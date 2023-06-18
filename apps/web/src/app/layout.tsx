@@ -2,9 +2,9 @@ import "@/styles/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-
 import PlausibleProvider from "next-plausible";
-import Background from "./components/background";
+import Background from "./_components/background";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
 

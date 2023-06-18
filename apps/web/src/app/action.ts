@@ -1,18 +1,56 @@
 "use server";
 
-export async function waitlist(data: FormData) {
+import { Resend } from "resend";
+import { Redis } from "@upstash/redis";
+
+const redis = Redis.fromEnv();
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function addToWaitlist(data: FormData) {
   const email = data.get("email");
   if (email) {
-    await wait(3000);
+    const number = await write(email);
+    await wait(500);
     // TODO: save email to Highstorm
+
+    // REMINDER: how to send emails in server action
+    // send(email)
+    return number;
   }
   return;
 }
 
+// Upstash
+const write = async (email) => {
+  const key = "waitlist";
+  const res = await redis
+    .pipeline()
+    .zadd(key, {
+      score: Date.now(),
+      member: email,
+    })
+    .zcard(key)
+    .exec();
+  return res[1];
+};
+
+// MOCK
 const wait = (ms: number): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve();
     }, ms);
+  });
+};
+
+// Resend
+const send = async (email) => {
+  return await resend.emails.send({
+    from: "onboarding@openstatus.dev",
+    to: "maximilian@kaske.org",
+    subject: "Hello world",
+    // @ts-ignore FIXME:
+    react: EmailTemplate({ firstName: "John" }),
   });
 };

@@ -4,6 +4,7 @@
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
+      "env": ["*", "RESEND_API_KEY", "!NEXT_PUBLIC_GIT_*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {},
