@@ -24,6 +24,7 @@ export default function RootLayout({
         <PlausibleProvider domain="openstatus.dev">
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>
+            <Toaster />
           </body>
         </PlausibleProvider>
       </ClerkProvider>
