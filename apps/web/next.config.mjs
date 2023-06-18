@@ -4,6 +4,9 @@ import "./src/env.mjs";
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["ui"],
+  experimental: {
+    serverActions: true,
+  },
 };
 
 export default nextConfig;
