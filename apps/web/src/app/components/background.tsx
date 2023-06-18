@@ -8,17 +8,23 @@ export default function Background({
 }) {
   React.useEffect(() => {
     function mouseMoveEvent(e: MouseEvent) {
-      const body = document.body;
+      const scale = window.visualViewport.scale;
+      // disable mouse movement on viewport zoom - causes page to slow down
+      if (scale === 1) {
+        const body = document.body;
 
-      const targetX = e.clientX;
-      const targetY = e.clientY;
+        const targetX = e.clientX;
+        const targetY = e.clientY;
 
-      body.style.setProperty("--x", `${targetX}px`);
-      body.style.setProperty("--y", `${targetY}px`);
+        body.style.setProperty("--x", `${targetX}px`);
+        body.style.setProperty("--y", `${targetY}px`);
+      }
     }
 
     document.addEventListener("mousemove", mouseMoveEvent);
-    return () => document.removeEventListener("mousemove", mouseMoveEvent);
+    return () => {
+      document.removeEventListener("mousemove", mouseMoveEvent);
+    };
   }, []);
 
   return (
