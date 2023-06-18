@@ -9,10 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/nextjs": "^4.21.3",
+    "@t3-oss/env-nextjs": "^0.4.1",
     "next": "13.4.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "ui": "workspace:*"
+    "ui": "workspace:*",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@types/node": "20.3.1",
