@@ -17,7 +17,7 @@ export default function Page() {
               OpenStatus
             </h1>
             <p className="text-muted-foreground text-lg mb-4">
-              Let's build a Saas together. Open for everyone. <br />
+              {"Let's"} build a Saas together. Open for everyone. <br />
               Managed or self-hosted. Pay-as-you go or plans. <br />
               Choose your solution.
             </p>
