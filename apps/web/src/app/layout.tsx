@@ -19,15 +19,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <ClerkProvider>
+    <ClerkProvider>
+      <html lang="en">
         <PlausibleProvider domain="openstatus.dev">
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>
             <Toaster />
           </body>
         </PlausibleProvider>
-      </ClerkProvider>
-    </html>
+      </html>
+    </ClerkProvider>
   );
 }
