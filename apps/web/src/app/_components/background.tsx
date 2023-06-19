@@ -32,7 +32,7 @@ export default function Background({
       <div className="absolute inset-0 z-[-1]">
         <div className="absolute inset-0 z-[-1] bg-muted-foreground/20" />
         <div
-          className="absolute z-[-1] h-56 w-56 rounded-full -translate-y-1/2 -translate-x-1/2 bg-gradient-radial from-muted-foreground/70 from-0% to-transparent to-90% blur-md"
+          className="absolute z-[-1] h-56 w-56 rounded-full -translate-y-1/2 -translate-x-1/2 bg-gradient-radial from-muted-foreground/80 from-0% to-transparent to-90% blur-md"
           style={{ left: "var(--x)", top: "var(--y)" }}
         />
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
