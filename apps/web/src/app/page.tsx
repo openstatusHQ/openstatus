@@ -11,13 +11,15 @@ export default function Page() {
     <main className="min-h-screen w-full flex flex-col p-4 md:p-8 space-y-6">
       <div className="flex-1 flex flex-col justify-center">
         <div className="mx-auto max-w-xl text-center">
-          <div className="rounded-lg border border-border backdrop-blur-[2px] p-8">
-            <Badge>Announcing Post</Badge>
-            <h1 className="text-3xl text-foreground font-cal mb-6 mt-2">
+          <div className="rounded-lg border border-border backdrop-blur-[2px] p-8 md:p-16">
+            <Badge>Coming Soon</Badge>
+            <h1 className="text-5xl text-foreground font-cal mb-6 mt-2">
               OpenStatus
             </h1>
-            <p className="text-muted-foreground mb-4">
-              Your Open Source Status Page.
+            <p className="text-muted-foreground text-lg mb-4">
+              {"Let's"} build a Saas together. Open for everyone. <br />
+              Managed or self-hosted. Pay-as-you go or plans. <br />
+              Choose your solution.
             </p>
             <form
               action={async (data) => {
@@ -48,12 +50,12 @@ export default function Page() {
         </div>
       </div>
       <footer className="text-center text-sm text-muted-foreground mx-auto rounded-full px-4 py-2 border border-border backdrop-blur-[2px]">
-        Creating by{" "}
+        A collaboration between{" "}
         <a
           href="https://twitter.com/mxkaske"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline"
+          className="underline underline-offset-4 hover:no-underline text-foreground"
         >
           @mxkaske
         </a>{" "}
@@ -62,7 +64,7 @@ export default function Page() {
           href="https://twitter.com/thibaultleouay"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline"
+          className="underline underline-offset-4 hover:no-underline text-foreground"
         >
           @thibaultleouay
         </a>
