@@ -2,6 +2,7 @@
 
 import { Resend } from "resend";
 import { Redis } from "@upstash/redis";
+import { EmailTemplate } from "@/components/templates/email-template";
 
 const redis = Redis.fromEnv();
 
@@ -50,7 +51,6 @@ const send = async (email) => {
     from: "onboarding@openstatus.dev",
     to: "maximilian@kaske.org",
     subject: "Hello world",
-    // @ts-ignore FIXME:
     react: EmailTemplate({ firstName: "John" }),
   });
 };
