@@ -1,4 +1,5 @@
 "use client";
+import useMouseMove from "@/hooks/use-mouse-move";
 import React from "react";
 
 export default function Background({
@@ -6,35 +7,13 @@ export default function Background({
 }: {
   children: React.ReactNode;
 }) {
-  React.useEffect(() => {
-    function mouseMoveEvent(e: MouseEvent) {
-      const scale = window.visualViewport.scale;
-      // disable mouse movement on viewport zoom - causes page to slow down
-      if (scale === 1) {
-        const body = document.body;
-
-        const targetX = e.clientX;
-        const targetY = e.clientY;
-
-        body.style.setProperty("--x", `${targetX}px`);
-        body.style.setProperty("--y", `${targetY}px`);
-      }
-    }
-
-    document.addEventListener("mousemove", mouseMoveEvent);
-    return () => {
-      document.removeEventListener("mousemove", mouseMoveEvent);
-    };
-  }, []);
-
+  // --x and --y will be updated based on mouse position
+  useMouseMove();
   return (
     <>
       <div className="absolute inset-0 z-[-1]">
         <div className="absolute inset-0 z-[-1] bg-muted-foreground/20" />
-        <div
-          className="absolute z-[-1] h-56 w-56 rounded-full -translate-y-1/2 -translate-x-1/2 bg-gradient-radial from-muted-foreground/80 from-0% to-transparent to-90% blur-md"
-          style={{ left: "var(--x)", top: "var(--y)" }}
-        />
+        <div className="absolute left-[--x] top-[--y] z-[-1] h-56 w-56 rounded-full -translate-y-1/2 -translate-x-1/2 bg-gradient-radial from-muted-foreground/80 from-0% to-transparent to-90% blur-md" />
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
           <defs>
             <pattern
