@@ -13,7 +13,6 @@ export async function POST() {
       from: "onboarding@openstatus.dev",
       to: "maximilian@kaske.org",
       subject: "Hello world",
-      // @ts-ignore FIXME:
       react: EmailTemplate({ firstName: "John" }),
     });
 

@@ -5,9 +5,7 @@ interface EmailTemplateProps {
 }
 
 // TODO: rename and content
-export const EmailTemplate: React.FC<Readonly<EmailTemplateProps>> = ({
-  firstName,
-}) => (
+export const EmailTemplate = ({ firstName }: EmailTemplateProps) => (
   <div>
     <h1>Welcome, {firstName}!</h1>
   </div>
