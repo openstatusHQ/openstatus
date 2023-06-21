@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/v0/ping",
-      "schedule": "0 * * * *"
+      "schedule": "0 */30 * * *"
     }
   ]
 }
