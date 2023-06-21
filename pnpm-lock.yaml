@@ -66,6 +66,9 @@ importers:
       '@clerk/nextjs':
         specifier: ^4.21.3
         version: 4.21.3(next@13.4.6)(react-dom@18.2.0)(react@18.2.0)
+      '@openstatus/db':
+        specifier: workspace:^
+        version: link:../../packages/db
       '@radix-ui/react-slot':
         specifier: ^1.0.2
         version: 1.0.2(@types/react@18.2.12)(react@18.2.0)
