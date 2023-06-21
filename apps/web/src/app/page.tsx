@@ -28,12 +28,12 @@ export default function Page() {
         </div>
       </div>
       <footer className="text-center text-sm text-muted-foreground mx-auto rounded-full px-4 py-2 border border-border backdrop-blur-[2px]">
-        Creating by{" "}
+        A collaboration between{" "}
         <a
           href="https://twitter.com/mxkaske"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline"
+          className="underline underline-offset-4 hover:no-underline text-foreground"
         >
           @mxkaske
         </a>{" "}
@@ -42,7 +42,7 @@ export default function Page() {
           href="https://twitter.com/thibaultleouay"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline"
+          className="underline underline-offset-4 hover:no-underline text-foreground"
         >
           @thibaultleouay
         </a>

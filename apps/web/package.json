@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^4.21.3",
-    "@t3-oss/env-nextjs": "^0.4.1",
+    "@openstatus/db": "workspace:^",
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-toast": "^1.1.4",
+    "@t3-oss/env-nextjs": "0.4.1",
     "@upstash/redis": "^1.21.0",
     "class-variance-authority": "^0.6.0",
     "clsx": "^1.2.1",
