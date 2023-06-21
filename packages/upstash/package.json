@@ -1,0 +1,25 @@
+{
+  "name": "@openstatus/upstash",
+  "version": "0.0.0",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@upstash/kafka": "^1.3.3",
+    "@upstash/qstash": "^0.3.6",
+    "@upstash/redis": "^1.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "20.3.1",
+    "tsconfig": "workspace:*",
+    "tsup": "^7.0.0",
+    "typescript": "^5.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
