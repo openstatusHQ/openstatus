@@ -1,5 +1,9 @@
-import { mysqlTable, varchar } from "drizzle-orm/mysql-core";
+import { datetime, mysqlTable, serial, varchar } from "drizzle-orm/mysql-core";
 
-export const policies = mysqlTable("user", {
-  id: varchar("id", { length: 256 }).primaryKey(),
+export const user = mysqlTable("user", {
+  id: serial("id").primaryKey(),
+  tenantId: varchar("tenant_id", { length: 256 }), // the clerk User Id
+
+  createdAt: datetime("created_at").default(new Date()),
+  updateAt: datetime("update_at"),
 });
