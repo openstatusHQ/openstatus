@@ -7,6 +7,7 @@ const redis = Redis.fromEnv();
 
 // include ratelimit
 
+// TODO: create a package for monitor
 async function monitor(statusCode: number) {
   return await publishPingResponse(tb)({
     id: "openstatus",
@@ -21,10 +22,10 @@ export async function GET(req: Request) {
     // REMINDER: connect tinybird, upstash and planetscale
     await redis.ping();
     const res = new Response("OK", { status: 200 });
-    await monitor(200);
     if (RANDOM) {
       throw new Error("Arg");
     }
+    await monitor(200);
     return res;
   } catch {
     const res = new Response("Error", { status: 500 });
