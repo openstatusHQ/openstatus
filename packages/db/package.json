@@ -9,13 +9,14 @@
   },
   "dependencies": {
     "@planetscale/database": "1.7.0",
-    "@t3-oss/env-nextjs": "0.4.1",
-    "drizzle-orm": "0.26.5",
+    "@t3-oss/env-core": "0.4.1",
+    "dotenv": "16.3.1",
+    "drizzle-orm": "0.27.0",
     "zod": "3.21.4"
   },
   "devDependencies": {
     "@types/node": "20.3.1",
-    "drizzle-kit": "0.18.1",
+    "drizzle-kit": "0.19.2",
     "tsconfig": "workspace:^",
     "typescript": "5.1.3"
   },

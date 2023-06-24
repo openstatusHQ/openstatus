@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "c99fed0d-f5ec-432b-91f9-7528a1c03735",
+  "id": "e1c08226-8869-4c2b-abb0-8bb8b097e26d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -27,7 +27,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'2023-06-23 18:31:48.002'"
+          "default": "'2023-06-24 19:14:15.944'"
         },
         "update_at": {
           "name": "update_at",
@@ -128,7 +128,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'2023-06-23 18:31:48.006'"
+          "default": "'2023-06-24 19:14:15.948'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -216,7 +216,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'2023-06-23 18:31:48.006'"
+          "default": "'2023-06-24 19:14:15.948'"
         },
         "updated_at": {
           "name": "updated_at",
@@ -253,7 +253,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'2023-06-23 18:31:48.008'"
+          "default": "'2023-06-24 19:14:15.949'"
         },
         "update_at": {
           "name": "update_at",
@@ -290,7 +290,7 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false,
-          "default": "'2023-06-23 18:31:48.010'"
+          "default": "'2023-06-24 19:14:15.951'"
         },
         "update_at": {
           "name": "update_at",
