@@ -1,30 +1,29 @@
 import {
   datetime,
   mysqlTable,
-  serial,
   varchar,
   text,
   mysqlEnum,
+  int,
 } from "drizzle-orm/mysql-core";
-import { statusJob } from "./status-job";
 
 export const incident = mysqlTable("incident", {
-  id: serial("id").primaryKey(),
+  id: int("id").autoincrement().primaryKey(),
 
   status: mysqlEnum("status", ["resolved", "investigatin", ""]),
 
-  incidentUpadteId: serial("id").references(() => incidentUpdate.id),
+  incidentUpdateId: int("incident_update_id"),
 
-  createdAt: datetime("created_at").default(new Date()),
-  updatedAt: datetime("update_at"),
+  createdAt: datetime("created_at").notNull(),
+  updatedAt: datetime("update_at").notNull(),
 });
 
 export const incidentUpdate = mysqlTable("incidentUpdate", {
-  id: serial("id").primaryKey(),
+  id: int("id").autoincrement().primaryKey(),
 
   date: datetime("incident_date"),
   title: varchar("title", { length: 256 }), // title of the incident
   message: text("message"), //  where we can write the incident message
 
-  updatedAt: datetime("updated_at"),
+  updatedAt: datetime("updated_at").notNull(),
 });

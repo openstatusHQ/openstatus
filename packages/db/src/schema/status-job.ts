@@ -2,12 +2,12 @@ import {
   datetime,
   mysqlEnum,
   mysqlTable,
-  serial,
+  int,
   varchar,
 } from "drizzle-orm/mysql-core";
 
 export const statusJob = mysqlTable("statusJob", {
-  id: serial("id").primaryKey(),
+  id: int("id").autoincrement().primaryKey(),
   jobType: mysqlEnum("job_type", ["website", "cron", "other"])
     .notNull()
     .default("other"),
@@ -25,6 +25,6 @@ export const statusJob = mysqlTable("statusJob", {
 
   url: varchar("url", { length: 512 }),
 
-  createdAt: datetime("created_at").default(new Date()),
-  updatedAt: datetime("updated_at"),
+  createdAt: datetime("created_at").notNull(),
+  updateddAt: datetime("updated_at").notNull(),
 });

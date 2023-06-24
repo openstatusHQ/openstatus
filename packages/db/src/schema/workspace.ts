@@ -1,18 +1,13 @@
-import { datetime, mysqlTable, serial, varchar } from "drizzle-orm/mysql-core";
-import { user } from "./user";
-import { page } from "./page";
+import { datetime, mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
 
 export const workspace = mysqlTable("workspace", {
-  id: serial("id").primaryKey(),
+  id: int("id").autoincrement().primaryKey(),
 
   stripeId: varchar("stripe_id", { length: 256 }),
 
-  userId: serial("id").references(() => user.id),
-  pageId: serial("id").references(() => page.id),
+  userId: int("user_id"),
+  pageId: int("page_id"),
 
-  createdAt: datetime("created_at").default(new Date()),
-  updateAt: datetime("update_at"),
+  createdAt: datetime("created_at").notNull(),
+  updatedAt: datetime("updated_at").notNull(),
 });
-function integer(arg0: string) {
-  throw new Error("Function not implemented.");
-}

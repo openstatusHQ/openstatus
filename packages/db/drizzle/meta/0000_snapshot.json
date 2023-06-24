@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "e1c08226-8869-4c2b-abb0-8bb8b097e26d",
+  "id": "27082c28-e5c2-48b0-bc7c-60cfb4c7237c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -9,9 +9,9 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
-          "primaryKey": false,
-          "notNull": false,
+          "type": "int",
+          "primaryKey": true,
+          "notNull": true,
           "autoincrement": true
         },
         "status": {
@@ -21,38 +21,30 @@
           "notNull": false,
           "autoincrement": false
         },
+        "incident_update_id": {
+          "name": "incident_update_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'2023-06-24 19:14:15.944'"
+          "notNull": true,
+          "autoincrement": false
         },
         "update_at": {
           "name": "update_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "incident_id_incidentUpdate_id_fk": {
-          "name": "incident_id_incidentUpdate_id_fk",
-          "tableFrom": "incident",
-          "tableTo": "incidentUpdate",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "incidentUpdate": {
@@ -60,7 +52,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "int",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
@@ -90,7 +82,7 @@
           "name": "updated_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
@@ -103,9 +95,9 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
-          "primaryKey": false,
-          "notNull": false,
+          "type": "int",
+          "primaryKey": true,
+          "notNull": true,
           "autoincrement": true
         },
         "slug": {
@@ -122,51 +114,37 @@
           "notNull": false,
           "autoincrement": false
         },
+        "status_job_id": {
+          "name": "status_job_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "incident_id": {
+          "name": "incident_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'2023-06-24 19:14:15.948'"
+          "notNull": true,
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "page_id_statusJob_id_fk": {
-          "name": "page_id_statusJob_id_fk",
-          "tableFrom": "page",
-          "tableTo": "statusJob",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "page_id_incident_id_fk": {
-          "name": "page_id_incident_id_fk",
-          "tableFrom": "page",
-          "tableTo": "incident",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
     "statusJob": {
@@ -174,7 +152,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "int",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
@@ -214,15 +192,14 @@
           "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'2023-06-24 19:14:15.948'"
+          "notNull": true,
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
@@ -235,7 +212,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "int",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": true
@@ -251,15 +228,14 @@
           "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'2023-06-24 19:14:15.949'"
+          "notNull": true,
+          "autoincrement": false
         },
-        "update_at": {
-          "name": "update_at",
+        "updated_at": {
+          "name": "updated_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
@@ -272,9 +248,9 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
-          "primaryKey": false,
-          "notNull": false,
+          "type": "int",
+          "primaryKey": true,
+          "notNull": true,
           "autoincrement": true
         },
         "stripe_id": {
@@ -284,51 +260,37 @@
           "notNull": false,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "'2023-06-24 19:14:15.951'"
+          "notNull": true,
+          "autoincrement": false
         },
-        "update_at": {
-          "name": "update_at",
+        "updated_at": {
+          "name": "updated_at",
           "type": "datetime",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {
-        "workspace_id_user_id_fk": {
-          "name": "workspace_id_user_id_fk",
-          "tableFrom": "workspace",
-          "tableTo": "user",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "workspace_id_page_id_fk": {
-          "name": "workspace_id_page_id_fk",
-          "tableFrom": "workspace",
-          "tableTo": "page",
-          "columnsFrom": [
-            "id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {}
     }
   },

@@ -8,5 +8,4 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
   },
-  skipValidation: true,
 });
