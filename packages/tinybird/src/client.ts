@@ -4,10 +4,6 @@ import type { Tinybird } from "@chronark/zod-bird";
 // REMINDER:
 // const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
 
-// An alternative to
-const VERION = "v0";
-const DATASOURCE = {};
-
 // TODO: think of a better name `publishHttpResponse`
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
@@ -25,13 +21,19 @@ export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
     pipe: "response_list__v0",
     parameters: z.object({
-      start: z.number().int(), // always start from a date
+      siteId: z.string().default("openstatus"), // REMINDER: remove default once alpha
+      start: z.number().int().default(0), // always start from a date
       end: z.number().int().optional(),
+      limit: z.number().int().optional().default(50), // used for pagination
     }),
     data: z.object({
       id: z.string(),
-      timestamp: z.number().int(),
+      timestamp: z.number().int(), // .transform(t => new Date(t))
       statusCode: z.number().int(),
+      // metadata: z.string().transform((m) => JSON.parse(m))
     }),
+    opts: {
+      revalidate: 5 * 60, // 5 minutes cache validation
+    },
   });
 }
