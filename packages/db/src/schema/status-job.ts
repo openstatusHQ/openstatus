@@ -4,7 +4,10 @@ import {
   mysqlTable,
   int,
   varchar,
+  timestamp,
 } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { page } from "./page";
 
 export const statusJob = mysqlTable("statusJob", {
   id: int("id").autoincrement().primaryKey(),
@@ -25,6 +28,15 @@ export const statusJob = mysqlTable("statusJob", {
 
   url: varchar("url", { length: 512 }),
 
-  createdAt: datetime("created_at").notNull(),
-  updateddAt: datetime("updated_at").notNull(),
+  pageId: int("page_id").notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updateddAt: timestamp("updated_at").notNull().onUpdateNow(),
 });
+
+export const statusJobRelation = relations(statusJob, ({ one }) => ({
+  page: one(page, {
+    fields: [statusJob.pageId],
+    references: [page.id],
+  }),
+}));

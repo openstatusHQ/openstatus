@@ -1,13 +1,18 @@
-import { datetime, mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, int, timestamp } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { page } from "./page";
+import { user } from "./user";
 
 export const workspace = mysqlTable("workspace", {
   id: int("id").autoincrement().primaryKey(),
 
   stripeId: varchar("stripe_id", { length: 256 }),
 
-  userId: int("user_id"),
-  pageId: int("page_id"),
-
-  createdAt: datetime("created_at").notNull(),
-  updatedAt: datetime("updated_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
 });
+
+export const workspaceRelations = relations(workspace, ({ many }) => ({
+  page: many(page),
+  user: many(user),
+}));

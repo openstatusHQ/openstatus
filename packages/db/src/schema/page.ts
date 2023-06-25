@@ -1,15 +1,27 @@
-import { datetime, mysqlTable, varchar, int } from "drizzle-orm/mysql-core";
+import { mysqlTable, varchar, int, timestamp } from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { incident } from "./incident";
+import { statusJob } from "./status-job";
 
 export const page = mysqlTable("page", {
   id: int("id").autoincrement().primaryKey(),
 
+  workspaceId: int("workspace_id").notNull(),
+
   slug: varchar("slug", { length: 256 }), // which is used for https://slug.openstatus.dev
   customDomain: varchar("custom_domain", { length: 256 }),
 
-  statusJobId: int("status_job_id"),
-  incidentId: int("incident_id"),
   // We should store settings of the page
 
-  createdAt: datetime("created_at").notNull(),
-  updatedAt: datetime("updated_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
 });
+
+export const pageRelations = relations(page, ({ many, one }) => ({
+  incidents: many(incident),
+  workspace: one(page, {
+    fields: [page.workspaceId],
+    references: [page.id],
+  }),
+  statusJob: many(statusJob),
+}));
