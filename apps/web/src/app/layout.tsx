@@ -14,9 +14,9 @@ const calSans = LocalFont({
   variable: "--font-calsans",
 });
 
-const TITLE = "Open-source monitoring service";
+const TITLE = "OpenStatus";
 const DESCRIPTION =
-  "OpenStatus is an open source alternative to your current monitoring service with beautiful status page";
+  "Open-Source alternative to your current monitoring service with beautiful status page";
 
 export const metadata: Metadata = {
   title: TITLE,

@@ -12,7 +12,7 @@ export function publishPingResponse(tb: Tinybird) {
       id: z.string(),
       timestamp: z.number().int(),
       statusCode: z.number().int(),
-      latency: z.number().int(),
+      latency: z.number().int(), // in ms
       url: z.string(),
       metadata: z.string().optional().default(""), // TODO: object + stringify json
     }),
@@ -37,7 +37,7 @@ export function getResponseList(tb: Tinybird) {
       // metadata: z.string().transform((m) => JSON.parse(m))
     }),
     opts: {
-      revalidate: 0, // 5 * 60, // 5 minutes cache validation
+      revalidate: 5 * 60, // 5 minutes cache validation
     },
   });
 }
