@@ -12,7 +12,9 @@ export function publishPingResponse(tb: Tinybird) {
       id: z.string(),
       timestamp: z.number().int(),
       statusCode: z.number().int(),
-      metadata: z.string().optional().default(""),
+      latency: z.number().int(),
+      url: z.string(),
+      metadata: z.string().optional().default(""), // TODO: object + stringify json
     }),
   });
 }
@@ -30,10 +32,12 @@ export function getResponseList(tb: Tinybird) {
       id: z.string(),
       timestamp: z.number().int(), // .transform(t => new Date(t))
       statusCode: z.number().int(),
+      latency: z.number().int(),
+      url: z.string(),
       // metadata: z.string().transform((m) => JSON.parse(m))
     }),
     opts: {
-      revalidate: 5 * 60, // 5 minutes cache validation
+      revalidate: 0, // 5 * 60, // 5 minutes cache validation
     },
   });
 }

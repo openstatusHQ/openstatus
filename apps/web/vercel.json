@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/v0/ping",
-      "schedule": "*/30 * * * *"
+      "path": "/api/v0/cron",
+      "schedule": "*/10 * * * *"
     }
   ]
 }

@@ -3,13 +3,7 @@ import { HeroForm } from "./_components/hero-form";
 import { Tinybird, getResponseList } from "@openstatus/tinybird";
 import { env } from "@/env.mjs";
 import { StatusContainer } from "./_components/status-container";
-
-const MOCK = [
-  { id: "openstatus", timestamp: 1687369844869, statusCode: 200 },
-  { id: "openstatus", timestamp: 1687370131709, statusCode: 500 },
-  { id: "openstatus", timestamp: 1687370254931, statusCode: 200 },
-  { id: "openstatus", timestamp: 1687370255071, statusCode: 500 },
-];
+import MOCK from "@/app/_mocks/response-list.json";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
