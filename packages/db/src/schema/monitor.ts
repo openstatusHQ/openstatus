@@ -1,0 +1,37 @@
+import {
+  datetime,
+  mysqlEnum,
+  mysqlTable,
+  int,
+  varchar,
+  timestamp,
+} from "drizzle-orm/mysql-core";
+import { relations } from "drizzle-orm";
+import { page } from "./page";
+
+export const monitor = mysqlTable("monitor", {
+  id: int("id").autoincrement().primaryKey(),
+  jobType: mysqlEnum("job_type", ["website", "cron", "other"])
+    .notNull()
+    .default("other"),
+  frequency: mysqlEnum("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
+    .notNull()
+    .default("other"),
+  status: mysqlEnum("status", ["active", "inactive"])
+    .notNull()
+    .default("inactive"),
+
+  url: varchar("url", { length: 512 }),
+
+  pageId: int("page_id").notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updateddAt: timestamp("updated_at").notNull().onUpdateNow(),
+});
+
+export const monitorRelation = relations(monitor, ({ one }) => ({
+  page: one(page, {
+    fields: [monitor.pageId],
+    references: [page.id],
+  }),
+}));
