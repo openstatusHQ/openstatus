@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "8ba6e4bd-ac45-49b6-816e-cf8634b90708",
+  "id": "b1ca2235-8b2f-4bb6-b382-484f98713c32",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -160,8 +160,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {}
     },
-    "statusJob": {
-      "name": "statusJob",
+    "monitor": {
+      "name": "monitor",
       "columns": {
         "id": {
           "name": "id",
@@ -180,7 +180,7 @@
         },
         "periodicity": {
           "name": "periodicity",
-          "type": "enum('every-5-min','every-1-min','every-1-h','other')",
+          "type": "enum('1m','5m','10m','30m','1h','other')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,

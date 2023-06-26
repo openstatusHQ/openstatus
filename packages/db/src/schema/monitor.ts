@@ -9,17 +9,12 @@ import {
 import { relations } from "drizzle-orm";
 import { page } from "./page";
 
-export const statusJob = mysqlTable("statusJob", {
+export const monitor = mysqlTable("monitor", {
   id: int("id").autoincrement().primaryKey(),
   jobType: mysqlEnum("job_type", ["website", "cron", "other"])
     .notNull()
     .default("other"),
-  periodicity: mysqlEnum("periodicity", [
-    "every-5-min",
-    "every-1-min",
-    "every-1-h",
-    "other",
-  ])
+  frequency: mysqlEnum("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
     .notNull()
     .default("other"),
   status: mysqlEnum("status", ["active", "inactive"])
@@ -34,9 +29,9 @@ export const statusJob = mysqlTable("statusJob", {
   updateddAt: timestamp("updated_at").notNull().onUpdateNow(),
 });
 
-export const statusJobRelation = relations(statusJob, ({ one }) => ({
+export const monitorRelation = relations(monitor, ({ one }) => ({
   page: one(page, {
-    fields: [statusJob.pageId],
+    fields: [monitor.pageId],
     references: [page.id],
   }),
 }));

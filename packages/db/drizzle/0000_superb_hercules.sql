@@ -22,10 +22,10 @@ CREATE TABLE `page` (
 	`created_at` timestamp NOT NULL DEFAULT (now()),
 	`updated_at` timestamp NOT NULL ON UPDATE CURRENT_TIMESTAMP);
 --> statement-breakpoint
-CREATE TABLE `statusJob` (
+CREATE TABLE `monitor` (
 	`id` int AUTO_INCREMENT PRIMARY KEY NOT NULL,
 	`job_type` enum('website','cron','other') NOT NULL DEFAULT 'other',
-	`periodicity` enum('every-5-min','every-1-min','every-1-h','other') NOT NULL DEFAULT 'other',
+	`periodicity` enum('1m','5m','10m','30m','1h','other') NOT NULL DEFAULT 'other',
 	`status` enum('active','inactive') NOT NULL DEFAULT 'inactive',
 	`url` varchar(512),
 	`page_id` int NOT NULL,
