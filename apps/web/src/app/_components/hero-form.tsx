@@ -10,7 +10,7 @@ export const HeroForm = () => {
       action={async (data) => {
         try {
           const number = await addToWaitlist(data);
-          const formattedNumber = Intl.NumberFormat().format(number);
+          const formattedNumber = Intl.NumberFormat().format(Number(number));
           toast({
             description: `Thank you, you're number ${formattedNumber} on the list.`,
           });

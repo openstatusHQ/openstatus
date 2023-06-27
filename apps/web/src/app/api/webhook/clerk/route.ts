@@ -6,11 +6,11 @@ import { lambdaRouter } from "@openstatus/api/src/lambda";
 import { clerkEvent } from "@openstatus/api/src/router/clerk/type";
 // import { clerkEvent } from "@openstatus/api/src/router/clerk";
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+// export const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
 
 export async function POST(req: NextRequest) {
   // Get witch headers is missing
