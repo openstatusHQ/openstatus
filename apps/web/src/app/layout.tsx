@@ -14,21 +14,25 @@ const calSans = LocalFont({
   variable: "--font-calsans",
 });
 
+const TITLE = "OpenStatus";
+const DESCRIPTION =
+  "Open-Source alternative to your current monitoring service with beautiful status page";
+
 export const metadata: Metadata = {
-  title: "openstatus.dev",
-  description: "An Open Source Alternative for your next Status Page.",
+  title: TITLE,
+  description: DESCRIPTION,
   metadataBase: new URL("https://openstatus.dev"),
   twitter: {
     images: [`/api/og`],
     card: "summary_large_image",
-    title: "openstatus.dev",
-    description: "An Open Source Alternative for your next Status Page.",
+    title: TITLE,
+    description: DESCRIPTION,
   },
   openGraph: {
     type: "website",
     images: [`/api/og`],
-    title: "openstatus.dev",
-    description: "An Open Source Alternative for your next Status Page.",
+    title: TITLE,
+    description: DESCRIPTION,
   },
 };
 

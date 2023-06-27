@@ -35,9 +35,8 @@ export async function GET(req: Request) {
           tw="flex w-full h-full absolute inset-0"
           // not every css variable is supported
           style={{
-            backgroundImage: "radial-gradient(#94a3b8 10%, transparent 10%)",
-            backgroundPosition: "0px 0px, 6px 6px",
-            backgroundSize: "12px 12px",
+            backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
+            backgroundSize: "32px 32px",
             filter: "blur(1px)", // to be discussed... couldn't put it inside the content container
           }}
         ></div>

@@ -1,0 +1,24 @@
+{
+  "name": "@openstatus/tinybird",
+  "version": "0.0.0",
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch"
+  },
+  "dependencies": {
+    "@chronark/zod-bird": "^0.1.1",
+    "zod": "^3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.3.1",
+    "tsup": "^7.0.0",
+    "typescript": "^5.1.0",
+    "tsconfig": "workspace:*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
