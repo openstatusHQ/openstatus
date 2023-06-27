@@ -1,11 +1,10 @@
-import { TRPCError } from "@trpc/server";
 import * as z from "zod";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { user } from "@openstatus/db/src/schema";
-import { clerkEvent } from ".";
+import { clerkEvent } from "./type";
 
-const webhookProcedure = publicProcedure.input(
+export const webhookProcedure = publicProcedure.input(
   z.object({
     data: clerkEvent,
   })
@@ -19,4 +18,8 @@ export const webhookRouter = createTRPCRouter({
       });
     }
   }),
+});
+
+export const clerkRouter = createTRPCRouter({
+  webhooks: webhookRouter,
 });

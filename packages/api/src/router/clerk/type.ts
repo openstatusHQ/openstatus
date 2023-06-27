@@ -1,9 +1,4 @@
-import { createTRPCRouter } from "../../trpc";
-import { webhookRouter } from "./webhook";
 import { z } from "zod";
-export const clerkRouter = createTRPCRouter({
-  webhooks: webhookRouter,
-});
 
 export const clerkEvent = z.discriminatedUnion("type", [
   z.object({

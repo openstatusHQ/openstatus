@@ -9,7 +9,7 @@ export const workspace = mysqlTable("workspace", {
   stripeId: varchar("stripe_id", { length: 256 }),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({

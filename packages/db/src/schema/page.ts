@@ -24,7 +24,7 @@ export const page = mysqlTable("page", {
   // theme
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
 export const pageRelations = relations(page, ({ many, one }) => ({

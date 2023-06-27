@@ -26,7 +26,7 @@ export const monitor = mysqlTable("monitor", {
   pageId: int("page_id").notNull(),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updateddAt: timestamp("updated_at").notNull().onUpdateNow(),
+  updateddAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
 export const monitorRelation = relations(monitor, ({ one }) => ({

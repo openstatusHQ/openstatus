@@ -30,7 +30,7 @@ export const incidentUpdate = mysqlTable("incidentUpdate", {
 
   incidentId: int("incident_id").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
 export const incidentRelations = relations(incident, ({ one, many }) => ({

@@ -1,4 +1,4 @@
-import { clerkRouter } from "./router/clerk";
+import { clerkRouter } from "./router/clerk/webhook";
 import { createTRPCRouter } from "./trpc";
 
 // Deployed to /trpc/lambda/**

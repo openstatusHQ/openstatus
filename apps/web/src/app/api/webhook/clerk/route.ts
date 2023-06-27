@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter } from "@openstatus/api/src/lambda";
-import { clerkEvent } from "@openstatus/api/src/router/clerk";
+import { clerkEvent } from "@openstatus/api/src/router/clerk/type";
+// import { clerkEvent } from "@openstatus/api/src/router/clerk";
 
 export const config = {
   api: {
@@ -12,11 +13,11 @@ export const config = {
 };
 
 export async function POST(req: NextRequest) {
-  const wh = new Webhook(env.CLERK_WEBHOOK_SECRET);
-  const msg = wh.verify(await req.text(), req.headers as any);
-
-  const r = clerkEvent.safeParse(msg);
-
+  // Get witch headers is missing
+  // const wh = new Webhook(env.CLERK_WEBHOOK_SECRET);
+  // const msg = wh.verify(JSON.stringify(await req.json()), req.headers as any);
+  const json = await req.json();
+  const r = clerkEvent.safeParse(json);
   if (!r.success) {
     return NextResponse.json(
       { error: "Internal Server Error" },
@@ -33,4 +34,5 @@ export async function POST(req: NextRequest) {
     default:
       break;
   }
+  return NextResponse.json({ success: true });
 }
