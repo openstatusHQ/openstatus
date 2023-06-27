@@ -8,7 +8,7 @@ export const runtime = "edge";
 const DEFAULT_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : process.env.VERCEL_URL;
+    : "https://openstatus.dev";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
