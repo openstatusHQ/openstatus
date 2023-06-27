@@ -7,7 +7,8 @@ import {
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 import { incident } from "./incident";
-import { statusJob } from "./status-job";
+
+import { monitor } from "./monitor";
 
 export const page = mysqlTable("page", {
   id: int("id").autoincrement().primaryKey(),
@@ -32,5 +33,5 @@ export const pageRelations = relations(page, ({ many, one }) => ({
     fields: [page.workspaceId],
     references: [page.id],
   }),
-  statusJob: many(statusJob),
+  monitors: many(monitor),
 }));
