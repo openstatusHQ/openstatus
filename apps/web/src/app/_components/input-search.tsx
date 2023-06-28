@@ -50,14 +50,13 @@ export function InputSearch({
 
   React.useEffect(() => {
     // FIXME: remove search params if exists on page load
+    const queryParams = createQueryString({
+      limit: null,
+      status: null,
+      pathname: null,
+    });
     startTransition(() => {
-      router.replace(
-        `${pathname}?${createQueryString({
-          limit: null,
-          status: null,
-          pathname: null,
-        })}`
-      );
+      router.replace(`${pathname}?${queryParams}`);
     });
   }, [router]);
 
@@ -75,7 +74,7 @@ export function InputSearch({
         }
         return prev;
       }, {} as Record<string, string>);
-    console.log(searchparams);
+    // console.log(searchparams);
     startTransition(() => {
       router.push(`${pathname}?${createQueryString(searchparams)}`);
     });
@@ -161,7 +160,7 @@ export function InputSearch({
                       }}
                       onSelect={(value) => {
                         setInputValue((prev) => {
-                          console.log({ prev, currentWord, value });
+                          // console.log({ prev, currentWord, value });
                           if (currentWord.trim() === "") {
                             const input = `${prev}${value}`;
                             return `${input}:`;

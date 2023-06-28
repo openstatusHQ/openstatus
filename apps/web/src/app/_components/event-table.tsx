@@ -43,7 +43,7 @@ export function EventTable({
       return true;
     })
     .slice(0, Number(limit) || 100);
-  console.log(filteredEvents);
+  // console.log(filteredEvents);
 
   return (
     <div className="relative max-h-56 overflow-hidden">

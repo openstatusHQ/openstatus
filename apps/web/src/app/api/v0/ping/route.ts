@@ -3,7 +3,7 @@ import { Redis } from "@openstatus/upstash";
 const redis = Redis.fromEnv();
 
 export async function GET(req: Request) {
-  const RANDOM = Math.random() > 0.9;
+  const RANDOM = Math.random() > 0.6;
   try {
     // TODO: connect tinybird, upstash and planetscale
     await redis.ping();
