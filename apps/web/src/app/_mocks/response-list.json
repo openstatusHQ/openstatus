@@ -8,8 +8,8 @@
   },
   {
     "id": "openstatus",
-    "timestamp": 1687718326838,
-    "statusCode": 500,
+    "timestamp": 16877183268,
+    "statusCode": 200,
     "latency": 660,
     "url": "http://localhost:3000/api/v0/ping"
   },
@@ -17,6 +17,20 @@
     "id": "openstatus",
     "timestamp": 1687718289489,
     "statusCode": 500,
+    "latency": 332,
+    "url": "http://localhost:3000/api/v0/ping"
+  },
+  {
+    "id": "openstatus",
+    "timestamp": 168771832688,
+    "statusCode": 500,
+    "latency": 660,
+    "url": "http://localhost:3000/api/v0/ping"
+  },
+  {
+    "id": "openstatus",
+    "timestamp": 16877182894,
+    "statusCode": 200,
     "latency": 332,
     "url": "http://localhost:3000/api/v0/ping"
   }
