@@ -18,6 +18,11 @@ export const webhookRouter = createTRPCRouter({
       });
     }
   }),
+  userUpdated: webhookProcedure.mutation(async (opts) => {
+    if (opts.input.data.type === "user.updated") {
+      // We should do something
+    }
+  }),
 });
 
 export const clerkRouter = createTRPCRouter({

@@ -123,6 +123,9 @@ importers:
       resend:
         specifier: ^0.15.3
         version: 0.15.3
+      superjson:
+        specifier: 1.9.1
+        version: 1.9.1
       svix:
         specifier: 1.4.12
         version: 1.4.12

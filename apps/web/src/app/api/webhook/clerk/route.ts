@@ -27,12 +27,29 @@ export async function POST(req: NextRequest) {
 
   const ctx = createTRPCContext({ req });
   const caller = lambdaRouter.createCaller(ctx);
-  switch (r.data.type) {
+
+  const event = r.data.type;
+  switch (event) {
     case "user.created":
       await caller.clerkRouter.webhooks.userCreated({ data: r.data });
       break;
-    default:
+    case "user.updated":
+    case "user.deleted":
       break;
+
+    case "session.created":
+    case "session.revoked":
+    case "session.removed":
+    case "session.ended":
+      break;
+
+    case "organization.created":
+    case "organizationMembership.created":
+      break;
+
+    default:
+      ((d: never) => console.error(`${d} not handled here`))(event);
+      return null;
   }
   return NextResponse.json({ success: true });
 }

@@ -20,7 +20,6 @@ export const clerkEvent = z.discriminatedUnion("type", [
     type: z.literal("user.updated"),
     data: z.object({
       id: z.string(),
-      // username: z.string(),
       updated_at: z.number(),
     }),
   }),

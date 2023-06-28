@@ -29,6 +29,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "resend": "^0.15.3",
+    "superjson": "1.9.1",
     "svix": "1.4.12",
     "tailwind-merge": "^1.13.2",
     "tailwindcss-animate": "^1.0.6",
