@@ -132,9 +132,12 @@ export function InputSearch({
                             const input = `${prev}${value}`;
                             return `${input}:`;
                           }
+                          // lots of cheat
+                          const isStarting = currentWord === prev;
+                          const prefix = isStarting ? "" : " ";
                           const input = prev.replace(
-                            ` ${currentWord}`,
-                            ` ${value}`
+                            `${prefix}${currentWord}`,
+                            `${prefix}${value}`
                           );
                           return `${input}:`;
                         });

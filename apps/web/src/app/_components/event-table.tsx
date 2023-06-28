@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import React from "react";
+import { Button } from "@/components/ui/button";
 
 export function EventTable({
   events,
@@ -25,8 +27,9 @@ export function EventTable({
     url: string;
   }[];
 }) {
+  const [open, toggle] = React.useReducer((state) => !state, false);
   return (
-    <div className="relative max-h-56 overflow-hidden">
+    <div className="relative overflow-hidden max-h-56">
       <Table>
         <TableCaption>A list of the latest pings.</TableCaption>
         <TableHeader>
@@ -79,10 +82,20 @@ export function EventTable({
           })}
         </TableBody>
       </Table>
-      <div className="absolute inset-0 flex items-end justify-center bg-gradient bg-gradient-to-b from-transparent from-20% to-background">
-        {/* TODO: view more button for collabsable */}
-        <p className="px-3 py-1 text-xs text-muted-foreground bg-background border border-border rounded-full">{`A total of ${events.length} events.`}</p>
-      </div>
+      {!open && (
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient bg-gradient-to-b from-transparent from-20% to-background">
+          {/* TODO: enable button */}
+          <Button
+            onClick={toggle}
+            variant="outline"
+            size="sm"
+            className="rounded-full backdrop-blur-sm"
+            // disabled
+          >
+            {`A total of ${events.length} events.`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
