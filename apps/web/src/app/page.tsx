@@ -1,9 +1,11 @@
-import { Badge } from "@/components/ui/badge";
-import { HeroForm } from "./_components/hero-form";
-import { Tinybird, getResponseList } from "@openstatus/tinybird";
-import { env } from "@/env.mjs";
-import { StatusContainer } from "./_components/status-container";
 import MOCK from "@/app/_mocks/response-list.json";
+import { Badge } from "@/components/ui/badge";
+import { env } from "@/env.mjs";
+
+import { getResponseList, Tinybird } from "@openstatus/tinybird";
+
+import { HeroForm } from "./_components/hero-form";
+import { StatusContainer } from "./_components/status-container";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -14,13 +16,14 @@ export default async function Page() {
     const res = await getResponseList(tb)({});
     data = res.data;
   }
+
   return (
-    <main className="min-h-screen w-full flex flex-col p-4 md:p-8 space-y-6">
-      <div className="flex-1 flex flex-col justify-center items-center gap-8">
+    <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
+      <div className="flex flex-1 flex-col items-center justify-center gap-8">
         <div className="mx-auto max-w-xl text-center">
-          <div className="rounded-lg border border-border backdrop-blur-[2px] p-8">
+          <div className="border-border rounded-lg border p-8 backdrop-blur-[2px]">
             <Badge>Coming Soon</Badge>
-            <h1 className="text-3xl text-foreground font-cal mb-6 mt-2">
+            <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
               Open-source monitoring service
             </h1>
             <p className="text-muted-foreground mb-4">
@@ -30,17 +33,17 @@ export default async function Page() {
             <HeroForm />
           </div>
         </div>
-        <div className="md:fixed bottom-8 right-8 max-w-max z-10">
+        <div className="bottom-8 right-8 z-10 max-w-max md:fixed">
           <StatusContainer events={data} />
         </div>
       </div>
-      <footer className="text-center text-sm text-muted-foreground mx-auto rounded-full px-4 py-2 border border-border backdrop-blur-[2px]">
+      <footer className="text-muted-foreground border-border mx-auto rounded-full border px-4 py-2 text-center text-sm backdrop-blur-[2px]">
         A collaboration between{" "}
         <a
           href="https://twitter.com/mxkaske"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline text-foreground"
+          className="text-foreground underline underline-offset-4 hover:no-underline"
         >
           @mxkaske
         </a>{" "}
@@ -49,7 +52,7 @@ export default async function Page() {
           href="https://twitter.com/thibaultleouay"
           target="_blank"
           rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline text-foreground"
+          className="text-foreground underline underline-offset-4 hover:no-underline"
         >
           @thibaultleouay
         </a>

@@ -9,7 +9,9 @@
   "devDependencies": {
     "@turbo/gen": "1.10.3",
     "eslint": "8.43.0",
-    "eslint-config-custom": "workspace:*",
+    "@openstatus/eslint-config": "workspace:*",
+    "@ianvs/prettier-plugin-sort-imports": "4.0.2",
+    "prettier-plugin-tailwindcss": "0.3.0",
     "prettier": "2.8.8",
     "turbo": "latest",
     "typescript": "5.1.3"

@@ -1,7 +1,9 @@
 "use client";
-import { toast } from "@/components/ui/use-toast";
-import { addToWaitlist } from "../action";
+
 import { Input } from "@/components/ui/input";
+import { toast } from "@/components/ui/use-toast";
+
+import { addToWaitlist } from "../action";
 import { SubmitButton } from "./submit-button";
 
 export const HeroForm = () => {

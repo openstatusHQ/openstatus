@@ -14,9 +14,9 @@ export function SubmitButton() {
       {pending ? (
         // TODO: move into separate file `LoadingAnimation`
         <div className="flex items-center justify-center gap-1">
-          <div className="h-1 w-1 animate-pulse direction-alternate duration-700 rounded-full bg-primary-foreground" />
-          <div className="h-1 w-1 animate-pulse direction-alternate duration-700 delay-150 rounded-full bg-primary-foreground" />
-          <div className="h-1 w-1 animate-pulse direction-alternate duration-700 delay-300 rounded-full bg-primary-foreground" />
+          <div className="direction-alternate bg-primary-foreground h-1 w-1 animate-pulse rounded-full duration-700" />
+          <div className="direction-alternate bg-primary-foreground h-1 w-1 animate-pulse rounded-full delay-150 duration-700" />
+          <div className="direction-alternate bg-primary-foreground h-1 w-1 animate-pulse rounded-full delay-300 duration-700" />
         </div>
       ) : (
         "Join"

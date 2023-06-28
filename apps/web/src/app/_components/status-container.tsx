@@ -11,9 +11,9 @@ export function StatusContainer({
 }) {
   return (
     // OVERFLOW-HIDDEN
-    <div className="relative border border-border rounded-lg backdrop-blur-[2px] p-4 mx-auto max-h-28 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-background from-0% via-transparent via-50% to-background to-100%" />
-      <ul className="grid gap-2 text-xs text-muted-foreground">
+    <div className="border-border relative mx-auto max-h-28 overflow-hidden rounded-lg border p-4 backdrop-blur-[2px]">
+      <div className="from-background to-background absolute inset-0 bg-gradient-to-b from-0% via-transparent via-50% to-100%" />
+      <ul className="text-muted-foreground grid gap-2 text-xs">
         {events.map(({ timestamp, statusCode }) => {
           return (
             <li key={timestamp} className="flex items-center justify-between">
@@ -23,12 +23,12 @@ export function StatusContainer({
                   includeSeconds: true,
                 })}
               </p>
-              <Badge variant="outline" className="text-xs ml-1 py-0.5 px-2">
+              <Badge variant="outline" className="ml-1 px-2 py-0.5 text-xs">
                 {statusCode}
                 <div
                   className={cn(
-                    "rounded-full bg-foreground h-1.5 w-1.5 ml-1",
-                    statusCode === 200 ? "bg-green-500" : "bg-red-500"
+                    "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
+                    statusCode === 200 ? "bg-green-500" : "bg-red-500",
                   )}
                 />
               </Badge>

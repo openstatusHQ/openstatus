@@ -1,9 +1,9 @@
 "use server";
 
-import { Resend } from "resend";
-import { Redis } from "@upstash/redis";
 import { EmailTemplate } from "@/components/templates/email-template";
 import { env } from "@/env.mjs";
+import { Redis } from "@upstash/redis";
+import { Resend } from "resend";
 
 const redis = Redis.fromEnv();
 
@@ -47,11 +47,11 @@ const wait = (ms: number): Promise<void> => {
 };
 
 // Resend
-const send = async (email) => {
-  return await resend.emails.send({
-    from: "onboarding@openstatus.dev",
-    to: "maximilian@kaske.org",
-    subject: "Hello world",
-    react: EmailTemplate({ firstName: "John" }),
-  });
-};
+// const send = async (email) => {
+//   return await resend.emails.send({
+//     from: "onboarding@openstatus.dev",
+//     to: "maximilian@kaske.org",
+//     subject: "Hello world",
+//     react: EmailTemplate({ firstName: "John" }),
+//   });
+// };
