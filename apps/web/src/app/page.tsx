@@ -36,25 +36,37 @@ export default async function Page() {
           </div>
         </div>
       </div>
-      <footer className="text-center text-sm text-muted-foreground mx-auto rounded-full px-4 py-2 border border-border backdrop-blur-[2px]">
-        A collaboration between{" "}
-        <a
-          href="https://twitter.com/mxkaske"
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline text-foreground"
-        >
-          @mxkaske
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://twitter.com/thibaultleouay"
-          target="_blank"
-          rel="noreferrer"
-          className="underline underline-offset-4 hover:no-underline text-foreground"
-        >
-          @thibaultleouay
-        </a>
+      <footer className="mx-auto text-sm text-muted-foreground grid gap-4">
+        <p className="text-center rounded-full px-4 py-2 border border-border backdrop-blur-[2px]">
+          A collaboration between{" "}
+          <a
+            href="https://twitter.com/mxkaske"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:no-underline text-foreground"
+          >
+            @mxkaske
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://twitter.com/thibaultleouay"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:no-underline text-foreground"
+          >
+            @thibaultleouay
+          </a>
+          <span className="mx-1 text-muted-foreground/70">&bull;</span>
+          See on{" "}
+          <a
+            href="https://github.com/mxkaske/openstatus"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 hover:no-underline text-foreground"
+          >
+            GitHub
+          </a>
+        </p>
       </footer>
     </main>
   );
