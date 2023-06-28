@@ -8,11 +8,14 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+
+// TODO: once stable, use the shallow route to store the search params inside of the search params
 
 export function InputSearch({
   events,
+  onSearch,
 }: {
+  onSearch(value: Record<string, string>): void;
   // FIXME: should be return type
   events: {
     id: string;
@@ -22,44 +25,12 @@ export function InputSearch({
     url: string;
   }[];
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = React.useTransition();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState<boolean>(false);
   const [inputValue, setInputValue] = React.useState<string>("");
   const [currentWord, setCurrentWord] = React.useState("");
 
-  // Create query string
-  const createQueryString = React.useCallback(
-    (params: Record<string, string | number | null>) => {
-      const newSearchParams = new URLSearchParams(searchParams?.toString());
-
-      for (const [key, value] of Object.entries(params)) {
-        if (value === null) {
-          newSearchParams.delete(key);
-        } else {
-          newSearchParams.set(key, String(value));
-        }
-      }
-      return newSearchParams.toString();
-    },
-    [searchParams]
-  );
-
-  React.useEffect(() => {
-    // FIXME: remove search params if exists on page load
-    const queryParams = createQueryString({
-      limit: null,
-      status: null,
-      pathname: null,
-    });
-    startTransition(() => {
-      router.replace(`${pathname}?${queryParams}`);
-    });
-  }, [router]);
-
+  // TODO: check if there is a move efficient way
   React.useEffect(() => {
     const searchparams = inputValue
       .trim()
@@ -67,20 +38,13 @@ export function InputSearch({
       .reduce((prev, curr) => {
         const [name, value] = curr.split(":");
         if (value && name && curr !== currentWord) {
-          if (value.includes(",")) {
-            // const values = value.split(",") // TODO: support multiple value
-          }
+          // TODO: support multiple value with value.split(",")
           prev[name] = value;
         }
         return prev;
       }, {} as Record<string, string>);
-    // console.log(searchparams);
-    startTransition(() => {
-      router.push(`${pathname}?${createQueryString(searchparams)}`);
-    });
-  }, [inputValue]);
-
-  // TODO: once stable, use the shallow route to store the search params inside of the search params
+    onSearch(searchparams);
+  }, [onSearch, inputValue]);
 
   // DEFINE YOUR SEARCH PARAMETERS
   const search = React.useMemo(

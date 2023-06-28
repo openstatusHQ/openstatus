@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSearchParams } from "next/navigation";
 
 export function EventTable({
   events,
@@ -26,25 +25,6 @@ export function EventTable({
     url: string;
   }[];
 }) {
-  // TODO: move to tinybird filter asap
-  const searchParams = useSearchParams();
-  const status = searchParams?.get("status");
-  const limit = searchParams?.get("limit");
-  const pathname = searchParams?.get("pathname");
-
-  const filteredEvents = events
-    .filter((event) => {
-      const url = new URL(event.url);
-      if (status && event.statusCode !== Number(status)) {
-        return false;
-      } else if (pathname && url.pathname !== pathname) {
-        return false;
-      }
-      return true;
-    })
-    .slice(0, Number(limit) || 100);
-  // console.log(filteredEvents);
-
   return (
     <div className="relative max-h-56 overflow-hidden">
       <Table>
@@ -58,7 +38,7 @@ export function EventTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredEvents.map((event) => {
+          {events.map((event) => {
             const isOk = event.statusCode === 200;
             const url = new URL(event.url);
             return (
@@ -73,7 +53,7 @@ export function EventTable({
                   <Badge
                     variant="outline"
                     className={cn(
-                      "text-xs ml-1 py-0.5 px-2",
+                      "text-xs py-0.5 px-2",
                       isOk
                         ? "border-green-100 bg-green-50"
                         : "border-red-100 bg-red-50"
@@ -101,7 +81,7 @@ export function EventTable({
       </Table>
       <div className="absolute inset-0 flex items-end justify-center bg-gradient bg-gradient-to-b from-transparent from-20% to-background">
         {/* TODO: view more button for collabsable */}
-        <p className="px-3 py-1 text-xs text-muted-foreground bg-background border border-border rounded-full">{`A total of ${filteredEvents.length} events.`}</p>
+        <p className="px-3 py-1 text-xs text-muted-foreground bg-background border border-border rounded-full">{`A total of ${events.length} events.`}</p>
       </div>
     </div>
   );

@@ -2,9 +2,8 @@ import { Badge } from "@/components/ui/badge";
 import { HeroForm } from "./_components/hero-form";
 import { Tinybird, getResponseList } from "@openstatus/tinybird";
 import { env } from "@/env.mjs";
-import { EventTable } from "./_components/event-table";
 import MOCK from "@/app/_mocks/response-list.json";
-import { InputSearch } from "./_components/input-search";
+import { TableInputContainer } from "./_components/table-input-container";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -33,8 +32,7 @@ export default async function Page() {
         </div>
         <div className="mx-auto max-w-xl w-full z-10 backdrop-blur-[2px]">
           <div className="p-8 border border-border rounded-lg">
-            <InputSearch events={data} />
-            <EventTable events={data} />
+            <TableInputContainer events={data} />
           </div>
         </div>
       </div>
