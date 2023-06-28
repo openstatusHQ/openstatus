@@ -34,6 +34,10 @@ export async function GET(req: Request) {
     const hasUrl = searchParams.has("url");
     const url = hasUrl ? searchParams.get("url") : `${DEFAULT_URL}/api/v0/ping`;
 
+    if (!url) {
+      return new Response("Error", { status: 400 });
+    }
+
     const startTime = Date.now();
     const res = await fetch(url, { cache: "no-store" });
     const endTime = Date.now();
