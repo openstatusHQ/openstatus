@@ -13,6 +13,8 @@ export default function useMouseMove() {
         const targetX = e.clientX;
         const targetY = e.clientY;
 
+        // TODO: make it move around cursor so you feal like its floating around it
+        // the animation requires tranformX and transformY on the HTML Element
         body.style.setProperty("--x", `${targetX}px`);
         body.style.setProperty("--y", `${targetY}px`);
       }
