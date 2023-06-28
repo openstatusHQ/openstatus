@@ -82,6 +82,9 @@ export function InputSearch({
         ref={inputRef}
         value={inputValue}
         onValueChange={setInputValue}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") inputRef?.current.blur();
+        }}
         onBlur={() => setOpen(false)}
         onFocus={() => setOpen(true)}
         onInput={(e) => {
@@ -140,8 +143,10 @@ export function InputSearch({
                       className="group"
                     >
                       {key}
-                      <span className="ml-1 hidden truncate text-muted-foreground group-aria-[selected=true]:block">
-                        [{search[key as SearchKey].join(", ")}]
+                      <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
+                        {search[key as SearchKey]
+                          .map((str) => `[${str}]`)
+                          .join(" ")}
                       </span>
                     </CommandItem>
                     {search[key as SearchKey].map((option) => {

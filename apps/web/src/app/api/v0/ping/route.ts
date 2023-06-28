@@ -10,8 +10,18 @@ export async function GET(req: Request) {
     if (RANDOM) {
       throw new Error("Arg");
     }
-    return new Response("OK", { status: 200 });
+    return new Response("OK", {
+      status: 200,
+      headers: {
+        "cache-control": "public, max-age=0, s-maxage=0",
+      },
+    });
   } catch {
-    return new Response("Error", { status: 500 });
+    return new Response("Error", {
+      status: 500,
+      headers: {
+        "cache-control": "public, max-age=0, s-maxage=0",
+      },
+    });
   }
 }
