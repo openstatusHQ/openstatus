@@ -26,7 +26,7 @@ export function getResponseList(tb: Tinybird) {
       siteId: z.string().default("openstatus"), // REMINDER: remove default once alpha
       start: z.number().int().default(0), // always start from a date
       end: z.number().int().optional(),
-      limit: z.number().int().optional().default(50), // used for pagination
+      limit: z.number().int().optional().default(100), // used for pagination
     }),
     data: z.object({
       id: z.string(),

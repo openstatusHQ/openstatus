@@ -1,11 +1,10 @@
+import { getResponseList, Tinybird } from "@openstatus/tinybird";
+
 import MOCK from "@/app/_mocks/response-list.json";
 import { Badge } from "@/components/ui/badge";
 import { env } from "@/env.mjs";
-
-import { getResponseList, Tinybird } from "@openstatus/tinybird";
-
 import { HeroForm } from "./_components/hero-form";
-import { StatusContainer } from "./_components/status-container";
+import { TableInputContainer } from "./_components/table-input-container";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -33,29 +32,43 @@ export default async function Page() {
             <HeroForm />
           </div>
         </div>
-        <div className="bottom-8 right-8 z-10 max-w-max md:fixed">
-          <StatusContainer events={data} />
+        <div className="z-10 mx-auto w-full max-w-xl backdrop-blur-[2px]">
+          <div className="border-border rounded-lg border p-8">
+            <TableInputContainer events={data} />
+          </div>
         </div>
       </div>
-      <footer className="text-muted-foreground border-border mx-auto rounded-full border px-4 py-2 text-center text-sm backdrop-blur-[2px]">
-        A collaboration between{" "}
-        <a
-          href="https://twitter.com/mxkaske"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline underline-offset-4 hover:no-underline"
-        >
-          @mxkaske
-        </a>{" "}
-        and{" "}
-        <a
-          href="https://twitter.com/thibaultleouay"
-          target="_blank"
-          rel="noreferrer"
-          className="text-foreground underline underline-offset-4 hover:no-underline"
-        >
-          @thibaultleouay
-        </a>
+      <footer className="text-muted-foreground mx-auto grid gap-4 text-sm">
+        <p className="border-border rounded-full border px-4 py-2 text-center backdrop-blur-[2px]">
+          A collaboration between{" "}
+          <a
+            href="https://twitter.com/mxkaske"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-4 hover:no-underline"
+          >
+            @mxkaske
+          </a>{" "}
+          and{" "}
+          <a
+            href="https://twitter.com/thibaultleouay"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-4 hover:no-underline"
+          >
+            @thibaultleouay
+          </a>
+          <span className="text-muted-foreground/70 mx-1">&bull;</span>
+          See on{" "}
+          <a
+            href="https://github.com/mxkaske/openstatus"
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline underline-offset-4 hover:no-underline"
+          >
+            GitHub
+          </a>
+        </p>
       </footer>
     </main>
   );

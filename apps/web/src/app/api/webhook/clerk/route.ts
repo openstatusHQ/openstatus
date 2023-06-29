@@ -1,11 +1,12 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { env } from "@/env.mjs";
 import { Webhook } from "svix";
 
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter } from "@openstatus/api/src/lambda";
 import { clerkEvent } from "@openstatus/api/src/router/clerk/type";
+
+import { env } from "@/env.mjs";
 
 // import { clerkEvent } from "@openstatus/api/src/router/clerk";
 
