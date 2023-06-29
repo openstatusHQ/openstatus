@@ -83,7 +83,7 @@ export function InputSearch({
         value={inputValue}
         onValueChange={setInputValue}
         onKeyDown={(e) => {
-          if (e.key === "Escape") inputRef?.current.blur();
+          if (e.key === "Escape") inputRef?.current?.blur();
         }}
         onBlur={() => setOpen(false)}
         onFocus={() => setOpen(true)}
