@@ -31,12 +31,10 @@ async function monitor(
 // TODO: auth middleware for user API check (unkey)
 export async function GET(req: Request) {
   try {
-    console.log(req.url);
     const { searchParams } = new URL(req.url);
     const hasUrl = searchParams.has("url");
     const url = hasUrl ? searchParams.get("url") : `${DEFAULT_URL}/api/v0/ping`;
 
-    console.log("url", url);
     if (!url) {
       return new Response("Error", { status: 400 });
     }
