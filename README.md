@@ -31,10 +31,37 @@ The Open-source monitoring platform
    pnpm install
    ```
 
-3. Start the development server
+3- from apps/web you will find .env.example create your own 
+
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+CLERK_WEBHOOK_SECRET=
+
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
+
+# TinyBird
+TINY_BIRD_API_KEY=
+
+# Resend
+RESEND_API_KEY=
+
+# Upstash
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
+RESEND_API_KEY='api-key'
+
+
+
+4. Start the development server
 
    ```sh
     pnpm dev
+
+
     ```
 
 4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
