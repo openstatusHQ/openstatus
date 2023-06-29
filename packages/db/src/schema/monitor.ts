@@ -1,12 +1,12 @@
+import { relations } from "drizzle-orm";
 import {
-  datetime,
+  int,
   mysqlEnum,
   mysqlTable,
-  int,
-  varchar,
   timestamp,
+  varchar,
 } from "drizzle-orm/mysql-core";
-import { relations } from "drizzle-orm";
+
 import { page } from "./page";
 
 export const monitor = mysqlTable("monitor", {

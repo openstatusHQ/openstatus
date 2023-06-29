@@ -1,11 +1,13 @@
 import "@/styles/globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-import PlausibleProvider from "next-plausible";
-import Background from "./_components/background";
 import { Toaster } from "@/components/ui/toaster";
-import { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
+import PlausibleProvider from "next-plausible";
+
+import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
 

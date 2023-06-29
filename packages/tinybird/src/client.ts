@@ -1,5 +1,5 @@
-import * as z from "zod";
 import type { Tinybird } from "@chronark/zod-bird";
+import * as z from "zod";
 
 // REMINDER:
 // const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });

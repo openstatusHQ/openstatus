@@ -1,5 +1,6 @@
-import { mysqlTable, varchar, int, timestamp } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
+import { int, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+
 import { page } from "./page";
 import { user } from "./user";
 

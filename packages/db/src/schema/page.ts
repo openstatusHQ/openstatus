@@ -1,13 +1,13 @@
-import {
-  mysqlTable,
-  varchar,
-  int,
-  timestamp,
-  text,
-} from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
-import { incident } from "./incident";
+import {
+  int,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
+import { incident } from "./incident";
 import { monitor } from "./monitor";
 
 export const page = mysqlTable("page", {

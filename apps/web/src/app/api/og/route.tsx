@@ -11,11 +11,11 @@ const TITLE = "Open Status";
 const DESCRIPTION = "An Open Source Alternative for your next Status Page";
 
 const interRegular = fetch(
-  new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url)
+  new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
 
 const calSemiBold = fetch(
-  new URL("../../../public/fonts/CalSans-SemiBold.ttf", import.meta.url)
+  new URL("../../../public/fonts/CalSans-SemiBold.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
 
 export async function GET(req: Request) {
@@ -64,6 +64,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    }
+    },
   );
 }

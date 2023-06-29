@@ -1,9 +1,13 @@
-import { env } from "@/env.mjs";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { Webhook } from "svix";
+
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter } from "@openstatus/api/src/lambda";
 import { clerkEvent } from "@openstatus/api/src/router/clerk/type";
+
+import { env } from "@/env.mjs";
+
 // import { clerkEvent } from "@openstatus/api/src/router/clerk";
 
 // export const config = {
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (!r.success) {
     return NextResponse.json(
       { error: "Internal Server Error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 

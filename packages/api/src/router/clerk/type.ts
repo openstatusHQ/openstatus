@@ -10,7 +10,7 @@ export const clerkEvent = z.discriminatedUnion("type", [
       email_addresses: z.array(
         z.object({
           email_address: z.string(),
-        })
+        }),
       ),
       first_name: z.string(),
       last_name: z.string(),

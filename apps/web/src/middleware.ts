@@ -6,6 +6,7 @@ export default authMiddleware({
     "/api/og",
     "/api/webhook/ping",
     "/api/v0/cron",
+    "/api/v0/ping",
     "/api/webhook/clerk",
   ],
 });
