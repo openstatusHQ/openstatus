@@ -1,5 +1,6 @@
+import { publishPingResponse, Tinybird } from "@openstatus/tinybird";
+
 import { env } from "@/env.mjs";
-import { Tinybird, publishPingResponse } from "@openstatus/tinybird";
 
 // TODO: create one route per region
 export const preferredRegion = ["fra1"];
@@ -15,7 +16,7 @@ const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 // TODO: create a package for monitor
 async function monitor(
   res: Response,
-  { latency, url }: { latency: number; url: string }
+  { latency, url }: { latency: number; url: string },
 ) {
   return await publishPingResponse(tb)({
     id: "openstatus",
@@ -30,10 +31,12 @@ async function monitor(
 // TODO: auth middleware for user API check (unkey)
 export async function GET(req: Request) {
   try {
+    console.log(req.url);
     const { searchParams } = new URL(req.url);
     const hasUrl = searchParams.has("url");
     const url = hasUrl ? searchParams.get("url") : `${DEFAULT_URL}/api/v0/ping`;
 
+    console.log("url", url);
     if (!url) {
       return new Response("Error", { status: 400 });
     }
@@ -47,6 +50,7 @@ export async function GET(req: Request) {
 
     return new Response("OK", { status: 200 });
   } catch (e) {
+    console.error(e);
     return new Response("Error", { status: 500 });
   }
 }
