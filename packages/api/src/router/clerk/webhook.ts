@@ -1,13 +1,14 @@
 import * as z from "zod";
 
-import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { user } from "@openstatus/db/src/schema";
+
+import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { clerkEvent } from "./type";
 
 export const webhookProcedure = publicProcedure.input(
   z.object({
     data: clerkEvent,
-  })
+  }),
 );
 
 export const webhookRouter = createTRPCRouter({

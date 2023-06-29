@@ -1,13 +1,14 @@
 import { relations } from "drizzle-orm";
 import {
   datetime,
-  mysqlTable,
-  varchar,
-  text,
-  mysqlEnum,
   int,
+  mysqlEnum,
+  mysqlTable,
+  text,
   timestamp,
+  varchar,
 } from "drizzle-orm/mysql-core";
+
 import { page } from "./page";
 
 export const incident = mysqlTable("incident", {

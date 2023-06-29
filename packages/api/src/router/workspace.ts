@@ -1,6 +1,7 @@
 import { eq } from "@openstatus/db";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { user } from "@openstatus/db/src/schema";
+
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const workspaceRouter = createTRPCRouter({
   getUserWorkspace: protectedProcedure.query(async (opts) => {
