@@ -7,7 +7,7 @@ export const user = mysqlTable("user", {
   tenantId: varchar("tenant_id", { length: 256 }), // the clerk User Id
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });
 
 export const userRelations = relations(user, ({ many }) => ({

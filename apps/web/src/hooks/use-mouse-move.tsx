@@ -5,7 +5,7 @@ import React from "react";
 export default function useMouseMove() {
   React.useEffect(() => {
     function mouseMoveEvent(e: MouseEvent) {
-      const scale = window.visualViewport.scale;
+      const scale = window.visualViewport?.scale;
       // disable mouse movement on viewport zoom - causes page to slow down
       if (scale === 1) {
         const body = document.body;
