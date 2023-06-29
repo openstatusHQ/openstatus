@@ -16,7 +16,8 @@ export async function GET(req: Request) {
         "cache-control": "public, max-age=0, s-maxage=0",
       },
     });
-  } catch {
+  } catch (e) {
+    console.error(e);
     return new Response("Error", {
       status: 500,
       headers: {
