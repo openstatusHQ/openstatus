@@ -1,5 +1,7 @@
 // TODO: change file location or naming
 // TODO: create Compound Components like Tracker.Legend instead of passing props
+import Link from "next/link";
+
 import {
   Tooltip,
   TooltipContent,
@@ -51,7 +53,12 @@ export function Tracker<T extends { color: TrackerColor }>({
       <div className="flex justify-between">
         <p className="text-foreground">Status</p>
         <p className="text-muted-foreground mb-3 text-sm">
-          openstatus.dev
+          <Link
+            href={`/monitor/openstatus.dev`}
+            className="hover:text-foreground font-semibold"
+          >
+            openstatus.dev
+          </Link>
           <span className="text-muted-foreground/70 mx-1">&bull;</span>
           last {maxSize} pings
         </p>

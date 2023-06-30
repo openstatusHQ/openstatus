@@ -17,10 +17,12 @@ export const columns: ColumnDef<Ping>[] = [
     cell: ({ row }) => {
       return (
         <div>
+          {/* FIXME: 24:00 and 00:00 are rendered differently on server and client - or use formatDistance */}
           {new Intl.DateTimeFormat("en", {
-            dateStyle: "short",
-            timeStyle: "short",
-            hour12: false,
+            // dateStyle: "short",
+            // timeStyle: "short",
+            // hour12: false,
+            // hourCycle: "h23",
           }).format(row.getValue("timestamp"))}
         </div>
       );

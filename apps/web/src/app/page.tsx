@@ -1,8 +1,11 @@
+import Link from "next/link";
+
 import { getResponseList, Tinybird } from "@openstatus/tinybird";
 
 import MOCK from "@/app/_mocks/response-list.json";
 import { Footer } from "@/components/layout/footer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { env } from "@/env.mjs";
 import { HeroForm } from "./_components/hero-form";
 import { TableInputContainer } from "./_components/table-input-container";
@@ -26,10 +29,14 @@ export default async function Page() {
             <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
               Open-source monitoring service
             </h1>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-muted-foreground">
               OpenStatus is an open source alternative to your current
               monitoring service with beautiful status page.
             </p>
+            {/* think of using the `A total of X events as Link as well */}
+            <Button asChild variant="outline" className="my-4 rounded-full">
+              <Link href="/play">Playground</Link>
+            </Button>
             <HeroForm />
           </div>
         </div>

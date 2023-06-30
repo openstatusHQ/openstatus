@@ -22,8 +22,7 @@ export default async function PlayPage() {
     .slice(0, 100);
 
   return (
-    <>
-      <DataTable columns={columns} data={data} />
+    <div className="grid gap-6">
       <Tracker
         data={sliceData.map((item) => ({
           color: item.statusCode === 200 ? "up" : "down",
@@ -31,6 +30,7 @@ export default async function PlayPage() {
         }))}
         tooltipKey="tooltip"
       />
-    </>
+      <DataTable columns={columns} data={data} />
+    </div>
   );
 }
