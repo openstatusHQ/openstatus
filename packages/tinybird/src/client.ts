@@ -18,6 +18,18 @@ export const tinyBirdEventType = z.object({
 });
 
 // TODO: think of a better name `publishHttpResponse`
+
+const pingSchema = z.object({
+  id: z.string(),
+  timestamp: z.number().int(),
+  statusCode: z.number().int(),
+  latency: z.number().int(), // in ms
+  url: z.string(),
+  metadata: z.string().optional().default(""), // TODO: object + stringify json
+});
+
+export type Ping = z.infer<typeof pingSchema>;
+
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
     datasource: "ping_response__v2",

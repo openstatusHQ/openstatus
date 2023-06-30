@@ -58,5 +58,12 @@
     "latency": 332,
     "region": "fra1",
     "url": "http://localhost:3000/api/v0/ping"
+  },
+  {
+    "id": "openstatus",
+    "timestamp": 1687935300295,
+    "statusCode": 500,
+    "latency": 1466,
+    "url": "http://localhost:3000/api/v0/ping"
   }
 ]
