@@ -4,7 +4,8 @@ export default authMiddleware({
   publicRoutes: [
     "/",
     "/play",
-    "/monitor",
+    "/play/(.*)",
+    "/monitor/(.*)",
     "/api/(.*)",
     "/api/og",
     "/api/ping",
