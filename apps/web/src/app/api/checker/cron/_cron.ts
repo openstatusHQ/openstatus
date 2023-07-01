@@ -1,4 +1,4 @@
-import { Client } from "@upstash/qstash/nodejs";
+import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
 import { db, eq } from "@openstatus/db";
@@ -23,19 +23,30 @@ export const cron = async ({
     token: env.QSTASH_TOKEN,
   });
 
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(eq(monitor.frequency, frequency));
+  // FIXME: Wait until db is ready
+  // const result = await db
+  //   .select()
+  //   .from(monitor)
+  //   .where(eq(monitor.frequency, frequency));
 
-  for (const row of result) {
-    for (const region of availableRegions) {
-      await c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/region/${region}`,
-        body: {
-          url: row.url,
-        },
-      });
-    }
+  // for (const row of result) {
+  //   for (const region of availableRegions) {
+  //     await c.publishJSON({
+  //       url: `${DEFAULT_URL}/api/checker/region/${region}`,
+  //       body: {
+  //         url: row.url,
+  //       },
+  //     });
+  //   }
+  // }
+
+  // Right now we are just checking the ping endpoint
+  for (const region of availableRegions) {
+    await c.publishJSON({
+      url: `${DEFAULT_URL}/api/checker/region/${region}`,
+      body: {
+        url: `${DEFAULT_URL}/api/ping`,
+      },
+    });
   }
 };
