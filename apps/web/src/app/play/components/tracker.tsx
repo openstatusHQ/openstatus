@@ -54,7 +54,7 @@ export function Tracker<T extends { color: TrackerColor }>({
         <p className="text-foreground">Status</p>
         <p className="text-muted-foreground mb-3 text-sm">
           <Link
-            href={`/play/monitor/openstatus`}
+            href={`/monitor/openstatus`}
             className="hover:text-foreground font-semibold"
           >
             openstatus.dev
