@@ -1,7 +1,5 @@
 import { Client } from "@upstash/qstash/nodejs";
 
-import { publishPingResponse, Tinybird } from "@openstatus/tinybird";
-
 import { env } from "@/env.mjs";
 
 // TODO: create one route per region
@@ -41,7 +39,7 @@ export async function GET(req: Request) {
   });
 
   await c.publishJSON({
-    url: `${DEFAULT_URL}/api/checker/`,
+    url: `${DEFAULT_URL}/api/checker/regions`,
     body: {
       ...req.body,
     },
