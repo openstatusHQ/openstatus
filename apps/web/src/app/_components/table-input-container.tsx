@@ -1,6 +1,10 @@
 "use client";
 
 import React from "react";
+import type { z } from "zod";
+
+import type { tinyBirdEventType } from "@openstatus/tinybird";
+
 import { EventTable } from "./event-table";
 import { InputSearch } from "./input-search";
 
@@ -10,13 +14,7 @@ export function TableInputContainer({
   events,
 }: {
   // FIXME: should be return type
-  events: {
-    id: string;
-    timestamp: number;
-    statusCode: number;
-    latency: number;
-    url: string;
-  }[];
+  events: z.infer<typeof tinyBirdEventType>[];
 }) {
   const [search, setSearch] = React.useState<Record<string, string>>({});
 

@@ -39,7 +39,9 @@ const monitor = async (
   { latency, url, region }: { latency: number; url: string; region: string },
 ) => {
   await publishPingResponse(tb)({
-    id: "openstatus",
+    workspaceId: "openstatus",
+    pageId: "openstatus",
+    monitorId: "openstatusPing",
     timestamp: Date.now(),
     statusCode: res.status,
     latency,
