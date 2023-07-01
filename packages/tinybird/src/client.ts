@@ -14,7 +14,8 @@ export function publishPingResponse(tb: Tinybird) {
       statusCode: z.number().int(),
       latency: z.number().int(), // in ms
       url: z.string(),
-      metadata: z.string().optional().default(""), // TODO: object + stringify json
+      metadata: z.string().optional().default(""),
+      region: z.string().min(4).max(4), // TODO: object + stringify json
     }),
   });
 }

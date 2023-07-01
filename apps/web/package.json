@@ -22,6 +22,7 @@
     "@trpc/next": "10.32.0",
     "@trpc/react-query": "10.32.0",
     "@trpc/server": "10.32.0",
+    "@upstash/qstash": "^0.3.6",
     "@upstash/redis": "1.21.0",
     "class-variance-authority": "^0.6.0",
     "clsx": "^1.2.1",
@@ -42,11 +43,11 @@
     "zod": "^3.21.4"
   },
   "devDependencies": {
+    "@openstatus/eslint-config": "workspace:*",
     "@types/node": "20.3.1",
     "@types/react": "18.2.12",
     "@types/react-dom": "18.2.5",
     "autoprefixer": "10.4.14",
-    "@openstatus/eslint-config": "workspace:*",
     "postcss": "8.4.24",
     "tailwindcss": "3.3.2",
     "tsconfig": "workspace:*",
