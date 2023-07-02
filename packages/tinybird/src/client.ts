@@ -35,12 +35,7 @@ export function getResponseList(tb: Tinybird) {
       end: z.number().int().optional(),
       limit: z.number().int().optional().default(100), // used for pagination
     }),
-    data: tinyBirdEventType.omit({
-      workspaceId: true,
-      pageId: true,
-      monitorId: true,
-      region: true,
-    }),
+    data: tinyBirdEventType,
     opts: {
       revalidate: 5 * 60, // 5 minutes cache validation
     },
