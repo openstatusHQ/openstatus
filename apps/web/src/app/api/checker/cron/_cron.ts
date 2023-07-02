@@ -10,10 +10,9 @@ import { availableRegions } from "../regions/_checker";
 
 const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
 
-const DEFAULT_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://www.openstatus.dev";
+const DEFAULT_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";
 
 export const cron = async ({
   frequency,
