@@ -57,16 +57,15 @@ export const checker = async (request: Request, region: string) => {
     nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
   });
 
-  const body = await request.text();
+  const jsonData = await request.json();
+
   const isValid = r.verify({
     signature: request?.headers?.get("Upstash-Signature") || "",
-    body,
+    body: JSON.stringify(jsonData),
   });
   if (!isValid) {
     throw new Error("Could not parse request");
   }
-
-  const jsonData = await request.json();
 
   const data = monitorSchema.parse(jsonData);
   const startTime = Date.now();
