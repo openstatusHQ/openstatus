@@ -20,14 +20,14 @@ export const tinyBirdEventType = z.object({
 // TODO: think of a better name `publishHttpResponse`
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
-    datasource: "ping_response__v0",
+    datasource: "ping_response__v1",
     event: tinyBirdEventType.omit({ id: true }),
   });
 }
 
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "response_list__v0",
+    pipe: "response_list__v1",
     parameters: z.object({
       siteId: z.string().default("openstatus"), // REMINDER: remove default once alpha
       monitorId: z.string().default("openstatus"), // REMINDER: remove default once alpha
