@@ -6,6 +6,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { page } from "./page";
 
@@ -35,3 +36,9 @@ export const monitorRelation = relations(monitor, ({ one }) => ({
     references: [page.id],
   }),
 }));
+
+// Schema for inserting a Monitor - can be used to validate API requests
+export const insertMonitorSchema = createInsertSchema(monitor);
+
+// Schema for selecting a Monitor - can be used to validate API responses
+export const selectMonitorSchema = createSelectSchema(monitor);

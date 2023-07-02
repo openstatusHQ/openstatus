@@ -12,6 +12,7 @@
     "@t3-oss/env-core": "0.4.1",
     "dotenv": "16.3.1",
     "drizzle-orm": "0.27.0",
+    "drizzle-zod": "^0.4.4",
     "zod": "3.21.4"
   },
   "devDependencies": {
