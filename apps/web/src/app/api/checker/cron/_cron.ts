@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
@@ -8,8 +9,6 @@ import { env } from "@/env.mjs";
 import { availableRegions } from "../regions/_checker";
 
 const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
-
-export const runtime = "edge";
 
 const DEFAULT_URL =
   process.env.NODE_ENV === "development"
@@ -49,4 +48,5 @@ export const cron = async ({
       },
     });
   }
+  return NextResponse.json({ status: "ok" }, { status: 200 });
 };
