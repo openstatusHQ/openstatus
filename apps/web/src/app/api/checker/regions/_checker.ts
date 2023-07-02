@@ -39,6 +39,7 @@ const monitor = async (
   { latency, url, region }: { latency: number; url: string; region: string },
 ) => {
   await publishPingResponse(tb)({
+    id: "openstatus",
     workspaceId: "openstatus",
     pageId: "openstatus",
     monitorId: "openstatusPing",
@@ -62,7 +63,7 @@ export const checker = async (request: Request, region: string) => {
     body,
   });
   if (!isValid) {
-    return new Response("Error", { status: 400 });
+    throw new Error("Could not parse request");
   }
 
   const jsonData = await request.json();

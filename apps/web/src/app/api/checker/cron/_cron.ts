@@ -48,5 +48,4 @@ export const cron = async ({
       },
     });
   }
-  return NextResponse.json({ status: "ok" }, { status: 200 });
 };
