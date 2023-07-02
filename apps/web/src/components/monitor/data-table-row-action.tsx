@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { pingSchema } from "../data/schema";
+import { pingSchema } from "./schema";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;

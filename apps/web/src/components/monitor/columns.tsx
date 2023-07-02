@@ -4,9 +4,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { Ping } from "../data/schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-action";
+import type { Ping } from "./schema";
 
 export const columns: ColumnDef<Ping>[] = [
   {
@@ -17,12 +17,13 @@ export const columns: ColumnDef<Ping>[] = [
     cell: ({ row }) => {
       return (
         <div>
-          {/* FIXME: 24:00 and 00:00 are rendered differently on server and client - or use formatDistance */}
           {new Intl.DateTimeFormat("en", {
-            // dateStyle: "short",
-            // timeStyle: "short",
-            // hour12: false,
-            // hourCycle: "h23",
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "numeric",
+            minute: "numeric",
+            hour12: false, // dismiss hydration issue ("_PM" and "__PM")
           }).format(row.getValue("timestamp"))}
         </div>
       );
@@ -55,8 +56,8 @@ export const columns: ColumnDef<Ping>[] = [
       );
     },
     filterFn: (row, id, value) => {
-      // TODO: filter function? not right?
-      return value.includes(row.getValue(id));
+      // needed because value is number, not string
+      return `${row.getValue(id)}`.includes(`${value}`);
     },
   },
   {

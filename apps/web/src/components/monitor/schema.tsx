@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-// We're keeping a simple non-relational schema here.
-// IRL, you will have a schema for your data models.
+// TODO: replace with correct schema
 export const pingSchema = z.object({
   id: z.string(),
   timestamp: z.number(),

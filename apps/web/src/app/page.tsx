@@ -1,24 +1,14 @@
 import Link from "next/link";
 
-import { getResponseList, Tinybird } from "@openstatus/tinybird";
-
-import MOCK from "@/app/_mocks/response-list.json";
 import { Footer } from "@/components/layout/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { env } from "@/env.mjs";
+import { getData } from "@/lib/tb";
 import { HeroForm } from "./_components/hero-form";
 import { TableInputContainer } from "./_components/table-input-container";
 
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
-
 export default async function Page() {
-  // REMINDER: to be removed
-  let data = MOCK;
-  if (process.env.NODE_ENV !== "development") {
-    const res = await getResponseList(tb)({});
-    data = res.data;
-  }
+  const data = await getData({});
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
