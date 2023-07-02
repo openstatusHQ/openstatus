@@ -14,7 +14,7 @@ export const runtime = "edge";
 const DEFAULT_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:3000"
-    : "https://openstatus.dev";
+    : "https://www.openstatus.dev";
 
 export const cron = async ({
   frequency,
