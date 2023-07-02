@@ -43,7 +43,7 @@ export const cron = async ({
   // Right now we are just checking the ping endpoint
   for (const region of availableRegions) {
     await c.publishJSON({
-      url: `${DEFAULT_URL}/api/checker/region/${region}`,
+      url: `${DEFAULT_URL}/api/checker/regions/${region}`,
       body: {
         url: `${DEFAULT_URL}/api/ping`,
       },
