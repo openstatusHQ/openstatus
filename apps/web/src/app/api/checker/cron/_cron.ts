@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
@@ -9,12 +10,9 @@ import { availableRegions } from "../regions/_checker";
 
 const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
 
-export const runtime = "edge";
-
-const DEFAULT_URL =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:3000"
-    : "https://openstatus.dev";
+const DEFAULT_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "http://localhost:3000";
 
 export const cron = async ({
   frequency,
@@ -43,7 +41,7 @@ export const cron = async ({
   // Right now we are just checking the ping endpoint
   for (const region of availableRegions) {
     await c.publishJSON({
-      url: `${DEFAULT_URL}/api/checker/region/${region}`,
+      url: `${DEFAULT_URL}/api/checker/regions/${region}`,
       body: {
         url: `${DEFAULT_URL}/api/ping`,
       },

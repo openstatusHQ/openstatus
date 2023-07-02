@@ -39,6 +39,7 @@ const monitor = async (
   { latency, url, region }: { latency: number; url: string; region: string },
 ) => {
   await publishPingResponse(tb)({
+    id: "openstatus",
     workspaceId: "openstatus",
     pageId: "openstatus",
     monitorId: "openstatusPing",
@@ -56,16 +57,15 @@ export const checker = async (request: Request, region: string) => {
     nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
   });
 
-  const body = await request.text();
+  const jsonData = await request.json();
+
   const isValid = r.verify({
     signature: request?.headers?.get("Upstash-Signature") || "",
-    body,
+    body: JSON.stringify(jsonData),
   });
   if (!isValid) {
-    return new Response("Error", { status: 400 });
+    throw new Error("Could not parse request");
   }
-
-  const jsonData = await request.json();
 
   const data = monitorSchema.parse(jsonData);
   const startTime = Date.now();

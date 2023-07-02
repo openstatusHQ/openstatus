@@ -20,8 +20,8 @@ export const tinyBirdEventType = z.object({
 // TODO: think of a better name `publishHttpResponse`
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
-    datasource: "ping_response__v1",
-    event: tinyBirdEventType.omit({ id: true }),
+    datasource: "ping_response__v2",
+    event: tinyBirdEventType,
   });
 }
 
