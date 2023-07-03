@@ -35,11 +35,7 @@ interface TrackerProps {
 }
 
 export function Tracker({ data, maxSize = 35 }: TrackerProps) {
-  const sliceData = data
-    .slice() // needed to make the array immutable
-    .reverse()
-    .slice(0, maxSize);
-
+  const sliceData = data.slice(0, maxSize);
   const placeholderData: null[] = Array(
     Math.max(0, maxSize - sliceData.length),
   ).fill(null);
@@ -66,35 +62,37 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
         {placeholderData.map((_, i) => {
           return <div key={i} className={tracker({ variant: "empty" })} />;
         })}
-        {sliceData.map(({ statusCode, latency, timestamp, region }, i) => {
-          const isOk = statusCode === 200;
-          return (
-            <HoverCard key={i} openDelay={100} closeDelay={100}>
-              <HoverCardTrigger>
-                <div className={tracker({ variant: isOk ? "up" : "down" })} />
-              </HoverCardTrigger>
-              <HoverCardContent side="top" className="w-56">
-                <div className="flex justify-between">
-                  <p className="text-sm font-semibold">
-                    {isOk ? "Operational" : "Downtime"}
-                  </p>
-                  <p className="text-muted-foreground font-mono text-xs">
-                    {region}
-                  </p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-xs font-light">
-                    {formatDistance(new Date(timestamp), new Date(), {
-                      addSuffix: true,
-                      includeSeconds: true,
-                    })}
-                  </p>
-                  <p className="text-muted-foreground text-xs">{latency}ms</p>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          );
-        })}
+        {sliceData
+          .reverse()
+          .map(({ statusCode, latency, timestamp, region }, i) => {
+            const isOk = statusCode === 200;
+            return (
+              <HoverCard key={i} openDelay={100} closeDelay={100}>
+                <HoverCardTrigger>
+                  <div className={tracker({ variant: isOk ? "up" : "down" })} />
+                </HoverCardTrigger>
+                <HoverCardContent side="top" className="w-56">
+                  <div className="flex justify-between">
+                    <p className="text-sm font-semibold">
+                      {isOk ? "Operational" : "Downtime"}
+                    </p>
+                    <p className="text-muted-foreground font-mono text-xs">
+                      {region}
+                    </p>
+                  </div>
+                  <div className="flex justify-between">
+                    <p className="text-xs font-light">
+                      {formatDistance(new Date(timestamp), new Date(), {
+                        addSuffix: true,
+                        includeSeconds: true,
+                      })}
+                    </p>
+                    <p className="text-muted-foreground text-xs">{latency}ms</p>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
+            );
+          })}
       </div>
     </div>
   );
