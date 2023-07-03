@@ -66,7 +66,7 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
         {placeholderData.map((_, i) => {
           return <div key={i} className={tracker({ variant: "empty" })} />;
         })}
-        {sliceData.map(({ statusCode, latency, timestamp }, i) => {
+        {sliceData.map(({ statusCode, latency, timestamp, region }, i) => {
           const isOk = statusCode === 200;
           return (
             <HoverCard key={i} openDelay={100} closeDelay={100}>
@@ -74,9 +74,14 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
                 <div className={tracker({ variant: isOk ? "up" : "down" })} />
               </HoverCardTrigger>
               <HoverCardContent side="top" className="w-56">
-                <p className="text-sm font-semibold">
-                  {isOk ? "Operational" : "Downtime"}
-                </p>
+                <div className="flex justify-between">
+                  <p className="text-sm font-semibold">
+                    {isOk ? "Operational" : "Downtime"}
+                  </p>
+                  <p className="text-muted-foreground font-mono text-xs">
+                    {region}
+                  </p>
+                </div>
                 <div className="flex justify-between">
                   <p className="text-xs font-light">
                     {formatDistance(new Date(timestamp), new Date(), {

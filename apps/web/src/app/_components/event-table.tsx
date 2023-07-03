@@ -71,10 +71,10 @@ export function EventTable({
                       />
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {event.latency}
+                  <TableCell className="text-muted-foreground font-light">
+                    {event.latency}ms
                   </TableCell>
-                  <TableCell className="truncate text-right font-light">
+                  <TableCell className="text-muted-foreground truncate text-right">
                     {event.region}
                   </TableCell>
                 </TableRow>
