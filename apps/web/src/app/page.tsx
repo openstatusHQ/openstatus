@@ -24,9 +24,20 @@ export default async function Page() {
               monitoring service with beautiful status page.
             </p>
             {/* think of using the `A total of X events as Link as well */}
-            <Button asChild variant="outline" className="my-4 rounded-full">
-              <Link href="/play">Playground</Link>
-            </Button>
+            <div className="my-4 flex items-center justify-center gap-2">
+              <Button asChild variant="outline" className="rounded-full">
+                <Link href="/play">Playground</Link>
+              </Button>
+              <Button asChild variant="link">
+                <a
+                  href="https://github.com/mxkaske/openstatus"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Star on GitHub
+                </a>
+              </Button>
+            </div>
             <HeroForm />
           </div>
         </div>
