@@ -37,7 +37,7 @@ export function EventTable({
             <TableRow className="sticky top-0">
               <TableHead>Time</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Latency</TableHead>
+              <TableHead>Latency (ms)</TableHead>
               <TableHead className="text-right">Region</TableHead>
             </TableRow>
           </TableHeader>
@@ -72,7 +72,7 @@ export function EventTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-muted-foreground font-light">
-                    {event.latency}ms
+                    {event.latency}
                   </TableCell>
                   <TableCell className="text-muted-foreground truncate text-right">
                     {event.region}
