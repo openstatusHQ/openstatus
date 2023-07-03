@@ -25,6 +25,8 @@ export const availableRegions = [
 
 export const availableRegionsEnum = z.enum(availableRegions);
 
+export type Region = (typeof availableRegions)[number];
+
 // REMINDER:
 // const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
 
