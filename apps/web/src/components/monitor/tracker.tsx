@@ -4,13 +4,14 @@ import Link from "next/link";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
 
+import type { Ping } from "@openstatus/tinybird";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { Ping } from "./schema";
 
 const tracker = cva("h-10 w-2 rounded-full sm:w-2.5", {
   variants: {

@@ -1,13 +1,16 @@
 "use client";
 
 import * as React from "react";
+import { Command as CommandPrimitive, useCommandState } from "cmdk";
+
+import type { Ping } from "@openstatus/tinybird";
+
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
 } from "@/components/ui/command";
-import { Command as CommandPrimitive, useCommandState } from "cmdk";
 
 // TODO: once stable, use the shallow route to store the search params inside of the search params
 
@@ -16,14 +19,7 @@ export function InputSearch({
   onSearch,
 }: {
   onSearch(value: Record<string, string>): void;
-  // FIXME: should be return type
-  events: {
-    id: string;
-    timestamp: number;
-    statusCode: number;
-    latency: number;
-    url: string;
-  }[];
+  events: Ping[];
 }) {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState<boolean>(false);
@@ -51,21 +47,20 @@ export function InputSearch({
     () =>
       events.reduce(
         (prev, curr) => {
-          const { pathname } = new URL(curr.url);
           return {
             ...prev,
             status: [...new Set([curr.statusCode, ...(prev.status || [])])],
-            pathname: [...new Set([pathname, ...(prev.pathname || [])])],
+            region: [...new Set([curr.region, ...(prev.region || [])])],
           };
         },
         // defaultState
-        { limit: [10, 25, 50], status: [], pathname: [] } as {
+        { limit: [10, 25, 50], status: [], region: [] } as {
           status: number[];
           limit: number[];
-          pathname: string[];
-        }
+          region: string[];
+        },
       ),
-    [events]
+    [events],
   );
 
   type SearchKey = keyof typeof search;
@@ -105,12 +100,12 @@ export function InputSearch({
           setCurrentWord(word);
         }}
         placeholder={`${events.length} total logs found...`}
-        className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        className="border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex-1 rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-offset-2"
       />
       <div className="relative mt-2">
         {open ? (
-          <div className="z-10 absolute top-0 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
-            <CommandGroup className="h-full overflow-auto">
+          <div className="bg-popover text-popover-foreground animate-in absolute top-0 z-10 w-full rounded-md border shadow-md outline-none">
+            <CommandGroup className="max-h-64 overflow-auto">
               {Object.keys(search).map((key) => {
                 if (
                   inputValue.includes(`${key}:`) &&
@@ -137,7 +132,7 @@ export function InputSearch({
                           const prefix = isStarting ? "" : " ";
                           const input = prev.replace(
                             `${prefix}${currentWord}`,
-                            `${prefix}${value}`
+                            `${prefix}${value}`,
                           );
                           return `${input}:`;
                         });
@@ -146,7 +141,7 @@ export function InputSearch({
                       className="group"
                     >
                       {key}
-                      <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
+                      <span className="text-muted-foreground/90 ml-1 hidden truncate group-aria-[selected=true]:block">
                         {search[key as SearchKey]
                           .map((str) => `[${str}]`)
                           .join(" ")}

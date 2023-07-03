@@ -2,11 +2,12 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 
+import type { Ping } from "@openstatus/tinybird";
+
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-action";
-import type { Ping } from "./schema";
 
 export const columns: ColumnDef<Ping>[] = [
   {
@@ -64,6 +65,12 @@ export const columns: ColumnDef<Ping>[] = [
     accessorKey: "latency",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Latency" />
+    ),
+  },
+  {
+    accessorKey: "region",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Region" />
     ),
   },
   {

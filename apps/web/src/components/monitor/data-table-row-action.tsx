@@ -3,6 +3,8 @@
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
+import { tinyBirdEventType } from "@openstatus/tinybird";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -12,7 +14,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { pingSchema } from "./schema";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -21,7 +22,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const ping = pingSchema.parse(row.original);
+  const ping = tinyBirdEventType.parse(row.original);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

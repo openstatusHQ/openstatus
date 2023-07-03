@@ -4,9 +4,9 @@ import type { z } from "zod";
 
 import { db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
-import { availableRegions } from "../regions/_checker";
 
 const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
 

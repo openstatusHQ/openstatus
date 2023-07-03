@@ -38,15 +38,14 @@ export function EventTable({
               <TableHead>Time</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Latency</TableHead>
-              <TableHead className="text-right">URL</TableHead>
+              <TableHead className="text-right">Region</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {events.map((event) => {
               const isOk = event.statusCode === 200;
-              const url = new URL(event.url);
               return (
-                <TableRow key={event.timestamp}>
+                <TableRow key={`${event.timestamp}-${event.region}`}>
                   <TableCell className="font-medium">
                     {formatDistance(new Date(event.timestamp), new Date(), {
                       addSuffix: true,
@@ -76,7 +75,7 @@ export function EventTable({
                     {event.latency}
                   </TableCell>
                   <TableCell className="truncate text-right font-light">
-                    {url.pathname}
+                    {event.region}
                   </TableCell>
                 </TableRow>
               );

@@ -9,29 +9,6 @@ export const monitorSchema = z.object({
   url: z.string().url(),
 });
 
-export const availableRegions = [
-  "arn1",
-  "bom1",
-  "cdg1",
-  "cle1",
-  "cpt1",
-  "dub1",
-  "ewr1",
-  "fra1",
-  "gru1",
-  "hkg1",
-  "hnd1",
-  "icn1",
-  "kix1",
-  "lhr1",
-  "pdx1",
-  "sfo1",
-  "sin1",
-  "syd1",
-] as const;
-
-export const availableRegionsEnum = z.enum(availableRegions);
-
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
