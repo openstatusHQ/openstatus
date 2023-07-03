@@ -2,16 +2,15 @@
 // TODO: create Compound Components like Tracker.Legend instead of passing props
 import Link from "next/link";
 import { cva } from "class-variance-authority";
-import type { VariantProps } from "class-variance-authority";
+import { formatDistance } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
 
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const tracker = cva("h-10 w-2 rounded-full sm:w-2.5", {
   variants: {
@@ -19,7 +18,7 @@ const tracker = cva("h-10 w-2 rounded-full sm:w-2.5", {
       up: "bg-green-500",
       down: "bg-red-500",
       degraded: "bg-yellow-500",
-      empty: "bg-muted-foreground",
+      empty: "bg-muted-foreground/20",
     },
   },
   defaultVariants: {
@@ -45,21 +44,14 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
     Math.max(0, maxSize - sliceData.length),
   ).fill(null);
 
-  const trackerData = [...placeholderData, ...sliceData].map((item) => {
-    if (item === null) {
-      return { tooltip: "Missing" };
-    }
-    const isOk = item.statusCode === 200;
-    return {
-      variant: isOk ? "up" : "down",
-      tooltip: isOk ? "Operational" : "Downtime",
-    };
-  }) as (VariantProps<typeof tracker> & { tooltip?: string })[];
+  // TODO: use tinybird for data aggregation
+  // IDEA: We want to group X events and aggregate data,
+  // only on hover you will get the individual informations
 
   return (
     <div className="max-w-max">
       <div className="flex justify-end">
-        <p className="text-muted-foreground mb-3 text-sm">
+        <p className="text-muted-foreground mb-2 text-sm">
           <Link
             href={`/monitor/openstatus`}
             className="hover:text-foreground font-semibold"
@@ -67,22 +59,35 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
             openstatus.dev
           </Link>
           <span className="text-muted-foreground/70 mx-1">&bull;</span>
-          last {maxSize} pings
+          <span className="font-light">last {maxSize} pings</span>
         </p>
       </div>
       <div className="flex gap-0.5">
-        {trackerData.map(({ variant, tooltip }, i) => {
+        {placeholderData.map((_, i) => {
+          return <div key={i} className={tracker({ variant: "empty" })} />;
+        })}
+        {sliceData.map(({ statusCode, latency, timestamp }, i) => {
+          const isOk = statusCode === 200;
           return (
-            <TooltipProvider key={i}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className={tracker({ variant })} />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <HoverCard key={i} openDelay={100} closeDelay={100}>
+              <HoverCardTrigger>
+                <div className={tracker({ variant: isOk ? "up" : "down" })} />
+              </HoverCardTrigger>
+              <HoverCardContent side="top" className="w-56">
+                <p className="text-sm font-semibold">
+                  {isOk ? "Operational" : "Downtime"}
+                </p>
+                <div className="flex justify-between">
+                  <p className="text-xs font-light">
+                    {formatDistance(new Date(timestamp), new Date(), {
+                      addSuffix: true,
+                      includeSeconds: true,
+                    })}
+                  </p>
+                  <p className="text-muted-foreground text-xs">{latency}ms</p>
+                </div>
+              </HoverCardContent>
+            </HoverCard>
           );
         })}
       </div>
