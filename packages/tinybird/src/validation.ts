@@ -10,7 +10,6 @@ export const availableRegions = [
   "cle1",
   "cpt1",
   "dub1",
-  "ewr1",
   "fra1",
   "gru1",
   "hkg1",
