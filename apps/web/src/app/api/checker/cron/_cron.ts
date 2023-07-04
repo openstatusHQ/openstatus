@@ -21,6 +21,7 @@ export const cron = async ({
     token: env.QSTASH_TOKEN,
   });
 
+  const timestamp = Date.now();
   // FIXME: Wait until db is ready
   // const result = await db
   //   .select()
@@ -33,6 +34,7 @@ export const cron = async ({
   //       url: `${DEFAULT_URL}/api/checker/region/${region}`,
   //       body: {
   //         url: row.url,
+  //         cronTimestamp: timestamp, // used to group all region requests
   //       },
   //     });
   //   }
@@ -44,6 +46,7 @@ export const cron = async ({
       url: `${DEFAULT_URL}/api/checker/regions/${region}`,
       body: {
         url: `${DEFAULT_URL}/api/ping`,
+        cronTimestamp: timestamp, // used to group all region requests - can be also cronId
       },
     });
   }

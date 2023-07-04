@@ -2,9 +2,8 @@
 
 import React from "react";
 import { formatDistance } from "date-fns";
-import type { z } from "zod";
 
-import type { tinyBirdEventType } from "@openstatus/tinybird";
+import type { Ping } from "@openstatus/tinybird";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,12 +18,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-export function EventTable({
-  events,
-}: {
-  // FIXME: should be return type
-  events: z.infer<typeof tinyBirdEventType>[];
-}) {
+export function EventTable({ events }: { events: Ping[] }) {
   const [open, toggle] = React.useReducer((state) => !state, false);
   return (
     <div className="relative max-h-56 overflow-hidden">

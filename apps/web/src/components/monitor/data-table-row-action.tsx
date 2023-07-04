@@ -3,7 +3,7 @@
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { tinyBirdEventType } from "@openstatus/tinybird";
+import { tbBuildResponseList } from "@openstatus/tinybird";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const ping = tinyBirdEventType.parse(row.original);
+  const ping = tbBuildResponseList.parse(row.original);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

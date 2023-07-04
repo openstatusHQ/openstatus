@@ -1,4 +1,3 @@
-// TODO: change file location or naming
 // TODO: create Compound Components like Tracker.Legend instead of passing props
 import Link from "next/link";
 import { cva } from "class-variance-authority";
@@ -12,7 +11,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 
-const tracker = cva("h-10 w-2 rounded-full sm:w-2.5", {
+const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
   variants: {
     variant: {
       up: "bg-green-500",
