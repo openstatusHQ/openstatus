@@ -3,12 +3,12 @@ import Link from "next/link";
 import { Footer } from "@/components/layout/footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getData } from "@/lib/tb";
+import { getResponseListData } from "@/lib/tb";
 import { HeroForm } from "./_components/hero-form";
 import { TableInputContainer } from "./_components/table-input-container";
 
 export default async function Page() {
-  const data = await getData({});
+  const data = await getResponseListData({});
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">

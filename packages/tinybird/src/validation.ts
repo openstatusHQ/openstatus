@@ -79,3 +79,4 @@ export const tbParameterResponseList = z.object({
 
 export type Ping = z.infer<typeof tbIngestPingResponse>;
 export type Region = (typeof availableRegions)[number];
+export type ResponseListParams = z.infer<typeof tbParameterResponseList>;

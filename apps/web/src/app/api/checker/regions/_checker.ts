@@ -36,6 +36,17 @@ const monitor = async (
     url,
     region,
     cronTimestamp,
+    // TODO: discuss how to use the metadata properly
+    // metadata: {
+    //   status: res.status,
+    //   statusText: res.statusText,
+    //   ok: res.ok,
+    //   headers: res.headers,
+    //   // body: res.body ? JSON.parse(res.body),
+    //   bodyUsed: res.bodyUsed,
+    //   redirected: res.redirected,
+    //   type: res.type,
+    // },
   });
 };
 
