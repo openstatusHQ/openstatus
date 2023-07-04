@@ -69,8 +69,8 @@ export const tbBuildResponseList = z.object({
  * Params for pipe response_list_v1
  */
 export const tbParameterResponseList = z.object({
-  siteId: z.string().default("openstatus"), // REMINDER: remove default once alpha
-  monitorId: z.string().default("openstatus"), // REMINDER: remove default once alpha
+  siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
+  monitorId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
   start: z.number().int().default(0), // always start from a date
   end: z.number().int().optional(),
   limit: z.number().int().optional().default(100), // used for pagination

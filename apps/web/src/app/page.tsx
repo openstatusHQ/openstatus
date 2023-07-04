@@ -8,7 +8,7 @@ import { HeroForm } from "./_components/hero-form";
 import { TableInputContainer } from "./_components/table-input-container";
 
 export default async function Page() {
-  const data = await getResponseListData({});
+  const data = await getResponseListData({ siteId: "openstatus" });
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
