@@ -79,5 +79,10 @@ export const checker = async (request: Request, region: string) => {
   const endTime = Date.now();
   const latency = endTime - startTime;
 
-  await monitor(res, { latency, url, region, cronTimestamp });
+  await monitor(res, {
+    latency,
+    url,
+    region,
+    cronTimestamp: cronTimestamp || Date.now(), // HOT FIXME: remove!
+  });
 };
