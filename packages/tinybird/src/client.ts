@@ -24,7 +24,7 @@ export function getResponseList(tb: Tinybird) {
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
-      revalidate: 5 * 60, // 5 minutes cache validation
+      revalidate: 60, // 60 seconds cache validation
     },
   });
 }

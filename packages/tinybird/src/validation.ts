@@ -74,6 +74,7 @@ export const tbParameterResponseList = z.object({
   end: z.number().int().optional(),
   limit: z.number().int().optional().default(100), // used for pagination
   region: z.enum(availableRegions).optional(),
+  cronTimestamp: z.number().int().optional(),
 });
 
 export type Ping = z.infer<typeof tbIngestPingResponse>;
