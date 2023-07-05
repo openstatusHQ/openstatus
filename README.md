@@ -1,14 +1,45 @@
+<p align="center" style="margin-top: 120px">
+
+  <h3 align="center">The Open-source Status Page and Alerting System
+   </h3>
+
+  <p align="center">
+    The Statuspage Open Source Alternative.
+    <br />
+    <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
+    <br />
+    <br />
+    <a href="">Discord</a>
+    ·
+    <a href="https://www.openstatus.dev">Website</a>
+    ·
+    <a href="https://github.com/mxkaske/openstatus/issues">Issues</a>
+    ·
+    <a href="https://github.com/mxkaske/openstatus/milestones">Roadmap</a>
+  </p>
+</p>
+
 # OpenStatus
 
-The Open-source monitoring platform
+## About this project
+
+OpenStatus is a free and open-source status page and alerting system.
+
+## Contributing
+
+Coming soon
+
+## Contact us
+
+If you want to lean more about this project or have any questions, send us an
+email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
+<a href="https://cal.com/thibault-openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
 ## Built with
 
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
-
-
 
 ## Getting Started
 
@@ -22,7 +53,7 @@ The Open-source monitoring platform
 1. Clone the repository
 
    ```sh
-   git clone https://github.com/openstatusHQ/openstatus.git
+   git clone https://github.com/mxkaske/openstatus.git
    ```
 
 2. Install dependencies
@@ -31,43 +62,25 @@ The Open-source monitoring platform
    pnpm install
    ```
 
-3- from apps/web you will find .env.example create your own 
+3. Set up your .env file
 
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
-CLERK_WEBHOOK_SECRET=
-
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
-NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-
-# TinyBird
-TINY_BIRD_API_KEY=
-
-# Resend
-RESEND_API_KEY=
-
-# Upstash
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-
-RESEND_API_KEY='api-key'
-
-
+   from `apps/web` and `packages/db` you will find .env.example create your own
 
 4. Start the development server
 
    ```sh
     pnpm dev
+   ```
 
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see
+   the result.
 
-    ```
+## Roadmap
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Coming soon
 
+## Contributors
 
-## Authors
-
-- [Maximilian Kaske](https://twitter.com/mxkaske)
-- [Thibault Le Ouay Ducasse](https://twitter.com/thibaultleouay)
+<a href="https://github.com/mxkaske/openstatus/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=mxkaske/openstatus" />
+</a>
