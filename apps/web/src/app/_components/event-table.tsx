@@ -2,9 +2,8 @@
 
 import React from "react";
 import { formatDistance } from "date-fns";
-import type { z } from "zod";
 
-import type { tinyBirdEventType } from "@openstatus/tinybird";
+import type { Ping } from "@openstatus/tinybird";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,12 +18,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-export function EventTable({
-  events,
-}: {
-  // FIXME: should be return type
-  events: z.infer<typeof tinyBirdEventType>[];
-}) {
+export function EventTable({ events }: { events: Ping[] }) {
   const [open, toggle] = React.useReducer((state) => !state, false);
   return (
     <div className="relative max-h-56 overflow-hidden">
@@ -37,16 +31,15 @@ export function EventTable({
             <TableRow className="sticky top-0">
               <TableHead>Time</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Latency</TableHead>
-              <TableHead className="text-right">URL</TableHead>
+              <TableHead>Latency (ms)</TableHead>
+              <TableHead className="text-right">Region</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {events.map((event) => {
               const isOk = event.statusCode === 200;
-              const url = new URL(event.url);
               return (
-                <TableRow key={event.timestamp}>
+                <TableRow key={`${event.timestamp}-${event.region}`}>
                   <TableCell className="font-medium">
                     {formatDistance(new Date(event.timestamp), new Date(), {
                       addSuffix: true,
@@ -72,11 +65,11 @@ export function EventTable({
                       />
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
+                  <TableCell className="text-muted-foreground font-light">
                     {event.latency}
                   </TableCell>
-                  <TableCell className="truncate text-right font-light">
-                    {url.pathname}
+                  <TableCell className="text-muted-foreground truncate text-right">
+                    {event.region}
                   </TableCell>
                 </TableRow>
               );

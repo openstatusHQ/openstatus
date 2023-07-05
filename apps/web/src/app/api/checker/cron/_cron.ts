@@ -4,9 +4,9 @@ import type { z } from "zod";
 
 import { db, eq } from "@openstatus/db";
 import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
-import { availableRegions } from "../regions/_checker";
 
 const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
 
@@ -21,6 +21,7 @@ export const cron = async ({
     token: env.QSTASH_TOKEN,
   });
 
+  const timestamp = Date.now();
   // FIXME: Wait until db is ready
   // const result = await db
   //   .select()
@@ -33,6 +34,7 @@ export const cron = async ({
   //       url: `${DEFAULT_URL}/api/checker/region/${region}`,
   //       body: {
   //         url: row.url,
+  //         cronTimestamp: timestamp, // used to group all region requests
   //       },
   //     });
   //   }
@@ -44,6 +46,7 @@ export const cron = async ({
       url: `${DEFAULT_URL}/api/checker/regions/${region}`,
       body: {
         url: `${DEFAULT_URL}/api/ping`,
+        cronTimestamp: timestamp, // used to group all region requests - can be also cronId
       },
     });
   }

@@ -1,42 +1,29 @@
 import { Receiver } from "@upstash/qstash/cloudflare";
 import { z } from "zod";
 
-import { publishPingResponse, Tinybird } from "@openstatus/tinybird";
+import {
+  publishPingResponse,
+  tbIngestPingResponse,
+  Tinybird,
+} from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
 
-export const monitorSchema = z.object({
-  url: z.string().url(),
+export const monitorSchema = tbIngestPingResponse.pick({
+  url: true,
+  cronTimestamp: true,
 });
-
-export const availableRegions = [
-  "arn1",
-  "bom1",
-  "cdg1",
-  "cle1",
-  "cpt1",
-  "dub1",
-  "ewr1",
-  "fra1",
-  "gru1",
-  "hkg1",
-  "hnd1",
-  "icn1",
-  "kix1",
-  "lhr1",
-  "pdx1",
-  "sfo1",
-  "sin1",
-  "syd1",
-] as const;
-
-export const availableRegionsEnum = z.enum(availableRegions);
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
   res: Response,
-  { latency, url, region }: { latency: number; url: string; region: string },
+  {
+    latency,
+    url,
+    region,
+    cronTimestamp,
+  }: { latency: number; url: string; region: string; cronTimestamp: number },
 ) => {
   await publishPingResponse(tb)({
     id: "openstatus",
@@ -48,6 +35,18 @@ const monitor = async (
     latency,
     url,
     region,
+    cronTimestamp,
+    // TODO: discuss how to use the metadata properly
+    // metadata: {
+    //   status: res.status,
+    //   statusText: res.statusText,
+    //   ok: res.ok,
+    //   headers: res.headers,
+    //   // body: res.body ? JSON.parse(res.body),
+    //   bodyUsed: res.bodyUsed,
+    //   redirected: res.redirected,
+    //   type: res.type,
+    // },
   });
 };
 
@@ -67,11 +66,18 @@ export const checker = async (request: Request, region: string) => {
     throw new Error("Could not parse request");
   }
 
-  const data = monitorSchema.parse(jsonData);
+  const result = monitorSchema.safeParse(jsonData);
+
+  if (!result.success) {
+    throw new Error("Invalid response body");
+  }
+
+  const { url, cronTimestamp } = result.data;
+
   const startTime = Date.now();
-  const res = await fetch(data.url, { cache: "no-store" });
+  const res = await fetch(url, { cache: "no-store" });
   const endTime = Date.now();
   const latency = endTime - startTime;
 
-  await monitor(res, { latency, url: data.url, region: region });
+  await monitor(res, { latency, url, region, cronTimestamp });
 };
