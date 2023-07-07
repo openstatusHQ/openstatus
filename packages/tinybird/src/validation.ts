@@ -24,7 +24,7 @@ export const availableRegions = [
 ] as const;
 
 /**
- * Values for the datasource ping_response_v2
+ * Values for the datasource ping_response__v2
  */
 export const tbIngestPingResponse = z.object({
   id: z.string(),
@@ -45,7 +45,7 @@ export const tbIngestPingResponse = z.object({
 });
 
 /**
- * Values from the pip response_list_v1
+ * Values from the pip response_list__v1
  */
 export const tbBuildResponseList = z.object({
   id: z.string(),
@@ -65,7 +65,7 @@ export const tbBuildResponseList = z.object({
 });
 
 /**
- * Params for pipe response_list_v1
+ * Params for pipe response_list__v1
  */
 export const tbParameterResponseList = z.object({
   siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
@@ -74,8 +74,30 @@ export const tbParameterResponseList = z.object({
   end: z.number().int().optional(),
   limit: z.number().int().optional().default(100), // used for pagination
   region: z.enum(availableRegions).optional(),
+  cronTimestamp: z.number().int().optional(),
+});
+
+/**
+ * Params for pipe monitor_list__v0
+ */
+export const tbParameterMonitorList = z.object({
+  siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
+  limit: z.number().int().optional().default(100), // used for pagination
+  cronTimestamp: z.number().int().optional(),
+});
+
+/**
+ * Values from the pip monitor_list__v0
+ */
+export const tbBuildMonitorList = z.object({
+  count: z.number().int(),
+  ok: z.number().int(),
+  avgLatency: z.number().int(), // in ms
+  cronTimestamp: z.number().int(),
 });
 
 export type Ping = z.infer<typeof tbIngestPingResponse>;
 export type Region = (typeof availableRegions)[number];
+export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;
+export type MonitorListParams = z.infer<typeof tbParameterMonitorList>;

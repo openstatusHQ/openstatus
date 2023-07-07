@@ -1,6 +1,7 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
 
@@ -18,14 +19,7 @@ export const columns: ColumnDef<Ping>[] = [
     cell: ({ row }) => {
       return (
         <div>
-          {new Intl.DateTimeFormat("en", {
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-            hour: "numeric",
-            minute: "numeric",
-            hour12: false, // dismiss hydration issue ("_PM" and "__PM")
-          }).format(row.getValue("timestamp"))}
+          {format(new Date(row.getValue("timestamp")), "dd/MM/yy HH:mm")}
         </div>
       );
     },
