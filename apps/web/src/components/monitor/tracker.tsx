@@ -1,7 +1,9 @@
-// TODO: create Compound Components like Tracker.Legend instead of passing props
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
-import { formatDistance } from "date-fns";
+import { format } from "date-fns";
 import { Eye } from "lucide-react";
 
 import type { Monitor } from "@openstatus/tinybird";
@@ -61,44 +63,50 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
         {placeholderData.map((_, i) => {
           return <div key={i} className={tracker({ variant: "empty" })} />;
         })}
-        {slicedData
-          .reverse()
-          .map(({ count, ok, avgLatency, cronTimestamp }, i) => {
-            const ratio = ok / count;
-            const isOk = ratio === 1; // TODO: when operational, downtime, degraded
-            return (
-              <HoverCard key={i} openDelay={100} closeDelay={100}>
-                <HoverCardTrigger>
-                  <div className={tracker({ variant: isOk ? "up" : "down" })} />
-                </HoverCardTrigger>
-                <HoverCardContent side="top" className="w-56">
-                  <div className="flex justify-between">
-                    <p className="text-sm font-semibold">
-                      {isOk ? "Operational" : "Downtime"}
-                    </p>
-                    <Link
-                      href={`/monitor/openstatus?cronTimestamp=${cronTimestamp}`}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="flex justify-between">
-                    <p className="text-xs font-light">
-                      {formatDistance(new Date(cronTimestamp), new Date(), {
-                        addSuffix: true,
-                        includeSeconds: true,
-                      })}
-                    </p>
-                    <p className="text-muted-foreground font-mono text-xs">
-                      {avgLatency}ms
-                    </p>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
-            );
-          })}
+        {slicedData.reverse().map((props) => {
+          return <Bar key={props.cronTimestamp} {...props} />;
+        })}
       </div>
     </div>
   );
 }
+
+const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
+  const [open, setOpen] = React.useState(false);
+  const ratio = ok / count;
+  const isOk = ratio === 1; // TODO: when operational, downtime, degraded
+
+  return (
+    <HoverCard
+      openDelay={100}
+      closeDelay={100}
+      open={open}
+      onOpenChange={setOpen}
+    >
+      <HoverCardTrigger onClick={() => setOpen(true)}>
+        <div className={tracker({ variant: isOk ? "up" : "down" })} />
+      </HoverCardTrigger>
+      <HoverCardContent side="top" className="w-56">
+        <div className="flex justify-between">
+          <p className="text-sm font-semibold">
+            {isOk ? "Operational" : "Downtime"}
+          </p>
+          <Link
+            href={`/monitor/openstatus?cronTimestamp=${cronTimestamp}`}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Eye className="h-4 w-4" />
+          </Link>
+        </div>
+        <div className="flex justify-between">
+          <p className="text-xs font-light">
+            {format(new Date(cronTimestamp), "dd/MM/yy HH:mm")}
+          </p>
+          <p className="text-muted-foreground text-xs">
+            avg. <span className="font-mono">{avgLatency}ms</span>
+          </p>
+        </div>
+      </HoverCardContent>
+    </HoverCard>
+  );
+};
