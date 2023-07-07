@@ -17,9 +17,9 @@ import {
 const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
   variants: {
     variant: {
-      up: "bg-green-500",
-      down: "bg-red-500",
-      degraded: "bg-yellow-500",
+      up: "bg-green-500 data-[state=open]:bg-green-600",
+      down: "bg-red-500 data-[state=open]:bg-red-600",
+      degraded: "bg-yellow-500 data-[state=open]:bg-yellow-600",
       empty: "bg-muted-foreground/20",
     },
   },
@@ -46,7 +46,7 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
   ).fill(null);
 
   return (
-    <div className="max-w-max">
+    <div className="mx-auto max-w-max">
       <div className="flex justify-end">
         <p className="text-muted-foreground mb-2 text-sm">
           <Link
@@ -83,7 +83,7 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
       open={open}
       onOpenChange={setOpen}
     >
-      <HoverCardTrigger onClick={() => setOpen(true)}>
+      <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div className={tracker({ variant: isOk ? "up" : "down" })} />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-56">
