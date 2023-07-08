@@ -1,14 +1,14 @@
 import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
+import { Tracker } from "@/components/monitor/tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getResponseListData } from "@/lib/tb";
+import { getMonitorListData } from "@/lib/tb";
 import { HeroForm } from "./_components/hero-form";
-import { TableInputContainer } from "./_components/table-input-container";
 
 export default async function Page() {
-  const data = await getResponseListData({ siteId: "openstatus" });
+  const data = await getMonitorListData({ siteId: "openstatus" });
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
@@ -43,7 +43,13 @@ export default async function Page() {
         </div>
         <div className="z-10 mx-auto w-full max-w-xl backdrop-blur-[2px]">
           <div className="border-border rounded-lg border p-8">
-            <TableInputContainer events={data} />
+            <h1 className="font-cal mb-3 text-center text-2xl">Status</h1>
+            <Tracker
+              data={data}
+              id="openstatus"
+              name="Ping"
+              url="https://openstatus.dev/api/ping"
+            />
           </div>
         </div>
       </div>
