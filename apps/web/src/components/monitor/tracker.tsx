@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { AlertCircle, CheckCircle2, Eye, Info } from "lucide-react";
+import { Eye, Info } from "lucide-react";
 
 import type { Monitor } from "@openstatus/tinybird";
 
@@ -45,15 +45,10 @@ interface TrackerProps {
   maxSize?: number;
 }
 
-// TODO: instead of slicing and setting placeholder data,
-// just start from end and absolute position the same number of divs
-// with a lighter bg color
 // TODO: discusss to move data fetching inside of Tracker
 export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
-  const slicedData = data.slice(0, maxSize);
-  const placeholderData: null[] = Array(
-    Math.max(0, maxSize - slicedData.length),
-  ).fill(null);
+  const slicedData = data.slice(0, maxSize).reverse();
+  const placeholderData: null[] = Array(maxSize).fill(null);
 
   const reducedData = slicedData.reduce(
     (prev, curr) => {
@@ -80,13 +75,17 @@ export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
           {`${totalUptime}%`} uptime
         </p>
       </div>
-      <div className="flex gap-0.5">
-        {placeholderData.map((_, i) => {
-          return <div key={i} className={tracker({ variant: "empty" })} />;
-        })}
-        {slicedData.reverse().map((props) => {
-          return <Bar key={props.cronTimestamp} {...props} />;
-        })}
+      <div className="relative">
+        <div className="z-[-1] flex gap-0.5">
+          {placeholderData.map((_, i) => {
+            return <div key={i} className={tracker({ variant: "empty" })} />;
+          })}
+        </div>
+        <div className="absolute right-0 top-0 flex gap-0.5">
+          {slicedData.map((props) => {
+            return <Bar key={props.cronTimestamp} {...props} />;
+          })}
+        </div>
       </div>
     </div>
   );
