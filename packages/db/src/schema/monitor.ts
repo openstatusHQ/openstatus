@@ -16,7 +16,14 @@ export const monitor = mysqlTable("monitor", {
   jobType: mysqlEnum("job_type", ["website", "cron", "other"])
     .default("other")
     .notNull(),
-  frequency: mysqlEnum("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
+  periodicity: mysqlEnum("periodicity", [
+    "1m",
+    "5m",
+    "10m",
+    "30m",
+    "1h",
+    "other",
+  ])
     .default("other")
     .notNull(),
   status: mysqlEnum("status", ["active", "inactive"])

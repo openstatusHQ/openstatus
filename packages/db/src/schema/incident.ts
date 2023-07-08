@@ -8,15 +8,16 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { page } from "./page";
 
 export const incident = mysqlTable("incident", {
   id: int("id").autoincrement().primaryKey(),
 
-  status: mysqlEnum("status", ["resolved", "investigatin", ""]),
+  status: mysqlEnum("status", ["resolved", "investigating"]).notNull(),
 
-  pageId: int("page_id"),
+  pageId: int("page_id").notNull(),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
@@ -48,3 +49,13 @@ export const incidentUpdateRelations = relations(incidentUpdate, ({ one }) => ({
     references: [incident.id],
   }),
 }));
+
+// Schema for inserting a Incident - can be used to validate API requests
+export const insertIncidentSchema = createInsertSchema(incident);
+
+// Schema for selecting a Incident - can be used to validate API responses
+export const selectIncidentSchema = createSelectSchema(incident);
+
+export const insertIncidentUpdateSchema = createInsertSchema(incidentUpdate);
+
+export const selectIncidentUpdateSchema = createSelectSchema(incidentUpdate);
