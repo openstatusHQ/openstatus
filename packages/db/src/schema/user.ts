@@ -1,5 +1,11 @@
 import { relations } from "drizzle-orm";
-import { int, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlTable,
+  text,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 import { workspace } from "./workspace";
 
