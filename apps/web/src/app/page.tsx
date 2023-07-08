@@ -44,7 +44,12 @@ export default async function Page() {
         <div className="z-10 mx-auto w-full max-w-xl backdrop-blur-[2px]">
           <div className="border-border rounded-lg border p-8">
             <h1 className="font-cal mb-3 text-center text-2xl">Status</h1>
-            <Tracker data={data} />
+            <Tracker
+              data={data}
+              id="openstatus"
+              name="Ping"
+              url="https://openstatus.dev/api/ping"
+            />
           </div>
         </div>
       </div>

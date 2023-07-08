@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { Eye } from "lucide-react";
+import { AlertCircle, CheckCircle2, Eye, Info } from "lucide-react";
 
 import type { Monitor } from "@openstatus/tinybird";
 
@@ -13,6 +13,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
   variants: {
@@ -30,6 +36,9 @@ const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
 
 interface TrackerProps {
   data: Monitor[];
+  url: string;
+  id: string;
+  name: string;
   /**
    * Maximium length of the data array
    */
@@ -39,24 +48,36 @@ interface TrackerProps {
 // TODO: instead of slicing and setting placeholder data,
 // just start from end and absolute position the same number of divs
 // with a lighter bg color
-export function Tracker({ data, maxSize = 35 }: TrackerProps) {
+// TODO: discusss to move data fetching inside of Tracker
+export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
   const slicedData = data.slice(0, maxSize);
   const placeholderData: null[] = Array(
     Math.max(0, maxSize - slicedData.length),
   ).fill(null);
 
+  const reducedData = slicedData.reduce(
+    (prev, curr) => {
+      prev.ok += curr.ok;
+      prev.count += curr.count;
+      return prev;
+    },
+    {
+      count: 0,
+      ok: 0,
+    },
+  );
+
+  const totalUptime = ((reducedData.ok / reducedData.count) * 100).toFixed(2);
+
   return (
     <div className="mx-auto max-w-max">
-      <div className="flex justify-end">
-        <p className="text-muted-foreground mb-2 text-sm">
-          <Link
-            href={`/monitor/openstatus`}
-            className="hover:text-foreground font-semibold"
-          >
-            openstatus.dev
-          </Link>
-          <span className="text-muted-foreground/70 mx-1">&bull;</span>
-          <span className="font-light">last {maxSize} pings</span>
+      <div className="mb-1 flex justify-between text-sm sm:mb-2">
+        <div className="flex items-center gap-2">
+          <p className="text-foreground font-semibold">{name}</p>
+          <MoreInfo {...{ url, id }} />
+        </div>
+        <p className="text-muted-foreground font-light">
+          {`${totalUptime}%`} uptime
         </p>
       </div>
       <div className="flex gap-0.5">
@@ -70,6 +91,28 @@ export function Tracker({ data, maxSize = 35 }: TrackerProps) {
     </div>
   );
 }
+
+const MoreInfo = ({ url, id }: Record<"id" | "url", string>) => {
+  const [open, setOpen] = React.useState(false);
+  const formattedURL = new URL(url);
+  return (
+    <TooltipProvider>
+      <Tooltip open={open} onOpenChange={setOpen}>
+        <TooltipTrigger onClick={() => setOpen(true)}>
+          <Info className="h-4 w-4" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <Link
+            href={`/monitor/${id}`}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {`${formattedURL.host}${formattedURL.pathname}`}
+          </Link>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
   const [open, setOpen] = React.useState(false);

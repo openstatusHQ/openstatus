@@ -7,7 +7,12 @@ export default async function PlayPage() {
     <div className="flex flex-col items-center justify-center gap-4">
       <p className="font-cal mb-2 text-3xl">Status</p>
       <p className="text-lg font-light">Learn more on how to build your own.</p>
-      <Tracker data={data} />
+      <Tracker
+        data={data}
+        id="openstatus"
+        name="Ping"
+        url="https://openstatus.dev/api/ping"
+      />
     </div>
   );
 }
