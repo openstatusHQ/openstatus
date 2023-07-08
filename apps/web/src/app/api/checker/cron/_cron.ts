@@ -8,15 +8,15 @@ import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
 
-const frequencyAvailable = selectMonitorSchema.pick({ frequency: true });
+const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
 const DEFAULT_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
 export const cron = async ({
-  frequency,
-}: z.infer<typeof frequencyAvailable>) => {
+  periodicity,
+}: z.infer<typeof periodicityAvailable>) => {
   const c = new Client({
     token: env.QSTASH_TOKEN,
   });

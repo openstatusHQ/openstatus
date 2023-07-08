@@ -7,6 +7,6 @@ export const preferredRegion = ["auto"];
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  await cron({ frequency: "10m" });
+  await cron({ periodicity: "10m" });
   return NextResponse.json({ success: true });
 }
