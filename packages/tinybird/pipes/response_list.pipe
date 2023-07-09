@@ -1,0 +1,23 @@
+VERSION 1
+
+NODE response_list__v1_0
+SQL >
+
+    %
+    SELECT *
+    FROM ping_response__v2
+    WHERE id = {{ String(siteId, 'openstatus') }} 
+    {% if defined(region) %}
+    AND region = {{ String(region) }}
+    {% end %}
+    {% if defined(cronTimestamp) %}
+    AND cronTimestamp = {{ Int64(cronTimestamp) }}
+    {% end %}
+    {% if defined(fromDate) %}
+    AND cronTimestamp >= {{ Int64(fromDate) }}
+    {% end %}
+    {% if defined(toDate) %}
+    AND cronTimestamp <= {{ Int64(toDate) }}
+    {% end %}
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 100)}}
