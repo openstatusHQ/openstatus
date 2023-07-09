@@ -95,7 +95,7 @@ export const tbParameterMonitorList = z.object({
 });
 
 /**
- * Values from the pip monitor_list__v1
+ * Values from the pip monitor_list__v0
  */
 export const tbBuildMonitorList = z.object({
   count: z.number().int(),
