@@ -6,6 +6,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { incident } from "./incident";
 import { monitor } from "./monitor";
@@ -35,3 +36,9 @@ export const pageRelations = relations(page, ({ many, one }) => ({
   }),
   monitors: many(monitor),
 }));
+
+// Schema for inserting a Page - can be used to validate API requests
+export const insertPageSchema = createInsertSchema(page);
+
+// Schema for selecting a Page - can be used to validate API responses
+export const selectPageSchema = createSelectSchema(page);

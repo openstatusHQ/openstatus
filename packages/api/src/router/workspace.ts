@@ -11,7 +11,7 @@ export const workspaceRouter = createTRPCRouter({
       with: { user: { where: eq(user.tenantId, opts.ctx.auth.userId) } },
     });
   }),
-  getWorkspacePage: protectedProcedure
+  getWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
       return await opts.ctx.db.query.workspace.findMany({
