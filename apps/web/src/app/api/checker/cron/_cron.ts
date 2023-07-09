@@ -46,6 +46,7 @@ export const cron = async ({
       url: `${DEFAULT_URL}/api/checker/regions/${region}`,
       body: {
         url: `${DEFAULT_URL}/api/ping`,
+        // FIXME: what is the concret timezone format? In DE, is 02h later
         cronTimestamp: timestamp, // used to group all region requests - can be also cronId
       },
     });

@@ -15,6 +15,8 @@ const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
   region: z.enum(availableRegions).optional(),
   cronTimestamp: z.coerce.number().optional(),
+  fromDate: z.coerce.number().optional(),
+  toDate: z.coerce.number().optional(),
 });
 
 export default async function Monitor({

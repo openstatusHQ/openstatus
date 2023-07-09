@@ -118,6 +118,12 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
   const ratio = ok / count;
   const isOk = ratio === 1; // TODO: when operational, downtime, degraded
 
+  // FIX: this is an easy way to detect if cronTimestamps have been aggregated
+  const isMidnight = String(cronTimestamp).endsWith("00000");
+  const date = new Date(cronTimestamp);
+  const toDate = isMidnight ? date.setDate(date.getDate() + 1) : cronTimestamp;
+  const dateFormat = isMidnight ? "dd/MM/yy" : "dd/MM/yy HH:mm";
+
   return (
     <HoverCard
       openDelay={100}
@@ -134,7 +140,7 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
             {isOk ? "Operational" : "Downtime"}
           </p>
           <Link
-            href={`/monitor/openstatus?cronTimestamp=${cronTimestamp}`}
+            href={`/monitor/openstatus?fromDate=${cronTimestamp}&toDate=${toDate}`}
             className="text-muted-foreground hover:text-foreground"
           >
             <Eye className="h-4 w-4" />
@@ -142,7 +148,7 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
         </div>
         <div className="flex justify-between">
           <p className="text-xs font-light">
-            {format(new Date(cronTimestamp), "dd/MM/yy HH:mm")}
+            {format(new Date(cronTimestamp), dateFormat)}
           </p>
           <p className="text-muted-foreground text-xs">
             avg. <span className="font-mono">{avgLatency}ms</span>
