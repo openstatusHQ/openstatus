@@ -1,9 +1,14 @@
 import * as React from "react";
+import { auth, currentUser } from "@clerk/nextjs";
 
-export default function AppPage() {
+import { Header } from "@/components/header";
+
+export default async function AppPage() {
+  const user = await currentUser();
+  console.log({ user });
   return (
     <div>
-      <h1>App</h1>
+      <Header title="App" description="Overview of all your websites" />
     </div>
   );
 }

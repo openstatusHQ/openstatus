@@ -2,10 +2,10 @@ import * as React from "react";
 
 import { Header } from "@/components/header";
 
-export default function MonitorPage() {
+export default function EndpointPage() {
   return (
     <div>
-      <Header title="Monitor" description="Overview of all the responses." />
+      <Header title="Endpoint" description="Overview of all your sites." />
     </div>
   );
 }
