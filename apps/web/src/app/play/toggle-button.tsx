@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 
+// TODO: move to @/components folder
 export function ToggleButton({ groupBy }: { groupBy?: GroupByRange }) {
   const router = useRouter();
   const updateSearchParams = useUpdateSearchParams();

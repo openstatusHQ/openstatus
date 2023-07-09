@@ -72,13 +72,15 @@ export const tbParameterResponseList = z.object({
   monitorId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
-  limit: z.number().int().optional().default(10000), // used for pagination
+  limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
   region: z.enum(availableRegions).optional(),
   cronTimestamp: z.number().int().optional(),
 });
 
 /**
  * All `groupBy` options for the monitoring list
+ * - "day" will aggregate data within the same day
+ * - "cron" will get data from single cron job
  */
 export const groupByRange = ["day", "cron"] as const;
 
@@ -87,7 +89,7 @@ export const groupByRange = ["day", "cron"] as const;
  */
 export const tbParameterMonitorList = z.object({
   siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
-  limit: z.number().int().optional().default(10000), // used for pagination
+  limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
   cronTimestamp: z.number().int().optional(),
   groupBy: z.enum(groupByRange).optional(), // TODO: rename to frequency: z.enum(["1d", "auto"]) - where "auto" the default periodicity setup
 });

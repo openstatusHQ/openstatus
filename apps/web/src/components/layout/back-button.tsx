@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 
 export const BackButton = () => {
   const router = useRouter();

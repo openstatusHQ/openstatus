@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { BackButton } from "@/components/BackButton";
+import { BackButton } from "@/components/layout/back-button";
 import { Footer } from "@/components/layout/footer";
 
 // same layout as /play
