@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { AlertCircle, CheckCircle2, Eye, Info } from "lucide-react";
+import { Eye, Info } from "lucide-react";
 
 import type { Monitor } from "@openstatus/tinybird";
 
@@ -45,15 +45,10 @@ interface TrackerProps {
   maxSize?: number;
 }
 
-// TODO: instead of slicing and setting placeholder data,
-// just start from end and absolute position the same number of divs
-// with a lighter bg color
 // TODO: discusss to move data fetching inside of Tracker
 export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
-  const slicedData = data.slice(0, maxSize);
-  const placeholderData: null[] = Array(
-    Math.max(0, maxSize - slicedData.length),
-  ).fill(null);
+  const slicedData = data.slice(0, maxSize).reverse();
+  const placeholderData: null[] = Array(maxSize).fill(null);
 
   const reducedData = slicedData.reduce(
     (prev, curr) => {
@@ -80,13 +75,17 @@ export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
           {`${totalUptime}%`} uptime
         </p>
       </div>
-      <div className="flex gap-0.5">
-        {placeholderData.map((_, i) => {
-          return <div key={i} className={tracker({ variant: "empty" })} />;
-        })}
-        {slicedData.reverse().map((props) => {
-          return <Bar key={props.cronTimestamp} {...props} />;
-        })}
+      <div className="relative">
+        <div className="z-[-1] flex gap-0.5">
+          {placeholderData.map((_, i) => {
+            return <div key={i} className={tracker({ variant: "empty" })} />;
+          })}
+        </div>
+        <div className="absolute right-0 top-0 flex gap-0.5">
+          {slicedData.map((props) => {
+            return <Bar key={props.cronTimestamp} {...props} />;
+          })}
+        </div>
       </div>
     </div>
   );
@@ -119,6 +118,12 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
   const ratio = ok / count;
   const isOk = ratio === 1; // TODO: when operational, downtime, degraded
 
+  // FIX: this is an easy way to detect if cronTimestamps have been aggregated
+  const isMidnight = String(cronTimestamp).endsWith("00000");
+  const date = new Date(cronTimestamp);
+  const toDate = isMidnight ? date.setDate(date.getDate() + 1) : cronTimestamp;
+  const dateFormat = isMidnight ? "dd/MM/yy" : "dd/MM/yy HH:mm";
+
   return (
     <HoverCard
       openDelay={100}
@@ -135,7 +140,7 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
             {isOk ? "Operational" : "Downtime"}
           </p>
           <Link
-            href={`/monitor/openstatus?cronTimestamp=${cronTimestamp}`}
+            href={`/monitor/openstatus?fromDate=${cronTimestamp}&toDate=${toDate}`}
             className="text-muted-foreground hover:text-foreground"
           >
             <Eye className="h-4 w-4" />
@@ -143,7 +148,7 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
         </div>
         <div className="flex justify-between">
           <p className="text-xs font-light">
-            {format(new Date(cronTimestamp), "dd/MM/yy HH:mm")}
+            {format(new Date(cronTimestamp), dateFormat)}
           </p>
           <p className="text-muted-foreground text-xs">
             avg. <span className="font-mono">{avgLatency}ms</span>

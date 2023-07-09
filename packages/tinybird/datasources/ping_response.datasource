@@ -1,0 +1,16 @@
+VERSION 2
+
+SCHEMA >
+    `id` String `json:$.id`,
+    `latency` Int16 `json:$.latency`,
+    `monitorId` String `json:$.monitorId`,
+    `pageId` String `json:$.pageId`,
+    `region` String `json:$.region`,
+    `statusCode` Int16 `json:$.statusCode`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `url` String `json:$.url`,
+    `workspaceId` String `json:$.workspaceId`,
+    `cronTimestamp` Nullable(Int64) `json:$.cronTimestamp`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "id, timestamp, url, workspaceId"
