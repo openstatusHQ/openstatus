@@ -8,7 +8,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 import { page } from "./page";
-import { user } from "./user";
+import { user, usersToWorkspaces } from "./user";
 
 export const workspace = mysqlTable("workspace", {
   id: int("id").autoincrement().primaryKey(),
@@ -22,5 +22,5 @@ export const workspace = mysqlTable("workspace", {
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({
   page: many(page),
-  user: many(user),
+  usersToWorkspaces: many(usersToWorkspaces),
 }));

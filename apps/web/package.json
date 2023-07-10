@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.21.10",
+    "@clerk/nextjs": "4.21.14",
     "@openstatus/api": "workspace:^",
     "@openstatus/db": "workspace:^",
     "@openstatus/tinybird": "workspace:*",

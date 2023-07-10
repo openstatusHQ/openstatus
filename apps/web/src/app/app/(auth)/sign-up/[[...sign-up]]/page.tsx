@@ -1,5 +1,8 @@
-import { SignUp } from "@clerk/nextjs";
+import { SignUp, useSignUp } from "@clerk/nextjs";
 
 export default function Page() {
-  return <SignUp />;
+  const { signUp } = useSignUp();
+
+  console.log("signUp", signUp);
+  return <SignUp redirectUrl={"/app"} />;
 }
