@@ -1,5 +1,11 @@
 import { relations } from "drizzle-orm";
-import { int, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
+import {
+  int,
+  mysqlTable,
+  primaryKey,
+  timestamp,
+  varchar,
+} from "drizzle-orm/mysql-core";
 
 import { workspace } from "./workspace";
 
@@ -12,5 +18,16 @@ export const user = mysqlTable("user", {
 });
 
 export const userRelations = relations(user, ({ many }) => ({
-  workspace: many(workspace),
+  usersToWorkspaces: many(usersToWorkspaces),
 }));
+
+export const usersToWorkspaces = mysqlTable(
+  "users_to_workspaces",
+  {
+    userId: int("user_id").notNull(),
+    workspaceId: int("workspace_id").notNull(),
+  },
+  (t) => ({
+    pk: primaryKey(t.userId, t.workspaceId),
+  }),
+);

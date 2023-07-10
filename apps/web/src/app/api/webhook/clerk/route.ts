@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
 
   const ctx = createTRPCContext({ req });
   const caller = lambdaRouter.createCaller(ctx);
-
+  console.log(r.data);
   const event = r.data.type;
   switch (event) {
     case "user.created":
