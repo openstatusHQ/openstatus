@@ -39,7 +39,6 @@ export default authMiddleware({
         .from(usersToWorkspaces)
         .leftJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
         .execute();
-      console.log(result);
       if (result.length) {
         const orgSelection = new URL(
           `/app/${result[0].users_to_workspaces.workspaceId}`,
