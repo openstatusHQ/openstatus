@@ -10,7 +10,6 @@ import { Icons } from "../icons";
 export function AppSidebar() {
   const pathname = usePathname();
   const params = useParams();
-  console.log({ pathname });
   return (
     <ul className="grid gap-1">
       {pagesConfig.map(({ title, href, icon, disabled }) => {
