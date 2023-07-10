@@ -11,7 +11,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="container mx-auto flex min-h-screen w-full flex-col items-center justify-center space-y-6 p-4 md:p-8">
       <AppHeader />
       <div className="flex w-full flex-1 gap-6 md:gap-8">
-        <Shell className="max-w-min">
+        <Shell className="hidden max-w-min md:block">
           <nav>
             <AppSidebar />
           </nav>

@@ -7,7 +7,7 @@ import { wait } from "@/lib/utils";
 export default async function IncidentPage() {
   await wait(1000);
   return (
-    <div className="grid grid-cols-2 gap-8">
+    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitor" description="Overview of all the responses." />
       <Container title="Hello"></Container>
       <Container title="World"></Container>
