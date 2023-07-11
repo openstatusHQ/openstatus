@@ -21,7 +21,7 @@ export function AppMenu() {
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Navigation</SheetTitle>
+          <SheetTitle className="text-left">Navigation</SheetTitle>
           <SheetDescription>
             <AppSidebar />
           </SheetDescription>

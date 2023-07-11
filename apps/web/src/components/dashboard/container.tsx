@@ -16,11 +16,14 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 function Container({ title, description, className, children }: CardProps) {
   return (
-    <Card className={cn("border-border/50 w-full", className)}>
+    <Card className={cn("border-border/50 w-full shadow-none", className)}>
       <CardHeader>
-        <CardTitle className="font-medium shadow-none">{title}</CardTitle>
+        <CardTitle className="text-lg font-medium tracking-normal">
+          {title}
+        </CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
+      {/* potentially `asChild` */}
       <CardContent>{children}</CardContent>
     </Card>
   );
