@@ -8,12 +8,10 @@ import { Button } from "../ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
-//  your navigation
 import { AppSidebar } from "./app-sidebar";
 
 export function AppMenu() {
@@ -35,9 +33,7 @@ export function AppMenu() {
       <SheetContent>
         <SheetHeader>
           <SheetTitle className="text-left">Navigation</SheetTitle>
-          <SheetDescription>
-            <AppSidebar /> {/* is here */}
-          </SheetDescription>
+          <AppSidebar />
         </SheetHeader>
       </SheetContent>
     </Sheet>

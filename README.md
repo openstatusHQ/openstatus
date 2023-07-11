@@ -40,6 +40,10 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
+- [tinybird](http://tinybird.co/)
+- [planetscale](http://planetscale.com/)
+- [drizzle](https://orm.drizzle.team/)
+- [clerk](https://clerk.com/)
 
 ## Getting Started
 
@@ -74,6 +78,14 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 
 5. Open [http://localhost:3000](http://localhost:3000) with your browser to see
    the result.
+
+For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
+access the link via ngrok (free), after login, append `/api/webhook/clerk` to
+the link you get after entering:
+
+```
+$ ngrok http 3000
+```
 
 ## Roadmap
 
