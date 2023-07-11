@@ -12,7 +12,7 @@ export const pagesConfig = [
   {
     title: "Dashboard",
     description: "Get an overview of what's hot.",
-    href: "/",
+    href: "",
     icon: "layout-dashboard",
   },
   {
