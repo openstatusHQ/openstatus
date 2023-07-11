@@ -5,17 +5,21 @@ import { Header } from "@/components/dashboard/header";
 import { wait } from "@/lib/utils";
 import { api } from "@/trpc/server";
 
-export default async function IncidentPage({
+export default async function Page({
   params,
 }: {
   params: { workspaceId: string };
 }) {
-  const incidents = await api.incident.getIncidentByWorkspace.query({
+  const pages = await api.page.getPageByWorkspace.query({
     workspaceId: Number(params.workspaceId),
   });
+  // iterate over pages
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitor" description="Overview of all the responses." />
+      <Header
+        title="Status Page"
+        description="Overview of all your status page."
+      />
       <Container title="Hello"></Container>
       <Container title="World"></Container>
     </div>

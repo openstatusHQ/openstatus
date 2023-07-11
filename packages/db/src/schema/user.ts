@@ -31,3 +31,17 @@ export const usersToWorkspaces = mysqlTable(
     pk: primaryKey(t.userId, t.workspaceId),
   }),
 );
+
+export const usersToWorkspaceRelations = relations(
+  usersToWorkspaces,
+  ({ one }) => ({
+    workspace: one(workspace, {
+      fields: [usersToWorkspaces.workspaceId],
+      references: [workspace.id],
+    }),
+    user: one(user, {
+      fields: [usersToWorkspaces.userId],
+      references: [user.id],
+    }),
+  }),
+);

@@ -22,6 +22,14 @@ export const pageRouter = createTRPCRouter({
         })
         .execute();
     }),
+  getPageByWorkspace: protectedProcedure
+    .input(z.object({ workspaceId: z.number() }))
+    .query(async (opts) => {
+      return await opts.ctx.db
+        .select()
+        .from(page)
+        .where(eq(page.workspaceId, opts.input.workspaceId));
+    }),
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
