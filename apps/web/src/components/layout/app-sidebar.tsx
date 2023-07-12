@@ -7,13 +7,6 @@ import { pagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 
-type PageConfig = {
-  title: string;
-  href: string;
-  icon: string;
-  disabled: boolean;
-};
-
 export function AppSidebar() {
   const pathname = usePathname();
   const params = useParams();

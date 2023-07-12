@@ -18,6 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Shell>
         <main className="z-10 flex w-full flex-1 flex-col items-start justify-center">
           <Shell className="relative flex-1">
+            {/* The `top-4` is represented in Shell with a `py-4` class */}
             <nav className="absolute right-4 top-4 block md:hidden">
               <AppMenu />
             </nav>
