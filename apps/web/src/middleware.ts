@@ -28,7 +28,12 @@ export default authMiddleware({
     }
 
     // redirect them to organization selection page
-    if (auth.userId && req.nextUrl.pathname === "/app") {
+    if (
+      auth.userId &&
+      (req.nextUrl.pathname === "/app" || req.nextUrl.pathname === "/app/")
+    ) {
+      console.log(auth.userId);
+      // improve on sign-up if the webhook has not been triggered yet
       const userQuery = db
         .select()
         .from(user)
@@ -37,14 +42,19 @@ export default authMiddleware({
       const result = await db
         .select()
         .from(usersToWorkspaces)
-        .leftJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
+        .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
         .execute();
+
       if (result.length) {
         const orgSelection = new URL(
           `/app/${result[0].users_to_workspaces.workspaceId}`,
           req.url,
         );
         return NextResponse.redirect(orgSelection);
+      } else {
+        // return NextResponse.redirect(new URL("/app/onboarding", req.url));
+        // probably redirect to onboarding
+        // or find a way to wait for the webhook
       }
     }
   },

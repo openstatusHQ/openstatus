@@ -1,19 +1,26 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { page, user, workspace } from "@openstatus/db/src/schema";
+import {
+  page,
+  user,
+  usersToWorkspaces,
+  workspace,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const workspaceRouter = createTRPCRouter({
-  getUserWorkspace: protectedProcedure.query(async (opts) => {
-    return await opts.ctx.db.query.workspace.findMany({
+  getUserWithWorkspace: protectedProcedure.query(async (opts) => {
+    return await opts.ctx.db.query.user.findMany({
       with: {
         usersToWorkspaces: {
-          where: eq(user.tenantId, opts.ctx.auth.userId),
-          with: { user: true },
+          with: {
+            workspace: true,
+          },
         },
       },
+      where: eq(user.tenantId, opts.ctx.auth.userId),
     });
   }),
   getWorkspace: protectedProcedure

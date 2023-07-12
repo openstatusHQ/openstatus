@@ -5,9 +5,15 @@ import { Header } from "@/components/dashboard/header";
 import { DialogForm } from "@/components/forms/dialog-form";
 import { Button } from "@/components/ui/button";
 import { wait } from "@/lib/utils";
+import { api } from "@/trpc/server";
+import Loading from "./loading";
 
 export default async function DashboardPage() {
-  await wait(1000);
+  const workspace = await api.workspace.getUserWithWorkspace.query();
+  if (!workspace) {
+    return <Loading />;
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <div className="col-span-full flex w-full justify-between">

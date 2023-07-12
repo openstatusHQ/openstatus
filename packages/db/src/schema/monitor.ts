@@ -10,6 +10,7 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { page } from "./page";
+import { workspace } from "./workspace";
 
 export const monitor = mysqlTable("monitor", {
   id: int("id").autoincrement().primaryKey(),
@@ -35,7 +36,8 @@ export const monitor = mysqlTable("monitor", {
   name: varchar("name", { length: 256 }),
   description: text("description"),
 
-  pageId: int("page_id").notNull(),
+  pageId: int("page_id"),
+  workspaceId: int("workspace_id"),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updateddAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
@@ -45,6 +47,10 @@ export const monitorRelation = relations(monitor, ({ one }) => ({
   page: one(page, {
     fields: [monitor.pageId],
     references: [page.id],
+  }),
+  workspace: one(workspace, {
+    fields: [monitor.workspaceId],
+    references: [workspace.id],
   }),
 }));
 

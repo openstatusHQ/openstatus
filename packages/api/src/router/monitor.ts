@@ -57,4 +57,13 @@ export const monitorRouter = createTRPCRouter({
         .delete(monitor)
         .where(eq(monitor.id, opts.input.monitorId));
     }),
+  getMonitorsByWorkspace: protectedProcedure
+    .input(z.object({ workspaceId: z.number() }))
+    .query(async (opts) => {
+      return await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.workspaceId, opts.input.workspaceId))
+        .execute();
+    }),
 });
