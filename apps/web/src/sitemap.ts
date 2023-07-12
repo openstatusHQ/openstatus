@@ -29,11 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
     },
     {
-      url: addPathToBaseURL("/monitor"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/incident"),
+      url: addPathToBaseURL("/monitor/openstatus"),
       lastModified: new Date(),
     },
   ];
