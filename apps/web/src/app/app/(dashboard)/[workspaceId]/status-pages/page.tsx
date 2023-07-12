@@ -25,7 +25,6 @@ export default async function Page({
       {pages.map((page) => (
         <Container title={page.title}></Container>
       ))}
-      <Container title="World"></Container>
     </div>
   );
 }
