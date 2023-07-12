@@ -22,8 +22,8 @@ export default async function Page({
       >
         <StatusPageCreateForm />
       </Header>
-      {pages.map((page) => (
-        <Container title={page.title}></Container>
+      {pages.map((page, index) => (
+        <Container key={index} title={page.title}></Container>
       ))}
     </div>
   );

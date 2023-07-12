@@ -19,10 +19,12 @@ export default async function MonitorPage({
       <Header title="Monitors" description="Overview of all your monitors.">
         <MonitorCreateForm />
       </Header>
-      {monitors.map((monitor) => (
-        <>
-          <Container title={monitor.url} description={monitor.name}></Container>
-        </>
+      {monitors.map((monitor, index) => (
+        <Container
+          key={index}
+          title={monitor.url}
+          description={monitor.name}
+        ></Container>
       ))}
     </div>
   );
