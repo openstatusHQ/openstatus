@@ -8,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 import { page } from "./page";
 import { workspace } from "./workspace";
@@ -31,10 +32,10 @@ export const monitor = mysqlTable("monitor", {
     .default("inactive")
     .notNull(),
 
-  url: varchar("url", { length: 512 }),
+  url: varchar("url", { length: 512 }).notNull(),
 
-  name: varchar("name", { length: 256 }),
-  description: text("description"),
+  name: varchar("name", { length: 256 }).default("").notNull(),
+  description: text("description").default("").notNull(),
 
   pageId: int("page_id"),
   workspaceId: int("workspace_id"),
@@ -54,8 +55,19 @@ export const monitorRelation = relations(monitor, ({ one }) => ({
   }),
 }));
 
+export const periodicityEnum = z.enum([
+  "1m",
+  "5m",
+  "10m",
+  "30m",
+  "1h",
+  "other",
+]);
 // Schema for inserting a Monitor - can be used to validate API requests
-export const insertMonitorSchema = createInsertSchema(monitor);
+export const insertMonitorSchema = createInsertSchema(monitor, {
+  periodicity: periodicityEnum,
+  url: z.string().url(),
+});
 
 // Schema for selecting a Monitor - can be used to validate API responses
 export const selectMonitorSchema = createSelectSchema(monitor);

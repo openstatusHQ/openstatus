@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
-import { wait } from "@/lib/utils";
+import { StatusPageCreateForm } from "@/components/forms/status-page-form";
 import { api } from "@/trpc/server";
 
 export default async function Page({
@@ -19,9 +19,12 @@ export default async function Page({
       <Header
         title="Status Page"
         description="Overview of all your status page."
-      />
-      <Container title="Hello"></Container>
-      <Container title="World"></Container>
+      >
+        <StatusPageCreateForm />
+      </Header>
+      {pages.map((page, index) => (
+        <Container key={index} title={page.title}></Container>
+      ))}
     </div>
   );
 }

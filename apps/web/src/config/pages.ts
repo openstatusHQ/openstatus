@@ -15,30 +15,24 @@ export const pagesConfig = [
     href: "",
     icon: "layout-dashboard",
   },
-  {
-    title: "Endpoints",
-    description: "Keep track of all your endpoints.",
-    href: "/endpoint",
-    icon: "link",
-  },
+
   {
     title: "Monitors",
     description: "Check all the responses in one place.",
-    href: "/monitor",
+    href: "/monitors",
     icon: "activity",
   },
   {
-    title: "Pages",
+    title: "Status Pages",
     description: "Wher you can see all the pages.",
-    href: "/page",
+    href: "/status-pages",
     icon: "panel-top",
   },
   {
     title: "Incidents",
     description: "War room where you handle the incidents.",
-    href: "/incident",
+    href: "/incidents",
     icon: "siren",
-    disabled: true,
   },
   // ...
 ] satisfies Page[];

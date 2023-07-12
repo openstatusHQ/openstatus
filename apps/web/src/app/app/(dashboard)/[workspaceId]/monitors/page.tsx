@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { MonitorCreateForm } from "@/components/forms/montitor-form";
 import { api } from "@/trpc/server";
 
 export default async function MonitorPage({
@@ -12,13 +13,19 @@ export default async function MonitorPage({
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
     workspaceId: Number(params.workspaceId),
   });
-  console.log(monitors);
   // iterate over monitors
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitor" description="Overview of all the responses." />
-      <Container title="Hello"></Container>
-      <Container title="World"></Container>
+      <Header title="Monitors" description="Overview of all your monitors.">
+        <MonitorCreateForm />
+      </Header>
+      {monitors.map((monitor, index) => (
+        <Container
+          key={index}
+          title={monitor.url}
+          description={monitor.name}
+        ></Container>
+      ))}
     </div>
   );
 }

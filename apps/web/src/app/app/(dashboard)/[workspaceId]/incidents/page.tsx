@@ -2,7 +2,6 @@ import * as React from "react";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
-import { wait } from "@/lib/utils";
 import { api } from "@/trpc/server";
 
 export default async function IncidentPage({
@@ -15,7 +14,7 @@ export default async function IncidentPage({
   });
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitor" description="Overview of all the responses." />
+      <Header title="Incidents" description="Overview of all your incidents." />
       <Container title="Hello"></Container>
       <Container title="World"></Container>
     </div>
