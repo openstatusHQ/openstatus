@@ -21,14 +21,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
     },
     {
-      url: addPathToBaseURL("/sign-in"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/sign-up"),
-      lastModified: new Date(),
-    },
-    {
       url: addPathToBaseURL("/monitor/openstatus"),
       lastModified: new Date(),
     },
