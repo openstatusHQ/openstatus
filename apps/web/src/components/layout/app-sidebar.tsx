@@ -12,7 +12,7 @@ export function AppSidebar() {
   const params = useParams();
   return (
     <ul className="grid gap-1">
-      {pagesConfig.map(({ title, href, icon, disabled }) => {
+      {pagesConfig.map(({ title, href, icon }) => {
         const Icon = Icons[icon];
         const link = `/app/${params.workspaceId}${href}`; // TODO: add
         return (
@@ -23,7 +23,6 @@ export function AppSidebar() {
                 "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
                 pathname === link &&
                   "bg-muted/50 border-border text-foreground",
-                disabled && "pointer-events-none opacity-60",
               )}
             >
               <Icon className={cn("mr-2 h-4 w-4")} />
