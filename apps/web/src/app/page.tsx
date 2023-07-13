@@ -21,7 +21,7 @@ export default async function Page() {
             </h1>
             <p className="text-muted-foreground">
               OpenStatus is an open source alternative to your current
-              monitoring service with beautiful status page.
+              monitoring service with a beautiful status page.
             </p>
             {/* think of using the `A total of X events as Link as well */}
             <div className="my-4 flex items-center justify-center gap-2">
