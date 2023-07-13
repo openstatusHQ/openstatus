@@ -31,7 +31,7 @@ Coming soon
 
 ## Contact us
 
-If you want to lean more about this project or have any questions, send us an
+If you want to learn more about this project or have any questions, send us an
 email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 <a href="https://cal.com/thibault-openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
