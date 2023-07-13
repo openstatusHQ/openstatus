@@ -9,13 +9,13 @@
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
     <br />
-    <a href="">Discord</a>
+    <a href="https://discord.gg/dHD4JtSfsn">Discord</a>
     ·
     <a href="https://www.openstatus.dev">Website</a>
     ·
     <a href="https://github.com/mxkaske/openstatus/issues">Issues</a>
     ·
-    <a href="https://github.com/mxkaske/openstatus/milestones">Roadmap</a>
+    <a href="https://openstatus.productlane.com/roadmap">Roadmap</a>
   </p>
 </p>
 
@@ -40,10 +40,11 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
-- [tinybird](http://tinybird.co/)
+- [tinybird](http://tinybird.co/?ref=openstatus.dev)
 - [planetscale](http://planetscale.com/)
 - [drizzle](https://orm.drizzle.team/)
 - [clerk](https://clerk.com/)
+- [Resend](https://resend.com/)
 
 ## Getting Started
 
@@ -89,7 +90,8 @@ $ ngrok http 3000
 
 ## Roadmap
 
-Coming soon
+Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
+contribute to it.
 
 ## Contributors
 
