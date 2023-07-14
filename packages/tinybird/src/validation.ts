@@ -68,8 +68,8 @@ export const tbBuildResponseList = z.object({
  * Params for pipe response_list__v1
  */
 export const tbParameterResponseList = z.object({
-  siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
-  monitorId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
+  siteId: z.string().optional().default(""), // REMINDER: remove default once alpha
+  monitorId: z.string().default(""), // REMINDER: remove default once alpha
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
