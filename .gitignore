@@ -37,3 +37,4 @@ yarn-error.log*
 
 # packages
 dist
+packages/emails/.react-email

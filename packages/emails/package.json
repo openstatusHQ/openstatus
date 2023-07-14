@@ -1,0 +1,27 @@
+{
+  "name": "@openstatus/emails",
+  "version": "1.0.0",
+  "description": "",
+  "main": "emails/index.tsx",
+  "scripts": {
+    "dev:email": "email dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@react-email/button": "0.0.9",
+    "@react-email/components": "0.0.7",
+    "@react-email/head": "0.0.5",
+    "@react-email/html": "0.0.4",
+    "@react-email/tailwind": "0.0.8",
+    "react-email": "1.9.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.3.1",
+    "@types/react": "18.2.12",
+    "react": "18.2.0",
+    "tsconfig": "workspace:*",
+    "typescript": "^5.1.0"
+  }
+}

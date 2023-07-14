@@ -1,9 +1,12 @@
 "use server";
 
-import { EmailTemplate } from "@/components/templates/email-template";
-import { env } from "@/env.mjs";
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
+
+import { validateEmailNotDisposable, WaitingList } from "@openstatus/emails";
+
+import { EmailTemplate } from "@/components/templates/email-template";
+import { env } from "@/env.mjs";
 
 const redis = Redis.fromEnv();
 
@@ -13,7 +16,7 @@ export async function addToWaitlist(data: FormData) {
   const email = data.get("email");
   if (email) {
     const number = await write(email);
-    await wait(500);
+    // await wait(500);
     // TODO: save email to Highstorm
 
     // REMINDER: how to send emails in server action
@@ -47,11 +50,14 @@ const wait = (ms: number): Promise<void> => {
 };
 
 // Resend
-// const send = async (email) => {
-//   return await resend.emails.send({
-//     from: "onboarding@openstatus.dev",
-//     to: "maximilian@kaske.org",
-//     subject: "Hello world",
-//     react: EmailTemplate({ firstName: "John" }),
-//   });
-// };
+export const sendWaitingListEmail = async (email) => {
+  const isValid = await validateEmailNotDisposable(email);
+  if (!isValid) {
+    await resend.emails.send({
+      from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      to: [email],
+      subject: "Thanks for joining the waitlist!",
+      react: WaitingList(),
+    });
+  }
+};

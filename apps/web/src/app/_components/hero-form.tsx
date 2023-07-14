@@ -2,8 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
-
-import { addToWaitlist } from "../action";
+import { addToWaitlist, sendWaitingListEmail } from "../action";
 import { SubmitButton } from "./submit-button";
 
 export const HeroForm = () => {
@@ -16,6 +15,10 @@ export const HeroForm = () => {
           toast({
             description: `Thank you, you're number ${formattedNumber} on the list.`,
           });
+          const email = data.get("email");
+          if (email) {
+            sendWaitingListEmail(email);
+          }
         } catch (e) {
           toast({
             description: "Something went wrong",
