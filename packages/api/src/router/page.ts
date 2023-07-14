@@ -34,6 +34,7 @@ export const pageRouter = createTRPCRouter({
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
+      console.log(opts.input.slug);
       return await opts.ctx.db.query.page
         .findFirst({
           where: eq(page.slug, opts.input.slug),

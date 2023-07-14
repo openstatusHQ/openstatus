@@ -8,6 +8,10 @@ import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 const before = (req: NextRequest, ev: NextFetchEvent) => {
   const url = req.nextUrl.clone();
 
+  if (url.pathname.includes("api/trpc")) {
+    return NextResponse.next();
+  }
+
   const host = req.headers.get("host");
   const subdomain = getValidSubdomain(host);
   if (subdomain) {
@@ -28,7 +32,7 @@ export const getValidSubdomain = (host?: string | null) => {
     // On client side, get the host from window
     host = window.location.host;
   }
-  // we should improve here for custom vercel deploy pages
+  // we should improve here for custom vercel deploy page
   if (host && host.includes(".") && !host.includes(".ngrok-free.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
