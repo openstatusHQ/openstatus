@@ -1,38 +1,42 @@
-import { relations } from "drizzle-orm";
-import {
-  datetime,
-  int,
-  mysqlEnum,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { relations, sql } from "drizzle-orm";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { page } from "./page";
 
-export const incident = mysqlTable("incident", {
-  id: int("id").autoincrement().primaryKey(),
+export const incident = sqliteTable("incident", {
+  id: integer("id").primaryKey(),
 
-  status: mysqlEnum("status", ["resolved", "investigating"]).notNull(),
+  status: text("status", ["resolved", "investigating"]).notNull(),
 
-  pageId: int("page_id").notNull(),
+  pageId: integer("page_id")
+    .notNull()
+    .references(() => page.id),
 
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().onUpdateNow(),
+  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
 });
 
-export const incidentUpdate = mysqlTable("incidentUpdate", {
-  id: int("id").autoincrement().primaryKey(),
+export const incidentUpdate = sqliteTable("incidentUpdate", {
+  id: integer("id").primaryKey(),
 
-  date: datetime("incident_date"),
-  title: varchar("title", { length: 256 }), // title of the incident
+  date: integer("incident_date"),
+  title: text("title", { length: 256 }), // title of the incident
   message: text("message"), //  where we can write the incident message
 
-  incidentId: int("incident_id").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  incidentId: integer("incident_id")
+    .references(() => incident.id)
+    .notNull(),
+  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
 });
 
 export const incidentRelations = relations(incident, ({ one, many }) => ({

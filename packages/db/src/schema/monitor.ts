@@ -1,47 +1,35 @@
-import { relations } from "drizzle-orm";
-import {
-  int,
-  mysqlEnum,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { relations, sql } from "drizzle-orm";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { page } from "./page";
 import { workspace } from "./workspace";
 
-export const monitor = mysqlTable("monitor", {
-  id: int("id").autoincrement().primaryKey(),
-  jobType: mysqlEnum("job_type", ["website", "cron", "other"])
+export const monitor = sqliteTable("monitor", {
+  id: integer("id").primaryKey(),
+  jobType: text("job_type", ["website", "cron", "other"])
     .default("other")
     .notNull(),
-  periodicity: mysqlEnum("periodicity", [
-    "1m",
-    "5m",
-    "10m",
-    "30m",
-    "1h",
-    "other",
-  ])
+  periodicity: text("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
     .default("other")
     .notNull(),
-  status: mysqlEnum("status", ["active", "inactive"])
-    .default("inactive")
-    .notNull(),
+  status: text("status", ["active", "inactive"]).default("inactive").notNull(),
 
-  url: varchar("url", { length: 512 }).notNull(),
+  url: text("url", { length: 512 }).notNull(),
 
-  name: varchar("name", { length: 256 }).default("").notNull(),
+  name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
 
-  pageId: int("page_id"),
-  workspaceId: int("workspace_id"),
+  pageId: integer("page_id").references(() => page.id),
+  workspaceId: integer("workspace_id").references(() => workspace.id),
 
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updateddAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
 });
 
 export const monitorRelation = relations(monitor, ({ one }) => ({

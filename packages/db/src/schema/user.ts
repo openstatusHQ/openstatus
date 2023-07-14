@@ -1,27 +1,31 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   int,
-  mysqlTable,
+  integer,
   primaryKey,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 import { workspace } from "./workspace";
 
-export const user = mysqlTable("user", {
-  id: int("id").autoincrement().primaryKey(),
-  tenantId: varchar("tenant_id", { length: 256 }), // the clerk User Id
+export const user = sqliteTable("user", {
+  id: int("id").primaryKey(),
+  tenantId: text("tenant_id", { length: 256 }), // the clerk User Id
 
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
 });
 
 export const userRelations = relations(user, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
 }));
 
-export const usersToWorkspaces = mysqlTable(
+export const usersToWorkspaces = sqliteTable(
   "users_to_workspaces",
   {
     userId: int("user_id").notNull(),

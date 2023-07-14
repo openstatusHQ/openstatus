@@ -6,6 +6,7 @@ const nextConfig = {
   transpilePackages: ["ui", "@openstatus/api"],
   experimental: {
     serverActions: true,
+    serverComponentsExternalPackages: ["better-sqlite3"],
   },
 };
 

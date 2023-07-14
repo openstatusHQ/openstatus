@@ -19,25 +19,30 @@ export const webhookRouter = createTRPCRouter({
       const alreadyExists = await opts.ctx.db
         .select({ id: user.id })
         .from(user)
-        .where(eq(user.tenantId, opts.input.data.data.id));
+        .where(eq(user.tenantId, opts.input.data.data.id))
+        .run();
 
-      if (alreadyExists.length) return;
+      if (alreadyExists.rows) return;
 
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
           tenantId: opts.input.data.data.id,
         })
-        .execute();
-      const workspaceResult = await opts.ctx.db.insert(workspace).values({});
-
+        .returning({ id: user.id })
+        .run();
+      const workspaceResult = await opts.ctx.db
+        .insert(workspace)
+        .values({})
+        .returning({ id: workspace.id })
+        .run();
       await opts.ctx.db
         .insert(usersToWorkspaces)
         .values({
-          userId: Number(userResult.insertId),
-          workspaceId: Number(workspaceResult.insertId),
+          userId: Number(userResult.lastInsertRowid),
+          workspaceId: Number(workspaceResult.lastInsertRowid),
         })
-        .execute();
+        .run();
     }
   }),
   userUpdated: webhookProcedure.mutation(async (opts) => {

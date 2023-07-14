@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
-import { createTRPCContext } from "@openstatus/api";
-import { edgeRouter } from "@openstatus/api/src/edge";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
 
@@ -42,9 +40,9 @@ export default authMiddleware({
         .select()
         .from(usersToWorkspaces)
         .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
-        .execute();
+        .run();
 
-      if (result.length) {
+      if (result.rows.length > 0) {
         const orgSelection = new URL(
           `/app/${result[0].users_to_workspaces.workspaceId}`,
           req.url,
