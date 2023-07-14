@@ -13,7 +13,7 @@
     ·
     <a href="https://www.openstatus.dev">Website</a>
     ·
-    <a href="https://github.com/mxkaske/openstatus/issues">Issues</a>
+    <a href="https://github.com/openstatushq/openstatus/issues">Issues</a>
     ·
     <a href="https://openstatus.productlane.com/roadmap">Roadmap</a>
   </p>
@@ -58,7 +58,7 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 1. Clone the repository
 
    ```sh
-   git clone https://github.com/mxkaske/openstatus.git
+   git clone https://github.com/openstatushq/openstatus.git
    ```
 
 2. Install dependencies
@@ -95,6 +95,6 @@ contribute to it.
 
 ## Contributors
 
-<a href="https://github.com/mxkaske/openstatus/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=mxkaske/openstatus" />
+<a href="https://github.com/openstatushq/openstatus/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
 </a>

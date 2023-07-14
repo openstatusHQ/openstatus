@@ -23,7 +23,7 @@ export function Footer() {
         <span className="text-muted-foreground/70 mx-1">&bull;</span>
         See on{" "}
         <a
-          href="https://github.com/mxkaske/openstatus"
+          href="https://github.com/openstatushq/openstatus"
           target="_blank"
           rel="noreferrer"
           className="text-foreground underline underline-offset-4 hover:no-underline"
