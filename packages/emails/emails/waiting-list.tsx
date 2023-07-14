@@ -14,7 +14,7 @@ const WaitingList = () => {
           <br />
           We're working hard to get you access to OpenStatus. ou can track our
           progress on our{" "}
-          <Link href="https://github.com/mxkaske/openstatus">
+          <Link href="https://github.com/openstatushq/openstatus">
             Github repository
           </Link>
           .

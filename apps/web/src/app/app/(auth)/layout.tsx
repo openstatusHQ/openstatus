@@ -19,7 +19,7 @@ export default function AuthLayout({
             developer and want to know how it works? <br />
             Check out{" "}
             <a
-              href="https://github.com/mxkaske/openstatus"
+              href="https://github.com/openstatushq/openstatus"
               target="_blank"
               rel="noreferrer"
               className="text-foreground underline underline-offset-4 hover:no-underline"

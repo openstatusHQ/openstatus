@@ -30,7 +30,7 @@ export default async function Page() {
               </Button>
               <Button asChild variant="link">
                 <a
-                  href="https://github.com/mxkaske/openstatus"
+                  href="https://github.com/openstatushq/openstatus"
                   rel="noreferrer"
                   target="_blank"
                 >
