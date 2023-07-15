@@ -30,6 +30,6 @@ export default async function Monitor({
   const data = search.success
     ? await getResponseListData({ siteId: params.id, ...search.data })
     : await getResponseListData({ siteId: params.id });
-
+  if (!data) return <div>Something went wrong</div>;
   return <DataTable columns={columns} data={data} />;
 }
