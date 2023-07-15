@@ -1,7 +1,8 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { experimental_useFormStatus as useFormStatus } from "react-dom";
+
+import { Button } from "@/components/ui/button";
 
 export function SubmitButton() {
   const { pending } = useFormStatus();
@@ -9,7 +10,7 @@ export function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="w-20 disabled:opacity-100"
+      className="h-auto w-20 disabled:opacity-100"
     >
       {pending ? (
         // TODO: move into separate file `LoadingAnimation`
