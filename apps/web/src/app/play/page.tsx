@@ -32,12 +32,14 @@ export default async function PlayPage({
       </div>
       <p className="font-cal mb-2 text-3xl">Status</p>
       <p className="text-lg font-light">Learn more on how to build your own.</p>
-      <Tracker
-        data={data}
-        id="openstatus"
-        name="Ping"
-        url="https://openstatus.dev/api/ping"
-      />
+      {data && (
+        <Tracker
+          data={data}
+          id="openstatus"
+          name="Ping"
+          url="https://openstatus.dev/api/ping"
+        />
+      )}
     </div>
   );
 }

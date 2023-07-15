@@ -13,7 +13,7 @@ function Header({ title, description, className, children }: HeaderProps) {
   return (
     <div
       className={cn(
-        "col-span-full mr-12 flex w-full justify-between md:mr-0",
+        "col-span-full mr-12 flex justify-between md:mr-0",
         className,
       )}
     >

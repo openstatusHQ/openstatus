@@ -8,7 +8,7 @@ type Page = {
   disabled?: boolean;
 };
 
-export const pagesConfig = [
+export const pagesConfig: Page[] = [
   {
     title: "Dashboard",
     description: "Get an overview of what's hot.",
@@ -35,4 +35,4 @@ export const pagesConfig = [
     icon: "siren",
   },
   // ...
-] satisfies Page[];
+];
