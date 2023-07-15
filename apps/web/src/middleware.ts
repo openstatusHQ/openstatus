@@ -1,10 +1,47 @@
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
-import { createTRPCContext } from "@openstatus/api";
-import { edgeRouter } from "@openstatus/api/src/edge";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+
+const before = (req: NextRequest, ev: NextFetchEvent) => {
+  const url = req.nextUrl.clone();
+
+  if (url.pathname.includes("api/trpc")) {
+    return NextResponse.next();
+  }
+
+  const host = req.headers.get("host");
+  const subdomain = getValidSubdomain(host);
+  if (subdomain) {
+    // Subdomain available, rewriting
+    console.log(
+      `>>> Rewriting: ${url.pathname} to /status-page/${subdomain}${url.pathname}`,
+    );
+    url.pathname = `/status-page/${subdomain}${url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  return NextResponse.next();
+};
+
+export const getValidSubdomain = (host?: string | null) => {
+  let subdomain: string | null = null;
+  if (!host && typeof window !== "undefined") {
+    // On client side, get the host from window
+    host = window.location.host;
+  }
+  // we should improve here for custom vercel deploy page
+  if (host && host.includes(".") && !host.includes(".ngrok-free.app")) {
+    const candidate = host.split(".")[0];
+    if (candidate && !candidate.includes("www")) {
+      // Valid candidate
+      subdomain = candidate;
+    }
+  }
+  return subdomain;
+};
 
 export default authMiddleware({
   publicRoutes: [
@@ -21,6 +58,8 @@ export default authMiddleware({
     "/api/checker/regions/(.*)",
     "/api/checker/cron/10m",
   ],
+
+  beforeAuth: before,
   async afterAuth(auth, req, evt) {
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
