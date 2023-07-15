@@ -32,11 +32,7 @@ type Schema = z.infer<typeof insertMonitorSchema>;
 
 interface Props {
   id: string;
-  defaultValues?: {
-    url: string;
-    name: string;
-    description: string;
-  };
+  defaultValues?: Schema;
   onSubmit: (values: Schema) => Promise<void>;
 }
 
