@@ -43,6 +43,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
+      periodicity: defaultValues?.periodicity || undefined,
     },
   });
 

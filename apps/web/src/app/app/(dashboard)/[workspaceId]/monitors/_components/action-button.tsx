@@ -37,19 +37,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { wait } from "@/lib/utils";
+import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
 interface Props {
-  // TODO: use type instead!
-  workspaceId: number;
-  url: string;
-  name: string;
-  description: string;
+  props: Schema;
 }
 
-// TODO: add correct types
-export function ActionButton({ workspaceId, ...props }: Props) {
+export function ActionButton({ props }: Props) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -57,7 +53,7 @@ export function ActionButton({ workspaceId, ...props }: Props) {
 
   async function onUpdate(values: Schema) {
     setSaving(true);
-    await wait(1000); // TODO: update monitor
+    await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
@@ -65,7 +61,8 @@ export function ActionButton({ workspaceId, ...props }: Props) {
 
   async function onDelete() {
     setSaving(true);
-    await wait(1000); // TODO: delete monitor
+    await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
+    router.refresh();
     setSaving(false);
     setAlertOpen(false);
   }
