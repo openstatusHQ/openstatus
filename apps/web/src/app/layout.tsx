@@ -43,6 +43,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // If you want to develop locally with with Clerk,  Comment the provider below
   return (
     <ClerkProvider>
       <html lang="en">
