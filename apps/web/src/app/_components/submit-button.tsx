@@ -11,7 +11,7 @@ export function SubmitButton() {
     <Button
       type="submit"
       disabled={pending}
-      className="w-20 disabled:opacity-100"
+      className="h-auto w-20 disabled:opacity-100"
     >
       {pending ? <LoadingAnimation /> : "Join"}
     </Button>
