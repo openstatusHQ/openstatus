@@ -13,11 +13,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
     },
     {
-      url: addPathToBaseURL("/sign-in"),
+      url: addPathToBaseURL("/app/sign-in"),
       lastModified: new Date(),
     },
     {
-      url: addPathToBaseURL("/sign-up"),
+      url: addPathToBaseURL("/app/sign-up"),
       lastModified: new Date(),
     },
     {
