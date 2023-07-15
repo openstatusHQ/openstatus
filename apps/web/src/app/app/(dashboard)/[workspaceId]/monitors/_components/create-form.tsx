@@ -46,7 +46,7 @@ export function CreateForm({ workspaceId }: Props) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Monitor</DialogTitle>
-          <DialogDescription>Create a monitor</DialogDescription>
+          <DialogDescription>Choose the settings.</DialogDescription>
         </DialogHeader>
         <MonitorForm id="monitor-create" onSubmit={onCreate} />
         <DialogFooter>

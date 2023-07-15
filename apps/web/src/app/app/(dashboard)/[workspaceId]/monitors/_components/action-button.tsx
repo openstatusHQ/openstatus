@@ -101,8 +101,8 @@ export function ActionButton({ workspaceId, ...props }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
+              This action cannot be undone. This will permanently delete the
+              monitor.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -122,8 +122,8 @@ export function ActionButton({ workspaceId, ...props }: Props) {
       </AlertDialog>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Monitor</DialogTitle>
-          <DialogDescription>Create a monitor</DialogDescription>
+          <DialogTitle>Update Monitor</DialogTitle>
+          <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
         <MonitorForm
           id="monitor-update"
