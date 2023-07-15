@@ -23,13 +23,16 @@ jobs:
         with:
           node-version: 16
 
-      - name: 📥 Download deps
+      - name: Set up pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 7
 
+      - name: 📥 Download deps
+        run: pnpm install
+
       - name: 🔬 Lint
-        run: pnpm lint
+        run: pnpm lint:strict
 
   prettier:
     name: 💅 Prettier
@@ -43,8 +46,11 @@ jobs:
         with:
           node-version: 16
 
-      - name: 📥 Download deps
+      - name: Set up pnpm
         uses: pnpm/action-setup@v2
+
+      - name: 📥 Download deps
+        run: pnpm install
 
       - name: 💅 Prettier check
         run: pnpm format
