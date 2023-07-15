@@ -33,7 +33,7 @@ export const getValidSubdomain = (host?: string | null) => {
     host = window.location.host;
   }
   // we should improve here for custom vercel deploy page
-  if (host && host.includes(".") && !host.includes(".ngrok-free.app")) {
+  if (host && host.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
