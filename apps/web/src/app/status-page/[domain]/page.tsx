@@ -16,8 +16,12 @@ export default async function Page({ params }: { params: { domain: string } }) {
 
   return (
     <Shell>
-      <div className="grid gap-4">
-        <Header title={page.title} description={page.description} />
+      <div className="grid gap-6">
+        <Header
+          title={page.title}
+          description={page.description}
+          className="max-w-lg"
+        />
         <MonitorList monitors={page.monitors} />
       </div>
     </Shell>

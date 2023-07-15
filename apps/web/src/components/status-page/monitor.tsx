@@ -20,10 +20,11 @@ export const Monitor = async ({
   return (
     <Tracker
       data={data}
-      id="openstatus"
+      id={monitor.id}
       name="Ping"
       url="https://openstatus.dev/api/ping"
       context="status-page"
+      maxSize={40}
     />
   );
 };

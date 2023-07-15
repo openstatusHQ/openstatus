@@ -37,7 +37,7 @@ const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
 interface TrackerProps {
   data: Monitor[];
   url: string;
-  id: string;
+  id: string | number;
   name: string;
   /**
    * Maximium length of the data array
