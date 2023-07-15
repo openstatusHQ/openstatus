@@ -43,7 +43,6 @@ type Schema = z.infer<typeof insertMonitorSchema>;
 interface Props {
   // TODO: use type instead!
   workspaceId: number;
-  id: number;
   url: string;
   name: string;
   description: string;
@@ -113,6 +112,7 @@ export function ActionButton({ workspaceId, ...props }: Props) {
                 e.preventDefault();
                 onDelete();
               }}
+              disabled={saving}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {!saving ? "Delete" : <LoadingAnimation />}

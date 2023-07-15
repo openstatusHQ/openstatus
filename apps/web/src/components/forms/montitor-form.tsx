@@ -43,7 +43,11 @@ interface Props {
 export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
   const form = useForm<Schema>({
     resolver: zodResolver(insertMonitorSchema), // too much - we should only validate the values we ask inside of the form!
-    defaultValues,
+    defaultValues: {
+      url: defaultValues?.url || "",
+      name: defaultValues?.name || "",
+      description: defaultValues?.description || "",
+    },
   });
 
   return (
