@@ -41,11 +41,7 @@ import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
-interface Props {
-  props: Schema;
-}
-
-export function ActionButton({ props }: Props) {
+export function ActionButton(props: Schema) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
