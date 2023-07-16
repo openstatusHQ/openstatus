@@ -23,7 +23,7 @@ export default async function MonitorPage({
       </Header>
       {monitors.map((monitor, index) => (
         <Container key={index} title={monitor.name} description={monitor.url}>
-          <ActionButton {...{ ...monitor, workspaceId }} />
+          <ActionButton {...monitor} />
         </Container>
       ))}
     </div>
