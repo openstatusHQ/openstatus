@@ -1,7 +1,17 @@
 import * as React from "react";
+import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
 import { Footer } from "@/components/layout/footer";
+
+export const metadata: Metadata = {
+  twitter: {
+    images: [`/api/og?monitorId=openstatus`],
+  },
+  openGraph: {
+    images: [`/api/og?monitorId=openstatu`],
+  },
+};
 
 export default function PlayLayout({
   children,
