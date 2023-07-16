@@ -12,11 +12,14 @@ const size = {
 
 const TITLE = "Open Status";
 const DESCRIPTION = "An Open Source Alternative for your next Status Page";
-const SITE_ID = "openstatus";
-const LIMIT = 30;
+const LIMIT = 40;
 
 const interRegular = fetch(
   new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url),
+).then((res) => res.arrayBuffer());
+
+const interLight = fetch(
+  new URL("../../../public/fonts/Inter-Light.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
 
 const calSemiBold = fetch(
@@ -25,6 +28,7 @@ const calSemiBold = fetch(
 
 export async function GET(req: Request) {
   const interRegularData = await interRegular;
+  const interLightData = await interLight;
   const calSemiBoldData = await calSemiBold;
 
   const { searchParams } = new URL(req.url);
@@ -35,11 +39,21 @@ export async function GET(req: Request) {
     : DESCRIPTION;
   const siteId = searchParams.has("siteId")
     ? searchParams.get("siteId")
-    : SITE_ID;
+    : undefined;
 
-  const data = siteId
-    ? await getMonitorListData({ siteId, groupBy: "day", limit: LIMIT })
-    : [];
+  const data =
+    (siteId &&
+      (await getMonitorListData({ siteId, groupBy: "day", limit: LIMIT }))) ||
+    [];
+
+  const uptime = data?.reduce(
+    (prev, curr) => {
+      prev.ok += curr.ok;
+      prev.count += curr.count;
+      return prev;
+    },
+    { ok: 0, count: 0 },
+  );
 
   return new ImageResponse(
     (
@@ -67,6 +81,12 @@ export async function GET(req: Request) {
           <p tw="text-slate-600 text-3xl">{description}</p>
           {data && data.length > 0 ? (
             <div tw="flex flex-col w-full mt-6">
+              <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
+                <p tw="">{formatDate(new Date())}</p>
+                <p tw="mr-1">
+                  {((uptime.ok / uptime.count) * 100).toFixed(2)}% uptime
+                </p>
+              </div>
               <div tw="flex flex-row relative">
                 {/* Empty State */}
                 {new Array(LIMIT).fill(null).map((_, i) => {
@@ -92,7 +112,10 @@ export async function GET(req: Request) {
                   })}
                 </div>
               </div>
-              <p tw="text-slate-500 text-lg">{formatDate(new Date())}</p>
+              <div tw="flex flex-row items-center justify-between -mt-3 text-slate-500 text-sm">
+                <p tw="">{LIMIT} days ago</p>
+                <p tw="mr-1">today</p>
+              </div>
             </div>
           ) : null}
         </div>
@@ -106,6 +129,12 @@ export async function GET(req: Request) {
           data: interRegularData,
           style: "normal",
           weight: 400,
+        },
+        {
+          name: "Inter",
+          data: interLightData,
+          style: "normal",
+          weight: 300,
         },
         {
           name: "Cal",
