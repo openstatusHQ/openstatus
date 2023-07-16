@@ -6,10 +6,10 @@ import { Footer } from "@/components/layout/footer";
 
 export const metadata: Metadata = {
   twitter: {
-    images: [`/api/og?siteId=openstatus`],
+    images: [`/api/og?monitorId=openstatus`],
   },
   openGraph: {
-    images: [`/api/og?siteId=openstatu`],
+    images: [`/api/og?monitorId=openstatu`],
   },
 };
 

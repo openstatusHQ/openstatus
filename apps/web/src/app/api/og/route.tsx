@@ -37,13 +37,17 @@ export async function GET(req: Request) {
   const description = searchParams.has("description")
     ? searchParams.get("description")
     : DESCRIPTION;
-  const siteId = searchParams.has("siteId")
-    ? searchParams.get("siteId")
+  const monitorId = searchParams.has("monitorId")
+    ? searchParams.get("monitorId")
     : undefined;
 
   const data =
-    (siteId &&
-      (await getMonitorListData({ siteId, groupBy: "day", limit: LIMIT }))) ||
+    (monitorId &&
+      (await getMonitorListData({
+        siteId: monitorId,
+        groupBy: "day",
+        limit: LIMIT,
+      }))) ||
     [];
 
   const uptime = data?.reduce(
