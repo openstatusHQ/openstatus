@@ -43,6 +43,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
+      periodicity: defaultValues?.periodicity || undefined,
     },
   });
 
@@ -103,7 +104,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
             name="periodicity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Periodicity</FormLabel>
                 <Select
                   onValueChange={(value) =>
                     field.onChange(periodicityEnum.parse(value))
@@ -112,7 +113,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="How often it should check" />
+                      <SelectValue placeholder="How often should it check your endpoint?" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -132,7 +133,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  You can manage email addresses in your{" "}
+                  How often your endpoint will be checked
                 </FormDescription>
                 <FormMessage />
               </FormItem>

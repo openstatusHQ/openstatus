@@ -1,7 +1,30 @@
 import * as React from "react";
+import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
 import { Footer } from "@/components/layout/footer";
+
+const TITLE = "OpenStatus";
+const DESCRIPTION =
+  "Open-Source alternative to your current monitoring service with beautiful status page";
+
+export const metadata: Metadata = {
+  title: TITLE,
+  description: DESCRIPTION,
+  metadataBase: new URL("https://openstatus.dev"),
+  twitter: {
+    images: [`/api/og?monitorId=openstatus`],
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  openGraph: {
+    type: "website",
+    images: [`/api/og?monitorId=openstatus`],
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+};
 
 export default function PlayLayout({
   children,

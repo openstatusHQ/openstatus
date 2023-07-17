@@ -10,7 +10,7 @@ export const MonitorList = ({
   monitors: z.infer<typeof selectMonitorSchema>[];
 }) => {
   return (
-    <div>
+    <div className="grid gap-4">
       {monitors.map((monitor, index) => (
         <div key={index}>
           {/* Fetch tracker and data */}
