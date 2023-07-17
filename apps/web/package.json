@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "contentlayer build && next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -27,6 +27,7 @@
     "@radix-ui/react-toast": "^1.1.4",
     "@radix-ui/react-tooltip": "^1.0.6",
     "@t3-oss/env-nextjs": "0.4.1",
+    "@tailwindcss/typography": "^0.5.9",
     "@tanstack/react-table": "^8.9.3",
     "@trpc/client": "10.32.0",
     "@trpc/next": "10.32.0",
@@ -47,7 +48,10 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.45.1",
+    "reading-time": "^1.5.0",
+    "rehype-pretty-code": "^0.10.0",
     "resend": "^0.15.3",
+    "shiki": "^0.14.3",
     "superjson": "1.9.1",
     "svix": "1.4.12",
     "tailwind-merge": "^1.13.2",
@@ -62,6 +66,9 @@
     "@types/react-dom": "18.2.5",
     "autoprefixer": "10.4.14",
     "postcss": "8.4.24",
+    "rehype-autolink-headings": "^6.1.1",
+    "rehype-slug": "^5.1.0",
+    "remark-gfm": "^3.0.1",
     "tailwindcss": "3.3.2",
     "tsconfig": "workspace:*",
     "typescript": "5.1.3"
