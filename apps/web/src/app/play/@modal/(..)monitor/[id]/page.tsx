@@ -32,6 +32,8 @@ export default async function Monitor({
     ? await getResponseListData({ siteId: params.id, ...search.data })
     : await getResponseListData({ siteId: params.id });
 
+  if (!data) return <div>Something went wrong</div>;
+
   return (
     <Modal>
       <DataTable columns={columns} data={data} />
