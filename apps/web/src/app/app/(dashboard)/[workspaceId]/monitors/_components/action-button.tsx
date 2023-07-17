@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
@@ -43,6 +44,7 @@ type Schema = z.infer<typeof insertMonitorSchema>;
 
 export function ActionButton(props: Schema) {
   const router = useRouter();
+  const pathname = usePathname();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
@@ -73,7 +75,7 @@ export function ActionButton(props: Schema) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="absolute right-6 top-6 h-8 w-8 p-0"
+              className="data-[state=open]:bg-accent absolute right-6 top-6 h-8 w-8 p-0"
             >
               <span className="sr-only">Open menu</span>
               <MoreVertical className="h-4 w-4" />
@@ -83,6 +85,13 @@ export function ActionButton(props: Schema) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
+            <DropdownMenuItem asChild>
+              <Link
+                href={`/app/${props.workspaceId}/monitors/${props.id}/data`}
+              >
+                View
+              </Link>
+            </DropdownMenuItem>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
                 Delete

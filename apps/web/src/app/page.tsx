@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
-import { Tracker } from "@/components/monitor/tracker";
+import { Tracker } from "@/components/tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMonitorListData } from "@/lib/tb";

@@ -2,7 +2,7 @@ import * as z from "zod";
 
 import { groupByRange } from "@openstatus/tinybird";
 
-import { Tracker } from "@/components/monitor/tracker";
+import { Tracker } from "@/components/tracker";
 import { getMonitorListData } from "@/lib/tb";
 import { ToggleButton } from "./toggle-button";
 
