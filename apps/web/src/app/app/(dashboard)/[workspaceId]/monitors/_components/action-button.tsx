@@ -89,7 +89,7 @@ export function ActionButton(props: Schema) {
               <Link
                 href={`/app/${props.workspaceId}/monitors/${props.id}/data`}
               >
-                View
+                View data
               </Link>
             </DropdownMenuItem>
             <AlertDialogTrigger asChild>

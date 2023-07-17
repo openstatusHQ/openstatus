@@ -26,7 +26,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
@@ -44,6 +45,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || undefined,
+      status: defaultValues?.status || "inactive",
     },
   });
 
@@ -101,6 +103,32 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between">
+                <div className="space-y-0.5">
+                  <FormLabel>Active</FormLabel>
+                  <FormDescription>
+                    This will start ping your endpoint on based on the selected
+                    frequence.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  {/* TODO: make the monitor.active a boolean value */}
+                  <Switch
+                    checked={field.value === "active" ? true : false}
+                    onCheckedChange={(value) =>
+                      field.onChange(value ? "active" : "inactive")
+                    }
+                    disabled
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="periodicity"
             render={({ field }) => (
               <FormItem>
@@ -133,7 +161,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  How often your endpoint will be checked
+                  Frequency of how often your endpoint will be pinged.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
