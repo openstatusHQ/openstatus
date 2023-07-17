@@ -21,12 +21,12 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 7
+          version: 8
 
       - name: 📥 Download deps
         run: pnpm install
