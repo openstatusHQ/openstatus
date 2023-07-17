@@ -3,7 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "contentlayer/generated": ["./.contentlayer/generated"]
     },
     "plugins": [{ "name": "next" }],
     "strictNullChecks": true
@@ -13,7 +14,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "**/*.mjs"
+    "**/*.mjs",
+    ".contentlayer/generated"
   ],
   "exclude": ["node_modules"]
 }
