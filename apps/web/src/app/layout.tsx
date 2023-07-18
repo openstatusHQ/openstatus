@@ -6,6 +6,7 @@ import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
+import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
 import Background from "./_components/background";
 
@@ -51,6 +52,7 @@ export default function RootLayout({
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>
             <Toaster />
+            <TailwindIndicator />
           </body>
         </PlausibleProvider>
       </html>

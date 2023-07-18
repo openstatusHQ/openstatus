@@ -6,9 +6,9 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
-import type { insertMonitorSchema } from "@openstatus/db/src/schema";
+import type { insertPageSchema } from "@openstatus/db/src/schema";
 
-import { MonitorForm } from "@/components/forms/montitor-form";
+import { StatusPageForm } from "@/components/forms/status-page-form";
 import { LoadingAnimation } from "@/components/loading-animation";
 import {
   AlertDialog,
@@ -40,18 +40,18 @@ import {
 import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
-type Schema = z.infer<typeof insertMonitorSchema>;
+type Schema = z.infer<typeof insertPageSchema>;
 
 export function ActionButton(props: Schema) {
   const router = useRouter();
-  const pathname = usePathname();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
   async function onUpdate(values: Schema) {
     setSaving(true);
-    await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
+    // await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
+    await wait(1000);
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
@@ -59,7 +59,8 @@ export function ActionButton(props: Schema) {
 
   async function onDelete() {
     setSaving(true);
-    await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
+    // await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
+    await wait(1000);
     router.refresh();
     setSaving(false);
     setAlertOpen(false);
@@ -85,13 +86,6 @@ export function ActionButton(props: Schema) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/app/${props.workspaceId}/monitors/${props.id}/data`}
-              >
-                View data
-              </Link>
-            </DropdownMenuItem>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
                 Delete
@@ -124,18 +118,18 @@ export function ActionButton(props: Schema) {
       </AlertDialog>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Update Monitor</DialogTitle>
+          <DialogTitle>Update Page</DialogTitle>
           <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
-        <MonitorForm
-          id="monitor-update"
+        <StatusPageForm
+          id="status-page-update"
           onSubmit={onUpdate}
           defaultValues={props}
         />
         <DialogFooter>
           <Button
             type="submit"
-            form="monitor-update"
+            form="status-page-update"
             disabled={saving}
             onSubmit={(e) => {
               e.preventDefault();

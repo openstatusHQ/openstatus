@@ -12,5 +12,5 @@ export function wait(ms: number) {
 }
 
 export function formatDate(date: Date) {
-  return format(date, "dd/MM/yyyy");
+  return format(date, "LLL dd, y");
 }

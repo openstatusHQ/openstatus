@@ -87,7 +87,7 @@ export default authMiddleware({
 
       if (result.length) {
         const orgSelection = new URL(
-          `/app/${result[0].users_to_workspaces.workspaceId}`,
+          `/app/${result[0].users_to_workspaces.workspaceId}/dashboard`,
           req.url,
         );
         return NextResponse.redirect(orgSelection);

@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  boolean,
   int,
   mysqlEnum,
   mysqlTable,
@@ -28,9 +29,13 @@ export const monitor = mysqlTable("monitor", {
   ])
     .default("other")
     .notNull(),
+
+  // TBD: if we keep or not?!?
   status: mysqlEnum("status", ["active", "inactive"])
     .default("inactive")
     .notNull(),
+
+  active: boolean("active").default(false),
 
   url: varchar("url", { length: 512 }).notNull(),
 

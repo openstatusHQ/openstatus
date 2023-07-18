@@ -2,8 +2,8 @@ import * as z from "zod";
 
 import { availableRegions } from "@openstatus/tinybird";
 
-import { columns } from "@/components/monitor/columns";
-import { DataTable } from "@/components/monitor/data-table";
+import { columns } from "@/components/data-table/columns";
+import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { Modal } from "./modal";
 

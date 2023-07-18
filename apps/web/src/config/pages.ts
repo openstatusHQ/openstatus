@@ -8,14 +8,14 @@ type Page = {
   disabled?: boolean;
 };
 
+// TODO: add to <Header id="dashboard" /> to easily access title and description - ideally allow both
 export const pagesConfig: Page[] = [
   {
     title: "Dashboard",
     description: "Get an overview of what's hot.",
-    href: "",
+    href: "/dashboard",
     icon: "layout-dashboard",
   },
-
   {
     title: "Monitors",
     description: "Check all the responses in one place.",
