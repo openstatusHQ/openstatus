@@ -8,7 +8,7 @@ import { getMonitorListData } from "@/lib/tb";
 import { HeroForm } from "./_components/hero-form";
 
 export default async function Page() {
-  const data = await getMonitorListData({ siteId: "openstatus" });
+  const data = await getMonitorListData({ monitorId: "openstatusPing" });
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
@@ -47,7 +47,7 @@ export default async function Page() {
             {data && (
               <Tracker
                 data={data}
-                id="openstatus"
+                id="openstatusPing"
                 name="Ping"
                 url="https://openstatus.dev/api/ping"
               />

@@ -43,6 +43,7 @@
     "date-fns": "^2.30.0",
     "lucide-react": "^0.244.0",
     "micro": "10.0.1",
+    "nanoid": "^4.0.2",
     "next": "13.4.8",
     "next-plausible": "3.7.2",
     "react": "18.2.0",

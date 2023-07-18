@@ -22,7 +22,7 @@ export function publishPingResponse(tb: Tinybird) {
 
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "response_list__v1",
+    pipe: "response_list__v2",
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
@@ -33,7 +33,7 @@ export function getResponseList(tb: Tinybird) {
 
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "monitor_list__v0",
+    pipe: "monitor_list__v1",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {

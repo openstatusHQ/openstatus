@@ -29,8 +29,8 @@ export default async function Monitor({
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
   const data = search.success
-    ? await getResponseListData({ siteId: params.id, ...search.data })
-    : await getResponseListData({ siteId: params.id });
+    ? await getResponseListData({ monitorId: params.id, ...search.data })
+    : await getResponseListData({ monitorId: params.id });
 
   if (!data) return <div>Something went wrong</div>;
 

@@ -164,7 +164,7 @@ const Bar = ({
           </p>
           {context === "play" ? (
             <Link
-              href={`/monitor/openstatus?fromDate=${cronTimestamp}&toDate=${toDate}`}
+              href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
               className="text-muted-foreground hover:text-foreground"
             >
               <Eye className="h-4 w-4" />
