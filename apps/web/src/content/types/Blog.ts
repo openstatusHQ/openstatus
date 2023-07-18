@@ -17,6 +17,14 @@ export const Blog = defineDocumentType(() => ({
       required: true,
     },
     publishedAt: { type: "string", required: true },
+    author: {
+      type: "string",
+      required: true,
+    },
+    authorLink: {
+      type: "string",
+      required: true,
+    },
   },
 
   computedFields: {

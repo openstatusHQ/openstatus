@@ -4,16 +4,27 @@ import type { Blog } from "contentlayer/generated";
 export const getDisplayBlogs = (allBlogs: Blog[]) => {
   return allBlogs
     .map((Blog) => {
-      const { title, slug, publishedAtFormatted, readingTime, description } =
-        Blog;
+      const {
+        title,
+        slug,
+        author,
+        authorLink,
+        publishedAt,
+        publishedAtFormatted,
+        readingTime,
+        description,
+      } = Blog;
 
       return Object.fromEntries(
         Object.entries({
           title,
-          slug,
-          publishedAtFormatted,
-          readingTime,
           description,
+          author,
+          authorLink,
+          publishedAt,
+          publishedAtFormatted,
+          slug,
+          readingTime,
         }),
       );
     })

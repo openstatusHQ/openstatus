@@ -31,7 +31,12 @@ export default async function Blog() {
             </p>
 
             <div className="text-muted-foreground mt-2 flex flex-row justify-start gap-5 text-sm">
+              <Link href={blog.authorLink} className="hidden sm:inline">
+                {blog.author}
+              </Link>
+              <span className="hidden sm:inline">/</span>
               <p>{blog.publishedAtFormatted}</p>
+              <span>/</span>
               <p>{blog.readingTime}</p>
             </div>
           </div>

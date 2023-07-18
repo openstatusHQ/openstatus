@@ -51,9 +51,9 @@ export default function BlogPage({ params }: { params: { slug: string } }) {
   }
   return (
     <>
-      <article className="relative my-5 grid grid-cols-[1fr,min(90%,100%),1fr] gap-y-8 pt-24 sm:grid-cols-[1fr,min(90%,100%),1fr] sm:pt-16 md:grid md:grid-cols-[1fr,min(80%,100%),1fr] lg:grid-cols-[1fr,min(70%,100%),1fr] xl:grid-cols-[1fr,minmax(auto,240px),min(50%,100%),minmax(auto,240px),1fr] xl:gap-x-5 xl:px-0 [&>*]:col-start-2 xl:[&>*]:col-start-3">
+      <article className="relative my-5 grid grid-cols-[1fr,min(90%,100%),1fr] gap-y-8 sm:grid-cols-[1fr,min(90%,100%),1fr] sm:pt-8 md:grid md:grid-cols-[1fr,min(80%,100%),1fr] lg:grid-cols-[1fr,min(70%,100%),1fr] xl:grid-cols-[1fr,minmax(auto,240px),min(50%,100%),minmax(auto,240px),1fr] xl:gap-x-5 xl:px-0 [&>*]:col-start-2 xl:[&>*]:col-start-3">
         <div>
-          <Button variant="secondary">
+          <Button variant="default">
             <Link href="/blog">⬅ Blogs</Link>
           </Button>
         </div>
@@ -62,8 +62,17 @@ export default function BlogPage({ params }: { params: { slug: string } }) {
           <div className="mt-2 w-full sm:pointer-events-none xl:!col-end-5">
             <h1 className="text-3xl font-bold sm:text-4xl">{blog.title}</h1>
           </div>
-          <div className="text-muted-foreground mt-4 hidden text-sm sm:pointer-events-none lg:inline-block lg:text-base">
-            ~{blog.readingTime}
+          <div className="mt-2 flex flex-col items-center justify-between sm:flex-row">
+            <div>
+              <Link href={blog.authorLink}>{blog.author}</Link>
+              <span className="text-muted-foreground">
+                {" / "}
+                {blog.publishedAtFormatted}
+              </span>
+            </div>
+            <div className="text-muted-foreground text-sm sm:pointer-events-none lg:text-base">
+              ~{blog.readingTime}
+            </div>
           </div>
         </section>
 
