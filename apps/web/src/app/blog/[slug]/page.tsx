@@ -67,7 +67,7 @@ export default function BlogPage({ params }: { params: { slug: string } }) {
           </div>
         </section>
 
-        <main className="prose prose-p:text-sm md:prose-p:text-base prose-ul:text-sm md:prose-ul:text-base lg:prose-lg dark:prose-invert font-hubot prose-code:before:content-none prose-code:after:content-none mb-6 w-full max-w-none">
+        <main className="prose prose-p:text-sm md:prose-p:text-base prose-ul:text-sm md:prose-ul:text-base lg:prose-lg dark:prose-invert prose-code:before:content-none prose-code:after:content-none mb-6 w-full max-w-none">
           <Mdx code={blog.body.code} />
         </main>
       </article>
