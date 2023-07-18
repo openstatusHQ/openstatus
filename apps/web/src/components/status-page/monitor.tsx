@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { getMonitorListData } from "@/lib/tb";
-import { Tracker } from "../monitor/tracker";
+import { Tracker } from "../tracker";
 
 export const Monitor = async ({
   monitor,
