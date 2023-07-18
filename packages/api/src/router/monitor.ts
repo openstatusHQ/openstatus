@@ -34,7 +34,18 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitor.id, opts.input.monitorId))
         .execute();
     }),
-
+  updateMonitor: protectedProcedure
+    .input(insertMonitorSchema)
+    .mutation(async (opts) => {
+      console.log(opts.input);
+      const r = await opts.ctx.db
+        .update(monitor)
+        .set(opts.input)
+        .where(eq(monitor.id, Number(opts.input.id)))
+        .execute();
+      console.log(r);
+      return r;
+    }),
   updateMonitorStatus: protectedProcedure
     .input(
       z.object({
@@ -43,7 +54,7 @@ export const monitorRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      await opts.ctx.db
+      return await opts.ctx.db
         .update(monitor)
         .set(opts.input.status)
         .where(eq(monitor.id, opts.input.id))

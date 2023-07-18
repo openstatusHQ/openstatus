@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Footer } from "@/components/layout/footer";
-import { Tracker } from "@/components/monitor/tracker";
+import { Tracker } from "@/components/tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMonitorListData } from "@/lib/tb";
@@ -44,12 +44,14 @@ export default async function Page() {
         <div className="z-10 mx-auto w-full max-w-xl backdrop-blur-[2px]">
           <div className="border-border rounded-lg border p-8">
             <h1 className="font-cal mb-3 text-center text-2xl">Status</h1>
-            <Tracker
-              data={data}
-              id="openstatusPing"
-              name="Ping"
-              url="https://openstatus.dev/api/ping"
-            />
+            {data && (
+              <Tracker
+                data={data}
+                id="openstatusPing"
+                name="Ping"
+                url="https://openstatus.dev/api/ping"
+              />
+            )}
           </div>
         </div>
       </div>

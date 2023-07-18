@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import type { Ping } from "@openstatus/tinybird";
 
 import { Badge } from "@/components/ui/badge";
+import { regionsDict } from "@/data/regions-dictionary";
 import { cn } from "@/lib/utils";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-action";
@@ -19,7 +20,7 @@ export const columns: ColumnDef<Ping>[] = [
     cell: ({ row }) => {
       return (
         <div>
-          {format(new Date(row.getValue("timestamp")), "dd/MM/yy HH:mm")}
+          {format(new Date(row.getValue("timestamp")), "LLL dd, y HH:mm")}
         </div>
       );
     },
@@ -58,7 +59,7 @@ export const columns: ColumnDef<Ping>[] = [
   {
     accessorKey: "latency",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Latency" />
+      <DataTableColumnHeader column={column} title="Latency (ms)" />
     ),
   },
   {
@@ -66,6 +67,13 @@ export const columns: ColumnDef<Ping>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Region" />
     ),
+    cell: ({ row }) => {
+      const region = String(row.getValue("region"));
+      return <div>{regionsDict[region]?.location}</div>;
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
   },
   {
     accessorKey: "url",

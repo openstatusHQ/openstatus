@@ -37,16 +37,23 @@ const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
 interface TrackerProps {
   data: Monitor[];
   url: string;
-  id: string;
+  id: string | number;
   name: string;
   /**
    * Maximium length of the data array
    */
   maxSize?: number;
+  context?: "play" | "status-page"; // TODO: we might need to extract those two different use cases - for now it's ok I'd say.
 }
 
-// TODO: discusss to move data fetching inside of Tracker
-export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
+export function Tracker({
+  data,
+  url,
+  id,
+  name,
+  maxSize = 35,
+  context = "play",
+}: TrackerProps) {
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
 
@@ -69,7 +76,7 @@ export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
       <div className="mb-1 flex justify-between text-sm sm:mb-2">
         <div className="flex items-center gap-2">
           <p className="text-foreground font-semibold">{name}</p>
-          <MoreInfo {...{ url, id }} />
+          <MoreInfo {...{ url, id, context }} />
         </div>
         <p className="text-muted-foreground font-light">
           {`${totalUptime}%`} uptime
@@ -83,7 +90,9 @@ export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
         </div>
         <div className="absolute right-0 top-0 flex gap-0.5">
           {slicedData.map((props) => {
-            return <Bar key={props.cronTimestamp} {...props} />;
+            return (
+              <Bar key={props.cronTimestamp} context={context} {...props} />
+            );
           })}
         </div>
       </div>
@@ -91,9 +100,14 @@ export function Tracker({ data, url, id, name, maxSize = 35 }: TrackerProps) {
   );
 }
 
-const MoreInfo = ({ url, id }: Record<"id" | "url", string>) => {
+const MoreInfo = ({
+  url,
+  id,
+  context,
+}: Pick<TrackerProps, "url" | "id" | "context">) => {
   const [open, setOpen] = React.useState(false);
   const formattedURL = new URL(url);
+  const link = `${formattedURL.host}${formattedURL.pathname}`;
   return (
     <TooltipProvider>
       <Tooltip open={open} onOpenChange={setOpen}>
@@ -101,19 +115,28 @@ const MoreInfo = ({ url, id }: Record<"id" | "url", string>) => {
           <Info className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent>
-          <Link
-            href={`/monitor/${id}`}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            {`${formattedURL.host}${formattedURL.pathname}`}
-          </Link>
+          <p className="text-muted-foreground">
+            {context === "play" ? (
+              <Link href={`/monitor/${id}`} className="hover:text-foreground">
+                {link}
+              </Link>
+            ) : (
+              link
+            )}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 };
 
-const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
+const Bar = ({
+  count,
+  ok,
+  avgLatency,
+  cronTimestamp,
+  context,
+}: Monitor & Pick<TrackerProps, "context">) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
   const isOk = ratio === 1; // TODO: when operational, downtime, degraded
@@ -139,12 +162,14 @@ const Bar = ({ count, ok, avgLatency, cronTimestamp }: Monitor) => {
           <p className="text-sm font-semibold">
             {isOk ? "Operational" : "Downtime"}
           </p>
-          <Link
-            href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <Eye className="h-4 w-4" />
-          </Link>
+          {context === "play" ? (
+            <Link
+              href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Eye className="h-4 w-4" />
+            </Link>
+          ) : null}
         </div>
         <div className="flex justify-between">
           <p className="text-xs font-light">

@@ -21,11 +21,21 @@ export async function getResponseListData(
     >
   >,
 ) {
-  const res = await getResponseList(tb)(props);
-  return res.data;
+  try {
+    const res = await getResponseList(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
 }
 
 export async function getMonitorListData(props: Partial<MonitorListParams>) {
-  const res = await getMonitorList(tb)(props);
-  return res.data;
+  try {
+    const res = await getMonitorList(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
 }

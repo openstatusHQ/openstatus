@@ -2,7 +2,7 @@ import * as z from "zod";
 
 import { groupByRange } from "@openstatus/tinybird";
 
-import { Tracker } from "@/components/monitor/tracker";
+import { Tracker } from "@/components/tracker";
 import { getMonitorListData } from "@/lib/tb";
 import { ToggleButton } from "./toggle-button";
 
@@ -32,12 +32,15 @@ export default async function PlayPage({
       </div>
       <p className="font-cal mb-2 text-3xl">Status</p>
       <p className="text-lg font-light">Learn more on how to build your own.</p>
-      <Tracker
-        data={data}
-        id="openstatusPing"
-        name="Ping"
-        url="https://openstatus.dev/api/ping"
-      />
+
+      {data && (
+        <Tracker
+          data={data}
+          id="openstatusPing"
+          name="Ping"
+          url="https://openstatus.dev/api/ping"
+        />
+      )}
     </div>
   );
 }
