@@ -44,3 +44,6 @@ packages/db/database.db-wal
 packages/db/database.db-shm
 packages/db/openstatus.db-shm
 packages/db/openstatus.db-wal
+openstatus.db-wal
+openstatus.db
+openstatus.db-shm
