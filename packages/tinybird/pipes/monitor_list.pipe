@@ -1,20 +1,20 @@
-VERSION 0
+VERSION 1
 
 TOKEN "monitor_list__v0_endpoint_read_0539" READ
 
-NODE monitor_list__v0_0
+NODE monitor_list__v1_0
 SQL >
 
     %
-    SELECT 
-    {% if defined(groupBy) and groupBy == "day" %} 
+    SELECT
+    {% if defined(groupBy) and groupBy == "day" %}
     toUnixTimestamp64Milli(toDateTime64(DATE(cronTimestamp / 1000), 3))
     {% else %}
     cronTimestamp
     {% end %}
     AS cronTimestamp, ROUND(AVG(latency)) as avgLatency, COUNT(*) as count, COUNT(CASE WHEN statusCode BETWEEN 200 AND 299 THEN 1 ELSE NULL END) as ok
     FROM ping_response__v2
-    WHERE id = {{ String(siteId, 'openstatus') }} AND cronTimestamp IS NOT NULL
+    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }} AND cronTimestamp IS NOT NULL
     GROUP BY cronTimestamp
     ORDER BY cronTimestamp DESC
     LIMIT {{Int32(limit, 1000)}}

@@ -34,7 +34,7 @@ yarn-error.log*
 
 # vercel
 .vercel
-
+.venv
 # packages
 dist
 packages/emails/.react-email

@@ -1,4 +1,5 @@
 import { Receiver } from "@upstash/qstash/cloudflare";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 
 import {
@@ -26,7 +27,7 @@ const monitor = async (
   }: { latency: number; url: string; region: string; cronTimestamp: number },
 ) => {
   await publishPingResponse(tb)({
-    id: "openstatus",
+    id: nanoid(),
     workspaceId: "openstatus",
     pageId: "openstatus",
     monitorId: "openstatusPing",

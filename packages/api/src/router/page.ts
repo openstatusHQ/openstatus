@@ -5,6 +5,7 @@ import { insertPageSchema, page } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
+// TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchema)

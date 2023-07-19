@@ -15,14 +15,27 @@ const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 // TODO: add security layer
 export async function getResponseListData(
   props: Partial<
-    Pick<ResponseListParams, "siteId" | "region" | "cronTimestamp" | "limit">
+    Pick<
+      ResponseListParams,
+      "siteId" | "region" | "cronTimestamp" | "limit" | "monitorId"
+    >
   >,
 ) {
-  const res = await getResponseList(tb)(props);
-  return res.data;
+  try {
+    const res = await getResponseList(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
 }
 
 export async function getMonitorListData(props: Partial<MonitorListParams>) {
-  const res = await getMonitorList(tb)(props);
-  return res.data;
+  try {
+    const res = await getMonitorList(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
 }

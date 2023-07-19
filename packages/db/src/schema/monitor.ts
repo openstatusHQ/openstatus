@@ -15,6 +15,7 @@ export const monitor = sqliteTable("monitor", {
     .default("other")
     .notNull(),
   status: text("status", ["active", "inactive"]).default("inactive").notNull(),
+  active: integer("active", { mode: "boolean" }).default(false),
 
   url: text("url", { length: 512 }).notNull(),
 
