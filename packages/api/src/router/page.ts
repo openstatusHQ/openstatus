@@ -9,23 +9,21 @@ export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(page).values(opts.input).execute();
+      return opts.ctx.db.insert(page).values(opts.input);
     }),
 
   getPageById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page
-        .findFirst({
-          where: eq(page.id, opts.input.id),
-          with: { monitors: true, incidents: true },
-        })
-        .execute();
+      return await opts.ctx.db.query.page.findFirst({
+        where: eq(page.id, opts.input.id),
+        with: { monitors: true, incidents: true },
+      });
     }),
   getPageByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db
+      return opts.ctx.db
         .select()
         .from(page)
         .where(eq(page.workspaceId, opts.input.workspaceId));
@@ -34,11 +32,9 @@ export const pageRouter = createTRPCRouter({
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page
-        .findFirst({
-          where: eq(page.slug, opts.input.slug),
-          with: { monitors: true, incidents: true },
-        })
-        .execute();
+      return opts.ctx.db.query.page.findFirst({
+        where: eq(page.slug, opts.input.slug),
+        with: { monitors: true, incidents: true },
+      });
     }),
 });

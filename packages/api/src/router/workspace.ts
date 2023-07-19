@@ -1,12 +1,7 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import {
-  page,
-  user,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { user, workspace } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -37,9 +32,6 @@ export const workspaceRouter = createTRPCRouter({
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
-      await opts.ctx.db
-        .insert(workspace)
-        .values({ name: opts.input.name })
-        .execute();
+      return opts.ctx.db.insert(workspace).values({ name: opts.input.name });
     }),
 });

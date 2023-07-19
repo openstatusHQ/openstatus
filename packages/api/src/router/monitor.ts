@@ -9,7 +9,7 @@ export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(monitor).values(opts.input).execute();
+      await opts.ctx.db.insert(monitor).values(opts.input).run();
     }),
 
   getMonitorById: protectedProcedure
@@ -32,7 +32,7 @@ export const monitorRouter = createTRPCRouter({
         .update(monitor)
         .set({ description: opts.input.description })
         .where(eq(monitor.id, opts.input.monitorId))
-        .execute();
+        .run();
     }),
 
   updateMonitorStatus: protectedProcedure
@@ -47,7 +47,7 @@ export const monitorRouter = createTRPCRouter({
         .update(monitor)
         .set(opts.input.status)
         .where(eq(monitor.id, opts.input.id))
-        .execute();
+        .run();
     }),
 
   deleteMonitor: protectedProcedure
@@ -55,7 +55,8 @@ export const monitorRouter = createTRPCRouter({
     .mutation(async (opts) => {
       await opts.ctx.db
         .delete(monitor)
-        .where(eq(monitor.id, opts.input.monitorId));
+        .where(eq(monitor.id, opts.input.monitorId))
+        .run();
     }),
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
@@ -64,6 +65,6 @@ export const monitorRouter = createTRPCRouter({
         .select()
         .from(monitor)
         .where(eq(monitor.workspaceId, opts.input.workspaceId))
-        .execute();
+        .run();
     }),
 });
