@@ -1,43 +1,41 @@
 import Link from "next/link";
-import { allBlogs } from "contentlayer/generated";
+import { allPosts } from "contentlayer/generated";
 
+import { BackButton } from "@/components/layout/back-button";
 import { Footer } from "@/components/layout/footer";
-import { Button } from "@/components/ui/button";
-import { getDisplayBlogs } from "@/lib/contentlayer";
+import { getDisplayPosts } from "@/lib/contentlayer/utils";
 
-export default async function Blog() {
-  const blogs = await getDisplayBlogs(allBlogs);
+export default async function Post() {
+  const posts = await getDisplayPosts(allPosts);
 
   return (
     <main className="mx-5 mb-7 flex flex-col items-start pt-24 sm:mx-20 md:mx-32 md:pt-28 lg:mx-60 xl:mx-96">
       <h1 className="text-foreground font-cal mb-4 mt-2 text-5xl">Blog</h1>
-      <Button variant="secondary">
-        <Link href="/">⬅ Back to home</Link>
-      </Button>
+      <BackButton />
 
-      {/* All blogs */}
+      {/* All posts */}
       <section className="mb-8 ">
-        {blogs.map((blog, idx) => (
-          <div key={blog.slug} className="mt-10">
+        {posts.map((Post, idx) => (
+          <div key={Post.slug} className="mt-10">
             <Link
-              href={`/blog/${blog.slug}`}
+              href={`/blog/${Post.slug}`}
               className="text-foreground font-cal text-2xl"
             >
               <span>{idx + 1}. </span>
-              {blog.title}
+              {Post.title}
             </Link>
             <p className="text-muted-foreground text-base">
-              {blog.description}
+              {Post.description}
             </p>
 
             <div className="text-muted-foreground mt-2 flex flex-row justify-start gap-5 text-sm">
-              <Link href={blog.authorLink} className="hidden sm:inline">
-                {blog.author}
+              <Link href={Post.authorLink} className="hidden sm:inline">
+                {Post.author}
               </Link>
               <span className="hidden sm:inline">/</span>
-              <p>{blog.publishedAtFormatted}</p>
+              <p>{Post.publishedAtFormatted}</p>
               <span>/</span>
-              <p>{blog.readingTime}</p>
+              <p>{Post.readingTime}</p>
             </div>
           </div>
         ))}

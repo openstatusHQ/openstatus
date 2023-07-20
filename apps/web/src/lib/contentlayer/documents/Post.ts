@@ -1,11 +1,11 @@
 import { defineDocumentType } from "contentlayer/source-files";
 import readingTime from "reading-time";
 
-export const Blog = defineDocumentType(() => ({
-  name: "Blog",
+export const Post = defineDocumentType(() => ({
+  name: "Post",
   contentType: "mdx",
   // Location of Blog source files (relative to `contentDirPath`)
-  filePathPattern: "blog/*.mdx",
+  filePathPattern: "posts/*.mdx",
 
   fields: {
     title: {
@@ -40,14 +40,14 @@ export const Blog = defineDocumentType(() => ({
       // 2023-03-21 to March 21, 2023
       type: "string",
       resolve: (post) => {
-        const date = new Date(post.publishedAt.split("-").join("-"));
-        return (
-          date.toLocaleString("default", { month: "long" }) +
-          " " +
-          date.getUTCDate() +
-          ", " +
-          date.getUTCFullYear()
-        );
+        const dateObj = new Date(post.publishedAt);
+        // https://stackoverflow.com/questions/66590691/typescript-type-string-is-not-assignable-to-type-numeric-2-digit-in-d
+        const options = {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        } as const;
+        return dateObj.toLocaleDateString("en-US", options);
       },
     },
     readingTime: {

@@ -10,6 +10,7 @@ div[data-rehype-pretty-code-fragment] {
   background-color: rgba(57, 57, 57, 0.102);
   border-radius: 0.5rem;
   width: 100%;
+  margin: 1rem 0;
 }
 
 div[data-rehype-pretty-code-fragment] pre {

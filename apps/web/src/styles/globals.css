@@ -79,10 +79,10 @@
 }
 
 /* blog */
+.prose h1 > a,
 .prose h2 > a,
-.prose h3 > a,
-.prose h4 > a {
-  @apply border-none no-underline before:-ml-[1em] before:mr-2 before:text-rose-100/0 before:content-['#'] hover:before:text-black/40 dark:hover:before:text-white/20;
+.prose h3 > a {
+  @apply hover:before:text-muted-foreground no-underline before:-ml-[0.9em] before:mr-2 before:text-rose-100/0 before:content-['#'];
 }
 
 .prose pre {

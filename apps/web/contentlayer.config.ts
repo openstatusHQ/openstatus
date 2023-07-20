@@ -4,13 +4,13 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 
-import { Blog } from "./src/content/types/Blog";
-import { rehypePrettyCodeOptions } from "./src/lib/rehypePrettyCode";
+import { Post } from "./src/lib/contentlayer/documents/Post";
+import { rehypePrettyCodeOptions } from "./src/lib/contentlayer/rehype-pretty-code";
 
 export default makeSource({
   // Location of source files for all defined documentTypes
   contentDirPath: "src/content/",
-  documentTypes: [Blog],
+  documentTypes: [Post],
   mdx: {
     remarkPlugins: [[remarkGfm]],
     rehypePlugins: [

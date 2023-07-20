@@ -1,9 +1,9 @@
-import type { Blog } from "contentlayer/generated";
+import type { Post } from "contentlayer/generated";
 
 // return only what is needed for the index page
-export const getDisplayBlogs = (allBlogs: Blog[]) => {
-  return allBlogs
-    .map((Blog) => {
+export const getDisplayPosts = (allPosts: Post[]) => {
+  return allPosts
+    .map((Post) => {
       const {
         title,
         slug,
@@ -13,7 +13,7 @@ export const getDisplayBlogs = (allBlogs: Blog[]) => {
         publishedAtFormatted,
         readingTime,
         description,
-      } = Blog;
+      } = Post;
 
       return Object.fromEntries(
         Object.entries({
@@ -29,10 +29,11 @@ export const getDisplayBlogs = (allBlogs: Blog[]) => {
       );
     })
     .sort((a, b) => {
-      const [yearA, monthA, dayA] = a.publishedAt.split("-").map(Number);
-      const [yearB, monthB, dayB] = b.publishedAt.split("-").map(Number);
-      if (yearB !== yearA) return yearB - yearA;
-      if (monthB !== monthA) return monthB - monthA;
-      return dayB - dayA;
+      console.log(a.publishedAt);
+      console.log(a.publishedAtFormatted);
+      const date1 = new Date(a.publishedAt).getTime();
+      const date2 = new Date(b.publishedAt).getTime();
+
+      return date2 - date1;
     });
 };

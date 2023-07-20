@@ -2,13 +2,14 @@
 title: Understanding Hoisting and Promises in JavaScript
 description:
   Understanding two important concepts in JavaScript - hoisting and promises.
-
-publishedAt: 2023-07-17
+author: Nikhil Mohite
+authorLink: https://nikhilmohite.com
+publishedAt: 2023-07-16
 ---
 
 Understanding two important concepts in JavaScript: hoisting and promises.
 
-# Understanding Hoisting and Promises in JavaScript
+## Understanding Hoisting and Promises in JavaScript
 
 JavaScript is a versatile programming language that offers a wide range of
 features and functionalities. Two important concepts to grasp in JavaScript are
@@ -27,13 +28,11 @@ declarations are hoisted, not the initializations.
 
 For example, consider the following code snippet:
 
-```js
-console.log(x); // Output: undefined
-var x = 10;
-console.log(x); // Output: 10
+```js title="index.js" {} showLineNumbers
+console.log(name);
 ```
 
-# Promises: Managing Asynchronous Operations
+## Promises: Managing Asynchronous Operations
 
 Promises are a powerful concept introduced in ECMAScript 6 (ES6) that enable
 better management of asynchronous operations in JavaScript. They provide a
@@ -51,7 +50,7 @@ This code fetches data asynchronously using a promise in TypeScript, resolves
 the data after a delay, and handles the received data or any potential errors
 using then and catch blocks.
 
-```ts
+```ts title="index.ts" {3, 16} showLineNumbers
 function getData(): Promise<string[]> {
   return new Promise<string[]>((resolve, reject) => {
     setTimeout(() => {
@@ -81,7 +80,7 @@ getData()
 - Promises help avoid <strong>"callback hell"</strong> by providing a more
   linear and sequential approach to asynchronous operations.
 
-# Conclusion
+## Conclusion
 
 In conclusion, hoisting and promises are important concepts in JavaScript that
 greatly contribute to writing efficient and reliable code. Hoisting allows
