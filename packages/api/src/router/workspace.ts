@@ -23,7 +23,7 @@ export const workspaceRouter = createTRPCRouter({
     .query(async (opts) => {
       return await opts.ctx.db.query.workspace.findMany({
         with: {
-          page: true,
+          pages: true,
         },
         where: eq(workspace.id, opts.input.workspaceId),
       });

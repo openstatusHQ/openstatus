@@ -276,8 +276,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
-        specifier: 0.4.1
-        version: 0.4.1(typescript@5.1.3)(zod@3.21.4)
+        specifier: 0.6.0
+        version: 0.6.0(typescript@5.1.3)(zod@3.21.4)
       dotenv:
         specifier: 16.3.1
         version: 16.3.1
@@ -298,8 +298,8 @@ importers:
         specifier: ^4.0.7
         version: 4.0.7
       drizzle-kit:
-        specifier: 0.19.5
-        version: 0.19.5
+        specifier: 0.19.9
+        version: 0.19.9
       encoding:
         specifier: 0.1.13
         version: 0.1.13
@@ -798,8 +798,8 @@ packages:
     resolution: {integrity: sha512-ed4pNnfur6UbASEgF34gVxR9p7Mc3qF+Ygbmjiil8ws5IhNFhPDFy5vE5hQAUA9JmVsSxXPcVLM5Rf8LOZqQ5Q==}
     dev: false
 
-  /@drizzle-team/studio@0.0.1:
-    resolution: {integrity: sha512-cHgGezy2ojBFMaU6PZyBkksgFsg2CQ8IRN4mS7WdbA/Zv6xUK6fCNmpEWS/FftbxoA4B8Z0XGnuKsaTJEZsGgA==}
+  /@drizzle-team/studio@0.0.3:
+    resolution: {integrity: sha512-GXda7FZIhZeJmXY8uPUCScHRcn6C7QVdG7CxEXnAxXWRc5eXbCR0mklqSpG2buOWtCKCTonL4MKpzSmqY9yTEw==}
     dev: true
 
   /@esbuild-kit/core-utils@3.1.0:
@@ -3316,6 +3316,16 @@ packages:
       zod: 3.21.4
     dev: false
 
+  /@t3-oss/env-core@0.6.0(typescript@5.1.3)(zod@3.21.4):
+    resolution: {integrity: sha512-3FkPAba069WRZVVab/sB1m3eSGn/rZeypx5k+sWEu1d+k0OQdRDnvFS+7MtxYgqVrwaRk3b7yVnX2dgSPVmWPQ==}
+    peerDependencies:
+      typescript: '>=4.7.2'
+      zod: ^3.0.0
+    dependencies:
+      typescript: 5.1.3
+      zod: 3.21.4
+    dev: false
+
   /@t3-oss/env-nextjs@0.4.1(typescript@5.1.3)(zod@3.21.4):
     resolution: {integrity: sha512-lDbewJvZwOW7bFwHzdKtAH4+YcVTvGU7UEJfHwlb1RqVe9ejPrKn6ax2OGv/nFji1JXGKecKYHz3Xkpru6TFbw==}
     peerDependencies:
@@ -4740,11 +4750,11 @@ packages:
       wordwrap: 1.0.0
     dev: true
 
-  /drizzle-kit@0.19.5:
-    resolution: {integrity: sha512-eX+M4QpPLbbZwLUamCxRhS9Y98ppZLk3jew2FghKoAr7bGEC3omFIm+YPiwtrhe/alZZgrJCn/1TDTRHwo1r9w==}
+  /drizzle-kit@0.19.9:
+    resolution: {integrity: sha512-ZS3Hpb7+QPXkSBzlkdmjaBhy6+1I9B+zVf1TD82g+URSWbPup1BvL+7AJFAtEa7M/pR5SLiYckfdUuxHndvZTA==}
     hasBin: true
     dependencies:
-      '@drizzle-team/studio': 0.0.1
+      '@drizzle-team/studio': 0.0.3
       '@esbuild-kit/esm-loader': 2.5.5
       camelcase: 7.0.1
       chalk: 5.2.0
