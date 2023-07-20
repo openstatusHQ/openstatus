@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { insertPageSchema, page } from "@openstatus/db/src/schema";
+import {
+  insertPageSchema,
+  page,
+  selectIncidentSchema,
+  selectMonitorSchema,
+  selectPageSchema,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -10,7 +16,7 @@ export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchema)
     .mutation(async (opts) => {
-      return opts.ctx.db.insert(page).values(opts.input);
+      return opts.ctx.db.insert(page).values(opts.input).returning().get();
     }),
 
   getPageById: protectedProcedure
@@ -27,15 +33,23 @@ export const pageRouter = createTRPCRouter({
       return opts.ctx.db
         .select()
         .from(page)
-        .where(eq(page.workspaceId, opts.input.workspaceId));
+        .where(eq(page.workspaceId, opts.input.workspaceId))
+        .all();
     }),
+
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
-      return opts.ctx.db.query.page.findFirst({
+      const result = opts.ctx.db.query.page.findFirst({
         where: eq(page.slug, opts.input.slug),
         with: { monitors: true, incidents: true },
       });
+      const selectPageSchemaWithRelation = selectPageSchema.extend({
+        monitors: z.array(selectMonitorSchema),
+        incidents: z.array(selectIncidentSchema),
+      });
+
+      return selectPageSchemaWithRelation.parse(result);
     }),
 });

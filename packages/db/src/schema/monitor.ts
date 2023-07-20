@@ -59,4 +59,6 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
-export const selectMonitorSchema = createSelectSchema(monitor);
+export const selectMonitorSchema = createSelectSchema(monitor, {
+  periodicity: periodicityEnum,
+});

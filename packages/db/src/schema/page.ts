@@ -3,8 +3,8 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { incident } from "./incident";
-import { monitor } from "./monitor";
+import { incident, selectIncidentSchema } from "./incident";
+import { monitor, selectMonitorSchema } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {

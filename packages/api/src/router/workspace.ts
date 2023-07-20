@@ -32,6 +32,10 @@ export const workspaceRouter = createTRPCRouter({
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
-      return opts.ctx.db.insert(workspace).values({ name: opts.input.name });
+      return opts.ctx.db
+        .insert(workspace)
+        .values({ name: opts.input.name })
+        .returning()
+        .get();
     }),
 });

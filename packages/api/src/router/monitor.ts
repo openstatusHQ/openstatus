@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { insertMonitorSchema, monitor } from "@openstatus/db/src/schema";
+import {
+  insertMonitorSchema,
+  monitor,
+  selectMonitorSchema,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -9,15 +13,15 @@ export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(monitor).values(opts.input).run();
+      await opts.ctx.db.insert(monitor).values(opts.input);
     }),
 
   getMonitorById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.monitor
-        .findFirst({ where: eq(monitor.id, opts.input.id) })
-        .execute();
+      return await opts.ctx.db.query.monitor.findFirst({
+        where: eq(monitor.id, opts.input.id),
+      });
     }),
 
   updateMonitorDescription: protectedProcedure
@@ -31,19 +35,15 @@ export const monitorRouter = createTRPCRouter({
       await opts.ctx.db
         .update(monitor)
         .set({ description: opts.input.description })
-        .where(eq(monitor.id, opts.input.monitorId))
-        .run();
+        .where(eq(monitor.id, opts.input.monitorId));
     }),
   updateMonitor: protectedProcedure
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
-      console.log(opts.input);
       const r = await opts.ctx.db
         .update(monitor)
         .set(opts.input)
-        .where(eq(monitor.id, Number(opts.input.id)))
-        .execute();
-      console.log(r);
+        .where(eq(monitor.id, Number(opts.input.id)));
       return r;
     }),
   updateMonitorStatus: protectedProcedure
@@ -57,8 +57,7 @@ export const monitorRouter = createTRPCRouter({
       return await opts.ctx.db
         .update(monitor)
         .set(opts.input.status)
-        .where(eq(monitor.id, opts.input.id))
-        .run();
+        .where(eq(monitor.id, opts.input.id));
     }),
 
   deleteMonitor: protectedProcedure
@@ -66,16 +65,18 @@ export const monitorRouter = createTRPCRouter({
     .mutation(async (opts) => {
       await opts.ctx.db
         .delete(monitor)
-        .where(eq(monitor.id, opts.input.monitorId))
-        .run();
+        .where(eq(monitor.id, opts.input.monitorId));
     }),
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db
+      const result = await opts.ctx.db
         .select()
         .from(monitor)
         .where(eq(monitor.workspaceId, opts.input.workspaceId))
-        .run();
+        .all();
+      const selectMonitorsArray = selectMonitorSchema.array();
+
+      return selectMonitorsArray.parse(result);
     }),
 });
