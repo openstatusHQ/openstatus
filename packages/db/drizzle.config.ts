@@ -12,4 +12,5 @@ export default {
     authToken: env.DATABASE_AUTH_TOKEN,
   },
   driver: "turso",
+  strict: true,
 } satisfies Config;

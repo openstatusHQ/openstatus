@@ -6,6 +6,7 @@
   "scripts": {
     "generate": "drizzle-kit generate:sqlite",
     "push": "drizzle-kit push:sqlite",
+    "migrate": "ts-node --esm src/migrate.mts ",
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
@@ -23,7 +24,8 @@
     "typescript": "5.1.3",
     "bufferutil": "^4.0.7",
     "utf-8-validate": "^6.0.3",
-    "encoding": "0.1.13"
+    "encoding": "0.1.13",
+    "ts-node": "^10.9.1"
   },
   "author": ""
 }

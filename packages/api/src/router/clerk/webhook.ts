@@ -21,8 +21,7 @@ export const webhookRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.input.data.data.id))
         .get();
-      if (alreadyExists.id) return;
-
+      if (alreadyExists) return;
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
@@ -38,9 +37,10 @@ export const webhookRouter = createTRPCRouter({
       await opts.ctx.db
         .insert(usersToWorkspaces)
         .values({
-          userId: Number(userResult.id),
-          workspaceId: Number(workspaceResult.id),
+          userId: userResult.id,
+          workspaceId: workspaceResult.id,
         })
+        .returning()
         .get();
     }
   }),

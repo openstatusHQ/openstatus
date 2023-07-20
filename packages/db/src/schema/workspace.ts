@@ -19,6 +19,6 @@ export const workspace = sqliteTable("workspace", {
 });
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({
-  page: many(page),
   usersToWorkspaces: many(usersToWorkspaces),
+  page: many(page),
 }));
