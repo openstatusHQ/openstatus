@@ -7,6 +7,17 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "tsc": "tsc"
   },
+  "pnpm": {
+    "overrides": {
+      "@opentelemetry/api": "1.4.1",
+      "@opentelemetry/core": "1.13.0",
+      "@opentelemetry/exporter-trace-otlp-grpc": "0.39.1",
+      "@opentelemetry/resources": "1.13.0",
+      "@opentelemetry/sdk-trace-base": "1.13.0",
+      "@opentelemetry/sdk-trace-node": "1.13.0",
+      "@opentelemetry/semantic-conventions": "1.13.0"
+    }
+  },
   "devDependencies": {
     "@turbo/gen": "1.10.3",
     "eslint": "8.43.0",

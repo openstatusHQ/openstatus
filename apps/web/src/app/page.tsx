@@ -37,6 +37,9 @@ export default async function Page() {
                   Star on GitHub
                 </a>
               </Button>
+              <Button variant="link">
+                <Link href="/blog">Blog</Link>
+              </Button>
             </div>
             <HeroForm />
           </div>

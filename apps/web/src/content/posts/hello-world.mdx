@@ -1,0 +1,90 @@
+---
+title: Understanding Hoisting and Promises in JavaScript
+description:
+  Understanding two important concepts in JavaScript - hoisting and promises.
+author: Nikhil Mohite
+authorLink: https://nikhilmohite.com
+publishedAt: 2023-07-16
+---
+
+Understanding two important concepts in JavaScript: hoisting and promises.
+
+## Understanding Hoisting and Promises in JavaScript
+
+JavaScript is a versatile programming language that offers a wide range of
+features and functionalities. Two important concepts to grasp in JavaScript are
+hoisting and promises. Understanding these concepts can greatly enhance your
+ability to write efficient and reliable code. In this blog post, we will explore
+what hoisting and promises are, how they work, and provide some code examples to
+illustrate their usage.
+
+## Hoisting: Bringing Declarations to the Top
+
+Hoisting is a behavior in JavaScript where variable and function declarations
+are moved to the top of their containing scope during the compilation phase.
+This means that you can access and use variables and functions before they are
+actually declared in your code. However, it's important to note that only the
+declarations are hoisted, not the initializations.
+
+For example, consider the following code snippet:
+
+```js title="index.js" {} showLineNumbers
+console.log(name);
+```
+
+## Promises: Managing Asynchronous Operations
+
+Promises are a powerful concept introduced in ECMAScript 6 (ES6) that enable
+better management of asynchronous operations in JavaScript. They provide a
+cleaner and more structured approach to handling asynchronous tasks, such as
+network requests or file operations. A promise represents a value that may not
+be available yet, but will be resolved at some point in the future.
+
+Promises have three states: pending, fulfilled, or rejected. When a promise is
+pending, it means the asynchronous operation is still in progress. Once the
+operation is completed successfully, the promise is fulfilled and returns a
+value. On the other hand, if an error occurs during the operation, the promise
+is rejected, and an error object is returned.
+
+This code fetches data asynchronously using a promise in TypeScript, resolves
+the data after a delay, and handles the received data or any potential errors
+using then and catch blocks.
+
+```ts title="index.ts" {3, 16} showLineNumbers
+function getData(): Promise<string[]> {
+  return new Promise<string[]>((resolve, reject) => {
+    setTimeout(() => {
+      const data: string[] = ["John", "Jane", "Bob"];
+      if (data.length > 0) {
+        resolve(data);
+      } else {
+        reject(new Error("No data available."));
+      }
+    }, 2000);
+  });
+}
+
+getData()
+  .then((data) => {
+    console.log("Received data:", data);
+  })
+  .catch((error) => {
+    console.error("Error:", error.message);
+  });
+```
+
+## Advantages of Using Promises
+
+- Promises improve code readability and maintainability in JavaScript.
+- Promises simplify error handling in asynchronous code.
+- Promises help avoid <strong>"callback hell"</strong> by providing a more
+  linear and sequential approach to asynchronous operations.
+
+## Conclusion
+
+In conclusion, hoisting and promises are important concepts in JavaScript that
+greatly contribute to writing efficient and reliable code. Hoisting allows
+variable and function declarations to be moved to the top of their scope,
+enabling early access to these entities. Promises, on the other hand, provide a
+structured and readable approach to managing asynchronous operations, enhancing
+code maintainability and error handling.
