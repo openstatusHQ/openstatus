@@ -10,8 +10,9 @@ export function Mdx({ code }: MdxProps) {
   const MDXComponent = getMDXComponent(code);
 
   return (
-    <main className="prose prose-quoteless prose-neutral dark:prose-invert mb-6 max-w-none">
+    // FIXME: weird behaviour when `prose-headings:font-cal` and on mouse movement font gets bigger
+    <div className="prose prose-neutral dark:prose-invert">
       <MDXComponent components={{ ...components }} />
-    </main>
+    </div>
   );
 }

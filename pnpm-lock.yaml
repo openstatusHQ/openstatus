@@ -243,6 +243,9 @@ importers:
       typescript:
         specifier: 5.1.3
         version: 5.1.3
+      unified:
+        specifier: ^10.1.2
+        version: 10.1.2
 
   packages/api:
     dependencies:

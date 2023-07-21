@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
-import { BackButton } from "@/components/layout/back-button";
-import { Footer } from "@/components/layout/footer";
-import { Mdx } from "@/components/mdx";
+import { Mdx } from "@/components/content/mdx";
+import { formatDate } from "@/lib/utils";
+
+export const dynamic = "force-static";
 
 export async function generateStaticParams() {
   return allPosts.map((post) => ({
@@ -17,7 +18,7 @@ export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
-}): Promise<Metadata | undefined> {
+}): Promise<Metadata | void> {
   const post = allPosts.find((post) => post.slug === params.slug);
   if (!post) {
     return;
@@ -56,35 +57,23 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   if (!post) {
     notFound();
   }
+
+  // TODO: add author.avatar and author.url
   return (
-    <>
-      <article className="relative my-5 grid grid-cols-[1fr,min(90%,100%),1fr] gap-y-8 sm:grid-cols-[1fr,min(90%,100%),1fr] sm:pt-8 md:grid md:grid-cols-[1fr,min(80%,100%),1fr] lg:grid-cols-[1fr,min(70%,100%),1fr] xl:grid-cols-[1fr,minmax(auto,240px),min(50%,100%),minmax(auto,240px),1fr] xl:gap-x-5 xl:px-0 [&>*]:col-start-2 xl:[&>*]:col-start-3">
-        <div>
-          <BackButton />
-        </div>
-
-        <section className="mt-1">
-          <div className="mt-2 w-full sm:pointer-events-none xl:!col-end-5">
-            <h1 className="text-3xl font-bold sm:text-4xl">{post.title}</h1>
-          </div>
-          <div className="mt-2 flex flex-col items-center justify-between sm:flex-row">
-            <div>
-              <Link href={post.authorLink}>{post.author}</Link>
-              <span className="text-muted-foreground">
-                {" / "}
-                {post.publishedAtFormatted}
-              </span>
-            </div>
-            <div className="text-muted-foreground text-sm sm:pointer-events-none lg:text-base">
-              ~{post.readingTime}
-            </div>
-          </div>
-        </section>
-
-        {/* load Post content stored in .mdx format */}
+    <article className="grid gap-8">
+      <div className="mx-auto grid max-w-prose gap-3">
+        <h1 className="font-cal text-3xl">{post.title}</h1>
+        <p className="text-muted-foreground text-sm font-light">
+          {post.author.name}
+          <span className="text-muted-foreground/70 mx-1">&bull;</span>
+          {formatDate(new Date(post.publishedAt))}
+          <span className="text-muted-foreground/70 mx-1">&bull;</span>
+          {post.readingTime}
+        </p>
+      </div>
+      <div className="mx-auto max-w-prose">
         <Mdx code={post.body.code} />
-      </article>
-      <Footer />
-    </>
+      </div>
+    </article>
   );
 }

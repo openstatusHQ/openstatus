@@ -3,11 +3,16 @@ pre > code {
   display: grid;
 }
 
+.prose pre {
+  margin: 0;
+  padding: 0;
+}
+
 div[data-rehype-pretty-code-fragment] {
   overflow: hidden;
 
   /* stylist preferences */
-  background-color: rgba(57, 57, 57, 0.102);
+  background-color: var(--muted-foreground);
   border-radius: 0.5rem;
   width: 100%;
   margin: 1rem 0;
@@ -36,8 +41,6 @@ div[data-rehype-pretty-code-title] {
     "Liberation Mono", "Courier New", monospace;
   font-size: 0.75rem;
   line-height: 1rem;
-
-  @apply dark:bg-[#ffe4e61a] dark:text-[#ccccccb3];
 }
 
 div[data-rehype-pretty-code-fragment] .line {
@@ -50,7 +53,7 @@ div[data-rehype-pretty-code-fragment] .line {
 }
 
 div[data-rehype-pretty-code-fragment] .line--highlighted {
-  border-left-color: rgba(135, 127, 128, 0.7);
+  border-left-color: var(--border);
   background-color: rgb(254 205 211 / 0.1);
 }
 
@@ -68,6 +71,4 @@ code[data-line-numbers] .line::before {
   /* stylistic preferences */
   margin-right: 0.75rem;
   width: 1rem;
-
-  @apply dark:text-[#e8e8e8b3];
 }

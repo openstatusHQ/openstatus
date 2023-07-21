@@ -1,5 +1,6 @@
-@tailwind base;
 @import "@/styles/syntax-highlighting.css";
+
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -76,30 +77,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* blog */
-.prose h1 > a,
-.prose h2 > a,
-.prose h3 > a {
-  @apply hover:before:text-muted-foreground no-underline before:-ml-[0.9em] before:mr-2 before:text-rose-100/0 before:content-['#'];
-}
-
-.prose pre {
-  margin: 0;
-  padding: 0;
-}
-
-.prose h2 {
-  word-wrap: break-all;
-}
-
-.prose p > code {
-  word-wrap: break-all;
-  @apply whitespace-nowrap rounded-full border border-rose-200/10 px-1.5 py-px text-red-400/90 dark:bg-white/5 dark:text-rose-300/90;
-}
-
-pre {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
 }
