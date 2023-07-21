@@ -23,7 +23,7 @@ export default async function MonitorPage({
       <Header title="Monitors" description="Overview of all your monitors.">
         <CreateForm {...{ workspaceId }} />
       </Header>
-      {monitors.map((monitor, index) => (
+      {monitors?.map((monitor, index) => (
         <Container
           key={index}
           title={monitor.name}

@@ -56,9 +56,14 @@ export const periodicityEnum = z.enum([
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
   url: z.string().url(),
+  status: z.enum(["active", "inactive"]).default("inactive"),
+  active: z.boolean().default(false),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: periodicityEnum,
+  status: z.enum(["active", "inactive"]).default("inactive"),
+  jobType: z.enum(["website", "cron", "other"]).default("other"),
+  active: z.boolean().default(false),
 });

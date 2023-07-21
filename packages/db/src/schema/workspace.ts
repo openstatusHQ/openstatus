@@ -7,7 +7,7 @@ import { usersToWorkspaces } from "./user";
 export const workspace = sqliteTable("workspace", {
   id: integer("id").primaryKey(),
 
-  stripeId: text("stripe_id", { length: 256 }),
+  stripeId: text("stripe_id", { length: 256 }).unique(),
   name: text("name"),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(

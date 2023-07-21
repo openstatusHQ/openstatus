@@ -33,6 +33,7 @@ CREATE TABLE `monitor` (
 	`job_type` text(3) DEFAULT 'other' NOT NULL,
 	`periodicity` text(6) DEFAULT 'other' NOT NULL,
 	`status` text(2) DEFAULT 'inactive' NOT NULL,
+	`active` integer DEFAULT false,
 	`url` text(512) NOT NULL,
 	`name` text(256) DEFAULT '' NOT NULL,
 	`description` text DEFAULT '' NOT NULL,
@@ -52,7 +53,9 @@ CREATE TABLE `user` (
 CREATE TABLE `users_to_workspaces` (
 	`user_id` integer NOT NULL,
 	`workspace_id` integer NOT NULL,
-	PRIMARY KEY(`user_id`, `workspace_id`)
+	PRIMARY KEY(`user_id`, `workspace_id`),
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE TABLE `workspace` (
@@ -61,3 +64,8 @@ CREATE TABLE `workspace` (
 	`name` text,
 	`updated_at` integer DEFAULT (strftime('%s', 'now'))
 );
+--> statement-breakpoint
+CREATE UNIQUE INDEX `page_slug_unique` ON `page` (`slug`);--> statement-breakpoint
+CREATE UNIQUE INDEX `page_custom_domain_unique` ON `page` (`custom_domain`);--> statement-breakpoint
+CREATE UNIQUE INDEX `user_tenant_id_unique` ON `user` (`tenant_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `workspace_stripe_id_unique` ON `workspace` (`stripe_id`);

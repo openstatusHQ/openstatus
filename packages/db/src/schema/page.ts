@@ -17,8 +17,11 @@ export const page = sqliteTable("page", {
   title: text("title").notNull(), // title of the page
   description: text("description").notNull(), // description of the page
   icon: text("icon", { length: 256 }), // icon of the page
-  slug: text("slug", { length: 256 }).notNull(), // which is used for https://slug.openstatus.dev
-  customDomain: text("custom_domain", { length: 256 }).notNull().default(""),
+  slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
+  customDomain: text("custom_domain", { length: 256 })
+    .notNull()
+    .default("")
+    .unique(),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,

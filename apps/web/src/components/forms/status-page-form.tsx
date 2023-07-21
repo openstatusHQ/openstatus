@@ -32,6 +32,7 @@ export function StatusPageForm({ id, defaultValues, onSubmit }: Props) {
       title: defaultValues?.title || "",
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
+      workspaceId: defaultValues?.workspaceId || 0,
     },
   });
 
