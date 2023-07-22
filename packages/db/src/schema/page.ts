@@ -3,8 +3,8 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { incident, selectIncidentSchema } from "./incident";
-import { monitor, selectMonitorSchema } from "./monitor";
+import { incident } from "./incident";
+import { monitorsToPages } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
@@ -18,10 +18,7 @@ export const page = sqliteTable("page", {
   description: text("description").notNull(), // description of the page
   icon: text("icon", { length: 256 }), // icon of the page
   slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
-  customDomain: text("custom_domain", { length: 256 })
-    .notNull()
-    .default("")
-    .unique(),
+  customDomain: text("custom_domain", { length: 256 }).notNull(),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -32,12 +29,12 @@ export const page = sqliteTable("page", {
 });
 
 export const pageRelations = relations(page, ({ many, one }) => ({
+  monitorsToPages: many(monitorsToPages),
   incidents: many(incident),
   workspace: one(workspace, {
     fields: [page.workspaceId],
     references: [workspace.id],
   }),
-  monitors: many(monitor),
 }));
 
 // Schema for inserting a Page - can be used to validate API requests
@@ -45,5 +42,9 @@ export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
 });
 
+export const insertPageSchemaWithMonitors = insertPageSchema.extend({
+  customDomain: z.string().optional().default(""),
+  monitors: z.array(z.number()).optional(),
+});
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);

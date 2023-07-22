@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import { eq } from "@openstatus/db";
 import {
+  allMonitorsSchema,
   insertMonitorSchema,
   monitor,
-  selectMonitorSchema,
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
@@ -215,8 +215,8 @@ export const monitorRouter = createTRPCRouter({
         .from(monitor)
         .where(eq(monitor.workspaceId, opts.input.workspaceId))
         .all();
-      const selectMonitorsArray = selectMonitorSchema.array();
+      // const selectMonitorsArray = selectMonitorSchema.array();
 
-      return selectMonitorsArray.parse(monitors);
+      return allMonitorsSchema.parse(monitors);
     }),
 });

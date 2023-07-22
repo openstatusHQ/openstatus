@@ -1,5 +1,10 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -33,16 +38,28 @@ export const monitor = sqliteTable("monitor", {
   ),
 });
 
-export const monitorRelation = relations(monitor, ({ one }) => ({
-  page: one(page, {
-    fields: [monitor.pageId],
-    references: [page.id],
-  }),
+export const monitorRelation = relations(monitor, ({ one, many }) => ({
+  monitorsToPages: many(monitorsToPages),
   workspace: one(workspace, {
     fields: [monitor.workspaceId],
     references: [workspace.id],
   }),
 }));
+
+export const monitorsToPages = sqliteTable(
+  "monitors_to_pages",
+  {
+    monitorId: integer("monitor_id")
+      .notNull()
+      .references(() => monitor.id),
+    pageId: integer("page_id")
+      .notNull()
+      .references(() => page.id),
+  },
+  (t) => ({
+    pk: primaryKey(t.monitorId, t.pageId),
+  }),
+);
 
 export const periodicityEnum = z.enum([
   "1m",
@@ -67,3 +84,5 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
 });
+
+export const allMonitorsSchema = z.array(selectMonitorSchema);
