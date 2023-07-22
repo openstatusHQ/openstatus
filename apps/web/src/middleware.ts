@@ -73,6 +73,7 @@ export default authMiddleware({
       auth.userId &&
       (req.nextUrl.pathname === "/app" || req.nextUrl.pathname === "/app/")
     ) {
+      console.log(auth.userId);
       // improve on sign-up if the webhook has not been triggered yet
       const userQuery = db
         .select()
@@ -83,9 +84,8 @@ export default authMiddleware({
         .select()
         .from(usersToWorkspaces)
         .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
-        .execute();
-
-      if (result.length) {
+        .all();
+      if (result.length > 0) {
         const orgSelection = new URL(
           `/app/${result[0].users_to_workspaces.workspaceId}/dashboard`,
           req.url,

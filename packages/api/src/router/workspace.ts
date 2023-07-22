@@ -1,12 +1,7 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import {
-  page,
-  user,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -26,9 +21,25 @@ export const workspaceRouter = createTRPCRouter({
   getWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
+      const currentUser = opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .as("currentUser");
+      const result = await opts.ctx.db
+        .select()
+        .from(usersToWorkspaces)
+        .where(
+          eq(usersToWorkspaces.workspaceId, Number(opts.input.workspaceId)),
+        )
+        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+        .get();
+
+      if (!result.users_to_workspaces) return;
+
       return await opts.ctx.db.query.workspace.findMany({
         with: {
-          page: true,
+          pages: true,
         },
         where: eq(workspace.id, opts.input.workspaceId),
       });
@@ -37,9 +48,10 @@ export const workspaceRouter = createTRPCRouter({
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
-      await opts.ctx.db
+      return opts.ctx.db
         .insert(workspace)
         .values({ name: opts.input.name })
-        .execute();
+        .returning()
+        .get();
     }),
 });

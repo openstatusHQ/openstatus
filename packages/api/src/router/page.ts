@@ -1,7 +1,13 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { insertPageSchema, page } from "@openstatus/db/src/schema";
+import {
+  insertPageSchema,
+  page,
+  selectIncidentSchema,
+  selectMonitorSchema,
+  selectPageSchema,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -10,36 +16,40 @@ export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(page).values(opts.input).execute();
+      return opts.ctx.db.insert(page).values(opts.input).returning().get();
     }),
 
   getPageById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page
-        .findFirst({
-          where: eq(page.id, opts.input.id),
-          with: { monitors: true, incidents: true },
-        })
-        .execute();
+      return await opts.ctx.db.query.page.findFirst({
+        where: eq(page.id, opts.input.id),
+        with: { monitors: true, incidents: true },
+      });
     }),
   getPageByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db
+      return opts.ctx.db
         .select()
         .from(page)
-        .where(eq(page.workspaceId, opts.input.workspaceId));
+        .where(eq(page.workspaceId, opts.input.workspaceId))
+        .all();
     }),
+
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page
-        .findFirst({
-          where: eq(page.slug, opts.input.slug),
-          with: { monitors: true, incidents: true },
-        })
-        .execute();
+      const result = opts.ctx.db.query.page.findFirst({
+        where: eq(page.slug, opts.input.slug),
+        with: { monitors: true, incidents: true },
+      });
+      const selectPageSchemaWithRelation = selectPageSchema.extend({
+        monitors: z.array(selectMonitorSchema),
+        incidents: z.array(selectIncidentSchema),
+      });
+
+      return selectPageSchemaWithRelation.parse(result);
     }),
 });

@@ -38,4 +38,13 @@ yarn-error.log*
 # packages
 dist
 packages/emails/.react-email
+packages/db/database.db
+packages/db/openstatus.db
+packages/db/database.db-wal
+packages/db/database.db-shm
+packages/db/openstatus.db-shm
+packages/db/openstatus.db-wal
+openstatus.db-wal
+openstatus.db
+openstatus.db-shm
 packages/tinybird/.tinyb
