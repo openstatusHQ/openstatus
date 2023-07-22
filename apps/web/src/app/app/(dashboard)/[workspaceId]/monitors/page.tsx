@@ -24,8 +24,8 @@ export default async function MonitorPage({
       <Header title="Monitors" description="Overview of all your monitors.">
         <CreateForm {...{ workspaceId }} />
       </Header>
-      {Boolean(monitors.length) ? (
-        monitors.map((monitor, index) => (
+      {Boolean(monitors?.length) ? (
+        monitors?.map((monitor, index) => (
           <Container
             key={index}
             title={monitor.name}

@@ -35,7 +35,8 @@ export const pageRouter = createTRPCRouter({
         .update(page)
         .set(opts.input)
         .where(eq(page.id, Number(opts.input.id)))
-        .execute();
+        .returning()
+        .get();
       console.log(r);
       return r;
     }),
