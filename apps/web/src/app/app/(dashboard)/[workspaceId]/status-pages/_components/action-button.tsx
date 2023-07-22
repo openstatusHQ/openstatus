@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
-import type { insertPageSchema } from "@openstatus/db/src/schema";
+import type {
+  insertMonitorSchema,
+  insertPageSchema,
+} from "@openstatus/db/src/schema";
 
 import { StatusPageForm } from "@/components/forms/status-page-form";
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -37,21 +39,34 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
-type Schema = z.infer<typeof insertPageSchema>;
+type MonitorSchema = z.infer<typeof insertMonitorSchema>;
+type PageSchema = z.infer<typeof insertPageSchema>;
 
-export function ActionButton(props: Schema) {
+// allMonitors
+interface ActionButtonProps {
+  page: PageSchema;
+  allMonitors?: MonitorSchema[];
+}
+
+export function ActionButton({ page, allMonitors }: ActionButtonProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  async function onUpdate(values: Schema) {
+  async function onUpdate({
+    monitors,
+    workspaceId,
+    ...props
+  }: PageSchema & { monitors: string[] }) {
     setSaving(true);
-    // await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
-    await wait(1000);
+    await api.page.updatePage.mutate({
+      id: page.id,
+      workspaceId: page.workspaceId,
+      ...props,
+    });
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
@@ -59,8 +74,7 @@ export function ActionButton(props: Schema) {
 
   async function onDelete() {
     setSaving(true);
-    // await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
-    await wait(1000);
+    await api.page.deletePage.mutate({ pageId: Number(page.id) });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);
@@ -116,16 +130,24 @@ export function ActionButton(props: Schema) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <DialogContent>
+      <DialogContent className="flex max-h-screen flex-col">
         <DialogHeader>
           <DialogTitle>Update Page</DialogTitle>
           <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
-        <StatusPageForm
-          id="status-page-update"
-          onSubmit={onUpdate}
-          defaultValues={props}
-        />
+        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+          <StatusPageForm
+            id="status-page-update"
+            onSubmit={onUpdate}
+            defaultValues={page}
+            allMonitors={
+              allMonitors?.map((m) => ({
+                label: m.name || "",
+                value: String(m.id) || "",
+              })) ?? []
+            }
+          />
+        </div>
         <DialogFooter>
           <Button
             type="submit"

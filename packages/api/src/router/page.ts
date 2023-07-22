@@ -27,6 +27,24 @@ export const pageRouter = createTRPCRouter({
         with: { monitors: true, incidents: true },
       });
     }),
+  updatePage: protectedProcedure
+    .input(insertPageSchema)
+    .mutation(async (opts) => {
+      console.log(opts.input);
+      const r = await opts.ctx.db
+        .update(page)
+        .set(opts.input)
+        .where(eq(page.id, Number(opts.input.id)))
+        .returning()
+        .get();
+      console.log(r);
+      return r;
+    }),
+  deletePage: protectedProcedure
+    .input(z.object({ pageId: z.number() }))
+    .mutation(async (opts) => {
+      await opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId));
+    }),
   getPageByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {

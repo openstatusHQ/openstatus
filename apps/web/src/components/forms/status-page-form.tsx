@@ -1,8 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
+import * as z from "zod";
 
 import { insertPageSchema } from "@openstatus/db/src/schema";
 
@@ -16,23 +17,39 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "../ui/checkbox";
 
-type Schema = z.infer<typeof insertPageSchema>;
+// REMINDER: only use the props you need!
+const schema = insertPageSchema
+  .pick({ title: true, slug: true, description: true })
+  .merge(
+    z.object({
+      monitors: z.string().array().optional(), // HOW TO PASS
+    }),
+  );
+
+type Schema = z.infer<typeof schema>;
 
 interface Props {
   id: string;
   defaultValues?: Schema;
   onSubmit: (values: Schema) => Promise<void>;
+  allMonitors?: Record<"label" | "value", string>[];
 }
 
-export function StatusPageForm({ id, defaultValues, onSubmit }: Props) {
+export function StatusPageForm({
+  id,
+  defaultValues,
+  onSubmit,
+  allMonitors,
+}: Props) {
   const form = useForm<Schema>({
-    resolver: zodResolver(insertPageSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title || "",
-      slug: defaultValues?.slug || "",
+      slug: defaultValues?.slug || "", // TODO: verify if is unique
       description: defaultValues?.description || "",
-      workspaceId: defaultValues?.workspaceId || 0,
+      monitors: [],
     },
   });
 
@@ -82,6 +99,57 @@ export function StatusPageForm({ id, defaultValues, onSubmit }: Props) {
                 <FormDescription>
                   Give your user some information about it.
                 </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="monitors"
+            render={() => (
+              <FormItem>
+                <div className="mb-4">
+                  <FormLabel className="text-base">Monitor</FormLabel>
+                  <FormDescription>
+                    Select the monitors you want to display.
+                  </FormDescription>
+                </div>
+                {allMonitors?.map((item) => (
+                  <FormField
+                    key={item.value}
+                    control={form.control}
+                    name="monitors"
+                    render={({ field }) => {
+                      return (
+                        <FormItem
+                          key={item.value}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.value)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([
+                                      ...(field.value || []),
+                                      item.value,
+                                    ])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item.value,
+                                      ),
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {item.label}
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    }}
+                  />
+                ))}
                 <FormMessage />
               </FormItem>
             )}

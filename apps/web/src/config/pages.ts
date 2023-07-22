@@ -33,6 +33,7 @@ export const pagesConfig: Page[] = [
     description: "War room where you handle the incidents.",
     href: "/incidents",
     icon: "siren",
+    disabled: true,
   },
   // ...
 ];

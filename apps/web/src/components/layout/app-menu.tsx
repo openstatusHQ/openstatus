@@ -33,8 +33,8 @@ export function AppMenu() {
       <SheetContent>
         <SheetHeader>
           <SheetTitle className="text-left">Navigation</SheetTitle>
-          <AppSidebar />
         </SheetHeader>
+        <AppSidebar />
       </SheetContent>
     </Sheet>
   );
