@@ -6,7 +6,7 @@ CREATE TABLE `incident` (
 	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `incidentUpdate` (
+CREATE TABLE `incident_update` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`incident_date` integer,
 	`title` text(256),

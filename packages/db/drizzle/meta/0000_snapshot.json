@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "d8e1f201-af0d-499a-983d-891183f02957",
+  "id": "1c9c9848-d580-4543-9104-566450666ad5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -56,8 +56,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "incidentUpdate": {
-      "name": "incidentUpdate",
+    "incident_update": {
+      "name": "incident_update",
       "columns": {
         "id": {
           "name": "id",
@@ -105,9 +105,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "incidentUpdate_incident_id_incident_id_fk": {
-          "name": "incidentUpdate_incident_id_incident_id_fk",
-          "tableFrom": "incidentUpdate",
+        "incident_update_incident_id_incident_id_fk": {
+          "name": "incident_update_incident_id_incident_id_fk",
+          "tableFrom": "incident_update",
           "tableTo": "incident",
           "columnsFrom": [
             "incident_id"

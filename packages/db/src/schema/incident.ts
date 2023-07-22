@@ -21,7 +21,7 @@ export const incident = sqliteTable("incident", {
   ),
 });
 
-export const incidentUpdate = sqliteTable("incidentUpdate", {
+export const incidentUpdate = sqliteTable("incident_update", {
   id: integer("id").primaryKey(),
 
   date: integer("incident_date"),
