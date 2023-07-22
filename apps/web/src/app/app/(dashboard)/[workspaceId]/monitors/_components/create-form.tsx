@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/trpc/client";
 
+type MonitorSchema = z.infer<typeof insertMonitorSchema>;
+
 interface Props {
   workspaceId: number;
 }
@@ -29,7 +31,7 @@ export function CreateForm({ workspaceId }: Props) {
   const [open, setOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  async function onCreate(values: z.infer<typeof insertMonitorSchema>) {
+  async function onCreate(values: MonitorSchema) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
     await api.monitor.createMonitor.mutate({ ...values, workspaceId });
@@ -43,12 +45,14 @@ export function CreateForm({ workspaceId }: Props) {
       <DialogTrigger asChild>
         <Button>Create</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="flex max-h-screen flex-col">
         <DialogHeader>
           <DialogTitle>Create Monitor</DialogTitle>
           <DialogDescription>Choose the settings.</DialogDescription>
         </DialogHeader>
-        <MonitorForm id="monitor-create" onSubmit={onCreate} />
+        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+          <MonitorForm id="monitor-create" onSubmit={onCreate} />
+        </div>
         <DialogFooter>
           <Button type="submit" form="monitor-create" disabled={saving}>
             {!saving ? "Confirm" : <LoadingAnimation />}

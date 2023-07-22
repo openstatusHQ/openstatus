@@ -122,16 +122,18 @@ export function ActionButton(props: Schema) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <DialogContent>
+      <DialogContent className="flex max-h-screen flex-col">
         <DialogHeader>
           <DialogTitle>Update Monitor</DialogTitle>
           <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
-        <MonitorForm
-          id="monitor-update"
-          onSubmit={onUpdate}
-          defaultValues={props}
-        />
+        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+          <MonitorForm
+            id="monitor-update"
+            onSubmit={onUpdate}
+            defaultValues={props}
+          />
+        </div>
         <DialogFooter>
           <Button
             type="submit"
