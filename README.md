@@ -72,7 +72,7 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
    from `apps/web` and `packages/db` you will find .env.example create your own.
 
 4. Follow the steps to run your sqlite database locally inside of
-   [README.md](https://github.com/openstatusHQ/openstatus/packages/db/README.md)
+   [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
 
 5. Start the development server
 
