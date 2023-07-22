@@ -30,7 +30,7 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       // the user don't have access to this workspace
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       await opts.ctx.db.insert(monitor).values(opts.input).returning().get();
     }),
@@ -56,7 +56,7 @@ export const monitorRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       return mon;
     }),
@@ -90,7 +90,7 @@ export const monitorRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       opts.ctx.db
         .update(monitor)
@@ -120,7 +120,7 @@ export const monitorRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       opts.ctx.db
         .update(monitor)
@@ -186,7 +186,7 @@ export const monitorRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       opts.ctx.db.delete(monitor).where(eq(monitor.id, opts.input.monitorId));
     }),
@@ -206,9 +206,8 @@ export const monitorRouter = createTRPCRouter({
         )
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
-
       // the user don't have access to this workspace
-      if (!result.users_to_workspaces) return;
+      if (!result || !result.users_to_workspaces) return;
 
       const monitors = await opts.ctx.db
         .select()

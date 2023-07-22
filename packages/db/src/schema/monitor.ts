@@ -61,6 +61,20 @@ export const monitorsToPages = sqliteTable(
   }),
 );
 
+export const monitorsToPagesRelation = relations(
+  monitorsToPages,
+  ({ one }) => ({
+    monitor: one(monitor, {
+      fields: [monitorsToPages.monitorId],
+      references: [monitor.id],
+    }),
+    page: one(page, {
+      fields: [monitorsToPages.pageId],
+      references: [page.id],
+    }),
+  }),
+);
+
 export const periodicityEnum = z.enum([
   "1m",
   "5m",

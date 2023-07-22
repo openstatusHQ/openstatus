@@ -76,7 +76,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       const result = opts.ctx.db.query.page.findFirst({
         where: eq(page.slug, opts.input.slug),
-        with: { monitorsToPages: { with: monitor }, incidents: true },
+        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
       });
       const selectPageSchemaWithRelation = selectPageSchema.extend({
         monitors: z.array(selectMonitorSchema),
