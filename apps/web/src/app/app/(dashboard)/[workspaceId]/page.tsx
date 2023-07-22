@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function DiscordRedirect({
+export default function DashboardRedirect({
   params,
 }: {
   params: { workspaceId: string };

@@ -3,10 +3,10 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
-import { Container } from "@/components/dashboard/container";
-import { Header } from "@/components/dashboard/header";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Shell } from "@/components/dashboard/shell";
+import { LoadingAnimation } from "@/components/loading-animation";
 
+// TODO: discuss how to make that page a bit more enjoyable
 export default function Page() {
   const router = useRouter();
 
@@ -14,15 +14,14 @@ export default function Page() {
   setTimeout(() => router.refresh(), 1000);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <div className="col-span-full flex w-full justify-between">
-        <Header.Skeleton>
-          <Skeleton className="h-9 w-20" />
-        </Header.Skeleton>
-      </div>
-      <Container.Skeleton />
-      <Container.Skeleton />
-      <Container.Skeleton />
+    <div className="flex min-h-screen flex-col items-center justify-center">
+      <Shell className="mx-auto grid w-auto gap-4">
+        <div className="grid gap-1 text-center">
+          <p className="text-lg font-bold">Creating Workspace</p>
+          <p className="text-muted-foreground">Should be done in a second.</p>
+        </div>
+        <LoadingAnimation variant="inverse" size="lg" />
+      </Shell>
     </div>
   );
 }
