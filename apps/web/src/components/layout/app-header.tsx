@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 
+import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";
+import { Icons } from "../icons";
+import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 
 export function AppHeader() {
@@ -18,11 +21,28 @@ export function AppHeader() {
         >
           openstatus
         </Link>
-        {!isLoaded && !isSignedIn ? (
-          <Skeleton className="h-8 w-8 rounded-full" />
-        ) : (
-          <UserButton />
-        )}
+        <div className="flex items-center gap-4">
+          {/* can be moved to a different place */}
+          <ul className="flex gap-2">
+            {socialsConfig.map(({ title, href, icon }) => {
+              const Icon = Icons[icon];
+              return (
+                <li key={title} className="w-full">
+                  <Button size="icon" variant="ghost" asChild>
+                    <a href={href} target="_blank" rel="noreferrer">
+                      <Icon className="h-5 w-5" />
+                    </a>
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+          {!isLoaded && !isSignedIn ? (
+            <Skeleton className="h-8 w-8 rounded-full" />
+          ) : (
+            <UserButton />
+          )}
+        </div>
       </Shell>
     </header>
   );
