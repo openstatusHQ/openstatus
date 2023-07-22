@@ -1,11 +1,11 @@
 VERSION 2
 
-NODE response_list__v2_0
+NODE response_list_0
 SQL >
 
     %
     SELECT *
-    FROM ping_response__v2
+    FROM ping_response
     WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
     {% if defined(region) %}
     AND region = {{ String(region) }}
@@ -21,3 +21,5 @@ SQL >
     {% end %}
     ORDER BY timestamp DESC
     LIMIT {{Int32(limit, 100)}}
+
+
