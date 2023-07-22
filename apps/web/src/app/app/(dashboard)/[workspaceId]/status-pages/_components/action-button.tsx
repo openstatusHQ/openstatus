@@ -39,7 +39,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 type MonitorSchema = z.infer<typeof insertMonitorSchema>;
@@ -59,12 +58,15 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
 
   async function onUpdate({
     monitors,
+    workspaceId,
     ...props
   }: PageSchema & { monitors: string[] }) {
-    console.log({ monitors, ...props });
     setSaving(true);
-    // await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
-    await wait(1000);
+    await api.page.updatePage.mutate({
+      id: page.id,
+      workspaceId: page.workspaceId,
+      ...props,
+    });
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
@@ -72,8 +74,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
 
   async function onDelete() {
     setSaving(true);
-    // await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
-    await wait(1000);
+    await api.page.deletePage.mutate({ pageId: Number(page.id) });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);
