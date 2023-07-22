@@ -1,12 +1,12 @@
 {
   "version": "5",
-  "dialect": "mysql",
+  "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1687764025255,
-      "tag": "0000_superb_hercules",
+      "when": 1690046393803,
+      "tag": "0000_nebulous_shape",
       "breakpoints": true
     }
   ]

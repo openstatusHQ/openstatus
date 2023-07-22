@@ -1,9 +1,7 @@
-import { NextResponse } from "next/server";
 import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
-import { db, eq } from "@openstatus/db";
-import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";

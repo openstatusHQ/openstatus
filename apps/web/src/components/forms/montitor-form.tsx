@@ -114,7 +114,6 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   </FormDescription>
                 </div>
                 <FormControl>
-                  {/* TODO: make the monitor.active a boolean value */}
                   <Switch
                     checked={field.value === "active" ? true : false}
                     onCheckedChange={(value) =>

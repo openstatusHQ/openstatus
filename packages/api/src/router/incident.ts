@@ -15,13 +15,17 @@ export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
     .input(insertIncidentSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(incident).values(opts.input).execute();
+      return opts.ctx.db.insert(incident).values(opts.input).returning().get();
     }),
 
   createIncidentUpdate: protectedProcedure
     .input(insertIncidentUpdateSchema)
     .mutation(async (opts) => {
-      await opts.ctx.db.insert(incidentUpdate).values(opts.input).execute();
+      return opts.ctx.db
+        .insert(incidentUpdate)
+        .values(opts.input)
+        .returning()
+        .get();
     }),
 
   updateIncident: protectedProcedure
@@ -32,11 +36,12 @@ export const incidentRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      await opts.ctx.db
+      return opts.ctx.db
         .update(incident)
         .set(opts.input.status)
         .where(eq(incident.id, opts.input.incidentId))
-        .execute();
+        .returning()
+        .get();
     }),
   getIncidentByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
@@ -50,6 +55,6 @@ export const incidentRouter = createTRPCRouter({
         .select()
         .from(incident)
         .innerJoin(pageQuery, eq(incident.pageId, pageQuery.id))
-        .execute();
+        .all();
     }),
 });
