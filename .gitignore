@@ -47,3 +47,4 @@ packages/db/openstatus.db-wal
 openstatus.db-wal
 openstatus.db
 openstatus.db-shm
+packages/tinybird/.tinyb

@@ -57,6 +57,8 @@ export default authMiddleware({
     "/api/webhook/clerk",
     "/api/checker/regions/(.*)",
     "/api/checker/cron/10m",
+    "/blog",
+    "/blog/(.*)",
   ],
   ignoredRoutes: ["/api/og"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
