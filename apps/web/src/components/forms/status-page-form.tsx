@@ -17,7 +17,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { api } from "@/trpc/client";
 import { Checkbox } from "../ui/checkbox";
+import { useToast } from "../ui/use-toast";
 
 // REMINDER: only use the props you need!
 const schema = insertPageSchema
@@ -47,15 +49,54 @@ export function StatusPageForm({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title || "",
-      slug: defaultValues?.slug || "", // TODO: verify if is unique
+      slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
       monitors: [],
     },
   });
+  const watchSlug = form.watch("slug");
+  const { toast } = useToast();
+
+  const checkUniqueSlug = React.useCallback(async () => {
+    const isUnique = await api.page.getSlugUniqueness.query({
+      slug: watchSlug,
+    });
+    if (!isUnique) {
+      form.setError("slug", {
+        message: "Already taken. Please select another slug.",
+      });
+    } else {
+      form.clearErrors("slug");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchSlug]);
+
+  React.useEffect(() => {
+    checkUniqueSlug();
+  }, [checkUniqueSlug]);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} id={id}>
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const isUnique = await api.page.getSlugUniqueness.query({
+            slug: watchSlug,
+          });
+          if (!isUnique) {
+            form.setError("slug", {
+              message: "Already taken. Please select another slug.",
+            });
+            toast({
+              title: "Slug is already taken.",
+              description: "Please select another slug. Every slug is unique.",
+            });
+          } else {
+            form.handleSubmit(onSubmit)(e);
+          }
+        }}
+        id={id}
+      >
         <div className="grid w-full items-center  space-y-6">
           <FormField
             control={form.control}
@@ -81,7 +122,7 @@ export function StatusPageForm({
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  This is your url of your page.
+                  This is your url of your page. At least 3 chars.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

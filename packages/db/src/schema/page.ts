@@ -18,10 +18,7 @@ export const page = sqliteTable("page", {
   description: text("description").notNull(), // description of the page
   icon: text("icon", { length: 256 }), // icon of the page
   slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
-  customDomain: text("custom_domain", { length: 256 })
-    .notNull()
-    .default("")
-    .unique(),
+  customDomain: text("custom_domain", { length: 256 }).unique(),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -43,6 +40,7 @@ export const pageRelations = relations(page, ({ many, one }) => ({
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
+  slug: z.string().min(3), // minimum subdomain length
 });
 
 // Schema for selecting a Page - can be used to validate API responses
