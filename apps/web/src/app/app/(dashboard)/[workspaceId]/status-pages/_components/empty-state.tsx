@@ -1,26 +1,42 @@
 import Link from "next/link";
+import type * as z from "zod";
 
-import { Icons } from "@/components/icons";
+import type { insertMonitorSchema } from "@openstatus/db/src/schema";
+
+import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
+import { CreateForm } from "./create-form";
 
-const PanelTopIcon = Icons["panel-top"];
+type MonitorSchema = z.infer<typeof insertMonitorSchema>;
 
-export function EmptyState() {
+export function EmptyState({
+  workspaceId,
+  allMonitors,
+}: {
+  workspaceId: number;
+  allMonitors?: MonitorSchema[];
+}) {
+  // Navigate user to monitor if they don't have one
+  if (!Boolean(allMonitors?.length)) {
+    return (
+      <DefaultEmptyState
+        icon="panel-top"
+        title="No pages"
+        description="First create a monitor before creating a page."
+        action={
+          <Button asChild>
+            <Link href="./monitors">Go to monitors</Link>
+          </Button>
+        }
+      />
+    );
+  }
   return (
-    <div className="border-border bg-background col-span-full w-full rounded-lg border-dashed p-8">
-      <div className="flex flex-col items-center justify-center gap-4">
-        <div className="flex flex-col items-center justify-center gap-1">
-          <PanelTopIcon className="h-6 w-6" />
-          <p className="text-foreground text-base">No pages</p>
-          <p className="text-muted-foreground">
-            First create a monitor before creating a page.
-          </p>
-        </div>
-        {/* Nice little example of how to */}
-        <Button asChild>
-          <Link href="./monitors">Go to monitors</Link>
-        </Button>
-      </div>
-    </div>
+    <DefaultEmptyState
+      icon="panel-top"
+      title="No pages"
+      description="Create your first page."
+      action={<CreateForm {...{ workspaceId, allMonitors }} />}
+    />
   );
 }

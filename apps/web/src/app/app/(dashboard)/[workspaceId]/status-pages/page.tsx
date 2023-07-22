@@ -32,7 +32,7 @@ export default async function Page({
           disabled={!Boolean(monitors)}
         />
       </Header>
-      {Boolean(monitors.length) ? (
+      {Boolean(pages.length) ? (
         pages.map((page, index) => (
           <Container
             key={index}
@@ -49,7 +49,7 @@ export default async function Page({
           </Container>
         ))
       ) : (
-        <EmptyState />
+        <EmptyState workspaceId={workspaceId} allMonitors={monitors} />
       )}
     </div>
   );
