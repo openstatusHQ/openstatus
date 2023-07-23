@@ -141,7 +141,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
           <StatusPageForm
             id="status-page-update"
             onSubmit={onUpdate}
-            defaultValues={page} // FIXME: we need to pass the page.monitors
+            defaultValues={page}
             allMonitors={allMonitors}
           />
         </div>
