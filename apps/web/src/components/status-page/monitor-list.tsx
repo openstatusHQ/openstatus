@@ -11,7 +11,7 @@ export const MonitorList = ({
 }) => {
   return (
     <div className="grid gap-4">
-      {monitors.map((monitor, index) => (
+      {monitors?.map((monitor, index) => (
         <div key={index}>
           {/* Fetch tracker and data */}
           <Monitor monitor={monitor} />
