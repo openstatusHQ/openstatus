@@ -6,8 +6,9 @@ import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
 import type {
-  insertMonitorSchema,
-  insertPageSchema,
+  allMonitorsSchema,
+  insertPageSchemaWithMonitors,
+  selectPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { StatusPageForm } from "@/components/forms/status-page-form";
@@ -41,13 +42,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/trpc/client";
 
-type MonitorSchema = z.infer<typeof insertMonitorSchema>;
-type PageSchema = z.infer<typeof insertPageSchema>;
+type PageSchema = z.infer<typeof selectPageSchema>;
 
 // allMonitors
 interface ActionButtonProps {
   page: PageSchema;
-  allMonitors?: MonitorSchema[];
+  allMonitors?: z.infer<typeof allMonitorsSchema>;
 }
 
 export function ActionButton({ page, allMonitors }: ActionButtonProps) {
@@ -57,10 +57,9 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
   const [saving, setSaving] = React.useState(false);
 
   async function onUpdate({
-    monitors,
     workspaceId,
     ...props
-  }: PageSchema & { monitors: string[] }) {
+  }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
     await api.page.updatePage.mutate({
       id: page.id,
@@ -140,12 +139,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
             id="status-page-update"
             onSubmit={onUpdate}
             defaultValues={page}
-            allMonitors={
-              allMonitors?.map((m) => ({
-                label: m.name || "",
-                value: String(m.id) || "",
-              })) ?? []
-            }
+            allMonitors={allMonitors}
           />
         </div>
         <DialogFooter>

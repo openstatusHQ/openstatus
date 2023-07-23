@@ -3,9 +3,10 @@
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import type * as z from "zod";
 
-import { insertPageSchema } from "@openstatus/db/src/schema";
+import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
 
 import {
   Form,
@@ -23,21 +24,14 @@ import { Checkbox } from "../ui/checkbox";
 import { useToast } from "../ui/use-toast";
 
 // REMINDER: only use the props you need!
-const schema = insertPageSchema
-  .pick({ title: true, slug: true, description: true })
-  .merge(
-    z.object({
-      monitors: z.string().array().optional(), // HOW TO PASS
-    }),
-  );
 
-type Schema = z.infer<typeof schema>;
+type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
 
 interface Props {
   id: string;
   defaultValues?: Schema;
   onSubmit: (values: Schema) => Promise<void>;
-  allMonitors?: Record<"label" | "value", string>[];
+  allMonitors?: z.infer<typeof allMonitorsSchema>;
 }
 
 export function StatusPageForm({
@@ -47,12 +41,13 @@ export function StatusPageForm({
   allMonitors,
 }: Props) {
   const form = useForm<Schema>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(insertPageSchemaWithMonitors),
     defaultValues: {
       title: defaultValues?.title || "",
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
       monitors: [],
+      workspaceId: 0,
     },
   });
   const watchSlug = form.watch("slug");
@@ -159,34 +154,34 @@ export function StatusPageForm({
                 </div>
                 {allMonitors?.map((item) => (
                   <FormField
-                    key={item.value}
+                    key={item.id}
                     control={form.control}
                     name="monitors"
                     render={({ field }) => {
                       return (
                         <FormItem
-                          key={item.value}
+                          key={item.id}
                           className="flex flex-row items-start space-x-3 space-y-0"
                         >
                           <FormControl>
                             <Checkbox
-                              checked={field.value?.includes(item.value)}
+                              checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked
                                   ? field.onChange([
                                       ...(field.value || []),
-                                      item.value,
+                                      item.id,
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.value,
+                                        (value) => value !== item.id,
                                       ),
                                     );
                               }}
                             />
                           </FormControl>
                           <FormLabel className="font-normal">
-                            {item.label}
+                            {item.name}
                           </FormLabel>
                         </FormItem>
                       );

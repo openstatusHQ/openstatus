@@ -1,3 +1,4 @@
+DROP INDEX IF EXISTS page_custom_domain_unique;--> statement-breakpoint
 /*
  SQLite does not support "Drop default from column" out of the box, we do not generate automatic migration for that, so it has to be done manually
  Please refer to: https://www.techonthenet.com/sqlite/tables/alter_table.php
@@ -7,11 +8,10 @@
  Due to that we don't generate migration automatically and it has to be done manually
 */
 
-DROP INDEX IF EXISTS page_custom_domain_unique;
+ALTER TABLE `page` RENAME TO `page_old`;
 --> statement-breakpoint
-ALTER TABLE page RENAME TO page_old;
---> statement-breakpoint
-CREATE TABLE page (
+
+CREATE TABLE `page` (
     id integer PRIMARY KEY NOT NULL,
     workspace_id integer NOT NULL,
     title text NOT NULL,
@@ -23,4 +23,9 @@ CREATE TABLE page (
     FOREIGN KEY (workspace_id) REFERENCES workspace(id) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-INSERT INTO page SELECT * FROM page_old;
+
+INSERT INTO `page` SELECT * FROM `page_old`;
+
+--> statement-breakpoint
+DROP TABLE `page_old`;
+

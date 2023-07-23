@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import type * as z from "zod";
 
 import type {
-  insertMonitorSchema,
-  insertPageSchema,
+  allMonitorsSchema,
+  insertPageSchemaWithMonitors,
 } from "@openstatus/db/src/schema";
 
 import { StatusPageForm } from "@/components/forms/status-page-form";
@@ -23,12 +23,9 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/trpc/client";
 
-type MonitorSchema = z.infer<typeof insertMonitorSchema>;
-type PageSchema = z.infer<typeof insertPageSchema>;
-
 interface Props {
   workspaceId: number;
-  allMonitors?: MonitorSchema[];
+  allMonitors?: z.infer<typeof allMonitorsSchema>;
   disabled?: boolean;
 }
 
@@ -38,9 +35,8 @@ export function CreateForm({ workspaceId, allMonitors, disabled }: Props) {
   const [saving, setSaving] = React.useState(false);
 
   async function onCreate({
-    monitors, // TODO:
     ...props
-  }: PageSchema & { monitors: string[] }) {
+  }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
     await api.page.createPage.mutate({ ...props, workspaceId });
@@ -63,12 +59,7 @@ export function CreateForm({ workspaceId, allMonitors, disabled }: Props) {
           <StatusPageForm
             id="status-page-create"
             onSubmit={onCreate}
-            allMonitors={
-              allMonitors?.map((m) => ({
-                label: m.name || "",
-                value: String(m.id) || "",
-              })) ?? []
-            }
+            allMonitors={allMonitors}
           />
         </div>
         <DialogFooter>

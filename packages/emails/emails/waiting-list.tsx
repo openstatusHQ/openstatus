@@ -12,7 +12,7 @@ const WaitingList = () => {
           Hello,
           <br />
           <br />
-          We're working hard to get you access to OpenStatus. ou can track our
+          We're working hard to get you access to OpenStatus. You can track our
           progress on our{" "}
           <Link href="https://github.com/openstatushq/openstatus">
             Github repository
@@ -20,10 +20,10 @@ const WaitingList = () => {
           .
           <br />
           <br />
-          If you have any questions, I'm more than happy to answer them
+          If you have any questions, I'm more than happy to answer them.
           <br />
           <br />
-          Thank you
+          Thank you,
           <br />
           Thibault Le Ouay Ducasse
         </Body>

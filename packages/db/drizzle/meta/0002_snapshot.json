@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "8cf0919d-6852-47b5-ad24-7d9e48504b51",
-  "prevId": "1c9c9848-d580-4543-9104-566450666ad5",
+  "id": "473566b5-0c33-467b-8a08-16bf6760c961",
+  "prevId": "8cf0919d-6852-47b5-ad24-7d9e48504b51",
   "tables": {
     "incident": {
       "name": "incident",
@@ -328,6 +328,63 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "monitors_to_pages": {
+      "name": "monitors_to_pages",
+      "columns": {
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "monitors_to_pages_monitor_id_monitor_id_fk": {
+          "name": "monitors_to_pages_monitor_id_monitor_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "monitors_to_pages_page_id_page_id_fk": {
+          "name": "monitors_to_pages_page_id_page_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "page",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "monitors_to_pages_monitor_id_page_id_pk": {
+          "columns": [
+            "monitor_id",
+            "page_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "user": {

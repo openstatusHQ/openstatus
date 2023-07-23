@@ -41,7 +41,7 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [tinybird](http://tinybird.co/?ref=openstatus.dev)
-- [planetscale](http://planetscale.com/)
+- [turso](http://turso.tech/)
 - [drizzle](https://orm.drizzle.team/)
 - [clerk](https://clerk.com/)
 - [Resend](https://resend.com/)
@@ -69,15 +69,18 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 
 3. Set up your .env file
 
-   from `apps/web` and `packages/db` you will find .env.example create your own
+   from `apps/web` and `packages/db` you will find .env.example create your own.
 
-4. Start the development server
+4. Follow the steps to run your sqlite database locally inside of
+   [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
+
+5. Start the development server
 
    ```sh
     pnpm dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see
+6. Open [http://localhost:3000](http://localhost:3000) with your browser to see
    the result.
 
 For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
