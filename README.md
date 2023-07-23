@@ -41,7 +41,7 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [tinybird](http://tinybird.co/?ref=openstatus.dev)
-- [planetscale](http://planetscale.com/)
+- [turso](http://turso.tech/)
 - [drizzle](https://orm.drizzle.team/)
 - [clerk](https://clerk.com/)
 - [Resend](https://resend.com/)
