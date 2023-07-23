@@ -17,6 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/trpc/client";
 import { Checkbox } from "../ui/checkbox";
 import { useToast } from "../ui/use-toast";
@@ -55,24 +56,29 @@ export function StatusPageForm({
     },
   });
   const watchSlug = form.watch("slug");
+  const debouncedSlug = useDebounce(watchSlug, 300); // using debounce to not exhaust the server
   const { toast } = useToast();
 
   const checkUniqueSlug = React.useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
-      slug: watchSlug,
+      slug: debouncedSlug,
     });
-    if (!isUnique) {
-      form.setError("slug", {
-        message: "Already taken. Please select another slug.",
-      });
-    } else {
-      form.clearErrors("slug");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [watchSlug]);
+    return isUnique || debouncedSlug === defaultValues?.slug;
+  }, [debouncedSlug, defaultValues?.slug]);
 
   React.useEffect(() => {
-    checkUniqueSlug();
+    async function watchSlugChanges() {
+      const isUnique = await checkUniqueSlug();
+      if (!isUnique) {
+        form.setError("slug", {
+          message: "Already taken. Please select another slug.",
+        });
+      } else {
+        form.clearErrors("slug");
+      }
+    }
+    watchSlugChanges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkUniqueSlug]);
 
   return (
@@ -80,13 +86,9 @@ export function StatusPageForm({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          const isUnique = await api.page.getSlugUniqueness.query({
-            slug: watchSlug,
-          });
+          const isUnique = await checkUniqueSlug();
           if (!isUnique) {
-            form.setError("slug", {
-              message: "Already taken. Please select another slug.",
-            });
+            // the user will already have the "error" message - we include a toast as well
             toast({
               title: "Slug is already taken.",
               description: "Please select another slug. Every slug is unique.",
@@ -107,7 +109,7 @@ export function StatusPageForm({
                 <FormControl>
                   <Input placeholder="" {...field} />
                 </FormControl>
-                <FormDescription>This is title of your page.</FormDescription>
+                <FormDescription>The title of your page.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -122,7 +124,7 @@ export function StatusPageForm({
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  This is your url of your page. At least 3 chars.
+                  The subdomain slug for your status page. At least 3 chars.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
