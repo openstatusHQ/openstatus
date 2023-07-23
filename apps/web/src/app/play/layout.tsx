@@ -36,7 +36,7 @@ export default function PlayLayout({
   return (
     <main className="container mx-auto flex min-h-screen w-full flex-col items-center justify-center space-y-6 p-4 md:p-8">
       <div className="z-10 flex w-full flex-1 flex-col items-start justify-center">
-        <BackButton />
+        <BackButton href="/" />
         <div className="border-border w-full rounded-lg border p-3 backdrop-blur-[2px] md:p-6">
           {children}
           {modal}

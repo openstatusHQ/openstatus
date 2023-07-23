@@ -7,7 +7,7 @@ const autolinkHeadings: unified.Pluggable<any[]> = [
     behavior: "append",
     properties: {
       className: [
-        "no-underline after:content-['#'] after:text-muted-foreground ml-1 after:p-1",
+        "no-underline after:content-['#'] after:text-muted-foreground/50 after:hover:text-muted-foreground ml-1 after:p-1",
       ],
     },
   },

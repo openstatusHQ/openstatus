@@ -26,9 +26,13 @@ export const Post = defineDocumentType(() => ({
       type: "string",
       required: true,
     },
+    image: {
+      type: "string",
+      required: true,
+    },
     publishedAt: { type: "date", required: true },
     author: {
-      type: "nested",
+      type: "nested", // TODO: allow list of authors
       of: Author,
       required: true,
     },
