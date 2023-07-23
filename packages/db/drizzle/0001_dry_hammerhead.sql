@@ -24,7 +24,7 @@ CREATE TABLE `page` (
 );
 --> statement-breakpoint
 
-INSERT INTO page SELECT * FROM `page_old`;
+INSERT INTO `page` SELECT * FROM `page_old`;
 
 --> statement-breakpoint
 DROP TABLE `page_old`;
