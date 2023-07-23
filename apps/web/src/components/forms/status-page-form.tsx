@@ -56,7 +56,7 @@ export function StatusPageForm({
     },
   });
   const watchSlug = form.watch("slug");
-  const debouncedSlug = useDebounce(watchSlug, 300); // using debounce to not exhaust the server
+  const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToast();
 
   const checkUniqueSlug = React.useCallback(async () => {
