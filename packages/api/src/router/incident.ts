@@ -9,7 +9,7 @@ import {
   page,
 } from "@openstatus/db/src/schema";
 
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
