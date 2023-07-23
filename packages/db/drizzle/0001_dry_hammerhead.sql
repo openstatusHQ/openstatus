@@ -8,10 +8,10 @@ DROP INDEX IF EXISTS page_custom_domain_unique;--> statement-breakpoint
  Due to that we don't generate migration automatically and it has to be done manually
 */
 
-ALTER TABLE page RENAME TO page_old;
+ALTER TABLE `page` RENAME TO `page_old`;
 --> statement-breakpoint
 
-CREATE TABLE page (
+CREATE TABLE `page` (
     id integer PRIMARY KEY NOT NULL,
     workspace_id integer NOT NULL,
     title text NOT NULL,
@@ -24,8 +24,8 @@ CREATE TABLE page (
 );
 --> statement-breakpoint
 
-INSERT INTO page SELECT * FROM page_old;
+INSERT INTO page SELECT * FROM `page_old`;
 
 --> statement-breakpoint
-DROP TABLE page_old;
+DROP TABLE `page_old`;
 

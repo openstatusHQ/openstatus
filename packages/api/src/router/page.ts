@@ -32,7 +32,7 @@ export const pageRouter = createTRPCRouter({
           pageId: newPage.id,
         }));
 
-        opts.ctx.db.insert(monitorsToPages).values(values).run();
+        await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
     }),
 
@@ -45,15 +45,26 @@ export const pageRouter = createTRPCRouter({
       });
     }),
   updatePage: protectedProcedure
-    .input(insertPageSchema)
+    .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
-      const r = await opts.ctx.db
+      const { monitors, ...pageInput } = opts.input;
+
+      await opts.ctx.db
         .update(page)
-        .set(opts.input)
+        .set(pageInput)
         .where(eq(page.id, Number(opts.input.id)))
         .returning()
         .get();
-      return r;
+
+      if (monitors) {
+        // We should make sure the user has access to the monitors
+        const values = monitors.map((monitorId) => ({
+          monitorId: monitorId,
+          pageId: Number(opts.input.id),
+        }));
+
+        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+      }
     }),
   deletePage: protectedProcedure
     .input(z.object({ pageId: z.number() }))

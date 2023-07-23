@@ -27,7 +27,6 @@ export const monitor = sqliteTable("monitor", {
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
 
-  pageId: integer("page_id").references(() => page.id),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
