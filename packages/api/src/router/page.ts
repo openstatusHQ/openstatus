@@ -3,6 +3,9 @@ import { z } from "zod";
 import { eq } from "@openstatus/db";
 import {
   insertPageSchema,
+  insertPageSchemaWithMonitors,
+  monitor,
+  monitorsToPages,
   page,
   selectIncidentSchema,
   selectMonitorSchema,
@@ -14,9 +17,23 @@ import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 // TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
-    .input(insertPageSchema)
+    .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
-      return opts.ctx.db.insert(page).values(opts.input).returning().get();
+      const { monitors, ...pageInput } = opts.input;
+      const newPage = await opts.ctx.db
+        .insert(page)
+        .values(pageInput)
+        .returning()
+        .get();
+      if (monitors) {
+        // We should make sure the user has access to the monitors
+        const values = monitors.map((monitorId) => ({
+          monitorId: monitorId,
+          pageId: newPage.id,
+        }));
+
+        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+      }
     }),
 
   getPageById: protectedProcedure
@@ -24,21 +41,30 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       return await opts.ctx.db.query.page.findFirst({
         where: eq(page.id, opts.input.id),
-        with: { monitors: true, incidents: true },
+        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
       });
     }),
   updatePage: protectedProcedure
-    .input(insertPageSchema)
+    .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
-      console.log(opts.input);
-      const r = await opts.ctx.db
+      const { monitors, ...pageInput } = opts.input;
+
+      await opts.ctx.db
         .update(page)
-        .set(opts.input)
+        .set(pageInput)
         .where(eq(page.id, Number(opts.input.id)))
         .returning()
         .get();
-      console.log(r);
-      return r;
+
+      if (monitors) {
+        // We should make sure the user has access to the monitors
+        const values = monitors.map((monitorId) => ({
+          monitorId: monitorId,
+          pageId: Number(opts.input.id),
+        }));
+
+        await opts.ctx.db.insert(monitorsToPages).values(values).run();
+      }
     }),
   deletePage: protectedProcedure
     .input(z.object({ pageId: z.number() }))
@@ -61,7 +87,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       const result = opts.ctx.db.query.page.findFirst({
         where: eq(page.slug, opts.input.slug),
-        with: { monitors: true, incidents: true },
+        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
       });
       const selectPageSchemaWithRelation = selectPageSchema.extend({
         monitors: z.array(selectMonitorSchema),
