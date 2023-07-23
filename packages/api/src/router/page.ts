@@ -41,7 +41,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       return await opts.ctx.db.query.page.findFirst({
         where: eq(page.id, opts.input.id),
-        with: { monitorsToPages: { with: monitor }, incidents: true },
+        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
       });
     }),
   updatePage: protectedProcedure
