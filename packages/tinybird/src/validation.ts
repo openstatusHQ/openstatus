@@ -36,11 +36,7 @@ export const tbIngestPingResponse = z.object({
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().optional().nullable().default(Date.now()),
   url: z.string().url(),
-  metadata: z
-    .record(z.string(), z.unknown())
-    .default({})
-    .transform((t) => JSON.stringify(t))
-    .optional(),
+  metadata: z.string().optional().default("{}"),
   region: z.string().min(4).max(4),
 });
 

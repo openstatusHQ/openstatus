@@ -23,6 +23,7 @@ export async function getResponseListData(
 ) {
   try {
     const res = await getResponseList(tb)(props);
+    console.log(res.data);
     return res.data;
   } catch (e) {
     console.error(e);

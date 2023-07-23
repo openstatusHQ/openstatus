@@ -14,8 +14,6 @@ import {
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
     datasource: "ping_response__v2",
-    // @ts-ignore TODO: this is caused by the metadata even though the
-    // error says something regarding _input.cronTimestamp
     event: tbIngestPingResponse,
   });
 }

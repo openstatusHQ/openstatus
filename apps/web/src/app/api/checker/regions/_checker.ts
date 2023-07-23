@@ -9,6 +9,7 @@ import {
 } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
+import { flatten } from "@/lib/flatten";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -38,7 +39,7 @@ const monitor = async (
     region,
     cronTimestamp,
     // TODO: discuss how to use the metadata properly
-    // metadata: {
+    // metadata: flatten({
     //   status: res.status,
     //   statusText: res.statusText,
     //   ok: res.ok,
@@ -47,7 +48,7 @@ const monitor = async (
     //   bodyUsed: res.bodyUsed,
     //   redirected: res.redirected,
     //   type: res.type,
-    // },
+    // }),
   });
 };
 
