@@ -40,6 +40,7 @@ export const pageRelations = relations(page, ({ many, one }) => ({
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
+  slug: z.string().min(3), // minimum subdomain length
 });
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({

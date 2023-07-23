@@ -96,4 +96,13 @@ export const pageRouter = createTRPCRouter({
 
       return selectPageSchemaWithRelation.parse(result);
     }),
+
+  getSlugUniqueness: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db.query.page.findMany({
+        where: eq(page.slug, opts.input.slug),
+      });
+      return result?.length > 0 ? false : true;
+    }),
 });

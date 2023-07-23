@@ -18,7 +18,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/use-debounce";
+import { api } from "@/trpc/client";
 import { Checkbox } from "../ui/checkbox";
+import { useToast } from "../ui/use-toast";
 
 // REMINDER: only use the props you need!
 
@@ -41,19 +44,54 @@ export function StatusPageForm({
     resolver: zodResolver(insertPageSchemaWithMonitors),
     defaultValues: {
       title: defaultValues?.title || "",
-      slug: defaultValues?.slug || "", // TODO: verify if is unique
+      slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
       monitors: [],
       workspaceId: 0,
     },
   });
+  const watchSlug = form.watch("slug");
+  const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
+  const { toast } = useToast();
+
+  const checkUniqueSlug = React.useCallback(async () => {
+    const isUnique = await api.page.getSlugUniqueness.query({
+      slug: debouncedSlug,
+    });
+    return isUnique || debouncedSlug === defaultValues?.slug;
+  }, [debouncedSlug, defaultValues?.slug]);
+
+  React.useEffect(() => {
+    async function watchSlugChanges() {
+      const isUnique = await checkUniqueSlug();
+      if (!isUnique) {
+        form.setError("slug", {
+          message: "Already taken. Please select another slug.",
+        });
+      } else {
+        form.clearErrors("slug");
+      }
+    }
+    watchSlugChanges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkUniqueSlug]);
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit, (e) => {
-          console.log(e);
-          console.log(form.getValues());
-        })}
+        onSubmit={async (e) => {
+          e.preventDefault();
+          const isUnique = await checkUniqueSlug();
+          if (!isUnique) {
+            // the user will already have the "error" message - we include a toast as well
+            toast({
+              title: "Slug is already taken.",
+              description: "Please select another slug. Every slug is unique.",
+            });
+          } else {
+            form.handleSubmit(onSubmit)(e);
+          }
+        }}
         id={id}
       >
         <div className="grid w-full items-center  space-y-6">
@@ -66,7 +104,7 @@ export function StatusPageForm({
                 <FormControl>
                   <Input placeholder="" {...field} />
                 </FormControl>
-                <FormDescription>This is title of your page.</FormDescription>
+                <FormDescription>The title of your page.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -81,7 +119,7 @@ export function StatusPageForm({
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  This is your url of your page.
+                  The subdomain slug for your status page. At least 3 chars.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
