@@ -7,7 +7,7 @@ interface Props extends React.ComponentProps<"div"> {
   icon: ValidIcon;
   title: string;
   description: string;
-  action: React.ReactNode;
+  action?: React.ReactNode;
 }
 
 export function EmptyState({ icon, title, description, action }: Props) {

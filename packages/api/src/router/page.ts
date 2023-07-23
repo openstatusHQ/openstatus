@@ -27,7 +27,7 @@ export const pageRouter = createTRPCRouter({
         .values(pageInput)
         .returning()
         .get();
-      if (monitors) {
+      if (monitors && monitors.length > 0) {
         // We should make sure the user has access to the monitors
         const values = monitors.map((monitorId) => ({
           monitorId: monitorId,
@@ -59,7 +59,7 @@ export const pageRouter = createTRPCRouter({
           eq(page.id, opts.input.id),
           inArray(page.workspaceId, workspaceIds),
         ),
-        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
+        with: { monitors: { with: { monitor: true } }, incidents: true },
       });
     }),
   updatePage: protectedProcedure
@@ -74,7 +74,7 @@ export const pageRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (monitors) {
+      if (monitors && monitors.length) {
         // We should make sure the user has access to the monitors
         const values = monitors.map((monitorId) => ({
           monitorId: monitorId,
@@ -111,9 +111,10 @@ export const pageRouter = createTRPCRouter({
         )
         .get();
       if (!pageToDelete) return;
-      await opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId));
+      opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId)).run();
     }),
-  getPageByWorkspace: protectedProcedure
+
+  getPagesByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
@@ -129,16 +130,19 @@ export const pageRouter = createTRPCRouter({
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 
-      return opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          and(
-            eq(page.workspaceId, opts.input.workspaceId),
-            inArray(page.workspaceId, workspaceIds),
-          ),
-        )
-        .all();
+      return opts.ctx.db.query.page.findMany({
+        where: and(
+          eq(page.workspaceId, opts.input.workspaceId),
+          inArray(page.workspaceId, workspaceIds),
+        ),
+        with: {
+          monitors: {
+            columns: {
+              monitorId: true,
+            },
+          },
+        },
+      });
     }),
 
   // public if we use trpc hooks to get the page from the url
@@ -160,18 +164,25 @@ export const pageRouter = createTRPCRouter({
         .from(monitorsToPages)
         .where(eq(monitorsToPages.pageId, result.id))
         .all();
+
       const monitorsId = monitorsToPagesResult.map(
         (monitor) => monitor.monitorId,
       );
+
+      const selectPageSchemaWithRelation = selectPageSchema.extend({
+        monitors: z.array(selectMonitorSchema),
+        incidents: z.array(selectIncidentSchema),
+      });
+
+      if (monitorsId.length === 0) {
+        return selectPageSchemaWithRelation.parse({ ...result, monitors: [] });
+      } // no monitors for that page
+
       const monitors = await opts.ctx.db
         .select()
         .from(monitor)
         .where(inArray(monitor.id, monitorsId))
         .all();
-      const selectPageSchemaWithRelation = selectPageSchema.extend({
-        monitors: z.array(selectMonitorSchema),
-        incidents: z.array(selectIncidentSchema),
-      });
 
       return selectPageSchemaWithRelation.parse({ ...result, monitors });
     }),

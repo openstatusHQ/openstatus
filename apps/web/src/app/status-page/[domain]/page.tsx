@@ -20,7 +20,7 @@ export default async function Page({ params }: { params: { domain: string } }) {
         <Header
           title={page.title}
           description={page.description}
-          className="max-w-lg"
+          className="mx-auto max-w-lg lg:mx-auto"
         />
         <MonitorList monitors={page.monitors} />
       </div>
