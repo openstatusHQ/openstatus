@@ -27,7 +27,11 @@ export function DataTableToolbar<TData>({
             column={table.getColumn("region")}
             title="Region"
             options={Object.keys(regionsDict).map((key) => ({
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-expect-error
               label: regionsDict[key].location,
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-expect-error
               value: regionsDict[key].code,
             }))}
           />

@@ -7,7 +7,8 @@
       "@/*": ["./src/*"]
     },
     "plugins": [{ "name": "next" }],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "strict": true
   },
   "include": [
     "next-env.d.ts",
