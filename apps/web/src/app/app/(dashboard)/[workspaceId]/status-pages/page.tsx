@@ -42,8 +42,7 @@ export default async function Page({
             <ActionButton
               page={{
                 ...page,
-                // FIXME: how to automatically make the { monitor: number[] }
-                monitors: page.monitors.map(({ monitorId }) => monitorId),
+                monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
               }}
               allMonitors={monitors}
             />

@@ -59,7 +59,7 @@ export const pageRouter = createTRPCRouter({
           eq(page.id, opts.input.id),
           inArray(page.workspaceId, workspaceIds),
         ),
-        with: { monitors: { with: { monitor: true } }, incidents: true },
+        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
       });
     }),
   updatePage: protectedProcedure
@@ -136,11 +136,7 @@ export const pageRouter = createTRPCRouter({
           inArray(page.workspaceId, workspaceIds),
         ),
         with: {
-          monitors: {
-            columns: {
-              monitorId: true,
-            },
-          },
+          monitorsToPages: { with: { monitor: true } },
         },
       });
     }),
