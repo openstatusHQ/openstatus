@@ -22,6 +22,6 @@
     "@types/react": "18.2.12",
     "react": "18.2.0",
     "tsconfig": "workspace:*",
-    "typescript": "^5.1.0"
+    "typescript": "5.1.6"
   }
 }

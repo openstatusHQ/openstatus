@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.23.0",
+    "@clerk/nextjs": "4.23.1",
     "@hookform/resolvers": "3.1.1",
     "@openstatus/api": "workspace:^",
     "@openstatus/db": "workspace:^",
