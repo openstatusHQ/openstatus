@@ -7,16 +7,14 @@ import { api } from "@/trpc/server";
 export default async function IncidentPage({
   params,
 }: {
-  params: { workspaceId: string };
+  params: { workspaceSlug: string };
 }) {
   const incidents = await api.incident.getIncidentByWorkspace.query({
-    workspaceId: Number(params.workspaceId),
+    workspaceSlug: params.workspaceSlug,
   });
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Incidents" description="Overview of all your incidents." />
-      <Container title="Hello"></Container>
-      <Container title="World"></Container>
     </div>
   );
 }

@@ -45,7 +45,8 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || undefined,
-      status: defaultValues?.status || "inactive",
+      active: defaultValues?.active || false,
+      id: defaultValues?.id || undefined,
     },
   });
 
@@ -103,7 +104,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
-            name="status"
+            name="active"
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between">
                 <div className="space-y-0.5">
@@ -115,11 +116,8 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value === "active" ? true : false}
-                    onCheckedChange={(value) =>
-                      field.onChange(value ? "active" : "inactive")
-                    }
-                    disabled
+                    checked={field.value || false}
+                    onCheckedChange={(value) => field.onChange(value)}
                   />
                 </FormControl>
                 <FormMessage />

@@ -1,4 +1,4 @@
-//@ts-expect-error  FIXME:
+// @ts-expect-error - this is a valid import
 import type { NextRequest } from "next/server";
 import type {
   SignedInAuthObject,

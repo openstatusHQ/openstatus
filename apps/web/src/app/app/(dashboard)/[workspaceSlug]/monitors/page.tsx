@@ -12,17 +12,16 @@ import { EmptyState } from "./_components/empty-state";
 export default async function MonitorPage({
   params,
 }: {
-  params: { workspaceId: string };
+  params: { workspaceSlug: string };
 }) {
-  const workspaceId = Number(params.workspaceId);
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceId,
+    workspaceSlug: params.workspaceSlug,
   });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm {...{ workspaceId }} />
+        <CreateForm workspaceSlug={params.workspaceSlug} />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -31,24 +30,20 @@ export default async function MonitorPage({
             title={monitor.name}
             description={monitor.description}
           >
-            <ActionButton {...monitor} />
+            <ActionButton {...monitor} workspaceSlug={params.workspaceSlug} />
             <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <dt>Status</dt>
                 <dd>
                   <Badge
-                    variant={
-                      monitor.status === "active" ? "default" : "outline"
-                    }
+                    variant={monitor.active ? "default" : "outline"}
                     className="capitalize"
                   >
-                    {monitor.status}
+                    {monitor.active ? "active" : "inactive"}
                     <span
                       className={cn(
                         "ml-1 h-1.5 w-1.5 rounded-full",
-                        monitor.status === "active"
-                          ? "bg-green-500"
-                          : "bg-red-500",
+                        monitor.active ? "bg-green-500" : "bg-red-500",
                       )}
                     />
                   </Badge>
@@ -68,7 +63,7 @@ export default async function MonitorPage({
           </Container>
         ))
       ) : (
-        <EmptyState {...{ workspaceId }} />
+        <EmptyState workspaceSlug={params.workspaceSlug} />
       )}
     </div>
   );

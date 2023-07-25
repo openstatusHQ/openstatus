@@ -50,10 +50,10 @@ export const monitorsToPages = sqliteTable(
   {
     monitorId: integer("monitor_id")
       .notNull()
-      .references(() => monitor.id),
+      .references(() => monitor.id, { onDelete: "cascade" }),
     pageId: integer("page_id")
       .notNull()
-      .references(() => page.id),
+      .references(() => page.id, { onDelete: "cascade" }),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),

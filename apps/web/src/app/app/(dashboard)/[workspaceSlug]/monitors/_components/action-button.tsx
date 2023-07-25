@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
@@ -37,29 +37,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
-export function ActionButton(props: Schema) {
+export function ActionButton(props: Schema & { workspaceSlug: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  console.log(router);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
   async function onUpdate(values: Schema) {
     setSaving(true);
-    await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
+    await api.monitor.updateMonitor.mutate({ ...values });
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
   }
 
   async function onDelete() {
+    if (!props.id) return;
     setSaving(true);
-    await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
+    await api.monitor.deleteMonitor.mutate({ id: props.id });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);
@@ -87,7 +88,7 @@ export function ActionButton(props: Schema) {
             </DialogTrigger>
             <DropdownMenuItem asChild>
               <Link
-                href={`/app/${props.workspaceId}/monitors/${props.id}/data`}
+                href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}
               >
                 View data
               </Link>

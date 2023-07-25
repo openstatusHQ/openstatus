@@ -4,9 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import type * as z from "zod";
 
-import type { insertMonitorSchema } from "@openstatus/db/src/schema";
+import type {
+  allMonitorsSchema,
+  insertPageSchemaWithMonitors,
+} from "@openstatus/db/src/schema";
 
-import { MonitorForm } from "@/components/forms/montitor-form";
+import { StatusPageForm } from "@/components/forms/status-page-form";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,21 +23,26 @@ import {
 } from "@/components/ui/dialog";
 import { api } from "@/trpc/client";
 
-type MonitorSchema = z.infer<typeof insertMonitorSchema>;
-
 interface Props {
-  workspaceId: number;
+  workspaceSlug: string;
+  allMonitors?: z.infer<typeof allMonitorsSchema>;
+  disabled?: boolean;
 }
 
-export function CreateForm({ workspaceId }: Props) {
+export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
-  async function onCreate(values: MonitorSchema) {
+  async function onCreate({
+    ...props
+  }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.monitor.createMonitor.mutate({ ...values, workspaceId });
+    await api.page.createPage.mutate({
+      ...props,
+      workspaceSlug,
+    });
     router.refresh();
     setSaving(false);
     setOpen(false);
@@ -43,18 +51,22 @@ export function CreateForm({ workspaceId }: Props) {
   return (
     <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DialogTrigger asChild>
-        <Button>Create</Button>
+        <Button disabled={disabled}>Create</Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-screen flex-col">
         <DialogHeader>
-          <DialogTitle>Create Monitor</DialogTitle>
+          <DialogTitle>Create Status Page</DialogTitle>
           <DialogDescription>Choose the settings.</DialogDescription>
         </DialogHeader>
         <div className="-mx-1 flex-1 overflow-y-scroll px-1">
-          <MonitorForm id="monitor-create" onSubmit={onCreate} />
+          <StatusPageForm
+            id="status-page-create"
+            onSubmit={onCreate}
+            allMonitors={allMonitors}
+          />
         </div>
         <DialogFooter>
-          <Button type="submit" form="monitor-create" disabled={saving}>
+          <Button type="submit" form="status-page-create" disabled={saving}>
             {!saving ? "Confirm" : <LoadingAnimation />}
           </Button>
         </DialogFooter>

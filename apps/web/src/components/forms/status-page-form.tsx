@@ -46,8 +46,10 @@ export function StatusPageForm({
       title: defaultValues?.title || "",
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
+      workspaceId: defaultValues?.workspaceId || 0,
+      id: defaultValues?.id || 0,
       monitors: defaultValues?.monitors ?? [],
-      workspaceId: 0,
+      workspaceSlug: "",
     },
   });
   const watchSlug = form.watch("slug");

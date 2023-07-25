@@ -31,14 +31,17 @@ export function InputSearch({
     const searchparams = inputValue
       .trim()
       .split(" ")
-      .reduce((prev, curr) => {
-        const [name, value] = curr.split(":");
-        if (value && name && curr !== currentWord) {
-          // TODO: support multiple value with value.split(",")
-          prev[name] = value;
-        }
-        return prev;
-      }, {} as Record<string, string>);
+      .reduce(
+        (prev, curr) => {
+          const [name, value] = curr.split(":");
+          if (value && name && curr !== currentWord) {
+            // TODO: support multiple value with value.split(",")
+            prev[name] = value;
+          }
+          return prev;
+        },
+        {} as Record<string, string>,
+      );
     onSearch(searchparams);
   }, [onSearch, inputValue]);
 
@@ -122,7 +125,6 @@ export function InputSearch({
                       }}
                       onSelect={(value) => {
                         setInputValue((prev) => {
-                          // console.log({ prev, currentWord, value });
                           if (currentWord.trim() === "") {
                             const input = `${prev}${value}`;
                             return `${input}:`;

@@ -1,3 +1,4 @@
+import { generateSlug } from "random-word-slugs";
 import * as z from "zod";
 
 import { eq } from "@openstatus/db";
@@ -29,9 +30,12 @@ export const webhookRouter = createTRPCRouter({
         })
         .returning({ id: user.id })
         .get();
+
+      const slug = generateSlug(2);
+
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ name: "" })
+        .values({ slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db

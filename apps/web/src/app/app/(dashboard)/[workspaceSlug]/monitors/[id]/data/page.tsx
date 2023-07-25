@@ -25,15 +25,15 @@ export default async function Page({
   params,
   searchParams,
 }: {
-  params: { workspaceId: string; id: string };
+  params: { workspaceSlug: string; id: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const workspaceId = Number(params.workspaceId);
-  const id = Number(params.id);
+  const workspaceSlug = params.workspaceSlug;
+  const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
-  const monitor = await api.monitor.getMonitorById.query({
-    id,
+  const monitor = await api.monitor.getMonitorByID.query({
+    id: Number(id),
   });
 
   if (!monitor || !search.success) {
