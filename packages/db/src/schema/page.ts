@@ -8,9 +8,9 @@ import { monitorsToPages } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey(),
 
-  workspaceId: integer("workspace_id")
+  workspaceId: text("workspace_id")
     .notNull()
     .references(() => workspace.id),
 
@@ -19,6 +19,7 @@ export const page = sqliteTable("page", {
   icon: text("icon", { length: 256 }), // icon of the page
   slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
   customDomain: text("custom_domain", { length: 256 }).notNull(),
+  published: integer("published", { mode: "boolean" }).default(false),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -45,7 +46,7 @@ export const insertPageSchema = createInsertSchema(page, {
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
-  monitors: z.array(z.number()).optional(),
+  monitors: z.array(z.string()).optional(),
 });
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);

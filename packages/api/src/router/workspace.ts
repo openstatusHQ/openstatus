@@ -1,3 +1,4 @@
+import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
@@ -19,7 +20,7 @@ export const workspaceRouter = createTRPCRouter({
     });
   }),
   getWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.number() }))
+    .input(z.object({ workspaceId: z.string() }))
     .query(async (opts) => {
       const currentUser = opts.ctx.db
         .select()
@@ -29,9 +30,7 @@ export const workspaceRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(opts.input.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, opts.input.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -48,9 +47,11 @@ export const workspaceRouter = createTRPCRouter({
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
+      const slug = generateSlug(2);
+
       return opts.ctx.db
         .insert(workspace)
-        .values({ name: opts.input.name })
+        .values({ id: slug, name: opts.input.name })
         .returning()
         .get();
     }),

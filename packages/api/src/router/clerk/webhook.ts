@@ -1,3 +1,5 @@
+import { customAlphabet, urlAlphabet } from "nanoid";
+import { generateSlug } from "random-word-slugs";
 import * as z from "zod";
 
 import { eq } from "@openstatus/db";
@@ -22,16 +24,21 @@ export const webhookRouter = createTRPCRouter({
         .where(eq(user.tenantId, opts.input.data.data.id))
         .get();
       if (alreadyExists) return;
+      const nanoid = customAlphabet(urlAlphabet, 10);
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
+          id: nanoid(),
           tenantId: opts.input.data.data.id,
         })
         .returning({ id: user.id })
         .get();
+
+      const slug = generateSlug(2);
+
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ name: "" })
+        .values({ id: slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db

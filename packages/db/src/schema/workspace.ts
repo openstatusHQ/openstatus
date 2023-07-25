@@ -5,7 +5,7 @@ import { page } from "./page";
 import { usersToWorkspaces } from "./user";
 
 export const workspace = sqliteTable("workspace", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey(), // we love random words
 
   stripeId: text("stripe_id", { length: 256 }).unique(),
   name: text("name"),

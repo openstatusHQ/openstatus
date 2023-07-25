@@ -1,3 +1,4 @@
+import { customAlphabet, urlAlphabet } from "nanoid";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
@@ -15,15 +16,23 @@ export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
     .input(insertIncidentSchema)
     .mutation(async (opts) => {
-      return opts.ctx.db.insert(incident).values(opts.input).returning().get();
+      const nanoid = customAlphabet(urlAlphabet, 10);
+
+      return opts.ctx.db
+        .insert(incident)
+        .values({ id: nanoid(), ...opts.input })
+        .returning()
+        .get();
     }),
 
   createIncidentUpdate: protectedProcedure
     .input(insertIncidentUpdateSchema)
     .mutation(async (opts) => {
+      const nanoid = customAlphabet(urlAlphabet, 10);
+
       return opts.ctx.db
         .insert(incidentUpdate)
-        .values(opts.input)
+        .values({ id: nanoid(), ...opts.input })
         .returning()
         .get();
     }),
@@ -31,7 +40,7 @@ export const incidentRouter = createTRPCRouter({
   updateIncident: protectedProcedure
     .input(
       z.object({
-        incidentId: z.number(),
+        incidentId: z.string(),
         status: insertIncidentSchema.pick({ status: true }),
       }),
     )
@@ -44,7 +53,7 @@ export const incidentRouter = createTRPCRouter({
         .get();
     }),
   getIncidentByWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.number() }))
+    .input(z.object({ workspaceId: z.string() }))
     .query(async (opts) => {
       const pageQuery = opts.ctx.db
         .select()

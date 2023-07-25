@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "1c9c9848-d580-4543-9104-566450666ad5",
+  "id": "d4a04196-e2fc-48f4-b53f-9fa26d2c4447",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -9,7 +9,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -23,7 +23,7 @@
         },
         "page_id": {
           "name": "page_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -61,7 +61,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -89,7 +89,7 @@
         },
         "incident_id": {
           "name": "incident_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -127,14 +127,14 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
         },
         "workspace_id": {
           "name": "workspace_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -172,8 +172,15 @@
           "type": "text(256)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "published": {
+          "name": "published",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false,
-          "default": "''"
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -189,13 +196,6 @@
           "name": "page_slug_unique",
           "columns": [
             "slug"
-          ],
-          "isUnique": true
-        },
-        "page_custom_domain_unique": {
-          "name": "page_custom_domain_unique",
-          "columns": [
-            "custom_domain"
           ],
           "isUnique": true
         }
@@ -223,7 +223,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -243,14 +243,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'other'"
-        },
-        "status": {
-          "name": "status",
-          "type": "text(2)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'inactive'"
         },
         "active": {
           "name": "active",
@@ -283,16 +275,9 @@
           "autoincrement": false,
           "default": "''"
         },
-        "page_id": {
-          "name": "page_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "workspace_id": {
           "name": "workspace_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -308,19 +293,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "monitor_page_id_page_id_fk": {
-          "name": "monitor_page_id_page_id_fk",
-          "tableFrom": "monitor",
-          "tableTo": "page",
-          "columnsFrom": [
-            "page_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "monitor_workspace_id_workspace_id_fk": {
           "name": "monitor_workspace_id_workspace_id_fk",
           "tableFrom": "monitor",
@@ -331,11 +303,68 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "monitors_to_pages": {
+      "name": "monitors_to_pages",
+      "columns": {
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "monitors_to_pages_monitor_id_monitor_id_fk": {
+          "name": "monitors_to_pages_monitor_id_monitor_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "monitors_to_pages_page_id_page_id_fk": {
+          "name": "monitors_to_pages_page_id_page_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "page",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "monitors_to_pages_monitor_id_page_id_pk": {
+          "columns": [
+            "monitor_id",
+            "page_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "user": {
@@ -343,7 +372,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false
@@ -382,14 +411,14 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
         "workspace_id": {
           "name": "workspace_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -439,7 +468,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": true,
           "notNull": true,
           "autoincrement": false

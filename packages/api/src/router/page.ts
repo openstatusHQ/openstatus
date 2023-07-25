@@ -1,3 +1,4 @@
+import { customAlphabet, urlAlphabet } from "nanoid";
 import { z } from "zod";
 
 import { and, eq, inArray } from "@openstatus/db";
@@ -21,10 +22,13 @@ export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
-      const { monitors, ...pageInput } = opts.input;
+      const { monitors, id, ...pageInput } = opts.input;
+
+      const nanoid = customAlphabet(urlAlphabet, 10);
+
       const newPage = await opts.ctx.db
         .insert(page)
-        .values(pageInput)
+        .values({ id: nanoid(), ...pageInput })
         .returning()
         .get();
       if (monitors) {
@@ -39,7 +43,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   getPageById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
         .select()
@@ -50,7 +54,7 @@ export const pageRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, Number(currentUser.id)))
+        .where(eq(usersToWorkspaces.userId, currentUser.id))
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 
@@ -70,7 +74,7 @@ export const pageRouter = createTRPCRouter({
       await opts.ctx.db
         .update(page)
         .set(pageInput)
-        .where(eq(page.id, Number(opts.input.id)))
+        .where(eq(page.id, opts.input.id))
         .returning()
         .get();
 
@@ -78,14 +82,14 @@ export const pageRouter = createTRPCRouter({
         // We should make sure the user has access to the monitors
         const values = monitors.map((monitorId) => ({
           monitorId: monitorId,
-          pageId: Number(opts.input.id),
+          pageId: opts.input.id,
         }));
 
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
     }),
   deletePage: protectedProcedure
-    .input(z.object({ pageId: z.number() }))
+    .input(z.object({ pageId: z.string() }))
     .mutation(async (opts) => {
       const currentUser = await opts.ctx.db
         .select()
@@ -96,7 +100,7 @@ export const pageRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, Number(currentUser.id)))
+        .where(eq(usersToWorkspaces.userId, currentUser.id))
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 
@@ -114,7 +118,7 @@ export const pageRouter = createTRPCRouter({
       await opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId));
     }),
   getPageByWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.number() }))
+    .input(z.object({ workspaceId: z.string() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
         .select()
@@ -125,7 +129,7 @@ export const pageRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, Number(currentUser.id)))
+        .where(eq(usersToWorkspaces.userId, currentUser.id))
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 

@@ -264,6 +264,12 @@ importers:
       '@trpc/server':
         specifier: 10.35.0
         version: 10.35.0
+      nanoid:
+        specifier: ^4.0.2
+        version: 4.0.2
+      random-word-slugs:
+        specifier: ^0.1.7
+        version: 0.1.7
       superjson:
         specifier: 1.13.1
         version: 1.13.1
@@ -9114,6 +9120,10 @@ packages:
   /quick-lru@5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
+    dev: false
+
+  /random-word-slugs@0.1.7:
+    resolution: {integrity: sha512-8cyzxOIDeLFvwSPTgCItMXHGT5ZPkjhuFKUTww06Xg1dNMXuGxIKlARvS7upk6JXIm41ZKXmtlKR1iCRWklKmg==}
     dev: false
 
   /raw-body@2.4.1:

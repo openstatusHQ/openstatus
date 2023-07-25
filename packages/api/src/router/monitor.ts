@@ -13,7 +13,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
-    .input(insertMonitorSchema)
+    .input(z.object({ data: insertMonitorSchema, workspaceId: z.string() }))
     .mutation(async (opts) => {
       const currentUser = opts.ctx.db
         .select()
@@ -23,26 +23,28 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(opts.input.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, opts.input.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
       // the user don't have access to this workspace
       if (!result || !result.users_to_workspaces) return;
 
-      await opts.ctx.db.insert(monitor).values(opts.input).returning().get();
+      await opts.ctx.db
+        .insert(monitor)
+        .values(opts.input.data)
+        .returning()
+        .get();
     }),
 
   getMonitorById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async (opts) => {
-      const mon = await opts.ctx.db.query.monitor.findFirst({
+      const currentMonitor = await opts.ctx.db.query.monitor.findFirst({
         where: eq(monitor.id, opts.input.id),
       });
 
-      if (!mon) return;
+      if (!currentMonitor || !currentMonitor.workspaceId) return;
       // We make sure user as access to this workspace
       const currentUser = opts.ctx.db
         .select()
@@ -52,19 +54,19 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, Number(mon.workspaceId)))
+        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
       if (!result || !result.users_to_workspaces) return;
 
-      return mon;
+      return currentMonitor;
     }),
 
   updateMonitorDescription: protectedProcedure
     .input(
       z.object({
-        monitorId: z.number(),
+        monitorId: z.string(),
         description: z.string(),
       }),
     )
@@ -76,6 +78,8 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitor.id, opts.input.monitorId))
         .get();
 
+      if (!currentMonitor || !currentMonitor.workspaceId) return;
+
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -84,9 +88,7 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(currentMonitor.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -103,8 +105,9 @@ export const monitorRouter = createTRPCRouter({
       const currentMonitor = await opts.ctx.db
         .select()
         .from(monitor)
-        .where(eq(monitor.id, Number(opts.input.id)))
+        .where(eq(monitor.id, opts.input.id))
         .get();
+      if (!currentMonitor || !currentMonitor.workspaceId) return;
 
       const currentUser = opts.ctx.db
         .select()
@@ -114,9 +117,7 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(currentMonitor.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -125,12 +126,12 @@ export const monitorRouter = createTRPCRouter({
       opts.ctx.db
         .update(monitor)
         .set(opts.input)
-        .where(eq(monitor.id, Number(opts.input.id)));
+        .where(eq(monitor.id, opts.input.id));
     }),
   updateMonitorStatus: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
         status: insertMonitorSchema.pick({ periodicity: true }),
       }),
     )
@@ -140,6 +141,7 @@ export const monitorRouter = createTRPCRouter({
         .from(monitor)
         .where(eq(monitor.id, opts.input.id))
         .get();
+      if (!currentMonitor || !currentMonitor.workspaceId) return;
 
       const currentUser = opts.ctx.db
         .select()
@@ -149,9 +151,7 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(currentMonitor.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -164,13 +164,14 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   deleteMonitor: protectedProcedure
-    .input(z.object({ monitorId: z.number() }))
+    .input(z.object({ monitorId: z.string() }))
     .mutation(async (opts) => {
       const currentMonitor = await opts.ctx.db
         .select()
         .from(monitor)
         .where(eq(monitor.id, opts.input.monitorId))
         .get();
+      if (!currentMonitor || !currentMonitor.workspaceId) return;
 
       const currentUser = opts.ctx.db
         .select()
@@ -180,9 +181,7 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(currentMonitor.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -191,7 +190,7 @@ export const monitorRouter = createTRPCRouter({
       opts.ctx.db.delete(monitor).where(eq(monitor.id, opts.input.monitorId));
     }),
   getMonitorsByWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.number() }))
+    .input(z.object({ workspaceId: z.string() }))
     .query(async (opts) => {
       const currentUser = opts.ctx.db
         .select()
@@ -201,9 +200,7 @@ export const monitorRouter = createTRPCRouter({
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(
-          eq(usersToWorkspaces.workspaceId, Number(opts.input.workspaceId)),
-        )
+        .where(eq(usersToWorkspaces.workspaceId, opts.input.workspaceId))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
       // the user don't have access to this workspace
