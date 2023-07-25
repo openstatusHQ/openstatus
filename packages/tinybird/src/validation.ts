@@ -101,7 +101,7 @@ export const tbBuildMonitorList = z.object({
   cronTimestamp: z.number().int(),
 });
 
-export type Ping = z.infer<typeof tbIngestPingResponse>;
+export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;

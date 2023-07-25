@@ -1,4 +1,4 @@
-VERSION 3
+VERSION 2
 
 SCHEMA >
     `id` String `json:$.id`,
@@ -10,8 +10,8 @@ SCHEMA >
     `timestamp` Int64 `json:$.timestamp`,
     `url` String `json:$.url`,
     `workspaceId` String `json:$.workspaceId`,
-    `cronTimestamp` Nullable(Int64) `json:$.cronTimestamp`
-    `metadata` String `json:$.metadata`
+    `cronTimestamp` Nullable(Int64) `json:$.cronTimestamp`,
+    `metadata` Nullable(String) `json:$.metadata`
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "id, timestamp, url, workspaceId"
