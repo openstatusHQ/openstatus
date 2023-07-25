@@ -48,7 +48,7 @@ importers:
         specifier: 4.23.0
         version: 4.23.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       '@hookform/resolvers':
-        specifier: ^3.1.1
+        specifier: 3.1.1
         version: 3.1.1(react-hook-form@7.45.1)
       '@openstatus/api':
         specifier: workspace:^
@@ -66,55 +66,55 @@ importers:
         specifier: workspace:*
         version: link:../../packages/upstash
       '@radix-ui/react-accordion':
-        specifier: ^1.1.2
+        specifier: 1.1.2
         version: 1.1.2(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-alert-dialog':
-        specifier: ^1.0.4
+        specifier: 1.0.4
         version: 1.0.4(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-checkbox':
-        specifier: ^1.0.4
+        specifier: 1.0.4
         version: 1.0.4(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-dialog':
-        specifier: ^1.0.4
+        specifier: 1.0.4
         version: 1.0.4(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-dropdown-menu':
-        specifier: ^2.0.5
+        specifier: 2.0.5
         version: 2.0.5(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-hover-card':
-        specifier: ^1.0.6
+        specifier: 1.0.6
         version: 1.0.6(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-label':
-        specifier: ^2.0.2
+        specifier: 2.0.2
         version: 2.0.2(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-popover':
-        specifier: ^1.0.6
+        specifier: 1.0.6
         version: 1.0.6(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-select':
-        specifier: ^1.2.2
+        specifier: 1.2.2
         version: 1.2.2(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-separator':
-        specifier: ^1.0.3
+        specifier: 1.0.3
         version: 1.0.3(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-slot':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(@types/react@18.2.12)(react@18.2.0)
       '@radix-ui/react-switch':
-        specifier: ^1.0.3
+        specifier: 1.0.3
         version: 1.0.3(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-toast':
-        specifier: ^1.1.4
+        specifier: 1.1.4
         version: 1.1.4(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@radix-ui/react-tooltip':
-        specifier: ^1.0.6
+        specifier: 1.0.6
         version: 1.0.6(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       '@t3-oss/env-nextjs':
         specifier: 0.4.1
         version: 0.4.1(typescript@5.1.6)(zod@3.21.4)
       '@tailwindcss/typography':
-        specifier: ^0.5.9
+        specifier: 0.5.9
         version: 0.5.9(tailwindcss@3.3.2)
       '@tanstack/react-table':
-        specifier: ^8.9.3
+        specifier: 8.9.3
         version: 8.9.3(react-dom@18.2.0)(react@18.2.0)
       '@trpc/client':
         specifier: 10.35.0
@@ -129,34 +129,34 @@ importers:
         specifier: 10.35.0
         version: 10.35.0
       '@upstash/qstash':
-        specifier: ^0.3.6
+        specifier: 0.3.6
         version: 0.3.6
       '@upstash/redis':
         specifier: 1.21.0
         version: 1.21.0
       class-variance-authority:
-        specifier: ^0.6.0
+        specifier: 0.6.0
         version: 0.6.0(typescript@5.1.6)
       clsx:
-        specifier: ^1.2.1
+        specifier: 1.2.1
         version: 1.2.1
       cmdk:
-        specifier: ^0.2.0
+        specifier: 0.2.0
         version: 0.2.0(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       contentlayer:
         specifier: 0.3.4
         version: 0.3.4(esbuild@0.18.10)
       date-fns:
-        specifier: ^2.30.0
+        specifier: 2.30.0
         version: 2.30.0
       lucide-react:
-        specifier: ^0.244.0
+        specifier: 0.244.0
         version: 0.244.0(react@18.2.0)
       micro:
         specifier: 10.0.1
         version: 10.0.1
       nanoid:
-        specifier: ^4.0.2
+        specifier: 4.0.2
         version: 4.0.2
       next:
         specifier: 13.4.12
@@ -171,25 +171,25 @@ importers:
         specifier: 18.2.0
         version: 18.2.0
       react-day-picker:
-        specifier: ^8.8.0
+        specifier: 8.8.0
         version: 8.8.0(date-fns@2.30.0)(react@18.2.0)
       react-dom:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       react-hook-form:
-        specifier: ^7.45.1
+        specifier: 7.45.1
         version: 7.45.1(react@18.2.0)
       reading-time:
-        specifier: ^1.5.0
+        specifier: 1.5.0
         version: 1.5.0
       rehype-pretty-code:
-        specifier: ^0.10.0
+        specifier: 0.10.0
         version: 0.10.0(shiki@0.14.3)
       resend:
-        specifier: ^0.15.3
+        specifier: 0.15.3
         version: 0.15.3
       shiki:
-        specifier: ^0.14.3
+        specifier: 0.14.3
         version: 0.14.3
       superjson:
         specifier: 1.13.1
@@ -198,16 +198,16 @@ importers:
         specifier: 1.4.12
         version: 1.4.12
       tailwind-merge:
-        specifier: ^1.13.2
+        specifier: 1.13.2
         version: 1.13.2
       tailwindcss-animate:
-        specifier: ^1.0.6
+        specifier: 1.0.6
         version: 1.0.6(tailwindcss@3.3.2)
       ui:
         specifier: workspace:*
         version: link:../../packages/ui
       zod:
-        specifier: ^3.21.4
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@openstatus/eslint-config':
@@ -229,13 +229,13 @@ importers:
         specifier: 8.4.24
         version: 8.4.24
       rehype-autolink-headings:
-        specifier: ^6.1.1
+        specifier: 6.1.1
         version: 6.1.1
       rehype-slug:
-        specifier: ^5.1.0
+        specifier: 5.1.0
         version: 5.1.0
       remark-gfm:
-        specifier: ^3.0.1
+        specifier: 3.0.1
         version: 3.0.1
       tailwindcss:
         specifier: 3.3.2
@@ -247,7 +247,7 @@ importers:
         specifier: 5.1.6
         version: 5.1.6
       unified:
-        specifier: ^10.1.2
+        specifier: 10.1.2
         version: 10.1.2
 
   packages/api:
@@ -2613,8 +2613,8 @@ packages:
     peerDependencies:
       '@types/react': '*'
       '@types/react-dom': '*'
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || 18.2
+      react-dom: ^16.8 || ^17.0 || ^18.0 || 18.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -2996,8 +2996,8 @@ packages:
     peerDependencies:
       '@types/react': '*'
       '@types/react-dom': '*'
-      react: ^16.8 || ^17.0 || ^18.0
-      react-dom: ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0 || 18.2
+      react-dom: ^16.8 || ^17.0 || ^18.0 || 18.2
     peerDependenciesMeta:
       '@types/react':
         optional: true
@@ -4939,8 +4939,8 @@ packages:
   /cmdk@0.2.0(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-JQpKvEOb86SnvMZbYaFKYhvzFntWBeSZdyii0rZPhKJj9uwJBxu4DaVYDrRN7r3mPop56oPhRw+JYWTKs66TYw==}
     peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
+      react: ^18.0.0 || 18.2
+      react-dom: ^18.0.0 || 18.2
     dependencies:
       '@radix-ui/react-dialog': 1.0.0(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
       command-score: 0.1.2

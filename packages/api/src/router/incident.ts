@@ -1,4 +1,3 @@
-import { customAlphabet, urlAlphabet } from "nanoid";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
