@@ -25,10 +25,10 @@ export default async function Page({
   params,
   searchParams,
 }: {
-  params: { workspaceId: string; id: string };
+  params: { workspaceSlug: string; id: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const workspaceId = params.workspaceId;
+  const workspaceSlug = params.workspaceSlug;
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
