@@ -15,8 +15,6 @@ export default async function IncidentPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Incidents" description="Overview of all your incidents." />
-      <Container title="Hello"></Container>
-      <Container title="World"></Container>
     </div>
   );
 }
