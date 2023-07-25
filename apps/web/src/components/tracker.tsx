@@ -69,7 +69,10 @@ export function Tracker({
     },
   );
 
-  const totalUptime = ((reducedData.ok / reducedData.count) * 100).toFixed(2);
+  const uptime =
+    reducedData.count !== 0
+      ? `${((reducedData.ok / reducedData.count) * 100).toFixed(2)}% uptime`
+      : "";
 
   return (
     <div className="mx-auto max-w-max">
@@ -78,9 +81,7 @@ export function Tracker({
           <p className="text-foreground font-semibold">{name}</p>
           <MoreInfo {...{ url, id, context }} />
         </div>
-        <p className="text-muted-foreground font-light">
-          {`${totalUptime}%`} uptime
-        </p>
+        <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
       <div className="relative">
         <div className="z-[-1] flex gap-0.5">

@@ -46,9 +46,9 @@ export function StatusPageForm({
       title: defaultValues?.title || "",
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
-      monitors: [],
       workspaceId: "",
       id: defaultValues?.id || "",
+      monitors: defaultValues?.monitors ?? [],
     },
   });
   const watchSlug = form.watch("slug");
