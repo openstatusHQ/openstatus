@@ -39,7 +39,7 @@ export function CreateForm({ workspaceId, allMonitors, disabled }: Props) {
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.page.createPage.mutate({ ...props, workspaceId });
+    await api.page.createPage.mutate({ ...props });
     router.refresh();
     setSaving(false);
     setOpen(false);

@@ -72,7 +72,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
 
   async function onDelete() {
     setSaving(true);
-    await api.page.deletePage.mutate({ pageId: page.id });
+    await api.page.deletePage.mutate({ pageUUID: page.uuid });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);

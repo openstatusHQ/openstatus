@@ -12,13 +12,15 @@ import { page } from "./page";
 import { workspace } from "./workspace";
 
 export const monitor = sqliteTable("monitor", {
-  id: text("id").primaryKey(),
+  id: integer("id").primaryKey(),
+  uuid: text("uuid").notNull().unique(),
   jobType: text("job_type", ["website", "cron", "other"])
     .default("other")
     .notNull(),
   periodicity: text("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
     .default("other")
     .notNull(),
+  status: text("status", ["active", "inactive"]).default("inactive").notNull(),
   active: integer("active", { mode: "boolean" }).default(false),
 
   url: text("url", { length: 512 }).notNull(),
@@ -26,9 +28,7 @@ export const monitor = sqliteTable("monitor", {
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
 
-  workspaceId: text("workspace_id").references(() => workspace.id, {
-    onDelete: "cascade",
-  }),
+  workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -49,16 +49,12 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
 export const monitorsToPages = sqliteTable(
   "monitors_to_pages",
   {
-    monitorId: text("monitor_id")
+    monitorId: integer("monitor_id")
       .notNull()
-      .references(() => monitor.id, {
-        onDelete: "cascade",
-      }),
-    pageId: text("page_id")
+      .references(() => monitor.id, { onDelete: "cascade" }),
+    pageId: integer("page_id")
       .notNull()
-      .references(() => page.id, {
-        onDelete: "cascade",
-      }),
+      .references(() => page.id, { onDelete: "cascade" }),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),
@@ -91,13 +87,14 @@ export const periodicityEnum = z.enum([
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
   url: z.string().url(),
+  status: z.enum(["active", "inactive"]).default("inactive"),
   active: z.boolean().default(false),
-  id: z.string().optional(),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: periodicityEnum,
+  status: z.enum(["active", "inactive"]).default("inactive"),
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
 });

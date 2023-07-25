@@ -10,7 +10,7 @@ export default async function IncidentPage({
   params: { workspaceId: string };
 }) {
   const incidents = await api.incident.getIncidentByWorkspace.query({
-    workspaceId: params.workspaceId,
+    workspaceSlug: params.workspaceId,
   });
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">

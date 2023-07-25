@@ -28,7 +28,7 @@ export const webhookRouter = createTRPCRouter({
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
-          id: nanoid(),
+          uuid: nanoid(),
           tenantId: opts.input.data.data.id,
         })
         .returning({ id: user.id })
@@ -38,7 +38,7 @@ export const webhookRouter = createTRPCRouter({
 
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ id: slug, name: "" })
+        .values({ slug: slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db

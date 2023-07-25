@@ -59,7 +59,7 @@ export function ActionButton(props: Schema) {
 
   async function onDelete() {
     setSaving(true);
-    await api.monitor.deleteMonitor.mutate({ monitorId: String(props.id) });
+    await api.monitor.deleteMonitor.mutate({ monitorUUID: String(props.id) });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);

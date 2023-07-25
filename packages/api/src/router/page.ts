@@ -12,6 +12,7 @@ import {
   selectPageSchema,
   user,
   usersToWorkspaces,
+  workspace,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -21,27 +22,29 @@ export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
     .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
-      const { monitors, id, ...pageInput } = opts.input;
+      const { monitors, uuid, ...pageInput } = opts.input;
 
       const nanoid = customAlphabet(urlAlphabet, 10);
 
       const newPage = await opts.ctx.db
         .insert(page)
-        .values({ id: nanoid(), ...pageInput })
+        .values({ uuid: nanoid(), ...pageInput })
         .returning()
         .get();
       if (monitors && monitors.length > 0) {
         // We should make sure the user has access to the monitors
-        const values = monitors.map((monitorId) => ({
-          monitorId: monitorId,
+        const allMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: inArray(monitor.id, monitors),
+        });
+        const values = allMonitors.map((monitor) => ({
+          monitorId: monitor.id,
           pageId: newPage.id,
         }));
-
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
     }),
 
-  getPageById: protectedProcedure
+  getPageByUUID: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
@@ -59,7 +62,7 @@ export const pageRouter = createTRPCRouter({
 
       return await opts.ctx.db.query.page.findFirst({
         where: and(
-          eq(page.id, opts.input.id),
+          eq(page.uuid, opts.input.id),
           inArray(page.workspaceId, workspaceIds),
         ),
         with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
@@ -73,7 +76,7 @@ export const pageRouter = createTRPCRouter({
       const currentPage = await opts.ctx.db
         .update(page)
         .set(pageInput)
-        .where(eq(page.id, opts.input.id))
+        .where(eq(page.uuid, opts.input.uuid))
         .returning()
         .get();
 
@@ -99,7 +102,7 @@ export const pageRouter = createTRPCRouter({
       if (addedMonitors && addedMonitors.length > 0) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
-          pageId: opts.input.id,
+          pageId: currentPage.id,
         }));
 
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
@@ -110,7 +113,7 @@ export const pageRouter = createTRPCRouter({
           .delete(monitorsToPages)
           .where(
             and(
-              eq(monitorsToPages.pageId, opts.input.id),
+              eq(monitorsToPages.pageId, currentPage.id),
               inArray(monitorsToPages.monitorId, removedMonitors),
             ),
           )
@@ -118,7 +121,7 @@ export const pageRouter = createTRPCRouter({
       }
     }),
   deletePage: protectedProcedure
-    .input(z.object({ pageId: z.string() }))
+    .input(z.object({ pageUUID: z.string() }))
     .mutation(async (opts) => {
       // TODO: this looks not very affective
       const currentUser = await opts.ctx.db
@@ -140,20 +143,17 @@ export const pageRouter = createTRPCRouter({
         .from(page)
         .where(
           and(
-            eq(page.id, opts.input.pageId),
+            eq(page.uuid, opts.input.pageUUID),
             inArray(page.workspaceId, workspaceIds),
           ),
         )
         .get();
       if (!pageToDelete) return;
 
-      await opts.ctx.db
-        .delete(page)
-        .where(eq(page.id, opts.input.pageId))
-        .run();
+      await opts.ctx.db.delete(page).where(eq(page.id, pageToDelete.id)).run();
     }),
   getPagesByWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(z.object({ workspaceSlug: z.string() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
         .select()
@@ -161,18 +161,25 @@ export const pageRouter = createTRPCRouter({
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
 
+      const currentWorkspace = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, opts.input.workspaceSlug))
+        .get();
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, currentUser.id))
+        .where(
+          and(
+            eq(usersToWorkspaces.userId, currentUser.id),
+            eq(usersToWorkspaces.workspaceId, currentWorkspace.id),
+          ),
+        )
         .all();
-      const workspaceIds = result.map((workspace) => workspace.workspaceId);
+      if (!result) return;
 
       return opts.ctx.db.query.page.findMany({
-        where: and(
-          eq(page.workspaceId, opts.input.workspaceId),
-          inArray(page.workspaceId, workspaceIds),
-        ),
+        where: and(eq(page.workspaceId, currentWorkspace.id)),
         with: {
           monitorsToPages: { with: { monitor: true } },
         },

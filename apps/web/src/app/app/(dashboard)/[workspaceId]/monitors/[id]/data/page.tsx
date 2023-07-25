@@ -32,7 +32,7 @@ export default async function Page({
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
-  const monitor = await api.monitor.getMonitorById.query({
+  const monitor = await api.monitor.getMonitorByUUID.query({
     id,
   });
 

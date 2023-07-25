@@ -15,7 +15,7 @@ export default async function MonitorPage({
   params: { workspaceId: string };
 }) {
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceId: params.workspaceId,
+    workspaceSlug: params.workspaceId,
   });
 
   return (

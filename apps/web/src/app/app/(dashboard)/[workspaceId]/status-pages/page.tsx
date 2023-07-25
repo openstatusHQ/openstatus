@@ -13,10 +13,10 @@ export default async function Page({
   params: { workspaceId: string };
 }) {
   const pages = await api.page.getPagesByWorkspace.query({
-    workspaceId: params.workspaceId,
+    workspaceSlug: params.workspaceId,
   });
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceId: params.workspaceId,
+    workspaceSlug: params.workspaceId,
   });
 
   return (
@@ -31,8 +31,8 @@ export default async function Page({
           disabled={!Boolean(monitors)}
         />
       </Header>
-      {Boolean(pages.length) ? (
-        pages.map((page, index) => (
+      {Boolean(pages?.length) ? (
+        pages?.map((page, index) => (
           <Container
             key={index}
             title={page.title}

@@ -34,7 +34,10 @@ export function CreateForm({ workspaceId }: Props) {
   async function onCreate(values: MonitorSchema) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.monitor.createMonitor.mutate({ data: values, workspaceId });
+    await api.monitor.createMonitor.mutate({
+      data: values,
+      workspaceSlug: workspaceId,
+    });
     router.refresh();
     setSaving(false);
     setOpen(false);

@@ -8,11 +8,13 @@ import { monitorsToPages } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
-  id: text("id").primaryKey(),
+  id: integer("id").primaryKey(),
 
-  workspaceId: text("workspace_id")
+  uuid: text("uuid").notNull().unique(),
+
+  workspaceId: integer("workspace_id")
     .notNull()
-    .references(() => workspace.id),
+    .references(() => workspace.id, { onDelete: "cascade" }),
 
   title: text("title").notNull(), // title of the page
   description: text("description").notNull(), // description of the page
@@ -46,7 +48,7 @@ export const insertPageSchema = createInsertSchema(page, {
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
-  monitors: z.array(z.string()).optional(),
+  monitors: z.array(z.number()).optional(),
 });
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);

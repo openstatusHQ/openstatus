@@ -20,17 +20,22 @@ export const workspaceRouter = createTRPCRouter({
     });
   }),
   getWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
       const currentUser = opts.ctx.db
         .select()
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .as("currentUser");
+      const currentWorkspace = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, opts.input.slug))
+        .get();
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, opts.input.workspaceId))
+        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
@@ -40,7 +45,7 @@ export const workspaceRouter = createTRPCRouter({
         with: {
           pages: true,
         },
-        where: eq(workspace.id, opts.input.workspaceId),
+        where: eq(workspace.id, currentWorkspace.id),
       });
     }),
 
@@ -51,7 +56,7 @@ export const workspaceRouter = createTRPCRouter({
 
       return opts.ctx.db
         .insert(workspace)
-        .values({ id: slug, name: opts.input.name })
+        .values({ slug: slug, name: opts.input.name })
         .returning()
         .get();
     }),
