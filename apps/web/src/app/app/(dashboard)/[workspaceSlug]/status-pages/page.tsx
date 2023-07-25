@@ -10,13 +10,13 @@ import { EmptyState } from "./_components/empty-state";
 export default async function Page({
   params,
 }: {
-  params: { workspaceId: string };
+  params: { workspaceSlug: string };
 }) {
   const pages = await api.page.getPagesByWorkspace.query({
-    workspaceSlug: params.workspaceId,
+    workspaceSlug: params.workspaceSlug,
   });
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug: params.workspaceId,
+    workspaceSlug: params.workspaceSlug,
   });
 
   return (
@@ -26,7 +26,7 @@ export default async function Page({
         description="Overview of all your status page."
       >
         <CreateForm
-          workspaceId={params.workspaceId}
+          workspaceSlug={params.workspaceSlug}
           allMonitors={monitors}
           disabled={!Boolean(monitors)}
         />
@@ -41,6 +41,7 @@ export default async function Page({
             <ActionButton
               page={{
                 ...page,
+                workspaceSlug: params.workspaceSlug,
                 monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
               }}
               allMonitors={monitors}
@@ -54,7 +55,7 @@ export default async function Page({
           </Container>
         ))
       ) : (
-        <EmptyState workspaceId={params.workspaceId} allMonitors={monitors} />
+        <EmptyState workspaceId={params.workspaceSlug} allMonitors={monitors} />
       )}
     </div>
   );

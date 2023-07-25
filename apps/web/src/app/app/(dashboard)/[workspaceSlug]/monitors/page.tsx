@@ -12,16 +12,16 @@ import { EmptyState } from "./_components/empty-state";
 export default async function MonitorPage({
   params,
 }: {
-  params: { workspaceId: string };
+  params: { workspaceSlug: string };
 }) {
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug: params.workspaceId,
+    workspaceSlug: params.workspaceSlug,
   });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm {...{ workspaceId: params.workspaceId }} />
+        <CreateForm {...{ workspaceSlug: params.workspaceSlug }} />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -63,7 +63,7 @@ export default async function MonitorPage({
           </Container>
         ))
       ) : (
-        <EmptyState {...{ workspaceId: params.workspaceId }} />
+        <EmptyState {...{ workspaceSlug: params.workspaceSlug }} />
       )}
     </div>
   );

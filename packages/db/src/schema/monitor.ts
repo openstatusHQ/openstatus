@@ -13,7 +13,6 @@ import { workspace } from "./workspace";
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),
-  uuid: text("uuid").notNull().unique(),
   jobType: text("job_type", ["website", "cron", "other"])
     .default("other")
     .notNull(),

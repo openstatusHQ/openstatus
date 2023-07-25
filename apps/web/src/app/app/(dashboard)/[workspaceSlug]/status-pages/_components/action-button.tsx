@@ -55,24 +55,20 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-
   async function onUpdate({
-    workspaceId,
     ...props
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
-    await api.page.updatePage.mutate({
-      workspaceId: page.workspaceId,
-      ...props,
-    });
+    await api.page.updatePage.mutate(props);
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
   }
 
   async function onDelete() {
+    if (!page.id) return;
     setSaving(true);
-    await api.page.deletePage.mutate({ pageUUID: page.uuid });
+    await api.page.deletePage.mutate({ id: page.id });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);

@@ -24,11 +24,9 @@ export const webhookRouter = createTRPCRouter({
         .where(eq(user.tenantId, opts.input.data.data.id))
         .get();
       if (alreadyExists) return;
-      const nanoid = customAlphabet(urlAlphabet, 10);
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
-          uuid: nanoid(),
           tenantId: opts.input.data.data.id,
         })
         .returning({ id: user.id })

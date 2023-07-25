@@ -10,8 +10,6 @@ import { workspace } from "./workspace";
 export const page = sqliteTable("page", {
   id: integer("id").primaryKey(),
 
-  uuid: text("uuid").notNull().unique(),
-
   workspaceId: integer("workspace_id")
     .notNull()
     .references(() => workspace.id, { onDelete: "cascade" }),
@@ -49,6 +47,7 @@ export const insertPageSchema = createInsertSchema(page, {
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
   monitors: z.array(z.number()).optional(),
+  workspaceSlug: z.string().optional(),
 });
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);

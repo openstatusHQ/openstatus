@@ -17,33 +17,25 @@ export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
     .input(insertIncidentSchema)
     .mutation(async (opts) => {
-      const nanoid = customAlphabet(urlAlphabet, 10);
-      const { uuid, ...data } = opts.input;
-
-      // return opts.ctx.db
-      //   .insert(incident)
-      //   .values({ uuid: nanoid(), data })
-      //   .returning()
-      //   .get();
+      // FIXME: SECURE THIS
+      return opts.ctx.db.insert(incident).values(opts.input).returning().get();
     }),
 
   createIncidentUpdate: protectedProcedure
     .input(insertIncidentUpdateSchema)
     .mutation(async (opts) => {
-      const nanoid = customAlphabet(urlAlphabet, 10);
-      const { uuid, ...data } = opts.input;
-
-      // return opts.ctx.db
-      //   .insert(incidentUpdate)
-      //   .values({ uuid: nanoid(), data })
-      //   .returning()
-      //   .get();
+      // FIXME: SECURE THIS
+      return await opts.ctx.db
+        .insert(incidentUpdate)
+        .values(opts.input)
+        .returning()
+        .get();
     }),
 
   updateIncident: protectedProcedure
     .input(
       z.object({
-        incidentUUID: z.string(),
+        incidentId: z.number(),
         status: insertIncidentSchema.pick({ status: true }),
       }),
     )
@@ -51,7 +43,7 @@ export const incidentRouter = createTRPCRouter({
       return opts.ctx.db
         .update(incident)
         .set(opts.input.status)
-        .where(eq(incident.uuid, opts.input.incidentUUID))
+        .where(eq(incident.id, opts.input.incidentId))
         .returning()
         .get();
     }),

@@ -6,7 +6,6 @@ import { page } from "./page";
 
 export const incident = sqliteTable("incident", {
   id: integer("id").primaryKey(),
-  uuid: text("uuid").notNull().unique(),
   status: text("status", ["resolved", "investigating"]).notNull(),
 
   pageId: text("page_id")

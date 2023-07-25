@@ -10,7 +10,6 @@ import { workspace } from "./workspace";
 
 export const user = sqliteTable("user", {
   id: integer("id").primaryKey(),
-  uuid: text("uuid").notNull().unique(),
   tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(

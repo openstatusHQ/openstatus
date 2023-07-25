@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
-import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 const before = (req: NextRequest, ev: NextFetchEvent) => {
   const url = req.nextUrl.clone();
@@ -85,8 +85,13 @@ export default authMiddleware({
         .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
         .all();
       if (result.length > 0) {
+        const currentWorkspace = await db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
+          .get();
         const orgSelection = new URL(
-          `/app/${result[0].users_to_workspaces.workspaceId}/monitors`,
+          `/app/${currentWorkspace.slug}/monitors`,
           req.url,
         );
         return NextResponse.redirect(orgSelection);

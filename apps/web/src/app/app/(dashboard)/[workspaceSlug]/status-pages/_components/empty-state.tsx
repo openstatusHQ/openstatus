@@ -34,7 +34,7 @@ export function EmptyState({
       icon="panel-top"
       title="No pages"
       description="Create your first page."
-      action={<CreateForm {...{ workspaceId, allMonitors }} />}
+      action={<CreateForm {...{ workspaceSlug: workspaceId, allMonitors }} />}
     />
   );
 }

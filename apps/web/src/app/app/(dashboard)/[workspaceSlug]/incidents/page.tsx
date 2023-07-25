@@ -7,10 +7,10 @@ import { api } from "@/trpc/server";
 export default async function IncidentPage({
   params,
 }: {
-  params: { workspaceId: string };
+  params: { workspaceSlug: string };
 }) {
   const incidents = await api.incident.getIncidentByWorkspace.query({
-    workspaceSlug: params.workspaceId,
+    workspaceSlug: params.workspaceSlug,
   });
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
