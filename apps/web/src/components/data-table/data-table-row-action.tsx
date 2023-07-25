@@ -36,10 +36,6 @@ export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   const ping = schema.parse(row.original);
-  const meta = {
-    "body.title": "Hello",
-    "body.text": true,
-  };
   return (
     <Dialog>
       <DropdownMenu>
@@ -69,12 +65,12 @@ export function DataTableRowActions<TData>({
         <div className="border-border rounded-lg border border-dashed p-4">
           {!Boolean(Object.keys(ping.metadata || {}).length) ? (
             <ul className="grid gap-1">
-              {Object.keys(meta).map((key) => {
+              {Object.keys(ping.metadata || {}).map((key) => {
                 return (
                   <li key={key} className="text-sm">
                     <p>
                       <code>
-                        {`"${key}"`}: {`${meta[key]}`}
+                        {`"${key}"`}: {`${ping.metadata?.[key] || null}`}
                       </code>
                     </p>
                   </li>
