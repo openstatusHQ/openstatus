@@ -12,7 +12,7 @@ export default async function Page({
 }: {
   params: { workspaceId: string };
 }) {
-  const pages = await api.page.getPageByWorkspace.query({
+  const pages = await api.page.getPagesByWorkspace.query({
     workspaceId: params.workspaceId,
   });
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
