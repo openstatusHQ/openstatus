@@ -25,7 +25,7 @@ import {
 
 // REMINDER: needed because `ResponseList` returns metadata as string, not as Record
 const schema = tbBuildResponseList.extend({
-  metadata: z.record(z.string(), z.unknown()),
+  metadata: z.record(z.string(), z.unknown()).nullable(),
 });
 
 interface DataTableRowActionsProps<TData> {
@@ -67,7 +67,7 @@ export function DataTableRowActions<TData>({
           </DialogDescription>
         </DialogHeader>
         <div className="border-border rounded-lg border border-dashed p-4">
-          {!Boolean(Object.keys(ping.metadata).length) ? (
+          {!Boolean(Object.keys(ping.metadata || {}).length) ? (
             <ul className="grid gap-1">
               {Object.keys(meta).map((key) => {
                 return (
