@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
@@ -8,7 +9,6 @@ import type * as z from "zod";
 import type {
   allMonitorsSchema,
   insertPageSchemaWithMonitors,
-  selectPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { StatusPageForm } from "@/components/forms/status-page-form";
@@ -42,7 +42,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/trpc/client";
 
-type PageSchema = z.infer<typeof selectPageSchema>;
+type PageSchema = z.infer<typeof insertPageSchemaWithMonitors>;
 
 // allMonitors
 interface ActionButtonProps {
@@ -99,6 +99,9 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
+            <DropdownMenuItem>
+              <Link href={`/status-page/${page.slug}`}>View</Link>
+            </DropdownMenuItem>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
                 Delete

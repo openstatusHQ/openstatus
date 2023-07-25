@@ -5,6 +5,7 @@ import {
   allMonitorsSchema,
   insertMonitorSchema,
   monitor,
+  monitorsToPages,
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
@@ -187,8 +188,15 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       if (!result || !result.users_to_workspaces) return;
-
-      opts.ctx.db.delete(monitor).where(eq(monitor.id, opts.input.monitorId));
+      // TODO: remove all the many-to-many relations to `pages`
+      opts.ctx.db
+        .delete(monitorsToPages)
+        .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
+        .run();
+      opts.ctx.db
+        .delete(monitor)
+        .where(eq(monitor.id, opts.input.monitorId))
+        .run();
     }),
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))

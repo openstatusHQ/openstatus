@@ -27,7 +27,7 @@ export const pageRouter = createTRPCRouter({
         .values(pageInput)
         .returning()
         .get();
-      if (monitors) {
+      if (monitors && monitors.length > 0) {
         // We should make sure the user has access to the monitors
         const values = monitors.map((monitorId) => ({
           monitorId: monitorId,
@@ -67,26 +67,57 @@ export const pageRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { monitors, ...pageInput } = opts.input;
 
-      await opts.ctx.db
+      const currentPage = await opts.ctx.db
         .update(page)
         .set(pageInput)
         .where(eq(page.id, Number(opts.input.id)))
         .returning()
         .get();
 
-      if (monitors) {
-        // We should make sure the user has access to the monitors
-        const values = monitors.map((monitorId) => ({
+      // TODO: optimize!
+      const currentMonitorsToPages = await opts.ctx.db
+        .select()
+        .from(monitorsToPages)
+        .where(eq(monitorsToPages.pageId, currentPage.id))
+        .all();
+
+      const currentMonitorsToPagesIds = currentMonitorsToPages.map(
+        ({ monitorId }) => monitorId,
+      );
+
+      const removedMonitors = currentMonitorsToPagesIds.filter(
+        (x) => !monitors?.includes(x),
+      );
+
+      const addedMonitors = monitors?.filter(
+        (x) => !currentMonitorsToPagesIds?.includes(x),
+      );
+
+      if (addedMonitors && addedMonitors.length > 0) {
+        const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
           pageId: Number(opts.input.id),
         }));
 
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
+
+      if (removedMonitors && removedMonitors.length > 0) {
+        await opts.ctx.db
+          .delete(monitorsToPages)
+          .where(
+            and(
+              eq(monitorsToPages.pageId, Number(opts.input.id)),
+              inArray(monitorsToPages.monitorId, removedMonitors),
+            ),
+          )
+          .run();
+      }
     }),
   deletePage: protectedProcedure
     .input(z.object({ pageId: z.number() }))
     .mutation(async (opts) => {
+      // TODO: this looks not very affective
       const currentUser = await opts.ctx.db
         .select()
         .from(user)
@@ -99,6 +130,7 @@ export const pageRouter = createTRPCRouter({
         .where(eq(usersToWorkspaces.userId, Number(currentUser.id)))
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
+      // two queries - can we reduce it?
 
       const pageToDelete = await opts.ctx.db
         .select()
@@ -111,9 +143,15 @@ export const pageRouter = createTRPCRouter({
         )
         .get();
       if (!pageToDelete) return;
-      await opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId));
+      // TODO: remove all the many-to-many monitors
+      opts.ctx.db
+        .delete(monitorsToPages)
+        .where(eq(monitorsToPages.pageId, opts.input.pageId))
+        .run();
+      opts.ctx.db.delete(page).where(eq(page.id, opts.input.pageId)).run();
     }),
-  getPageByWorkspace: protectedProcedure
+
+  getPagesByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.number() }))
     .query(async (opts) => {
       const currentUser = await opts.ctx.db
@@ -129,16 +167,15 @@ export const pageRouter = createTRPCRouter({
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 
-      return opts.ctx.db
-        .select()
-        .from(page)
-        .where(
-          and(
-            eq(page.workspaceId, opts.input.workspaceId),
-            inArray(page.workspaceId, workspaceIds),
-          ),
-        )
-        .all();
+      return opts.ctx.db.query.page.findMany({
+        where: and(
+          eq(page.workspaceId, opts.input.workspaceId),
+          inArray(page.workspaceId, workspaceIds),
+        ),
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+        },
+      });
     }),
 
   // public if we use trpc hooks to get the page from the url
@@ -160,18 +197,25 @@ export const pageRouter = createTRPCRouter({
         .from(monitorsToPages)
         .where(eq(monitorsToPages.pageId, result.id))
         .all();
+
       const monitorsId = monitorsToPagesResult.map(
         (monitor) => monitor.monitorId,
       );
+
+      const selectPageSchemaWithRelation = selectPageSchema.extend({
+        monitors: z.array(selectMonitorSchema),
+        incidents: z.array(selectIncidentSchema),
+      });
+
+      if (monitorsId.length === 0) {
+        return selectPageSchemaWithRelation.parse({ ...result, monitors: [] });
+      } // no monitors for that page
+
       const monitors = await opts.ctx.db
         .select()
         .from(monitor)
         .where(inArray(monitor.id, monitorsId))
         .all();
-      const selectPageSchemaWithRelation = selectPageSchema.extend({
-        monitors: z.array(selectMonitorSchema),
-        incidents: z.array(selectIncidentSchema),
-      });
 
       return selectPageSchemaWithRelation.parse({ ...result, monitors });
     }),
