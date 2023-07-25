@@ -1,7 +1,7 @@
 import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
 import { CreateForm } from "./create-form";
 
-export function EmptyState({ workspaceId }: { workspaceId: number }) {
+export function EmptyState({ workspaceId }: { workspaceId: string }) {
   return (
     <DefaultEmptyState
       icon="activity"

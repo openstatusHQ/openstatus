@@ -62,7 +62,6 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
     setSaving(true);
     await api.page.updatePage.mutate({
-      id: page.id,
       workspaceId: page.workspaceId,
       ...props,
     });
@@ -73,7 +72,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
 
   async function onDelete() {
     setSaving(true);
-    await api.page.deletePage.mutate({ pageId: Number(page.id) });
+    await api.page.deletePage.mutate({ pageId: page.id });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);

@@ -92,6 +92,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
   url: z.string().url(),
   active: z.boolean().default(false),
+  id: z.string().optional(),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses

@@ -14,15 +14,14 @@ export default async function MonitorPage({
 }: {
   params: { workspaceId: string };
 }) {
-  const workspaceId = Number(params.workspaceId);
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceId,
+    workspaceId: params.workspaceId,
   });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm {...{ workspaceId }} />
+        <CreateForm {...{ workspaceId: params.workspaceId }} />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -37,18 +36,14 @@ export default async function MonitorPage({
                 <dt>Status</dt>
                 <dd>
                   <Badge
-                    variant={
-                      monitor.status === "active" ? "default" : "outline"
-                    }
+                    variant={monitor.active ? "default" : "outline"}
                     className="capitalize"
                   >
-                    {monitor.status}
+                    {monitor.active ? "active" : "inactive"}
                     <span
                       className={cn(
                         "ml-1 h-1.5 w-1.5 rounded-full",
-                        monitor.status === "active"
-                          ? "bg-green-500"
-                          : "bg-red-500",
+                        monitor.active ? "bg-green-500" : "bg-red-500",
                       )}
                     />
                   </Badge>
@@ -68,7 +63,7 @@ export default async function MonitorPage({
           </Container>
         ))
       ) : (
-        <EmptyState {...{ workspaceId }} />
+        <EmptyState {...{ workspaceId: params.workspaceId }} />
       )}
     </div>
   );

@@ -12,12 +12,11 @@ export default async function Page({
 }: {
   params: { workspaceId: string };
 }) {
-  const workspaceId = Number(params.workspaceId);
   const pages = await api.page.getPageByWorkspace.query({
-    workspaceId,
+    workspaceId: params.workspaceId,
   });
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceId,
+    workspaceId: params.workspaceId,
   });
 
   return (
@@ -27,7 +26,7 @@ export default async function Page({
         description="Overview of all your status page."
       >
         <CreateForm
-          workspaceId={workspaceId}
+          workspaceId={params.workspaceId}
           allMonitors={monitors}
           disabled={!Boolean(monitors)}
         />
@@ -49,7 +48,7 @@ export default async function Page({
           </Container>
         ))
       ) : (
-        <EmptyState workspaceId={workspaceId} allMonitors={monitors} />
+        <EmptyState workspaceId={params.workspaceId} allMonitors={monitors} />
       )}
     </div>
   );

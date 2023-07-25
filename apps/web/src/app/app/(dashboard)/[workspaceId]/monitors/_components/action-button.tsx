@@ -51,7 +51,7 @@ export function ActionButton(props: Schema) {
 
   async function onUpdate(values: Schema) {
     setSaving(true);
-    await api.monitor.updateMonitor.mutate({ id: props.id, ...values });
+    await api.monitor.updateMonitor.mutate({ ...values });
     router.refresh();
     setSaving(false);
     setDialogOpen(false);
@@ -59,7 +59,7 @@ export function ActionButton(props: Schema) {
 
   async function onDelete() {
     setSaving(true);
-    await api.monitor.deleteMonitor.mutate({ monitorId: Number(props.id) });
+    await api.monitor.deleteMonitor.mutate({ monitorId: String(props.id) });
     router.refresh();
     setSaving(false);
     setAlertOpen(false);

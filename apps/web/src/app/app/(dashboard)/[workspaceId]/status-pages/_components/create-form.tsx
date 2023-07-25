@@ -24,7 +24,7 @@ import {
 import { api } from "@/trpc/client";
 
 interface Props {
-  workspaceId: number;
+  workspaceId: string;
   allMonitors?: z.infer<typeof allMonitorsSchema>;
   disabled?: boolean;
 }

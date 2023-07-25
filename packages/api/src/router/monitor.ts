@@ -1,3 +1,4 @@
+import { customAlphabet, urlAlphabet } from "nanoid";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
@@ -29,10 +30,16 @@ export const monitorRouter = createTRPCRouter({
 
       // the user don't have access to this workspace
       if (!result || !result.users_to_workspaces) return;
+      const nanoid = customAlphabet(urlAlphabet, 10);
+      const { id, ...values } = opts.input.data;
 
       await opts.ctx.db
         .insert(monitor)
-        .values(opts.input.data)
+        .values({
+          id: nanoid(),
+          ...values,
+          workspaceId: opts.input.workspaceId,
+        })
         .returning()
         .get();
     }),
@@ -102,6 +109,7 @@ export const monitorRouter = createTRPCRouter({
   updateMonitor: protectedProcedure
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
+      if (!opts.input.id) return;
       const currentMonitor = await opts.ctx.db
         .select()
         .from(monitor)
@@ -123,10 +131,12 @@ export const monitorRouter = createTRPCRouter({
 
       if (!result || !result.users_to_workspaces) return;
 
-      opts.ctx.db
+      await opts.ctx.db
         .update(monitor)
         .set(opts.input)
-        .where(eq(monitor.id, opts.input.id));
+        .where(eq(monitor.id, opts.input.id))
+        .returning()
+        .get();
     }),
   updateMonitorStatus: protectedProcedure
     .input(
@@ -187,7 +197,10 @@ export const monitorRouter = createTRPCRouter({
 
       if (!result || !result.users_to_workspaces) return;
 
-      opts.ctx.db.delete(monitor).where(eq(monitor.id, opts.input.monitorId));
+      await opts.ctx.db
+        .delete(monitor)
+        .where(eq(monitor.id, opts.input.monitorId))
+        .run();
     }),
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceId: z.string() }))

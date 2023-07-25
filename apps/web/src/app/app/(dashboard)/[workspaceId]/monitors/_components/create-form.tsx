@@ -23,7 +23,7 @@ import { api } from "@/trpc/client";
 type MonitorSchema = z.infer<typeof insertMonitorSchema>;
 
 interface Props {
-  workspaceId: number;
+  workspaceId: string;
 }
 
 export function CreateForm({ workspaceId }: Props) {
@@ -34,7 +34,7 @@ export function CreateForm({ workspaceId }: Props) {
   async function onCreate(values: MonitorSchema) {
     setSaving(true);
     // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.monitor.createMonitor.mutate({ ...values, workspaceId });
+    await api.monitor.createMonitor.mutate({ data: values, workspaceId });
     router.refresh();
     setSaving(false);
     setOpen(false);

@@ -28,8 +28,8 @@ export default async function Page({
   params: { workspaceId: string; id: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const workspaceId = Number(params.workspaceId);
-  const id = Number(params.id);
+  const workspaceId = params.workspaceId;
+  const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
   const monitor = await api.monitor.getMonitorById.query({
