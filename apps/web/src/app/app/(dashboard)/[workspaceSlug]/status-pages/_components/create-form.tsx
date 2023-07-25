@@ -41,7 +41,7 @@ export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
     // await api.monitor.getMonitorsByWorkspace.revalidate();
     await api.page.createPage.mutate({
       ...props,
-      workspaceSlug: workspaceSlug,
+      workspaceSlug,
     });
     router.refresh();
     setSaving(false);

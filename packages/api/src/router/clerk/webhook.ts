@@ -36,7 +36,7 @@ export const webhookRouter = createTRPCRouter({
 
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ slug: slug, name: "" })
+        .values({ slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db

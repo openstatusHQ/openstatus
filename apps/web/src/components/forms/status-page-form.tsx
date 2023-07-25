@@ -91,9 +91,7 @@ export function StatusPageForm({
               description: "Please select another slug. Every slug is unique.",
             });
           } else {
-            form.handleSubmit(onSubmit, (e) => {
-              console.log(e);
-            })(e);
+            form.handleSubmit(onSubmit)(e);
           }
         }}
         id={id}

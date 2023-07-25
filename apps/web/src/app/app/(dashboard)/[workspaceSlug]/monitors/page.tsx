@@ -21,7 +21,7 @@ export default async function MonitorPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm {...{ workspaceSlug: params.workspaceSlug }} />
+        <CreateForm workspaceSlug={params.workspaceSlug} />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -63,7 +63,7 @@ export default async function MonitorPage({
           </Container>
         ))
       ) : (
-        <EmptyState {...{ workspaceSlug: params.workspaceSlug }} />
+        <EmptyState workspaceSlug={params.workspaceSlug} />
       )}
     </div>
   );

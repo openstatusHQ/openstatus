@@ -264,9 +264,6 @@ importers:
       '@trpc/server':
         specifier: 10.35.0
         version: 10.35.0
-      nanoid:
-        specifier: ^4.0.2
-        version: 4.0.2
       random-word-slugs:
         specifier: ^0.1.7
         version: 0.1.7
