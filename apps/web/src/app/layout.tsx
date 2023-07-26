@@ -48,6 +48,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
+        {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
         <PlausibleProvider domain="openstatus.dev">
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>

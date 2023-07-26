@@ -41,7 +41,7 @@ export default async function Page({
   }
 
   const data = await getResponseListData({
-    siteId: "openstatus", // TODO: use monitorId
+    monitorId: id,
     ...search.data,
   });
 

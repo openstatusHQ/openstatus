@@ -32,20 +32,19 @@ interface Props {
 export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   async function onCreate({
     ...props
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
-    setSaving(true);
-    // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.page.createPage.mutate({
-      ...props,
-      workspaceSlug,
+    startTransition(async () => {
+      await api.page.createPage.mutate({
+        ...props,
+        workspaceSlug,
+      });
+      router.refresh();
+      setOpen(false);
     });
-    router.refresh();
-    setSaving(false);
-    setOpen(false);
   }
 
   return (
@@ -66,8 +65,8 @@ export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
           />
         </div>
         <DialogFooter>
-          <Button type="submit" form="status-page-create" disabled={saving}>
-            {!saving ? "Confirm" : <LoadingAnimation />}
+          <Button type="submit" form="status-page-create" disabled={isPending}>
+            {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </DialogFooter>
       </DialogContent>

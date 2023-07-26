@@ -237,7 +237,7 @@ export const pageRouter = createTRPCRouter({
       const monitors = await opts.ctx.db
         .select()
         .from(monitor)
-        .where(inArray(monitor.id, monitorsId))
+        .where(and(inArray(monitor.id, monitorsId), eq(monitor.active, true))) // REMINDER: this is hardcoded
         .all();
 
       return selectPageSchemaWithRelation.parse({ ...result, monitors });
