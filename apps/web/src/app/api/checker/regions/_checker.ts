@@ -26,34 +26,28 @@ const monitor = async (
   latency: number,
 ) => {
   const json = res.bodyUsed ? await res.json() : {};
-  if (monitorInfo.pageId.length > 0) {
-    for (const pageId of monitorInfo.pageId) {
+  if (monitorInfo.pageIds.length > 0) {
+    for (const pageId of monitorInfo.pageIds) {
       await publishPingResponse(tb)({
+        ...monitorInfo,
         id: nanoid(), // TBD: we don't need it
-        workspaceId: monitorInfo.workspaceId,
         pageId: pageId,
-        monitorId: monitorInfo.monitorId,
         timestamp: Date.now(),
         statusCode: res.status,
         latency,
-        url: monitorInfo.url,
         region,
-        cronTimestamp: monitorInfo.cronTimestamp || Date.now(), // TBC: why did we have this?
         metadata: JSON.stringify({ body: json }),
       });
     }
   } else {
     await publishPingResponse(tb)({
+      ...monitorInfo,
       id: nanoid(), // TBD: we don't need it
-      workspaceId: monitorInfo.workspaceId,
       pageId: "",
-      monitorId: monitorInfo.monitorId,
       timestamp: Date.now(),
       statusCode: res.status,
       latency,
-      url: monitorInfo.url,
       region,
-      cronTimestamp: monitorInfo.cronTimestamp,
       metadata: JSON.stringify({ body: json }),
     });
   }

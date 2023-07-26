@@ -1,7 +1,7 @@
 import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorsToPages,
@@ -30,7 +30,7 @@ export const cron = async ({
   const result = await db
     .select()
     .from(monitor)
-    .where(eq(monitor.periodicity, periodicity))
+    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
     .all();
 
   for (const row of result) {
@@ -47,7 +47,7 @@ export const cron = async ({
         monitorId: String(row.id),
         url: row.url,
         cronTimestamp: timestamp,
-        pageId: allPages.map((p) => String(p.pageId)),
+        pageIds: allPages.map((p) => String(p.pageId)),
       };
 
       await c.publishJSON({
@@ -56,6 +56,7 @@ export const cron = async ({
       });
     }
   }
+  // our first legacy monitor
   if (periodicity === "10m") {
     // Right now we are just checking the ping endpoint
     for (const region of availableRegions) {
@@ -64,16 +65,12 @@ export const cron = async ({
         monitorId: "openstatusPing",
         url: `${DEFAULT_URL}/api/ping`,
         cronTimestamp: timestamp,
-        pageId: ["openstatus"],
+        pageIds: ["openstatus"],
       };
 
       await c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
-        body: {
-          url: `${DEFAULT_URL}/api/ping`,
-          // FIXME: what is the concret timezone format? In DE, is 02h later
-          cronTimestamp: timestamp, // used to group all region requests - can be also cronId
-        },
+        body: payload,
       });
     }
   }

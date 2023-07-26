@@ -5,5 +5,5 @@ export const payloadSchema = z.object({
   monitorId: z.string(),
   url: z.string(),
   cronTimestamp: z.number(),
-  pageId: z.array(z.string()),
+  pageIds: z.array(z.string()),
 });
