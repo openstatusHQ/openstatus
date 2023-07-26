@@ -51,7 +51,7 @@ export const cron = async ({
       };
 
       await c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/region/${region}`,
+        url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
       });
     }
