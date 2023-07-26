@@ -11,7 +11,7 @@ export const Monitor = async ({
   monitor: z.infer<typeof selectMonitorSchema>;
 }) => {
   const data = await getMonitorListData({
-    siteId: "openstatus", // TODO: use proper id
+    monitorId: String(monitor.id),
     groupBy: "day",
   });
 
