@@ -54,24 +54,25 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
   const router = useRouter();
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
+
   async function onUpdate({
     ...props
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
-    setSaving(true);
-    await api.page.updatePage.mutate(props);
-    router.refresh();
-    setSaving(false);
-    setDialogOpen(false);
+    startTransition(async () => {
+      await api.page.updatePage.mutate(props);
+      router.refresh();
+      setDialogOpen(false);
+    });
   }
 
   async function onDelete() {
-    if (!page.id) return;
-    setSaving(true);
-    await api.page.deletePage.mutate({ id: page.id });
-    router.refresh();
-    setSaving(false);
-    setAlertOpen(false);
+    startTransition(async () => {
+      if (!page.id) return;
+      await api.page.deletePage.mutate({ id: page.id });
+      router.refresh();
+      setAlertOpen(false);
+    });
   }
 
   return (
@@ -119,10 +120,10 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
                 e.preventDefault();
                 onDelete();
               }}
-              disabled={saving}
+              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {!saving ? "Delete" : <LoadingAnimation />}
+              {!isPending ? "Delete" : <LoadingAnimation />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -144,12 +145,12 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
           <Button
             type="submit"
             form="status-page-update"
-            disabled={saving}
+            disabled={isPending}
             onSubmit={(e) => {
               e.preventDefault();
             }}
           >
-            {!saving ? "Confirm" : <LoadingAnimation />}
+            {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </DialogFooter>
       </DialogContent>

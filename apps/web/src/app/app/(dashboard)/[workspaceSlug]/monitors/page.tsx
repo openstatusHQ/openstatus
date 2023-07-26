@@ -3,11 +3,14 @@ import * as React from "react";
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Badge } from "@/components/ui/badge";
+import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
+
+const limit = plansConfig.free.limits.monitors;
 
 export default async function MonitorPage({
   params,
@@ -21,7 +24,10 @@ export default async function MonitorPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm workspaceSlug={params.workspaceSlug} />
+        <CreateForm
+          workspaceSlug={params.workspaceSlug}
+          disabled={monitors?.length === limit}
+        />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (

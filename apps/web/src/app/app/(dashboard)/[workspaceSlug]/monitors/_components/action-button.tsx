@@ -43,27 +43,25 @@ type Schema = z.infer<typeof insertMonitorSchema>;
 
 export function ActionButton(props: Schema & { workspaceSlug: string }) {
   const router = useRouter();
-  const pathname = usePathname();
-  console.log(router);
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   async function onUpdate(values: Schema) {
-    setSaving(true);
-    await api.monitor.updateMonitor.mutate({ ...values });
-    router.refresh();
-    setSaving(false);
-    setDialogOpen(false);
+    startTransition(async () => {
+      await api.monitor.updateMonitor.mutate({ ...values });
+      router.refresh();
+      setDialogOpen(false);
+    });
   }
 
   async function onDelete() {
-    if (!props.id) return;
-    setSaving(true);
-    await api.monitor.deleteMonitor.mutate({ id: props.id });
-    router.refresh();
-    setSaving(false);
-    setAlertOpen(false);
+    startTransition(async () => {
+      if (!props.id) return;
+      await api.monitor.deleteMonitor.mutate({ id: props.id });
+      router.refresh();
+      setAlertOpen(false);
+    });
   }
 
   return (
@@ -115,10 +113,10 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
                 e.preventDefault();
                 onDelete();
               }}
-              disabled={saving}
+              disabled={isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {!saving ? "Delete" : <LoadingAnimation />}
+              {!isPending ? "Delete" : <LoadingAnimation />}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -139,12 +137,12 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <Button
             type="submit"
             form="monitor-update"
-            disabled={saving}
+            disabled={isPending}
             onSubmit={(e) => {
               e.preventDefault();
             }}
           >
-            {!saving ? "Confirm" : <LoadingAnimation />}
+            {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </DialogFooter>
       </DialogContent>

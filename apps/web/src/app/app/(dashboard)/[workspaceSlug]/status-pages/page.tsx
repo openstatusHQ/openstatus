@@ -2,10 +2,15 @@ import * as React from "react";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { Badge } from "@/components/ui/badge";
+import { plansConfig } from "@/config/plans";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
+
+const limit = plansConfig.free.limits["status-pages"];
 
 export default async function Page({
   params,
@@ -28,7 +33,7 @@ export default async function Page({
         <CreateForm
           workspaceSlug={params.workspaceSlug}
           allMonitors={monitors}
-          disabled={!Boolean(monitors)}
+          disabled={!Boolean(monitors) || pages?.length === limit}
         />
       </Header>
       {Boolean(pages?.length) ? (
@@ -50,6 +55,24 @@ export default async function Page({
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <dt>Slug</dt>
                 <dd className="font-mono">{page.slug}</dd>
+              </div>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <dt>Monitors</dt>
+                <dd className="flex flex-wrap justify-end gap-2">
+                  {page.monitorsToPages.map(
+                    ({ monitor: { id, name, active } }, i) => (
+                      <Badge key={id} variant={active ? "default" : "outline"}>
+                        {name}
+                        <span
+                          className={cn(
+                            "ml-1 inline-block h-1.5 w-1.5 rounded-full",
+                            active ? "bg-green-500" : "bg-red-500",
+                          )}
+                        />
+                      </Badge>
+                    ),
+                  )}
+                </dd>
               </div>
             </dl>
           </Container>

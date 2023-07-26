@@ -24,29 +24,29 @@ type MonitorSchema = z.infer<typeof insertMonitorSchema>;
 
 interface Props {
   workspaceSlug: string;
+  disabled?: boolean;
 }
 
-export function CreateForm({ workspaceSlug }: Props) {
+export function CreateForm({ workspaceSlug, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   async function onCreate(values: MonitorSchema) {
-    setSaving(true);
-    // await api.monitor.getMonitorsByWorkspace.revalidate();
-    await api.monitor.createMonitor.mutate({
-      data: values,
-      workspaceSlug,
+    startTransition(async () => {
+      await api.monitor.createMonitor.mutate({
+        data: values,
+        workspaceSlug,
+      });
+      router.refresh();
+      setOpen(false);
     });
-    router.refresh();
-    setSaving(false);
-    setOpen(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={(value) => setOpen(value)}>
       <DialogTrigger asChild>
-        <Button>Create</Button>
+        <Button disabled={disabled}>Create</Button>
       </DialogTrigger>
       <DialogContent className="flex max-h-screen flex-col">
         <DialogHeader>
@@ -57,8 +57,8 @@ export function CreateForm({ workspaceSlug }: Props) {
           <MonitorForm id="monitor-create" onSubmit={onCreate} />
         </div>
         <DialogFooter>
-          <Button type="submit" form="monitor-create" disabled={saving}>
-            {!saving ? "Confirm" : <LoadingAnimation />}
+          <Button type="submit" form="monitor-create" disabled={isPending}>
+            {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </DialogFooter>
       </DialogContent>
