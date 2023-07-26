@@ -30,7 +30,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { plansConfig } from "@/config/plans";
 
-const limit = plansConfig.free.limits["cron-jobs"];
+const limit = plansConfig.free.limits.periodicity;
 const cronJobs = [
   { value: "1m", label: "1 minute" },
   { value: "5m", label: "5 minutes" },
