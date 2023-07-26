@@ -1,6 +1,8 @@
 import { Receiver } from "@upstash/qstash/cloudflare";
 import { nanoid } from "nanoid";
+import type { z } from "zod";
 
+import { page } from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -8,6 +10,7 @@ import {
 } from "@openstatus/tinybird";
 
 import { env } from "@/env.mjs";
+import { payloadSchema } from "../schema";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -18,27 +21,36 @@ const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
   res: Response,
-  {
-    latency,
-    url,
-    region,
-    cronTimestamp,
-  }: { latency: number; url: string; region: string; cronTimestamp: number },
+  monitorInfo: z.infer<typeof payloadSchema>,
+  region: string,
+  latency: number,
 ) => {
   const json = res.bodyUsed ? await res.json() : {};
-  await publishPingResponse(tb)({
-    id: nanoid(), // TBD: we don't need it
-    workspaceId: "openstatus",
-    pageId: "openstatus",
-    monitorId: "openstatusPing",
-    timestamp: Date.now(),
-    statusCode: res.status,
-    latency,
-    url,
-    region,
-    cronTimestamp,
-    metadata: JSON.stringify({ body: json }),
-  });
+  if (monitorInfo.pageIds.length > 0) {
+    for (const pageId of monitorInfo.pageIds) {
+      await publishPingResponse(tb)({
+        ...monitorInfo,
+        id: nanoid(), // TBD: we don't need it
+        pageId: pageId,
+        timestamp: Date.now(),
+        statusCode: res.status,
+        latency,
+        region,
+        metadata: JSON.stringify({ body: json }),
+      });
+    }
+  } else {
+    await publishPingResponse(tb)({
+      ...monitorInfo,
+      id: nanoid(), // TBD: we don't need it
+      pageId: "",
+      timestamp: Date.now(),
+      statusCode: res.status,
+      latency,
+      region,
+      metadata: JSON.stringify({ body: json }),
+    });
+  }
 };
 
 export const checker = async (request: Request, region: string) => {
@@ -57,23 +69,16 @@ export const checker = async (request: Request, region: string) => {
     throw new Error("Could not parse request");
   }
 
-  const result = monitorSchema.safeParse(jsonData);
+  const result = payloadSchema.safeParse(jsonData);
 
   if (!result.success) {
     throw new Error("Invalid response body");
   }
 
-  const { url, cronTimestamp } = result.data;
-
   const startTime = Date.now();
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(result.data.url, { cache: "no-store" });
   const endTime = Date.now();
   const latency = endTime - startTime;
 
-  await monitor(res, {
-    latency,
-    url,
-    region,
-    cronTimestamp: cronTimestamp || Date.now(), // HOT FIXME: remove!
-  });
+  await monitor(res, result.data, region, latency);
 };
