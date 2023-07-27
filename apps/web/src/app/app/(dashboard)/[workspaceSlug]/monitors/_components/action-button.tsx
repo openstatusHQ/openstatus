@@ -57,8 +57,8 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
         setDialogOpen(false);
       } catch {
         toast({
-          title: "Limits are reached.",
-          description: "Don't try to bypass the server.",
+          title: "Something went wrong.",
+          description: "If you are in the limits, please try again.",
         });
       }
     });
