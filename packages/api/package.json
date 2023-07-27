@@ -9,6 +9,7 @@
   "dependencies": {
     "@clerk/nextjs": "4.23.1",
     "@openstatus/db": "workspace:^",
+    "@openstatus/emails": "workspace:^",
     "@trpc/client": "10.35.0",
     "@trpc/server": "10.35.0",
     "random-word-slugs": "0.1.7",

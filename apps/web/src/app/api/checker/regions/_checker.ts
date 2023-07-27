@@ -9,7 +9,7 @@ import {
   Tinybird,
 } from "@openstatus/tinybird";
 
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 import { payloadSchema } from "../schema";
 
 export const monitorSchema = tbIngestPingResponse.pick({
