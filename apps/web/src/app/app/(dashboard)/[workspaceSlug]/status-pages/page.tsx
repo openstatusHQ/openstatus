@@ -1,16 +1,17 @@
 import * as React from "react";
 
+import { allPlans } from "@openstatus/plans";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Badge } from "@/components/ui/badge";
-import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
 
-const limit = plansConfig.free.limits["status-pages"];
+const limit = allPlans.free.limits["status-pages"];
 
 export default async function Page({
   params,
@@ -33,7 +34,7 @@ export default async function Page({
         <CreateForm
           workspaceSlug={params.workspaceSlug}
           allMonitors={monitors}
-          disabled={!Boolean(monitors) || pages?.length === limit}
+          // disabled={!Boolean(monitors) || pages?.length === limit}
         />
       </Header>
       {Boolean(pages?.length) ? (

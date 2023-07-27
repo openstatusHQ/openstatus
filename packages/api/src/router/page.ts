@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq, inArray } from "@openstatus/db";
@@ -13,8 +14,11 @@ import {
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+
+const limit = allPlans.free.limits["status-pages"];
 
 // TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
@@ -38,9 +42,25 @@ export const pageRouter = createTRPCRouter({
         .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
+
       if (!result) return;
       const { monitors, workspaceId, workspaceSlug, id, ...pageInput } =
         opts.input;
+
+      const pageNumbers = (
+        await opts.ctx.db.query.page.findMany({
+          where: eq(page.workspaceId, currentWorkspace.id),
+        })
+      ).length;
+
+      // the user has reached the limits
+      if (pageNumbers >= limit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your status-page limits.",
+        });
+      }
+
       const newPage = await opts.ctx.db
         .insert(page)
         .values({ workspaceId: currentWorkspace.id, ...pageInput })

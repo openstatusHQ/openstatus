@@ -59,6 +59,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:^
         version: link:../../packages/emails
+      '@openstatus/plans':
+        specifier: workspace:*
+        version: link:../../packages/plans
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -258,6 +261,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:^
         version: link:../db
+      '@openstatus/plans':
+        specifier: workspace:^
+        version: link:../plans
       '@trpc/client':
         specifier: 10.35.0
         version: 10.35.0(@trpc/server@10.35.0)
@@ -393,6 +399,22 @@ importers:
         version: 18.2.0
       tsconfig:
         specifier: workspace:*
+        version: link:../tsconfig
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
+
+  packages/plans:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:^
+        version: link:../db
+      zod:
+        specifier: 3.21.4
+        version: 3.21.4
+    devDependencies:
+      tsconfig:
+        specifier: workspace:^
         version: link:../tsconfig
       typescript:
         specifier: 5.1.6

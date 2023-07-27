@@ -9,6 +9,7 @@ import {
   insertMonitorSchema,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/plans";
 
 import {
   Form,
@@ -28,9 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { plansConfig } from "@/config/plans";
 
-const limit = plansConfig.free.limits.periodicity;
+const limit = allPlans.free.limits.periodicity;
 const cronJobs = [
   { value: "1m", label: "1 minute" },
   { value: "5m", label: "5 minutes" },

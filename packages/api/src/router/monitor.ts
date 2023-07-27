@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
@@ -9,8 +10,12 @@ import {
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+const monitorLimit = allPlans.free.limits.monitors;
+const periodicityLimit = allPlans.free.limits.periodicity;
 
 export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
@@ -35,6 +40,31 @@ export const monitorRouter = createTRPCRouter({
 
       // the user don't have access to this workspace
       if (!result || !result.users_to_workspaces) return;
+
+      const monitorNumbers = (
+        await opts.ctx.db.query.monitor.findMany({
+          where: eq(monitor.workspaceId, currentWorkspace.id),
+        })
+      ).length;
+
+      // the user has reached the limits
+      if (monitorNumbers >= monitorLimit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your monitor limits.",
+        });
+      }
+
+      // the user is not allowed to use the cron job
+      if (
+        opts.input.data?.periodicity &&
+        !periodicityLimit.includes(opts.input.data?.periodicity)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your cron job limits.",
+        });
+      }
 
       await opts.ctx.db
         .insert(monitor)
@@ -133,6 +163,17 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       if (!result || !result.users_to_workspaces) return;
+
+      // the user is not allowed to use the cron job
+      if (
+        opts.input?.periodicity &&
+        !periodicityLimit.includes(opts.input?.periodicity)
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your cron job limits.",
+        });
+      }
 
       await opts.ctx.db
         .update(monitor)

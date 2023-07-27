@@ -21,6 +21,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/client";
 
 interface Props {
@@ -33,17 +34,25 @@ export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const { toast } = useToast();
 
   async function onCreate({
     ...props
   }: z.infer<typeof insertPageSchemaWithMonitors>) {
     startTransition(async () => {
-      await api.page.createPage.mutate({
-        ...props,
-        workspaceSlug,
-      });
-      router.refresh();
-      setOpen(false);
+      try {
+        await api.page.createPage.mutate({
+          ...props,
+          workspaceSlug,
+        });
+        router.refresh();
+        setOpen(false);
+      } catch {
+        toast({
+          title: "Limits are reached.",
+          description: "Don't try to bypass the server.",
+        });
+      }
     });
   }
 
