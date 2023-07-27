@@ -95,12 +95,12 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
-            <DropdownMenuItem>
-              {/* TODO: forward directly to subdomain */}
-              <Link href={`/status-page/${page.slug}`} target="_blank">
-                View
-              </Link>
-            </DropdownMenuItem>
+            <Link href={`/status-page/${page.slug}`} target="_blank">
+              <DropdownMenuItem>
+                {/* TODO: forward directly to subdomain */}
+                View Page
+              </DropdownMenuItem>
+            </Link>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
                 Delete
