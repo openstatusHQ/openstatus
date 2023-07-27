@@ -1,16 +1,18 @@
 import * as React from "react";
 
+import { allPlans } from "@openstatus/plans";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
-import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
 
-const limit = plansConfig.free.limits["status-pages"];
+const limit = allPlans.free.limits["status-pages"];
 
 export default async function Page({
   params,
@@ -24,6 +26,8 @@ export default async function Page({
     workspaceSlug: params.workspaceSlug,
   });
 
+  const isLimit = (pages?.length || 0) >= limit;
+  console.log(pages?.length);
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
@@ -33,7 +37,7 @@ export default async function Page({
         <CreateForm
           workspaceSlug={params.workspaceSlug}
           allMonitors={monitors}
-          disabled={!Boolean(monitors) || pages?.length === limit}
+          disabled={isLimit || !Boolean(monitors)}
         />
       </Header>
       {Boolean(pages?.length) ? (
@@ -80,6 +84,7 @@ export default async function Page({
       ) : (
         <EmptyState workspaceId={params.workspaceSlug} allMonitors={monitors} />
       )}
+      {isLimit ? <Limit /> : null}
     </div>
   );
 }

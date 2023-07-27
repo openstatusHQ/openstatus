@@ -37,6 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
@@ -46,12 +47,20 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const { toast } = useToast();
 
   async function onUpdate(values: Schema) {
     startTransition(async () => {
-      await api.monitor.updateMonitor.mutate({ ...values });
-      router.refresh();
-      setDialogOpen(false);
+      try {
+        await api.monitor.updateMonitor.mutate({ ...values });
+        router.refresh();
+        setDialogOpen(false);
+      } catch {
+        toast({
+          title: "Something went wrong.",
+          description: "If you are in the limits, please try again.",
+        });
+      }
     });
   }
 

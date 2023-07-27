@@ -1,16 +1,18 @@
 import * as React from "react";
 
+import { allPlans } from "@openstatus/plans";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
-import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
 
-const limit = plansConfig.free.limits.monitors;
+const limit = allPlans.free.limits.monitors;
 
 export default async function MonitorPage({
   params,
@@ -21,13 +23,12 @@ export default async function MonitorPage({
     workspaceSlug: params.workspaceSlug,
   });
 
+  const isLimit = (monitors?.length || 0) >= limit;
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm
-          workspaceSlug={params.workspaceSlug}
-          disabled={monitors?.length === limit}
-        />
+        <CreateForm workspaceSlug={params.workspaceSlug} disabled={isLimit} />
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -71,6 +72,7 @@ export default async function MonitorPage({
       ) : (
         <EmptyState workspaceSlug={params.workspaceSlug} />
       )}
+      {isLimit ? <Limit /> : null}
     </div>
   );
 }

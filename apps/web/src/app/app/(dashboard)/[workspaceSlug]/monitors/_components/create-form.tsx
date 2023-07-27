@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 import { api } from "@/trpc/client";
 
 type MonitorSchema = z.infer<typeof insertMonitorSchema>;
@@ -31,15 +32,23 @@ export function CreateForm({ workspaceSlug, disabled }: Props) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const { toast } = useToast();
 
   async function onCreate(values: MonitorSchema) {
     startTransition(async () => {
-      await api.monitor.createMonitor.mutate({
-        data: values,
-        workspaceSlug,
-      });
-      router.refresh();
-      setOpen(false);
+      try {
+        await api.monitor.createMonitor.mutate({
+          data: values,
+          workspaceSlug,
+        });
+        router.refresh();
+        setOpen(false);
+      } catch {
+        toast({
+          title: "Something went wrong.",
+          description: "If you are in the limits, please try again.",
+        });
+      }
     });
   }
 

@@ -10,12 +10,12 @@ type Plan = {
   };
 };
 
-export const plansConfig: Record<"free", Plan> = {
+export const allPlans: Record<"free", Plan> = {
   free: {
     limits: {
       monitors: 5,
       "status-pages": 1,
-      periodicity: ["10m"],
+      periodicity: ["10m", "30m", "1h"],
     },
   },
 };
