@@ -261,6 +261,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:^
         version: link:../db
+      '@openstatus/emails':
+        specifier: workspace:^
+        version: link:../emails
       '@openstatus/plans':
         specifier: workspace:^
         version: link:../plans
@@ -384,9 +387,18 @@ importers:
       '@react-email/tailwind':
         specifier: 0.0.8
         version: 0.0.8
+      '@t3-oss/env-core':
+        specifier: 0.6.0
+        version: 0.6.0(typescript@5.1.6)(zod@3.21.4)
       react-email:
         specifier: 1.9.4
         version: 1.9.4
+      resend:
+        specifier: 0.15.3
+        version: 0.15.3
+      zod:
+        specifier: 3.21.4
+        version: 3.21.4
     devDependencies:
       '@types/node':
         specifier: 20.3.1

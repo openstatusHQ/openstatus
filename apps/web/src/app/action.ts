@@ -6,7 +6,7 @@ import { Resend } from "resend";
 import { validateEmailNotDisposable, WaitingList } from "@openstatus/emails";
 
 import { EmailTemplate } from "@/components/templates/email-template";
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 
 const redis = Redis.fromEnv();
 
@@ -50,7 +50,7 @@ const wait = (ms: number): Promise<void> => {
 };
 
 // Resend
-export const sendWaitingListEmail = async (email:string) => {
+export const sendWaitingListEmail = async (email: string) => {
   const isValid = await validateEmailNotDisposable(email);
   if (!isValid) {
     await resend.emails.send({

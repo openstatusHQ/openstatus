@@ -9,7 +9,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { availableRegions } from "@openstatus/tinybird";
 
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 import type { payloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
@@ -17,6 +17,11 @@ const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 const DEFAULT_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
+
+// We can't secure cron endpoint by vercel thus we should make sure they are called by the generated url
+export const isAuthorizedDomain = (url: string) => {
+  return url.includes(DEFAULT_URL);
+};
 
 export const cron = async ({
   periodicity,
