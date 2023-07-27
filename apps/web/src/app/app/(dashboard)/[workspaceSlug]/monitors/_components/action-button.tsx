@@ -84,13 +84,11 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
-            <DropdownMenuItem asChild>
-              <Link
-                href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}
-              >
-                View data
-              </Link>
-            </DropdownMenuItem>
+            <Link
+              href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}
+            >
+              <DropdownMenuItem>View data</DropdownMenuItem>
+            </Link>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
                 Delete
