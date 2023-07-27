@@ -34,7 +34,7 @@ export default async function Page({
         <CreateForm
           workspaceSlug={params.workspaceSlug}
           allMonitors={monitors}
-          // disabled={!Boolean(monitors) || pages?.length === limit}
+          disabled={!Boolean(monitors) || pages?.length === limit}
         />
       </Header>
       {Boolean(pages?.length) ? (
