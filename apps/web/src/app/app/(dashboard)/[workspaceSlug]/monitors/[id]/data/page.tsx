@@ -10,6 +10,8 @@ import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 
+export const revalidate = 600; // revalidate this page every 10 minutes
+
 /**
  * allowed URL search params
  */
