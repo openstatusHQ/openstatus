@@ -40,6 +40,7 @@ interface TrackerProps {
   url: string;
   id: string | number;
   name: string;
+  description?: string;
   /**
    * Maximium length of the data array
    */
@@ -54,6 +55,7 @@ export function Tracker({
   name,
   maxSize = 35,
   context = "play",
+  description,
 }: TrackerProps) {
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
@@ -80,7 +82,7 @@ export function Tracker({
       <div className="mb-1 flex justify-between text-sm sm:mb-2">
         <div className="flex items-center gap-2">
           <p className="text-foreground font-semibold">{name}</p>
-          <MoreInfo {...{ url, id, context }} />
+          <MoreInfo {...{ url, id, context, description }} />
         </div>
         <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
@@ -106,26 +108,32 @@ const MoreInfo = ({
   url,
   id,
   context,
-}: Pick<TrackerProps, "url" | "id" | "context">) => {
+  description,
+}: Pick<TrackerProps, "url" | "id" | "context" | "description">) => {
   const [open, setOpen] = React.useState(false);
   const formattedURL = new URL(url);
   const link = `${formattedURL.host}${formattedURL.pathname}`;
   return (
     <TooltipProvider>
       <Tooltip open={open} onOpenChange={setOpen}>
-        <TooltipTrigger onClick={() => setOpen(true)}>
+        <TooltipTrigger onClick={() => setOpen(true)} asChild>
           <Info className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-muted-foreground">
-            {context === "play" ? (
-              <Link href={`/monitor/${id}`} className="hover:text-foreground">
-                {link}
-              </Link>
-            ) : (
-              link
+          <>
+            {description && (
+              <p className="text-muted-foreground">{description}</p>
             )}
-          </p>
+            <p className="text-muted-foreground">
+              {context === "play" ? (
+                <Link href={`/monitor/${id}`} className="hover:text-foreground">
+                  {link}
+                </Link>
+              ) : (
+                link
+              )}
+            </p>
+          </>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

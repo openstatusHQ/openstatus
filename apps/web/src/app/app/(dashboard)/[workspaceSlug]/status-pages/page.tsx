@@ -14,7 +14,7 @@ import { EmptyState } from "./_components/empty-state";
 
 const limit = allPlans.free.limits["status-pages"];
 
-export const revalidate = 600; // revalidate this page every 10 minutes
+export const revalidate = 300; // revalidate this page every 5 minutes
 
 export default async function Page({
   params,
@@ -29,7 +29,6 @@ export default async function Page({
   });
 
   const isLimit = (pages?.length || 0) >= limit;
-  console.log(pages?.length);
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header

@@ -136,7 +136,7 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
           <DialogTitle>Update Page</DialogTitle>
           <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+        <div className="overflow-y-none -mx-1 flex-1 px-1">
           <StatusPageForm
             id="status-page-update"
             onSubmit={onUpdate}

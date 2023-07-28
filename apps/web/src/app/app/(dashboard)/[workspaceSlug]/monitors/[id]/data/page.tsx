@@ -10,7 +10,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 
-export const revalidate = 600; // revalidate this page every 10 minutes
+export const revalidate = 0; // revalidate this page every 10 minutes
 
 /**
  * allowed URL search params
@@ -30,7 +30,6 @@ export default async function Page({
   params: { workspaceSlug: string; id: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const workspaceSlug = params.workspaceSlug;
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
@@ -49,7 +48,7 @@ export default async function Page({
 
   return (
     <div className="grid gap-6 md:gap-8">
-      <Header title={monitor.name} description={monitor.description}></Header>
+      <Header title={monitor.name} description={monitor.url}></Header>
       {data && <DataTable columns={columns} data={data} />}
     </div>
   );

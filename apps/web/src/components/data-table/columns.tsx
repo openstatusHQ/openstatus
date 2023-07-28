@@ -77,16 +77,7 @@ export const columns: ColumnDef<Ping>[] = [
       return value.includes(row.getValue(id));
     },
   },
-  {
-    accessorKey: "url",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="URL" />
-    ),
-    cell: ({ row }) => {
-      const url = new URL(row.getValue("url"));
-      return <div>{url.pathname}</div>;
-    },
-  },
+
   {
     id: "actions",
     cell: ({ row }) => {
