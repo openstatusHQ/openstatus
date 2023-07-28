@@ -4,12 +4,12 @@
    </h3>
 
   <p align="center">
-    The Statuspage Open Source Alternative.
+    The Atlassian's Statuspage Open Source Alternative.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
     <br />
-    <a href="https://discord.gg/dHD4JtSfsn">Discord</a>
+    <a href="https://www.openstatus.dev/discord">Discord</a>
     ·
     <a href="https://www.openstatus.dev">Website</a>
     ·
@@ -19,20 +19,20 @@
   </p>
 </p>
 
-# OpenStatus
+## About OpenStatus
 
-## About this project
+OpenStatus is open-source status page and alerting system. We are building it
+publicly for everyone to see our progress. We believe great softwares are built
+this way.
 
-OpenStatus is a free and open-source status page and alerting system.
-
-## Contributing
-
-Coming soon
+You can choose to host it yourself or use our hosted version at
+[openstatus.dev](https://www.openstatus.dev)
 
 ## Contact us
 
-If you want to learn more about this project or have any questions, send us an
-email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
+If you want to learn more about this project or have any questions, book a call
+with us or send us an email at
+[hello@openstatus.dev](mailto:hello@openstatus.dev) <br/><br/>
 <a href="https://cal.com/thibault-openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
 ## Built with
@@ -96,8 +96,16 @@ $ ngrok http 3000
 Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
 contribute to it.
 
-## Contributors
+## Contributing
+
+If you want to help us building the best status page and alerting system, you
+can check our
+[contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD)
+
+### Top Contributors
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
 </a>
+
+Made with [Contrib.rocks](https://contrib.rocks)

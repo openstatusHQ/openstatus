@@ -74,7 +74,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  This is url you want to monitor.
+                  Here is the URL you want to monitor.{" "}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -90,7 +90,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  The name of the monitor that will be displayed.
+                  The name of the monitor displayed on the status page.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -106,7 +106,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   <Input placeholder="" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Give your user some information about it.
+                  Provide your users with information about it.{" "}
                 </FormDescription>
                 <FormMessage />
               </FormItem>

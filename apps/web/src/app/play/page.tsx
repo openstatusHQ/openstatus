@@ -38,7 +38,7 @@ export default async function PlayPage({
           data={data}
           id="openstatusPing"
           name="Ping"
-          url="https://openstatus.dev/api/ping"
+          url="https://www.openstatus.dev/api/ping"
         />
       )}
     </div>

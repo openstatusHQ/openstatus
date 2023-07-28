@@ -62,7 +62,7 @@ export function CreateForm({ workspaceSlug, disabled }: Props) {
           <DialogTitle>Create Monitor</DialogTitle>
           <DialogDescription>Choose the settings.</DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
           <MonitorForm id="monitor-create" onSubmit={onCreate} />
         </div>
         <DialogFooter>

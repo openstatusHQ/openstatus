@@ -266,6 +266,10 @@ export const pageRouter = createTRPCRouter({
   getSlugUniqueness: protectedProcedure
     .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
+      // had filter on some words we want to keep for us
+      if (["api", "app", "www", "docs"].includes(opts.input.slug)) {
+        return false;
+      }
       const result = await opts.ctx.db.query.page.findMany({
         where: eq(page.slug, opts.input.slug),
       });

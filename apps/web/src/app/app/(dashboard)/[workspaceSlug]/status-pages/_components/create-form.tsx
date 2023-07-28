@@ -66,7 +66,7 @@ export function CreateForm({ workspaceSlug, allMonitors, disabled }: Props) {
           <DialogTitle>Create Status Page</DialogTitle>
           <DialogDescription>Choose the settings.</DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
           <StatusPageForm
             id="status-page-create"
             onSubmit={onCreate}

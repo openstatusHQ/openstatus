@@ -14,6 +14,7 @@ export function DataTableFilterInput<TData>({
   // const isFiltered = table.getState().columnFilters.length > 0;
   return (
     <Input
+      type="number"
       placeholder="Filter status code..."
       value={(table.getColumn("statusCode")?.getFilterValue() as string) ?? ""}
       onChange={(event) => {
