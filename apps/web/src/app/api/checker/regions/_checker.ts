@@ -24,7 +24,7 @@ const monitor = async (
   region: string,
   latency: number,
 ) => {
-  const json = res.bodyUsed ? await res.json() : {};
+  const json = (await res.json()) || {};
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
       const { pageIds, ...rest } = monitorInfo;
