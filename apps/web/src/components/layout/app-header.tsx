@@ -16,7 +16,7 @@ export function AppHeader() {
     <header className="border-border sticky top-3 z-50 w-full">
       <Shell className="bg-background/70 flex w-full items-center justify-between px-3 py-3 backdrop-blur-lg md:px-6 md:py-3">
         <Link
-          href="/app"
+          href="/"
           className="font-cal text-muted-foreground hover:text-foreground text-lg"
         >
           openstatus
