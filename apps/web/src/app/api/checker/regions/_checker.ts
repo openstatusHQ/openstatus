@@ -2,7 +2,6 @@ import { Receiver } from "@upstash/qstash/cloudflare";
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 
-import { page } from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -28,8 +27,9 @@ const monitor = async (
   const json = res.bodyUsed ? await res.json() : {};
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
+      const { pageIds, ...rest } = monitorInfo;
       await publishPingResponse(tb)({
-        ...monitorInfo,
+        ...rest,
         id: nanoid(), // TBD: we don't need it
         pageId: pageId,
         timestamp: Date.now(),
@@ -40,8 +40,10 @@ const monitor = async (
       });
     }
   } else {
+    const { pageIds, ...rest } = monitorInfo;
+
     await publishPingResponse(tb)({
-      ...monitorInfo,
+      ...rest,
       id: nanoid(), // TBD: we don't need it
       pageId: "",
       timestamp: Date.now(),

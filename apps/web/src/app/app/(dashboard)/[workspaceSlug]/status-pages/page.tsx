@@ -14,6 +14,8 @@ import { EmptyState } from "./_components/empty-state";
 
 const limit = allPlans.free.limits["status-pages"];
 
+export const revalidate = 600; // revalidate this page every 10 minutes
+
 export default async function Page({
   params,
 }: {
