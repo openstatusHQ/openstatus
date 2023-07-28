@@ -13,14 +13,14 @@ import {
 
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
-    datasource: "ping_response__v2",
+    datasource: "ping_response__v0",
     event: tbIngestPingResponse,
   });
 }
 
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "response_list__v2",
+    pipe: "response_list__v0",
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
@@ -31,7 +31,7 @@ export function getResponseList(tb: Tinybird) {
 
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "monitor_list__v1",
+    pipe: "monitor_list__v0",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
