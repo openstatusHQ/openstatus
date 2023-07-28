@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
 import { Mdx } from "@/components/content/mdx";
+import { Shell } from "@/components/dashboard/shell";
+import { BackButton } from "@/components/layout/back-button";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";
@@ -23,7 +25,7 @@ export async function generateMetadata({
   if (!post) {
     return;
   }
-  const { title, publishedAt: publishedTime, description, slug } = post;
+  const { title, publishedAt: publishedTime, description, slug, image } = post;
 
   return {
     title,
@@ -36,7 +38,7 @@ export async function generateMetadata({
       url: `https://www.openstatus.dev/blog/${slug}`,
       images: [
         {
-          url: `https://www.openstatus.dev/api/og?title=${title}&description=${description}`,
+          url: `https://openstatus.dev/api/og/post?title=${title}&description=${description}&image=${image}`,
         },
       ],
     },
@@ -45,7 +47,7 @@ export async function generateMetadata({
       title,
       description,
       images: [
-        `https://www.openstatus.dev/api/og?title=${title}&description=${description}`,
+        `https://openstatus.dev/api/og/post?title=${title}&description=${description}&image=${image}`,
       ],
     },
   };
@@ -60,20 +62,33 @@ export default function PostPage({ params }: { params: { slug: string } }) {
 
   // TODO: add author.avatar and author.url
   return (
-    <article className="grid gap-8">
-      <div className="mx-auto grid max-w-prose gap-3">
-        <h1 className="font-cal text-3xl">{post.title}</h1>
-        <p className="text-muted-foreground text-sm font-light">
-          {post.author.name}
-          <span className="text-muted-foreground/70 mx-1">&bull;</span>
-          {formatDate(new Date(post.publishedAt))}
-          <span className="text-muted-foreground/70 mx-1">&bull;</span>
-          {post.readingTime}
-        </p>
-      </div>
-      <div className="mx-auto max-w-prose">
-        <Mdx code={post.body.code} />
-      </div>
-    </article>
+    <>
+      <BackButton href="/blog" />
+      <Shell>
+        <article className="grid gap-8">
+          <div className="mx-auto grid max-w-prose gap-3">
+            <h1 className="font-cal text-3xl">{post.title}</h1>
+            <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
+              <Image
+                src={post.image}
+                fill={true}
+                alt={post.title}
+                className="object-cover"
+              />
+            </div>
+            <p className="text-muted-foreground text-sm font-light">
+              {post.author.name}
+              <span className="text-muted-foreground/70 mx-1">&bull;</span>
+              {formatDate(new Date(post.publishedAt))}
+              <span className="text-muted-foreground/70 mx-1">&bull;</span>
+              {post.readingTime}
+            </p>
+          </div>
+          <div className="mx-auto max-w-prose">
+            <Mdx code={post.body.code} />
+          </div>
+        </article>
+      </Shell>
+    </>
   );
 }

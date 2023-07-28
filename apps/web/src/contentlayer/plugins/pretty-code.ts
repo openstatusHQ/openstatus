@@ -6,7 +6,7 @@ const prettyCode: unified.Pluggable<any[]> = [
   {
     // prepacked themes
     // https://github.com/shikijs/shiki/blob/main/docs/themes.md
-    theme: "one-dark-pro",
+    theme: "github-light",
 
     // https://stackoverflow.com/questions/76549262/onvisithighlightedline-cannot-push-classname-using-rehype-pretty-code
     // FIXME: maybe properly type this

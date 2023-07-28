@@ -75,7 +75,7 @@ export async function GET(req: Request) {
           style={{
             backgroundColor: "white",
             backgroundImage:
-              "radial-gradient(farthest-corner at 100px 100px, #64748b, white 70%)", // tbd: switch color position
+              "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
           }}
         ></div>
         <div tw="max-w-4xl relative flex flex-col">

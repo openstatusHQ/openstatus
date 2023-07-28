@@ -1,16 +1,20 @@
-"use client";
-
-import { useRouter } from "next/navigation";
+import type { LinkProps } from "next/link";
+import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
 import { Button } from "../ui/button";
 
-export const BackButton = () => {
-  const router = useRouter();
+interface BackButtonProps extends LinkProps {
+  children?: React.ReactNode;
+}
+
+export const BackButton = ({ href, children }: BackButtonProps) => {
   return (
-    <Button variant="link" className="group mb-1" onClick={router.back}>
-      <ChevronLeft className="text-muted-foreground group-hover:text-foreground mr-1 h-4 w-4" />{" "}
-      Back
+    <Button variant="link" asChild>
+      <Link href={href} className="group mb-1">
+        <ChevronLeft className="text-muted-foreground group-hover:text-foreground mr-1 h-4 w-4" />{" "}
+        {children || "Back"}
+      </Link>
     </Button>
   );
 };
