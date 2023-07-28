@@ -133,7 +133,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <DialogTitle>Update Monitor</DialogTitle>
           <DialogDescription>Change your settings.</DialogDescription>
         </DialogHeader>
-        <div className="-mx-1 flex-1 overflow-y-scroll px-1">
+        <div className="-mx-1 flex-1 overflow-y-auto px-1">
           <MonitorForm
             id="monitor-update"
             onSubmit={onUpdate}

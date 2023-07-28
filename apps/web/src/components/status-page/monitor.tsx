@@ -15,13 +15,13 @@ export const Monitor = async ({
     groupBy: "day",
   });
   if (!data) return <div>Something went wrong</div>;
-
   return (
     <Tracker
       data={data}
       id={monitor.id}
       name={monitor.name}
       url={monitor.url}
+      description={monitor.description}
       context="status-page"
       maxSize={40}
     />

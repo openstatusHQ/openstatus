@@ -12,7 +12,7 @@ export default function StatusPageLayout({
         <p className="text-muted-foreground text-center text-sm">
           powered by{" "}
           <a
-            href="https://openstatus.dev"
+            href="https://www.openstatus.dev"
             target="_blank"
             rel="noreferrer"
             className="text-foreground underline underline-offset-4 hover:no-underline"

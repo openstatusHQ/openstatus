@@ -59,8 +59,10 @@ export default authMiddleware({
     "/api/checker/cron/10m",
     "/blog",
     "/blog/(.*)",
+    "/discord",
+    "/github",
   ],
-  ignoredRoutes: ["/api/og"], // FIXME: we should check the `publicRoutes`
+  ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
   async afterAuth(auth, req, evt) {
     // handle users who aren't authenticated

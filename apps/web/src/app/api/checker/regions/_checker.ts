@@ -24,7 +24,7 @@ const monitor = async (
   region: string,
   latency: number,
 ) => {
-  const json = res.bodyUsed ? await res.json() : {};
+  const text = (await res.text()) || "";
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
       const { pageIds, ...rest } = monitorInfo;
@@ -36,7 +36,7 @@ const monitor = async (
         statusCode: res.status,
         latency,
         region,
-        metadata: JSON.stringify({ body: json }),
+        metadata: JSON.stringify({ text }),
       });
     }
   } else {
@@ -50,7 +50,7 @@ const monitor = async (
       statusCode: res.status,
       latency,
       region,
-      metadata: JSON.stringify({ body: json }),
+      metadata: JSON.stringify({ text }),
     });
   }
 };

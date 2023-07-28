@@ -11,7 +11,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  metadataBase: new URL("https://openstatus.dev"),
+  metadataBase: new URL("https://www.openstatus.dev"),
   twitter: {
     images: [`/api/og?monitorId=openstatus`],
     card: "summary_large_image",

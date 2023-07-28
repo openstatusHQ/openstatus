@@ -19,7 +19,6 @@ export default async function Page({ params }: Props) {
   if (!page) {
     return notFound();
   }
-
   return (
     <Shell>
       <div className="grid gap-6">
