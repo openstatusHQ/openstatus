@@ -30,9 +30,10 @@ export default async function PlayPage({
       <div className="absolute right-2 top-2">
         <ToggleButton groupBy={params?.groupBy} />
       </div>
-      <p className="font-cal mb-2 text-3xl">Status</p>
-      <p className="text-lg font-light">Learn more on how to build your own.</p>
-
+      <p className="font-cal mb-1 text-3xl">Status</p>
+      <p className="text-muted-foreground text-lg font-light">
+        Build your own within seconds.
+      </p>
       {data && (
         <Tracker
           data={data}

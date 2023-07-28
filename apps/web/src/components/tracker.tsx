@@ -186,13 +186,13 @@ const Bar = ({
           <p className="text-left text-xs">
             <span className="font-mono text-green-600">{count}</span>{" "}
             <span className="text-muted-foreground font-light">
-              Total requests
+              total requests
             </span>
           </p>
           <p className="text-right text-xs">
             <span className="font-mono text-red-600">{count - ok}</span>{" "}
             <span className="text-muted-foreground font-light">
-              Failed requests
+              failed requests
             </span>
           </p>
         </div>
