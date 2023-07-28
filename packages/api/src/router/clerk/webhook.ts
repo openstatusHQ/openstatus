@@ -1,7 +1,9 @@
+import { generateSlug } from "random-word-slugs";
 import * as z from "zod";
 
 import { eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import { sendEmail, WelcomeEmail } from "@openstatus/emails";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { clerkEvent } from "./type";
@@ -29,9 +31,11 @@ export const webhookRouter = createTRPCRouter({
         })
         .returning({ id: user.id })
         .get();
+
+      const slug = generateSlug(2);
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ name: "" })
+        .values({ slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db
@@ -42,6 +46,13 @@ export const webhookRouter = createTRPCRouter({
         })
         .returning()
         .get();
+
+      await sendEmail({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "Welcome to OpenStatus.dev 👋",
+        to: [opts.input.data.data.email_addresses[0].email_address],
+        react: WelcomeEmail(),
+      });
     }
   }),
   userUpdated: webhookProcedure.mutation(async (opts) => {

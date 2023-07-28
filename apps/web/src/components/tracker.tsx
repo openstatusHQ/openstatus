@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
   variants: {
     variant: {
@@ -69,7 +70,10 @@ export function Tracker({
     },
   );
 
-  const totalUptime = ((reducedData.ok / reducedData.count) * 100).toFixed(2);
+  const uptime =
+    reducedData.count !== 0
+      ? `${((reducedData.ok / reducedData.count) * 100).toFixed(2)}% uptime`
+      : "";
 
   return (
     <div className="mx-auto max-w-max">
@@ -78,9 +82,7 @@ export function Tracker({
           <p className="text-foreground font-semibold">{name}</p>
           <MoreInfo {...{ url, id, context }} />
         </div>
-        <p className="text-muted-foreground font-light">
-          {`${totalUptime}%`} uptime
-        </p>
+        <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
       <div className="relative">
         <div className="z-[-1] flex gap-0.5">
@@ -139,8 +141,6 @@ const Bar = ({
 }: Monitor & Pick<TrackerProps, "context">) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
-  const isOk = ratio === 1; // TODO: when operational, downtime, degraded
-
   // FIX: this is an easy way to detect if cronTimestamps have been aggregated
   const isMidnight = String(cronTimestamp).endsWith("00000");
   const date = new Date(cronTimestamp);
@@ -155,13 +155,11 @@ const Bar = ({
       onOpenChange={setOpen}
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
-        <div className={tracker({ variant: isOk ? "up" : "down" })} />
+        <div className={tracker({ variant: getStatus(ratio).variant })} />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-56">
         <div className="flex justify-between">
-          <p className="text-sm font-semibold">
-            {isOk ? "Operational" : "Downtime"}
-          </p>
+          <p className="text-sm font-semibold">{getStatus(ratio).label}</p>
           {context === "play" ? (
             <Link
               href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
@@ -179,7 +177,24 @@ const Bar = ({
             avg. <span className="font-mono">{avgLatency}ms</span>
           </p>
         </div>
+        <div className="flex justify-between">
+          <p className="text-xs font-light">Failed requests</p>
+          <p className="text-muted-foreground text-xs">{count - ok}</p>
+        </div>
+        <div className="flex justify-between">
+          <p className="text-xs font-light">Total requests</p>
+          <p className="text-muted-foreground text-xs">{count}</p>
+        </div>
       </HoverCardContent>
     </HoverCard>
   );
+};
+
+// FIXME this is a temporary solution
+const getStatus = (
+  ratio: number,
+): { label: string; variant: "up" | "degraded" | "down" } => {
+  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
+  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
+  return { label: "Downtime", variant: "down" };
 };

@@ -36,11 +36,7 @@ export const tbIngestPingResponse = z.object({
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().optional().nullable().default(Date.now()),
   url: z.string().url(),
-  metadata: z
-    .record(z.string(), z.unknown())
-    .default({})
-    .transform((t) => JSON.stringify(t))
-    .optional(),
+  metadata: z.string().optional().default("{}").nullable(),
   region: z.string().min(4).max(4),
 });
 
@@ -60,7 +56,8 @@ export const tbBuildResponseList = z.object({
   metadata: z
     .string()
     .default("{}")
-    .transform((t) => JSON.parse(t)),
+    .transform((t) => JSON.parse(t))
+    .nullable(),
   region: z.enum(availableRegions),
 });
 
@@ -105,7 +102,7 @@ export const tbBuildMonitorList = z.object({
   cronTimestamp: z.number().int(),
 });
 
-export type Ping = z.infer<typeof tbIngestPingResponse>;
+export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;

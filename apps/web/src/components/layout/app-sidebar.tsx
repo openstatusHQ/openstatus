@@ -14,7 +14,7 @@ export function AppSidebar() {
     <ul className="grid gap-1">
       {pagesConfig.map(({ title, href, icon, disabled }) => {
         const Icon = Icons[icon];
-        const link = `/app/${params.workspaceId}${href}`;
+        const link = `/app/${params.workspaceSlug}${href}`;
         return (
           <li key={title} className="w-full">
             <Link

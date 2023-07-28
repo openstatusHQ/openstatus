@@ -69,6 +69,8 @@ export const columns: ColumnDef<Ping>[] = [
     ),
     cell: ({ row }) => {
       const region = String(row.getValue("region"));
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-expect-error
       return <div>{regionsDict[region]?.location}</div>;
     },
     filterFn: (row, id, value) => {

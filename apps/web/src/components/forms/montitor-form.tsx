@@ -9,6 +9,7 @@ import {
   insertMonitorSchema,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/plans";
 
 import {
   Form,
@@ -29,6 +30,15 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 
+const limit = allPlans.free.limits.periodicity;
+const cronJobs = [
+  { value: "1m", label: "1 minute" },
+  { value: "5m", label: "5 minutes" },
+  { value: "10m", label: "10 minutes" },
+  { value: "30m", label: "30 minutes" },
+  { value: "1h", label: "1 hour" },
+] as const;
+
 type Schema = z.infer<typeof insertMonitorSchema>;
 
 interface Props {
@@ -45,7 +55,8 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || undefined,
-      status: defaultValues?.status || "inactive",
+      active: defaultValues?.active || false,
+      id: defaultValues?.id || undefined,
     },
   });
 
@@ -103,7 +114,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
-            name="status"
+            name="active"
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between">
                 <div className="space-y-0.5">
@@ -115,11 +126,8 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                 </div>
                 <FormControl>
                   <Switch
-                    checked={field.value === "active" ? true : false}
-                    onCheckedChange={(value) =>
-                      field.onChange(value ? "active" : "inactive")
-                    }
-                    disabled
+                    checked={field.value || false}
+                    onCheckedChange={(value) => field.onChange(value)}
                   />
                 </FormControl>
                 <FormMessage />
@@ -144,19 +152,15 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="1m" disabled>
-                      1 minute
-                    </SelectItem>
-                    <SelectItem value="5m" disabled>
-                      5 minutes
-                    </SelectItem>
-                    <SelectItem value="10m">10 minutes</SelectItem>
-                    <SelectItem value="30m" disabled>
-                      30 minutes
-                    </SelectItem>
-                    <SelectItem value="1h" disabled>
-                      1 hour
-                    </SelectItem>
+                    {cronJobs.map(({ label, value }) => (
+                      <SelectItem
+                        key={value}
+                        value={value}
+                        disabled={!limit.includes(value)}
+                      >
+                        {label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>

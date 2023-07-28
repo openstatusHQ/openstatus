@@ -53,8 +53,8 @@ div[data-rehype-pretty-code-fragment] .line {
 }
 
 div[data-rehype-pretty-code-fragment] .line--highlighted {
-  border-left-color: var(--border);
-  background-color: rgb(254 205 211 / 0.1);
+  border-left-color: hsl(var(--border));
+  background-color: hsl(var(--muted));
 }
 
 /* https://rehype-pretty-code.netlify.app/#:~:text=%60%60%60-,Line%20numbers,-CSS%20counters%20can */
@@ -67,6 +67,7 @@ code[data-line-numbers] .line::before {
   content: counter(lineNumber);
   display: inline-block;
   text-align: right;
+  color: hsl(var(--muted-foreground) / 0.5);
 
   /* stylistic preferences */
   margin-right: 0.75rem;

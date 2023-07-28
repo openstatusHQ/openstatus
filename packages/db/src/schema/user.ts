@@ -1,6 +1,5 @@
 import { relations, sql } from "drizzle-orm";
 import {
-  int,
   integer,
   primaryKey,
   sqliteTable,
@@ -10,7 +9,7 @@ import {
 import { workspace } from "./workspace";
 
 export const user = sqliteTable("user", {
-  id: int("id").primaryKey(),
+  id: integer("id").primaryKey(),
   tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
@@ -28,10 +27,10 @@ export const userRelations = relations(user, ({ many }) => ({
 export const usersToWorkspaces = sqliteTable(
   "users_to_workspaces",
   {
-    userId: int("user_id")
+    userId: integer("user_id")
       .notNull()
       .references(() => user.id),
-    workspaceId: int("workspace_id")
+    workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id),
   },

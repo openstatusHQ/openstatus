@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "1c9c9848-d580-4543-9104-566450666ad5",
+  "id": "41c8003d-9f2a-4d3e-9e11-b3d4076fe395",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -23,7 +23,7 @@
         },
         "page_id": {
           "name": "page_id",
-          "type": "integer",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -49,7 +49,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -63,6 +63,13 @@
           "name": "id",
           "type": "integer",
           "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -103,7 +110,15 @@
           "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "incident_update_uuid_unique": {
+          "name": "incident_update_uuid_unique",
+          "columns": [
+            "uuid"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "incident_update_incident_id_incident_id_fk": {
           "name": "incident_update_incident_id_incident_id_fk",
@@ -115,7 +130,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -172,8 +187,15 @@
           "type": "text(256)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "published": {
+          "name": "published",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false,
-          "default": "''"
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
@@ -191,13 +213,6 @@
             "slug"
           ],
           "isUnique": true
-        },
-        "page_custom_domain_unique": {
-          "name": "page_custom_domain_unique",
-          "columns": [
-            "custom_domain"
-          ],
-          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -211,7 +226,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -283,13 +298,6 @@
           "autoincrement": false,
           "default": "''"
         },
-        "page_id": {
-          "name": "page_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "workspace_id": {
           "name": "workspace_id",
           "type": "integer",
@@ -308,19 +316,6 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "monitor_page_id_page_id_fk": {
-          "name": "monitor_page_id_page_id_fk",
-          "tableFrom": "monitor",
-          "tableTo": "page",
-          "columnsFrom": [
-            "page_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
         "monitor_workspace_id_workspace_id_fk": {
           "name": "monitor_workspace_id_workspace_id_fk",
           "tableFrom": "monitor",
@@ -336,6 +331,63 @@
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "monitors_to_pages": {
+      "name": "monitors_to_pages",
+      "columns": {
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "monitors_to_pages_monitor_id_monitor_id_fk": {
+          "name": "monitors_to_pages_monitor_id_monitor_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "monitors_to_pages_page_id_page_id_fk": {
+          "name": "monitors_to_pages_page_id_page_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "page",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "monitors_to_pages_monitor_id_page_id_pk": {
+          "columns": [
+            "monitor_id",
+            "page_id"
+          ]
+        }
+      },
       "uniqueConstraints": {}
     },
     "user": {
@@ -444,6 +496,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "stripe_id": {
           "name": "stripe_id",
           "type": "text(256)",
@@ -468,6 +527,13 @@
         }
       },
       "indexes": {
+        "workspace_slug_unique": {
+          "name": "workspace_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
         "workspace_stripe_id_unique": {
           "name": "workspace_stripe_id_unique",
           "columns": [

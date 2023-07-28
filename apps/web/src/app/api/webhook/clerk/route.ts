@@ -6,7 +6,7 @@ import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter } from "@openstatus/api/src/lambda";
 import { clerkEvent } from "@openstatus/api/src/router/clerk/type";
 
-import { env } from "@/env.mjs";
+import { env } from "@/env";
 
 // import { clerkEvent } from "@openstatus/api/src/router/clerk";
 

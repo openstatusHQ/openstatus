@@ -12,13 +12,14 @@ export const page = sqliteTable("page", {
 
   workspaceId: integer("workspace_id")
     .notNull()
-    .references(() => workspace.id),
+    .references(() => workspace.id, { onDelete: "cascade" }),
 
   title: text("title").notNull(), // title of the page
   description: text("description").notNull(), // description of the page
   icon: text("icon", { length: 256 }), // icon of the page
   slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
   customDomain: text("custom_domain", { length: 256 }).notNull(),
+  published: integer("published", { mode: "boolean" }).default(false),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -40,12 +41,19 @@ export const pageRelations = relations(page, ({ many, one }) => ({
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
-  slug: z.string().min(3), // minimum subdomain length
+  slug: z
+    .string()
+    .regex(
+      new RegExp("^[A-Za-z0-9-]+$"),
+      "Only use digits (0-9), hyphen (-) or characters (A-Z, a-z).",
+    )
+    .min(3),
 });
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
   monitors: z.array(z.number()).optional(),
+  workspaceSlug: z.string().optional(),
 });
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);
