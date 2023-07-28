@@ -155,11 +155,11 @@ const Bar = ({
       onOpenChange={setOpen}
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
-        <div className={tracker({ variant: getVariant(ratio) })} />
+        <div className={tracker({ variant: getStatus(ratio).variant })} />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-56">
         <div className="flex justify-between">
-          <p className="text-sm font-semibold">{getStatus(ratio)}</p>
+          <p className="text-sm font-semibold">{getStatus(ratio).label}</p>
           {context === "play" ? (
             <Link
               href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
@@ -191,14 +191,10 @@ const Bar = ({
 };
 
 // FIXME this is a temporary solution
-const getStatus = (ratio: number) => {
-  if (ratio >= 0.98) return "Operational";
-  if (ratio >= 0.5) return "Degraded";
-  return "Downtime";
-};
-
-const getVariant = (ratio: number) => {
-  if (ratio >= 0.98) return "up";
-  if (ratio >= 0.5) return "degraded";
-  return "down";
+const getStatus = (
+  ratio: number,
+): { label: string; variant: "up" | "degraded" | "down" } => {
+  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
+  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
+  return { label: "Downtime", variant: "down" };
 };

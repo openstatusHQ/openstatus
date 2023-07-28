@@ -14,7 +14,6 @@ export const Monitor = async ({
     monitorId: String(monitor.id),
     groupBy: "day",
   });
-  console.log(data);
   if (!data) return <div>Something went wrong</div>;
 
   return (
