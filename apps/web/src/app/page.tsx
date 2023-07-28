@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Shell } from "@/components/dashboard/shell";
 import { Footer } from "@/components/layout/footer";
+import { MarketingHeader } from "@/components/layout/marketing-header";
 import { Cards } from "@/components/marketing/cards";
 import { FAQs } from "@/components/marketing/faqs";
 import { Tracker } from "@/components/tracker";
@@ -15,18 +16,8 @@ export default async function Page() {
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-8 p-4 md:p-8">
-      <header className="mx-auto flex w-full max-w-2xl items-center justify-between text-right">
-        <Link
-          href="/"
-          className="font-cal text-muted-foreground hover:text-foreground text-lg"
-        >
-          openstatus
-        </Link>
-        <Button asChild>
-          <Link href="/app">Dashboard</Link>
-        </Button>
-      </header>
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8">
+      <MarketingHeader className="mx-auto w-full max-w-[calc(65ch+8rem)]" />
+      <div className="mx-auto flex w-full max-w-[calc(65ch+8rem)] flex-1 flex-col gap-8">
         <Shell className="text-center">
           <Badge>Coming Soon</Badge>
           <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
@@ -51,7 +42,9 @@ export default async function Page() {
               </a>
             </Button>
           </div>
-          <HeroForm />
+          <div className="mx-auto max-w-lg">
+            <HeroForm />
+          </div>
         </Shell>
         <Shell>
           <h2 className="font-cal mb-3 text-center text-2xl">Status</h2>
