@@ -25,7 +25,7 @@ export async function generateMetadata({
   if (!post) {
     return;
   }
-  const { title, publishedAt: publishedTime, description, slug, image } = post;
+  const { title, publishedAt: publishedTime, description, slug } = post;
 
   return {
     title,
@@ -38,7 +38,7 @@ export async function generateMetadata({
       url: `https://www.openstatus.dev/blog/${slug}`,
       images: [
         {
-          url: `https://openstatus.dev/api/og/post?title=${title}&description=${description}&image=${image}`,
+          url: `https://openstatus.dev/api/og?title=${title}&description=${description}`,
         },
       ],
     },
@@ -47,7 +47,7 @@ export async function generateMetadata({
       title,
       description,
       images: [
-        `https://openstatus.dev/api/og/post?title=${title}&description=${description}&image=${image}`,
+        `https://openstatus.dev/api/og?title=${title}&description=${description}`,
       ],
     },
   };
