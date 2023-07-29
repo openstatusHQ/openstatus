@@ -3,6 +3,14 @@
     {
       "path": "/api/checker/cron/10m",
       "schedule": "*/10 * * * *"
+    },
+    {
+      "path": "/api/checker/cron/30m",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/checker/cron/1h",
+      "schedule": "0 * * * *"
     }
   ]
 }
