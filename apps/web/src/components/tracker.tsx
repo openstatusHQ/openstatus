@@ -13,6 +13,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
@@ -120,20 +121,15 @@ const MoreInfo = ({
           <Info className="h-4 w-4" />
         </TooltipTrigger>
         <TooltipContent>
-          <>
-            {description && (
-              <p className="text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground">
+            {context === "play" ? (
+              <Link href={`/monitor/${id}`} className="hover:text-foreground">
+                {link}
+              </Link>
+            ) : (
+              description
             )}
-            <p className="text-muted-foreground">
-              {context === "play" ? (
-                <Link href={`/monitor/${id}`} className="hover:text-foreground">
-                  {link}
-                </Link>
-              ) : (
-                link
-              )}
-            </p>
-          </>
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -165,7 +161,7 @@ const Bar = ({
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div className={tracker({ variant: getStatus(ratio).variant })} />
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-56">
+      <HoverCardContent side="top" className="w-64">
         <div className="flex justify-between">
           <p className="text-sm font-semibold">{getStatus(ratio).label}</p>
           {context === "play" ? (
@@ -185,13 +181,20 @@ const Bar = ({
             avg. <span className="font-mono">{avgLatency}ms</span>
           </p>
         </div>
-        <div className="flex justify-between">
-          <p className="text-xs font-light">Failed requests</p>
-          <p className="text-muted-foreground text-xs">{count - ok}</p>
-        </div>
-        <div className="flex justify-between">
-          <p className="text-xs font-light">Total requests</p>
-          <p className="text-muted-foreground text-xs">{count}</p>
+        <Separator className="my-1.5" />
+        <div className="grid grid-cols-2">
+          <p className="text-left text-xs">
+            <span className="font-mono text-green-600">{count}</span>{" "}
+            <span className="text-muted-foreground font-light">
+              total requests
+            </span>
+          </p>
+          <p className="text-right text-xs">
+            <span className="font-mono text-red-600">{count - ok}</span>{" "}
+            <span className="text-muted-foreground font-light">
+              failed requests
+            </span>
+          </p>
         </div>
       </HoverCardContent>
     </HoverCard>

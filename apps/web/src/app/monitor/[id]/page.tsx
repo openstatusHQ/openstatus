@@ -28,8 +28,8 @@ export default async function Monitor({
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
   const data = search.success
-    // TODO: lets hard-code our `monitorId` here 
-    ? await getResponseListData({ monitorId: params.id, ...search.data })
+    ? // TODO: lets hard-code our `monitorId` here
+      await getResponseListData({ monitorId: params.id, ...search.data })
     : await getResponseListData({ monitorId: params.id });
   if (!data || !search.success) return <div>Something went wrong</div>;
   return <DataTable columns={columns} data={data} />;
