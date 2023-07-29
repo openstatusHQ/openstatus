@@ -30,7 +30,7 @@ export function MarketingHeader({ className }: Props) {
         <Button variant="link" asChild className="md:mr-3">
           <Link href="/blog">Blog</Link>
         </Button>
-        <Button asChild>
+        <Button asChild className="rounded-full">
           <Link href="/app">Dashboard</Link>
         </Button>
       </div>

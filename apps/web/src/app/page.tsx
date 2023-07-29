@@ -5,6 +5,7 @@ import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { Cards } from "@/components/marketing/cards";
 import { FAQs } from "@/components/marketing/faqs";
+import { Plans } from "@/components/marketing/plans";
 import { Tracker } from "@/components/tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ export default async function Page() {
           )}
         </Shell>
         <Cards />
+        <Plans />
         <Shell>
           <FAQs />
         </Shell>
