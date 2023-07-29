@@ -29,7 +29,7 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
       "10m, 30m, 1h checks",
     ],
     action: {
-      text: "Start Now",
+      text: "Start now",
       link: "/app",
     },
   },
