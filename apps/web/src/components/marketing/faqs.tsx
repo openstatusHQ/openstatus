@@ -13,11 +13,19 @@ const faqsConfig: Record<"q" | "a", string>[] = [
   },
   {
     q: "Who are we?",
-    a: "We are <a href=https://twitter.com/thibaultleouay' target='_blank'>Thibault</a> and <a href='https://twitter.com/mxkaske' target='_blank'>Max</a>. We both have a 9-to-5 job and we are doing that project for the purpose of open source and the community. Of course, it would be nice to make that project self sustainable. It's not a sprint, it's a marathon.",
+    a: "We are <a href='https://twitter.com/thibaultleouay' target='_blank'>Thibault</a> and <a href='https://twitter.com/mxkaske' target='_blank'>Max</a>. We both have a 9-to-5 job and we are doing that project for the purpose of open source and the community. Of course, it would be nice to make that project self sustainable. It's not a sprint, it's a marathon.",
+  },
+  {
+    q: "How does it work",
+    a: "We will ping your endpoint from multiple region to figure out if it's up or down. We will then display the status on your status page.",
   },
   {
     q: "What regions do we support?",
     a: "We support all the <strong>vercel regions</strong>. Find the full list <a href='https://vercel.com/docs/concepts/edge-network/regions' target='_blank'>here</a>.",
+  },
+  {
+    q: "How can I help?",
+    a: "You can star our project on <a href='https://github.com/openstatusHQ/openstatus'>github</a>, or contribute to it. Or you can also become a paid user.",
   },
 ];
 

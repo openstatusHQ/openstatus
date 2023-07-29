@@ -35,8 +35,18 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
   pro: {
     title: "Pro",
     description: "Scale and build monitors all your services.",
-    cost: "???", // unknown
-    features: ["wip", "tbd"],
+    cost: 29, // unknown
+    features: [
+      "20 monitors",
+      "5 status page",
+      "custom domain",
+      "1m, 5m, 10m, 30m, 1h checks",
+      "5 team members",
+    ],
+    action: {
+      text: "Coming  soon",
+      link: "",
+    },
   },
   enterprise: {
     title: "Enterprise",

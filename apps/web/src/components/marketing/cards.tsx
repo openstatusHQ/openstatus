@@ -10,13 +10,24 @@ const cardConfig: {
   {
     icon: "activity",
     title: "Monitors",
-    description: "Track your endpoints on a frequent basis.",
+    description: "Regularly monitor your website or API.",
   },
   {
     icon: "layout-dashboard",
     title: "Status Pages",
     description:
       "Create your own status page within seconds. Select your endpoints you wish to display.",
+  },
+  {
+    icon: "siren",
+    title: "Incidents",
+    description: "Inform your users when something goes wrong.",
+  },
+  {
+    icon: "toy-brick",
+    title: "Integrations",
+    description:
+      "Create incident or received failure notification in the tools you already work with.",
   },
 ];
 

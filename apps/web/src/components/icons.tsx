@@ -5,6 +5,7 @@ import {
   PanelTop,
   Siren,
   Table,
+  ToyBrick,
 } from "lucide-react";
 import type { Icon as LucideIcon, LucideProps } from "lucide-react";
 
@@ -18,6 +19,7 @@ export const Icons = {
   siren: Siren,
   "panel-top": PanelTop,
   table: Table,
+  "toy-brick": ToyBrick,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
