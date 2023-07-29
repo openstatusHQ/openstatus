@@ -1,11 +1,13 @@
 import { Shell } from "../dashboard/shell";
 import { Icons } from "../icons";
 import type { ValidIcon } from "../icons";
+import { Badge } from "../ui/badge";
 
 const cardConfig: {
   icon: ValidIcon;
   title: string;
   description: string;
+  badge?: "Coming soon" | "New";
 }[] = [
   {
     icon: "activity",
@@ -13,7 +15,7 @@ const cardConfig: {
     description: "Regularly monitor your website or API.",
   },
   {
-    icon: "layout-dashboard",
+    icon: "panel-top",
     title: "Status Pages",
     description:
       "Create your own status page within seconds. Select your endpoints you wish to display.",
@@ -22,12 +24,14 @@ const cardConfig: {
     icon: "siren",
     title: "Incidents",
     description: "Inform your users when something goes wrong.",
+    badge: "Coming soon",
   },
   {
     icon: "toy-brick",
     title: "Integrations",
     description:
       "Create incident or received failure notification in the tools you already work with.",
+    badge: "Coming soon",
   },
 ];
 
@@ -35,10 +39,18 @@ const cardConfig: {
 export function Cards() {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-      {cardConfig.map(({ icon, title, description }, i) => {
+      {cardConfig.map(({ icon, title, description, badge }, i) => {
         const Icon = Icons[icon];
         return (
-          <Shell key={i}>
+          <Shell key={i} className="relative">
+            {badge ? (
+              <Badge
+                variant={"secondary"}
+                className="bg-background text-muted-foreground absolute -top-3 right-2"
+              >
+                {badge}
+              </Badge>
+            ) : null}
             <h3 className="font-cal mb-1 flex items-center text-xl">
               <Icon className="mr-2 h-4 w-4" /> {title}
             </h3>

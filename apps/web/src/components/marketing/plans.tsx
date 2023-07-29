@@ -14,6 +14,7 @@ interface Plan {
     text: string;
     link: string;
   };
+  disabled?: boolean;
 }
 
 const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
@@ -25,7 +26,7 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
       "5 monitors",
       "1 status page",
       "subdomain",
-      "10m, 30m, 1h pings",
+      "10m, 30m, 1h checks",
     ],
     action: {
       text: "Start Now",
@@ -34,8 +35,8 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
   },
   pro: {
     title: "Pro",
-    description: "Scale and build monitors all your services.",
-    cost: 29, // unknown
+    description: "Scale and build monitors for all your services.",
+    cost: 29,
     features: [
       "20 monitors",
       "5 status page",
@@ -44,9 +45,10 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
       "5 team members",
     ],
     action: {
-      text: "Coming  soon",
-      link: "",
+      text: "Coming soon",
+      link: "/",
     },
+    disabled: true,
   },
   enterprise: {
     title: "Enterprise",
@@ -88,38 +90,50 @@ function Plan({
   cost,
   features,
   action,
+  disabled,
   className,
 }: Props) {
   return (
-    <div key={title} className={cn("w-full", className)}>
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <p className="font-cal mb-2 text-xl">{title}</p>
-          <p className="text-muted-foreground">{description}</p>
+    <div
+      key={title}
+      className={cn(
+        "flex w-full flex-col",
+        disabled && "pointer-events-none opacity-70",
+        className,
+      )}
+    >
+      <div className="flex-1">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="font-cal mb-2 text-xl">{title}</p>
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+          <p className="shrink-0">
+            <span className="font-cal text-2xl">{cost}</span>
+            {typeof cost === "number" ? (
+              <span className="text-muted-foreground font-light">/month</span>
+            ) : null}
+          </p>
         </div>
-        <p className="shrink-0">
-          <span className="font-cal text-2xl">{cost}</span>
-          {typeof cost === "number" ? (
-            <span className="text-muted-foreground font-light">/month</span>
-          ) : null}
-        </p>
+        <ul className="border-border/50 grid divide-y py-2">
+          {features.map((item) => (
+            <li
+              key={item}
+              className="text-muted-foreground inline-flex items-center py-2 text-sm"
+            >
+              <Check className="mr-2 h-4 w-4 text-green-500" />
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
-      <ul className="border-border/50 grid divide-y py-2">
-        {features.map((item) => (
-          <li
-            key={item}
-            className="text-muted-foreground inline-flex items-center py-2 text-sm"
-          >
-            <Check className="mr-2 h-4 w-4 text-green-500" />
-            {item}
-          </li>
-        ))}
-      </ul>
-      {action ? (
-        <Button asChild size="sm">
-          <Link href={action.link}>{action.text}</Link>
-        </Button>
-      ) : null}
+      <div>
+        {action ? (
+          <Button asChild size="sm">
+            <Link href={action.link}>{action.text}</Link>
+          </Button>
+        ) : null}
+      </div>
     </div>
   );
 }
