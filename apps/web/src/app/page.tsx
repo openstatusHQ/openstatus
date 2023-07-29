@@ -1,8 +1,7 @@
 import Link from "next/link";
 
 import { Shell } from "@/components/dashboard/shell";
-import { Footer } from "@/components/layout/footer";
-import { MarketingHeader } from "@/components/layout/marketing-header";
+import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { Cards } from "@/components/marketing/cards";
 import { FAQs } from "@/components/marketing/faqs";
 import { Tracker } from "@/components/tracker";
@@ -15,9 +14,8 @@ export default async function Page() {
   const data = await getMonitorListData({ monitorId: "openstatusPing" });
 
   return (
-    <main className="flex min-h-screen w-full flex-col space-y-8 p-4 md:p-8">
-      <MarketingHeader className="mx-auto w-full max-w-[calc(65ch+8rem)]" />
-      <div className="mx-auto flex w-full max-w-[calc(65ch+8rem)] flex-1 flex-col gap-8">
+    <MarketingLayout>
+      <div className="grid gap-8">
         <Shell className="text-center">
           <Badge>Coming Soon</Badge>
           <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
@@ -62,7 +60,6 @@ export default async function Page() {
           <FAQs />
         </Shell>
       </div>
-      <Footer />
-    </main>
+    </MarketingLayout>
   );
 }
