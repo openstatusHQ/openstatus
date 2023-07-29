@@ -13,7 +13,7 @@ const faqsConfig: Record<"q" | "a", string>[] = [
   },
   {
     q: "Who are we?",
-    a: "We are <a href=https://twitter.com' target='_blank'>Thibault</a> and <a href='https://twitter.com/mxkaske' target='_blank'>Max</a>. We both have a 9-to-5 job and we are doing that project for the purpose of open source and the community. Of course, it would be nice to make that project self sustainable. It's not a sprint, it's a marathon.",
+    a: "We are <a href=https://twitter.com/thibaultleouay' target='_blank'>Thibault</a> and <a href='https://twitter.com/mxkaske' target='_blank'>Max</a>. We both have a 9-to-5 job and we are doing that project for the purpose of open source and the community. Of course, it would be nice to make that project self sustainable. It's not a sprint, it's a marathon.",
   },
   {
     q: "What regions do we support?",
