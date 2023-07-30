@@ -1,0 +1,21 @@
+{
+  "name": "@openstatus/analytics",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@jitsu/js": "^1.2.1",
+    "@t3-oss/env-core": "0.6.0",
+    "zod": "3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.3.1",
+    "ts-node": "10.9.1",
+    "tsconfig": "workspace:^",
+    "typescript": "5.1.6"
+  },
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

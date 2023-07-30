@@ -1,6 +1,7 @@
 import { generateSlug } from "random-word-slugs";
 import * as z from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { sendEmail, WelcomeEmail } from "@openstatus/emails";
@@ -47,11 +48,20 @@ export const webhookRouter = createTRPCRouter({
         .returning()
         .get();
 
-      await sendEmail({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "Welcome to OpenStatus.dev 👋",
-        to: [opts.input.data.data.email_addresses[0].email_address],
-        react: WelcomeEmail(),
+      // await sendEmail({
+      //   from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      //   subject: "Welcome to OpenStatus.dev 👋",
+      //   to: [opts.input.data.data.email_addresses[0].email_address],
+      //   react: WelcomeEmail(),
+      // });
+      await analytics.identify(userResult.id, {
+        email: opts.input.data.data.email_addresses[0].email_address,
+      });
+      await trackAnalytics({
+        event: "User Created",
+        properties: {
+          email: opts.input.data.data.email_addresses[0].email_address,
+        },
       });
     }
   }),

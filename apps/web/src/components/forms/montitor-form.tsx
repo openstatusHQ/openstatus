@@ -55,7 +55,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       name: defaultValues?.name || "",
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || undefined,
-      active: defaultValues?.active || false,
+      active: defaultValues?.active || true,
       id: defaultValues?.id || undefined,
     },
   });

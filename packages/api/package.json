@@ -2,12 +2,13 @@
   "name": "@openstatus/api",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
     "@clerk/nextjs": "4.23.1",
+    "@openstatus/analytics": "workspace:^",
     "@openstatus/db": "workspace:^",
     "@openstatus/emails": "workspace:^",
     "@openstatus/plans": "workspace:^",
