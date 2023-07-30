@@ -41,10 +41,11 @@ export async function GET(req: Request) {
     ? searchParams.get("monitorId")
     : undefined;
 
+  // currently, we only show the tracker for a single(!) monitor
   const data =
     (monitorId &&
       (await getMonitorListData({
-        siteId: monitorId,
+        monitorId,
         groupBy: "day",
         limit: LIMIT,
       }))) ||
@@ -97,19 +98,20 @@ export async function GET(req: Request) {
                   return (
                     <div
                       key={i}
-                      tw="h-16 w-2.5 rounded-full mr-1 bg-black/20"
+                      tw="h-16 w-3 rounded-full mr-1 bg-black/20"
                     ></div>
                   );
                 })}
                 <div tw="flex flex-row absolute right-0">
                   {data.map((item, i) => {
-                    const status = item.ok / item.count === 1 ? "up" : "down"; // needs to be better defined!
+                    const { variant } = getStatus(item.ok / item.count);
                     return (
                       <div
                         key={i}
-                        tw={cn("h-16 w-2.5 rounded-full mr-1", {
-                          "bg-green-600": status === "up",
-                          "bg-red-600": status === "down",
+                        tw={cn("h-16 w-3 rounded-full mr-1", {
+                          "bg-green-500": variant === "up",
+                          "bg-red-500": variant === "down",
+                          "bg-yellow-500": variant === "degraded",
                         })}
                       ></div>
                     );
@@ -150,3 +152,12 @@ export async function GET(req: Request) {
     },
   );
 }
+
+// FIXME this is a temporary solution (taken from Tracker)
+const getStatus = (
+  ratio: number,
+): { label: string; variant: "up" | "degraded" | "down" } => {
+  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
+  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
+  return { label: "Downtime", variant: "down" };
+};

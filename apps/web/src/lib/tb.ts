@@ -15,10 +15,7 @@ const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 // TODO: add security layer
 export async function getResponseListData(
   props: Partial<
-    Pick<
-      ResponseListParams,
-      "siteId" | "region" | "cronTimestamp" | "limit" | "monitorId"
-    >
+    Pick<ResponseListParams, "region" | "cronTimestamp" | "limit" | "monitorId">
   >,
 ) {
   try {

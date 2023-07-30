@@ -35,19 +35,20 @@ export default async function Page({ params }: Props) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
+  const firstMonitor = page?.monitors?.[0]; // temporary solution
 
   return {
     title: page?.title,
     description: page?.description,
     twitter: {
-      images: [`/api/og?monitorId=${page?.id}`],
+      images: [`/api/og?monitorId=${firstMonitor?.id}`],
       card: "summary_large_image",
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
       type: "website",
-      images: [`/api/og?monitorId=${page?.id}`],
+      images: [`/api/og?monitorId=${firstMonitor?.id}`],
       title: page?.title,
       description: page?.description,
     },
