@@ -95,7 +95,14 @@ export function ActionButton({ page, allMonitors }: ActionButtonProps) {
             <DialogTrigger asChild>
               <DropdownMenuItem>Edit</DropdownMenuItem>
             </DialogTrigger>
-            <Link href={`/status-page/${page.slug}`} target="_blank">
+            <Link
+              href={
+                process.env.NODE_ENV === "production"
+                  ? `https://${page.slug}.openstatus.dev`
+                  : `/status-page/${page.slug}`
+              }
+              target="_blank"
+            >
               <DropdownMenuItem>
                 {/* TODO: forward directly to subdomain */}
                 View Page
