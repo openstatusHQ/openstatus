@@ -48,12 +48,13 @@ export const webhookRouter = createTRPCRouter({
         .returning()
         .get();
 
-      // await sendEmail({
-      //   from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-      //   subject: "Welcome to OpenStatus.dev 👋",
-      //   to: [opts.input.data.data.email_addresses[0].email_address],
-      //   react: WelcomeEmail(),
-      // });
+      await sendEmail({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "Welcome to OpenStatus.dev 👋",
+        to: [opts.input.data.data.email_addresses[0].email_address],
+        react: WelcomeEmail(),
+      });
+
       await analytics.identify(userResult.id, {
         email: opts.input.data.data.email_addresses[0].email_address,
       });
@@ -68,6 +69,12 @@ export const webhookRouter = createTRPCRouter({
   userUpdated: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "user.updated") {
       // We should do something
+    }
+  }),
+  userSignedIn: webhookProcedure.mutation(async (opts) => {
+    if (opts.input.data.type === "session.created") {
+      await analytics.identify(opts.input.data.data.user_id);
+      await trackAnalytics({ event: "User Signed In" });
     }
   }),
 });

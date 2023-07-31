@@ -14,4 +14,5 @@ export type AnalyticsEvents =
       properties: {
         slug: string;
       };
-    };
+    }
+  | { event: "User Signed In" };
