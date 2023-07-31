@@ -79,7 +79,7 @@ export const pageRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
 
-      await analytics.identify(result.users_to_workspaces.userId, {
+      await analytics.identify(String(result.users_to_workspaces.userId), {
         userId: result.users_to_workspaces.userId,
       });
       await trackAnalytics({

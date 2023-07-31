@@ -55,7 +55,7 @@ export const webhookRouter = createTRPCRouter({
         react: WelcomeEmail(),
       });
 
-      await analytics.identify(userResult.id, {
+      await analytics.identify(String(userResult.id), {
         email: opts.input.data.data.email_addresses[0].email_address,
       });
       await trackAnalytics({

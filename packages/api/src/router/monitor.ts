@@ -76,7 +76,7 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
-      await analytics.identify(result.users_to_workspaces.userId, {
+      await analytics.identify(String(result.users_to_workspaces.userId), {
         userId: result.users_to_workspaces.userId,
       });
       await trackAnalytics({
