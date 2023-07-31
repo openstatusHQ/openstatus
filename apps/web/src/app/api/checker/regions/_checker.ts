@@ -19,7 +19,7 @@ export const monitorSchema = tbIngestPingResponse.pick({
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
-  res: Response,
+  res: { text: () => Promise<string>; status: number },
   monitorInfo: z.infer<typeof payloadSchema>,
   region: string,
   latency: number,
@@ -77,10 +77,22 @@ export const checker = async (request: Request, region: string) => {
     throw new Error("Invalid response body");
   }
 
-  const startTime = Date.now();
-  const res = await fetch(result.data.url, { cache: "no-store" });
-  const endTime = Date.now();
-  const latency = endTime - startTime;
+  try {
+    const startTime = Date.now();
+    const res = await fetch(result.data.url, { cache: "no-store" });
 
-  await monitor(res, result.data, region, latency);
+    const endTime = Date.now();
+    const latency = endTime - startTime;
+    await monitor(res, result.data, region, latency);
+  } catch (e) {
+    // if on the third retry we still get an error, we should report it
+    if (request.headers.get("Upstash-Retried") === "3") {
+      await monitor(
+        { status: 500, text: () => Promise.resolve(`${e}`) },
+        result.data,
+        region,
+        -1,
+      );
+    }
+  }
 };
