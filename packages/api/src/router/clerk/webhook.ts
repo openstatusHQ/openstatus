@@ -1,6 +1,7 @@
 import { generateSlug } from "random-word-slugs";
 import * as z from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 import { sendEmail, WelcomeEmail } from "@openstatus/emails";
@@ -53,11 +54,27 @@ export const webhookRouter = createTRPCRouter({
         to: [opts.input.data.data.email_addresses[0].email_address],
         react: WelcomeEmail(),
       });
+
+      await analytics.identify(userResult.id, {
+        email: opts.input.data.data.email_addresses[0].email_address,
+      });
+      await trackAnalytics({
+        event: "User Created",
+        properties: {
+          email: opts.input.data.data.email_addresses[0].email_address,
+        },
+      });
     }
   }),
   userUpdated: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "user.updated") {
       // We should do something
+    }
+  }),
+  userSignedIn: webhookProcedure.mutation(async (opts) => {
+    if (opts.input.data.type === "session.created") {
+      await analytics.identify(opts.input.data.data.user_id);
+      await trackAnalytics({ event: "User Signed In" });
     }
   }),
 });

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray } from "@openstatus/db";
 import {
   insertPageSchemaWithMonitors,
@@ -77,6 +78,16 @@ export const pageRouter = createTRPCRouter({
         }));
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
+
+      await analytics.identify(result.users_to_workspaces.userId, {
+        userId: result.users_to_workspaces.userId,
+      });
+      await trackAnalytics({
+        event: "Page Created",
+        properties: {
+          slug: newPage.slug,
+        },
+      });
     }),
 
   getPageByID: protectedProcedure

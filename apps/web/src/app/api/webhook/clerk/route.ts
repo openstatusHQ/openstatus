@@ -41,6 +41,8 @@ export async function POST(req: NextRequest) {
       break;
 
     case "session.created":
+      await caller.clerkRouter.webhooks.userSignedIn({ data: r.data });
+      break;
     case "session.revoked":
     case "session.removed":
     case "session.ended":

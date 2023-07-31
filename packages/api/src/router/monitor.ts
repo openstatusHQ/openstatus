@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import {
   allMonitorsSchema,
@@ -66,7 +67,7 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      await opts.ctx.db
+      const newMonitor = await opts.ctx.db
         .insert(monitor)
         .values({
           ...opts.input.data,
@@ -74,6 +75,17 @@ export const monitorRouter = createTRPCRouter({
         })
         .returning()
         .get();
+
+      await analytics.identify(result.users_to_workspaces.userId, {
+        userId: result.users_to_workspaces.userId,
+      });
+      await trackAnalytics({
+        event: "Monitor Created",
+        properties: {
+          url: newMonitor.url,
+          periodicity: newMonitor.periodicity,
+        },
+      });
     }),
 
   getMonitorByID: protectedProcedure
