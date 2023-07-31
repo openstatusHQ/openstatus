@@ -38,6 +38,8 @@ export const cron = async ({
     .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
     .all();
 
+  const allResult = [];
+
   for (const row of result) {
     // could be improved with a single query
     const allPages = await db
@@ -55,10 +57,11 @@ export const cron = async ({
         pageIds: allPages.map((p) => String(p.pageId)),
       };
 
-      await c.publishJSON({
+      const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
       });
+      allResult.push(result);
     }
   }
   // our first legacy monitor
@@ -73,10 +76,12 @@ export const cron = async ({
         pageIds: ["openstatus"],
       };
 
-      await c.publishJSON({
+      const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
       });
+      allResult.push(result);
     }
   }
+  await Promise.all(allResult);
 };
