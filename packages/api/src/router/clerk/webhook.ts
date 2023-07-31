@@ -55,7 +55,7 @@ export const webhookRouter = createTRPCRouter({
         react: WelcomeEmail(),
       });
 
-      await analytics.identify(String(userResult.id), {
+      await analytics.identify(userResult.id, {
         email: opts.input.data.data.email_addresses[0].email_address,
       });
       await trackAnalytics({
@@ -73,7 +73,12 @@ export const webhookRouter = createTRPCRouter({
   }),
   userSignedIn: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "session.created") {
-      await analytics.identify(opts.input.data.data.user_id);
+      const currentUser = await opts.ctx.db
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.tenantId, opts.input.data.data.user_id))
+      .get();
+      await analytics.identify(currentUser.id );
       await trackAnalytics({ event: "User Signed In" });
     }
   }),
