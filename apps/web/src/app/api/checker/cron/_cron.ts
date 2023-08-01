@@ -15,6 +15,7 @@ import type { payloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
+// FIXME: do coerce in zod instead
 const currentRegions = z.string().transform((val) => val.split(","));
 
 const DEFAULT_URL = process.env.VERCEL_URL

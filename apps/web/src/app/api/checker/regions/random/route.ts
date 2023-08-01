@@ -9,6 +9,9 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   const region = process.env.VERCEL_REGION;
-  await checker(request, region || "global");
+  if (!region) {
+    throw new Error("No region");
+  }
+  await checker(request, region);
   return NextResponse.json({ success: true });
 }

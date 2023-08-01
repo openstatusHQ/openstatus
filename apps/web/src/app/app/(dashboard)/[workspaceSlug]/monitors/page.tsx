@@ -57,7 +57,7 @@ export default async function MonitorPage({
                 </dd>
               </div>
               <div className="flex min-w-0 items-center justify-between gap-3">
-                <dt>Periodicity</dt>
+                <dt>Frequency</dt>
                 <dd className="font-mono">{monitor.periodicity}</dd>
               </div>
               <div className="flex min-w-0 items-center justify-between gap-3">
