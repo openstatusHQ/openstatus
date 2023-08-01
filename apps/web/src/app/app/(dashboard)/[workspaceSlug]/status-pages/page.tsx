@@ -14,7 +14,8 @@ import { EmptyState } from "./_components/empty-state";
 
 const limit = allPlans.free.limits["status-pages"];
 
-export const revalidate = 300; // revalidate this page every 5 minutes
+// export const revalidate = 300; // revalidate this page every 5 minutes
+export const dynamic = "force-dynamic";
 
 export default async function Page({
   params,
