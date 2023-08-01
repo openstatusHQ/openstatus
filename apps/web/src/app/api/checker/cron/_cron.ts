@@ -1,10 +1,11 @@
 import { Client } from "@upstash/qstash/cloudflare";
-import type { z } from "zod";
+import { z } from "zod";
 
 import { and, db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorsToPages,
+  RegionEnum,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { availableRegions } from "@openstatus/tinybird";
@@ -13,6 +14,9 @@ import { env } from "@/env";
 import type { payloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
+
+// FIXME: do coerce in zod instead
+const currentRegions = z.string().transform((val) => val.split(","));
 
 const DEFAULT_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -48,7 +52,8 @@ export const cron = async ({
       .where(eq(monitorsToPages.monitorId, row.id))
       .all();
 
-    for (const region of availableRegions) {
+    const allMonitorsRegions = currentRegions.parse(row.regions);
+    if (allMonitorsRegions.length === 0) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
         monitorId: String(row.id),
@@ -59,11 +64,27 @@ export const cron = async ({
 
       // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/${region}`,
+        url: `${DEFAULT_URL}/api/checker/regions/random`,
         body: payload,
-        delay: Math.random() * 180,
+        delay: Math.random() * 90,
       });
       allResult.push(result);
+    } else {
+      for (const region of allMonitorsRegions) {
+        const payload: z.infer<typeof payloadSchema> = {
+          workspaceId: String(row.workspaceId),
+          monitorId: String(row.id),
+          url: row.url,
+          cronTimestamp: timestamp,
+          pageIds: allPages.map((p) => String(p.pageId)),
+        };
+
+        const result = c.publishJSON({
+          url: `${DEFAULT_URL}/api/checker/regions/${region}`,
+          body: payload,
+        });
+        allResult.push(result);
+      }
     }
   }
   // our first legacy monitor
@@ -82,7 +103,7 @@ export const cron = async ({
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
-        delay: Math.random() * 180,
+        delay: Math.random() * 90,
       });
       allResult.push(result);
     }

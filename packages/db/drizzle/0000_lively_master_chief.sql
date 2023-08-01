@@ -1,20 +1,3 @@
-DROP TABLE IF EXISTS `incident`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `incident_update`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `monitors_to_pages`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `monitor`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `page`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `users_to_workspaces`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `user`;
---> statement-breakpoint
-DROP TABLE IF EXISTS `workspace`;
---> statement-breakpoint
-
 CREATE TABLE `incident` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`status` text(2) NOT NULL,

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
@@ -11,6 +12,14 @@ import {
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
 import {
   Form,
   FormControl,
@@ -22,6 +31,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -29,6 +43,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { regionsDict } from "@/data/regions-dictionary";
+import { cn } from "@/lib/utils";
 
 const limit = allPlans.free.limits.periodicity;
 const cronJobs = [
@@ -39,16 +55,14 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-type Schema = z.infer<typeof insertMonitorSchema>;
-
 interface Props {
   id: string;
-  defaultValues?: Schema;
-  onSubmit: (values: Schema) => Promise<void>;
+  defaultValues?: z.infer<typeof insertMonitorSchema>;
+  onSubmit: (values: z.infer<typeof insertMonitorSchema>) => Promise<void>;
 }
 
 export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
-  const form = useForm<Schema>({
+  const form = useForm<z.infer<typeof insertMonitorSchema>>({
     resolver: zodResolver(insertMonitorSchema), // too much - we should only validate the values we ask inside of the form!
     defaultValues: {
       url: defaultValues?.url || "",
@@ -57,6 +71,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
       periodicity: defaultValues?.periodicity || undefined,
       active: defaultValues?.active || true,
       id: defaultValues?.id || undefined,
+      regions: defaultValues?.regions || [],
     },
   });
 
@@ -136,10 +151,76 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
           />
           <FormField
             control={form.control}
+            name="regions"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel>Regions</FormLabel>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <FormControl>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
+                        {/* This is a hotfix */}
+                        {field.value?.length === 1 && field.value[0].length > 0
+                          ? regionsDict[
+                              field.value[0] as keyof typeof regionsDict
+                            ].location
+                          : "Select region"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </FormControl>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0">
+                    <Command>
+                      <CommandInput placeholder="Select a region..." />
+                      <CommandEmpty>No regions found.</CommandEmpty>
+                      <CommandGroup>
+                        {Object.keys(regionsDict).map((region) => {
+                          const { code, location } =
+                            regionsDict[region as keyof typeof regionsDict];
+                          const isSelected = field.value?.includes(code);
+                          return (
+                            <CommandItem
+                              value={code}
+                              key={code}
+                              onSelect={() => {
+                                form.setValue("regions", [code]); // TODO: allow more than one to be selected in the future
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  isSelected ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {location}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <FormDescription>
+                  Select the regions you want to monitor, or leave it blank for
+                  randomly picked regions.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="periodicity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Periodicity</FormLabel>
+                <FormLabel>Frequency</FormLabel>
                 <Select
                   onValueChange={(value) =>
                     field.onChange(periodicityEnum.parse(value))
