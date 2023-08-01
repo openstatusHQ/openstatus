@@ -55,7 +55,6 @@ export const cron = async ({
         });
         allResult.push(result);
       } catch (e) {
-        console.error(e);
         const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
           method: "POST",
           body: JSON.stringify(payload),
@@ -83,7 +82,6 @@ export const cron = async ({
         });
         allResult.push(result);
       } catch (e) {
-        console.error(e);
         const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
           method: "POST",
           body: JSON.stringify(payload),
