@@ -28,7 +28,7 @@ export const MonitorList = ({
           description="Fill your status page with monitors."
           action={
             <Button asChild>
-              <Link href="/app">Go to Dashboard</Link>
+              <Link href="https://www.openstatus.dev/app">Go to Dashboard</Link>
             </Button>
           }
         />
