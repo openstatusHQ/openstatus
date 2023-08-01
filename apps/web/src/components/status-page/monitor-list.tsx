@@ -12,6 +12,10 @@ export const MonitorList = ({
 }: {
   monitors: z.infer<typeof selectMonitorSchema>[];
 }) => {
+  const url =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://www.openstatus.dev";
   return (
     <div className="grid gap-4">
       {Boolean(monitors.length) ? (
@@ -28,7 +32,7 @@ export const MonitorList = ({
           description="Fill your status page with monitors."
           action={
             <Button asChild>
-              <Link href="https://www.openstatus.dev/app">Go to Dashboard</Link>
+              <Link href={`${url}/app`}>Go to Dashboard</Link>
             </Button>
           }
         />
