@@ -66,12 +66,14 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
+      const { regions, ...data } = opts.input.data;
 
       const newMonitor = await opts.ctx.db
         .insert(monitor)
         .values({
-          ...opts.input.data,
+          ...data,
           workspaceId: currentWorkspace.id,
+          regions: regions?.join(","),
         })
         .returning()
         .get();
@@ -186,10 +188,11 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-
+      console.log(opts.input.regions?.join(","));
+      const { regions, ...data } = opts.input;
       await opts.ctx.db
         .update(monitor)
-        .set(opts.input)
+        .set({ ...data, regions: regions?.join(",") })
         .where(eq(monitor.id, opts.input.id))
         .returning()
         .get();

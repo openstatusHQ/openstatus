@@ -8,6 +8,13 @@
       "when": 1690309905039,
       "tag": "0000_lively_master_chief",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1690892003254,
+      "tag": "0001_brainy_beast",
+      "breakpoints": true
     }
   ]
 }

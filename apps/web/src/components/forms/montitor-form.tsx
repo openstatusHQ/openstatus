@@ -4,7 +4,7 @@ import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
+import type * as z from "zod";
 
 import {
   insertMonitorSchema,
@@ -55,21 +55,15 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-const newSchema = insertMonitorSchema.extend({
-  regions: z.string().array().max(1),
-});
-
-type Schema = z.infer<typeof newSchema>;
-
 interface Props {
   id: string;
-  defaultValues?: Schema;
-  onSubmit: (values: Schema) => Promise<void>;
+  defaultValues?: z.infer<typeof insertMonitorSchema>;
+  onSubmit: (values: z.infer<typeof insertMonitorSchema>) => Promise<void>;
 }
 
 export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
-  const form = useForm<Schema>({
-    resolver: zodResolver(newSchema), // too much - we should only validate the values we ask inside of the form!
+  const form = useForm<z.infer<typeof insertMonitorSchema>>({
+    resolver: zodResolver(insertMonitorSchema), // too much - we should only validate the values we ask inside of the form!
     defaultValues: {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
@@ -173,7 +167,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                         )}
                       >
                         {/* This is a hotfix */}
-                        {field.value.length === 1
+                        {field.value?.length === 1 && field.value[0].length > 0
                           ? regionsDict[
                               field.value[0] as keyof typeof regionsDict
                             ].location
@@ -190,7 +184,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                         {Object.keys(regionsDict).map((region) => {
                           const { code, location } =
                             regionsDict[region as keyof typeof regionsDict];
-                          const isSelected = field.value.includes(code);
+                          const isSelected = field.value?.includes(code);
                           return (
                             <CommandItem
                               value={code}
@@ -214,7 +208,8 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
                   </PopoverContent>
                 </Popover>
                 <FormDescription>
-                  Select the regions you want to monitor.
+                  Select the regions you want to monitor, or leave it blank for
+                  randomly picked regions.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -225,7 +220,7 @@ export function MonitorForm({ id, defaultValues, onSubmit }: Props) {
             name="periodicity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Periodicity</FormLabel>
+                <FormLabel>Frequency</FormLabel>
                 <Select
                   onValueChange={(value) =>
                     field.onChange(periodicityEnum.parse(value))

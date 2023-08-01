@@ -11,6 +11,29 @@ import { z } from "zod";
 import { page } from "./page";
 import { workspace } from "./workspace";
 
+export const availableRegions = [
+  "arn1",
+  "bom1",
+  "cdg1",
+  "cle1",
+  "cpt1",
+  "dub1",
+  "fra1",
+  "gru1",
+  "hkg1",
+  "hnd1",
+  "iad1",
+  "icn1",
+  "kix1",
+  "lhr1",
+  "pdx1",
+  "sfo1",
+  "sin1",
+  "syd1",
+] as const;
+
+export const RegionEnum = z.enum(availableRegions);
+
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),
   jobType: text("job_type", ["website", "cron", "other"])
@@ -21,6 +44,8 @@ export const monitor = sqliteTable("monitor", {
     .notNull(),
   status: text("status", ["active", "inactive"]).default("inactive").notNull(),
   active: integer("active", { mode: "boolean" }).default(false),
+
+  regions: text("regions").default("").notNull(),
 
   url: text("url", { length: 512 }).notNull(),
 
@@ -88,6 +113,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   url: z.string().url(),
   status: z.enum(["active", "inactive"]).default("inactive"),
   active: z.boolean().default(false),
+  regions: z.array(RegionEnum).default([]).optional(),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
@@ -96,6 +122,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   status: z.enum(["active", "inactive"]).default("inactive"),
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
+  regions: z.string().transform((val) => val.split(",")),
 });
 
 export const allMonitorsSchema = z.array(selectMonitorSchema);
