@@ -30,7 +30,7 @@ export const webhookRouter = createTRPCRouter({
         .values({
           tenantId: opts.input.data.data.id,
         })
-        .returning({ id: user.id })
+        .returning()
         .get();
 
       const slug = generateSlug(2);
@@ -55,14 +55,14 @@ export const webhookRouter = createTRPCRouter({
         react: WelcomeEmail(),
       });
 
-      await analytics.identify(userResult.id, {
+      await analytics.identify(String(userResult.id), {
         email: opts.input.data.data.email_addresses[0].email_address,
+        userId: userResult.id,
       });
       await trackAnalytics({
         event: "User Created",
-        properties: {
-          email: opts.input.data.data.email_addresses[0].email_address,
-        },
+        userId: String(userResult.id),
+        email: opts.input.data.data.email_addresses[0].email_address,
       });
     }
   }),
@@ -74,11 +74,16 @@ export const webhookRouter = createTRPCRouter({
   userSignedIn: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "session.created") {
       const currentUser = await opts.ctx.db
-      .select({ id: user.id })
-      .from(user)
-      .where(eq(user.tenantId, opts.input.data.data.user_id))
-      .get();
-      await analytics.identify(currentUser.id );
+        .select({ id: user.id })
+        .from(user)
+        .where(eq(user.tenantId, opts.input.data.data.user_id))
+        .get();
+      // Then it's the new user it might be null
+      if (!currentUser) return;
+
+      await analytics.identify(String(currentUser.id), {
+        userId: currentUser.id,
+      });
       await trackAnalytics({ event: "User Signed In" });
     }
   }),

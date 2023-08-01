@@ -81,10 +81,8 @@ export const monitorRouter = createTRPCRouter({
       });
       await trackAnalytics({
         event: "Monitor Created",
-        properties: {
-          url: newMonitor.url,
-          periodicity: newMonitor.periodicity,
-        },
+        url: newMonitor.url,
+        periodicity: newMonitor.periodicity,
       });
     }),
 
