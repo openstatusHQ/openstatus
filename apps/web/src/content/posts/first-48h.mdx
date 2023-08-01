@@ -1,0 +1,67 @@
+---
+title: 48h of public OpenStatus
+description: The numbers, problems we faced and consequences we have taken.
+author:
+  name: Maximilian Kaske, Thibault Le Ouay - Ducasse
+  url:
+publishedAt: 2023-08-01
+image: /assets/posts/blog-post-1.png
+---
+
+## 48h of Rollercoaster
+
+The last two days after the launch where crazy. We were not expecting the amount
+of interest. The gh stars went wild. The numbers of users and the created
+monitors went way over our expectations. Thank you for all your support. This
+motivates even more.
+
+The raw numbers are crazy:
+
+- Number of monitors: 315
+- Number of users: 375
+- Number of status pages: 172
+
+With lots of users comes lots of responsibility. And without the high amount we
+wouldn’t have known all the flaws we had in our system. We immediately
+encountered issues and had to act quickly.
+
+The main issues we encountered so far were:
+
+- We where DDOSing Vercel’s firewalls from upstash servers. Before even removing
+  qstash, we had to create a hot fix to add delays between 0 to 180 seconds to
+  every check we were sending to **not** send every request at once. That
+  reduced the retries we had on qstash drastically. Now, we have a random check
+  between 0 and 90 seconds.
+
+- We where storing the metadata `res.text()` inside of tiny bird and where
+  fetching `SELECT * from monitors WHERE …`. This means that if the text is html
+  we will store the html of the page, which is fine. But that means also, that
+  we quickly reached the 100MB limit of data send whenever you where accessing
+  your monitor data. We still ingest it but we will not query it in the
+  meantime. In the near future, only whenever you check the metadata, we will
+  access the `res.text()` that we store in tinybird.
+
+- We were close to drop QStash because of the limits reaching very soon. We will
+  keep it until now to make sure that every check is really passed.
+
+With the current infrastructure we are running on, this would costs a lot.
+Therefore we had to downgrade all the monitors to a single region. By default,
+We apologize for that but we had to take the approach to stay in a reasonable
+cost cap. Once normalized, we will inform you about new conditions.
+
+A big appreciation for [@chronark\_](https://twitter.com/chronark_) who jumped
+into a call to discuss possible solutions and shared his knowledge regarding his
+own service [planetfall.io](https://planetfall.io). Big big appreciation!
+
+Let's break the numbers a bit more down:
+
+- Number of monitor requests every 10min: 315 \* 18 regions = 5.670
+- Number of monitor requests every 1h: 5.670 \* 6 = 34.020
+- Number of monitor requests every day: 34.020 \* 24 = 816.480
+
+Vercel's Pro plan has 1M edge function executions and for every 1M more, we
+would pay $2. This sounds sounds not much but for a free plan, we cannot pay 2$
+per day. Therefore, with this incident, we will also rethink prices and plans
+that are presented on our homepage.
+
+Again, thank you for all your support and your understanding.

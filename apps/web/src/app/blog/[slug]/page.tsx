@@ -66,7 +66,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
       <BackButton href="/blog" />
       <Shell>
         <article className="grid gap-8">
-          <div className="mx-auto grid max-w-prose gap-3">
+          <div className="mx-auto grid w-full max-w-prose gap-3">
             <h1 className="font-cal text-3xl">{post.title}</h1>
             <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
               <Image
