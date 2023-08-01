@@ -52,8 +52,7 @@ export const cron = async ({
       .where(eq(monitorsToPages.monitorId, row.id))
       .all();
 
-    const allMonitorsRegions = currentRegions.parse(row.regions);
-    if (allMonitorsRegions.length === 0) {
+    if (row.regions.length === 0) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
         monitorId: String(row.id),
@@ -70,6 +69,7 @@ export const cron = async ({
       });
       allResult.push(result);
     } else {
+      const allMonitorsRegions = currentRegions.parse(row.regions);
       for (const region of allMonitorsRegions) {
         const payload: z.infer<typeof payloadSchema> = {
           workspaceId: String(row.workspaceId),
