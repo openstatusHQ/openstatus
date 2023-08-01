@@ -66,7 +66,7 @@ export const cron = async ({
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/random`,
         body: payload,
-        delay: Math.random() * 180,
+        delay: Math.random() * 90,
       });
       allResult.push(result);
     } else {
@@ -103,7 +103,7 @@ export const cron = async ({
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
-        delay: Math.random() * 180,
+        delay: Math.random() * 90,
       });
       allResult.push(result);
     }
