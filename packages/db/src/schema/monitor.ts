@@ -122,7 +122,9 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   status: z.enum(["active", "inactive"]).default("inactive"),
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
-  regions: z.string().transform((val) => val.split(",")),
+  regions: z
+    .preprocess((val) => String(val).split(","), z.array(RegionEnum))
+    .default([]),
 });
 
 export const allMonitorsSchema = z.array(selectMonitorSchema);
