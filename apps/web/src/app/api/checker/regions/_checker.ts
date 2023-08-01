@@ -85,6 +85,7 @@ export const checker = async (request: Request, region: string) => {
       const latency = endTime - startTime;
       await monitor(res, result.data, region, latency);
     } catch (e) {
+      console.log(e);
       await monitor(
         { status: 500, text: () => Promise.resolve(`${e}`) },
         result.data,
