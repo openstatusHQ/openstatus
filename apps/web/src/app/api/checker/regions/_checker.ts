@@ -9,6 +9,7 @@ import {
 } from "@openstatus/tinybird";
 
 import { env } from "@/env";
+import { isAuthorizedDomain } from "../_shared";
 import { payloadSchema } from "../schema";
 
 export const monitorSchema = tbIngestPingResponse.pick({
@@ -56,37 +57,34 @@ const monitor = async (
 };
 
 export const checker = async (request: Request, region: string) => {
-  const r = new Receiver({
-    currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
-    nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
-  });
-
-  const jsonData = await request.json();
-
-  const isValid = r.verify({
-    signature: request?.headers?.get("Upstash-Signature") || "",
-    body: JSON.stringify(jsonData),
-  });
-  if (!isValid) {
-    throw new Error("Could not parse request");
+  if (!isAuthorizedDomain(request.url)) {
+    return;
   }
+  const jsonData = await request.json();
 
   const result = payloadSchema.safeParse(jsonData);
 
   if (!result.success) {
     throw new Error("Invalid response body");
   }
-
+  let res: Response;
   try {
     const startTime = Date.now();
-    const res = await fetch(result.data.url, { cache: "no-store" });
+    res = await fetch(result.data.url, { cache: "no-store" });
 
     const endTime = Date.now();
     const latency = endTime - startTime;
     await monitor(res, result.data, region, latency);
   } catch (e) {
     // if on the third retry we still get an error, we should report it
-    if (request.headers.get("Upstash-Retried") === "3") {
+    try {
+      const startTime = Date.now();
+      res = await fetch(result.data.url, { cache: "no-store" });
+
+      const endTime = Date.now();
+      const latency = endTime - startTime;
+      await monitor(res, result.data, region, latency);
+    } catch (e) {
       await monitor(
         { status: 500, text: () => Promise.resolve(`${e}`) },
         result.data,

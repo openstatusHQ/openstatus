@@ -1,4 +1,4 @@
-import { Client } from "@upstash/qstash/cloudflare";
+// import { Client } from "@upstash/qstash/cloudflare";
 import type { z } from "zod";
 
 import { and, db, eq } from "@openstatus/db";
@@ -10,25 +10,17 @@ import {
 import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env";
+import { DEFAULT_URL } from "../_shared";
 import type { payloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
-const DEFAULT_URL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
-// We can't secure cron endpoint by vercel thus we should make sure they are called by the generated url
-export const isAuthorizedDomain = (url: string) => {
-  return url.includes(DEFAULT_URL);
-};
-
 export const cron = async ({
   periodicity,
 }: z.infer<typeof periodicityAvailable>) => {
-  const c = new Client({
-    token: env.QSTASH_TOKEN,
-  });
+  // const c = new Client({
+  //   token: env.QSTASH_TOKEN,
+  // });
 
   const timestamp = Date.now();
   // FIXME: Wait until db is ready
@@ -56,14 +48,20 @@ export const cron = async ({
         cronTimestamp: timestamp,
         pageIds: allPages.map((p) => String(p.pageId)),
       };
-
-      // TODO: fetch + try - catch + retry once
-      const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/${region}`,
-        body: payload,
-        delay: Math.random() * 180,
-      });
-      allResult.push(result);
+      try {
+        const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        allResult.push(result);
+      } catch (e) {
+        console.error(e);
+        const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        allResult.push(result);
+      }
     }
   }
   // our first legacy monitor
@@ -78,13 +76,20 @@ export const cron = async ({
         pageIds: ["openstatus"],
       };
 
-      // TODO: fetch + try - catch + retry once
-      const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/${region}`,
-        body: payload,
-        delay: Math.random() * 180,
-      });
-      allResult.push(result);
+      try {
+        const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        allResult.push(result);
+      } catch (e) {
+        console.error(e);
+        const result = fetch(`${DEFAULT_URL}/api/checker/regions/${region}`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        allResult.push(result);
+      }
     }
   }
   await Promise.all(allResult);
