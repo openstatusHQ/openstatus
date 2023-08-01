@@ -123,7 +123,11 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
   regions: z
-    .preprocess((val) => String(val).split(","), z.array(RegionEnum))
+    .preprocess((val) => {
+      if (String(val).length > 0) {
+        return String(val).split(",");
+      }
+    }, z.array(RegionEnum))
     .default([]),
 });
 
