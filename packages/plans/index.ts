@@ -13,7 +13,7 @@ type Plan = {
 export const allPlans: Record<"free", Plan> = {
   free: {
     limits: {
-      monitors: 5,
+      monitors: 0,
       "status-pages": 1,
       periodicity: ["10m", "30m", "1h"],
     },

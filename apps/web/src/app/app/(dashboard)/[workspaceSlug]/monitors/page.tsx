@@ -5,6 +5,8 @@ import { allPlans } from "@openstatus/plans";
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
+import { Icons } from "@/components/icons";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
@@ -25,11 +27,22 @@ export default async function MonitorPage({
 
   const isLimit = (monitors?.length || 0) >= limit;
 
+  const Icon = Icons["alert-triangle"];
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
         <CreateForm workspaceSlug={params.workspaceSlug} disabled={isLimit} />
       </Header>
+      <Alert className="bg-destructive/5 col-span-full">
+        <Icon className="h-4 w-4" />
+        <AlertTitle>Monitor creation deactivated.</AlertTitle>
+        <AlertDescription>
+          We were not expecting the amount of users and have some scaling
+          issues. Therefore, we have deactivated the creation of monitors and
+          keep you informed once back. Sorry for the inconvenience.
+        </AlertDescription>
+      </Alert>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
           <Container
