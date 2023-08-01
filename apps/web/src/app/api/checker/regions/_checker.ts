@@ -85,6 +85,7 @@ export const checker = async (request: Request, region: string) => {
     const latency = endTime - startTime;
     await monitor(res, result.data, region, latency);
   } catch (e) {
+    console.error(e);
     // if on the third retry we still get an error, we should report it
     if (request.headers.get("Upstash-Retried") === "2") {
       await monitor(
