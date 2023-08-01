@@ -84,9 +84,7 @@ export const pageRouter = createTRPCRouter({
       });
       await trackAnalytics({
         event: "Page Created",
-        properties: {
-          slug: newPage.slug,
-        },
+        slug: newPage.slug,
       });
     }),
 
