@@ -107,5 +107,10 @@ export default authMiddleware({
 });
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)", "/", "/(api/og|api/ping|api/webhook|api/trpc)(.*)", "/(!api/checker/:path*)"],
+  matcher: [
+    "/((?!api|assets|_next/static|_next/image|favicon.ico).*)",
+    "/",
+    "/(api/og|api/ping|api/webhook|api/trpc)(.*)",
+    "/(!api/checker/:path*)",
+  ],
 };
