@@ -126,6 +126,8 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
     .preprocess((val) => {
       if (String(val).length > 0) {
         return String(val).split(",");
+      } else {
+        return [];
       }
     }, z.array(RegionEnum))
     .default([]),
