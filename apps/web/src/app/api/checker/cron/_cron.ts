@@ -57,9 +57,11 @@ export const cron = async ({
         pageIds: allPages.map((p) => String(p.pageId)),
       };
 
+      // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
+        delay: Math.random() * 180,
       });
       allResult.push(result);
     }
@@ -76,9 +78,11 @@ export const cron = async ({
         pageIds: ["openstatus"],
       };
 
+      // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
+        delay: Math.random() * 180,
       });
       allResult.push(result);
     }
