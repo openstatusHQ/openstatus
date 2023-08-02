@@ -63,7 +63,7 @@ export const cron = async ({
 
       // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/random`,
+        url: `${DEFAULT_URL}/api/checker/regions/auto`,
         body: payload,
         delay: Math.random() * 90,
       });
