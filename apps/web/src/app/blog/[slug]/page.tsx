@@ -76,7 +76,11 @@ export default function PostPage({ params }: { params: { slug: string } }) {
                 className="object-cover"
               /> */}
               {/* HOTFIX: plain `img` */}
-              <img src={post.image} alt={post.title} className="object-cover" />
+              <img
+                src={post.image}
+                alt={post.title}
+                className="h-full w-full object-cover"
+              />
             </div>
             <p className="text-muted-foreground text-sm font-light">
               {post.author.name}

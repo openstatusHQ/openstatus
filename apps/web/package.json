@@ -57,6 +57,7 @@
     "react-day-picker": "8.8.0",
     "react-dom": "18.2.0",
     "react-hook-form": "7.45.1",
+    "react-tweet": "^3.0.3",
     "reading-time": "1.5.0",
     "rehype-pretty-code": "0.10.0",
     "resend": "0.15.3",

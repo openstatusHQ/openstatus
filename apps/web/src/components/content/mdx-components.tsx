@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import { Tweet } from "react-tweet";
 
 export const components = {
   a: ({
@@ -24,6 +25,13 @@ export const components = {
         className="text-foreground underline underline-offset-4 hover:no-underline"
         {...props}
       />
+    );
+  },
+  Tweet: (props: TweetProps) => {
+    return (
+      <div data-theme="light" className="not-prose">
+        <Tweet {...props} />
+      </div>
     );
   },
 };
