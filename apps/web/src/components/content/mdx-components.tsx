@@ -30,7 +30,7 @@ export const components = {
   },
   Tweet: (props: TweetProps) => {
     return (
-      <div data-theme="light" className="not-prose">
+      <div data-theme="light" className="not-prose [&>div]:mx-auto">
         <Tweet {...props} />
       </div>
     );

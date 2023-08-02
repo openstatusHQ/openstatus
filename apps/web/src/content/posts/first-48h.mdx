@@ -10,58 +10,47 @@ image: /assets/posts/first-48h/github-trending.png
 
 ## 48h of Rollercoaster
 
-The last two days after the launch where crazy. We were not expecting the amount
-of interest. We were trending on GitHub and the numbers of users and the created
-monitors went way over our expectations. Thank you for all your support. This
-motivates even more.
+The past two days following the launch have been incredibly hectic. The level of
+interest we received exceeded our expectations. We were even trending on GitHub.
+The number of users and created monitors far surpassed what we anticipated. We
+sincerely appreciate your support, as it further motivates us. The raw
+statistics are astonishing:
 
-The raw numbers are crazy:
+- Monitors: 315
+- Users: 418
+- Status pages: 174
 
-- Number of monitors: 315
-- Number of users: 375
-- Number of status pages: 172
-
-With lots of users comes lots of responsibility. And without the high amount we
-wouldn’t have known all the flaws we had in our system. We immediately
-encountered issues and had to act quickly.
+With a large user base comes great responsibility. Thanks to the high volume of
+users, we discovered several flaws in our system. We promptly addressed the
+issues and took action.
 
 ## Limits we encountered
 
-- We were DDOSing Vercel’s firewalls from upstash servers. Before thinking of
-  removing [QStash](http://upstash.com/qstash?ref=openstatus), we had to create
-  a hot fix to add delays between 0 to 180 seconds to every check we were
-  sending to **not** send every request at once. That reduced the retries we had
-  on QStash drastically as we were not simoultaneously sending lots of requests
-  to vercel anymore. Now, after the measures we have taken, we have a random
-  check between 0 and 90 seconds.
+We conducted a DDOS attack on Vercel's firewalls from Upstash servers because we
+where pining every single vercel region for every monitor (18 \* 315 = 5.670)
+more or less at once. Before considering the removal of
+[QStash](http://upstash.com/qstash?ref=openstatus), we implemented a hotfix to
+introduce random delays of 0 to 180 seconds between each ping. This prevented us
+from overwhelming Vercel with simultaneous requests, significantly reducing the
+number of retries on QStash. As a result of these measures, we now have a
+randomized check interval of 0 to 90 seconds.
 
-- We were breaking the `/monitor/[id]/data` data-table. We are storing the
-  metadata `res.text()` inside of tinybird and were fetching
-  `SELECT * from monitors WHERE …`. This means that if the text is html we will
-  store the html of the page, which is fine. But that means also, that we
-  quickly reached the 100MB limit of result length send whenever you where
-  accessing your monitor data. We still ingest it and will only request it in
-  the near future whenever you are interested and click on the "View metadata"
-  action.
-
-- We were close to dropping QStash because of the limits reaching very soon. We
-  will keep it until now to make sure that every check is really passed.
+For the time being, we will keep it to ensure that every check is successfully
+processed.
 
 ![Qstash Usage](/assets/posts/first-48h/qstash-usage.png)
 
-With the current infrastructure we are running on, this would costs a lot.
-Therefore we had to **downgrade all the monitors to a single region**, by
-default `/random`. We apologize for that but we had to take the approach to stay
-in a reasonable cost cap. Once normalized, we will inform you about new
-conditions.
+Moreover, our actions caused the `/monitor/[id]/data` data-table to break. We
+were storing the metadata `res.text()` in Tinybird and retrieving it with the
+query `SELECT * from monitors WHERE ....` This means that if the text is in HTML
+format, we store the HTML content of the page, which is acceptable. However,
+this led to quickly exceeding the 100MB limit for the result length when
+accessing monitor data. Now, we are only querying the necessary data from
+tinybird: `SELECT latency, timestamp, url, ... from monitors WHERE ...`. Despite
+this, we continue to ingest the data and will only request it in the future when
+you click on the "View metadata" action.
 
-A big appreciation for [@chronark\_](https://twitter.com/chronark_) who jumped
-into a call to discuss possible solutions and shared his knowledge regarding his
-own service [planetfall.io](https://planetfall.io). Big big appreciation!
-
-Also, Guilherme said it well:
-
-<Tweet id="1686482013685940224" />
+### What would it cost us?
 
 Let's break the current numbers a bit more down if we would have kept pinging
 all the regions:
@@ -72,24 +61,43 @@ all the regions:
 
 ![Vercel Usage](/assets/posts/first-48h/vercel-usage.png)
 
-Regarding the edge middleware invocations, we fixed an issue regarding regex
-where it got called whenever an api endpoint would have called.
+> We have resolved an issue with regex invocation in the edge middleware.
+> Previously, it was being called whenever an API endpoint was called.
 
-Vercel's Pro plan has 1M edge function executions and for every 1M more, we
-would pay $2. This sounds not much but for a free plan, we cannot pay 2$ per
-day.
+Under Vercel's Pro plan, we have 1 million edge function executions included,
+and for each additional 1 million, there is a
+$2 charge. Because the numbers are constant, we would have payed
+1$/100k Qstash
+messages which would lead us to a approx. 10$/day for the current free tiers.
 
-With this incident, we will rethink prices and plans that are presented on our
-homepage.
+### Actions taken
 
-Join [discord](https://openstatus.dev/discord) if you want to learn more or just
+But due to the high cost of our current infrastructure, **we had to downgrade
+all monitors to a single region**, specifically `/regions/auto`, in order to
+stay within a reasonable budget (dividing it by 18). You can edit the region for
+each monitor. We apologize for any inconvenience caused and will update you on
+the new conditions once everything is normalized.
+
+A big appreciation to [@chronark\_](https://twitter.com/chronark_) who joined us
+on a call to discuss potential solutions and for sharing his knowledge about his
+own service, [planetfall.io](https://planetfall.io).
+
+Also, Guilherme had a very good comment:
+
+<Tweet id="1686482013685940224" />
+
+As a result of this incident, we will be reevaluating the prices and plans
+displayed on our homepage.
+
+Join [Discord](https://openstatus.dev/discord) if you want to learn more or just
 have a chat!
 
 Again, thank you for all your support and your understanding.
 
 ---
 
-P.S. We are generating your workspace-slug by merging two random names. NotRoman
-came by and share us his slug:
+P.S. We are generating your workspace-slug by merging two random names. Share
+yours on [Discord](https://openstatus.dev/discord) - it's fun to watch!
 
-![wet-grandmother slug](/assets/posts/first-48h/funny-workspace-slug.png)
+![wet-grandmother slug](/assets/posts/first-48h/wet-grandmother-workspace-slug.png)
+![enough-gas slug](/assets/posts/first-48h/enough-gas-workspace-slug.png)
