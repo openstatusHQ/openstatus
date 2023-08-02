@@ -68,15 +68,17 @@ Under Vercel's Pro plan, we have 1 million edge function executions included,
 and for each additional 1 million, there is a
 $2 charge. Because the numbers are constant, we would have payed
 1$/100k Qstash
-messages which would lead us to a approx. 10$/day for the current free tiers.
+messages which would lead us to a approx. **10$/day** for the current free
+tiers.
 
 ### Actions taken
 
-But due to the high cost of our current infrastructure, **we had to downgrade
-all monitors to a single region**, specifically `/regions/auto`, in order to
-stay within a reasonable budget (dividing it by 18). You can edit the region for
-each monitor. We apologize for any inconvenience caused and will update you on
-the new conditions once everything is normalized.
+But due to the high cost of our current infrastructure, **we have downgraded all
+monitors to a single region** (`/regions/auto`, a which will take a random
+vercel region) in order to stay within a reasonable budget, by dividing it
+by 18. You can edit the region for each monitor. We apologize for any
+inconvenience caused and will update you on the new conditions once everything
+is normalized.
 
 A big appreciation to [@chronark\_](https://twitter.com/chronark_) who joined us
 on a call to discuss potential solutions and for sharing his knowledge about his
