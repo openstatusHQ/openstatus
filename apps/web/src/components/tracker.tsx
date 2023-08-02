@@ -70,7 +70,7 @@ export function Tracker({
     {
       count: 0,
       ok: 0,
-    },
+    }
   );
 
   const uptime =
@@ -114,6 +114,11 @@ const MoreInfo = ({
   const [open, setOpen] = React.useState(false);
   const formattedURL = new URL(url);
   const link = `${formattedURL.host}${formattedURL.pathname}`;
+
+  if (description == null && context !== "play") {
+    return;
+  }
+
   return (
     <TooltipProvider>
       <Tooltip open={open} onOpenChange={setOpen}>
@@ -203,7 +208,7 @@ const Bar = ({
 
 // FIXME this is a temporary solution
 const getStatus = (
-  ratio: number,
+  ratio: number
 ): { label: string; variant: "up" | "degraded" | "down" } => {
   if (ratio >= 0.98) return { label: "Operational", variant: "up" };
   if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
