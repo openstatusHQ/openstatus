@@ -64,10 +64,10 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <BackButton href="/blog" />
-      <Shell>
+      <Shell className="sm:py-8 md:py-12">
         <article className="grid gap-8">
           <div className="mx-auto grid w-full max-w-prose gap-3">
-            <h1 className="font-cal text-3xl">{post.title}</h1>
+            <h1 className="font-cal mb-5 text-3xl">{post.title}</h1>
             <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
               {/* <Image
                 src={post.image}

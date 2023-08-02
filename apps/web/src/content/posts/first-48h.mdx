@@ -2,13 +2,13 @@
 title: 48h of public OpenStatus
 description: The numbers, limits we faced and consequences we have taken.
 author:
-  name: Maximilian Kaske, Thibault Le Ouay - Ducasse
-  url:
+  name: Maximilian Kaske
+  url: https://twitter.com/mxkaske
 publishedAt: 2023-08-02
 image: /assets/posts/first-48h/github-trending.png
 ---
 
-## 48h of Rollercoaster
+## 48h of Rollercoaster 🎢
 
 The past two days following the launch have been incredibly hectic. The level of
 interest we received exceeded our expectations. We were even trending on GitHub.
@@ -24,7 +24,7 @@ With a large user base comes great responsibility. Thanks to the high volume of
 users, we discovered several flaws in our system. We promptly addressed the
 issues and took action.
 
-## Limits we encountered
+## Limits we encountered 😱
 
 We conducted a DDOS attack on Vercel's firewalls from Upstash servers because we
 where pining every single vercel region for every monitor (18 \* 315 = 5.670)
@@ -53,7 +53,7 @@ you click on the "View metadata" action.
 And of course no need to mention all the little hotfixed we had to make here and
 there.
 
-### What would it cost us?
+### What would it cost us? 💸
 
 Let's break the current numbers a bit more down if we would have kept pinging
 all the regions:
@@ -74,7 +74,7 @@ $2 charge. Because the numbers are constant, we would have payed
 messages which would lead us to a approx. **10$/day** for the current free
 tiers.
 
-### Actions taken
+### Actions taken 👷
 
 But due to the high cost of our current infrastructure, **we have downgraded all
 monitors to a single region** (`/regions/auto`, a which will take a random
@@ -97,12 +97,12 @@ displayed on our homepage.
 Join [Discord](https://openstatus.dev/discord) if you want to learn more or just
 have a chat!
 
-Again, thank you for all your support and your understanding.
+Again, thank you for all your support and your understanding. 🙏
 
 ---
 
 P.S. We are generating your workspace-slug by merging two random names. Share
-yours on [Discord](https://openstatus.dev/discord) - it's fun to watch!
+yours on [Discord](https://openstatus.dev/discord) - it's fun to watch! 🍿
 
 ![wet-grandmother slug](/assets/posts/first-48h/wet-grandmother-workspace-slug.png)
 ![enough-gas slug](/assets/posts/first-48h/enough-gas-workspace-slug.png)
