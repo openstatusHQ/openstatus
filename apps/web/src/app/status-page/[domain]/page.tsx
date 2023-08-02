@@ -41,14 +41,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: page?.title,
     description: page?.description,
     twitter: {
-      images: [`/api/og?monitorId=${firstMonitor?.id}`],
+      images: [
+        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
+          page?.description || `The ${page?.title} status page}`
+        }`,
+      ],
       card: "summary_large_image",
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
       type: "website",
-      images: [`/api/og?monitorId=${firstMonitor?.id}`],
+      images: [
+        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
+          page?.description || `The ${page?.title} status page}`
+        }`,
+      ],
       title: page?.title,
       description: page?.description,
     },
