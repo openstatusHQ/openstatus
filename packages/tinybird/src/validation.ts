@@ -14,6 +14,7 @@ export const availableRegions = [
   "gru1",
   "hkg1",
   "hnd1",
+  "iad1",
   "icn1",
   "kix1",
   "lhr1",
