@@ -1,5 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
+import type { TweetProps } from "react-tweet";
 import { Tweet } from "react-tweet";
 
 export const components = {
