@@ -13,7 +13,7 @@ export const clerkEvent = z.discriminatedUnion("type", [
         }),
       ),
       first_name: z.string(),
-      last_name: z.string(),
+      last_name: z.string().nullable(),
     }),
   }),
   z.object({

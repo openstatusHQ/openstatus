@@ -33,7 +33,7 @@ export const cron = async ({
   const c = new Client({
     token: env.QSTASH_TOKEN,
   });
-
+  console.info(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
   // FIXME: Wait until db is ready
   const result = await db
@@ -63,7 +63,7 @@ export const cron = async ({
 
       // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/random`,
+        url: `${DEFAULT_URL}/api/checker/regions/auto`,
         body: payload,
         delay: Math.random() * 90,
       });
@@ -109,4 +109,5 @@ export const cron = async ({
     }
   }
   await Promise.all(allResult);
+  console.info(`End cron for ${periodicity} with ${allResult.length} jobs`);
 };

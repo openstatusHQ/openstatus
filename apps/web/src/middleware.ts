@@ -50,10 +50,6 @@ export default authMiddleware({
     "/play/(.*)",
     "/monitor/(.*)",
     "/api/(.*)",
-    "/api/og",
-    "/api/ping",
-    "/api/v0/cron",
-    "/api/v0/ping",
     "/api/webhook/clerk",
     "/api/checker/regions/(.*)",
     "/api/checker/cron/10m",
@@ -110,7 +106,7 @@ export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     "/",
-    "/(api/og|api/ping|api/webhook|api/trpc)(.*)",
-    "/(!api/checker/:path*)",
+    "/(api/webhook|api/trpc)(.*)",
+    "/(!api/checker/:path*|!api/og|!api/ping)",
   ],
 };
