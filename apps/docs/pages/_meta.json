@@ -1,0 +1,15 @@
+{
+  "index": "Introduction",
+  "get-started": "Get Started",
+  "community": "Community",
+  "about": {
+    "title": "About",
+    "type": "page"
+  },
+  "contact": {
+    "title": "Contact ↗",
+    "type": "page",
+    "href": "https://twitter.com/thibaultleouay",
+    "newWindow": true
+  }
+}
