@@ -2,14 +2,11 @@
   "index": "Introduction",
   "get-started": "Get Started",
   "community": "Community",
-  "about": {
-    "title": "About",
-    "type": "page"
-  },
+
   "contact": {
-    "title": "Contact ↗",
+    "title": "🌐 Website",
     "type": "page",
-    "href": "https://twitter.com/thibaultleouay",
+    "href": "https://www.openstatus.dev",
     "newWindow": true
   }
 }
