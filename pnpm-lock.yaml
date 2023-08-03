@@ -44,6 +44,9 @@ importers:
 
   apps/docs:
     dependencies:
+      '@vercel/analytics':
+        specifier: ^1.0.1
+        version: 1.0.1
       next:
         specifier: ^13.4.12
         version: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
@@ -168,6 +171,9 @@ importers:
       '@upstash/redis':
         specifier: 1.21.0
         version: 1.21.0
+      '@vercel/analytics':
+        specifier: 1.0.1
+        version: 1.0.1
       class-variance-authority:
         specifier: 0.6.0
         version: 0.6.0(typescript@5.1.6)
@@ -5444,6 +5450,10 @@ packages:
       isomorphic-fetch: 3.0.0
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@vercel/analytics@1.0.1:
+    resolution: {integrity: sha512-Ux0c9qUfkcPqng3vrR0GTrlQdqNJ2JREn/2ydrVuKwM3RtMfF2mWX31Ijqo1opSjNAq6rK76PwtANw6kl6TAow==}
     dev: false
 
   /abbrev@1.1.1:
