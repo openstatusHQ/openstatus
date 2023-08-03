@@ -1,28 +1,24 @@
 import type { MetadataRoute } from "next";
+import { allPosts } from "contentlayer/generated";
 
 const addPathToBaseURL = (path: string) => `https://openstatus.dev${path}`;
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return [
-    {
-      url: addPathToBaseURL("/"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/play"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/app/sign-in"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/app/sign-up"),
-      lastModified: new Date(),
-    },
-    {
-      url: addPathToBaseURL("/monitor/openstatus"),
-      lastModified: new Date(),
-    },
-  ];
+  const blogs = allPosts.map((post) => ({
+    url: `https://openstatus.dev/blog/${post.slug}`,
+    lastModified: post.publishedAt, // date format should be YYYY-MM-DD
+  }));
+
+  const routes = [
+    "/",
+    "/play",
+    "/app/sign-in",
+    "/app/sign-up",
+    "/monitor/openstatus",
+  ].map((route) => ({
+    url: addPathToBaseURL(route),
+    lastModified: new Date(),
+  }));
+
+  return [...routes, ...blogs];
 }
