@@ -18,8 +18,7 @@ const calSans = LocalFont({
 });
 
 const TITLE = "OpenStatus";
-const DESCRIPTION =
-  "Open-Source alternative to your current monitoring service with beautiful status page";
+const DESCRIPTION = "Open-Source alternative to your current status page.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -44,7 +43,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally with with Clerk,  Comment the provider below
+  // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <ClerkProvider>
       <html lang="en">
