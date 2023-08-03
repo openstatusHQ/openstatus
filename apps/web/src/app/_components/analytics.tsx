@@ -17,7 +17,7 @@ export const ClientAnalytics = () => {
       beforeSend={(event) => {
         console.log(event);
         // Ignore all events that have a `/private` inside the URL
-        if (event.url.match("https://((?!www).*).openstatus.dev")) {
+        if (event.url.match(/https:\/\/((?!www).*)\.openstatus\.dev/)) {
           return {
             ...event,
             url: `/status-page/${getSubdomain(event.url)}`,
