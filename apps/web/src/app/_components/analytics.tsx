@@ -20,7 +20,9 @@ export const ClientAnalytics = () => {
         if (event.url.match(/https:\/\/((?!www).*)\.openstatus\.dev/)) {
           return {
             ...event,
-            url: `/status-page/${getSubdomain(event.url)}`,
+            url: `https://www.openstatus.dev/status-page/${getSubdomain(
+              event.url,
+            )}`,
           };
         }
         return event;
