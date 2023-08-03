@@ -24,7 +24,7 @@ export function getResponseList(tb: Tinybird) {
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
-      revalidate: 60, // 60 seconds cache validation
+      cache: "no-store",
     },
   });
 }
@@ -35,7 +35,7 @@ export function getMonitorList(tb: Tinybird) {
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      revalidate: 60,
+      cache: "no-store",
     },
   });
 }

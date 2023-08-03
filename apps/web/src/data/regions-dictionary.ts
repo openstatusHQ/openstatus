@@ -1,8 +1,16 @@
 /**
- * AWS data center informations from 17 regions, supported by vercel.
+ * AWS data center informations from 18 regions, supported by vercel.
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
 export const regionsDict = {
+  /**
+   * A random location will be chosen
+   */
+  auto: {
+    code: "auto",
+    name: "random",
+    location: "Random",
+  },
   arn1: {
     code: "arn1",
     name: "eu-north-1",
