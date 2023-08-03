@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
@@ -8,6 +9,8 @@ import type * as z from "zod";
 import type { allMonitorsSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
 
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -18,26 +21,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { api } from "@/trpc/client";
-import { Checkbox } from "../ui/checkbox";
-import { useToast } from "../ui/use-toast";
+import { LoadingAnimation } from "../loading-animation";
 
 // REMINDER: only use the props you need!
 
 type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
 
 interface Props {
-  id: string;
   defaultValues?: Schema;
-  onSubmit: (values: Schema) => Promise<void>;
+  workspaceSlug: string;
   allMonitors?: z.infer<typeof allMonitorsSchema>;
 }
 
 export function StatusPageForm({
-  id,
   defaultValues,
-  onSubmit,
+  workspaceSlug,
   allMonitors,
 }: Props) {
   const form = useForm<Schema>({
@@ -52,6 +53,8 @@ export function StatusPageForm({
       workspaceSlug: "",
     },
   });
+  const router = useRouter();
+  const [isPending, startTransition] = React.useTransition();
   const watchSlug = form.watch("slug");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToast();
@@ -78,6 +81,31 @@ export function StatusPageForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkUniqueSlug]);
 
+  const onSubmit = async ({
+    ...props
+  }: z.infer<typeof insertPageSchemaWithMonitors>) => {
+    startTransition(async () => {
+      // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
+      try {
+        if (defaultValues) {
+          await api.page.updatePage.mutate(props);
+        } else {
+          await api.page.createPage.mutate({
+            ...props,
+            workspaceSlug,
+          });
+        }
+        router.push("./");
+        router.refresh(); // this will actually revalidate the page after submission
+      } catch {
+        toast({
+          title: "Something went wrong.",
+          description: "If you are in the limits, please try again.",
+        });
+      }
+    });
+  };
+
   return (
     <Form {...form}>
       <form
@@ -91,109 +119,117 @@ export function StatusPageForm({
               description: "Please select another slug. Every slug is unique.",
             });
           } else {
-            form.handleSubmit(onSubmit)(e);
+            if (onSubmit) {
+              form.handleSubmit(onSubmit)(e);
+            }
           }
         }}
-        id={id}
+        className="grid w-full grid-cols-1 items-center gap-6 sm:grid-cols-6"
       >
-        <div className="grid w-full items-center  space-y-6">
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="" {...field} />
-                </FormControl>
-                <FormDescription>The title of your page.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="slug"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Slug</FormLabel>
-                <FormControl>
-                  <Input placeholder="" {...field} />
-                </FormControl>
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-4">
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input placeholder="" {...field} />
+              </FormControl>
+              <FormDescription>The title of your page.</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-5">
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="" {...field} />
+              </FormControl>
+              <FormDescription>
+                Give your user some information about it.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="slug"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-3">
+              <FormLabel>Slug</FormLabel>
+              <FormControl>
+                <Input placeholder="" {...field} />
+              </FormControl>
+              <FormDescription>
+                The subdomain for your status page. At least 3 chars.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="monitors"
+          render={() => (
+            <FormItem className="sm:col-span-full">
+              <div className="mb-4">
+                <FormLabel className="text-base">Monitor</FormLabel>
                 <FormDescription>
-                  The subdomain slug for your status page. At least 3 chars.
+                  Select the monitors you want to display.
                 </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input placeholder="" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Give your user some information about it.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="monitors"
-            render={() => (
-              <FormItem>
-                <div className="mb-4">
-                  <FormLabel className="text-base">Monitor</FormLabel>
-                  <FormDescription>
-                    Select the monitors you want to display.
-                  </FormDescription>
-                </div>
-                {allMonitors?.map((item) => (
-                  <FormField
-                    key={item.id}
-                    control={form.control}
-                    name="monitors"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={item.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([
-                                      ...(field.value || []),
-                                      item.id,
-                                    ])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
-                                    );
-                              }}
-                            />
-                          </FormControl>
+              </div>
+              {allMonitors?.map((item) => (
+                <FormField
+                  key={item.id}
+                  control={form.control}
+                  name="monitors"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        key={item.id}
+                        className="flex flex-row items-start space-x-3 space-y-0"
+                      >
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(item.id)}
+                            onCheckedChange={(checked) => {
+                              return checked
+                                ? field.onChange([
+                                    ...(field.value || []),
+                                    item.id,
+                                  ])
+                                : field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== item.id,
+                                    ),
+                                  );
+                            }}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
                           <FormLabel className="font-normal">
                             {item.name}
                           </FormLabel>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                          <FormDescription>{item.description}</FormDescription>
+                        </div>
+                      </FormItem>
+                    );
+                  }}
+                />
+              ))}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="sm:col-span-full">
+          <Button className="w-full sm:w-auto">
+            {!isPending ? "Confirm" : <LoadingAnimation />}
+          </Button>
         </div>
       </form>
     </Form>
