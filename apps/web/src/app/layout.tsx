@@ -4,10 +4,12 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Analytics } from "@vercel/analytics/react";
 import PlausibleProvider from "next-plausible";
 
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
+import { ClientAnalytics } from "./_components/analytics";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -55,6 +57,7 @@ export default function RootLayout({
             <TailwindIndicator />
           </body>
         </PlausibleProvider>
+        <ClientAnalytics />;
       </html>
     </ClerkProvider>
   );
