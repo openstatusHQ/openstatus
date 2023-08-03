@@ -38,7 +38,7 @@ const cardConfig: {
 // TBD: if we need it at the beginning
 export function Cards() {
   return (
-    <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+    <div className="z-[-1] grid grid-cols-1 gap-8 md:grid-cols-2">
       {cardConfig.map(({ icon, title, description, badge }, i) => {
         const Icon = Icons[icon];
         return (
