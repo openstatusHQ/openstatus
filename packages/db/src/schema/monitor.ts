@@ -12,6 +12,7 @@ import { page } from "./page";
 import { workspace } from "./workspace";
 
 export const availableRegions = [
+  "auto", // randomly choose region
   "arn1",
   "bom1",
   "cdg1",
