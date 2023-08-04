@@ -37,7 +37,6 @@ export default async function EditPage({
       <div className="col-span-full">
         <MonitorForm
           workspaceSlug={params.workspaceSlug}
-          // @ts-ignore FIXME: monitor is missing types like periodicityEnum,..
           defaultValues={monitor || undefined}
         />
       </div>
