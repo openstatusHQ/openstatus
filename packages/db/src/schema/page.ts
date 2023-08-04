@@ -54,6 +54,7 @@ export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
   monitors: z.array(z.number()).optional(),
   workspaceSlug: z.string().optional(),
+  slug: z.string().toLowerCase(),
 });
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);

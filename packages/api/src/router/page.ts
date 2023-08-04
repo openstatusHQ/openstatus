@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   insertPageSchemaWithMonitors,
   monitor,
@@ -232,10 +232,10 @@ export const pageRouter = createTRPCRouter({
 
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
       const result = await opts.ctx.db.query.page.findFirst({
-        where: eq(page.slug, opts.input.slug),
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
         with: { incidents: true },
       });
 
@@ -273,14 +273,14 @@ export const pageRouter = createTRPCRouter({
     }),
 
   getSlugUniqueness: protectedProcedure
-    .input(z.object({ slug: z.string() }))
+    .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
       // had filter on some words we want to keep for us
       if (["api", "app", "www", "docs"].includes(opts.input.slug)) {
         return false;
       }
       const result = await opts.ctx.db.query.page.findMany({
-        where: eq(page.slug, opts.input.slug),
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
       return result?.length > 0 ? false : true;
     }),
