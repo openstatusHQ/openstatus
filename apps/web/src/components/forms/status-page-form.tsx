@@ -63,7 +63,10 @@ export function StatusPageForm({
     const isUnique = await api.page.getSlugUniqueness.query({
       slug: debouncedSlug,
     });
-    return isUnique || debouncedSlug === defaultValues?.slug;
+    return (
+      isUnique ||
+      debouncedSlug.toLowerCase() === defaultValues?.slug.toLowerCase()
+    );
   }, [debouncedSlug, defaultValues?.slug]);
 
   React.useEffect(() => {

@@ -235,7 +235,7 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
       const result = await opts.ctx.db.query.page.findFirst({
-        where: eq(sql`lower(${page.slug})`, opts.input.slug),
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
         with: { incidents: true },
       });
 
@@ -280,7 +280,7 @@ export const pageRouter = createTRPCRouter({
         return false;
       }
       const result = await opts.ctx.db.query.page.findMany({
-        where: eq(sql`lower(${page.slug})`, opts.input.slug),
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
       return result?.length > 0 ? false : true;
     }),
