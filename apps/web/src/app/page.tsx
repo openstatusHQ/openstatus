@@ -19,7 +19,7 @@ export default async function Page() {
       <div className="grid gap-8">
         <Shell className="text-center">
           <Link
-            href="https://twitter.com/thibaultleouay/status/1679026811609464832?s=20"
+            href="https://twitter.com/mxkaske/status/1685666982786404352?s=20"
             target="_blank"
             rel="noreferrer"
           >

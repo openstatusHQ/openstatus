@@ -8,7 +8,7 @@ const config: DocsThemeConfig = {
   chat: {
     link: "https://discord.com/invite/dHD4JtSfsn",
   },
-  docsRepositoryBase: "https://github.com/openstatusHQ/openstatus/apps/docs",
+  docsRepositoryBase: "https://github.com/openstatusHQ/openstatus/tree/main/apps/docs",
   footer: {
     text: "OpenStatus Documentation",
   },
