@@ -15,7 +15,6 @@ export const ClientAnalytics = () => {
   return (
     <Analytics
       beforeSend={(event) => {
-        console.log(event);
         // Ignore all events that have a `/private` inside the URL
         if (event.url.match(/https:\/\/((?!www).*)\.openstatus\.dev/)) {
           return {
