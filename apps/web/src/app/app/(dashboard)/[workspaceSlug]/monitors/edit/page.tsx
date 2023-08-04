@@ -29,8 +29,6 @@ export default async function EditPage({
 
   const monitor = id && (await api.monitor.getMonitorByID.query({ id }));
 
-  console.log({ monitor });
-
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitor" description="Upsert your monitor." />
