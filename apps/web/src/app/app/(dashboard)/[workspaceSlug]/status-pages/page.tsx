@@ -1,4 +1,5 @@
 import * as React from "react";
+import Link from "next/link";
 
 import { allPlans } from "@openstatus/plans";
 
@@ -6,13 +7,16 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
-import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
 
 const limit = allPlans.free.limits["status-pages"];
+
+// export const revalidate = 0;
+export const dynamic = "force-dynamic";
 
 export default async function Page({
   params,
@@ -27,17 +31,17 @@ export default async function Page({
   });
 
   const isLimit = (pages?.length || 0) >= limit;
+  const disableButton = isLimit || !Boolean(monitors);
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
         title="Status Page"
         description="Overview of all your status page."
       >
-        <CreateForm
-          workspaceSlug={params.workspaceSlug}
-          allMonitors={monitors}
-          disabled={isLimit || !Boolean(monitors)}
-        />
+        <Button asChild={!disableButton} disabled={disableButton}>
+          <Link href="./status-pages/edit">Create</Link>
+        </Button>
       </Header>
       {Boolean(pages?.length) ? (
         pages?.map((page, index) => (
@@ -52,7 +56,6 @@ export default async function Page({
                 workspaceSlug: params.workspaceSlug,
                 monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
               }}
-              allMonitors={monitors}
             />
             <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
               <div className="flex min-w-0 items-center justify-between gap-3">
@@ -81,7 +84,7 @@ export default async function Page({
           </Container>
         ))
       ) : (
-        <EmptyState workspaceId={params.workspaceSlug} allMonitors={monitors} />
+        <EmptyState allMonitors={monitors} />
       )}
       {isLimit ? <Limit /> : null}
     </div>

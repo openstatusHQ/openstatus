@@ -47,18 +47,18 @@ export default function RootLayout({
 }) {
   // If you want to develop locally without Clerk,  Comment the provider below
   return (
-    <ClerkProvider>
-      <html lang="en">
-        {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
-        <PlausibleProvider domain="openstatus.dev">
+    <html lang="en">
+      {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
+      <PlausibleProvider domain="openstatus.dev">
+        <ClerkProvider>
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>
             <Toaster />
             <TailwindIndicator />
           </body>
-        </PlausibleProvider>
-        <ClientAnalytics />;
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </PlausibleProvider>
+      <ClientAnalytics />
+    </html>
   );
 }

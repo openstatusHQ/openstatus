@@ -1,4 +1,5 @@
 import * as React from "react";
+import Link from "next/link";
 
 import { allPlans } from "@openstatus/plans";
 
@@ -6,10 +7,10 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
-import { CreateForm } from "./_components/create-form";
 import { EmptyState } from "./_components/empty-state";
 
 const limit = allPlans.free.limits.monitors;
@@ -28,7 +29,9 @@ export default async function MonitorPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <CreateForm workspaceSlug={params.workspaceSlug} disabled={isLimit} />
+        <Button asChild={!isLimit} disabled={isLimit}>
+          <Link href="./monitors/edit">Create </Link>
+        </Button>
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
@@ -70,7 +73,7 @@ export default async function MonitorPage({
           </Container>
         ))
       ) : (
-        <EmptyState workspaceSlug={params.workspaceSlug} />
+        <EmptyState />
       )}
       {isLimit ? <Limit /> : null}
     </div>

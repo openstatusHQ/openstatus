@@ -7,6 +7,7 @@ import {
   allMonitorsSchema,
   insertMonitorSchema,
   monitor,
+  selectMonitorSchema,
   user,
   usersToWorkspaces,
   workspace,
@@ -110,8 +111,8 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       if (!result || !result.users_to_workspaces) return;
-
-      return currentMonitor;
+      const _monitor = selectMonitorSchema.parse(currentMonitor);
+      return _monitor;
     }),
 
   updateMonitorDescription: protectedProcedure
