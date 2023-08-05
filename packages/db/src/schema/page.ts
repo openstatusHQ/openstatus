@@ -37,23 +37,27 @@ export const pageRelations = relations(page, ({ many, one }) => ({
   }),
 }));
 
+const slugSchema = z
+  .string()
+  .regex(
+    new RegExp("^[A-Za-z0-9-]+$"),
+    "Only use digits (0-9), hyphen (-) or characters (A-Z, a-z).",
+  )
+  .min(3)
+  .toLowerCase();
+
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
-  slug: z
-    .string()
-    .regex(
-      new RegExp("^[A-Za-z0-9-]+$"),
-      "Only use digits (0-9), hyphen (-) or characters (A-Z, a-z).",
-    )
-    .min(3),
+  slug: slugSchema,
 });
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
   customDomain: z.string().optional().default(""),
   monitors: z.array(z.number()).optional(),
   workspaceSlug: z.string().optional(),
-  slug: z.string().toLowerCase(),
+  slug: slugSchema,
 });
+
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);
