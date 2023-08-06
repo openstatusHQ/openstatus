@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
-import type { insertMonitorSchema } from "@openstatus/db/src/schema";
+import {
+  insertIncidentSchema,
+  // insertIncidentUpdateSchema,
+  insertMonitorSchema,
+} from "@openstatus/db/src/schema";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import {
@@ -29,17 +33,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/trpc/client";
 
-type Schema = z.infer<typeof insertMonitorSchema>;
+const temporary = insertIncidentSchema.pick({ id: true, workspaceSlug: true });
 
-export function ActionButton(props: Schema & { workspaceSlug: string }) {
+type Schema = z.infer<typeof temporary>;
+
+export function ActionButton(props: Schema) {
   const router = useRouter();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
-  async function onDelete() {
+  async function deleteIncident() {
     startTransition(async () => {
       if (!props.id) return;
-      await api.monitor.deleteMonitor.mutate({ id: props.id });
+      await api.incident.deleteIncident.mutate({ id: props.id });
+      router.refresh();
+      setAlertOpen(false);
+    });
+  }
+
+  async function deleteIncidentUpdate() {
+    startTransition(async () => {
+      if (!props.id) return;
+      await api.incident.deleteIncidentUpdate.mutate({ id: props.id });
       router.refresh();
       setAlertOpen(false);
     });
@@ -58,11 +73,8 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./monitors/edit?id=${props.id}`}>
+          <Link href={`./incidents/edit?id=${props.id}`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
-          </Link>
-          <Link href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}>
-            <DropdownMenuItem>View data</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
@@ -76,7 +88,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the
-            monitor.
+            incident.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -84,7 +96,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              onDelete();
+              deleteIncident();
             }}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

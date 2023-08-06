@@ -15,6 +15,13 @@
       "when": 1690892003254,
       "tag": "0001_brainy_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1691475315459,
+      "tag": "0002_pink_venus",
+      "breakpoints": true
     }
   ]
 }

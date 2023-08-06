@@ -8,7 +8,6 @@ import {
   monitor,
   monitorsToPages,
   page,
-  selectIncidentSchema,
   selectMonitorSchema,
   selectPageSchema,
   user,
@@ -109,7 +108,10 @@ export const pageRouter = createTRPCRouter({
           eq(page.id, opts.input.id),
           inArray(page.workspaceId, workspaceIds),
         ),
-        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+          // incidents: true
+        },
       });
     }),
   updatePage: protectedProcedure
@@ -236,7 +238,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-        with: { incidents: true },
+        // with: { incidents: true },
       });
 
       if (!result) {
@@ -256,7 +258,7 @@ export const pageRouter = createTRPCRouter({
 
       const selectPageSchemaWithRelation = selectPageSchema.extend({
         monitors: z.array(selectMonitorSchema),
-        incidents: z.array(selectIncidentSchema),
+        // incidents: z.array(selectIncidentSchema),
       });
 
       if (monitorsId.length === 0) {
