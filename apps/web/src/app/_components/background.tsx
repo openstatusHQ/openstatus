@@ -13,7 +13,7 @@ export default function Background({
   useMouseMove();
   return (
     <>
-      <div className="fixed -z-50 h-full w-full">
+      <div className="absolute -z-50 h-full w-full">
         <div className="bg-muted-foreground/20 absolute inset-0 z-[-1]" />
         <div className="bg-gradient-radial from-muted-foreground/80 absolute left-[--x] top-[--y] z-[-1] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full from-0% to-transparent to-90% blur-md" />
         <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
