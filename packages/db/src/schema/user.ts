@@ -12,6 +12,11 @@ export const user = sqliteTable("user", {
   id: integer("id").primaryKey(),
   tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
 
+  firstName: text("first_name").default(""),
+  lastName: text("last_name").default(""),
+  email: text("email").default(""),
+  photoUrl: text("photo_url").default(""),
+
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

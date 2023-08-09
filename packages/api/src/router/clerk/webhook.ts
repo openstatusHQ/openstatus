@@ -28,7 +28,10 @@ export const webhookRouter = createTRPCRouter({
       const userResult = await opts.ctx.db
         .insert(user)
         .values({
+          email: opts.input.data.data.email_addresses[0].email_address,
           tenantId: opts.input.data.data.id,
+          firstName: opts.input.data.data.first_name,
+          lastName: opts.input.data.data.last_name || "",
         })
         .returning()
         .get();
