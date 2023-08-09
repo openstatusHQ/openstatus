@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "bb221329-f0dc-4038-b821-282319a5fe8f",
+  "id": "84c77cb9-dca1-424b-8929-c31f24ad5144",
   "prevId": "762acc59-e72a-4ca4-b3fa-2cfd65cdf49a",
   "tables": {
     "incident": {
@@ -433,6 +433,14 @@
         },
         "email": {
           "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "photo_url": {
+          "name": "photo_url",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

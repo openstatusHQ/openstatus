@@ -15,6 +15,7 @@ export const user = sqliteTable("user", {
   firstName: text("first_name").default(""),
   lastName: text("last_name").default(""),
   email: text("email").default(""),
+  photoUrl: text("photo_url").default(""),
 
   createdAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
