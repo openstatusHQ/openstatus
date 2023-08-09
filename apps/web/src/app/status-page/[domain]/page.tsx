@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
 import { Shell } from "@/components/dashboard/shell";
+import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { api } from "@/trpc/server";
 
@@ -27,6 +28,7 @@ export default async function Page({ params }: Props) {
           description={page.description}
           className="mx-auto max-w-lg lg:mx-auto"
         />
+        {/* <IncidentList incidents={page.incidents} /> */}
         <MonitorList monitors={page.monitors} />
       </div>
     </Shell>

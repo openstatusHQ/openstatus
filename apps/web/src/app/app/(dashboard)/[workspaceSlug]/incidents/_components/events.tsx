@@ -77,7 +77,7 @@ export function Events({
               </Badge>
             </div>
             <div>
-              <p className="max-w-2xl text-sm">{update.message}</p>
+              <p className="max-w-3xl text-sm">{update.message}</p>
             </div>
           </div>
         );

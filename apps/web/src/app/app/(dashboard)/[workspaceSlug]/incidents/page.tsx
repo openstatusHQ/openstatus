@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { format, formatDistance } from "date-fns";
+import { formatDistance } from "date-fns";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
@@ -12,8 +12,6 @@ import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { Events } from "./_components/events";
 
-const MessageIcon = Icons["message-circle"];
-
 export default async function IncidentPage({
   params,
 }: {
@@ -23,14 +21,14 @@ export default async function IncidentPage({
     workspaceSlug: params.workspaceSlug,
   });
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+    <div className="grid gap-6 md:grid-cols-1 md:gap-8">
       <Header title="Incidents" description="Overview of all your incidents.">
         <Button asChild>
           <Link href="./incidents/edit">Create</Link>
         </Button>
       </Header>
       <div className="col-span-full grid sm:grid-cols-6">
-        <ul role="list" className="grid gap-4 sm:col-span-5">
+        <ul role="list" className="grid gap-4 sm:col-span-6">
           {incidents.map((incident, i) => {
             const { label, icon } =
               statusDict[incident.status as keyof typeof statusDict];

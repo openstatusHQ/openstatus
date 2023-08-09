@@ -4,10 +4,14 @@ import { z } from "zod";
 import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
+  incident,
   insertPageSchemaWithMonitors,
   monitor,
+  monitorsToIncidents,
   monitorsToPages,
   page,
+  selectIncidentSchema,
+  selectIncidentUpdateSchema,
   selectMonitorSchema,
   selectPageSchema,
   user,
@@ -253,25 +257,52 @@ export const pageRouter = createTRPCRouter({
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        (monitor) => monitor.monitorId,
+        ({ monitorId }) => monitorId,
+      );
+
+      const monitorsToIncidentsResult = await opts.ctx.db
+        .select()
+        .from(monitorsToIncidents)
+        .where(inArray(monitorsToIncidents.monitorId, monitorsId))
+        .all();
+
+      const incidentsId = monitorsToIncidentsResult.map(
+        ({ incidentId }) => incidentId,
       );
 
       const selectPageSchemaWithRelation = selectPageSchema.extend({
         monitors: z.array(selectMonitorSchema),
-        // incidents: z.array(selectIncidentSchema),
+        incidents: z.array(
+          selectIncidentSchema.extend({
+            incidentUpdates: selectIncidentUpdateSchema,
+          }),
+        ),
       });
 
-      if (monitorsId.length === 0) {
-        return selectPageSchemaWithRelation.parse({ ...result, monitors: [] });
-      } // no monitors for that page
+      const incidents =
+        incidentsId.length > 0
+          ? await opts.ctx.db.query.incident.findMany({
+              where: inArray(incident.id, incidentsId),
+              with: { incidentUpdates: true },
+            })
+          : [];
 
-      const monitors = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(and(inArray(monitor.id, monitorsId), eq(monitor.active, true))) // REMINDER: this is hardcoded
-        .all();
+      const monitors =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(monitor)
+              .where(
+                and(inArray(monitor.id, monitorsId), eq(monitor.active, true)), // REMINDER: this is hardcoded
+              )
+              .all()
+          : [];
 
-      return selectPageSchemaWithRelation.parse({ ...result, monitors });
+      return selectPageSchemaWithRelation.parse({
+        ...result,
+        monitors,
+        incidents,
+      });
     }),
 
   getSlugUniqueness: protectedProcedure
