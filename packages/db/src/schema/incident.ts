@@ -12,7 +12,7 @@ export const incident = sqliteTable("incident", {
     .notNull()
     .references(() => page.id, { onDelete: "cascade" }),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
@@ -31,7 +31,7 @@ export const incidentUpdate = sqliteTable("incident_update", {
   incidentId: integer("incident_id")
     .references(() => incident.id, { onDelete: "cascade" })
     .notNull(),
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(

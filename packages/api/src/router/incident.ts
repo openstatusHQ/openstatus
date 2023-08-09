@@ -35,13 +35,13 @@ export const incidentRouter = createTRPCRouter({
     .input(
       z.object({
         incidentId: z.number(),
-        status: insertIncidentSchema.pick({ status: true }),
+        data: insertIncidentSchema.pick({ status: true }),
       }),
     )
     .mutation(async (opts) => {
       return opts.ctx.db
         .update(incident)
-        .set(opts.input.status)
+        .set({ status: opts.input.data.status, updatedAt: new Date() })
         .where(eq(incident.id, opts.input.incidentId))
         .returning()
         .get();

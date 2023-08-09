@@ -10,7 +10,7 @@ export const workspace = sqliteTable("workspace", {
   stripeId: text("stripe_id", { length: 256 }).unique(),
   name: text("name"),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(

@@ -21,7 +21,7 @@ export const page = sqliteTable("page", {
   customDomain: text("custom_domain", { length: 256 }).notNull(),
   published: integer("published", { mode: "boolean" }).default(false),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
