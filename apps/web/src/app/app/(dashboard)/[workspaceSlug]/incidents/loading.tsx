@@ -9,7 +9,7 @@ export default function Loading() {
           <Skeleton className="h-9 w-20" />
         </Header.Skeleton>
       </div>
-      {/* double the height of  */}
+      <Skeleton className="h-4 w-24" />
       <Skeleton className="h-48 w-full" />
       <Skeleton className="h-48 w-full" />
     </div>

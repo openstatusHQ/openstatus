@@ -51,15 +51,6 @@ export function ActionButton(props: Schema) {
     });
   }
 
-  async function deleteIncidentUpdate() {
-    startTransition(async () => {
-      if (!props.id) return;
-      await api.incident.deleteIncidentUpdate.mutate({ id: props.id });
-      router.refresh();
-      setAlertOpen(false);
-    });
-  }
-
   return (
     <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
       <DropdownMenu>
