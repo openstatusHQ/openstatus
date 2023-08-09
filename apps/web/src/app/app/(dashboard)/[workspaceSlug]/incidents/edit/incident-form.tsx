@@ -5,7 +5,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
+import * as z from "zod";
 
 import type {
   allMonitorsSchema,
@@ -38,11 +38,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/client";
 
-type IncidentProps = z.infer<typeof insertIncidentSchema> & {
-  message?: string;
-  date?: number;
-};
-type IncidentUpdateProps = z.infer<typeof insertIncidentUpdateSchema>;
+// include update on creation
+const insertSchema = insertIncidentSchema.extend({
+  message: z.string().optional(),
+  date: z.number().optional(),
+});
+
+type IncidentProps = z.infer<typeof insertSchema>;
 type MonitorsProps = z.infer<typeof allMonitorsSchema>;
 
 interface Props {
@@ -57,15 +59,16 @@ export function IncidentForm({
   workspaceSlug,
 }: Props) {
   const form = useForm<IncidentProps>({
-    resolver: zodResolver(insertIncidentSchema),
+    resolver: zodResolver(insertSchema),
     defaultValues: {
       id: defaultValues?.id || 0,
       title: defaultValues?.title || "",
       status: defaultValues?.status || "investigating",
       monitors: defaultValues?.monitors || [],
+      workspaceSlug,
+      // include update on creation
       message: "",
       date: new Date().getTime(),
-      workspaceSlug,
     },
   });
   const router = useRouter();
@@ -86,6 +89,7 @@ export function IncidentForm({
             status,
             ...rest,
           });
+          // include update on creation
           if (incident?.id) {
             await api.incident.createIncidentUpdate.mutate({
               message,
@@ -168,7 +172,7 @@ export function IncidentForm({
             </FormItem>
           )}
         />
-        {/* Whenever the user creates an incident, we immediately display the incident update */}
+        {/* include update on creation */}
         {!defaultValues ? (
           <div className="bg-accent/40 border-border col-span-full -m-3 grid gap-6 rounded-lg border p-3 sm:grid-cols-6">
             <FormField

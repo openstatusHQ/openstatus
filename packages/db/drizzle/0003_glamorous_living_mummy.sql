@@ -33,3 +33,6 @@ CREATE TABLE `incident_update` (
   `incident_id` integer NOT NULL,
   FOREIGN KEY (`incident_id`) REFERENCES `incident`(`id`) ON UPDATE no action ON DELETE cascade
 );
+--> statement-breakpoint
+
+DROP INDEX IF EXISTS `incident_update_uuid_unique`;
