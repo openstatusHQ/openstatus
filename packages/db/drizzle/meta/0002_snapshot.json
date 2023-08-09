@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "502dd02b-3b95-4d87-aea1-41032fd7c93f",
+  "id": "84c77cb9-dca1-424b-8929-c31f24ad5144",
   "prevId": "762acc59-e72a-4ca4-b3fa-2cfd65cdf49a",
   "tables": {
     "incident": {
@@ -21,27 +21,12 @@
           "notNull": true,
           "autoincrement": false
         },
-        "title": {
-          "name": "title",
-          "type": "text(256)",
+        "page_id": {
+          "name": "page_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
         },
         "updated_at": {
           "name": "updated_at",
@@ -54,17 +39,17 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "incident_workspace_id_workspace_id_fk": {
-          "name": "incident_workspace_id_workspace_id_fk",
+        "incident_page_id_page_id_fk": {
+          "name": "incident_page_id_page_id_fk",
           "tableFrom": "incident",
-          "tableTo": "workspace",
+          "tableTo": "page",
           "columnsFrom": [
-            "workspace_id"
+            "page_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -81,25 +66,32 @@
           "notNull": true,
           "autoincrement": false
         },
-        "date": {
-          "name": "date",
-          "type": "integer",
+        "uuid": {
+          "name": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "status": {
-          "name": "status",
-          "type": "text(2)",
+        "incident_date": {
+          "name": "incident_date",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "message": {
           "name": "message",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "incident_id": {
@@ -108,14 +100,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false,
-          "default": "(strftime('%s', 'now'))"
         },
         "updated_at": {
           "name": "updated_at",
@@ -126,7 +110,15 @@
           "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "incident_update_uuid_unique": {
+          "name": "incident_update_uuid_unique",
+          "columns": [
+            "uuid"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "incident_update_incident_id_incident_id_fk": {
           "name": "incident_update_incident_id_incident_id_fk",
@@ -143,63 +135,6 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
-    },
-    "incidents_to_monitors": {
-      "name": "incidents_to_monitors",
-      "columns": {
-        "monitor_id": {
-          "name": "monitor_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "incident_id": {
-          "name": "incident_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "incidents_to_monitors_monitor_id_monitor_id_fk": {
-          "name": "incidents_to_monitors_monitor_id_monitor_id_fk",
-          "tableFrom": "incidents_to_monitors",
-          "tableTo": "monitor",
-          "columnsFrom": [
-            "monitor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "incidents_to_monitors_incident_id_incident_id_fk": {
-          "name": "incidents_to_monitors_incident_id_incident_id_fk",
-          "tableFrom": "incidents_to_monitors",
-          "tableTo": "incident",
-          "columnsFrom": [
-            "incident_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "incidents_to_monitors_monitor_id_incident_id_pk": {
-          "columns": [
-            "incident_id",
-            "monitor_id"
-          ]
-        }
-      },
       "uniqueConstraints": {}
     },
     "page": {
@@ -479,6 +414,38 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "photo_url": {
+          "name": "photo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "''"
         },
         "updated_at": {
           "name": "updated_at",
