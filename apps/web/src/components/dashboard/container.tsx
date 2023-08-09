@@ -13,7 +13,7 @@ interface CardProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title: React.ReactNode;
   description?: string;
-  actions: React.ReactNode | React.ReactNode[];
+  actions?: React.ReactNode | React.ReactNode[];
 }
 
 function Container({
@@ -36,7 +36,7 @@ function Container({
             <CardDescription>{description}</CardDescription>
           ) : null}
         </div>
-        <div className="flex gap-2">{actions}</div>
+        {actions ? <div className="flex gap-2">{actions}</div> : null}
       </CardHeader>
       {/* potentially `asChild` */}
       <CardContent>{children}</CardContent>

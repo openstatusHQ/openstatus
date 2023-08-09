@@ -53,7 +53,7 @@ export default async function IncidentPage({
                     </>
                   }
                   actions={[
-                    <Button variant="outline" size="sm">
+                    <Button key="status-button" variant="outline" size="sm">
                       <Link
                         href={`./incidents/update/edit?incidentId=${incident.id}`}
                       >
@@ -61,6 +61,7 @@ export default async function IncidentPage({
                       </Link>
                     </Button>,
                     <ActionButton
+                      key="action-button"
                       id={incident.id}
                       workspaceSlug={params.workspaceSlug}
                     />,

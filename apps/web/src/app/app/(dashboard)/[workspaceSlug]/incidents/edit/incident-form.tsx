@@ -186,7 +186,7 @@ export function IncidentForm({
                     />
                   </FormControl>
                   <FormDescription>
-                    Tell your user what's happening.
+                    Tell your user what&apos;s happening.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

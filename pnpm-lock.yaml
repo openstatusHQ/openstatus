@@ -171,9 +171,6 @@ importers:
       '@trpc/server':
         specifier: 10.35.0
         version: 10.35.0
-      '@types/luxon':
-        specifier: ^3.3.1
-        version: 3.3.1
       '@upstash/qstash':
         specifier: 0.3.6
         version: 0.3.6
@@ -268,6 +265,9 @@ importers:
       '@openstatus/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config/eslint
+      '@types/luxon':
+        specifier: ^3.3.1
+        version: 3.3.1
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -4512,7 +4512,7 @@ packages:
 
   /@types/luxon@3.3.1:
     resolution: {integrity: sha512-XOS5nBcgEeP2PpcqJHjCWhUCAzGfXIU8ILOSLpx2FhxqMW9KdxgCGXNOEKGVBfveKtIpztHzKK5vSRVLyW/NqA==}
-    dev: false
+    dev: true
 
   /@types/mdast@3.0.12:
     resolution: {integrity: sha512-DT+iNIRNX884cx0/Q1ja7NyUPpZuv0KPyL5rGNxm1WC1OtHstl7n4Jb7nk+xacNShQMbczJjt8uFzznpp6kYBg==}
