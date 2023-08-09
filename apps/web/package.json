@@ -43,6 +43,7 @@
     "@upstash/qstash": "0.3.6",
     "@upstash/redis": "1.21.0",
     "@vercel/analytics": "1.0.1",
+    "@vercel/blob": "0.10.0",
     "class-variance-authority": "0.6.0",
     "clsx": "1.2.1",
     "cmdk": "0.2.0",

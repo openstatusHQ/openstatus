@@ -1,8 +1,10 @@
 "use client";
 
 import * as React from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { PutBlobResult } from "@vercel/blob";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
@@ -51,15 +53,17 @@ export function StatusPageForm({
       id: defaultValues?.id || 0,
       monitors: defaultValues?.monitors ?? [],
       workspaceSlug: "",
+      icon: defaultValues?.icon || "",
     },
   });
   const router = useRouter();
-  const [isPending, startTransition] = React.useTransition();
+  const inputFileRef = useRef<HTMLInputElement>(null);
+  const [isPending, startTransition] = useTransition();
   const watchSlug = form.watch("slug");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToast();
 
-  const checkUniqueSlug = React.useCallback(async () => {
+  const checkUniqueSlug = useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
       slug: debouncedSlug,
     });
@@ -69,7 +73,7 @@ export function StatusPageForm({
     );
   }, [debouncedSlug, defaultValues?.slug]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     async function watchSlugChanges() {
       const isUnique = await checkUniqueSlug();
       if (!isUnique) {
@@ -107,6 +111,22 @@ export function StatusPageForm({
         });
       }
     });
+  };
+
+  const handleChange = async (file: FileList | null) => {
+    if (!file || file.length === 0) {
+      return;
+    }
+
+    console.log(file[0]);
+    const response = await fetch(`/api/upload?filename=${file[0].name}`, {
+      method: "POST",
+      body: file[0],
+    });
+
+    const newblob = (await response.json()) as PutBlobResult;
+    console.log(newblob.url);
+    form.setValue("icon", newblob.url);
   };
 
   return (
@@ -171,6 +191,44 @@ export function StatusPageForm({
               <FormDescription>
                 The subdomain for your status page. At least 3 chars.
               </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="icon"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-3">
+              <FormLabel>Favicon</FormLabel>
+              <FormControl>
+                <>
+                  {!field.value && (
+                    <Input
+                      type="file"
+                      accept="image/x-icon,image/png"
+                      ref={inputFileRef}
+                      onChange={(e) => handleChange(e.target.files)}
+                    />
+                  )}
+                  {field.value && (
+                    <div className="flex items-center">
+                      <div className="h-5 w-5">
+                        <img src={field.value} />
+                      </div>
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          form.setValue("icon", "");
+                        }}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  )}
+                </>
+              </FormControl>
+              <FormDescription>Your status page favicon</FormDescription>
               <FormMessage />
             </FormItem>
           )}
