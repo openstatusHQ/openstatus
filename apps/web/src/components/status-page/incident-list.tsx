@@ -8,6 +8,7 @@ import type {
 import { notEmpty } from "@/lib/utils";
 import { AffectedMonitors } from "../incidents/affected-monitors";
 import { Events } from "../incidents/events";
+import { StatusBadge } from "../incidents/status-badge";
 
 // TODO: change layout - it is too packed with data rn
 
@@ -25,41 +26,39 @@ export const IncidentList = ({
   return (
     <>
       {currentIncidents?.length > 0 ? (
-        <>
-          <h2 className="text-muted-foreground text-lg font-light">
-            Current Incidents
-          </h2>
-          <div className="grid gap-4">
-            {currentIncidents.map((incident) => {
-              return (
-                <div key={incident.id} className="grid gap-4 text-left">
-                  <p className="max-w-3xl font-semibold">{incident.title}</p>
-                  <div>
-                    <p className="text-muted-foreground mb-1 text-xs">
-                      Affected Monitors
-                    </p>
-                    <AffectedMonitors
-                      monitors={incident.monitorsToIncidents
-                        .map(({ monitorId }) => {
-                          const monitor = monitors.find(
-                            ({ id }) => monitorId === id,
-                          );
-                          return monitor || undefined;
-                        })
-                        .filter(notEmpty)}
-                    />
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground mb-1 text-xs">
-                      Latest Updates
-                    </p>
-                    <Events incidentUpdates={incident.incidentUpdates} />
-                  </div>
+        <div className="grid gap-4">
+          {currentIncidents.map((incident) => {
+            return (
+              <div key={incident.id} className="grid gap-4 text-left">
+                <div className="max-w-3xl font-semibold">
+                  {incident.title}
+                  <StatusBadge status={incident.status} />
                 </div>
-              );
-            })}
-          </div>
-        </>
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs">
+                    Affected Monitors
+                  </p>
+                  <AffectedMonitors
+                    monitors={incident.monitorsToIncidents
+                      .map(({ monitorId }) => {
+                        const monitor = monitors.find(
+                          ({ id }) => monitorId === id,
+                        );
+                        return monitor || undefined;
+                      })
+                      .filter(notEmpty)}
+                  />
+                </div>
+                <div>
+                  <p className="text-muted-foreground mb-1 text-xs">
+                    Latest Updates
+                  </p>
+                  <Events incidentUpdates={incident.incidentUpdates} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <h2 className="text-muted-foreground text-lg font-light">
           No current incidents

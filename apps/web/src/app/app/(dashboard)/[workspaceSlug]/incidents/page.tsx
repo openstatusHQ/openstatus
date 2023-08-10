@@ -7,9 +7,11 @@ import { Header } from "@/components/dashboard/header";
 import { Icons } from "@/components/icons";
 import { AffectedMonitors } from "@/components/incidents/affected-monitors";
 import { Events } from "@/components/incidents/events";
+import { StatusBadge } from "@/components/incidents/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
@@ -47,10 +49,7 @@ export default async function IncidentPage({
                     title={
                       <>
                         {incident.title}
-                        <Badge variant="outline" className="ml-2">
-                          <Icon className="mr-1 h-3 w-3" />
-                          {label}
-                        </Badge>
+                        <StatusBadge status={incident.status} />
                       </>
                     }
                     actions={[
