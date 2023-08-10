@@ -25,7 +25,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   // TODO: add author.avatar and author.url
   return (
     <>
-      <BackButton href="/blog" />
+      <BackButton href="/" />
       <Shell className="sm:py-8 md:py-12">
         <article className="grid gap-8">
           <div className="mx-auto grid w-full max-w-prose gap-3">

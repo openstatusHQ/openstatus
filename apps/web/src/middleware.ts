@@ -55,6 +55,7 @@ export default authMiddleware({
     "/api/checker/cron/10m",
     "/blog",
     "/blog/(.*)",
+    "/legal/(.*)",
     "/discord",
     "/github",
   ],
