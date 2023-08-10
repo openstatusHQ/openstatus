@@ -5,13 +5,14 @@ import { formatDistance } from "date-fns";
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Icons } from "@/components/icons";
+import { AffectedMonitors } from "@/components/incidents/affected-monitors";
+import { Events } from "@/components/incidents/events";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
-import { Events } from "./_components/events";
 
 export default async function IncidentPage({
   params,
@@ -67,30 +68,27 @@ export default async function IncidentPage({
                       />,
                     ]}
                   >
-                    <div className="grid gap-3">
-                      <div className="flex space-x-3">
-                        <Icons.activity className="text-muted-foreground mt-0.5 h-4 w-4 flex-shrink-0" />
-                        <div className="grid gap-2">
-                          {incident.monitorsToIncidents.length > 0 ? (
-                            incident.monitorsToIncidents.map(
-                              ({ monitor: { name, description } }, i) => (
-                                <div key={i} className="text-sm">
-                                  <p>{name}</p>
-                                  <p className="text-muted-foreground">
-                                    {description}
-                                  </p>
-                                </div>
-                              ),
-                            )
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              Monitor(s) missing
-                            </p>
+                    <div className="grid gap-4">
+                      <div>
+                        <p className="text-muted-foreground mb-1.5 text-xs">
+                          Affected Monitors
+                        </p>
+                        <AffectedMonitors
+                          monitors={incident.monitorsToIncidents.map(
+                            ({ monitor }) => monitor,
                           )}
-                        </div>
+                        />
                       </div>
-                      {/* Make it ordered by desc and make it toggable if you want the whole history! */}
-                      <Events incidentUpdates={incident.incidentUpdates} />
+                      <div>
+                        <p className="text-muted-foreground mb-1.5 text-xs">
+                          Last Updates
+                        </p>
+                        {/* Make it ordered by desc and make it toggable if you want the whole history! */}
+                        <Events
+                          incidentUpdates={incident.incidentUpdates}
+                          editable
+                        />
+                      </div>
                     </div>
                   </Container>
                 </li>

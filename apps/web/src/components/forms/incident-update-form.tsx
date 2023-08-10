@@ -32,6 +32,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/client";
 
+// TODO: for UX, using the form inside of a Dialog feels more suitable
+
 type IncidentUpdateProps = z.infer<typeof insertIncidentUpdateSchema>;
 
 interface Props {

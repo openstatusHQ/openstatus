@@ -1,59 +1,70 @@
-import { format } from "date-fns";
 import type { z } from "zod";
 
-import type { selectIncidentsPageSchema } from "@openstatus/db/src/schema";
+import type {
+  selectIncidentsPageSchema,
+  selectMonitorSchema,
+} from "@openstatus/db/src/schema";
 
-import { statusDict } from "@/data/incidents-dictionary";
-import { Icons } from "../icons";
-import { Badge } from "../ui/badge";
+import { notEmpty } from "@/lib/utils";
+import { AffectedMonitors } from "../incidents/affected-monitors";
+import { Events } from "../incidents/events";
 
-// Check event.tsx for design inspiration
+// TODO: change layout - it is too packed with data rn
 
 export const IncidentList = ({
   incidents,
+  monitors,
 }: {
   incidents: z.infer<typeof selectIncidentsPageSchema>;
+  monitors: z.infer<typeof selectMonitorSchema>[];
 }) => {
+  const currentIncidents = incidents.filter(
+    ({ status }) => status !== "resolved",
+  );
+
   return (
     <>
-      <h2 className="mb-8 text-lg">Incidents</h2>
-      <div className="grid gap-4">
-        {incidents.map((incident) => {
-          return (
-            <div key={incident.id}>
-              <div className="text-foreground  flex items-center font-medium">
-                <p className="max-w-3xl text-sm">{incident.title}</p>
-              </div>
-              {incident.incidentUpdates.map((incidentUpdate) => {
-                const { icon, label } = statusDict[incidentUpdate.status];
-                const StatusIcon = Icons[icon];
-
-                return (
-                  <>
-                    <div className="text-muted-foreground flex items-center text-xs font-light">
-                      {format(
-                        new Date(incidentUpdate.date || 0),
-                        "LLL dd, y HH:mm",
-                      )}
-                      <span className="text-muted-foreground/70 mx-1">
-                        &bull;
-                      </span>
-
-                      <Badge variant="secondary">
-                        <StatusIcon className="mr-1 h-3 w-3" />
-                        {label}
-                      </Badge>
-                    </div>
-                    <div className="text-foreground  flex items-center font-medium">
-                      <span className="text-sm">{incidentUpdate.message}</span>
-                    </div>
-                  </>
-                );
-              })}
-            </div>
-          );
-        })}
-      </div>
+      {currentIncidents?.length > 0 ? (
+        <>
+          <h2 className="text-muted-foreground text-lg font-light">
+            Current Incidents
+          </h2>
+          <div className="grid gap-4">
+            {currentIncidents.map((incident) => {
+              return (
+                <div key={incident.id} className="grid gap-4 text-left">
+                  <p className="max-w-3xl font-semibold">{incident.title}</p>
+                  <div>
+                    <p className="text-muted-foreground mb-1 text-xs">
+                      Affected Monitors
+                    </p>
+                    <AffectedMonitors
+                      monitors={incident.monitorsToIncidents
+                        .map(({ monitorId }) => {
+                          const monitor = monitors.find(
+                            ({ id }) => monitorId === id,
+                          );
+                          return monitor || undefined;
+                        })
+                        .filter(notEmpty)}
+                    />
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground mb-1 text-xs">
+                      Latest Updates
+                    </p>
+                    <Events incidentUpdates={incident.incidentUpdates} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <h2 className="text-muted-foreground text-lg font-light">
+          No current incidents
+        </h2>
+      )}
     </>
   );
 };

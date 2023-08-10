@@ -2,9 +2,10 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, not, sql } from "@openstatus/db";
 import {
   incident,
+  incidentUpdate,
   insertPageSchemaWithMonitors,
   monitor,
   monitorsToIncidents,
@@ -274,8 +275,8 @@ export const pageRouter = createTRPCRouter({
       const incidents =
         incidentsId.length > 0
           ? await opts.ctx.db.query.incident.findMany({
-              where: inArray(incident.id, incidentsId),
-              with: { incidentUpdates: true },
+              where: and(inArray(incident.id, incidentsId)),
+              with: { incidentUpdates: true, monitorsToIncidents: true },
             })
           : [];
 

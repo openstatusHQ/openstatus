@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
+import { IncidentUpdateForm } from "@/components/forms/incident-update-form";
 import { api } from "@/trpc/server";
-import { IncidentUpdateForm } from "./incident-update-form";
 
 /**
  * allowed URL search params

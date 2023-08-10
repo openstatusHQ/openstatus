@@ -7,6 +7,7 @@ import {
   insertIncidentSchema,
   insertIncidentSchemaWithMonitors,
   insertIncidentUpdateSchema,
+  monitor,
   monitorsToIncidents,
   selectIncidentSchema,
   selectIncidentUpdateSchema,
@@ -44,8 +45,6 @@ export const incidentRouter = createTRPCRouter({
       const { id, workspaceSlug, monitors, date, ...incidentInput } =
         opts.input;
 
-      // add monitors inside of `monitorsToIncidents`
-
       const newIncident = await opts.ctx.db
         .insert(incident)
         .values({
@@ -54,6 +53,18 @@ export const incidentRouter = createTRPCRouter({
         })
         .returning()
         .get();
+
+      // if (monitors && monitors.length > 0) {
+      //   // We should make sure the user has access to the monitors
+      //   const allMonitors = await opts.ctx.db.query.monitor.findMany({
+      //     where: inArray(monitor.id, monitors),
+      //   });
+      //   const values = allMonitors.map((monitor) => ({
+      //     monitorId: monitor.id,
+      //     incidentId: newIncident.id,
+      //   }));
+      //   await opts.ctx.db.insert(monitorsToIncidents).values(values).run();
+      // }
 
       await opts.ctx.db
         .insert(monitorsToIncidents)
@@ -129,16 +140,59 @@ export const incidentRouter = createTRPCRouter({
 
       if (!result) return;
 
+      console.log(opts.input);
       const { monitors, workspaceSlug, ...incidentInput } = opts.input;
+      console.log(incidentInput);
 
       if (!incidentInput.id) return;
 
+      const { title, status } = incidentInput;
+
       const currentIncident = await opts.ctx.db
         .update(incident)
-        .set(incidentInput)
+        .set({ title, status, updatedAt: new Date() })
         .where(eq(incident.id, incidentInput.id))
         .returning()
         .get();
+
+      const currentMonitorToIncidents = await opts.ctx.db
+        .select()
+        .from(monitorsToIncidents)
+        .where(eq(monitorsToIncidents.incidentId, currentIncident.id))
+        .all();
+
+      const currentMonitorToIncidentsIds = currentMonitorToIncidents.map(
+        ({ monitorId }) => monitorId,
+      );
+
+      const removedMonitors = currentMonitorToIncidentsIds.filter(
+        (x) => !monitors?.includes(x),
+      );
+
+      const addedMonitors = monitors?.filter(
+        (x) => !currentMonitorToIncidentsIds?.includes(x),
+      );
+
+      if (addedMonitors && addedMonitors.length > 0) {
+        const values = addedMonitors.map((monitorId) => ({
+          monitorId: monitorId,
+          incidentId: currentIncident.id,
+        }));
+
+        await opts.ctx.db.insert(monitorsToIncidents).values(values).run();
+      }
+
+      if (removedMonitors && removedMonitors.length > 0) {
+        await opts.ctx.db
+          .delete(monitorsToIncidents)
+          .where(
+            and(
+              eq(monitorsToIncidents.incidentId, currentIncident.id),
+              inArray(monitorsToIncidents.monitorId, removedMonitors),
+            ),
+          )
+          .run();
+      }
 
       return currentIncident;
     }),
@@ -253,7 +307,7 @@ export const incidentRouter = createTRPCRouter({
     .query(async (opts) => {
       const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
         status: StatusEnum.default("investigating"), // TODO: remove!
-        monitors: z
+        monitorsToIncidents: z
           .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
           .default([]),
         incidentUpdates: z.array(selectIncidentUpdateSchema),
@@ -271,7 +325,7 @@ export const incidentRouter = createTRPCRouter({
           },
         },
       });
-      // TODO:
+
       return selectIncidentSchemaWithRelation.parse(data);
     }),
 

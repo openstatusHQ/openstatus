@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
+import { IncidentForm } from "@/components/forms/incident-form";
 import { api } from "@/trpc/server";
-import { IncidentForm } from "./incident-form";
 
 /**
  * allowed URL search params
@@ -49,7 +49,7 @@ export default async function EditPage({
               ? {
                   ...incident,
                   workspaceSlug: params.workspaceSlug,
-                  monitors: incident?.monitors.map(
+                  monitors: incident?.monitorsToIncidents.map(
                     ({ monitorId }) => monitorId,
                   ),
                 }

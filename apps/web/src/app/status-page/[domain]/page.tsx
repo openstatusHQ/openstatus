@@ -28,12 +28,9 @@ export default async function Page({ params }: Props) {
           description={page.description}
           className="mx-auto max-w-lg lg:mx-auto"
         />
+        {/* Think of having a tab to switch between monitors and incidents? */}
         <MonitorList monitors={page.monitors} />
-        {page.incidents && (
-          <div>
-            <IncidentList incidents={page.incidents} />
-          </div>
-        )}
+        <IncidentList incidents={page.incidents} monitors={page.monitors} />
       </div>
     </Shell>
   );
