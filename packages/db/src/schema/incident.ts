@@ -23,7 +23,7 @@ export const StatusEnum = z.enum(availableStatus);
 // We should have a self relation. Such that we show the parent.
 export const incident = sqliteTable("incident", {
   id: integer("id").primaryKey(),
-  status: text("status", ["resolved", "investigating"]).notNull(), // FIXME: delete from table!
+  status: text("status", availableStatus).notNull(), // FIXME: delete from table!
   title: text("title", { length: 256 }).notNull(),
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
@@ -40,8 +40,8 @@ export const incident = sqliteTable("incident", {
 export const incidentUpdate = sqliteTable("incident_update", {
   id: integer("id").primaryKey(),
 
-  status: text("status", ["resolved", "investigating"]).notNull(),
-  date: integer("date").notNull(),
+  status: text("status", availableStatus).notNull(),
+  date: integer("date", { mode: "timestamp" }).notNull(),
   message: text("message").notNull(),
 
   incidentId: integer("incident_id")
@@ -115,7 +115,7 @@ export const insertIncidentUpdateSchema = createInsertSchema(
 ).extend({
   status: StatusEnum,
   message: z.string().optional().default(""),
-  date: z.number().optional().default(new Date().getTime()),
+  // date: z.number().optional().default(new Date().getTime()),
   workspaceSlug: z.string(),
 });
 

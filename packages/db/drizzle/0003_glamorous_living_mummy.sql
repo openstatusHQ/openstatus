@@ -8,7 +8,7 @@ DROP TABLE `incident_update_old`;--> statement-breakpoint
 
 CREATE TABLE `incident` (
   `id` integer PRIMARY KEY NOT NULL,
-  `status` text(2) NOT NULL,
+  `status` text(4) NOT NULL,
   `title` text(256) NOT NULL,
   `created_at` integer DEFAULT (strftime('%s', 'now')),
   `updated_at` integer DEFAULT (strftime('%s', 'now')),
@@ -19,7 +19,7 @@ CREATE TABLE `incident` (
 
 CREATE TABLE `incident_update` (
   `id` integer PRIMARY KEY NOT NULL,
-  `status` text(2) NOT NULL,
+  `status` text(4) NOT NULL,
   `date` integer NOT NULL,
   `message` text NOT NULL,
   `created_at` integer DEFAULT (strftime('%s', 'now')),
