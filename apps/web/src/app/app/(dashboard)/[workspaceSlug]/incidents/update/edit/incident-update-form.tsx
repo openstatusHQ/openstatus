@@ -61,7 +61,6 @@ export function IncidentUpdateForm({
   const { toast } = useToast();
 
   const onSubmit = ({ ...props }: IncidentUpdateProps) => {
-    console.log(props);
     startTransition(async () => {
       try {
         if (defaultValues) {

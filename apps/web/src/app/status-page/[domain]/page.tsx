@@ -28,8 +28,12 @@ export default async function Page({ params }: Props) {
           description={page.description}
           className="mx-auto max-w-lg lg:mx-auto"
         />
-        {/* <IncidentList incidents={page.incidents} /> */}
         <MonitorList monitors={page.monitors} />
+        {page.incidents && (
+          <div>
+            <IncidentList incidents={page.incidents} />
+          </div>
+        )}
       </div>
     </Shell>
   );

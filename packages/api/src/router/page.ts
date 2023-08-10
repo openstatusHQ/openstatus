@@ -14,6 +14,7 @@ import {
   selectIncidentUpdateSchema,
   selectMonitorSchema,
   selectPageSchema,
+  selectPageSchemaWithRelation,
   user,
   usersToWorkspaces,
   workspace,
@@ -269,15 +270,6 @@ export const pageRouter = createTRPCRouter({
       const incidentsId = monitorsToIncidentsResult.map(
         ({ incidentId }) => incidentId,
       );
-
-      const selectPageSchemaWithRelation = selectPageSchema.extend({
-        monitors: z.array(selectMonitorSchema),
-        incidents: z.array(
-          selectIncidentSchema.extend({
-            incidentUpdates: selectIncidentUpdateSchema,
-          }),
-        ),
-      });
 
       const incidents =
         incidentsId.length > 0

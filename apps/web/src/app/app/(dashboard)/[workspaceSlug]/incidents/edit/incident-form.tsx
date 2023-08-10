@@ -38,6 +38,7 @@ import { api } from "@/trpc/client";
 // include update on creation
 const insertSchema = insertIncidentSchema.extend({
   message: z.string().optional(),
+  date: z.date().optional().default(new Date()),
 });
 
 type IncidentProps = z.infer<typeof insertSchema>;
@@ -64,7 +65,7 @@ export function IncidentForm({
       workspaceSlug,
       // include update on creation
       message: "",
-      date: new Date(),
+      date: defaultValues?.date || new Date(),
     },
   });
   const router = useRouter();
@@ -105,7 +106,6 @@ export function IncidentForm({
       }
     });
   };
-  console.log(defaultValues);
   return (
     <Form {...form}>
       <form

@@ -257,6 +257,7 @@ export const incidentRouter = createTRPCRouter({
           .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
           .default([]),
         incidentUpdates: z.array(selectIncidentUpdateSchema),
+        date: z.date().default(new Date()),
       });
 
       const data = await opts.ctx.db.query.incident.findFirst({

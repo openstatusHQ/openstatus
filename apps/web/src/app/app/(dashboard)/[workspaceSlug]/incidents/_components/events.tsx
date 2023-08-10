@@ -86,7 +86,7 @@ export function Events({
       {incidentUpdates.length > 1 ? (
         <div className="text-center">
           <Button variant="ghost" onClick={toggle}>
-            {open ? "Close all" : "All incidents"}
+            {open ? "Close all" : "All updates"}
           </Button>
         </div>
       ) : null}

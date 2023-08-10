@@ -57,7 +57,7 @@ export default async function IncidentPage({
                         <Link
                           href={`./incidents/update/edit?incidentId=${incident.id}`}
                         >
-                          New Status
+                          New Update
                         </Link>
                       </Button>,
                       <ActionButton
