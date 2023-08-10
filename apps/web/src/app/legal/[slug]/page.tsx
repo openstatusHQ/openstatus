@@ -5,7 +5,6 @@ import { allLegalPosts } from "contentlayer/generated";
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
-import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";
 
