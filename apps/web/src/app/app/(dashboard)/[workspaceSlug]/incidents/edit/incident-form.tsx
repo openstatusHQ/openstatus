@@ -72,7 +72,6 @@ export function IncidentForm({
   const { toast } = useToast();
 
   const onSubmit = ({ ...props }: IncidentProps) => {
-    console.log(props);
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -106,9 +105,7 @@ export function IncidentForm({
       }
     });
   };
-
-  console.log(form.formState.errors);
-
+  console.log(defaultValues);
   return (
     <Form {...form}>
       <form

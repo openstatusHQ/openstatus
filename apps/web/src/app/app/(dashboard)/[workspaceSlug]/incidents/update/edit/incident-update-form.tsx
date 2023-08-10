@@ -51,7 +51,7 @@ export function IncidentUpdateForm({
       id: defaultValues?.id || 0,
       status: defaultValues?.status || "investigating",
       message: defaultValues?.message || "",
-      date: defaultValues?.date || new Date().getTime(),
+      date: defaultValues?.date || new Date(),
       incidentId,
       workspaceSlug,
     },
@@ -155,7 +155,7 @@ export function IncidentUpdateForm({
               <DateTimePicker
                 date={new Date(field.value)}
                 setDate={(date) => {
-                  field.onChange(date.getTime());
+                  field.onChange(date);
                 }}
               />
               <FormDescription>
