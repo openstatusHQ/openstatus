@@ -7,6 +7,7 @@ import {
   insertIncidentSchema,
   insertIncidentSchemaWithMonitors,
   insertIncidentUpdateSchema,
+  monitorsToIncidents,
   selectIncidentSchema,
   selectIncidentUpdateSchema,
   selectMonitorSchema,
@@ -40,15 +41,32 @@ export const incidentRouter = createTRPCRouter({
         .get();
 
       if (!result) return;
-      const { id, workspaceSlug, monitors, ...incidentInput } = opts.input;
+      const { id, workspaceSlug, monitors, date, ...incidentInput } =
+        opts.input;
 
       // add monitors inside of `monitorsToIncidents`
 
-      return opts.ctx.db
+      const newIncident = await opts.ctx.db
         .insert(incident)
-        .values({ workspaceId: currentWorkspace.id, ...incidentInput })
+        .values({
+          workspaceId: currentWorkspace.id,
+          ...incidentInput,
+        })
         .returning()
         .get();
+
+      await opts.ctx.db
+        .insert(monitorsToIncidents)
+        .values(
+          monitors.map((monitor) => ({
+            monitorId: monitor,
+            incidentId: newIncident.id,
+          })),
+        )
+        .returning()
+        .get();
+
+      return newIncident;
     }),
 
   createIncidentUpdate: protectedProcedure

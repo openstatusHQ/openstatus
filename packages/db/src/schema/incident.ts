@@ -105,6 +105,7 @@ export const insertIncidentSchema = createInsertSchema(incident).extend({
   title: z.string().default(""),
   // message: z.string().optional().default(""),
   status: StatusEnum,
+  date: z.date().optional().default(new Date()),
   // date: z.number().optional().default(new Date().getTime()),
   workspaceSlug: z.string(),
   monitors: z.number().array().min(1),

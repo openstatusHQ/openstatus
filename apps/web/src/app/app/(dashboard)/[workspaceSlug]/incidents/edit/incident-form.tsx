@@ -7,10 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import type {
-  allMonitorsSchema,
-  insertIncidentUpdateSchema,
-} from "@openstatus/db/src/schema";
+import type { allMonitorsSchema } from "@openstatus/db/src/schema";
 import {
   availableStatus,
   insertIncidentSchema,
@@ -41,7 +38,6 @@ import { api } from "@/trpc/client";
 // include update on creation
 const insertSchema = insertIncidentSchema.extend({
   message: z.string().optional(),
-  date: z.number().optional(),
 });
 
 type IncidentProps = z.infer<typeof insertSchema>;
@@ -68,7 +64,7 @@ export function IncidentForm({
       workspaceSlug,
       // include update on creation
       message: "",
-      date: new Date().getTime(),
+      date: new Date(),
     },
   });
   const router = useRouter();
@@ -205,7 +201,7 @@ export function IncidentForm({
                   <DateTimePicker
                     date={field.value ? new Date(field.value) : new Date()}
                     setDate={(date) => {
-                      field.onChange(date.getTime());
+                      field.onChange(date);
                     }}
                   />
                   <FormDescription>
