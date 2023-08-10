@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="text-muted-foreground mx-auto grid gap-4 text-sm">
@@ -31,6 +33,15 @@ export function Footer() {
           GitHub
         </a>
       </p>
+      <div className="flex items-center justify-center space-x-2">
+        <Link href="/legal/terms" className="text-xs">
+          Terms
+        </Link>{" "}
+        <span>{"/"}</span>
+        <Link href="/legal/tos" className="text-xs">
+          Privacy
+        </Link>
+      </div>
     </footer>
   );
 }
