@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.23.1",
+    "@clerk/nextjs": "4.23.2",
     "@hookform/resolvers": "3.1.1",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/api": "workspace:^",
@@ -33,6 +33,7 @@
     "@radix-ui/react-switch": "1.0.3",
     "@radix-ui/react-toast": "1.1.4",
     "@radix-ui/react-tooltip": "1.0.6",
+    "@stripe/stripe-js": "2.0.0",
     "@t3-oss/env-nextjs": "0.4.1",
     "@tailwindcss/typography": "0.5.9",
     "@tanstack/react-table": "8.9.3",
@@ -63,6 +64,7 @@
     "rehype-pretty-code": "0.10.0",
     "resend": "0.15.3",
     "shiki": "0.14.3",
+    "stripe": "12.17.0",
     "superjson": "1.13.1",
     "svix": "1.4.12",
     "tailwind-merge": "1.13.2",

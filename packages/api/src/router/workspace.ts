@@ -41,7 +41,7 @@ export const workspaceRouter = createTRPCRouter({
 
       if (!result.users_to_workspaces) return;
 
-      return await opts.ctx.db.query.workspace.findMany({
+      return await opts.ctx.db.query.workspace.findFirst({
         with: {
           pages: true,
         },

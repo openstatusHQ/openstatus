@@ -5,5 +5,5 @@ export default function DashboardRedirect({
 }: {
   params: { workspaceId: string };
 }) {
-  return redirect(`/app/${params.workspaceId}/dashboard`);
+  return redirect(`/app/${params.workspaceId}/monitors`);
 }

@@ -1,5 +1,6 @@
 import {
   Activity,
+  Cog,
   LayoutDashboard,
   Link,
   PanelTop,
@@ -20,6 +21,7 @@ export const Icons = {
   "panel-top": PanelTop,
   table: Table,
   "toy-brick": ToyBrick,
+  cog: Cog,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

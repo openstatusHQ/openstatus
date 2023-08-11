@@ -49,7 +49,7 @@ importers:
         version: 1.0.1
       next:
         specifier: ^13.4.12
-        version: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+        version: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       nextra:
         specifier: 2.10.0
         version: 2.10.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
@@ -76,8 +76,8 @@ importers:
   apps/web:
     dependencies:
       '@clerk/nextjs':
-        specifier: 4.23.1
-        version: 4.23.1(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
+        specifier: 4.23.2
+        version: 4.23.2(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       '@hookform/resolvers':
         specifier: 3.1.1
         version: 3.1.1(react-hook-form@7.45.1)
@@ -144,6 +144,9 @@ importers:
       '@radix-ui/react-tooltip':
         specifier: 1.0.6
         version: 1.0.6(@types/react-dom@18.2.5)(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
+      '@stripe/stripe-js':
+        specifier: 2.0.0
+        version: 2.0.0
       '@t3-oss/env-nextjs':
         specifier: 0.4.1
         version: 0.4.1(typescript@5.1.6)(zod@3.21.4)
@@ -234,6 +237,9 @@ importers:
       shiki:
         specifier: 0.14.3
         version: 0.14.3
+      stripe:
+        specifier: 12.17.0
+        version: 12.17.0
       superjson:
         specifier: 1.13.1
         version: 1.13.1
@@ -335,6 +341,9 @@ importers:
       '@openstatus/plans':
         specifier: workspace:^
         version: link:../plans
+      '@t3-oss/env-core':
+        specifier: 0.6.0
+        version: 0.6.0(typescript@5.1.6)(zod@3.21.4)
       '@trpc/client':
         specifier: 10.35.0
         version: 10.35.0(@trpc/server@10.35.0)
@@ -344,6 +353,9 @@ importers:
       random-word-slugs:
         specifier: 0.1.7
         version: 0.1.7
+      stripe:
+        specifier: 12.17.0
+        version: 12.17.0
       superjson:
         specifier: 1.13.1
         version: 1.13.1
@@ -951,6 +963,20 @@ packages:
       tslib: 2.4.1
     dev: false
 
+  /@clerk/backend@0.27.0:
+    resolution: {integrity: sha512-Sj541JrpqAn1A/UwdyDBxFV3stq2A/Pe/8HdPTG3Cct6briPyavfi46O5s1+L3BSvUcKUY+UbM0+8VsoCNFi4w==}
+    engines: {node: '>=14'}
+    dependencies:
+      '@clerk/types': 3.49.0
+      '@peculiar/webcrypto': 1.4.1
+      '@types/node': 16.18.6
+      cookie: 0.5.0
+      deepmerge: 4.2.2
+      node-fetch-native: 1.0.1
+      snakecase-keys: 5.4.4
+      tslib: 2.4.1
+    dev: false
+
   /@clerk/clerk-react@4.23.1(react@18.2.0):
     resolution: {integrity: sha512-X0h7I2aPxc3cY7f5ZOaUrrgYjYXSOWbWOCyNuF4rZeW1L6ED8mZEFpQV4+EluUgAomxgGrt8kdMIyMwSsGw3Tg==}
     engines: {node: '>=14'}
@@ -964,12 +990,38 @@ packages:
       tslib: 2.4.1
     dev: false
 
+  /@clerk/clerk-react@4.23.2(react@18.2.0):
+    resolution: {integrity: sha512-6MJa8ecr22qHhTfdkMMIJGctMBqj01fLJ4vmfZvr22tIkwkPXoeYJd5XcFKuSoO2dXc1eHD/F9i/HdCqGm68gw==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: '>=16'
+    dependencies:
+      '@clerk/shared': 0.21.0(react@18.2.0)
+      '@clerk/types': 3.49.0
+      react: 18.2.0
+      tslib: 2.4.1
+    dev: false
+
   /@clerk/clerk-sdk-node@4.12.1:
     resolution: {integrity: sha512-KR8L0zX9YWms8ScZPXLfBmEHYxFWuI+JeXJ/UtYhTP5qu2LBoAOBbZI0zsYPwTKE2L/1i2Gga6m3whmVAJfmzg==}
     engines: {node: '>=14'}
     dependencies:
       '@clerk/backend': 0.26.0
       '@clerk/types': 3.48.1
+      '@types/cookies': 0.7.7
+      '@types/express': 4.17.14
+      '@types/node-fetch': 2.6.2
+      camelcase-keys: 6.2.2
+      snakecase-keys: 3.2.1
+      tslib: 2.4.1
+    dev: false
+
+  /@clerk/clerk-sdk-node@4.12.2:
+    resolution: {integrity: sha512-7xYPsLSeGO5XoP0No/9m2dsCMezwtmiYGKOwWzt41ZzJNFlU0rfqYF3VOZEsbtQlc3ZXeU+67ItjoJYrf3kT6A==}
+    engines: {node: '>=14'}
+    dependencies:
+      '@clerk/backend': 0.27.0
+      '@clerk/types': 3.49.0
       '@types/cookies': 0.7.7
       '@types/express': 4.17.14
       '@types/node-fetch': 2.6.2
@@ -990,7 +1042,26 @@ packages:
       '@clerk/clerk-react': 4.23.1(react@18.2.0)
       '@clerk/clerk-sdk-node': 4.12.1
       '@clerk/types': 3.48.1
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      path-to-regexp: 6.2.1
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
+      tslib: 2.4.1
+    dev: false
+
+  /@clerk/nextjs@4.23.2(next@13.4.12)(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-99bSVu9r1E9MxybO/6mmPAufSKq4KU7SFeMVkylX7UF8sy5t/LE9cLHyc+9jitcCGgZNai9Om4sj1WIgkNOP8w==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      next: '>=10'
+      react: ^17.0.2 || ^18.0.0-0
+      react-dom: ^17.0.2 || ^18.0.0-0
+    dependencies:
+      '@clerk/backend': 0.27.0
+      '@clerk/clerk-react': 4.23.2(react@18.2.0)
+      '@clerk/clerk-sdk-node': 4.12.2
+      '@clerk/types': 3.49.0
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       path-to-regexp: 6.2.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
@@ -1008,8 +1079,26 @@ packages:
       swr: 1.3.0(react@18.2.0)
     dev: false
 
+  /@clerk/shared@0.21.0(react@18.2.0):
+    resolution: {integrity: sha512-tkV2OAddFMPBHDjcMbtNNrV3NQD+hGKf2hn3TKv1mRJNZ2oR5Bfk8r0bkaqwoqxX8ndkbHLCa9gwR8SWO7GGow==}
+    peerDependencies:
+      react: '>=16'
+    dependencies:
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.1
+      react: 18.2.0
+      swr: 1.3.0(react@18.2.0)
+    dev: false
+
   /@clerk/types@3.48.1:
     resolution: {integrity: sha512-bpSSfqdrw4iYCLlJ8UVN8HWMkA12wOH0lICdjnefPKKm1qO3yb8P5p6jmaCckcwF77unMECAslO2q2ocZcO1QA==}
+    engines: {node: '>=14'}
+    dependencies:
+      csstype: 3.1.1
+    dev: false
+
+  /@clerk/types@3.49.0:
+    resolution: {integrity: sha512-vAx5R/iYfsgIaIDMiDr6ZKQnAneAmRrUVYz6KCtPG6/hnEAnRYhwXpEUi89e5G0BFmuUfSxe/N/Anfc1PNteXQ==}
     engines: {node: '>=14'}
     dependencies:
       csstype: 3.1.1
@@ -4735,6 +4824,10 @@ packages:
     resolution: {integrity: sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==}
     dev: false
 
+  /@stripe/stripe-js@2.0.0:
+    resolution: {integrity: sha512-SxZnf192En0uAfgbigUIj7oJYaXgGc5AI1aos59YXvO8DPeLI0AtT4oMg/Wuk17wbpquEv73+akyCe7xdEjGlA==}
+    dev: false
+
   /@swc/helpers@0.4.14:
     resolution: {integrity: sha512-4C7nX/dvpzB7za4Ql9K81xK3HPxCpHMgwTZVyf+9JQ6VUbn9jjZVN7/Nkdz/Ugzs2CSjqnL/UPXroiVBVHUWUw==}
     dependencies:
@@ -5943,6 +6036,7 @@ packages:
 
   /caniuse-lite@1.0.30001517:
     resolution: {integrity: sha512-Vdhm5S11DaFVLlyiKu4hiUTkpZu+y1KA/rZZqVQfOD5YdDT/eQKlkt7NaE0WGOFgX32diqt9MiP9CAiFeRklaA==}
+    dev: true
 
   /caniuse-lite@1.0.30001519:
     resolution: {integrity: sha512-0QHgqR+Jv4bxHMp8kZ1Kn8CH55OikjKJ6JmKkZYP1F3D7w+lnFXF70nG5eNfsZS89jadi5Ywy5UCSKLAglIRkg==}
@@ -10348,7 +10442,7 @@ packages:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
@@ -10360,7 +10454,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
     dev: false
@@ -10438,49 +10532,6 @@ packages:
       '@opentelemetry/api': 1.4.1
       '@swc/helpers': 0.5.1
       busboy: 1.6.0
-      caniuse-lite: 1.0.30001517
-      postcss: 8.4.14
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      styled-jsx: 5.1.1(@babel/core@7.22.9)(react@18.2.0)
-      watchpack: 2.4.0
-      zod: 3.21.4
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 13.4.12
-      '@next/swc-darwin-x64': 13.4.12
-      '@next/swc-linux-arm64-gnu': 13.4.12
-      '@next/swc-linux-arm64-musl': 13.4.12
-      '@next/swc-linux-x64-gnu': 13.4.12
-      '@next/swc-linux-x64-musl': 13.4.12
-      '@next/swc-win32-arm64-msvc': 13.4.12
-      '@next/swc-win32-ia32-msvc': 13.4.12
-      '@next/swc-win32-x64-msvc': 13.4.12
-    transitivePeerDependencies:
-      - '@babel/core'
-      - babel-plugin-macros
-    dev: false
-
-  /next@13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-eHfnru9x6NRmTMcjQp6Nz0J4XH9OubmzOa7CkWL+AUrUxpibub3vWwttjduu9No16dug1kq04hiUUpo7J3m3Xw==}
-    engines: {node: '>=16.8.0'}
-    hasBin: true
-    peerDependencies:
-      '@opentelemetry/api': ^1.1.0
-      fibers: '>= 3.1.0'
-      react: ^18.2.0
-      react-dom: ^18.2.0
-      sass: ^1.3.0
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      fibers:
-        optional: true
-      sass:
-        optional: true
-    dependencies:
-      '@next/env': 13.4.12
-      '@swc/helpers': 0.5.1
-      busboy: 1.6.0
       caniuse-lite: 1.0.30001519
       postcss: 8.4.14
       react: 18.2.0
@@ -10519,7 +10570,7 @@ packages:
       git-url-parse: 13.1.0
       intersection-observer: 0.12.2
       match-sorter: 6.3.1
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       next-seo: 6.1.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       next-themes: 0.2.1(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       nextra: 2.10.0(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
@@ -10549,7 +10600,7 @@ packages:
       gray-matter: 4.0.3
       katex: 0.16.8
       lodash.get: 4.4.2
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
+      next: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       next-mdx-remote: 4.4.1(react-dom@18.2.0)(react@18.2.0)
       p-limit: 3.1.0
       react: 18.2.0
@@ -11398,6 +11449,13 @@ packages:
   /pvutils@1.1.3:
     resolution: {integrity: sha512-pMpnA0qRdFp32b1sJl1wOJNxZLQ2cbQx+k6tjNtZ8CpvVhNqEPRgivZ2WOUev2YMajecdH7ctUPDvEe87nariQ==}
     engines: {node: '>=6.0.0'}
+    dev: false
+
+  /qs@6.11.2:
+    resolution: {integrity: sha512-tDNIz22aBzCDxLtVH++VnTfzxlfeK5CbqohpSqpJgj1Wg/cQbStNAz3NuqCs5vV+pjBsK4x4pN9HlVh7rcYRiA==}
+    engines: {node: '>=0.6'}
+    dependencies:
+      side-channel: 1.0.4
     dev: false
 
   /querystringify@2.2.0:
@@ -12366,6 +12424,14 @@ packages:
   /strip-json-comments@3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
+
+  /stripe@12.17.0:
+    resolution: {integrity: sha512-f8GhS2LQlGCDZ1Akyu57txgSWyLUEYf0yZYS7x2aTKJXVua5lLmmgfJFFYHfTgEdS5P6rurf0Ghcf/HVLggv5g==}
+    engines: {node: '>=12.*'}
+    dependencies:
+      '@types/node': 20.3.1
+      qs: 6.11.2
+    dev: false
 
   /style-to-js@1.1.3:
     resolution: {integrity: sha512-zKI5gN/zb7LS/Vm0eUwjmjrXWw8IMtyA8aPBJZdYiQTXj4+wQ3IucOLIOnF7zCHxvW8UhIGh/uZh/t9zEHXNTQ==}
