@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { Check } from "lucide-react";
 import type { z } from "zod";
 
@@ -20,7 +21,7 @@ interface Plan {
     text: string;
     onClick: () => void;
   };
-  disabled?: boolean;
+  loading?: boolean;
 }
 
 interface Props extends Plan {
@@ -33,18 +34,19 @@ export const SettingsPlan = ({
   workspaceSlug: string;
   workspaceData: z.infer<typeof selectWorkspaceSchema>;
 }) => {
+  const [isPending, startTransition] = useTransition();
+
   const getCheckoutSession = async () => {
-    console.log("getCheckoutSession");
+    startTransition(async () => {
+      const result = await api.stripeRouter.getCheckoutSession.mutate({
+        workspaceId: workspaceSlug,
+      });
+      if (!result) return;
 
-    const result = await api.stripeRouter.getCheckoutSession.mutate({
-      workspaceId: workspaceSlug,
+      const stripe = await getStripe();
+      stripe?.redirectToCheckout({ sessionId: result.id });
     });
-    if (!result) return;
-
-    const stripe = await getStripe();
-    stripe?.redirectToCheckout({ sessionId: result.id });
   };
-
   const plans: Record<"free" | "pro", Plan> = {
     free: {
       title: "Free",
@@ -72,6 +74,7 @@ export const SettingsPlan = ({
         "1m, 5m, 10m, 30m, 1h checks",
         "5 team members",
       ],
+      loading: isPending,
       action: {
         text: workspaceData?.plan === "free" ? "Upgrade" : "Current plan",
         onClick: async () => {
@@ -100,18 +103,11 @@ export function Plan({
   cost,
   features,
   action,
-  disabled,
+  loading,
   className,
 }: Props) {
   return (
-    <div
-      key={title}
-      className={cn(
-        "flex w-full flex-col",
-        disabled && "pointer-events-none opacity-70",
-        className,
-      )}
-    >
+    <div key={title} className={cn("flex w-full flex-col", className)}>
       <div className="flex-1">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -138,7 +134,7 @@ export function Plan({
         </ul>
       </div>
       <div>
-        <Button size="sm" onClick={action.onClick}>
+        <Button size="sm" onClick={action.onClick} disabled={loading}>
           {action.text}
         </Button>
       </div>

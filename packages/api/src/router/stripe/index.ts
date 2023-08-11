@@ -97,6 +97,11 @@ export const stripeRouter = createTRPCRouter({
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
       let stripeId = result.stripeId;
       if (!stripeId) {
+        const currentUser = await opts.ctx.db
+          .select()
+          .from(user)
+          .where(eq(user.tenantId, opts.ctx.auth.userId))
+          .get();
         const customerData: {
           metadata: { workspaceId: string };
           email?: string;
@@ -104,9 +109,8 @@ export const stripeRouter = createTRPCRouter({
           metadata: {
             workspaceId: String(workspace.id),
           },
-          email: opts.ctx.auth.user?.emailAddresses[0].emailAddress || "",
+          email: currentUser.email || "",
         };
-
         const stripeUser = await stripe.customers.create(customerData);
 
         stripeId = stripeUser.id;
@@ -119,6 +123,8 @@ export const stripeRouter = createTRPCRouter({
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
+        customer: stripeId,
+
         line_items: [
           {
             price: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
