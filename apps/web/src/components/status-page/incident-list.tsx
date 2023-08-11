@@ -19,15 +19,19 @@ export const IncidentList = ({
   incidents: z.infer<typeof selectIncidentsPageSchema>;
   monitors: z.infer<typeof selectMonitorSchema>[];
 }) => {
-  const currentIncidents = incidents.filter(
-    ({ status }) => status !== "resolved",
-  );
+  // TBD
+  // const currentIncidents = incidents.filter(
+  //   ({ status }) => status !== "resolved",
+  // );
 
   return (
     <>
-      {currentIncidents?.length > 0 ? (
+      {incidents?.length > 0 ? (
         <div className="grid gap-4">
-          {currentIncidents.map((incident) => {
+          <h2 className="text-muted-foreground text-lg font-light">
+            All Incidents
+          </h2>
+          {incidents.map((incident) => {
             return (
               <div key={incident.id} className="grid gap-4 text-left">
                 <div className="max-w-3xl font-semibold">
@@ -61,7 +65,7 @@ export const IncidentList = ({
         </div>
       ) : (
         <h2 className="text-muted-foreground text-lg font-light">
-          No current incidents
+          No Incidents
         </h2>
       )}
     </>
