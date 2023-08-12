@@ -56,7 +56,7 @@ export const monitor = sqliteTable("monitor", {
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(

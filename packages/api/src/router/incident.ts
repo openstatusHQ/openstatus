@@ -7,7 +7,6 @@ import {
   insertIncidentSchema,
   insertIncidentSchemaWithMonitors,
   insertIncidentUpdateSchema,
-  monitor,
   monitorsToIncidents,
   selectIncidentSchema,
   selectIncidentUpdateSchema,

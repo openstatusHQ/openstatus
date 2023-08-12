@@ -123,11 +123,38 @@ export const pageRouter = createTRPCRouter({
   updatePage: protectedProcedure
     .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
+      if (!opts.input.id) return;
+
+      const currentUser = await opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .get();
+
+      const result = await opts.ctx.db
+        .select()
+        .from(usersToWorkspaces)
+        .where(eq(usersToWorkspaces.userId, currentUser.id))
+        .all();
+      const workspaceIds = result.map((workspace) => workspace.workspaceId);
+
+      const pageToUpdate = await opts.ctx.db
+        .select()
+        .from(page)
+        .where(
+          and(
+            eq(page.id, opts.input.id),
+            inArray(page.workspaceId, workspaceIds),
+          ),
+        )
+        .get();
+      if (!pageToUpdate) return;
+
       const { monitors, workspaceSlug, ...pageInput } = opts.input;
       if (!pageInput.id) return;
       const currentPage = await opts.ctx.db
         .update(page)
-        .set(pageInput)
+        .set({ ...pageInput, updatedAt: new Date() })
         .where(eq(page.id, pageInput.id))
         .returning()
         .get();

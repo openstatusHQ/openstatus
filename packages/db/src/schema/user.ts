@@ -17,7 +17,7 @@ export const user = sqliteTable("user", {
   email: text("email").default(""),
   photoUrl: text("photo_url").default(""),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
