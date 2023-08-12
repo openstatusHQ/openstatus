@@ -83,7 +83,7 @@ export function Tracker({
       <div className="mb-1 flex justify-between text-sm sm:mb-2">
         <div className="flex items-center gap-2">
           <p className="text-foreground font-semibold">{name}</p>
-          <MoreInfo {...{ url, id, context, description }} />
+          { description ? <MoreInfo {...{ url, id, context, description }} /> : null }
         </div>
         <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
