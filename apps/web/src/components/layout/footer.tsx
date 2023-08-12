@@ -38,7 +38,7 @@ export function Footer() {
           Terms
         </Link>{" "}
         <span>{"/"}</span>
-        <Link href="/legal/tos" className="text-xs">
+        <Link href="/legal/privacy" className="text-xs">
           Privacy
         </Link>
       </div>
