@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
 import { Shell } from "@/components/dashboard/shell";
+import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { api } from "@/trpc/server";
 
@@ -27,7 +28,9 @@ export default async function Page({ params }: Props) {
           description={page.description}
           className="mx-auto max-w-lg lg:mx-auto"
         />
+        {/* Think of having a tab to switch between monitors and incidents? */}
         <MonitorList monitors={page.monitors} />
+        <IncidentList incidents={page.incidents} monitors={page.monitors} />
       </div>
     </Shell>
   );

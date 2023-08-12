@@ -1,11 +1,19 @@
 import {
   Activity,
+  Calendar,
+  Fingerprint,
   LayoutDashboard,
   Link,
+  MessageCircle,
   PanelTop,
+  Pencil,
+  Search,
+  SearchCheck,
   Siren,
   Table,
+  Tag,
   ToyBrick,
+  Trash,
 } from "lucide-react";
 import type { Icon as LucideIcon, LucideProps } from "lucide-react";
 
@@ -20,6 +28,14 @@ export const Icons = {
   "panel-top": PanelTop,
   table: Table,
   "toy-brick": ToyBrick,
+  search: Search,
+  "search-check": SearchCheck,
+  fingerprint: Fingerprint,
+  pencil: Pencil,
+  "message-circle": MessageCircle,
+  calendar: Calendar,
+  tag: Tag,
+  trash: Trash,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
