@@ -8,6 +8,14 @@ const nextConfig = {
   experimental: {
     serverActions: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.public.blob.vercel-storage.com",
+      },
+    ],
+  },
 };
 
 module.exports = withContentlayer(nextConfig);

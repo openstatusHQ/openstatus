@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useCallback, useEffect, useRef, useTransition } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { PutBlobResult } from "@vercel/blob";
@@ -213,8 +214,13 @@ export function StatusPageForm({
                   )}
                   {field.value && (
                     <div className="flex items-center">
-                      <div className="h-5 w-5">
-                        <img src={field.value} />
+                      <div className="border-border h-10 w-10 rounded-sm border p-1">
+                        <Image
+                          src={field.value}
+                          width={64}
+                          height={64}
+                          alt="Favicon"
+                        />
                       </div>
                       <Button
                         variant="link"
