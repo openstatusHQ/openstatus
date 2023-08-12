@@ -1,37 +1,53 @@
 import { relations, sql } from "drizzle-orm";
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import * as z from "zod";
 
-import { page } from "./page";
+import { monitor } from "./monitor";
+import { workspace } from "./workspace";
 
+export const availableStatus = [
+  "investigating",
+  "identified",
+  "monitoring",
+  "resolved",
+] as const;
+
+export const StatusEnum = z.enum(availableStatus);
+
+// We should have a self relation. Such that we show the parent.
 export const incident = sqliteTable("incident", {
   id: integer("id").primaryKey(),
-  status: text("status", ["resolved", "investigating"]).notNull(),
+  status: text("status", availableStatus).notNull(), // FIXME: delete from table!
+  title: text("title", { length: 256 }).notNull(),
 
-  pageId: text("page_id")
-    .notNull()
-    .references(() => page.id, { onDelete: "cascade" }),
+  workspaceId: integer("workspace_id").references(() => workspace.id),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
+  // createdBy
 });
 
 export const incidentUpdate = sqliteTable("incident_update", {
   id: integer("id").primaryKey(),
-  uuid: text("uuid").notNull().unique(),
 
-  date: integer("incident_date"),
-  title: text("title", { length: 256 }), // title of the incident
-  message: text("message"), //  where we can write the incident message
+  status: text("status", availableStatus).notNull(),
+  date: integer("date", { mode: "timestamp" }).notNull(),
+  message: text("message").notNull(),
 
   incidentId: integer("incident_id")
     .references(() => incident.id, { onDelete: "cascade" })
     .notNull(),
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
@@ -40,11 +56,12 @@ export const incidentUpdate = sqliteTable("incident_update", {
 });
 
 export const incidentRelations = relations(incident, ({ one, many }) => ({
-  page: one(page, {
-    fields: [incident.pageId],
-    references: [page.id],
-  }),
+  monitorsToIncidents: many(monitorsToIncidents),
   incidentUpdates: many(incidentUpdate),
+  workspace: one(workspace, {
+    fields: [incident.workspaceId],
+    references: [workspace.id],
+  }),
 }));
 
 export const incidentUpdateRelations = relations(incidentUpdate, ({ one }) => ({
@@ -54,14 +71,71 @@ export const incidentUpdateRelations = relations(incidentUpdate, ({ one }) => ({
   }),
 }));
 
-// Schema for inserting a Incident - can be used to validate API requests
-export const insertIncidentSchema = createInsertSchema(incident);
+export const monitorsToIncidents = sqliteTable(
+  "incidents_to_monitors",
+  {
+    monitorId: integer("monitor_id")
+      .notNull()
+      .references(() => monitor.id, { onDelete: "cascade" }),
+    incidentId: integer("incident_id")
+      .notNull()
+      .references(() => incident.id, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    pk: primaryKey(t.monitorId, t.incidentId),
+  }),
+);
 
-// Schema for selecting a Incident - can be used to validate API responses
-export const selectIncidentSchema = createSelectSchema(incident);
+export const monitorsToIncidentsRelations = relations(
+  monitorsToIncidents,
+  ({ one }) => ({
+    monitor: one(monitor, {
+      fields: [monitorsToIncidents.monitorId],
+      references: [monitor.id],
+    }),
+    incident: one(incident, {
+      fields: [monitorsToIncidents.incidentId],
+      references: [incident.id],
+    }),
+  }),
+);
+
+// Schema for inserting a Incident - can be used to validate API requests
+export const insertIncidentSchema = createInsertSchema(incident).extend({
+  title: z.string().default(""),
+  // message: z.string().optional().default(""),
+  status: StatusEnum,
+  date: z.date().optional().default(new Date()),
+  // date: z.number().optional().default(new Date().getTime()),
+  workspaceSlug: z.string(),
+  monitors: z.number().array().min(1),
+});
 
 export const insertIncidentUpdateSchema = createInsertSchema(
   incidentUpdate,
-).omit({ id: true });
+).extend({
+  status: StatusEnum,
+  message: z.string().optional().default(""),
+  // date: z.number().optional().default(new Date().getTime()),
+  workspaceSlug: z.string(),
+});
 
-export const selectIncidentUpdateSchema = createSelectSchema(incidentUpdate);
+export const insertIncidentSchemaWithIncidentUpdates =
+  insertIncidentSchema.extend({
+    incidentUpdates: insertIncidentUpdateSchema.array(),
+  });
+
+// TODO: remove!
+export const insertIncidentSchemaWithMonitors = insertIncidentSchema.extend({
+  monitors: z.number().array().min(1),
+});
+
+export const selectIncidentSchema = createSelectSchema(incident).extend({
+  status: StatusEnum,
+});
+
+export const selectIncidentUpdateSchema = createSelectSchema(
+  incidentUpdate,
+).extend({
+  status: StatusEnum,
+});

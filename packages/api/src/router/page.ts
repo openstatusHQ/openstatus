@@ -2,15 +2,20 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, not, sql } from "@openstatus/db";
 import {
+  incident,
+  incidentUpdate,
   insertPageSchemaWithMonitors,
   monitor,
+  monitorsToIncidents,
   monitorsToPages,
   page,
   selectIncidentSchema,
+  selectIncidentUpdateSchema,
   selectMonitorSchema,
   selectPageSchema,
+  selectPageSchemaWithRelation,
   user,
   usersToWorkspaces,
   workspace,
@@ -109,7 +114,10 @@ export const pageRouter = createTRPCRouter({
           eq(page.id, opts.input.id),
           inArray(page.workspaceId, workspaceIds),
         ),
-        with: { monitorsToPages: { with: { monitor: true } }, incidents: true },
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+          // incidents: true
+        },
       });
     }),
   updatePage: protectedProcedure
@@ -236,7 +244,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-        with: { incidents: true },
+        // with: { incidents: true },
       });
 
       if (!result) {
@@ -251,25 +259,43 @@ export const pageRouter = createTRPCRouter({
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        (monitor) => monitor.monitorId,
+        ({ monitorId }) => monitorId,
       );
 
-      const selectPageSchemaWithRelation = selectPageSchema.extend({
-        monitors: z.array(selectMonitorSchema),
-        incidents: z.array(selectIncidentSchema),
-      });
-
-      if (monitorsId.length === 0) {
-        return selectPageSchemaWithRelation.parse({ ...result, monitors: [] });
-      } // no monitors for that page
-
-      const monitors = await opts.ctx.db
+      const monitorsToIncidentsResult = await opts.ctx.db
         .select()
-        .from(monitor)
-        .where(and(inArray(monitor.id, monitorsId), eq(monitor.active, true))) // REMINDER: this is hardcoded
+        .from(monitorsToIncidents)
+        .where(inArray(monitorsToIncidents.monitorId, monitorsId))
         .all();
 
-      return selectPageSchemaWithRelation.parse({ ...result, monitors });
+      const incidentsId = monitorsToIncidentsResult.map(
+        ({ incidentId }) => incidentId,
+      );
+
+      const incidents =
+        incidentsId.length > 0
+          ? await opts.ctx.db.query.incident.findMany({
+              where: and(inArray(incident.id, incidentsId)),
+              with: { incidentUpdates: true, monitorsToIncidents: true },
+            })
+          : [];
+
+      const monitors =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(monitor)
+              .where(
+                and(inArray(monitor.id, monitorsId), eq(monitor.active, true)), // REMINDER: this is hardcoded
+              )
+              .all()
+          : [];
+
+      return selectPageSchemaWithRelation.parse({
+        ...result,
+        monitors,
+        incidents,
+      });
     }),
 
   getSlugUniqueness: protectedProcedure
