@@ -43,6 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: page?.title,
     description: page?.description,
+    icons: page?.icon,
     twitter: {
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${

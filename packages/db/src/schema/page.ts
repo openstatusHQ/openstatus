@@ -20,7 +20,7 @@ export const page = sqliteTable("page", {
 
   title: text("title").notNull(), // title of the page
   description: text("description").notNull(), // description of the page
-  icon: text("icon", { length: 256 }), // icon of the page
+  icon: text("icon", { length: 256 }).default(""), // icon of the page
   slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
   customDomain: text("custom_domain", { length: 256 }).notNull(),
   published: integer("published", { mode: "boolean" }).default(false),
@@ -53,6 +53,7 @@ const slugSchema = z
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
+  icon: z.string().optional(),
   slug: slugSchema,
 });
 
