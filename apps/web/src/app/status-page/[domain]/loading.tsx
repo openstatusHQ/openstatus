@@ -11,6 +11,9 @@ export default function StatusPageLoading() {
           <Container.Skeleton />
           <Container.Skeleton />
         </div>
+        <div className="grid gap-4">
+          <Container.Skeleton />
+        </div>
       </div>
     </Shell>
   );

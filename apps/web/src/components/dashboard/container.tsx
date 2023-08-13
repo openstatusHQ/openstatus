@@ -9,21 +9,34 @@ import {
 import { cn } from "@/lib/utils";
 import { Skeleton } from "../ui/skeleton";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  title: string;
+interface CardProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+  title: React.ReactNode;
   description?: string;
+  actions?: React.ReactNode | React.ReactNode[];
 }
 
-function Container({ title, description, className, children }: CardProps) {
+function Container({
+  title,
+  description,
+  actions,
+  className,
+  children,
+}: CardProps) {
   return (
     <Card
       className={cn("border-border/50 relative w-full shadow-none", className)}
     >
-      <CardHeader className="mr-12">
-        <CardTitle className="text-lg font-medium tracking-normal">
-          {title}
-        </CardTitle>
-        {description ? <CardDescription>{description}</CardDescription> : null}
+      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+        <div className="space-y-1.5">
+          <CardTitle className="text-lg font-medium tracking-normal">
+            {title}
+          </CardTitle>
+          {description ? (
+            <CardDescription>{description}</CardDescription>
+          ) : null}
+        </div>
+        {actions ? <div className="flex gap-2">{actions}</div> : null}
       </CardHeader>
       {/* potentially `asChild` */}
       <CardContent>{children}</CardContent>

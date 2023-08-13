@@ -18,7 +18,7 @@ export const workspace = sqliteTable("workspace", {
   endsAt: integer("ends_at", { mode: "timestamp" }),
   paidUntil: integer("paid_until", { mode: "timestamp" }),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(

@@ -49,14 +49,18 @@ export default async function Page({
             key={index}
             title={page.title}
             description={page.description}
+            actions={
+              <ActionButton
+                page={{
+                  ...page,
+                  workspaceSlug: params.workspaceSlug,
+                  monitors: page.monitorsToPages.map(
+                    ({ monitor }) => monitor.id,
+                  ),
+                }}
+              />
+            }
           >
-            <ActionButton
-              page={{
-                ...page,
-                workspaceSlug: params.workspaceSlug,
-                monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
-              }}
-            />
             <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <dt>Slug</dt>

@@ -51,7 +51,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent absolute right-6 top-6 h-8 w-8 p-0"
+            className="data-[state=open]:bg-accent h-8 w-8 p-0"
           >
             <span className="sr-only">Open menu</span>
             <MoreVertical className="h-4 w-4" />

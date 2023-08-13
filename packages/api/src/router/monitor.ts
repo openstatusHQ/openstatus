@@ -191,16 +191,16 @@ export const monitorRouter = createTRPCRouter({
       const { regions, ...data } = opts.input;
       await opts.ctx.db
         .update(monitor)
-        .set({ ...data, regions: regions?.join(",") })
+        .set({ ...data, regions: regions?.join(","), updatedAt: new Date() })
         .where(eq(monitor.id, opts.input.id))
         .returning()
         .get();
     }),
-  updateMonitorStatus: protectedProcedure
+  updateMonitorPeriodicity: protectedProcedure
     .input(
       z.object({
         id: z.number(),
-        status: insertMonitorSchema.pick({ periodicity: true }),
+        data: insertMonitorSchema.pick({ periodicity: true }),
       }),
     )
     .mutation(async (opts) => {
@@ -227,7 +227,10 @@ export const monitorRouter = createTRPCRouter({
 
       await opts.ctx.db
         .update(monitor)
-        .set(opts.input.status)
+        .set({
+          periodicity: opts.input.data.periodicity,
+          updatedAt: new Date(),
+        })
         .where(eq(monitor.id, opts.input.id))
         .run();
     }),

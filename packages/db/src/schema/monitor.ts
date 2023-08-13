@@ -8,6 +8,7 @@ import {
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import { monitorsToIncidents } from "./incident";
 import { page } from "./page";
 import { workspace } from "./workspace";
 
@@ -55,7 +56,7 @@ export const monitor = sqliteTable("monitor", {
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
-  createdAt: integer("updated_at", { mode: "timestamp" }).default(
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
@@ -65,6 +66,7 @@ export const monitor = sqliteTable("monitor", {
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToPages: many(monitorsToPages),
+  monitorsToIncidents: many(monitorsToIncidents),
   workspace: one(workspace, {
     fields: [monitor.workspaceId],
     references: [workspace.id],

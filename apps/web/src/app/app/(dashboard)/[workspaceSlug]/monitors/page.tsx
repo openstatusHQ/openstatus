@@ -39,8 +39,10 @@ export default async function MonitorPage({
             key={index}
             title={monitor.name}
             description={monitor.description}
+            actions={
+              <ActionButton {...monitor} workspaceSlug={params.workspaceSlug} />
+            }
           >
-            <ActionButton {...monitor} workspaceSlug={params.workspaceSlug} />
             <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <dt>Status</dt>
