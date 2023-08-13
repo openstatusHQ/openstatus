@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import type { z } from "zod";
 
@@ -34,6 +35,8 @@ export const SettingsPlan = ({
   workspaceSlug: string;
   workspaceData: z.infer<typeof selectWorkspaceSchema>;
 }) => {
+  const router = useRouter();
+
   const [isPending, startTransition] = useTransition();
 
   const getCheckoutSession = async () => {
@@ -47,6 +50,15 @@ export const SettingsPlan = ({
       stripe?.redirectToCheckout({ sessionId: result.id });
     });
   };
+  const getUserCustomerPortal = async () => {
+    const url = await api.stripeRouter.getUserCustomerPortal.mutate({
+      workspaceId: workspaceSlug,
+    });
+    if (!url) return;
+    await router.push(url);
+    return;
+  };
+  getUserCustomerPortal;
   const plans: Record<"free" | "pro", Plan> = {
     free: {
       title: "Free",
@@ -60,7 +72,9 @@ export const SettingsPlan = ({
       ],
       action: {
         text: workspaceData?.plan === "free" ? "Current plan" : "Downgrade",
-        onClick: async () => {},
+        onClick: async () => {
+          await getUserCustomerPortal();
+        },
       },
     },
     pro: {
