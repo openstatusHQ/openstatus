@@ -5,10 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { api } from "@/trpc/server";
 import { SettingsPlan } from "./_components/plan";
 
-// const limit = allPlans.free.limits["status-pages"];
-
-// export const revalidate = 0;
-
 export default async function Page({
   params,
 }: {

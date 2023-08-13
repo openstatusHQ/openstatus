@@ -12,9 +12,6 @@ export async function POST(req: NextRequest) {
   const signature = req.headers.get("Stripe-Signature");
   if (!signature) return new Response("No signature", { status: 400 });
 
-  // console.log(env.STRIPE_WEBHOOK_SECRET_KEY);
-  // console.log(signature);
-  // console.log(payload);
   try {
     const event = stripe.webhooks.constructEvent(
       payload,
@@ -32,18 +29,6 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed":
         await caller.stripeRouter.webhooks.sessionCompleted({ event });
         break;
-      //   case "invoice.payment_succeeded":
-      //     await caller.stripe.webhooks.invoicePaymentSucceeded({ event });
-      //     break;
-      //   case "invoice.payment_failed":
-      //     // TODO: Handle failed payments
-      //     break;
-      //   case "customer.subscription.deleted":
-      //     await caller.stripe.webhooks.customerSubscriptionDeleted({ event });
-      //     break;
-      //   case "customer.subscription.updated":
-      //     await caller.stripe.webhooks.customerSubscriptionUpdated({ event });
-      //     break;
 
       default:
         throw new Error(`Unhandled event type ${event.type}`);
