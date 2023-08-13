@@ -13,8 +13,6 @@ import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
 
-const limit = allPlans.free.limits["status-pages"];
-
 // export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
@@ -30,7 +28,14 @@ export default async function Page({
     workspaceSlug: params.workspaceSlug,
   });
 
-  const isLimit = (pages?.length || 0) >= limit;
+  const workspace = await api.workspace.getWorkspace.query({
+    slug: params.workspaceSlug,
+  });
+
+  const isLimit =
+    (monitors?.length || 0) >=
+    allPlans[workspace?.plan || "free"].limits["status-pages"];
+
   const disableButton = isLimit || !Boolean(monitors);
 
   return (

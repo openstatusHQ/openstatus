@@ -2,7 +2,13 @@ import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  selectPageSchema,
+  selectWorkspaceSchema,
+  user,
+  usersToWorkspaces,
+  workspace,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -41,12 +47,11 @@ export const workspaceRouter = createTRPCRouter({
 
       if (!result.users_to_workspaces) return;
 
-      return await opts.ctx.db.query.workspace.findFirst({
-        with: {
-          pages: true,
-        },
+      const data = await opts.ctx.db.query.workspace.findFirst({
         where: eq(workspace.id, currentWorkspace.id),
       });
+
+      return selectWorkspaceSchema.parse(data);
     }),
 
   createWorkspace: protectedProcedure

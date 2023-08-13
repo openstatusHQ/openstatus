@@ -6,7 +6,7 @@ import { z } from "zod";
 import { page } from "./page";
 import { usersToWorkspaces } from "./user";
 
-const plan = ["free", "pro", "enterprise"] as const;
+const plan = ["free", "pro"] as const;
 
 export const workspace = sqliteTable("workspace", {
   id: integer("id").primaryKey(),
@@ -33,5 +33,9 @@ export const workspaceRelations = relations(workspace, ({ many }) => ({
 }));
 
 export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
-  // plan: z.enum(plan).default("free"),
+  plan: z
+    .enum(plan)
+    .nullable()
+    .default("free")
+    .transform((val) => val ?? "free"),
 });
