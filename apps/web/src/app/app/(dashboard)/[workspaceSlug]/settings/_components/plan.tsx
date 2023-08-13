@@ -39,7 +39,7 @@ export const SettingsPlan = ({
 
   const [isPending, startTransition] = useTransition();
 
-  const getCheckoutSession = async () => {
+  const getCheckoutSession = () => {
     startTransition(async () => {
       const result = await api.stripeRouter.getCheckoutSession.mutate({
         workspaceId: workspaceSlug,
@@ -55,7 +55,7 @@ export const SettingsPlan = ({
       workspaceId: workspaceSlug,
     });
     if (!url) return;
-    await router.push(url);
+    router.push(url);
     return;
   };
   getUserCustomerPortal;

@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "a14b9be0-500a-49ce-9ccc-aca086e7b809",
+  "id": "84447f0c-af79-4add-93d7-eb6868983258",
   "prevId": "c7088c9f-2521-43af-884e-b7b0b81b0cb9",
   "tables": {
     "incident": {
@@ -659,8 +659,7 @@
           "type": "text(3)",
           "primaryKey": false,
           "notNull": false,
-          "autoincrement": false,
-          "default": "'free'"
+          "autoincrement": false
         },
         "ends_at": {
           "name": "ends_at",
