@@ -1,5 +1,12 @@
-import { SignUp } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { auth, SignUp } from "@clerk/nextjs";
 
 export default function Page() {
-  return <SignUp redirectUrl={"/app"} />;
+  const { userId } = auth();
+
+  if (userId) {
+    redirect("/app");
+  }
+
+  return <SignUp redirectUrl={"/app"} afterSignUpUrl={"/app"} />;
 }
