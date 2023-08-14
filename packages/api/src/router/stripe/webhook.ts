@@ -2,8 +2,9 @@ import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
 import { custom, z } from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
+import { user, workspace } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
@@ -60,6 +61,22 @@ export const webhookRouter = createTRPCRouter({
       })
       .where(eq(workspace.id, result.id))
       .run();
+    const customer = await stripe.customers.retrieve(customerId);
+    if (!customer.deleted && customer.email) {
+      const userResult = await opts.ctx.db
+        .select()
+        .from(user)
+        .where(eq(user.email, customer.email))
+        .get();
+      await analytics.identify(String(userResult.id), {
+        email: customer.email,
+        userId: userResult.id,
+      });
+      await trackAnalytics({
+        event: "User Upgraded",
+        email: customer.email,
+      });
+    }
   }),
   customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
     const subscription = opts.input.event.data.object as Stripe.Subscription;
