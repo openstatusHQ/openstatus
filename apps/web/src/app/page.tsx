@@ -36,7 +36,7 @@ export default async function Page() {
           </p>
           <div className="my-4 flex items-center justify-center gap-2">
             <Button asChild className="rounded-full">
-              <Link href="/app">Get Started</Link>
+              <Link href="/app/sign-up">Get Started</Link>
             </Button>
             <Button asChild variant="link">
               <Link href="/github" target="_blank">

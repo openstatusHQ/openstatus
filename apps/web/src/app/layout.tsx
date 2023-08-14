@@ -20,7 +20,8 @@ const calSans = LocalFont({
 });
 
 const TITLE = "OpenStatus";
-const DESCRIPTION = "Open-Source alternative to your current status page.";
+const DESCRIPTION =
+  "Open-Source alternative to your current status page and monitoring service.";
 
 export const metadata: Metadata = {
   title: TITLE,
