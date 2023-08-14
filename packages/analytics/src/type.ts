@@ -13,4 +13,5 @@ export type AnalyticsEvents =
       event: "Page Created";
       slug: string;
     }
+  | { event: "User Upgraded"; email: string }
   | { event: "User Signed In" };

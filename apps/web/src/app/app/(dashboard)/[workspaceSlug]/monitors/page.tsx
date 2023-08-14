@@ -23,8 +23,13 @@ export default async function MonitorPage({
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
     workspaceSlug: params.workspaceSlug,
   });
+  const workspace = await api.workspace.getWorkspace.query({
+    slug: params.workspaceSlug,
+  });
 
-  const isLimit = (monitors?.length || 0) >= limit;
+  const isLimit =
+    (monitors?.length || 0) >=
+    allPlans[workspace?.plan || "free"].limits.monitors;
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">

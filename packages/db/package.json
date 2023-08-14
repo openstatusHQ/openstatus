@@ -10,11 +10,11 @@
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@libsql/client": "^0.3.1",
+    "@libsql/client": "0.3.1",
     "@t3-oss/env-core": "0.6.0",
     "dotenv": "16.3.1",
     "drizzle-orm": "0.27.2",
-    "drizzle-zod": "^0.4.4",
+    "drizzle-zod": "0.4.4",
     "zod": "3.21.4"
   },
   "devDependencies": {
@@ -22,10 +22,10 @@
     "drizzle-kit": "0.19.10",
     "tsconfig": "workspace:^",
     "typescript": "5.1.6",
-    "bufferutil": "^4.0.7",
-    "utf-8-validate": "^6.0.3",
+    "bufferutil": "4.0.7",
+    "utf-8-validate": "6.0.3",
     "encoding": "0.1.13",
-    "ts-node": "^10.9.1"
+    "ts-node": "10.9.1"
   },
   "author": ""
 }

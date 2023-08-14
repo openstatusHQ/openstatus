@@ -1,6 +1,7 @@
 import {
   Activity,
   Calendar,
+  Cog,
   Fingerprint,
   LayoutDashboard,
   Link,
@@ -28,6 +29,7 @@ export const Icons = {
   "panel-top": PanelTop,
   table: Table,
   "toy-brick": ToyBrick,
+  cog: Cog,
   search: Search,
   "search-check": SearchCheck,
   fingerprint: Fingerprint,
