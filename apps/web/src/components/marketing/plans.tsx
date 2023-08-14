@@ -30,7 +30,7 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
     ],
     action: {
       text: "Start Now",
-      link: "/app?plan=hobby",
+      link: "/app/sign-up?plan=hobby",
     },
   },
   pro: {
@@ -46,7 +46,7 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
     ],
     action: {
       text: "Start Now",
-      link: "/app?plan=pro",
+      link: "/app/sign-up?plan=pro",
     },
   },
   enterprise: {

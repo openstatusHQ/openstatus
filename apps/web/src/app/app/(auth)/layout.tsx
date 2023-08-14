@@ -12,11 +12,12 @@ export default function AuthLayout({
       <aside className="border-border col-span-1 flex w-full items-center justify-center border p-3 backdrop-blur-[2px] md:p-6">
         <div className="w-full max-w-lg text-left">
           <h1 className="font-cal text-foreground mb-3 text-2xl">
-            Open Source Status Page
+            Open Source Monitoring Service
           </h1>
           <p className="text-muted-foreground">
-            Create your own status page within a couple of minutes. You are
-            developer and want to know how it works? <br />
+            Monitor your website or API and create your own status page within a
+            couple of minutes. Want to know how it works? <br />
+            <br />
             Check out{" "}
             <a
               href="https://github.com/openstatushq/openstatus"
@@ -30,9 +31,9 @@ export default function AuthLayout({
           </p>
           {/* Add Demo tracker here? */}
           <div className="h-12" />
-          <p className="text-muted-foreground text-right text-sm font-light">
+          {/* <p className="text-muted-foreground text-right text-sm font-light">
             *your data is safe
-          </p>
+          </p> */}
         </div>
       </aside>
       <main className="container col-span-1 mx-auto flex items-center justify-center md:col-span-1 xl:col-span-2">
