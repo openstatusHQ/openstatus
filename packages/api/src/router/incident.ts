@@ -28,6 +28,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -87,6 +88,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -125,6 +127,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -204,6 +207,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -241,7 +245,7 @@ export const incidentRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -276,7 +280,7 @@ export const incidentRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -345,7 +349,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
-
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)

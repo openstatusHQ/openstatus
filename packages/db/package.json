@@ -13,13 +13,13 @@
     "@libsql/client": "0.3.1",
     "@t3-oss/env-core": "0.6.0",
     "dotenv": "16.3.1",
-    "drizzle-orm": "0.27.2",
-    "drizzle-zod": "0.4.4",
+    "drizzle-orm": "0.28.2",
+    "drizzle-zod": "0.5.0",
     "zod": "3.21.4"
   },
   "devDependencies": {
     "@types/node": "20.3.1",
-    "drizzle-kit": "0.19.10",
+    "drizzle-kit": "0.19.12",
     "tsconfig": "workspace:^",
     "typescript": "5.1.6",
     "bufferutil": "4.0.7",

@@ -5,16 +5,11 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray, not, sql } from "@openstatus/db";
 import {
   incident,
-  incidentUpdate,
   insertPageSchemaWithMonitors,
   monitor,
   monitorsToIncidents,
   monitorsToPages,
   page,
-  selectIncidentSchema,
-  selectIncidentUpdateSchema,
-  selectMonitorSchema,
-  selectPageSchema,
   selectPageSchemaWithRelation,
   user,
   usersToWorkspaces,
@@ -37,6 +32,7 @@ export const pageRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -101,7 +97,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -130,7 +126,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -208,7 +204,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -239,12 +235,13 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const currentWorkspace = await opts.ctx.db
         .select()
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)

@@ -109,7 +109,7 @@ export const stripeRouter = createTRPCRouter({
           metadata: {
             workspaceId: String(workspace.id),
           },
-          email: currentUser.email || "",
+          email: currentUser?.email || "",
         };
         const stripeUser = await stripe.customers.create(customerData);
 

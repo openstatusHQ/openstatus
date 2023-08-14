@@ -28,6 +28,7 @@ export const monitorRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -223,7 +224,7 @@ export const monitorRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result?.users_to_workspaces) return;
 
       await opts.ctx.db
         .update(monitor)
@@ -278,6 +279,7 @@ export const monitorRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)

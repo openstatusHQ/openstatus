@@ -89,11 +89,13 @@ export default authMiddleware({
           .from(workspace)
           .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
           .get();
-        const orgSelection = new URL(
-          `/app/${currentWorkspace.slug}/monitors`,
-          req.url,
-        );
-        return NextResponse.redirect(orgSelection);
+        if (currentWorkspace) {
+          const orgSelection = new URL(
+            `/app/${currentWorkspace.slug}/monitors`,
+            req.url,
+          );
+          return NextResponse.redirect(orgSelection);
+        }
       } else {
         // return NextResponse.redirect(new URL("/app/onboarding", req.url));
         // probably redirect to onboarding

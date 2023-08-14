@@ -38,6 +38,7 @@ export const workspaceRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.slug))
         .get();
+      if (!currentWorkspace) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -45,7 +46,7 @@ export const workspaceRouter = createTRPCRouter({
         .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
         .get();
 
-      if (!result.users_to_workspaces) return;
+      if (!result?.users_to_workspaces) return;
 
       const data = await opts.ctx.db.query.workspace.findFirst({
         where: eq(workspace.id, currentWorkspace.id),
