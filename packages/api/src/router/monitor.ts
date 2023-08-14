@@ -10,11 +10,11 @@ import {
   selectMonitorSchema,
   user,
   usersToWorkspaces,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasUserAccessToWorkspace } from "./utils";
 
 const monitorLimit = allPlans.free.limits.monitors;
 const periodicityLimit = allPlans.free.limits.periodicity;
@@ -23,30 +23,16 @@ export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
     .input(z.object({ data: insertMonitorSchema, workspaceSlug: z.string() }))
     .mutation(async (opts) => {
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      if (!currentWorkspace) return;
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      // the user don't have access to this workspace
-      if (!result || !result.users_to_workspaces) return;
+      const result = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        tenantId: opts.ctx.auth.userId,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
-          where: eq(monitor.workspaceId, currentWorkspace.id),
+          where: eq(monitor.workspaceId, result.workspace.id),
         })
       ).length;
 
@@ -74,14 +60,14 @@ export const monitorRouter = createTRPCRouter({
         .insert(monitor)
         .values({
           ...data,
-          workspaceId: currentWorkspace.id,
+          workspaceId: result.workspace.id,
           regions: regions?.join(","),
         })
         .returning()
         .get();
 
-      await analytics.identify(result.users_to_workspaces.userId, {
-        userId: result.users_to_workspaces.userId,
+      await analytics.identify(result.user.id, {
+        userId: result.user.id,
       });
       await trackAnalytics({
         event: "Monitor Created",
@@ -268,31 +254,18 @@ export const monitorRouter = createTRPCRouter({
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceSlug: z.string() }))
     .query(async (opts) => {
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      if (!currentWorkspace) return;
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-      // the user don't have access to this workspace
-      if (!result || !result.users_to_workspaces) return;
+      // Check if user has access to workspace
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        tenantId: opts.ctx.auth.userId,
+        ctx: opts.ctx,
+      });
+      if (!data) return;
 
       const monitors = await opts.ctx.db
         .select()
         .from(monitor)
-        .where(eq(monitor.workspaceId, currentWorkspace.id))
+        .where(eq(monitor.workspaceId, data.workspace.id))
         .all();
       // const selectMonitorsArray = selectMonitorSchema.array();
 
