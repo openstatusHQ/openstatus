@@ -42,7 +42,7 @@ export const SettingsPlan = ({
   const getCheckoutSession = () => {
     startTransition(async () => {
       const result = await api.stripeRouter.getCheckoutSession.mutate({
-        workspaceId: workspaceSlug,
+        workspaceSlug: workspaceSlug,
       });
       if (!result) return;
 
@@ -52,7 +52,7 @@ export const SettingsPlan = ({
   };
   const getUserCustomerPortal = async () => {
     const url = await api.stripeRouter.getUserCustomerPortal.mutate({
-      workspaceId: workspaceSlug,
+      workspaceSlug: workspaceSlug,
     });
     if (!url) return;
     router.push(url);

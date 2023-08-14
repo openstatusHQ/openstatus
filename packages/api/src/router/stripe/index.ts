@@ -16,12 +16,12 @@ export const stripeRouter = createTRPCRouter({
   webhooks: webhookRouter,
 
   getUserCustomerPortal: protectedProcedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(z.object({ workspaceSlug: z.string() }))
     .mutation(async (opts) => {
       const result = await opts.ctx.db
         .select()
         .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceId))
+        .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
 
       if (!result) return;
@@ -70,14 +70,14 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
-    .input(z.object({ workspaceId: z.string() }))
+    .input(z.object({ workspaceSlug: z.string() }))
     .mutation(async (opts) => {
       console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
       const result = await opts.ctx.db
         .select()
         .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceId))
+        .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
 
       if (!result) return;
@@ -132,7 +132,7 @@ export const stripeRouter = createTRPCRouter({
           },
         ],
         mode: "subscription",
-        success_url: `${url}/app/${result.slug}/settings`,
+        success_url: `${url}/app/${result.slug}/settings?success=true`,
         cancel_url: `${url}/app/${result.slug}/settings`,
       });
 
