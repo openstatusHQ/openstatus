@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
-import { z } from "zod";
+import { custom, z } from "zod";
 
 import { eq } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
@@ -52,8 +52,30 @@ export const webhookRouter = createTRPCRouter({
     }
     await opts.ctx.db
       .update(workspace)
-      .set({ plan: "pro" })
+      .set({
+        plan: "pro",
+        subscriptionId: subscription.id,
+        endsAt: new Date(subscription.current_period_end * 1000),
+        paidUntil: new Date(subscription.current_period_end * 1000),
+      })
       .where(eq(workspace.id, result.id))
+      .run();
+  }),
+  customerSubscriptionDeleted: webhookProcedure.mutation(async (opts) => {
+    const subscription = opts.input.event.data.object as Stripe.Subscription;
+    const customerId =
+      typeof subscription.customer === "string"
+        ? subscription.customer
+        : subscription.customer.id;
+
+    await opts.ctx.db
+      .update(workspace)
+      .set({
+        subscriptionId: null,
+        plan: "FREE",
+        paidUntil: null,
+      })
+      .where(eq(workspace.stripeId, customerId))
       .run();
   }),
 });

@@ -30,6 +30,12 @@ export async function POST(req: NextRequest) {
         await caller.stripeRouter.webhooks.sessionCompleted({ event });
         break;
 
+      case "customer.subscription.deleted":
+        await caller.stripeRouter.webhooks.customerSubscriptionDeleted({
+          event,
+        });
+        break;
+
       default:
         throw new Error(`Unhandled event type ${event.type}`);
     }
