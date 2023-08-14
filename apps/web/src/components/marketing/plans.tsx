@@ -29,8 +29,8 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
       "10m, 30m, 1h checks",
     ],
     action: {
-      text: "Start now",
-      link: "/app",
+      text: "Start Now",
+      link: "/app?plan=hobby",
     },
   },
   pro: {
@@ -45,10 +45,9 @@ const plans: Record<"hobby" | "pro" | "enterprise", Plan> = {
       "5 team members",
     ],
     action: {
-      text: "Coming soon",
-      link: "/",
+      text: "Start Now",
+      link: "/app?plan=pro",
     },
-    disabled: true,
   },
   enterprise: {
     title: "Enterprise",

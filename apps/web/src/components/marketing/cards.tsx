@@ -18,13 +18,12 @@ const cardConfig: {
     icon: "panel-top",
     title: "Status Pages",
     description:
-      "Create your own status page within seconds. Select your endpoints you wish to display.",
+      "Create your own status page within seconds. Select your monitors you wish to display.",
   },
   {
     icon: "siren",
     title: "Incidents",
     description: "Inform your users when something goes wrong.",
-    badge: "Coming soon",
   },
   {
     icon: "toy-brick",
