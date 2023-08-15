@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -49,7 +49,7 @@ export function DataTableDateRangePicker({
             id="date"
             variant="outline"
             className={cn(
-              "w-[250px] justify-start text-left font-normal",
+              "w-[260px] justify-start text-left font-normal",
               !date && "text-muted-foreground",
             )}
           >
@@ -74,11 +74,13 @@ export function DataTableDateRangePicker({
             mode="range"
             defaultMonth={date?.from}
             selected={date}
-            onSelect={(e) => {
-              setDate(e);
+            onSelect={(value) => {
+              setDate(value);
+              const { fromDate, toDate } = manipulateDate(value);
+
               const searchParams = updateSearchParams({
-                fromDate: e?.from?.getTime() || null,
-                toDate: e?.to?.getTime() || null,
+                fromDate,
+                toDate,
               });
               router.replace(`${pathname}?${searchParams}`);
             }}
@@ -87,4 +89,21 @@ export function DataTableDateRangePicker({
       </Popover>
     </div>
   );
+}
+
+/**
+ * Whenever you select a date, it will use the midnight timestamp of that date.
+ * We need to add a day minus one second to include the whole day.
+ */
+function manipulateDate(date?: DateRange | null) {
+  const isToDateMidnight = String(date?.to?.getTime()).endsWith("00000");
+
+  const addOneDayToDate = date?.to
+    ? addDays(new Date(date.to), 1).getTime() - 1
+    : null;
+
+  return {
+    fromDate: date?.from?.getTime() || null,
+    toDate: isToDateMidnight ? addOneDayToDate : date?.to?.getTime() || null,
+  };
 }
