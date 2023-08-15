@@ -13,8 +13,6 @@ import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
 
-const limit = allPlans.free.limits.monitors;
-
 export default async function MonitorPage({
   params,
 }: {

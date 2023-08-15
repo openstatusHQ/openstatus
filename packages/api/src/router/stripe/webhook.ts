@@ -1,6 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import type Stripe from "stripe";
-import { custom, z } from "zod";
+import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
@@ -68,6 +68,8 @@ export const webhookRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.email, customer.email))
         .get();
+      if (!userResult) return;
+
       await analytics.identify(String(userResult.id), {
         email: customer.email,
         userId: userResult.id,

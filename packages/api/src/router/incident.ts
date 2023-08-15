@@ -18,36 +18,25 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasUserAccessToWorkspace } from "./utils";
 
 export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
     .input(insertIncidentSchema)
     .mutation(async (opts) => {
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
+      const result = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
       if (!result) return;
+
       const { id, workspaceSlug, monitors, date, ...incidentInput } =
         opts.input;
 
       const newIncident = await opts.ctx.db
         .insert(incident)
         .values({
-          workspaceId: currentWorkspace.id,
+          workspaceId: result.workspace.id,
           ...incidentInput,
         })
         .returning()
@@ -82,24 +71,12 @@ export const incidentRouter = createTRPCRouter({
   createIncidentUpdate: protectedProcedure
     .input(insertIncidentUpdateSchema)
     .mutation(async (opts) => {
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result) return;
+      // Check if user has access to workspace
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!data) return;
 
       // update parent incident with latest status
       await opts.ctx.db
@@ -120,28 +97,13 @@ export const incidentRouter = createTRPCRouter({
   updateIncident: protectedProcedure
     .input(insertIncidentSchemaWithMonitors)
     .mutation(async (opts) => {
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!data) return;
 
-      if (!result) return;
-
-      console.log(opts.input);
       const { monitors, workspaceSlug, ...incidentInput } = opts.input;
-      console.log(incidentInput);
 
       if (!incidentInput.id) return;
 
@@ -204,6 +166,7 @@ export const incidentRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const currentUser = opts.ctx.db
         .select()
         .from(user)
@@ -241,7 +204,7 @@ export const incidentRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -276,7 +239,7 @@ export const incidentRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -340,26 +303,11 @@ export const incidentRouter = createTRPCRouter({
   getIncidentByWorkspace: protectedProcedure
     .input(z.object({ workspaceSlug: z.string() }))
     .query(async (opts) => {
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result) return;
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!data) return;
 
       const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
         status: StatusEnum.default("investigating"), // TODO: remove!
@@ -375,8 +323,8 @@ export const incidentRouter = createTRPCRouter({
         incidentUpdates: z.array(selectIncidentUpdateSchema),
       });
 
-      const data = await opts.ctx.db.query.incident.findMany({
-        where: eq(incident.workspaceId, currentWorkspace.id),
+      const result = await opts.ctx.db.query.incident.findMany({
+        where: eq(incident.workspaceId, data.workspace.id),
         with: {
           monitorsToIncidents: { with: { monitor: true } },
           incidentUpdates: {
@@ -388,6 +336,6 @@ export const incidentRouter = createTRPCRouter({
         orderBy: (incident, { desc }) => [desc(incident.createdAt)],
       });
 
-      return z.array(selectIncidentSchemaWithRelation).parse(data);
+      return z.array(selectIncidentSchemaWithRelation).parse(result);
     }),
 });

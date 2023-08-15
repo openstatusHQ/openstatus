@@ -5,16 +5,11 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray, not, sql } from "@openstatus/db";
 import {
   incident,
-  incidentUpdate,
   insertPageSchemaWithMonitors,
   monitor,
   monitorsToIncidents,
   monitorsToPages,
   page,
-  selectIncidentSchema,
-  selectIncidentUpdateSchema,
-  selectMonitorSchema,
-  selectPageSchema,
   selectPageSchemaWithRelation,
   user,
   usersToWorkspaces,
@@ -23,6 +18,7 @@ import {
 import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { hasUserAccessToWorkspace } from "./utils";
 
 const limit = allPlans.free.limits["status-pages"];
 
@@ -32,30 +28,18 @@ export const pageRouter = createTRPCRouter({
     .input(insertPageSchemaWithMonitors)
     .mutation(async (opts) => {
       if (!opts.input.workspaceSlug) return;
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.slug, opts.input.workspaceSlug))
-        .get();
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!data) return;
 
-      if (!result) return;
       const { monitors, workspaceId, workspaceSlug, id, ...pageInput } =
         opts.input;
 
       const pageNumbers = (
         await opts.ctx.db.query.page.findMany({
-          where: eq(page.workspaceId, currentWorkspace.id),
+          where: eq(page.workspaceId, data.workspace.id),
         })
       ).length;
 
@@ -69,7 +53,7 @@ export const pageRouter = createTRPCRouter({
 
       const newPage = await opts.ctx.db
         .insert(page)
-        .values({ workspaceId: currentWorkspace.id, ...pageInput })
+        .values({ workspaceId: data.workspace.id, ...pageInput })
         .returning()
         .get();
       if (monitors && monitors.length > 0) {
@@ -84,8 +68,8 @@ export const pageRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
 
-      await analytics.identify(result.users_to_workspaces.userId, {
-        userId: result.users_to_workspaces.userId,
+      await analytics.identify(data.user.id, {
+        userId: data.user.id,
       });
       await trackAnalytics({
         event: "Page Created",
@@ -101,7 +85,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -130,7 +114,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -208,7 +192,7 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -239,12 +223,13 @@ export const pageRouter = createTRPCRouter({
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .get();
-
+      if (!currentUser) return;
       const currentWorkspace = await opts.ctx.db
         .select()
         .from(workspace)
         .where(eq(workspace.slug, opts.input.workspaceSlug))
         .get();
+      if (!currentWorkspace) return;
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -271,7 +256,6 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
-        // with: { incidents: true },
       });
 
       if (!result) {

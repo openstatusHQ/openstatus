@@ -75,7 +75,7 @@ export default async function Page({
                 <dt>Monitors</dt>
                 <dd className="flex flex-wrap justify-end gap-2">
                   {page.monitorsToPages.map(
-                    ({ monitor: { id, name, active } }, i) => (
+                    ({ monitor: { id, name, active } }) => (
                       <Badge key={id} variant={active ? "default" : "outline"}>
                         {name}
                         <span
