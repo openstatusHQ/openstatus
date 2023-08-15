@@ -50,7 +50,6 @@ import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 import { useToast } from "../ui/use-toast";
 
-const limit = allPlans.free.limits.periodicity;
 const cronJobs = [
   { value: "1m", label: "1 minute" },
   { value: "5m", label: "5 minutes" },
@@ -64,9 +63,14 @@ type MonitorProps = z.infer<typeof insertMonitorSchema>;
 interface Props {
   defaultValues?: MonitorProps;
   workspaceSlug: string;
+  plan?: "free" | "pro"; // HOTFIX - We can think of returning `workspace` instead of `workspaceSlug`
 }
 
-export function MonitorForm({ defaultValues, workspaceSlug }: Props) {
+export function MonitorForm({
+  defaultValues,
+  workspaceSlug,
+  plan = "free",
+}: Props) {
   const form = useForm<MonitorProps>({
     resolver: zodResolver(insertMonitorSchema), // too much - we should only validate the values we ask inside of the form!
     defaultValues: {
@@ -105,6 +109,8 @@ export function MonitorForm({ defaultValues, workspaceSlug }: Props) {
       }
     });
   };
+
+  const limit = allPlans[plan].limits.periodicity;
 
   return (
     <Form {...form}>
