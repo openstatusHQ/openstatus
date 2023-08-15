@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function Footer() {
+export function MarketingFooter() {
   return (
     <footer className="text-muted-foreground mx-auto grid gap-4 text-sm">
       <p className="border-border rounded-full border px-4 py-2 text-center backdrop-blur-[2px]">

@@ -36,7 +36,9 @@ function Container({
             <CardDescription>{description}</CardDescription>
           ) : null}
         </div>
-        {actions ? <div className="flex gap-2">{actions}</div> : null}
+        {actions ? (
+          <div className="flex items-center gap-2">{actions}</div>
+        ) : null}
       </CardHeader>
       {/* potentially `asChild` */}
       <CardContent>{children}</CardContent>
