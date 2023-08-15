@@ -12,17 +12,16 @@ import { Context } from "../trpc";
  */
 export const hasUserAccessToWorkspace = async ({
   workspaceSlug,
-  tenantId,
   ctx,
 }: {
   workspaceSlug: string;
-  tenantId: string;
   ctx: Context;
 }) => {
+  if (!ctx.auth?.userId) return;
   const currentUser = ctx.db
     .select()
     .from(user)
-    .where(eq(user.tenantId, tenantId))
+    .where(eq(user.tenantId, ctx.auth?.userId))
     .as("currentUser");
 
   const currentWorkspace = await ctx.db
@@ -37,7 +36,7 @@ export const hasUserAccessToWorkspace = async ({
     .where(eq(usersToWorkspaces.workspaceId, currentWorkspace.id))
     .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
     .get();
-  // the user don't have access to this workspace
+  // the user doesn't have access to this workspace
   if (!result || !result.users_to_workspaces) return;
 
   return { workspace: currentWorkspace, user: result.currentUser };

@@ -30,7 +30,6 @@ export const workspaceRouter = createTRPCRouter({
     .query(async (opts) => {
       const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.slug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!data) return;

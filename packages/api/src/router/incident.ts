@@ -29,7 +29,6 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const result = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!result) return;
@@ -78,7 +77,6 @@ export const incidentRouter = createTRPCRouter({
       // Check if user has access to workspace
       const data = await getUserAndWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!data) return;
@@ -104,7 +102,6 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const data = await getUserAndWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!data) return;
@@ -311,7 +308,6 @@ export const incidentRouter = createTRPCRouter({
     .query(async (opts) => {
       const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!data) return;

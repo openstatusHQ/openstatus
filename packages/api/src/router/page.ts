@@ -30,7 +30,6 @@ export const pageRouter = createTRPCRouter({
       if (!opts.input.workspaceSlug) return;
       const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
-        tenantId: opts.ctx.auth.userId,
         ctx: opts.ctx,
       });
       if (!data) return;
