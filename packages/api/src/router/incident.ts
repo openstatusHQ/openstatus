@@ -18,10 +18,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import {
-  hasUserAccessToWorkspace as getUserAndWorkspace,
-  hasUserAccessToWorkspace,
-} from "./utils";
+import { hasUserAccessToWorkspace } from "./utils";
 
 export const incidentRouter = createTRPCRouter({
   createIncident: protectedProcedure
@@ -75,7 +72,7 @@ export const incidentRouter = createTRPCRouter({
     .input(insertIncidentUpdateSchema)
     .mutation(async (opts) => {
       // Check if user has access to workspace
-      const data = await getUserAndWorkspace({
+      const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
         ctx: opts.ctx,
       });
@@ -100,7 +97,7 @@ export const incidentRouter = createTRPCRouter({
   updateIncident: protectedProcedure
     .input(insertIncidentSchemaWithMonitors)
     .mutation(async (opts) => {
-      const data = await getUserAndWorkspace({
+      const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
         ctx: opts.ctx,
       });
