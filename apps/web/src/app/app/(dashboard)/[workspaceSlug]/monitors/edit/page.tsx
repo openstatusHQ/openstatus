@@ -29,6 +29,10 @@ export default async function EditPage({
 
   const monitor = id && (await api.monitor.getMonitorByID.query({ id }));
 
+  const workspace = await api.workspace.getWorkspace.query({
+    slug: params.workspaceSlug,
+  });
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitor" description="Upsert your monitor." />
@@ -36,6 +40,7 @@ export default async function EditPage({
         <MonitorForm
           workspaceSlug={params.workspaceSlug}
           defaultValues={monitor || undefined}
+          plan={workspace?.plan}
         />
       </div>
     </div>
