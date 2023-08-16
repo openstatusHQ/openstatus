@@ -1,10 +1,10 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-source Status Page and Alerting System
+  <h3 align="center">The Open-source Uptime Monitoring with Status Page
    </h3>
 
   <p align="center">
-    The Atlassian's Statuspage Open Source Alternative.
+    The BetterUptime Open Source Alternative.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -21,9 +21,9 @@
 
 ## About OpenStatus
 
-OpenStatus is open-source status page and alerting system. We are building it
-publicly for everyone to see our progress. We believe great softwares are built
-this way.
+OpenStatus is open-source monitoring system with beautiful status page. We are
+building it publicly for everyone to see our progress. We believe great
+softwares are built this way.
 
 You can choose to host it yourself or use our hosted version at
 [openstatus.dev](https://www.openstatus.dev)

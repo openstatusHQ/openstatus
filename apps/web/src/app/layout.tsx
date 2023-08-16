@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Analytics } from "@vercel/analytics/react";
 import PlausibleProvider from "next-plausible";
 
 import { TailwindIndicator } from "@/components/tailwind-indicator";
@@ -21,7 +20,7 @@ const calSans = LocalFont({
 
 const TITLE = "OpenStatus";
 const DESCRIPTION =
-  "Open-Source alternative to your current status page and monitoring service.";
+  "Open-Source uptime monitoring with beautiful status pages.";
 
 export const metadata: Metadata = {
   title: TITLE,
