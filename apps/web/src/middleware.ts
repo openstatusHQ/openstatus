@@ -1,11 +1,11 @@
-import type { NextFetchEvent, NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
-const before = (req: NextRequest, ev: NextFetchEvent) => {
+const before = (req: NextRequest) => {
   const url = req.nextUrl.clone();
 
   if (url.pathname.includes("api/trpc")) {
@@ -61,7 +61,7 @@ export default authMiddleware({
   ],
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
-  async afterAuth(auth, req, evt) {
+  async afterAuth(auth, req) {
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
       return redirectToSignIn({ returnBackUrl: req.url });

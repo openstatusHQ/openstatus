@@ -5,7 +5,6 @@ import { and, db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorsToPages,
-  RegionEnum,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { availableRegions } from "@openstatus/tinybird";

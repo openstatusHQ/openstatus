@@ -9,7 +9,6 @@ import type * as z from "zod";
 import {
   insertIncidentSchema,
   // insertIncidentUpdateSchema,
-  insertMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { LoadingAnimation } from "@/components/loading-animation";
