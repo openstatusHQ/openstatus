@@ -55,7 +55,7 @@ function FooterLink({ href, label }: Record<"href" | "label", string>) {
     <LinkSlot
       className="text-foreground inline-flex items-center underline underline-offset-4 hover:no-underline"
       href={href}
-      {...{ externalProps }}
+      {...externalProps}
     >
       {label}
       {isExternal ? <ArrowUpRight className="ml-1 h-4 w-4" /> : null}
