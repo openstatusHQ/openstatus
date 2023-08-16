@@ -1,7 +1,10 @@
+import Link from "next/link";
 import type { z } from "zod";
 
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 
+import { EmptyState } from "../dashboard/empty-state";
+import { Button } from "../ui/button";
 import { Monitor } from "./monitor";
 
 export const MonitorList = ({
@@ -9,14 +12,31 @@ export const MonitorList = ({
 }: {
   monitors: z.infer<typeof selectMonitorSchema>[];
 }) => {
+  const url =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:3000"
+      : "https://www.openstatus.dev";
   return (
-    <div>
-      {monitors.map((monitor, index) => (
-        <div key={index}>
-          {/* Fetch tracker and data */}
-          <Monitor monitor={monitor} />
-        </div>
-      ))}
+    <div className="grid gap-4">
+      {Boolean(monitors.length) ? (
+        monitors.map((monitor, index) => (
+          <div key={index}>
+            {/* Fetch tracker and data */}
+            <Monitor monitor={monitor} />
+          </div>
+        ))
+      ) : (
+        <EmptyState
+          icon="activity"
+          title="Missing Monitors"
+          description="Fill your status page with monitors."
+          action={
+            <Button asChild>
+              <Link href={`${url}/app`}>Go to Dashboard</Link>
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 };

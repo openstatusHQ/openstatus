@@ -17,7 +17,7 @@ export const HeroForm = () => {
           });
           const email = data.get("email");
           if (email) {
-            sendWaitingListEmail(email);
+            sendWaitingListEmail(String(email));
           }
         } catch (e) {
           toast({

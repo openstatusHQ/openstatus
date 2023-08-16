@@ -6,7 +6,9 @@ import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
+import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
+import { ClientAnalytics } from "./_components/analytics";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -18,12 +20,12 @@ const calSans = LocalFont({
 
 const TITLE = "OpenStatus";
 const DESCRIPTION =
-  "Open-Source alternative to your current monitoring service with beautiful status page";
+  "Open-Source uptime monitoring with beautiful status pages.";
 
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
-  metadataBase: new URL("https://openstatus.dev"),
+  metadataBase: new URL("https://www.openstatus.dev"),
   twitter: {
     images: [`/api/og`],
     card: "summary_large_image",
@@ -43,17 +45,20 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally with with Clerk,  Comment the provider below
+  // If you want to develop locally without Clerk,  Comment the provider below
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <PlausibleProvider domain="openstatus.dev">
+    <html lang="en">
+      {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
+      <PlausibleProvider domain="openstatus.dev">
+        <ClerkProvider>
           <body className={`${inter.className} ${calSans.variable}`}>
             <Background>{children}</Background>
             <Toaster />
+            <TailwindIndicator />
           </body>
-        </PlausibleProvider>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </PlausibleProvider>
+      <ClientAnalytics />
+    </html>
   );
 }

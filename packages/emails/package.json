@@ -2,7 +2,7 @@
   "name": "@openstatus/emails",
   "version": "1.0.0",
   "description": "",
-  "main": "emails/index.tsx",
+  "main": "./index.ts",
   "scripts": {
     "dev:email": "email dev"
   },
@@ -15,13 +15,16 @@
     "@react-email/head": "0.0.5",
     "@react-email/html": "0.0.4",
     "@react-email/tailwind": "0.0.8",
-    "react-email": "1.9.4"
+    "@t3-oss/env-core": "0.6.0",
+    "react-email": "1.9.4",
+    "resend": "0.15.3",
+    "zod": "3.21.4"
   },
   "devDependencies": {
     "@types/node": "20.3.1",
     "@types/react": "18.2.12",
     "react": "18.2.0",
     "tsconfig": "workspace:*",
-    "typescript": "^5.1.0"
+    "typescript": "5.1.6"
   }
 }

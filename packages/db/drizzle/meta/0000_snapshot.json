@@ -1,7 +1,7 @@
 {
   "version": "5",
-  "dialect": "mysql",
-  "id": "b1ca2235-8b2f-4bb6-b382-484f98713c32",
+  "dialect": "sqlite",
+  "id": "41c8003d-9f2a-4d3e-9e11-b3d4076fe395",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "incident": {
@@ -9,66 +9,80 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "status": {
           "name": "status",
-          "type": "enum('resolved','investigatin','')",
+          "type": "text(2)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "page_id": {
           "name": "page_id",
-          "type": "int",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(now())"
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false,
-          "onUpdate": true
+          "default": "(strftime('%s', 'now'))"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "foreignKeys": {
+        "incident_page_id_page_id_fk": {
+          "name": "incident_page_id_page_id_fk",
+          "tableFrom": "incident",
+          "tableTo": "page",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     },
-    "incidentUpdate": {
-      "name": "incidentUpdate",
+    "incident_update": {
+      "name": "incident_update",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "incident_date": {
           "name": "incident_date",
-          "type": "datetime",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
         "title": {
           "name": "title",
-          "type": "varchar(256)",
+          "type": "text(256)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -82,97 +96,156 @@
         },
         "incident_id": {
           "name": "incident_id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(now())"
-        },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false,
-          "onUpdate": true
+          "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "indexes": {
+        "incident_update_uuid_unique": {
+          "name": "incident_update_uuid_unique",
+          "columns": [
+            "uuid"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "incident_update_incident_id_incident_id_fk": {
+          "name": "incident_update_incident_id_incident_id_fk",
+          "tableFrom": "incident_update",
+          "tableTo": "incident",
+          "columnsFrom": [
+            "incident_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     },
     "page": {
       "name": "page",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "workspace_id": {
           "name": "workspace_id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "slug": {
           "name": "slug",
-          "type": "varchar(256)",
+          "type": "text(256)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "custom_domain": {
           "name": "custom_domain",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+          "type": "text(256)",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "published": {
+          "name": "published",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false,
-          "default": "(now())"
+          "default": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false,
-          "onUpdate": true
+          "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "indexes": {
+        "page_slug_unique": {
+          "name": "page_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "page_workspace_id_workspace_id_fk": {
+          "name": "page_workspace_id_workspace_id_fk",
+          "tableFrom": "page",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     },
     "monitor": {
       "name": "monitor",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "job_type": {
           "name": "job_type",
-          "type": "enum('website','cron','other')",
+          "type": "text(3)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -180,7 +253,7 @@
         },
         "periodicity": {
           "name": "periodicity",
-          "type": "enum('1m','5m','10m','30m','1h','other')",
+          "type": "text(6)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
@@ -188,125 +261,293 @@
         },
         "status": {
           "name": "status",
-          "type": "enum('active','inactive')",
+          "type": "text(2)",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'inactive'"
         },
+        "active": {
+          "name": "active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": false
+        },
         "url": {
           "name": "url",
-          "type": "varchar(512)",
+          "type": "text(512)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "''"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "page_id": {
-          "name": "page_id",
-          "type": "int",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(strftime('%s', 'now'))"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "monitor_workspace_id_workspace_id_fk": {
+          "name": "monitor_workspace_id_workspace_id_fk",
+          "tableFrom": "monitor",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "monitors_to_pages": {
+      "name": "monitors_to_pages",
+      "columns": {
+        "monitor_id": {
+          "name": "monitor_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "page_id": {
+          "name": "page_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "(now())"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "foreignKeys": {
+        "monitors_to_pages_monitor_id_monitor_id_fk": {
+          "name": "monitors_to_pages_monitor_id_monitor_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "monitor",
+          "columnsFrom": [
+            "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "monitors_to_pages_page_id_page_id_fk": {
+          "name": "monitors_to_pages_page_id_page_id_fk",
+          "tableFrom": "monitors_to_pages",
+          "tableTo": "page",
+          "columnsFrom": [
+            "page_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "monitors_to_pages_monitor_id_page_id_pk": {
+          "columns": [
+            "monitor_id",
+            "page_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
     },
     "user": {
       "name": "user",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
         },
         "tenant_id": {
           "name": "tenant_id",
-          "type": "varchar(256)",
+          "type": "text(256)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(now())"
-        },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "(strftime('%s', 'now'))"
+        }
+      },
+      "indexes": {
+        "user_tenant_id_unique": {
+          "name": "user_tenant_id_unique",
+          "columns": [
+            "tenant_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "users_to_workspaces": {
+      "name": "users_to_workspaces",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true
+          "autoincrement": false
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         }
       },
       "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "foreignKeys": {
+        "users_to_workspaces_user_id_user_id_fk": {
+          "name": "users_to_workspaces_user_id_user_id_fk",
+          "tableFrom": "users_to_workspaces",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "users_to_workspaces_workspace_id_workspace_id_fk": {
+          "name": "users_to_workspaces_workspace_id_workspace_id_fk",
+          "tableFrom": "users_to_workspaces",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "users_to_workspaces_user_id_workspace_id_pk": {
+          "columns": [
+            "user_id",
+            "workspace_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
     },
     "workspace": {
       "name": "workspace",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int",
+          "type": "integer",
           "primaryKey": true,
           "notNull": true,
-          "autoincrement": true
+          "autoincrement": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
         },
         "stripe_id": {
           "name": "stripe_id",
-          "type": "varchar(256)",
+          "type": "text(256)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
+        "name": {
+          "name": "name",
+          "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(now())"
+          "notNull": false,
+          "autoincrement": false
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false,
-          "onUpdate": true
+          "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "workspace_slug_unique": {
+          "name": "workspace_slug_unique",
+          "columns": [
+            "slug"
+          ],
+          "isUnique": true
+        },
+        "workspace_stripe_id_unique": {
+          "name": "workspace_stripe_id_unique",
+          "columns": [
+            "stripe_id"
+          ],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {},
-      "compositePrimaryKeys": {}
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
     }
   },
-  "schemas": {},
+  "enums": {},
   "_meta": {
     "schemas": {},
     "tables": {},

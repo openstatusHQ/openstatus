@@ -8,7 +8,9 @@ export default {
   schema: "./src/schema/index.ts",
   out: "./drizzle",
   dbCredentials: {
-    connectionString: env.DATABASE_URL,
+    url: env.DATABASE_URL,
+    authToken: env.DATABASE_AUTH_TOKEN,
   },
-  driver: "mysql2",
+  driver: "turso",
+  strict: true,
 } satisfies Config;

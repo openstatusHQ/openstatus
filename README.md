@@ -1,15 +1,15 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-source Status Page and Alerting System
+  <h3 align="center">The Open-source Uptime Monitoring with Status Page
    </h3>
 
   <p align="center">
-    The Statuspage Open Source Alternative.
+    The BetterUptime Open Source Alternative.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
     <br />
-    <a href="https://discord.gg/dHD4JtSfsn">Discord</a>
+    <a href="https://www.openstatus.dev/discord">Discord</a>
     ·
     <a href="https://www.openstatus.dev">Website</a>
     ·
@@ -19,20 +19,20 @@
   </p>
 </p>
 
-# OpenStatus
+## About OpenStatus
 
-## About this project
+OpenStatus is open-source monitoring system with beautiful status page. We are
+building it publicly for everyone to see our progress. We believe great
+softwares are built this way.
 
-OpenStatus is a free and open-source status page and alerting system.
-
-## Contributing
-
-Coming soon
+You can choose to host it yourself or use our hosted version at
+[openstatus.dev](https://www.openstatus.dev)
 
 ## Contact us
 
-If you want to learn more about this project or have any questions, send us an
-email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
+If you want to learn more about this project or have any questions, book a call
+with us or send us an email at
+[hello@openstatus.dev](mailto:hello@openstatus.dev) <br/><br/>
 <a href="https://cal.com/thibault-openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
 ## Built with
@@ -41,7 +41,7 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 - [Tailwind CSS](https://tailwindcss.com/)
 - [shadcn/ui](https://ui.shadcn.com/)
 - [tinybird](http://tinybird.co/?ref=openstatus.dev)
-- [planetscale](http://planetscale.com/)
+- [turso](http://turso.tech/)
 - [drizzle](https://orm.drizzle.team/)
 - [clerk](https://clerk.com/)
 - [Resend](https://resend.com/)
@@ -69,15 +69,18 @@ email at [hello@openstatus.dev](mailto:hello@openstatus.dev) <br/> or <br/>
 
 3. Set up your .env file
 
-   from `apps/web` and `packages/db` you will find .env.example create your own
+   from `apps/web` and `packages/db` you will find .env.example create your own.
 
-4. Start the development server
+4. Follow the steps to run your sqlite database locally inside of
+   [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
+
+5. Start the development server
 
    ```sh
     pnpm dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see
+6. Open [http://localhost:3000](http://localhost:3000) with your browser to see
    the result.
 
 For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
@@ -93,8 +96,16 @@ $ ngrok http 3000
 Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
 contribute to it.
 
-## Contributors
+## Contributing
+
+If you want to help us building the best status page and alerting system, you
+can check our
+[contributing guidelines](https://github.com/openstatusHQ/openstatus/blob/main/CONTRIBUTING.MD)
+
+### Top Contributors
 
 <a href="https://github.com/openstatushq/openstatus/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=openstatushq/openstatus" />
 </a>
+
+Made with [Contrib.rocks](https://contrib.rocks)

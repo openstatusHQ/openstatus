@@ -1,4 +1,4 @@
-import type { HttpBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
+import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink } from "@trpc/client";
 
 import type { AppRouter } from "@openstatus/api";
@@ -10,13 +10,13 @@ const getBaseUrl = () => {
   return `http://localhost:3000`;
 };
 
-const lambdas = ["clerk"];
+const lambdas = ["clerkRouter", "stripeRouter"];
 
 export const endingLink = (opts?: { headers?: HTTPHeaders }) =>
   ((runtime) => {
     const sharedOpts = {
       headers: opts?.headers,
-    } satisfies Partial<HttpBatchLinkOptions>;
+    } satisfies Partial<HTTPBatchLinkOptions>;
 
     const edgeLink = httpBatchLink({
       ...sharedOpts,

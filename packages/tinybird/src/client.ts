@@ -14,19 +14,17 @@ import {
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
     datasource: "ping_response__v2",
-    // @ts-ignore TODO: this is caused by the metadata even though the
-    // error says something regarding _input.cronTimestamp
     event: tbIngestPingResponse,
   });
 }
 
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "response_list__v1",
+    pipe: "response_list__v0",
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
-      revalidate: 60, // 60 seconds cache validation
+      cache: "no-store",
     },
   });
 }
@@ -37,7 +35,7 @@ export function getMonitorList(tb: Tinybird) {
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      revalidate: 60,
+      cache: "no-store",
     },
   });
 }

@@ -1,12 +1,47 @@
 {
   "version": "5",
-  "dialect": "mysql",
+  "dialect": "sqlite",
   "entries": [
     {
       "idx": 0,
       "version": "5",
-      "when": 1687764025255,
-      "tag": "0000_superb_hercules",
+      "when": 1690309905039,
+      "tag": "0000_lively_master_chief",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1690892003254,
+      "tag": "0001_brainy_beast",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1691573899721,
+      "tag": "0002_luxuriant_ser_duncan",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1691614487733,
+      "tag": "0003_glamorous_living_mummy",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1691850907670,
+      "tag": "0004_fixed_dakota_north",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1691930414569,
+      "tag": "0005_even_baron_strucker",
       "breakpoints": true
     }
   ]

@@ -1,0 +1,20 @@
+{
+  "name": "@openstatus/plans",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@openstatus/db": "workspace:^",
+    "zod": "3.21.4"
+  },
+  "devDependencies": {
+    "tsconfig": "workspace:^",
+    "typescript": "5.1.6"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

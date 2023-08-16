@@ -1,0 +1,11 @@
+{
+  "index": "Introduction",
+  "get-started": "Get Started",
+
+  "contact": {
+    "title": "🌐 Website",
+    "type": "page",
+    "href": "https://www.openstatus.dev",
+    "newWindow": true
+  }
+}

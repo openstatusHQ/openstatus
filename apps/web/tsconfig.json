@@ -3,17 +3,20 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "contentlayer/generated": ["./.contentlayer/generated"],
       "@/*": ["./src/*"]
     },
     "plugins": [{ "name": "next" }],
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "strict": true
   },
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "**/*.mjs"
+    "**/*.mjs",
+    ".contentlayer/generated"
   ],
   "exclude": ["node_modules"]
 }

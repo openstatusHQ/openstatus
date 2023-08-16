@@ -1,12 +1,12 @@
-VERSION 1
+VERSION 0
 
-NODE response_list__v1_0
+NODE response_list_0
 SQL >
 
     %
     SELECT *
-    FROM ping_response__v2
-    WHERE id = {{ String(siteId, 'openstatus') }} 
+    FROM ping_response
+    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
     {% if defined(region) %}
     AND region = {{ String(region) }}
     {% end %}
@@ -21,3 +21,5 @@ SQL >
     {% end %}
     ORDER BY timestamp DESC
     LIMIT {{Int32(limit, 100)}}
+
+

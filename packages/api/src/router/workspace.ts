@@ -1,14 +1,15 @@
+import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
 import {
-  page,
+  selectWorkspaceSchema,
   user,
-  usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { hasUserAccessToWorkspace } from "./utils";
 
 export const workspaceRouter = createTRPCRouter({
   getUserWithWorkspace: protectedProcedure.query(async (opts) => {
@@ -23,23 +24,32 @@ export const workspaceRouter = createTRPCRouter({
       where: eq(user.tenantId, opts.ctx.auth.userId),
     });
   }),
+
   getWorkspace: protectedProcedure
-    .input(z.object({ workspaceId: z.number() }))
+    .input(z.object({ slug: z.string() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.workspace.findMany({
-        with: {
-          page: true,
-        },
-        where: eq(workspace.id, opts.input.workspaceId),
+      const data = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.slug,
+        ctx: opts.ctx,
       });
+      if (!data) return;
+
+      const result = await opts.ctx.db.query.workspace.findFirst({
+        where: eq(workspace.id, data.workspace.id),
+      });
+
+      return selectWorkspaceSchema.parse(result);
     }),
 
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
-      await opts.ctx.db
+      const slug = generateSlug(2);
+
+      return opts.ctx.db
         .insert(workspace)
-        .values({ name: opts.input.name })
-        .execute();
+        .values({ slug: slug, name: opts.input.name })
+        .returning()
+        .get();
     }),
 });

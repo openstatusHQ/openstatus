@@ -3,28 +3,27 @@ import type { z } from "zod";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { getMonitorListData } from "@/lib/tb";
-import { Tracker } from "../monitor/tracker";
+import { Tracker } from "../tracker";
 
 export const Monitor = async ({
   monitor,
 }: {
   monitor: z.infer<typeof selectMonitorSchema>;
 }) => {
-  // fix this we should update our tinybird to fetch with  pageId and monitorId
-  //   const data = await getMonitorListData({ siteId: String(monitor.pageId) });
-  const data = await getMonitorListData({ siteId: "openstatus" });
-
+  const data = await getMonitorListData({
+    monitorId: String(monitor.id),
+    groupBy: "day",
+  });
   if (!data) return <div>Something went wrong</div>;
-
   return (
-    <div className="border-border rounded-lg border p-8">
-      <h1 className="font-cal mb-3 text-center text-2xl">Status</h1>
-      <Tracker
-        data={data}
-        id="openstatus"
-        name="Ping"
-        url="https://openstatus.dev/api/ping"
-      />
-    </div>
+    <Tracker
+      data={data}
+      id={monitor.id}
+      name={monitor.name}
+      url={monitor.url}
+      description={monitor.description}
+      context="status-page"
+      maxSize={40}
+    />
   );
 };

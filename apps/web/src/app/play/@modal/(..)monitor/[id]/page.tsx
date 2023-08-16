@@ -2,8 +2,8 @@ import * as z from "zod";
 
 import { availableRegions } from "@openstatus/tinybird";
 
-import { columns } from "@/components/monitor/columns";
-import { DataTable } from "@/components/monitor/data-table";
+import { columns } from "@/components/data-table/columns";
+import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { Modal } from "./modal";
 
@@ -29,8 +29,9 @@ export default async function Monitor({
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
   const data = search.success
-    ? await getResponseListData({ siteId: params.id, ...search.data })
-    : await getResponseListData({ siteId: params.id });
+    // TODO: lets hard-code our `monitorId` here 
+    ? await getResponseListData({ monitorId: params.id, ...search.data })
+    : await getResponseListData({ monitorId: params.id });
 
   if (!data) return <div>Something went wrong</div>;
 

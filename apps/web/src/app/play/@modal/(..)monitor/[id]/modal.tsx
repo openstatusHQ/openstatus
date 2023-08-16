@@ -16,7 +16,7 @@ export function Modal({ children }: { children: React.ReactNode }) {
   return (
     <Dialog open onOpenChange={handleOpenChange}>
       {/* overflow-auto should happen inside content table */}
-      <DialogContent className="max-h-screen w-full overflow-auto sm:max-w-3xl">
+      <DialogContent className="max-h-screen w-full overflow-auto sm:max-w-3xl sm:p-8">
         {children}
       </DialogContent>
     </Dialog>

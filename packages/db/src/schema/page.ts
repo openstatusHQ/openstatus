@@ -1,47 +1,67 @@
-import { relations } from "drizzle-orm";
-import {
-  int,
-  mysqlTable,
-  text,
-  timestamp,
-  varchar,
-} from "drizzle-orm/mysql-core";
+import { relations, sql } from "drizzle-orm";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { incident } from "./incident";
-import { monitor } from "./monitor";
+import {
+  incident,
+  selectIncidentSchema,
+  selectIncidentUpdateSchema,
+} from "./incident";
+import { monitorsToPages, selectMonitorSchema } from "./monitor";
+import { workspace } from "./workspace";
 
-export const page = mysqlTable("page", {
-  id: int("id").autoincrement().primaryKey(),
+export const page = sqliteTable("page", {
+  id: integer("id").primaryKey(),
 
-  workspaceId: int("workspace_id").notNull(),
+  workspaceId: integer("workspace_id")
+    .notNull()
+    .references(() => workspace.id, { onDelete: "cascade" }),
 
   title: text("title").notNull(), // title of the page
   description: text("description").notNull(), // description of the page
-  icon: varchar("icon", { length: 256 }), // icon of the page
-  slug: varchar("slug", { length: 256 }).notNull(), // which is used for https://slug.openstatus.dev
-  customDomain: varchar("custom_domain", { length: 256 }).notNull().default(""),
+  icon: text("icon", { length: 256 }).default(""), // icon of the page
+  slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
+  customDomain: text("custom_domain", { length: 256 }).notNull(),
+  published: integer("published", { mode: "boolean" }).default(false),
 
-  // We should store settings of the page
-  // theme
-
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`(strftime('%s', 'now'))`,
+  ),
 });
 
 export const pageRelations = relations(page, ({ many, one }) => ({
-  incidents: many(incident),
-  workspace: one(page, {
+  monitorsToPages: many(monitorsToPages),
+  workspace: one(workspace, {
     fields: [page.workspaceId],
-    references: [page.id],
+    references: [workspace.id],
   }),
-  monitors: many(monitor),
 }));
+
+const slugSchema = z
+  .string()
+  .regex(
+    new RegExp("^[A-Za-z0-9-]+$"),
+    "Only use digits (0-9), hyphen (-) or characters (A-Z, a-z).",
+  )
+  .min(3)
+  .toLowerCase();
 
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
   customDomain: z.string().optional(),
+  icon: z.string().optional(),
+  slug: slugSchema,
+});
+
+export const insertPageSchemaWithMonitors = insertPageSchema.extend({
+  customDomain: z.string().optional().default(""),
+  monitors: z.array(z.number()).optional(),
+  workspaceSlug: z.string().optional(),
+  slug: slugSchema,
 });
 
 // Schema for selecting a Page - can be used to validate API responses

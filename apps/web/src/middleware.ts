@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
-import { user, usersToWorkspaces } from "@openstatus/db/src/schema";
+import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 const before = (req: NextRequest, ev: NextFetchEvent) => {
   const url = req.nextUrl.clone();
@@ -50,15 +50,16 @@ export default authMiddleware({
     "/play/(.*)",
     "/monitor/(.*)",
     "/api/(.*)",
-    "/api/og",
-    "/api/ping",
-    "/api/v0/cron",
-    "/api/v0/ping",
     "/api/webhook/clerk",
     "/api/checker/regions/(.*)",
     "/api/checker/cron/10m",
+    "/blog",
+    "/blog/(.*)",
+    "/legal/(.*)",
+    "/discord",
+    "/github",
   ],
-
+  ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
   async afterAuth(auth, req, evt) {
     // handle users who aren't authenticated
@@ -81,14 +82,20 @@ export default authMiddleware({
         .select()
         .from(usersToWorkspaces)
         .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
-        .execute();
-
-      if (result.length) {
-        const orgSelection = new URL(
-          `/app/${result[0].users_to_workspaces.workspaceId}`,
-          req.url,
-        );
-        return NextResponse.redirect(orgSelection);
+        .all();
+      if (result.length > 0) {
+        const currentWorkspace = await db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
+          .get();
+        if (currentWorkspace) {
+          const orgSelection = new URL(
+            `/app/${currentWorkspace.slug}/monitors`,
+            req.url,
+          );
+          return NextResponse.redirect(orgSelection);
+        }
       } else {
         // return NextResponse.redirect(new URL("/app/onboarding", req.url));
         // probably redirect to onboarding
@@ -99,5 +106,10 @@ export default authMiddleware({
 });
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: [
+    "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/",
+    "/(api/webhook|api/trpc)(.*)",
+    "/(!api/checker/:path*|!api/og|!api/ping)",
+  ],
 };
