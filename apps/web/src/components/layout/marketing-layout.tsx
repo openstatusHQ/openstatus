@@ -8,7 +8,7 @@ export function MarketingLayout({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex w-full max-w-[calc(65ch+8rem)] flex-1 flex-col items-start justify-center">
         {children}
       </div>
-      <MarketingFooter />
+      <MarketingFooter className="mx-auto w-full max-w-[calc(65ch+8rem)]" />
     </main>
   );
 }

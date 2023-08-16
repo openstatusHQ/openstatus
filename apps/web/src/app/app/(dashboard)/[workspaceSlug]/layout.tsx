@@ -1,7 +1,6 @@
 import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
-import { AppFooter } from "@/components/layout/app-footer";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppMenu } from "@/components/layout/app-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
@@ -25,7 +24,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Shell>
         </main>
       </div>
-      <AppFooter />
     </div>
   );
 }
