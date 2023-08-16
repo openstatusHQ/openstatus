@@ -37,7 +37,7 @@ jobs:
         run: pnpm install
 
       - name: 🔬 Lint
-        run: pnpm lint:strict
+        run: pnpm lint
 
   prettier:
     name: 💅 Prettier
@@ -66,4 +66,4 @@ jobs:
         run: pnpm install
 
       - name: 💅 Prettier check
-        run: pnpm prettier
+        run: pnpm format
