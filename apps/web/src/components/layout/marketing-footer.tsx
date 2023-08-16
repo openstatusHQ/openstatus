@@ -12,7 +12,7 @@ export function MarketingFooter({ className }: Props) {
   return (
     <footer className={cn("w-full", className)}>
       <Shell className="grid grid-cols-2 gap-6 md:grid-cols-3">
-        <div className="grid gap-3 text-sm">
+        <div className="flex flex-col gap-3 text-sm">
           <p className="text-muted-foreground font-semibold">Twitter</p>
           <FooterLink
             href="https://twitter.com/thibaultleouay"
@@ -20,7 +20,7 @@ export function MarketingFooter({ className }: Props) {
           />
           <FooterLink href="https://twitter.com/mxkaske" label="@mxkaske" />
         </div>
-        <div className="grid gap-3 text-sm">
+        <div className="flex flex-col gap-3 text-sm">
           <p className="text-muted-foreground font-semibold">Community</p>
           <FooterLink
             href="https://github.com/openstatushq/openstatus"
@@ -28,8 +28,9 @@ export function MarketingFooter({ className }: Props) {
           />
           <FooterLink href="https://discord.gg/dHD4JtSfsn" label="Discord" />
         </div>
-        <div className="grid gap-3 text-sm">
+        <div className="flex flex-col gap-3 text-sm">
           <p className="text-muted-foreground font-semibold">More</p>
+          <FooterLink href="https://docs.openstatus.dev" label="Docs" />
           <FooterLink href="/legal/terms" label="Terms" />
           <FooterLink href="/legal/privacy" label="Privacy" />
         </div>
