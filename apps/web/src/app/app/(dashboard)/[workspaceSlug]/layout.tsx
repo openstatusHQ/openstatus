@@ -4,8 +4,8 @@ import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppMenu } from "@/components/layout/app-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { Footer } from "@/components/layout/footer";
 
+// TODO: make the container min-h-screen and the footer below!
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4 lg:p-8">
@@ -24,7 +24,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </Shell>
         </main>
       </div>
-      <Footer />
     </div>
   );
 }

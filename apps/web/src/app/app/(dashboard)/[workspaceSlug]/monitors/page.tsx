@@ -42,28 +42,28 @@ export default async function MonitorPage({
             key={index}
             title={monitor.name}
             description={monitor.description}
-            actions={
-              <ActionButton {...monitor} workspaceSlug={params.workspaceSlug} />
-            }
+            actions={[
+              <Badge
+                key="status-badge"
+                variant={monitor.active ? "default" : "outline"}
+                className="capitalize"
+              >
+                {monitor.active ? "active" : "inactive"}
+                <span
+                  className={cn(
+                    "ml-1 h-1.5 w-1.5 rounded-full",
+                    monitor.active ? "bg-green-500" : "bg-red-500",
+                  )}
+                />
+              </Badge>,
+              <ActionButton
+                key="action-button"
+                {...monitor}
+                workspaceSlug={params.workspaceSlug}
+              />,
+            ]}
           >
             <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
-              <div className="flex min-w-0 items-center justify-between gap-3">
-                <dt>Status</dt>
-                <dd>
-                  <Badge
-                    variant={monitor.active ? "default" : "outline"}
-                    className="capitalize"
-                  >
-                    {monitor.active ? "active" : "inactive"}
-                    <span
-                      className={cn(
-                        "ml-1 h-1.5 w-1.5 rounded-full",
-                        monitor.active ? "bg-green-500" : "bg-red-500",
-                      )}
-                    />
-                  </Badge>
-                </dd>
-              </div>
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <dt>Frequency</dt>
                 <dd className="font-mono">{monitor.periodicity}</dd>
