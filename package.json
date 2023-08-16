@@ -4,7 +4,9 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
     "tsc": "tsc"
   },
   "pnpm": {
