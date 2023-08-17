@@ -41,7 +41,7 @@ export function Events({
 
   return (
     <div className="grid gap-3">
-      {slicedArray?.map((update, i) => {
+      {slicedArray?.map((update) => {
         const { icon, label } = statusDict[update.status];
         const StatusIcon = Icons[icon];
         return (

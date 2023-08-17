@@ -8,10 +8,8 @@ import { Icons } from "@/components/icons";
 import { AffectedMonitors } from "@/components/incidents/affected-monitors";
 import { Events } from "@/components/incidents/events";
 import { StatusBadge } from "@/components/incidents/status-badge";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
-import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
@@ -37,7 +35,6 @@ export default async function IncidentPage({
             {incidents?.map((incident, i) => {
               const { label, icon } =
                 statusDict[incident.status as keyof typeof statusDict];
-              const Icon = Icons[icon];
               return (
                 <li key={i} className="grid gap-2">
                   <time className="text-muted-foreground pl-3 text-xs">

@@ -5,7 +5,6 @@ import { Resend } from "resend";
 
 import { validateEmailNotDisposable, WaitingList } from "@openstatus/emails";
 
-import { EmailTemplate } from "@/components/templates/email-template";
 import { env } from "@/env";
 
 const redis = Redis.fromEnv();
@@ -38,15 +37,6 @@ const write = async (email: string) => {
     .zcard(key)
     .exec();
   return res[1];
-};
-
-// MOCK
-const wait = (ms: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
 };
 
 // Resend
