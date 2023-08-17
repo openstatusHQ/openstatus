@@ -20,8 +20,6 @@ import { allPlans } from "@openstatus/plans";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { hasUserAccessToWorkspace } from "./utils";
 
-const limit = allPlans.free.limits["status-pages"];
-
 // TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
@@ -42,6 +40,8 @@ export const pageRouter = createTRPCRouter({
           where: eq(page.workspaceId, data.workspace.id),
         })
       ).length;
+
+      const limit = data.plan.limits["status-pages"];
 
       // the user has reached the limits
       if (pageNumbers >= limit) {
