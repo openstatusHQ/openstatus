@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
+import { CustomDomainForm } from "@/components/forms/custom-domain-form";
 import { StatusPageForm } from "@/components/forms/status-page-form";
 import { api } from "@/trpc/server";
 
@@ -32,8 +33,6 @@ export default async function EditPage({
     workspaceSlug: params.workspaceSlug,
   });
 
-  console.log(monitors, page);
-
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Status Page" description="Upsert your status page." />
@@ -52,6 +51,12 @@ export default async function EditPage({
               : undefined
           }
         />
+        <div />
+        {page ? (
+          <CustomDomainForm
+            defaultValues={{ customDomain: page?.customDomain, id: page?.id }} // to be improved
+          />
+        ) : null}
       </div>
     </div>
   );
