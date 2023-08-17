@@ -1,5 +1,6 @@
 import { eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import { allPlans } from "@openstatus/plans";
 
 import { Context } from "../trpc";
 
@@ -39,5 +40,11 @@ export const hasUserAccessToWorkspace = async ({
   // the user doesn't have access to this workspace
   if (!result || !result.users_to_workspaces) return;
 
-  return { workspace: currentWorkspace, user: result.currentUser };
+  const plan = (currentWorkspace.plan || "free") as "free" | "pro"; // FIXME: that is a hotfix
+
+  return {
+    workspace: currentWorkspace,
+    user: result.currentUser,
+    plan: allPlans[plan],
+  };
 };
