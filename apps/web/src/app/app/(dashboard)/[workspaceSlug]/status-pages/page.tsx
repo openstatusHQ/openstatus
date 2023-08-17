@@ -33,7 +33,7 @@ export default async function Page({
   });
 
   const isLimit =
-    (monitors?.length || 0) >=
+    (pages?.length || 0) >=
     allPlans[workspace?.plan || "free"].limits["status-pages"];
 
   const disableButton = isLimit || !Boolean(monitors);
