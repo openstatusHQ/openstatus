@@ -70,7 +70,7 @@ export function Tracker({
     {
       count: 0,
       ok: 0,
-    }
+    },
   );
 
   const uptime =
@@ -83,7 +83,9 @@ export function Tracker({
       <div className="mb-1 flex justify-between text-sm sm:mb-2">
         <div className="flex items-center gap-2">
           <p className="text-foreground font-semibold">{name}</p>
-          { description ? <MoreInfo {...{ url, id, context, description }} /> : null }
+          {description ? (
+            <MoreInfo {...{ url, id, context, description }} />
+          ) : null}
         </div>
         <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
@@ -208,7 +210,7 @@ const Bar = ({
 
 // FIXME this is a temporary solution
 const getStatus = (
-  ratio: number
+  ratio: number,
 ): { label: string; variant: "up" | "degraded" | "down" } => {
   if (ratio >= 0.98) return { label: "Operational", variant: "up" };
   if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
