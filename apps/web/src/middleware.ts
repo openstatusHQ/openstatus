@@ -42,11 +42,10 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
-  console.log(host, env.NEXT_PUBLIC_URL);
   // In case the host is a custom domain
   if (
     host &&
-    (!host?.includes(env.NEXT_PUBLIC_URL) || !host?.endsWith(".vercel.app"))
+    !(host?.includes(env.NEXT_PUBLIC_URL) || host?.endsWith(".vercel.app"))
   ) {
     subdomain = host;
   }
