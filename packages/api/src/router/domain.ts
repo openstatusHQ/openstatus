@@ -114,7 +114,7 @@ export const domainRouter = createTRPCRouter({
     .input(z.object({ domain: z.string() }))
     .query(async (opts) => {
       const data = await fetch(
-        `https://api.vercel.com/v6/domains/${opts.input.domain}/config?teamId=${env.TEAM_ID_VERCEL}`,
+        `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${opts.input.domain}?teamId=${env.TEAM_ID_VERCEL}`,
         {
           method: "GET",
           headers: {
@@ -124,7 +124,6 @@ export const domainRouter = createTRPCRouter({
         },
       );
       const json = await data.json();
-      console.log(json);
       const result = domainResponseSchema
         .extend({
           error: z

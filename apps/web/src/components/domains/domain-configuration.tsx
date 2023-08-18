@@ -44,12 +44,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       const data = await checker(domain);
       setDomainVerification(data);
     }
-    checkDomain(); // first check
-    const myInterval = setInterval(() => {
-      startTransition(async () => {
-        await checkDomain();
-      });
-    }, 5000);
+    setInterval(checkDomain, 5000);
     // clearInterval(myInterval)
   }, [domain]);
 
@@ -149,14 +144,10 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   </div>
                 </div>
               </div>
-            </TabsContent>
-            <TabsContent value="CNAME">
-              <div className="my-3 text-left">
-                <p className="my-5 text-sm">
-                  To configure your subdomain (
-                  <InlineSnippet>{domainJson.name}</InlineSnippet>
-                  ), set the following CNAME record on your DNS provider to
-                  continue:
+              <div>
+                <p className="text-sm font-bold">Value</p>
+                <p className="mt-2 font-mono text-sm">
+                  {recordType === "A" ? `76.76.21.21` : `cname.vercel-dns.com`}
                 </p>
                 <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                   <div>
@@ -172,7 +163,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   <div>
                     <p className="text-sm font-bold">Value</p>
                     <p className="mt-2 font-mono text-sm">
-                      {`cname.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}
+                      {`cname.vercel-dns.com`}
                     </p>
                   </div>
                   <div>
@@ -196,12 +187,12 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
 
 async function checker(domain: string) {
   let status: DomainVerificationStatusProps = "Valid Configuration";
-
   const [domainJson, configJson] = await Promise.all([
     api.domain.getDomainResponse.query({ domain }),
     api.domain.getConfigResponse.query({ domain }),
   ]);
 
+  console.log(domainJson, configJson);
   if (domainJson?.error?.code === "not_found") {
     // domain not found on Vercel project
     status = "Domain Not Found";
@@ -224,7 +215,6 @@ async function checker(domain: string) {
   } else {
     status = "Valid Configuration";
   }
-
   return {
     status,
     domainJson,
