@@ -146,9 +146,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
               </div>
               <div>
                 <p className="text-sm font-bold">Value</p>
-                <p className="mt-2 font-mono text-sm">
-                  {recordType === "A" ? `76.76.21.21` : `cname.vercel-dns.com`}
-                </p>
+                <p className="mt-2 font-mono text-sm">cname.vercel-dns.com</p>
                 <div className="bg-muted flex items-center justify-start space-x-10 rounded-md p-2">
                   <div>
                     <p className="text-sm font-bold">Type</p>
