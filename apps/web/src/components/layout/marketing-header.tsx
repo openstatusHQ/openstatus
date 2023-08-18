@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { BrandName } from "./brand-name";
 
 interface Props {
   className?: string;
@@ -15,12 +16,7 @@ export function MarketingHeader({ className }: Props) {
         className,
       )}
     >
-      <Link
-        href="/"
-        className="font-cal text-muted-foreground hover:text-foreground"
-      >
-        openstatus
-      </Link>
+      <BrandName />
       <div className="flex items-center md:gap-3">
         <Button variant="link" asChild>
           <Link href="/discord" target="_blank" rel="noreferrer">
