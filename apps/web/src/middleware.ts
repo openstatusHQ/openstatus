@@ -42,7 +42,7 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
-  console.log(host);
+  console.log(host, env.NEXT_PUBLIC_URL);
   // In case the host is a custom domain
   if (
     host &&
