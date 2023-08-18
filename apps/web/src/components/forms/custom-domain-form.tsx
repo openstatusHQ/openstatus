@@ -19,8 +19,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useDomainStatus } from "@/hooks/use-domain-status";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
+import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
 
 const customDomain = insertPageSchemaWithMonitors.pick({
@@ -37,10 +39,10 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const domainStatus = useDomainStatus(defaultValues?.customDomain);
+  const { status } = domainStatus || {};
 
   async function onSubmit(data: Schema) {
-    console.log(data);
-    // if new
     startTransition(async () => {
       if (defaultValues.id) {
         await api.page.addCustomDomain.mutate({
@@ -86,7 +88,13 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
             <FormItem className="sm:col-span-4">
               <FormLabel>Custom Domain</FormLabel>
               <FormControl>
-                <Input placeholder="acme.com" {...field} />
+                <div className="flex items-center space-x-3">
+                  <Input placeholder="acme.com" {...field} />
+                  <div className="h-full w-7">
+                    {/* TODO: add loading state */}
+                    {status ? <DomainStatusIcon status={status} /> : null}
+                  </div>
+                </div>
               </FormControl>
               <FormDescription>
                 The custom domain for your status page.

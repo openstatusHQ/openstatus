@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { AlertCircle, XCircle } from "lucide-react";
 
 import type {
   DomainResponse,
@@ -9,9 +8,9 @@ import type {
 } from "@openstatus/api/src/router/domain";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDomainStatus } from "@/hooks/use-domain-status";
 import { getSubdomain } from "@/lib/domains";
 import { cn } from "@/lib/utils";
-import { api } from "@/trpc/client";
 import DomainStatusIcon from "./domain-status-icon";
 
 export const InlineSnippet = ({
@@ -33,22 +32,8 @@ export const InlineSnippet = ({
   );
 };
 export default function DomainConfiguration({ domain }: { domain: string }) {
-  const [domainVerification, setDomainVerification] = useState<{
-    status: DomainVerificationStatusProps;
-    domainJson: DomainResponse & { error?: { code: string; message: string } };
-  }>();
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    async function checkDomain() {
-      const data = await checker(domain);
-      setDomainVerification(data);
-    }
-    setInterval(checkDomain, 5000);
-    // clearInterval(myInterval)
-  }, [domain]);
-
-  const { status, domainJson } = domainVerification || {};
+  const domainStatus = useDomainStatus(domain);
+  const { status, domainJson } = domainStatus || {};
 
   if (!status || status === "Valid Configuration" || !domainJson) return null;
 
@@ -65,7 +50,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
   return (
     <div>
       <div className="mb-4 flex items-center space-x-2">
-        <DomainStatusIcon status={status} loading={isPending} />
+        <DomainStatusIcon status={status} />
         <p className="text-lg font-semibold">{status}</p>
       </div>
       {txtVerification ? (
@@ -181,40 +166,4 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
       )}
     </div>
   );
-}
-
-async function checker(domain: string) {
-  let status: DomainVerificationStatusProps = "Valid Configuration";
-  const [domainJson, configJson] = await Promise.all([
-    api.domain.getDomainResponse.query({ domain }),
-    api.domain.getConfigResponse.query({ domain }),
-  ]);
-
-  console.log(domainJson, configJson);
-  if (domainJson?.error?.code === "not_found") {
-    // domain not found on Vercel project
-    status = "Domain Not Found";
-
-    // unknown error
-  } else if (domainJson.error) {
-    status = "Unknown Error";
-
-    // if domain is not verified, we try to verify now
-  } else if (!domainJson.verified) {
-    status = "Pending Verification";
-    const verificationJson = await api.domain.verifyDomain.query({ domain });
-
-    // domain was just verified
-    if (verificationJson && verificationJson.verified) {
-      status = "Valid Configuration";
-    }
-  } else if (configJson.misconfigured) {
-    status = "Invalid Configuration";
-  } else {
-    status = "Valid Configuration";
-  }
-  return {
-    status,
-    domainJson,
-  };
 }
