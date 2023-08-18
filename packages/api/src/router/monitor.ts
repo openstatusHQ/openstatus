@@ -10,14 +10,12 @@ import {
   selectMonitorSchema,
   user,
   usersToWorkspaces,
+  workspace,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { hasUserAccessToWorkspace } from "./utils";
-
-const monitorLimit = allPlans.free.limits.monitors;
-const periodicityLimit = allPlans.free.limits.periodicity;
 
 export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
@@ -27,7 +25,11 @@ export const monitorRouter = createTRPCRouter({
         workspaceSlug: opts.input.workspaceSlug,
         ctx: opts.ctx,
       });
+
       if (!result) return;
+
+      const monitorLimit = result.plan.limits.monitors;
+      const periodicityLimit = result.plan.limits.periodicity;
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
@@ -101,6 +103,7 @@ export const monitorRouter = createTRPCRouter({
       return _monitor;
     }),
 
+  // TODO: delete
   updateMonitorDescription: protectedProcedure
     .input(
       z.object({
@@ -149,11 +152,13 @@ export const monitorRouter = createTRPCRouter({
         .get();
       if (!currentMonitor || !currentMonitor.workspaceId) return;
 
+      // TODO: we should use hasUserAccess and pass `workspaceId` instead of `workspaceSlug`
       const currentUser = opts.ctx.db
         .select()
         .from(user)
         .where(eq(user.tenantId, opts.ctx.auth.userId))
         .as("currentUser");
+
       const result = await opts.ctx.db
         .select()
         .from(usersToWorkspaces)
@@ -162,6 +167,16 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       if (!result || !result.users_to_workspaces) return;
+
+      const currentWorkspace = await opts.ctx.db.query.workspace.findFirst({
+        where: eq(workspace.id, result.users_to_workspaces.workspaceId),
+      });
+
+      if (!currentWorkspace) return;
+
+      const plan = (currentWorkspace?.plan || "free") as "free" | "pro";
+
+      const periodicityLimit = allPlans[plan].limits.periodicity;
 
       // the user is not allowed to use the cron job
       if (
@@ -182,6 +197,7 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
     }),
+  // TODO: delete
   updateMonitorPeriodicity: protectedProcedure
     .input(
       z.object({
