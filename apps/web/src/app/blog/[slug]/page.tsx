@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";
@@ -59,6 +61,13 @@ export default function PostPage({ params }: { params: { slug: string } }) {
     notFound();
   }
 
+  const getNameInitials = (name: string) => {
+    const individualNames = name.split(" ");
+    return (
+      individualNames[0][0] + individualNames[individualNames.length - 1][0]
+    );
+  };
+
   // TODO: add author.avatar and author.url
   return (
     <>
@@ -81,13 +90,28 @@ export default function PostPage({ params }: { params: { slug: string } }) {
                 className="h-full w-full object-cover"
               />
             </div>
-            <p className="text-muted-foreground text-sm font-light">
-              {post.author.name}
-              <span className="text-muted-foreground/70 mx-1">&bull;</span>
-              {formatDate(new Date(post.publishedAt))}
-              <span className="text-muted-foreground/70 mx-1">&bull;</span>
-              {post.readingTime}
-            </p>
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={post.author.avatar} />
+                <AvatarFallback>
+                  {getNameInitials(post.author.name)}
+                </AvatarFallback>
+              </Avatar>
+              <p className="text-muted-foreground text-sm font-light">
+                <Link
+                  href={post.author.url ?? "#"}
+                  target="_blank"
+                  className="cursor-pointer font-medium text-black hover:underline"
+                >
+                  {post.author.name}
+                </Link>
+                <div>
+                  {formatDate(new Date(post.publishedAt))}
+                  <span className="text-muted-foreground/70 mx-1">&bull;</span>
+                  {post.readingTime}
+                </div>
+              </p>
+            </div>
           </div>
           <div className="mx-auto max-w-prose">
             <Mdx code={post.body.code} />
