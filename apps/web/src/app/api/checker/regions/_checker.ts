@@ -79,7 +79,13 @@ export const checker = async (request: Request, region: string) => {
 
   try {
     const startTime = Date.now();
-    const res = await fetch(result.data.url, { cache: "no-store" });
+    const res = await fetch(result.data.url,
+      {
+        headers:{
+          "OpenStatus-Ping":"true"
+        }
+        cache: "no-store"
+      });
 
     const endTime = Date.now();
     const latency = endTime - startTime;
