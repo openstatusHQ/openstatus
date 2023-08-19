@@ -21,7 +21,7 @@ export function BrandName() {
       </ContextMenuTrigger>
       <ContextMenuContent>
         <ContextMenuItem asChild>
-          <a href="/assets/logos/Openstatus.svg" download="openstatus.svg">
+          <a href="/assets/logos/OpenStatus.svg" download="openstatus.svg">
             Download SVG
           </a>
         </ContextMenuItem>
