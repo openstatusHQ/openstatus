@@ -83,7 +83,7 @@ export const checker = async (request: Request, region: string) => {
       {
         headers:{
           "OpenStatus-Ping":"true"
-        }
+        },
         cache: "no-store"
       });
 
