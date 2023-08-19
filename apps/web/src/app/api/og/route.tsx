@@ -10,7 +10,7 @@ const size = {
   height: 630,
 };
 
-const TITLE = "Open Status";
+const TITLE = "OpenStatus";
 const DESCRIPTION = "An Open Source Alternative for your next Status Page";
 const LIMIT = 40;
 
