@@ -53,7 +53,7 @@ export const plansConfig: Record<Plans, PlanProps> = {
   enterprise: {
     title: "Enterprise",
     description: "Dedicated support and needs for your company.",
-    cost: "Lets talk",
+    cost: "Let's talk",
     features: [],
     action: {
       text: "Schedule call",
