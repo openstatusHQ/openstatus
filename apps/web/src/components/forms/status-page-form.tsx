@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
@@ -62,6 +63,7 @@ export function StatusPageForm({
   const [isPending, startTransition] = useTransition();
   const watchSlug = form.watch("slug");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
+  const watchTitle = form.watch("title");
   const { toast } = useToast();
 
   const checkUniqueSlug = useCallback(async () => {
@@ -85,9 +87,14 @@ export function StatusPageForm({
         form.clearErrors("slug");
       }
     }
-    watchSlugChanges();
+
+    void watchSlugChanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkUniqueSlug]);
+
+  useEffect(() => {
+    form.setValue("slug", slugify(watchTitle));
+  }, [watchTitle, form]);
 
   const onSubmit = async ({
     ...props
@@ -144,7 +151,7 @@ export function StatusPageForm({
             });
           } else {
             if (onSubmit) {
-              form.handleSubmit(onSubmit)(e);
+              void form.handleSubmit(onSubmit)(e);
             }
           }
         }}
