@@ -3,6 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
@@ -29,9 +34,11 @@ export async function generateMetadata({
   const { title, publishedAt: publishedTime, description, slug, image } = post;
 
   return {
+    ...defaultMetadata,
     title,
     description,
     openGraph: {
+      ...ogMetadata,
       title,
       description,
       type: "article",
@@ -44,7 +51,7 @@ export async function generateMetadata({
       ],
     },
     twitter: {
-      card: "summary_large_image",
+      ...twitterMetadata,
       title,
       description,
       images: [
