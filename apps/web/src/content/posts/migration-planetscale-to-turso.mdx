@@ -1,0 +1,173 @@
+---
+title: Why we migrate from PlanetScale to Turso.
+description:
+  Discover the reasons behind our decision to use Turso as our main database.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2023-08-20
+image: /assets/posts/migration-planetscale-to-turso/latency.png
+---
+
+## What are we building ? 🏗️
+
+We are building an open source status uptime monitoring with beautiful status
+page. Our goal is to provide a fast service to our users.
+
+To achieve this, we are hosting it on the Vercel Edge Runtime, which requires an
+Edge Database to fully benefits from it.
+
+We also aim to simplify contributions to our project by eliminating the
+requirement for an account on an external service.
+
+Our data tech stack is:
+
+- Next 13
+- Drizzle Orm
+
+### What is PlanetScale ? 🗃️
+
+PlanetScale is a cloud-native database platform.
+
+It is built on top of the open-source database system Vitess. PlanetScale offers
+a managed database service that allows developers to deploy, manage, and scale
+databases easily. In my opinion, the standout feature of PlanetScale is its
+migration management system.
+
+### What is Turso ? 🌍
+
+Turso is a new database provider.
+
+They provide an Edge database that enhances the developer experience of SQLite
+for your users. It enables extensive replication, allowing you to distribute
+your data to numerous locations where your users are located.
+
+### History of the project 📜
+
+When we began the project, we opted for PlanetScale due to its simplicity and
+cost-free database option. They also don't have any cold start which is super
+nice for us. When we want to build the fastest status page. It was a good choice
+when we started the project. The database was just a URL. Their migration tools,
+ensuring zero downtime, are also valuable to us during rapid prototyping and
+frequent modifications.
+
+I came across Turso on Twitter and became interested in trying it out. It seems
+promising as their value proposition is an edge database, which is exactly what
+we need. We plan to deploy the status page to the edge (Vercel Edge Runtime) .
+Calling a database in a specific region would negate the benefits of Vercel Edge
+Runtime.
+
+## What drove our changes ? 🤔
+
+### Performance 🏎️
+
+Not all of our users are in us-east-1. Users who are not located in us-east-1
+should receive the same level of performance as those in that region.
+
+I was playing with this [Vercel tool](https://edge-data-latency.vercel.app/) to
+determine the most suitable database for our users. Among the options, Turso
+proved to be the fastest.
+
+![Turso latency](/assets/posts/migration-planetscale-to-turso/turso-latency.png)
+Turso is around 60ms for 5 serial queries globally.
+![PlanetScale latency](/assets/posts/migration-planetscale-to-turso/planetscale-latency.png)
+While PlanetScale is around 450ms for 5 serial queries in a different region.
+
+We considered using read replicas from PlanetScale, but I was also interested in
+trying out Turso.
+
+With Turso, you only need a single URL for all your replicas, eliminating the
+need to add this logic in your codebase. Additionally, Turso's scaler plan is
+more affordable, offering 6 replicas for 29euros, whereas planetscale only
+allows 3 replicas.
+
+Turso offers 26 regions, while PlanetScale only offers 11 regions (their AWS
+regions).
+
+### Better DX for contributors 🧑‍💻
+
+We are building an open source status page, and we want to make it easy for
+everyone to contribute to it.
+
+Asking our users to create an account on a new service is a bit awkward. We
+could have asked for our user to use Docker and create a MySQL8 database while
+developing locally. However I don’t like docker it consumes too much memory on
+my laptop 😁
+
+Or We use a file and SQLite, as it is the best option for everyone. and it’s
+what we can achieve with Turso. Seamless local development
+
+## How the migration went. 🚀
+
+### SQLite has less a less powerful type system than MySQL. 📦
+
+The migration process from MySQL to SQLite requires some changes. SQLite has
+fewer data types compared to MySQL. For example, DateTime doesn't exist in
+SQLite, so dates should be treated as integers.
+
+There are only five types in SQLite:
+
+- INT
+- INTEGER,
+- REAL,
+- TEXT,
+- BLOB,
+
+We use Drizzle for type handling in our codebase, so we weren't significantly
+affected by this. Additionally, our experience with SQLite has taught us the
+importance of implementing additional checks in our code, rather than solely
+relying on the database engine.
+
+### Drizzle ORM Migration 😱
+
+We had to write additional SQL for migration when transitioning from Planetscale
+and/or Prisma. Initially, it was a bit frustrating because Drizzle cannot
+generate all the necessary migration code.
+
+```
+/*
+ SQLite does not support "Drop not null from column" out of the box,
+ we do not generate automatic migration for that, so it has to be done manually
+ Please refer to: <https://www.techonthenet.com/sqlite/tables/alter_table.php>
+                  <https://www.sqlite.org/lang_altertable.html>
+                  <https://stackoverflow.com/questions/2083543/modify-a-columns-type-in-sqlite3>
+
+ Due to that we don't generate migration automatically
+ and it has to be done manually
+*/
+
+```
+
+After migrating a couple of times, you realize that they are mostly the same,
+and you need to follow these steps.
+
+1. Create new table
+2. Copy data into new table
+3. Drop old table
+4. Rename new table
+
+## The Turso Doc 📚
+
+The Turso Documentation has been the major challenge during the migration. faced
+difficulties finding the specific information I needed to make it work both
+locally and on Turso.
+
+I have struggled to find exactly what I was looking for to make it work locally
+and on Turso.
+
+However, I have DMed Glauber, the CEO of Turso, and they are aware of this
+issue. Hopefully, they will update the documentation soon. I believe that with
+comprehensive documentation and plenty of examples, Turso will be a great
+product.
+
+# The verdict 🍾
+
+We are pleased with the change, regardless of whether our users are interested
+in the stack we utilize. We genuinely enjoy using this stack. Turso is still an
+early product, but we are confident that it will improve over time. I strongly
+believe in its future.
+
+P.S. We are building OpenStatus in public, follow
+[me](https://www.twitter.com/thibaultleouay) or
+[Max](https://www.twitter.com/mxkaske) on twitter if you want sneak peak of the
+upcoming features - it's fun to watch! 🍿
