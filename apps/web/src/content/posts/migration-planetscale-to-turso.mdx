@@ -15,19 +15,21 @@ We are building an open source status uptime monitoring with beautiful status
 page. Our goal is to provide a fast service to our users.
 
 To achieve this, we are hosting it on the Vercel Edge Runtime, which requires an
-Edge Database to fully benefits from it.
+Edge Database to fully benefit from it.
 
 We also aim to simplify contributions to our project by eliminating the
 requirement for an account on an external service.
 
 Our data tech stack is:
 
-- Next 13
-- Drizzle Orm
+- [Next 13](https://nextjs.org/)
+- [Drizzle ORM](https://orm.drizzle.team/)
+- Tinybird
+- SQL Database
 
 ### What is PlanetScale ? 🗃️
 
-PlanetScale is a cloud-native database platform.
+[PlanetScale](https://planetscale.com/) is a cloud-native database platform.
 
 It is built on top of the open-source database system Vitess. PlanetScale offers
 a managed database service that allows developers to deploy, manage, and scale
@@ -36,9 +38,9 @@ migration management system.
 
 ### What is Turso ? 🌍
 
-Turso is a new database provider.
+[Turso](https://turso.tech/) is a new database provider.
 
-They provide an Edge database that enhances the developer experience of SQLite
+They provide an edge database that enhances the developer experience of SQLite
 for your users. It enables extensive replication, allowing you to distribute
 your data to numerous locations where your users are located.
 
@@ -51,17 +53,17 @@ when we started the project. The database was just a URL. Their migration tools,
 ensuring zero downtime, are also valuable to us during rapid prototyping and
 frequent modifications.
 
-I came across Turso on Twitter and became interested in trying it out. It seems
-promising as their value proposition is an edge database, which is exactly what
-we need. We plan to deploy the status page to the edge (Vercel Edge Runtime) .
-Calling a database in a specific region would negate the benefits of Vercel Edge
-Runtime.
+I came across Turso on X (formely known as Twitter) and became interested in
+trying it out. It seems promising as their value proposition is an edge
+database, which is exactly what we need. We plan to deploy the status page to
+the edge (Vercel Edge Runtime). Calling a database in a specific region would
+negate the benefits of Vercel Edge Runtime.
 
 ## What drove our changes ? 🤔
 
 ### Performance 🏎️
 
-Not all of our users are in us-east-1. Users who are not located in us-east-1
+Not all of our users are in `us-east-1`. Users who are not located in us-east-1
 should receive the same level of performance as those in that region.
 
 I was playing with this [Vercel tool](https://edge-data-latency.vercel.app/) to
@@ -78,8 +80,8 @@ trying out Turso.
 
 With Turso, you only need a single URL for all your replicas, eliminating the
 need to add this logic in your codebase. Additionally, Turso's scaler plan is
-more affordable, offering 6 replicas for 29euros, whereas planetscale only
-allows 3 replicas.
+more affordable, offering 6 replicas for 29 $, whereas Planetscale only allows 3
+replicas.
 
 Turso offers 26 regions, while PlanetScale only offers 11 regions (their AWS
 regions).
@@ -91,11 +93,11 @@ everyone to contribute to it.
 
 Asking our users to create an account on a new service is a bit awkward. We
 could have asked for our user to use Docker and create a MySQL8 database while
-developing locally. However I don’t like docker it consumes too much memory on
-my laptop 😁
+developing locally. However I don’t like Docker, it consumes too much memory on
+my laptop 😁.
 
-Or We use a file and SQLite, as it is the best option for everyone. and it’s
-what we can achieve with Turso. Seamless local development
+Or We use a file and SQLite, as it is the best option for everyone. And it’s
+what we can achieve with Turso: seamless local development
 
 ## How the migration went. 🚀
 
@@ -107,11 +109,13 @@ SQLite, so dates should be treated as integers.
 
 There are only five types in SQLite:
 
+```
 - INT
 - INTEGER,
 - REAL,
 - TEXT,
 - BLOB,
+```
 
 We use Drizzle for type handling in our codebase, so we weren't significantly
 affected by this. Additionally, our experience with SQLite has taught us the
@@ -146,6 +150,42 @@ and you need to follow these steps.
 3. Drop old table
 4. Rename new table
 
+As it can been seen in this
+[migration](https://github.com/openstatusHQ/openstatus/blob/9f610d7cafb892774ceda533b3f21aaa4a4b3d5f/packages/db/drizzle/0003_glamorous_living_mummy.sql)
+when we realeased the incident:
+
+```sql
+ALTER TABLE `incident` RENAME TO `incident_old`;--> statement-breakpoint
+ALTER TABLE `incident_update` RENAME TO `incident_update_old`;--> statement-breakpoint
+
+DROP TABLE `incident_old`;--> statement-breakpoint
+DROP TABLE `incident_update_old`;--> statement-breakpoint
+
+CREATE TABLE `incident` (
+`id` integer PRIMARY KEY NOT NULL,
+`status` text(4) NOT NULL,
+`title` text(256) NOT NULL,
+`created_at` integer DEFAULT (strftime('%s', 'now')),
+`updated_at` integer DEFAULT (strftime('%s', 'now')),
+`workspace_id` integer NOT NULL,
+FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+
+CREATE TABLE `incident_update` (
+`id` integer PRIMARY KEY NOT NULL,
+`status` text(4) NOT NULL,
+`date` integer NOT NULL,
+`message` text NOT NULL,
+`created_at` integer DEFAULT (strftime('%s', 'now')),
+`updated_at` integer DEFAULT (strftime('%s', 'now')),
+`incident_id` integer NOT NULL,
+FOREIGN KEY (`incident_id`) REFERENCES `incident`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+
+```
+
 ## The Turso Doc 📚
 
 The Turso Documentation has been the major challenge during the migration. faced
@@ -155,19 +195,19 @@ locally and on Turso.
 I have struggled to find exactly what I was looking for to make it work locally
 and on Turso.
 
-However, I have DMed Glauber, the CEO of Turso, and they are aware of this
-issue. Hopefully, they will update the documentation soon. I believe that with
-comprehensive documentation and plenty of examples, Turso will be a great
-product.
+However, I have DMed [Glauber Costa](https://twitter.com/glcst), the CEO of
+Turso, and they are aware of this issue. Hopefully, they will update the
+documentation soon. I believe that with comprehensive documentation and plenty
+of examples, Turso will be an even great product.
 
-# The verdict 🍾
+## The verdict 🍾
 
 We are pleased with the change, regardless of whether our users are interested
-in the stack we utilize. We genuinely enjoy using this stack. Turso is still an
+in the stack we use. We genuinely enjoy using this stack. Turso is still an
 early product, but we are confident that it will improve over time. I strongly
 believe in its future.
 
 P.S. We are building OpenStatus in public, follow
 [me](https://www.twitter.com/thibaultleouay) or
-[Max](https://www.twitter.com/mxkaske) on twitter if you want sneak peak of the
-upcoming features - it's fun to watch! 🍿
+[Max](https://www.twitter.com/mxkaske) on Twitter/X if you want sneak peaks of
+the upcoming features - it's fun to watch! 🍿
