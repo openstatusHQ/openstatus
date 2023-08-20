@@ -1,4 +1,3 @@
-// move into @/components/forms/ later
 "use client";
 
 import * as React from "react";
@@ -14,6 +13,7 @@ import {
   StatusEnum,
 } from "@openstatus/db/src/schema";
 
+import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { statusDict } from "@/data/incidents-dictionary";
@@ -170,20 +171,31 @@ export function IncidentForm({
           <div className="bg-accent/40 border-border col-span-full -m-3 grid gap-6 rounded-lg border p-3 sm:grid-cols-6">
             <FormField
               control={form.control}
-              name="message" // TODO: support markdown and add a `Tabs` switch between "Write" and "Preview"
+              name="message"
               render={({ field }) => (
                 <FormItem className="sm:col-span-4">
                   <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="We are encountering..."
-                      className="w-full resize-none"
-                      rows={7}
-                      {...field}
-                    />
-                  </FormControl>
+                  <Tabs defaultValue="write">
+                    <TabsList>
+                      <TabsTrigger value="write">Write</TabsTrigger>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="write">
+                      <FormControl>
+                        <Textarea
+                          placeholder="We are encountering..."
+                          className="h-auto w-full resize-none"
+                          rows={7}
+                          {...field}
+                        />
+                      </FormControl>
+                    </TabsContent>
+                    <TabsContent value="preview">
+                      <Preview md={form.getValues("message")} />
+                    </TabsContent>
+                  </Tabs>
                   <FormDescription>
-                    Tell your user what&apos;s happening.
+                    Tell your user what&apos;s happening. Supports markdown.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
