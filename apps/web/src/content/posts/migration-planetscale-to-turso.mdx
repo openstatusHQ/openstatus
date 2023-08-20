@@ -20,12 +20,12 @@ Edge Database to fully benefit from it.
 We also aim to simplify contributions to our project by eliminating the
 requirement for an account on an external service.
 
-Our data tech stack is:
+Our current data tech stack is:
 
 - [Next 13](https://nextjs.org/)
 - [Drizzle ORM](https://orm.drizzle.team/)
 - [Tinybird](https://www.tinybird.co/)
-- SQL Database
+- [Turso](https://turso.tech/)
 
 ### What is PlanetScale ? 🗃️
 
@@ -110,11 +110,11 @@ SQLite, so dates should be treated as integers.
 
 There are only five types in SQLite:
 
-- INT
-- INTEGER,
-- REAL,
-- TEXT,
-- BLOB,
+- `INT`
+- `INTEGER`
+- `REAL`
+- `TEXT`
+- `BLOB`
 
 We use Drizzle for type handling and migration in our codebase, so we weren't
 significantly affected by this. Additionally, our experience with SQLite has
@@ -187,8 +187,8 @@ FOREIGN KEY (`incident_id`) REFERENCES `incident`(`id`) ON UPDATE no action ON D
 
 ## The Turso Doc 📚
 
-The Turso Documentation has been the major challenge during the migration.We
-faced difficulties finding the specific information We needed to make it work
+The Turso Documentation has been the major challenge during the migration. We
+faced difficulties finding the specific information. We needed to make it work
 both locally and on Turso.
 
 However, we have DMed [Glauber Costa](https://twitter.com/glcst), the CEO of
