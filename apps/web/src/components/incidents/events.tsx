@@ -7,12 +7,12 @@ import type * as z from "zod";
 
 import type { selectIncidentUpdateSchema } from "@openstatus/db/src/schema";
 
+import { DeleteIncidentUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/incidents/_components/delete-incident-update";
 import { Icons } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
 import { cn } from "@/lib/utils";
-import { DeleteIncidentUpdateButtonIcon } from "../../app/app/(dashboard)/[workspaceSlug]/incidents/_components/delete-incident-update";
 
 type IncidentUpdateProps = z.infer<typeof selectIncidentUpdateSchema>;
 
@@ -78,7 +78,9 @@ export function Events({
                 {label}
               </Badge>
             </div>
-            <p className="max-w-3xl text-sm">{update.message}</p>
+            <p className="max-w-3xl whitespace-pre-line text-sm">
+              {update.message}
+            </p>
           </div>
         );
       })}
