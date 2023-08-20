@@ -1,5 +1,5 @@
 ---
-title: Why we migrate from PlanetScale to Turso.
+title: Why we have migrated from PlanetScale to Turso.
 description:
   Discover the reasons behind our decision to use Turso as our main database.
 author:
@@ -11,7 +11,7 @@ image: /assets/posts/migration-planetscale-to-turso/latency.png
 
 ## What are we building ? 🏗️
 
-We are building an open source status uptime monitoring with beautiful status
+We are building an open source status uptime monitoring with a beautiful status
 page. Our goal is to provide a fast service to our users.
 
 To achieve this, we are hosting it on the Vercel Edge Runtime, which requires an
@@ -24,7 +24,7 @@ Our data tech stack is:
 
 - [Next 13](https://nextjs.org/)
 - [Drizzle ORM](https://orm.drizzle.team/)
-- Tinybird
+- [Tinybird](https://www.tinybird.co/)
 - SQL Database
 
 ### What is PlanetScale ? 🗃️
@@ -48,10 +48,10 @@ your data to numerous locations where your users are located.
 
 When we began the project, we opted for PlanetScale due to its simplicity and
 cost-free database option. They also don't have any cold start which is super
-nice for us. When we want to build the fastest status page. It was a good choice
-when we started the project. The database was just a URL. Their migration tools,
-ensuring zero downtime, are also valuable to us during rapid prototyping and
-frequent modifications.
+nice for us. Since we wanted to build fast, it was a good choice when we started
+the project. The database was just a URL. Their migration tools, ensuring zero
+downtime, were also valuable to us during rapid prototyping and frequent
+modifications.
 
 I came across Turso on X (formely known as Twitter) and became interested in
 trying it out. It seems promising as their value proposition is an edge
@@ -63,24 +63,25 @@ negate the benefits of Vercel Edge Runtime.
 
 ### Performance 🏎️
 
-Not all of our users are in `us-east-1`. Users who are not located in us-east-1
-should receive the same level of performance as those in that region.
+Not all of our users are in `us-east-1`. Users who are not located in
+`us-east-1` should receive the same level of performance as those in that
+region.
 
 I was playing with this [Vercel tool](https://edge-data-latency.vercel.app/) to
 determine the most suitable database for our users. Among the options, Turso
 proved to be the fastest.
 
 ![Turso latency](/assets/posts/migration-planetscale-to-turso/turso-latency.png)
-Turso is around 60ms for 5 serial queries globally.
+Turso is around `60ms` for 5 serial queries globally.
 ![PlanetScale latency](/assets/posts/migration-planetscale-to-turso/planetscale-latency.png)
-While PlanetScale is around 450ms for 5 serial queries in a different region.
+While PlanetScale is around `450ms` for 5 serial queries in a different region.
 
 We considered using read replicas from PlanetScale, but I was also interested in
 trying out Turso.
 
 With Turso, you only need a single URL for all your replicas, eliminating the
 need to add this logic in your codebase. Additionally, Turso's scaler plan is
-more affordable, offering 6 replicas for 29 $, whereas Planetscale only allows 3
+more affordable, offering 6 replicas for $29, whereas PlanetScale only allows 3
 replicas.
 
 Turso offers 26 regions, while PlanetScale only offers 11 regions (their AWS
@@ -96,8 +97,8 @@ could have asked for our user to use Docker and create a MySQL8 database while
 developing locally. However I don’t like Docker, it consumes too much memory on
 my laptop 😁.
 
-Or We use a file and SQLite, as it is the best option for everyone. And it’s
-what we can achieve with Turso: seamless local development
+Or we use a file and SQLite, as it is the best option for everyone. And it’s
+what we can achieve with Turso: seamless local development.
 
 ## How the migration went. 🚀
 
@@ -109,23 +110,21 @@ SQLite, so dates should be treated as integers.
 
 There are only five types in SQLite:
 
-```
 - INT
 - INTEGER,
 - REAL,
 - TEXT,
 - BLOB,
-```
 
-We use Drizzle for type handling in our codebase, so we weren't significantly
-affected by this. Additionally, our experience with SQLite has taught us the
-importance of implementing additional checks in our code, rather than solely
-relying on the database engine.
+We use Drizzle for type handling and migration in our codebase, so we weren't
+significantly affected by this. Additionally, our experience with SQLite has
+taught us the importance of implementing additional checks in our code, rather
+than solely relying on the database engine.
 
 ### Drizzle ORM Migration 😱
 
 We had to write additional SQL for migration when transitioning from Planetscale
-and/or Prisma. Initially, it was a bit frustrating because Drizzle cannot
+and/or Prisma. Initially, it was a bit frustrating because Drizzle could not
 generate all the necessary migration code.
 
 ```
@@ -152,7 +151,7 @@ and you need to follow these steps.
 
 As it can been seen in this
 [migration](https://github.com/openstatusHQ/openstatus/blob/9f610d7cafb892774ceda533b3f21aaa4a4b3d5f/packages/db/drizzle/0003_glamorous_living_mummy.sql)
-when we realeased the incident:
+when we released the incident:
 
 ```sql
 ALTER TABLE `incident` RENAME TO `incident_old`;--> statement-breakpoint
@@ -188,17 +187,14 @@ FOREIGN KEY (`incident_id`) REFERENCES `incident`(`id`) ON UPDATE no action ON D
 
 ## The Turso Doc 📚
 
-The Turso Documentation has been the major challenge during the migration. faced
-difficulties finding the specific information I needed to make it work both
-locally and on Turso.
+The Turso Documentation has been the major challenge during the migration.We
+faced difficulties finding the specific information We needed to make it work
+both locally and on Turso.
 
-I have struggled to find exactly what I was looking for to make it work locally
-and on Turso.
-
-However, I have DMed [Glauber Costa](https://twitter.com/glcst), the CEO of
+However, we have DMed [Glauber Costa](https://twitter.com/glcst), the CEO of
 Turso, and they are aware of this issue. Hopefully, they will update the
-documentation soon. I believe that with comprehensive documentation and plenty
-of examples, Turso will be an even great product.
+documentation soon. We believe that with comprehensive documentation and plenty
+of examples, Turso will be an even greater product.
 
 ## The verdict 🍾
 
