@@ -104,7 +104,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
                   {getNameInitials(post.author.name)}
                 </AvatarFallback>
               </Avatar>
-              <p className="text-muted-foreground text-sm font-light">
+              <div className="text-muted-foreground text-sm font-light">
                 <Link
                   href={post.author.url ?? "#"}
                   target="_blank"
@@ -112,12 +112,12 @@ export default function PostPage({ params }: { params: { slug: string } }) {
                 >
                   {post.author.name}
                 </Link>
-                <div>
+                <p>
                   {formatDate(new Date(post.publishedAt))}
                   <span className="text-muted-foreground/70 mx-1">&bull;</span>
                   {post.readingTime}
-                </div>
-              </p>
+                </p>
+              </div>
             </div>
           </div>
           <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto  max-w-prose ">
