@@ -22,11 +22,8 @@ export function MarketingFooter({ className }: Props) {
         </div>
         <div className="flex flex-col gap-3 text-sm">
           <p className="text-foreground font-semibold">Community</p>
-          <FooterLink
-            href="https://github.com/openstatushq/openstatus"
-            label="GitHub"
-          />
-          <FooterLink href="https://discord.gg/dHD4JtSfsn" label="Discord" />
+          <FooterLink href="/github" label="GitHub" external />
+          <FooterLink href="/discord" label="Discord" external />
         </div>
         <div className="flex flex-col gap-3 text-sm">
           <p className="text-foreground font-semibold">Resources</p>
@@ -44,8 +41,14 @@ export function MarketingFooter({ className }: Props) {
   );
 }
 
-function FooterLink({ href, label }: Record<"href" | "label", string>) {
-  const isExternal = href.startsWith("http");
+interface FooterLinkProps {
+  href: string;
+  label: string;
+  external?: boolean;
+}
+
+function FooterLink({ href, label, external = false }: FooterLinkProps) {
+  const isExternal = external || href.startsWith("http");
 
   const LinkSlot = isExternal ? "a" : Link;
 

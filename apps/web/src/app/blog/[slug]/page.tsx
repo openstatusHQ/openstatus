@@ -75,7 +75,6 @@ export default function PostPage({ params }: { params: { slug: string } }) {
     );
   };
 
-  // TODO: add author.avatar and author.url
   return (
     <>
       <BackButton href="/blog" />
