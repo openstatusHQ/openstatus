@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { auth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,7 +12,7 @@ interface Props {
 }
 
 export function MarketingHeader({ className }: Props) {
-  const { userId } = auth();
+  const { isSignedIn } = useUser();
 
   return (
     <header
@@ -25,7 +27,7 @@ export function MarketingHeader({ className }: Props) {
           <Link href="/blog">Blog</Link>
         </Button>
         <Button asChild className="rounded-full">
-          {userId ? (
+          {isSignedIn ? (
             <Link href="/app">Dashboard</Link>
           ) : (
             <Link href="/app/sign-up">Sign Up</Link>
