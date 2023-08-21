@@ -11,6 +11,7 @@ import { Icons } from "@/components/icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
+import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
 import { DeleteIncidentUpdateButtonIcon } from "../../app/app/(dashboard)/[workspaceSlug]/incidents/_components/delete-incident-update";
 
@@ -78,7 +79,8 @@ export function Events({
                 {label}
               </Badge>
             </div>
-            <p className="max-w-3xl text-sm">{update.message}</p>
+            {/* <p className="max-w-3xl text-sm">{update.message}</p> */}
+            <EventMessage message={update.message} />
           </div>
         );
       })}
@@ -90,6 +92,26 @@ export function Events({
           </Button>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function EventMessage({
+  message,
+  className,
+}: {
+  message: string;
+  className?: string;
+}) {
+  const Component = useProcessor(message);
+  return (
+    <div
+      className={cn(
+        "prose dark:prose-invert prose-sm prose-headings:font-cal",
+        className,
+      )}
+    >
+      {Component}
     </div>
   );
 }
