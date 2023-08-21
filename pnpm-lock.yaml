@@ -250,13 +250,13 @@ importers:
         specifier: 0.10.0
         version: 0.10.0(shiki@0.14.3)
       rehype-react:
-        specifier: ^7.2.0
+        specifier: 7.2.0
         version: 7.2.0(@types/react@18.2.12)
       remark-parse:
-        specifier: ^10.0.2
+        specifier: 10.0.2
         version: 10.0.2
       remark-rehype:
-        specifier: ^10.1.0
+        specifier: 10.1.0
         version: 10.1.0
       resend:
         specifier: 0.15.3
