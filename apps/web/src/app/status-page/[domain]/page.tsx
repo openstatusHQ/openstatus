@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Header } from "@/components/dashboard/header";
 import { Shell } from "@/components/dashboard/shell";
 import { IncidentList } from "@/components/status-page/incident-list";
@@ -13,7 +18,7 @@ type Props = {
 };
 
 export default async function Page({ params }: Props) {
-  // We should fetch the the monitors and incident here
+  // We should fetch the monitors and incident here
   // also the page information
   if (!params.domain) return notFound();
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
@@ -41,21 +46,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const firstMonitor = page?.monitors?.[0]; // temporary solution
 
   return {
+    ...defaultMetadata,
     title: page?.title,
     description: page?.description,
     icons: page?.icon,
     twitter: {
+      ...twitterMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
           page?.description || `The ${page?.title} status page}`
         }`,
       ],
-      card: "summary_large_image",
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
-      type: "website",
+      ...ogMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
           page?.description || `The ${page?.title} status page}`
