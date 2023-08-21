@@ -8,7 +8,6 @@ interface Props {
 
 export function Preview({ md }: Props) {
   const Component = useProcessor(md || "");
-  console.log(Component);
   return (
     <div className="prose dark:prose-invert prose-sm prose-headings:font-cal border-input h-[158px] w-full overflow-auto rounded-md border px-3 py-2">
       {Component}
