@@ -66,7 +66,7 @@ export default async function EditPage({
           <TabsContent value="advanced" className="pt-3">
             <AdvancedMonitorForm
               workspaceSlug={params.workspaceSlug}
-              // defaultValues={undefined}
+              defaultValues={monitor || undefined}
             />
           </TabsContent>
         </Tabs>

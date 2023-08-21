@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -32,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
 /**
@@ -60,11 +61,13 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
     resolver: zodResolver(advancedSchema),
     defaultValues: {
       headers: [{ key: "", value: "" }],
-      body: "",
-      method: undefined,
+      body: defaultValues?.body ?? "",
+      method: defaultValues?.method ?? "GET",
     },
   });
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const monitorId = searchParams.get("id");
+  console.log(defaultValues);
   const [isPending, startTransition] = React.useTransition();
 
   const { fields, append, remove } = useFieldArray({
@@ -75,6 +78,11 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
   const onSubmit = ({ ...props }: AdvancedMonitorProps) => {
     startTransition(async () => {
       console.log(props);
+      if (!monitorId) return;
+      await api.monitor.updateMonitorAdvanced.mutate({
+        id: Number(monitorId),
+        ...props,
+      });
       // if (validateJSON(props.body) === false) return
     });
   };

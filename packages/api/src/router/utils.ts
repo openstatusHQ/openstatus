@@ -1,5 +1,10 @@
 import { eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  user,
+  usersToWorkspaces,
+  workspace,
+} from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
 import { Context } from "../trpc";
@@ -46,5 +51,49 @@ export const hasUserAccessToWorkspace = async ({
     workspace: currentWorkspace,
     user: result.currentUser,
     plan: allPlans[plan],
+  };
+};
+
+export const hasUserAccessToMonitor = async ({
+  monitorId,
+  ctx,
+}: {
+  monitorId: number;
+  ctx: Context;
+}) => {
+  if (!ctx.auth?.userId) return;
+
+  const currentMonitor = await ctx.db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.id, monitorId))
+    .get();
+  if (!currentMonitor || !currentMonitor.workspaceId) return;
+
+  // TODO: we should use hasUserAccess and pass `workspaceId` instead of `workspaceSlug`
+  const currentUser = ctx.db
+    .select()
+    .from(user)
+    .where(eq(user.tenantId, ctx.auth.userId))
+    .as("currentUser");
+
+  const result = await ctx.db
+    .select()
+    .from(usersToWorkspaces)
+    .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
+    .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+    .get();
+
+  if (!result || !result.users_to_workspaces) return;
+
+  const currentWorkspace = await ctx.db.query.workspace.findFirst({
+    where: eq(workspace.id, result.users_to_workspaces.workspaceId),
+  });
+
+  if (!currentWorkspace) return;
+  return {
+    workspace: currentWorkspace,
+    user: result.currentUser,
+    monitor: currentMonitor,
   };
 };
