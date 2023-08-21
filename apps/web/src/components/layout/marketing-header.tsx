@@ -18,11 +18,6 @@ export function MarketingHeader({ className }: Props) {
     >
       <BrandName />
       <div className="flex items-center md:gap-3">
-        <Button variant="link" asChild>
-          <Link href="/discord" target="_blank" rel="noreferrer">
-            Discord
-          </Link>
-        </Button>
         <Button variant="link" asChild className="md:mr-3">
           <Link href="/blog">Blog</Link>
         </Button>
