@@ -120,7 +120,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
               </p>
             </div>
           </div>
-          <div className="mx-auto max-w-prose">
+          <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto  max-w-prose ">
             <Mdx code={post.body.code} />
           </div>
         </article>
