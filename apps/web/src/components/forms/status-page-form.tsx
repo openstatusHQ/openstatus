@@ -54,6 +54,7 @@ export function StatusPageForm({
       workspaceId: defaultValues?.workspaceId || 0,
       id: defaultValues?.id || 0,
       monitors: defaultValues?.monitors ?? [],
+      customDomain: defaultValues?.customDomain || "", // HOTFIX: we need to keep all the other overwrites. Ideally, we append it in the api.update({ ...defaultValues, ...props })
       workspaceSlug: "",
       icon: defaultValues?.icon || "",
     },
