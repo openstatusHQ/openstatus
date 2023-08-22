@@ -1,6 +1,6 @@
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
 import { Client } from "@upstash/qstash/cloudflare";
-import { z } from "zod";
+import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
@@ -13,7 +13,6 @@ import type { payloadSchema } from "../schema";
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
 // FIXME: do coerce in zod instead
-const currentRegions = z.string().transform((val) => val.split(","));
 
 const DEFAULT_URL = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -24,7 +23,6 @@ export const isAuthorizedDomain = (url: string) => {
   return url.includes(DEFAULT_URL);
 };
 
-type cronType = z.infer<typeof periodicityAvailable> & { req: Request };
 export const cron = async ({
   periodicity,
   req,
@@ -35,7 +33,7 @@ export const cron = async ({
   console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
-  const ctx = createTRPCContext({ req });
+  const ctx = createTRPCContext({ req, serverSideCall: true });
   ctx.auth = { userId: "cron" } as SignedInAuthObject;
   const caller = edgeRouter.createCaller(ctx);
 
@@ -70,7 +68,7 @@ export const cron = async ({
       });
       allResult.push(result);
     } else {
-      const allMonitorsRegions = currentRegions.parse(row.regions);
+      const allMonitorsRegions = row.regions;
       for (const region of allMonitorsRegions) {
         const payload: z.infer<typeof payloadSchema> = {
           workspaceId: String(row.workspaceId),
