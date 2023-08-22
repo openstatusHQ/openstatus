@@ -18,7 +18,7 @@ export function EmptyState({ icon, title, description, action }: Props) {
         <div className="flex flex-col items-center justify-center gap-1">
           <Icon className="h-6 w-6" />
           <p className="text-foreground text-base">{title}</p>
-          <p className="text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground text-center">{description}</p>
         </div>
         <div>{action}</div>
       </div>
