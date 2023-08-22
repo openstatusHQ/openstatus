@@ -60,7 +60,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
   const form = useForm<AdvancedMonitorProps>({
     resolver: zodResolver(advancedSchema),
     defaultValues: {
-      headers: [{ key: "", value: "" }],
+      headers: defaultValues?.headers ?? [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
       method: defaultValues?.method ?? "GET",
     },

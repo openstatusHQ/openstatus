@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import { J } from "drizzle-orm/column.d-04875079";
 import {
   integer,
   primaryKey,
@@ -123,6 +124,10 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
   method: z.enum(METHODS).default("GET"),
+  body: z.string().default(""),
+  headers: z
+    .array(z.object({ key: z.string(), value: z.string() }))
+    .default([]),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
@@ -140,17 +145,27 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
       }
     }, z.array(RegionEnum))
     .default([]),
+});
+
+export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   method: z.enum(METHODS).default("GET"),
-  body: z.string().default(""),
-  headers: z
+  body: z
     .preprocess((val) => {
+      return String(val);
+    }, z.string())
+    .default(""),
+  headers: z.preprocess(
+    (val) => {
       if (String(val).length > 0) {
-        return String(val).split(",");
+        return JSON.parse(String(val));
       } else {
         return [];
       }
-    }, z.array(z.string()).default([]))
-    .transform((val) => val),
+    },
+    z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  ),
 });
 
-export const allMonitorsSchema = z.array(selectMonitorSchema);
+export const allMonitorsSchema = z.array(selectMonitorExtendedSchema);
+
+export const allMonitorsExtendedSchema = z.array(selectMonitorExtendedSchema);

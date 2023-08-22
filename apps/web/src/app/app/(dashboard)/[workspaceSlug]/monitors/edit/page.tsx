@@ -30,7 +30,6 @@ export default async function EditPage({
   const { id } = search.data;
 
   const monitor = id && (await api.monitor.getMonitorByID.query({ id }));
-
   const workspace = await api.workspace.getWorkspace.query({
     slug: params.workspaceSlug,
   });

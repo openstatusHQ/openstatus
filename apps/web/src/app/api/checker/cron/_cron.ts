@@ -1,12 +1,10 @@
+import type { SignedInAuthObject } from "@clerk/nextjs/api";
 import { Client } from "@upstash/qstash/cloudflare";
 import { z } from "zod";
 
-import { and, db, eq } from "@openstatus/db";
-import {
-  monitor,
-  monitorsToPages,
-  selectMonitorSchema,
-} from "@openstatus/db/src/schema";
+import { createTRPCContext } from "@openstatus/api";
+import { edgeRouter } from "@openstatus/api/src/edge";
+import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import { availableRegions } from "@openstatus/tinybird";
 
 import { env } from "@/env";
@@ -26,36 +24,40 @@ export const isAuthorizedDomain = (url: string) => {
   return url.includes(DEFAULT_URL);
 };
 
+type cronType = z.infer<typeof periodicityAvailable> & { req: Request };
 export const cron = async ({
   periodicity,
-}: z.infer<typeof periodicityAvailable>) => {
+  req,
+}: z.infer<typeof periodicityAvailable> & { req: Request }) => {
   const c = new Client({
     token: env.QSTASH_TOKEN,
   });
-  console.info(`Start cron for ${periodicity}`);
+  console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
-  // FIXME: Wait until db is ready
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
-    .all();
+
+  const ctx = createTRPCContext({ req });
+  ctx.auth = { userId: "cron" } as SignedInAuthObject;
+  const caller = edgeRouter.createCaller(ctx);
+
+  const monitors = await caller.monitor.getMonitorsForPeriodicity({
+    periodicity: periodicity,
+  });
 
   const allResult = [];
 
-  for (const row of result) {
-    // could be improved with a single query
-    const allPages = await db
-      .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.monitorId, row.id))
-      .all();
+  for (const row of monitors) {
+    const allPages = await caller.monitor.getAllPagesForMonitor({
+      monitorId: row.id,
+    });
 
     if (row.regions.length === 0) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
+        method: row.method || "GET",
         monitorId: String(row.id),
         url: row.url,
+        headers: row.headers,
+        body: row.body,
         cronTimestamp: timestamp,
         pageIds: allPages.map((p) => String(p.pageId)),
       };
@@ -74,7 +76,10 @@ export const cron = async ({
           workspaceId: String(row.workspaceId),
           monitorId: String(row.id),
           url: row.url,
+          method: row.method || "GET",
           cronTimestamp: timestamp,
+          body: row.body,
+          headers: row.headers,
           pageIds: allPages.map((p) => String(p.pageId)),
         };
 
@@ -95,6 +100,7 @@ export const cron = async ({
         monitorId: "openstatusPing",
         url: `${DEFAULT_URL}/api/ping`,
         cronTimestamp: timestamp,
+        method: "GET",
         pageIds: ["openstatus"],
       };
 
@@ -108,5 +114,5 @@ export const cron = async ({
     }
   }
   await Promise.all(allResult);
-  console.info(`End cron for ${periodicity} with ${allResult.length} jobs`);
+  console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
 };

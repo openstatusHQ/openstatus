@@ -2,12 +2,16 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
+  allMonitorsExtendedSchema,
   allMonitorsSchema,
   insertMonitorSchema,
   METHODS,
   monitor,
+  monitorsToPages,
+  periodicityEnum,
+  selectMonitorExtendedSchema,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
@@ -53,7 +57,8 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-      const { regions, ...data } = opts.input.data;
+      // FIXME: this is a hotfix
+      const { regions, headers, ...data } = opts.input.data;
 
       const newMonitor = await opts.ctx.db
         .insert(monitor)
@@ -77,6 +82,7 @@ export const monitorRouter = createTRPCRouter({
 
   getMonitorByID: protectedProcedure
     .input(z.object({ id: z.number() }))
+    // .output(selectMonitorSchema)
     .query(async (opts) => {
       if (!opts.input.id) return;
       const result = await hasUserAccessToMonitor({
@@ -85,8 +91,8 @@ export const monitorRouter = createTRPCRouter({
       });
       if (!result) return;
 
-      const _monitor = selectMonitorSchema.parse(result.monitor);
-      console.log(_monitor);
+      const _monitor = selectMonitorExtendedSchema.parse(result.monitor);
+      _monitor.headers;
       return _monitor;
     }),
 
@@ -137,8 +143,7 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-      console.log(opts.input.regions?.join(","));
-      const { regions, ...data } = opts.input;
+      const { regions, headers, ...data } = opts.input;
       await opts.ctx.db
         .update(monitor)
         .set({ ...data, regions: regions?.join(","), updatedAt: new Date() })
@@ -201,7 +206,12 @@ export const monitorRouter = createTRPCRouter({
         .all();
       // const selectMonitorsArray = selectMonitorSchema.array();
 
-      return allMonitorsSchema.parse(monitors);
+      try {
+        return allMonitorsSchema.parse(monitors);
+      } catch (e) {
+        console.log(e);
+      }
+      return null;
     }),
 
   updateMonitorAdvanced: protectedProcedure
@@ -233,4 +243,29 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitor.id, opts.input.id))
         .run();
     }),
+
+  getMonitorsForPeriodicity: protectedProcedure
+    .input(z.object({ periodicity: periodicityEnum }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.periodicity, opts.input.periodicity),
+            eq(monitor.active, true),
+          ),
+        )
+        .all();
+      return allMonitorsExtendedSchema.parse(result);
+    }),
+
+    getAllPagesForMonitor: protectedProcedure.input(z.object({ monitorId: z.number() })).query(async (opts) => {
+      const allPages = await opts.ctx.db
+      .select()
+      .from(monitorsToPages)
+      .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
+      .all();
+      return allPages;
+    }
 });
