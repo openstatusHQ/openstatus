@@ -19,7 +19,7 @@ export function AppHeader() {
           href="/"
           className="font-cal text-muted-foreground hover:text-foreground text-lg"
         >
-          openstatus
+          OpenStatus
         </Link>
         <div className="flex items-center gap-4">
           {/* can be moved to a different place */}
