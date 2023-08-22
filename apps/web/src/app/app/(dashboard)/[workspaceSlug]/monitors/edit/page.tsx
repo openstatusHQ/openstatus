@@ -38,8 +38,7 @@ export default async function EditPage({
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitor" description="Upsert your monitor." />
       <div className="col-span-full">
-        {/* TODO: remove before feature release */}
-        <Tabs defaultValue="advanced" className="relative mr-auto w-full">
+        <Tabs defaultValue="settings" className="relative mr-auto w-full">
           <TabsList className="h-9 w-full justify-start rounded-none border-b bg-transparent p-0">
             <TabsTrigger
               className="text-muted-foreground data-[state=active]:border-b-primary data-[state=active]:text-foreground relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold shadow-none transition-none data-[state=active]:shadow-none"
