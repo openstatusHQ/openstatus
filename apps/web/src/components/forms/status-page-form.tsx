@@ -9,7 +9,7 @@ import type { PutBlobResult } from "@vercel/blob";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
-import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
 
 import { Button } from "@/components/ui/button";
@@ -37,7 +37,7 @@ type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
 interface Props {
   defaultValues?: Schema;
   workspaceSlug: string;
-  allMonitors?: z.infer<typeof allMonitorsSchema>;
+  allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
 }
 
 export function StatusPageForm({

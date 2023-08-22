@@ -207,11 +207,11 @@ export const monitorRouter = createTRPCRouter({
       // const selectMonitorsArray = selectMonitorSchema.array();
 
       try {
-        return allMonitorsSchema.parse(monitors);
+        return allMonitorsExtendedSchema.parse(monitors);
       } catch (e) {
         console.log(e);
       }
-      return null;
+      return;
     }),
 
   updateMonitorAdvanced: protectedProcedure
