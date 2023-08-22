@@ -260,12 +260,14 @@ export const monitorRouter = createTRPCRouter({
       return allMonitorsExtendedSchema.parse(result);
     }),
 
-    getAllPagesForMonitor: protectedProcedure.input(z.object({ monitorId: z.number() })).query(async (opts) => {
+  getAllPagesForMonitor: protectedProcedure
+    .input(z.object({ monitorId: z.number() }))
+    .query(async (opts) => {
       const allPages = await opts.ctx.db
-      .select()
-      .from(monitorsToPages)
-      .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
-      .all();
+        .select()
+        .from(monitorsToPages)
+        .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
+        .all();
       return allPages;
-    }
+    }),
 });
