@@ -18,3 +18,23 @@ updates:
     labels:
       - dependencies
       - npm
+  
+  - package-ecosystem: pnpm
+    target-branch: main
+    directory: /apps/web
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
+
+  - package-ecosystem: pnpm
+    target-branch: main
+    directory: /apps/docs
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - npm
