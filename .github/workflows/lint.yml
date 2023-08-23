@@ -1,5 +1,5 @@
 # https://github.com/kentcdodds/kentcdodds.com/blob/main/.github/workflows/deployment.yml
-name: Code Check
+name: Lint Check
 on:
   push:
     branches:
