@@ -18,12 +18,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { useDomainStatus } from "@/hooks/use-domain-status";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
+import { InputWithAddons } from "../ui/input-with-addons";
 
 const customDomain = insertPageSchemaWithMonitors.pick({
   customDomain: true,
@@ -89,7 +89,11 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
               <FormLabel>Custom Domain</FormLabel>
               <FormControl>
                 <div className="flex items-center space-x-3">
-                  <Input placeholder="acme.com" {...field} />
+                  <InputWithAddons
+                    placeholder="acme.com"
+                    leading="https://"
+                    {...field}
+                  />
                   <div className="h-full w-7">
                     {/* TODO: add loading state */}
                     {status ? <DomainStatusIcon status={status} /> : null}
