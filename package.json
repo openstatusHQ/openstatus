@@ -8,8 +8,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
     "tsc": "tsc",
-    "prepare": "husky install",
-    "commitlint": "commitlint --edit"
+    "prepare": "husky install"
   },
   "engines": {
     "npm": ">=8.6.0",
