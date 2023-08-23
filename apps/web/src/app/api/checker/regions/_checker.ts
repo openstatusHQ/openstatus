@@ -74,6 +74,7 @@ export const checker = async (request: Request, region: string) => {
   const result = payloadSchema.safeParse(jsonData);
 
   if (!result.success) {
+    console.error(result.error);
     throw new Error("Invalid response body");
   }
 

@@ -1,5 +1,4 @@
 import { relations, sql } from "drizzle-orm";
-import { J } from "drizzle-orm/column.d-04875079";
 import {
   integer,
   primaryKey,

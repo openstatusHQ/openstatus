@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
@@ -65,6 +65,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
       method: defaultValues?.method ?? "GET",
     },
   });
+  const router = useRouter();
   const searchParams = useSearchParams();
   const monitorId = searchParams.get("id");
   console.log(defaultValues);
@@ -79,11 +80,13 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
     startTransition(async () => {
       console.log(props);
       if (!monitorId) return;
+      if (validateJSON(props.body) === false) return;
       await api.monitor.updateMonitorAdvanced.mutate({
         id: Number(monitorId),
         ...props,
       });
-      // if (validateJSON(props.body) === false) return
+      router.refresh();
+      // router.push("./"); // TODO: we need a better UX flow here.
     });
   };
 

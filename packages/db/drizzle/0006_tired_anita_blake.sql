@@ -20,10 +20,10 @@ CREATE TABLE `monitor_new` (
 	`name` text(256) DEFAULT '' NOT NULL,
 	`description` text DEFAULT '' NOT NULL,
 	`workspace_id` integer,
-    `headers` text DEFAULT '',
-    `body` text DEFAULT '',
-    `method` text(5) DEFAULT 'GET',
-	"created_at" integer DEFAULT (strftime('%s', 'now')), `regions` text DEFAULT '' NOT NULL, `updated_at` integer,
+	`headers` text DEFAULT '',
+	`body` text DEFAULT '',
+	`method` text(5) DEFAULT 'GET',
+	`created_at` integer DEFAULT (strftime('%s', 'now')), `regions` text DEFAULT '' NOT NULL, `updated_at` integer,
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
