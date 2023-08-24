@@ -74,12 +74,22 @@ export const checker = async (request: Request, region: string) => {
   const result = payloadSchema.safeParse(jsonData);
 
   if (!result.success) {
+    console.error(result.error);
     throw new Error("Invalid response body");
   }
 
+  const headers =
+    result.data?.headers?.reduce((o, v) => ({ ...o, [v.key]: v.value }), {}) ||
+    {};
+
   try {
     const startTime = Date.now();
-    const res = await fetch(result.data.url, { cache: "no-store" });
+    const res = await fetch(result.data?.url, {
+      method: result.data?.method,
+      cache: "no-store",
+      headers: { ...headers },
+      body: result.data?.body,
+    });
 
     const endTime = Date.now();
     const latency = endTime - startTime;

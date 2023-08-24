@@ -2,20 +2,22 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
+  allMonitorsExtendedSchema,
   allMonitorsSchema,
   insertMonitorSchema,
+  METHODS,
   monitor,
+  monitorsToPages,
+  periodicityEnum,
+  selectMonitorExtendedSchema,
   selectMonitorSchema,
-  user,
-  usersToWorkspaces,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { hasUserAccessToWorkspace } from "./utils";
+import { hasUserAccessToMonitor, hasUserAccessToWorkspace } from "./utils";
 
 export const monitorRouter = createTRPCRouter({
   createMonitor: protectedProcedure
@@ -55,7 +57,8 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-      const { regions, ...data } = opts.input.data;
+      // FIXME: this is a hotfix
+      const { regions, headers, ...data } = opts.input.data;
 
       const newMonitor = await opts.ctx.db
         .insert(monitor)
@@ -79,27 +82,17 @@ export const monitorRouter = createTRPCRouter({
 
   getMonitorByID: protectedProcedure
     .input(z.object({ id: z.number() }))
+    // .output(selectMonitorSchema)
     .query(async (opts) => {
-      const currentMonitor = await opts.ctx.db.query.monitor.findFirst({
-        where: eq(monitor.id, opts.input.id),
+      if (!opts.input.id) return;
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
       });
+      if (!result) return;
 
-      if (!currentMonitor || !currentMonitor.workspaceId) return;
-      // We make sure user as access to this workspace
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result || !result.users_to_workspaces) return;
-      const _monitor = selectMonitorSchema.parse(currentMonitor);
+      const _monitor = selectMonitorExtendedSchema.parse(result.monitor);
+      _monitor.headers;
       return _monitor;
     }),
 
@@ -113,27 +106,12 @@ export const monitorRouter = createTRPCRouter({
     )
     .mutation(async (opts) => {
       //  We make sure user as access to this workspace and the monitor
-      const currentMonitor = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(eq(monitor.id, opts.input.id))
-        .get();
-
-      if (!currentMonitor || !currentMonitor.workspaceId) return;
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result || !result.users_to_workspaces) return;
+      if (!opts.input.id) return;
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
 
       await opts.ctx.db
         .update(monitor)
@@ -145,36 +123,13 @@ export const monitorRouter = createTRPCRouter({
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) return;
-      const currentMonitor = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(eq(monitor.id, opts.input.id))
-        .get();
-      if (!currentMonitor || !currentMonitor.workspaceId) return;
-
-      // TODO: we should use hasUserAccess and pass `workspaceId` instead of `workspaceSlug`
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result || !result.users_to_workspaces) return;
-
-      const currentWorkspace = await opts.ctx.db.query.workspace.findFirst({
-        where: eq(workspace.id, result.users_to_workspaces.workspaceId),
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
       });
+      if (!result) return;
 
-      if (!currentWorkspace) return;
-
-      const plan = (currentWorkspace?.plan || "free") as "free" | "pro";
+      const plan = (result.workspace?.plan || "free") as "free" | "pro";
 
       const periodicityLimit = allPlans[plan].limits.periodicity;
 
@@ -188,8 +143,7 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-      console.log(opts.input.regions?.join(","));
-      const { regions, ...data } = opts.input;
+      const { regions, headers, ...data } = opts.input;
       await opts.ctx.db
         .update(monitor)
         .set({ ...data, regions: regions?.join(","), updatedAt: new Date() })
@@ -206,26 +160,11 @@ export const monitorRouter = createTRPCRouter({
       }),
     )
     .mutation(async (opts) => {
-      const currentMonitor = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(eq(monitor.id, opts.input.id))
-        .get();
-      if (!currentMonitor || !currentMonitor.workspaceId) return;
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result?.users_to_workspaces) return;
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
 
       await opts.ctx.db
         .update(monitor)
@@ -240,30 +179,14 @@ export const monitorRouter = createTRPCRouter({
   deleteMonitor: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const currentMonitor = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(eq(monitor.id, opts.input.id))
-        .get();
-      if (!currentMonitor || !currentMonitor.workspaceId) return;
-
-      const currentUser = opts.ctx.db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
-        .as("currentUser");
-      const result = await opts.ctx.db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.workspaceId, currentMonitor.workspaceId))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
-        .get();
-
-      if (!result || !result.users_to_workspaces) return;
-
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
       await opts.ctx.db
         .delete(monitor)
-        .where(eq(monitor.id, currentMonitor.id))
+        .where(eq(monitor.id, result.monitor.id))
         .run();
     }),
   getMonitorsByWorkspace: protectedProcedure
@@ -283,6 +206,68 @@ export const monitorRouter = createTRPCRouter({
         .all();
       // const selectMonitorsArray = selectMonitorSchema.array();
 
-      return allMonitorsSchema.parse(monitors);
+      try {
+        return allMonitorsExtendedSchema.parse(monitors);
+      } catch (e) {
+        console.log(e);
+      }
+      return;
+    }),
+
+  updateMonitorAdvanced: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        method: z.enum(METHODS).default("GET"),
+        body: z.string().default("").optional(),
+        headers: z
+          .array(z.object({ key: z.string(), value: z.string() }))
+          .transform((val) => JSON.stringify(val))
+          .default([])
+          .optional(),
+      }),
+    )
+    .mutation(async (opts) => {
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
+      await opts.ctx.db
+        .update(monitor)
+        .set({
+          method: opts.input.method,
+          body: opts.input.body,
+          headers: opts.input.headers,
+        })
+        .where(eq(monitor.id, opts.input.id))
+        .run();
+    }),
+
+  getMonitorsForPeriodicity: protectedProcedure
+    .input(z.object({ periodicity: periodicityEnum }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.periodicity, opts.input.periodicity),
+            eq(monitor.active, true),
+          ),
+        )
+        .all();
+      return allMonitorsExtendedSchema.parse(result);
+    }),
+
+  getAllPagesForMonitor: protectedProcedure
+    .input(z.object({ monitorId: z.number() }))
+    .query(async (opts) => {
+      const allPages = await opts.ctx.db
+        .select()
+        .from(monitorsToPages)
+        .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
+        .all();
+      return allPages;
     }),
 });

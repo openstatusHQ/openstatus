@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import {
   availableStatus,
   insertIncidentSchema,
@@ -43,7 +43,7 @@ const insertSchema = insertIncidentSchema.extend({
 });
 
 type IncidentProps = z.infer<typeof insertSchema>;
-type MonitorsProps = z.infer<typeof allMonitorsSchema>;
+type MonitorsProps = z.infer<typeof allMonitorsExtendedSchema>;
 
 interface Props {
   defaultValues?: IncidentProps;

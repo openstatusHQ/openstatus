@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   if (isAuthorizedDomain(req.url)) {
-    await cron({ periodicity: "10m" });
+    await cron({ periodicity: "10m", req });
   }
   return NextResponse.json({ success: true });
 }

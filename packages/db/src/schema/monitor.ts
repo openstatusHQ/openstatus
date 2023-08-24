@@ -34,6 +34,8 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
+export const METHODS = ["GET", "POST"] as const;
+
 export const RegionEnum = z.enum(availableRegions);
 
 export const monitor = sqliteTable("monitor", {
@@ -54,6 +56,9 @@ export const monitor = sqliteTable("monitor", {
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
 
+  headers: text("headers").default(""),
+  body: text("body").default(""),
+  method: text("method", METHODS).default("GET"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
@@ -117,6 +122,11 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: z.enum(["active", "inactive"]).default("inactive"),
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
+  method: z.enum(METHODS).default("GET"),
+  body: z.string().default(""),
+  headers: z
+    .array(z.object({ key: z.string(), value: z.string() }))
+    .default([]),
 });
 
 // Schema for selecting a Monitor - can be used to validate API responses
@@ -136,4 +146,25 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
     .default([]),
 });
 
-export const allMonitorsSchema = z.array(selectMonitorSchema);
+export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
+  method: z.enum(METHODS).default("GET"),
+  body: z
+    .preprocess((val) => {
+      return String(val);
+    }, z.string())
+    .default(""),
+  headers: z.preprocess(
+    (val) => {
+      if (String(val).length > 0) {
+        return JSON.parse(String(val));
+      } else {
+        return [];
+      }
+    },
+    z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  ),
+});
+
+export const allMonitorsSchema = z.array(selectMonitorExtendedSchema);
+
+export const allMonitorsExtendedSchema = z.array(selectMonitorExtendedSchema);
