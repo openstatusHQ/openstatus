@@ -3,12 +3,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import {
-  incident,
-  selectIncidentSchema,
-  selectIncidentUpdateSchema,
-} from "./incident";
-import { monitorsToPages, selectMonitorSchema } from "./monitor";
+import { monitorsToPages } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
@@ -55,7 +50,8 @@ const customDomainSchema = z
   .regex(
     new RegExp("^(?!https?://|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$"),
     "Should not start with http://, https:// or www.",
-  );
+  )
+  .or(z.enum([""]));
 
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
