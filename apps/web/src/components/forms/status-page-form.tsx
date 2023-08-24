@@ -24,6 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InputWithAddons } from "@/components/ui/input-with-addons";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { slugify } from "@/lib/utils";
@@ -195,7 +196,7 @@ export function StatusPageForm({
             <FormItem className="sm:col-span-3">
               <FormLabel>Slug</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <InputWithAddons {...field} trailing={".openstatus.dev"} />
               </FormControl>
               <FormDescription>
                 The subdomain for your status page. At least 3 chars.
