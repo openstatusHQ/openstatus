@@ -144,6 +144,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
       }
     }, z.array(RegionEnum))
     .default([]),
+  method: z.enum(METHODS).default("GET"),
 });
 
 export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
