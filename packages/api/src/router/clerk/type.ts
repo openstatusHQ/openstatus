@@ -12,7 +12,7 @@ export const clerkEvent = z.discriminatedUnion("type", [
           email_address: z.string(),
         }),
       ),
-      first_name: z.string(),
+      first_name: z.string().nullable(),
       last_name: z.string().nullable(),
     }),
   }),
