@@ -46,8 +46,11 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = (opts: { req: NextRequest }) => {
-  const auth = getAuth(opts.req);
+export const createTRPCContext = (opts: {
+  req: NextRequest;
+  serverSideCall?: boolean;
+}) => {
+  const auth = !opts.serverSideCall ? getAuth(opts.req) : null;
 
   return createInnerTRPCContext({
     auth,

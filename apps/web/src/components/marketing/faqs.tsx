@@ -25,7 +25,7 @@ const faqsConfig: Record<"q" | "a", string>[] = [
   },
   {
     q: "How can I help?",
-    a: "You can star our project on <a href='https://github.com/openstatusHQ/openstatus'>GitHub</a>, or contribute to it. Or you can also become a paid user.",
+    a: "You can star our project on <a href='https://github.com/openstatusHQ/openstatus'>GitHub</a>, or contribute to it. Or you can also become a <strong>Pro</strong> user.",
   },
 ];
 

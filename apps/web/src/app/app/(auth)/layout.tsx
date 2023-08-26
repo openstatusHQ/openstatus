@@ -1,12 +1,17 @@
 import * as React from "react";
-
-// TODO: update description
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs";
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { userId } = auth();
+
+  if (userId) {
+    redirect("/app");
+  }
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
       <aside className="border-border col-span-1 flex w-full items-center justify-center border p-3 backdrop-blur-[2px] md:p-6">

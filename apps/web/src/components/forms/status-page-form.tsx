@@ -9,7 +9,7 @@ import type { PutBlobResult } from "@vercel/blob";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
-import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
 
 import { Button } from "@/components/ui/button";
@@ -24,8 +24,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { InputWithAddons } from "@/components/ui/input-with-addons";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
@@ -36,7 +38,7 @@ type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
 interface Props {
   defaultValues?: Schema;
   workspaceSlug: string;
-  allMonitors?: z.infer<typeof allMonitorsSchema>;
+  allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
 }
 
 export function StatusPageForm({
@@ -53,6 +55,7 @@ export function StatusPageForm({
       workspaceId: defaultValues?.workspaceId || 0,
       id: defaultValues?.id || 0,
       monitors: defaultValues?.monitors ?? [],
+      customDomain: defaultValues?.customDomain || "", // HOTFIX: we need to keep all the other overwrites. Ideally, we append it in the api.update({ ...defaultValues, ...props })
       workspaceSlug: "",
       icon: defaultValues?.icon || "",
     },
@@ -63,7 +66,6 @@ export function StatusPageForm({
   const watchSlug = form.watch("slug");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToast();
-
   const checkUniqueSlug = useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
       slug: debouncedSlug,
@@ -85,9 +87,17 @@ export function StatusPageForm({
         form.clearErrors("slug");
       }
     }
-    watchSlugChanges();
+
+    void watchSlugChanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkUniqueSlug]);
+
+  // FIXME: 🐛 This is causing a bug
+  // useEffect(() => {
+  //   if (!watchSlug) {
+  //     form.setValue("slug", slugify(watchTitle));
+  //   }
+  // }, [watchTitle, form, watchSlug]);
 
   const onSubmit = async ({
     ...props
@@ -144,7 +154,7 @@ export function StatusPageForm({
             });
           } else {
             if (onSubmit) {
-              form.handleSubmit(onSubmit)(e);
+              void form.handleSubmit(onSubmit)(e);
             }
           }
         }}
@@ -187,7 +197,7 @@ export function StatusPageForm({
             <FormItem className="sm:col-span-3">
               <FormLabel>Slug</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <InputWithAddons {...field} trailing={".openstatus.dev"} />
               </FormControl>
               <FormDescription>
                 The subdomain for your status page. At least 3 chars.

@@ -6,6 +6,11 @@ import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
 import { ClientAnalytics } from "./_components/analytics";
@@ -18,25 +23,13 @@ const calSans = LocalFont({
   variable: "--font-calsans",
 });
 
-const TITLE = "OpenStatus";
-const DESCRIPTION =
-  "Open-Source uptime monitoring with beautiful status pages.";
-
 export const metadata: Metadata = {
-  title: TITLE,
-  description: DESCRIPTION,
-  metadataBase: new URL("https://www.openstatus.dev"),
+  ...defaultMetadata,
   twitter: {
-    images: [`/api/og`],
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
+    ...twitterMetadata,
   },
   openGraph: {
-    type: "website",
-    images: [`/api/og`],
-    title: TITLE,
-    description: DESCRIPTION,
+    ...ogMetadata,
   },
 };
 

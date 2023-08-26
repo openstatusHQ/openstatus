@@ -5,6 +5,8 @@ import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
+import { env } from "./env";
+
 const before = (req: NextRequest) => {
   const url = req.nextUrl.clone();
 
@@ -39,6 +41,13 @@ export const getValidSubdomain = (host?: string | null) => {
       // Valid candidate
       subdomain = candidate;
     }
+  }
+  // In case the host is a custom domain
+  if (
+    host &&
+    !(host?.includes(env.NEXT_PUBLIC_URL) || host?.endsWith(".vercel.app"))
+  ) {
+    subdomain = host;
   }
   return subdomain;
 };

@@ -3,12 +3,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import {
-  incident,
-  selectIncidentSchema,
-  selectIncidentUpdateSchema,
-} from "./incident";
-import { monitorsToPages, selectMonitorSchema } from "./monitor";
+import { monitorsToPages } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
@@ -50,15 +45,23 @@ const slugSchema = z
   .min(3)
   .toLowerCase();
 
+const customDomainSchema = z
+  .string()
+  .regex(
+    new RegExp("^(?!https?://|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$"),
+    "Should not start with http://, https:// or www.",
+  )
+  .or(z.enum([""]));
+
 // Schema for inserting a Page - can be used to validate API requests
 export const insertPageSchema = createInsertSchema(page, {
-  customDomain: z.string().optional(),
+  customDomain: customDomainSchema.optional(),
   icon: z.string().optional(),
   slug: slugSchema,
 });
 
 export const insertPageSchemaWithMonitors = insertPageSchema.extend({
-  customDomain: z.string().optional().default(""),
+  customDomain: customDomainSchema.optional().default(""),
   monitors: z.array(z.number()).optional(),
   workspaceSlug: z.string().optional(),
   slug: slugSchema,

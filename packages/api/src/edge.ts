@@ -1,3 +1,4 @@
+import { domainRouter } from "./router/domain";
 import { incidentRouter } from "./router/incident";
 import { monitorRouter } from "./router/monitor";
 import { pageRouter } from "./router/page";
@@ -10,4 +11,5 @@ export const edgeRouter = createTRPCRouter({
   monitor: monitorRouter,
   page: pageRouter,
   incident: incidentRouter,
+  domain: domainRouter,
 });

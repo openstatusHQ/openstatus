@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";
@@ -27,9 +34,11 @@ export async function generateMetadata({
   const { title, publishedAt: publishedTime, description, slug, image } = post;
 
   return {
+    ...defaultMetadata,
     title,
     description,
     openGraph: {
+      ...ogMetadata,
       title,
       description,
       type: "article",
@@ -42,7 +51,7 @@ export async function generateMetadata({
       ],
     },
     twitter: {
-      card: "summary_large_image",
+      ...twitterMetadata,
       title,
       description,
       images: [
@@ -59,7 +68,13 @@ export default function PostPage({ params }: { params: { slug: string } }) {
     notFound();
   }
 
-  // TODO: add author.avatar and author.url
+  const getNameInitials = (name: string) => {
+    const individualNames = name.split(" ");
+    return (
+      individualNames[0][0] + individualNames[individualNames.length - 1][0]
+    );
+  };
+
   return (
     <>
       <BackButton href="/blog" />
@@ -81,15 +96,30 @@ export default function PostPage({ params }: { params: { slug: string } }) {
                 className="h-full w-full object-cover"
               />
             </div>
-            <p className="text-muted-foreground text-sm font-light">
-              {post.author.name}
-              <span className="text-muted-foreground/70 mx-1">&bull;</span>
-              {formatDate(new Date(post.publishedAt))}
-              <span className="text-muted-foreground/70 mx-1">&bull;</span>
-              {post.readingTime}
-            </p>
+            <div className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={post.author.avatar} />
+                <AvatarFallback>
+                  {getNameInitials(post.author.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-muted-foreground text-sm font-light">
+                <Link
+                  href={post.author.url ?? "#"}
+                  target="_blank"
+                  className="cursor-pointer font-medium text-black hover:underline"
+                >
+                  {post.author.name}
+                </Link>
+                <p>
+                  {formatDate(new Date(post.publishedAt))}
+                  <span className="text-muted-foreground/70 mx-1">&bull;</span>
+                  {post.readingTime}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="mx-auto max-w-prose">
+          <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto  max-w-prose ">
             <Mdx code={post.body.code} />
           </div>
         </article>

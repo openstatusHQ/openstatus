@@ -254,8 +254,9 @@ export const pageRouter = createTRPCRouter({
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
+      console.log(opts.input.slug);
       const result = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
       });
 
       if (!result) {
@@ -320,5 +321,19 @@ export const pageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
       return result?.length > 0 ? false : true;
+    }),
+
+  addCustomDomain: protectedProcedure
+    .input(
+      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
+    )
+    .mutation(async (opts) => {
+      // TODO Add some check ?
+      await opts.ctx.db
+        .update(page)
+        .set({ customDomain: opts.input.customDomain })
+        .where(eq(page.id, opts.input.pageId))
+        .returning()
+        .get();
     }),
 });
