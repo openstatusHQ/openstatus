@@ -17,18 +17,25 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 export function DeleteIncidentUpdateButtonIcon({ id }: { id: number }) {
   const router = useRouter();
+  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
-      await api.incident.deleteIncidentUpdate.mutate({ id });
-      router.refresh();
-      setAlertOpen(false);
+      try {
+        await api.incident.deleteIncidentUpdate.mutate({ id });
+        toast("deleted");
+        router.refresh();
+        setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
     });
   }
 

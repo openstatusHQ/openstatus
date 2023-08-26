@@ -70,6 +70,7 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
+      // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(result.user.id, {
         userId: result.user.id,
       });
@@ -78,6 +79,7 @@ export const monitorRouter = createTRPCRouter({
         url: newMonitor.url,
         periodicity: newMonitor.periodicity,
       });
+      return newMonitor;
     }),
 
   getMonitorByID: protectedProcedure

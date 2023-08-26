@@ -9,6 +9,14 @@ import { Icons } from "../icons";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 
+/**
+ * TODO: work on a better breadcrumb navigation like Vercel
+ * [workspace/project/deploymenents/deployment]
+ * This will allow us to 'only' save, and not redirect the user to the other pages
+ * and therefore, can after saving the monitor/page go to the next tab!
+ * Probably, we will need to use useSegements() from vercel, but once done properly, it could be really nice to share
+ */
+
 export function AppHeader() {
   const { isLoaded, isSignedIn } = useUser();
 

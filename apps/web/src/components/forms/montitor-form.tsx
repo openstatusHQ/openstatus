@@ -45,10 +45,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { regionsDict } from "@/data/regions-dictionary";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
-import { useToast } from "../ui/use-toast";
 
 const cronJobs = [
   { value: "1m", label: "1 minute" },
@@ -85,7 +85,7 @@ export function MonitorForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToast();
+  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: MonitorProps) => {
     startTransition(async () => {
@@ -94,18 +94,16 @@ export function MonitorForm({
         if (defaultValues) {
           await api.monitor.updateMonitor.mutate(props);
         } else {
-          await api.monitor.createMonitor.mutate({
+          const monitor = await api.monitor.createMonitor.mutate({
             data: props,
             workspaceSlug,
           });
+          router.replace(`./edit?id=${monitor?.id}`); // to stay on same page and enable 'Advanced' tab
         }
-        router.push("./");
         router.refresh();
+        toast("saved");
       } catch {
-        toast({
-          title: "Something went wrong.",
-          description: "If you are in the limits, please try again.",
-        });
+        toast("error");
       }
     });
   };
@@ -125,7 +123,7 @@ export function MonitorForm({
             <FormItem className="sm:col-span-3">
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input placeholder="Documenso" {...field} />
               </FormControl>
               <FormDescription>
                 The name of the monitor displayed on the status page.
@@ -141,7 +139,11 @@ export function MonitorForm({
             <FormItem className="sm:col-span-4">
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                {/* Should we use `InputWithAddons here? */}
+                <Input
+                  placeholder="https://documenso.com/api/health"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 Here is the URL you want to monitor.{" "}
@@ -157,7 +159,10 @@ export function MonitorForm({
             <FormItem className="sm:col-span-5">
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input
+                  placeholder="Determines the api health of our services."
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 Provide your users with information about it.{" "}

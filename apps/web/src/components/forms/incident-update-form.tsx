@@ -29,8 +29,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { statusDict } from "@/data/incidents-dictionary";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 // TODO: for UX, using the form inside of a Dialog feels more suitable
@@ -61,7 +61,7 @@ export function IncidentUpdateForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToast();
+  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: IncidentUpdateProps) => {
     startTransition(async () => {
@@ -71,13 +71,10 @@ export function IncidentUpdateForm({
         } else {
           await api.incident.createIncidentUpdate.mutate({ ...props });
         }
-        router.push("../");
+        toast("saved");
         router.refresh();
       } catch {
-        toast({
-          title: "Something went wrong.",
-          description: "Please try again.",
-        });
+        toast("error");
       }
     });
   };

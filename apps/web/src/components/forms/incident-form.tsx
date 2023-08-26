@@ -32,8 +32,8 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
 import { statusDict } from "@/data/incidents-dictionary";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 // include update on creation
@@ -71,7 +71,7 @@ export function IncidentForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToast();
+  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: IncidentProps) => {
     startTransition(async () => {
@@ -97,13 +97,10 @@ export function IncidentForm({
             });
           }
         }
-        router.push("./");
+        toast("saved");
         router.refresh();
       } catch {
-        toast({
-          title: "Something went wrong.",
-          description: "Please try again.",
-        });
+        toast("error");
       }
     });
   };

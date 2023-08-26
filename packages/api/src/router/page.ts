@@ -68,6 +68,7 @@ export const pageRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
 
+      // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(data.user.id, {
         userId: data.user.id,
       });
@@ -75,6 +76,7 @@ export const pageRouter = createTRPCRouter({
         event: "Page Created",
         slug: newPage.slug,
       });
+      return newPage;
     }),
 
   getPageByID: protectedProcedure

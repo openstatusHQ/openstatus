@@ -30,6 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 const temporary = insertIncidentSchema.pick({ id: true, workspaceSlug: true });
@@ -38,15 +39,21 @@ type Schema = z.infer<typeof temporary>;
 
 export function ActionButton(props: Schema) {
   const router = useRouter();
+  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function deleteIncident() {
     startTransition(async () => {
-      if (!props.id) return;
-      await api.incident.deleteIncident.mutate({ id: props.id });
-      router.refresh();
-      setAlertOpen(false);
+      try {
+        if (!props.id) return;
+        await api.incident.deleteIncident.mutate({ id: props.id });
+        toast("deleted");
+        router.refresh();
+        setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
     });
   }
 

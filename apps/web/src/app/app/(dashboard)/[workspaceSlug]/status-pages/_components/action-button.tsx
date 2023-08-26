@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 type PageSchema = z.infer<typeof insertPageSchemaWithMonitors>;
@@ -37,15 +38,21 @@ interface ActionButtonProps {
 
 export function ActionButton({ page }: ActionButtonProps) {
   const router = useRouter();
+  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
-      if (!page.id) return;
-      await api.page.deletePage.mutate({ id: page.id });
-      router.refresh();
-      setAlertOpen(false);
+      try {
+        if (!page.id) return;
+        await api.page.deletePage.mutate({ id: page.id });
+        toast("deleted");
+        router.refresh();
+        setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
     });
   }
 

@@ -23,7 +23,6 @@ export const Monitor = async ({
       url={monitor.url}
       description={monitor.description}
       context="status-page"
-      maxSize={40}
     />
   );
 };
