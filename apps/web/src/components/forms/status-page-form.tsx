@@ -64,6 +64,7 @@ export function StatusPageForm({
   const inputFileRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const watchSlug = form.watch("slug");
+  const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToast();
   const checkUniqueSlug = useCallback(async () => {
@@ -92,12 +93,11 @@ export function StatusPageForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkUniqueSlug]);
 
-  // FIXME: 🐛 This is causing a bug
-  // useEffect(() => {
-  //   if (!watchSlug) {
-  //     form.setValue("slug", slugify(watchTitle));
-  //   }
-  // }, [watchTitle, form, watchSlug]);
+  useEffect(() => {
+    if (!watchSlug) {
+      form.setValue("slug", slugify(watchTitle));
+    }
+  }, [watchTitle, form, watchSlug]);
 
   const onSubmit = async ({
     ...props
