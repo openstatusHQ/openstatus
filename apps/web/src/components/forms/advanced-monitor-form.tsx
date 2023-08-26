@@ -35,19 +35,25 @@ import {
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
-/**
- * GET requests don't need a body, we could think of using a z.discriminatedUnion?
- * https://github.com/colinhacks/zod#discriminated-unions
- */
-
 const methods = ["POST", "GET"] as const;
 const methodsEnum = z.enum(methods);
 
-const advancedSchema = z.object({
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
-  body: z.string().optional(),
-  method: methodsEnum.default("GET"),
-}); // insertMonitorSchema.pick()
+const headersSchema = z
+  .array(z.object({ key: z.string(), value: z.string() }))
+  .optional();
+
+const advancedSchema = z.discriminatedUnion("method", [
+  z.object({
+    method: z.literal("GET"),
+    body: z.string().length(0).optional(),
+    headers: headersSchema,
+  }),
+  z.object({
+    method: z.literal("POST"),
+    body: z.string().optional(),
+    headers: headersSchema,
+  }),
+]);
 
 type AdvancedMonitorProps = z.infer<typeof advancedSchema>;
 
@@ -65,6 +71,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
       method: defaultValues?.method ?? "GET",
     },
   });
+  const method = form.watch("method");
   const router = useRouter();
   const searchParams = useSearchParams();
   const monitorId = searchParams.get("id");
@@ -178,9 +185,10 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
             <FormItem className="sm:col-span-2 sm:col-start-1 sm:self-baseline">
               <FormLabel>Method</FormLabel>
               <Select
-                onValueChange={(value) =>
-                  field.onChange(methodsEnum.parse(value))
-                }
+                onValueChange={(value) => {
+                  field.onChange(methodsEnum.parse(value));
+                  form.resetField("body");
+                }}
                 defaultValue={field.value}
               >
                 <FormControl>
@@ -201,45 +209,47 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
             </FormItem>
           )}
         />
-        <div className="sm:col-span-4 sm:col-start-1">
-          <FormField
-            control={form.control}
-            name="body"
-            render={({ field }) => (
-              <FormItem>
-                <div className="flex items-end justify-between">
-                  <FormLabel>Body</FormLabel>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={onPrettifyJSON}
-                        >
-                          <Wand2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Prettify JSON</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <FormControl>
-                  <Textarea
-                    rows={8}
-                    placeholder='{ "hello": "world" }'
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>Write your json payload.</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {method === "POST" && (
+          <div className="sm:col-span-4 sm:col-start-1">
+            <FormField
+              control={form.control}
+              name="body"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-end justify-between">
+                    <FormLabel>Body</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={onPrettifyJSON}
+                          >
+                            <Wand2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Prettify JSON</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      rows={8}
+                      placeholder='{ "hello": "world" }'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>Write your json payload.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
         <div className="sm:col-span-full">
           <Button className="w-full sm:w-auto">
             {!isPending ? "Confirm" : <LoadingAnimation />}
