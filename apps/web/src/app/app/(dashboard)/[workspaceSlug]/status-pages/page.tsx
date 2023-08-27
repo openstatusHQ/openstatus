@@ -76,15 +76,17 @@ export default async function Page({
                 <dd className="flex flex-wrap justify-end gap-2">
                   {page.monitorsToPages.map(
                     ({ monitor: { id, name, active } }) => (
-                      <Badge key={id} variant={active ? "default" : "outline"}>
-                        {name}
-                        <span
-                          className={cn(
-                            "ml-1 inline-block h-1.5 w-1.5 rounded-full",
-                            active ? "bg-green-500" : "bg-red-500",
-                          )}
-                        />
-                      </Badge>
+                      <Link key={id} href={`./monitors/edit?id=${id}`}>
+                        <Badge variant={active ? "default" : "outline"}>
+                          {name}
+                          <span
+                            className={cn(
+                              "ml-1 inline-block h-1.5 w-1.5 rounded-full",
+                              active ? "bg-green-500" : "bg-red-500",
+                            )}
+                          />
+                        </Badge>
+                      </Link>
                     ),
                   )}
                 </dd>
