@@ -187,7 +187,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
               <Select
                 onValueChange={(value) => {
                   field.onChange(methodsEnum.parse(value));
-                  form.resetField("body");
+                  form.resetField("body", { defaultValue: "" });
                 }}
                 defaultValue={field.value}
               >
