@@ -16,3 +16,20 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
   incidents: selectIncidentsPageSchema,
 });
+
+export const selectPublicPageSchemaWithRelation = selectPageSchema
+  .extend({
+    monitors: z.array(
+      selectMonitorSchema.omit({
+        body: true,
+        headers: true,
+        regions: true,
+        method: true,
+      }),
+    ),
+    incidents: selectIncidentsPageSchema,
+  })
+  .omit({
+    workspaceId: true,
+    id: true,
+  });
