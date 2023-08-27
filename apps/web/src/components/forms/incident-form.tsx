@@ -260,9 +260,16 @@ export function IncidentForm({
                             />
                           </FormControl>
                           <div className="grid gap-1.5 leading-none">
-                            <FormLabel className="font-normal">
-                              {item.name}
-                            </FormLabel>
+                            <div className="flex items-center gap-2">
+                              <FormLabel className="font-normal">
+                                {item.name}
+                              </FormLabel>
+                              {item.active ? (
+                                <span className="rounded-full bg-green-500 p-1"></span>
+                              ) : (
+                                <span className="rounded-full bg-red-500 p-1"></span>
+                              )}
+                            </div>
                             <p className="text-muted-foreground truncate text-sm">
                               {item.description}
                             </p>
