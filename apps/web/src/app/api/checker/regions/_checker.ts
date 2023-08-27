@@ -87,9 +87,9 @@ export const checker = async (request: Request, region: string) => {
     const res = await fetch(result.data?.url, {
       method: result.data?.method,
       cache: "no-store",
-      headers: { 
+      headers: {
         "OpenStatus-Ping": "true",
-        ...headers 
+        ...headers,
       },
       body: result.data?.body,
     });
