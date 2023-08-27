@@ -34,14 +34,16 @@ export default async function PlayPage({
       <p className="text-muted-foreground text-lg font-light">
         Build your own within seconds.
       </p>
-      {data && (
-        <Tracker
-          data={data}
-          id="openstatusPing"
-          name="Ping"
-          url="https://www.openstatus.dev/api/ping"
-        />
-      )}
+      <div className="mx-auto w-full max-w-md">
+        {data && (
+          <Tracker
+            data={data}
+            id="openstatusPing"
+            name="Ping"
+            url="https://www.openstatus.dev/api/ping"
+          />
+        )}
+      </div>
     </div>
   );
 }

@@ -27,21 +27,28 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
 export function ActionButton(props: Schema & { workspaceSlug: string }) {
   const router = useRouter();
+  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
-      if (!props.id) return;
-      await api.monitor.deleteMonitor.mutate({ id: props.id });
-      router.refresh();
-      setAlertOpen(false);
+      try {
+        if (!props.id) return;
+        await api.monitor.deleteMonitor.mutate({ id: props.id });
+        toast("deleted");
+        router.refresh();
+        setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
     });
   }
 

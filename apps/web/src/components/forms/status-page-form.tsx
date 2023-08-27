@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { InputWithAddons } from "@/components/ui/input-with-addons";
-import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
@@ -65,7 +65,7 @@ export function StatusPageForm({
   const [isPending, startTransition] = useTransition();
   const watchSlug = form.watch("slug");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
-  const { toast } = useToast();
+  const { toast } = useToastAction();
   const checkUniqueSlug = useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
       slug: debouncedSlug,
@@ -108,18 +108,16 @@ export function StatusPageForm({
         if (defaultValues) {
           await api.page.updatePage.mutate(props);
         } else {
-          await api.page.createPage.mutate({
+          const page = await api.page.createPage.mutate({
             ...props,
             workspaceSlug,
           });
+          router.replace(`./edit?id=${page?.id}`); // to stay on same page and enable 'Advanced' tab
         }
-        router.push("./");
-        router.refresh(); // this will actually revalidate the page after submission
+        toast("saved");
+        router.refresh();
       } catch {
-        toast({
-          title: "Something went wrong.",
-          description: "If you are in the limits, please try again.",
-        });
+        toast("error");
       }
     });
   };
@@ -148,10 +146,7 @@ export function StatusPageForm({
           const isUnique = await checkUniqueSlug();
           if (!isUnique) {
             // the user will already have the "error" message - we include a toast as well
-            toast({
-              title: "Slug is already taken.",
-              description: "Please select another slug. Every slug is unique.",
-            });
+            toast("unique-slug");
           } else {
             if (onSubmit) {
               void form.handleSubmit(onSubmit)(e);
@@ -167,7 +162,7 @@ export function StatusPageForm({
             <FormItem className="sm:col-span-4">
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input placeholder="Documenso Status" {...field} />
               </FormControl>
               <FormDescription>The title of your page.</FormDescription>
               <FormMessage />
@@ -181,10 +176,13 @@ export function StatusPageForm({
             <FormItem className="sm:col-span-5">
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input
+                  placeholder="Stay informed about our api and website health."
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
-                Give your user some information about it.
+                Provide your users informations about it.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -197,7 +195,11 @@ export function StatusPageForm({
             <FormItem className="sm:col-span-3">
               <FormLabel>Slug</FormLabel>
               <FormControl>
-                <InputWithAddons {...field} trailing={".openstatus.dev"} />
+                <InputWithAddons
+                  placeholder="documenso"
+                  trailing={".openstatus.dev"}
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 The subdomain for your status page. At least 3 chars.

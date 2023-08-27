@@ -32,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
@@ -60,15 +61,17 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
   const form = useForm<AdvancedMonitorProps>({
     resolver: zodResolver(advancedSchema),
     defaultValues: {
-      headers: defaultValues?.headers ?? [{ key: "", value: "" }],
+      headers: Boolean(defaultValues?.headers?.length)
+        ? defaultValues?.headers
+        : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
       method: defaultValues?.method ?? "GET",
     },
   });
   const router = useRouter();
+  const { toast } = useToastAction();
   const searchParams = useSearchParams();
   const monitorId = searchParams.get("id");
-  console.log(defaultValues);
   const [isPending, startTransition] = React.useTransition();
 
   const { fields, append, remove } = useFieldArray({
@@ -76,17 +79,21 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
     control: form.control,
   });
 
-  const onSubmit = ({ ...props }: AdvancedMonitorProps) => {
+  const onSubmit = ({ headers, ...props }: AdvancedMonitorProps) => {
     startTransition(async () => {
-      console.log(props);
-      if (!monitorId) return;
-      if (validateJSON(props.body) === false) return;
-      await api.monitor.updateMonitorAdvanced.mutate({
-        id: Number(monitorId),
-        ...props,
-      });
-      router.refresh();
-      // router.push("./"); // TODO: we need a better UX flow here.
+      try {
+        if (!monitorId) return;
+        if (validateJSON(props.body) === false) return;
+        await api.monitor.updateMonitorAdvanced.mutate({
+          id: Number(monitorId),
+          headers: headers?.filter(({ key }) => key !== ""), // avoid saving empty key headers
+          ...props,
+        });
+        toast("saved");
+        router.refresh();
+      } catch (e) {
+        toast("error");
+      }
     });
   };
 
@@ -113,8 +120,6 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
     }
   };
 
-  console.log(form.formState.errors);
-
   return (
     <Form {...form}>
       <form
@@ -122,8 +127,8 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
         className="grid w-full grid-cols-1 items-center gap-6 sm:grid-cols-6"
       >
         <div className="space-y-2 sm:col-span-full">
-          <FormLabel>Request Header</FormLabel>
           {/* TODO: add FormDescription for latest key/value */}
+          <FormLabel>Request Header</FormLabel>
           {fields.map((field, index) => (
             <div key={field.id} className="grid grid-cols-6 gap-6">
               <FormField

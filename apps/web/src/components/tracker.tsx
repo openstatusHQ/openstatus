@@ -20,9 +20,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import useWindowSize from "@/hooks/use-window-size";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
-const tracker = cva("h-10 w-1.5 sm:w-2 rounded-full md:w-2.5", {
+const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
       up: "bg-green-500 data-[state=open]:bg-green-600",
@@ -42,10 +43,6 @@ interface TrackerProps {
   id: string | number;
   name: string;
   description?: string;
-  /**
-   * Maximium length of the data array
-   */
-  maxSize?: number;
   context?: "play" | "status-page"; // TODO: we might need to extract those two different use cases - for now it's ok I'd say.
 }
 
@@ -54,10 +51,11 @@ export function Tracker({
   url,
   id,
   name,
-  maxSize = 35,
   context = "play",
   description,
 }: TrackerProps) {
+  const { isMobile } = useWindowSize();
+  const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]); // TODO: it is better than how it is currently, but creates a small content shift on first render
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
 
@@ -79,8 +77,8 @@ export function Tracker({
       : "";
 
   return (
-    <div className="mx-auto max-w-max">
-      <div className="mb-1 flex justify-between text-sm sm:mb-2">
+    <div className="flex flex-col">
+      <div className="mb-2 flex justify-between text-sm">
         <div className="flex items-center gap-2">
           <p className="text-foreground font-semibold">{name}</p>
           {description ? (
@@ -89,13 +87,14 @@ export function Tracker({
         </div>
         <p className="text-muted-foreground font-light">{uptime}</p>
       </div>
-      <div className="relative">
-        <div className="z-[-1] flex gap-0.5">
-          {placeholderData.map((_, i) => {
-            return <div key={i} className={tracker({ variant: "empty" })} />;
-          })}
-        </div>
-        <div className="absolute right-0 top-0 flex gap-0.5">
+      <div className="relative h-full w-full">
+        <div className="flex gap-0.5">
+          {Array(placeholderData.length - slicedData.length)
+            .fill(null)
+            .map((_, i) => {
+              // TODO: use `Bar` component and `HoverCard` with empty state
+              return <div key={i} className={tracker({ variant: "empty" })} />;
+            })}
           {slicedData.map((props) => {
             return (
               <Bar key={props.cronTimestamp} context={context} {...props} />
