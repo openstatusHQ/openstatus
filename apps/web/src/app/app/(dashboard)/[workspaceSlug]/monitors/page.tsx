@@ -33,7 +33,7 @@ export default async function MonitorPage({
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
         <Button asChild={!isLimit} disabled={isLimit}>
-          <Link href="./monitors/edit">Create </Link>
+          <Link href="./monitors/edit">Create</Link>
         </Button>
       </Header>
       {Boolean(monitors?.length) ? (
@@ -72,6 +72,22 @@ export default async function MonitorPage({
                 <dt>URL</dt>
                 <dd className="overflow-hidden text-ellipsis font-semibold">
                   {monitor.url}
+                </dd>
+              </div>
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <dt>Method</dt>
+                <dd className="overflow-hidden text-ellipsis font-semibold">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "font-mono",
+                      monitor.method === "GET"
+                        ? "border-blue-100 bg-blue-50 text-blue-600"
+                        : "border-amber-100 bg-amber-50 text-amber-600",
+                    )}
+                  >
+                    {monitor.method}
+                  </Badge>
                 </dd>
               </div>
             </dl>
