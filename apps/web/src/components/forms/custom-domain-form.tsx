@@ -102,8 +102,7 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
                     {...field}
                   />
                   <div className="h-full w-7">
-                    {/* TODO: add loading state */}
-                    {status ? <DomainStatusIcon status={status} /> : null}
+                    <DomainStatusIcon status={status} />
                   </div>
                 </div>
               </FormControl>

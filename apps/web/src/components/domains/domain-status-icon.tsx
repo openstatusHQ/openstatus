@@ -8,26 +8,28 @@ import { LoadingAnimation } from "../loading-animation";
 
 export default function DomainStatusIcon({
   status,
-  loading,
 }: {
-  status: DomainVerificationStatusProps;
-  loading?: boolean;
+  status?: DomainVerificationStatusProps;
 }) {
-  return loading ? (
-    <LoadingAnimation />
+  return !status ? (
+    <LoadingAnimation variant="inverse" className="h-6 w-6" />
   ) : status === "Valid Configuration" ? (
     <CheckCircle2
       fill="#22c55e"
       stroke="currentColor"
-      className="text-background"
+      className="text-background h-6 w-6"
     />
   ) : status === "Pending Verification" ? (
     <AlertCircle
       fill="#eab308"
       stroke="currentColor"
-      className="text-background"
+      className="text-background h-6 w-6"
     />
   ) : (
-    <XCircle fill="#ef4444" stroke="currentColor" className="text-background" />
+    <XCircle
+      fill="#ef4444"
+      stroke="currentColor"
+      className="text-background h-6 w-6"
+    />
   );
 }
