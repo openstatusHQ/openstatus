@@ -91,7 +91,7 @@ export const checker = async (request: Request, region: string) => {
         "OpenStatus-Ping": "true",
         ...headers,
       },
-      body: result.data?.body,
+      body: result.data?.method === "POST" ? result.data?.body : undefined,
     });
 
     const endTime = Date.now();
