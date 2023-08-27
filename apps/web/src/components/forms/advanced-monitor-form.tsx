@@ -71,7 +71,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
       method: defaultValues?.method ?? "GET",
     },
   });
-  const methodWatch = form.watch("method");
+  const watchMethod = form.watch("method");
   const router = useRouter();
   const searchParams = useSearchParams();
   const monitorId = searchParams.get("id");
@@ -209,7 +209,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
             </FormItem>
           )}
         />
-        {methodWatch === "POST" && (
+        {watchMethod === "POST" && (
           <div className="sm:col-span-4 sm:col-start-1">
             <FormField
               control={form.control}
