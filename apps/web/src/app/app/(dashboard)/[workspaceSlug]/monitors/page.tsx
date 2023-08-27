@@ -78,11 +78,12 @@ export default async function MonitorPage({
                 <dt>Method</dt>
                 <dd className="overflow-hidden text-ellipsis font-semibold">
                   <Badge
+                    variant="outline"
                     className={cn(
                       "font-mono",
                       monitor.method === "GET"
-                        ? "bg-blue-100 text-blue-600 hover:bg-blue-100/80"
-                        : "bg-amber-100 text-amber-600 hover:bg-amber-100/80",
+                        ? "border-blue-100 bg-blue-50 text-blue-600"
+                        : "border-amber-100 bg-amber-50 text-amber-600",
                     )}
                   >
                     {monitor.method}
