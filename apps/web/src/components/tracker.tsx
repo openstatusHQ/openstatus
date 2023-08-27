@@ -37,6 +37,9 @@ const tracker = cva("h-10 rounded-full flex-1", {
   },
 });
 
+// We had issues during those dates!
+const blacklistedDates = [1692921600000, 1693008000000];
+
 interface TrackerProps {
   data: Monitor[];
   url: string;
@@ -59,7 +62,9 @@ export function Tracker({
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
 
-  const filledData = fillMissingDates(slicedData);
+  const filledData =
+    // playground includes not only aggregated data, but data by ping (so every 10m)
+    context === "play" ? slicedData : fillMissingDates(slicedData);
 
   const reducedData = slicedData.reduce(
     (prev, curr) => {
@@ -226,14 +231,16 @@ function fillMissingDates(data: Monitor[]) {
   const endDate = new Date(data[data.length - 1].cronTimestamp);
   const dateSequence = generateDateSequence(startDate, endDate);
 
-  const filledData = [];
+  const filledData: Monitor[] = [];
   let dataIndex = 0;
 
   for (const currentDate of dateSequence) {
     const currentTimestamp = currentDate.getTime();
     if (
       dataIndex < data.length &&
-      data[dataIndex].cronTimestamp === currentTimestamp
+      data[dataIndex].cronTimestamp === currentTimestamp &&
+      // can be removed once not needed!
+      !blacklistedDates.includes(currentTimestamp)
     ) {
       filledData.push(data[dataIndex]);
       dataIndex++;
