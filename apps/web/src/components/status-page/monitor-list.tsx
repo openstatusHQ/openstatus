@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { z } from "zod";
 
-import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
 
 import { EmptyState } from "../dashboard/empty-state";
 import { Button } from "../ui/button";
@@ -10,7 +10,7 @@ import { Monitor } from "./monitor";
 export const MonitorList = ({
   monitors,
 }: {
-  monitors: z.infer<typeof selectMonitorSchema>[];
+  monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) => {
   const url =
     process.env.NODE_ENV === "development"

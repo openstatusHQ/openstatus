@@ -17,16 +17,16 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   incidents: selectIncidentsPageSchema,
 });
 
+export const selectPublicMonitorSchema = selectMonitorSchema.omit({
+  body: true,
+  headers: true,
+  regions: true,
+  method: true,
+});
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
-    monitors: z.array(
-      selectMonitorSchema.omit({
-        body: true,
-        headers: true,
-        regions: true,
-        method: true,
-      }),
-    ),
+    monitors: z.array(selectPublicMonitorSchema),
     incidents: selectIncidentsPageSchema,
   })
   .omit({

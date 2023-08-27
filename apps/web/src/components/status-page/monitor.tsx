@@ -1,6 +1,6 @@
 import type { z } from "zod";
 
-import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
 
 import { getMonitorListData } from "@/lib/tb";
 import { Tracker } from "../tracker";
@@ -8,7 +8,7 @@ import { Tracker } from "../tracker";
 export const Monitor = async ({
   monitor,
 }: {
-  monitor: z.infer<typeof selectMonitorSchema>;
+  monitor: z.infer<typeof selectPublicMonitorSchema>;
 }) => {
   const data = await getMonitorListData({
     monitorId: String(monitor.id),
