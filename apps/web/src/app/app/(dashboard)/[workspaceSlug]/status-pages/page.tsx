@@ -42,7 +42,7 @@ export default async function Page({
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
         title="Status Page"
-        description="Overview of all your status page."
+        description="Overview of all your status pages."
       >
         <Button asChild={!disableButton} disabled={disableButton}>
           <Link href="./status-pages/edit">Create</Link>
