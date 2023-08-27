@@ -41,9 +41,22 @@ jobs:
           node-version: 18
           cache: "pnpm"
 
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
       - name: 📥 Download deps
         run: pnpm install
 
       - name: 🗃️ Run migrations
         run: pnpm migrate
         working-directory: ./packages/db
+
+      - name: 💽  Seed database
+        run: pnpm seed
+        working-directory: ./packages/db
+
+      - name: 🧪 Tests
+        run: pnpm test
+        working-directory: ./packages/api

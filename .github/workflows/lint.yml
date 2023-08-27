@@ -44,17 +44,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
-    services:
-      sqld:
-        image: ghcr.io/libsql/sqld:latest
-        ports:
-          - 8080:8080
-
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-      DATABASE_URL: http://127.0.0.1:8080
-      DATABASE_AUTH_TOKEN: "hello"
+
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
@@ -70,22 +63,8 @@ jobs:
           node-version: 18
           cache: "pnpm"
 
-      - name: 🔥 Install bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-
       - name: 📥 Download deps
         run: pnpm install
 
-      - name: 🗃️ Run migrations
-        run: pnpm migrate
-        working-directory: ./packages/db
-
-      - name: 💽  Seed database
-        run: pnpm seed
-        working-directory: ./packages/db
-
-      - name: 🧪 Tests
-        run: pnpm test
-        working-directory: ./packages/api
+      - name: 💅 Prettier check
+        run: pnpm format:check
