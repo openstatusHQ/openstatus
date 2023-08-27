@@ -50,14 +50,16 @@ export default async function Page() {
           <Button asChild variant="outline" className="rounded-full">
             <Link href="/play">Playground</Link>
           </Button>
-          {data && (
-            <Tracker
-              data={data}
-              id="openstatusPing"
-              name="Ping"
-              url="https://www.openstatus.dev/api/ping"
-            />
-          )}
+          <div className="mx-auto max-w-md">
+            {data && (
+              <Tracker
+                data={data}
+                id="openstatusPing"
+                name="Ping"
+                url="https://www.openstatus.dev/api/ping"
+              />
+            )}
+          </div>
         </Shell>
         <Cards />
         <Plans />
