@@ -59,6 +59,8 @@ export function Tracker({
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
 
+  const filledData = fillMissingDates(slicedData);
+
   const reducedData = slicedData.reduce(
     (prev, curr) => {
       prev.ok += curr.ok;
@@ -95,7 +97,7 @@ export function Tracker({
               // TODO: use `Bar` component and `HoverCard` with empty state
               return <div key={i} className={tracker({ variant: "empty" })} />;
             })}
-          {slicedData.map((props) => {
+          {filledData.map((props) => {
             return (
               <Bar key={props.cronTimestamp} context={context} {...props} />
             );
@@ -210,8 +212,53 @@ const Bar = ({
 // FIXME this is a temporary solution
 const getStatus = (
   ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" } => {
+): { label: string; variant: "up" | "degraded" | "down" | "empty" } => {
+  if (isNaN(ratio)) return { label: "Missing", variant: "empty" };
   if (ratio >= 0.98) return { label: "Operational", variant: "up" };
   if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
   return { label: "Downtime", variant: "down" };
 };
+
+// TODO: is there a way to do it with `date-fns`?
+// Function to fill missing dates in the data array
+function fillMissingDates(data: Monitor[]) {
+  const startDate = new Date(data[0].cronTimestamp);
+  const endDate = new Date(data[data.length - 1].cronTimestamp);
+  const dateSequence = generateDateSequence(startDate, endDate);
+
+  const filledData = [];
+  let dataIndex = 0;
+
+  for (const currentDate of dateSequence) {
+    const currentTimestamp = currentDate.getTime();
+    if (
+      dataIndex < data.length &&
+      data[dataIndex].cronTimestamp === currentTimestamp
+    ) {
+      filledData.push(data[dataIndex]);
+      dataIndex++;
+    } else {
+      filledData.push({
+        count: 0,
+        ok: 0,
+        avgLatency: 0,
+        cronTimestamp: currentTimestamp,
+      });
+    }
+  }
+
+  return filledData;
+}
+
+// Function to generate a sequence of dates between two dates
+function generateDateSequence(startDate: Date, endDate: Date) {
+  const dateSequence = [];
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    dateSequence.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dateSequence;
+}
