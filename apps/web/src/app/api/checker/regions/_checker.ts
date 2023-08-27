@@ -91,7 +91,8 @@ export const checker = async (request: Request, region: string) => {
         "OpenStatus-Ping": "true",
         ...headers,
       },
-      body: result.data?.body,
+      // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
+      ...(result.data.method !== "GET" && { body: result.data?.body }),
     });
 
     const endTime = Date.now();
