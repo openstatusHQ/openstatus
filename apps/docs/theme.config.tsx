@@ -25,17 +25,8 @@ const config: DocsThemeConfig = {
   ),
   useNextSeoProps() {
     return {
+      title: "OpenStatus Documentation",
       titleTemplate: "%s | OpenStatus Documentation",
-      description: "An Open Source alternative for your next Status Page",
-      openGraph: {
-        url: "https://openstatus.dev/api/og",
-        title: "OpenStatus Documentation",
-        description: "An Open Source alternative for your next Status Page",
-      },
-      twitter: {
-        cardType: "summary_large_image",
-        site: "https://nextra.vercel.app",
-      },
     };
   },
 };
