@@ -97,7 +97,7 @@ export function StatusPageForm({
     if (!defaultValues?.title) {
       form.setValue("slug", slugify(watchTitle));
     }
-  }, [watchTitle, form, watchSlug, defaultValues?.title]);
+  }, [watchTitle, form, defaultValues?.title]);
 
   const onSubmit = async ({
     ...props
