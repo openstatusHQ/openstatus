@@ -107,7 +107,7 @@ function EventMessage({
   return (
     <div
       className={cn(
-        "prose dark:prose-invert prose-sm prose-headings:font-cal",
+        "prose dark:prose-invert prose-sm prose-headings:font-cal overflow-hidden text-ellipsis", // fixes very long words
         className,
       )}
     >
