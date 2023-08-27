@@ -400,7 +400,7 @@ importers:
         specifier: 5.1.6
         version: 5.1.6
       vitest:
-        specifier: ^0.34.3
+        specifier: 0.34.3
         version: 0.34.3
 
   packages/config/eslint:
