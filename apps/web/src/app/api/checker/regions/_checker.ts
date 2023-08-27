@@ -88,7 +88,7 @@ export const checker = async (request: Request, region: string) => {
       method: result.data?.method,
       cache: "no-store",
       headers: { 
-         "OpenStatus-Ping":"true",
+        "OpenStatus-Ping": "true",
         ...headers 
       },
       body: result.data?.body,
