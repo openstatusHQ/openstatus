@@ -94,10 +94,10 @@ export function StatusPageForm({
   }, [checkUniqueSlug]);
 
   useEffect(() => {
-    if (!watchSlug) {
+    if (!defaultValues?.title) {
       form.setValue("slug", slugify(watchTitle));
     }
-  }, [watchTitle, form, watchSlug]);
+  }, [watchTitle, form, watchSlug, defaultValues?.title]);
 
   const onSubmit = async ({
     ...props
