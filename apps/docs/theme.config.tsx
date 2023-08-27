@@ -13,6 +13,22 @@ const config: DocsThemeConfig = {
   footer: {
     text: "OpenStatus Documentation",
   },
+  head: (
+    <>
+      <title>OpenStatus Documentation</title>
+      <meta
+        name="description"
+        content="An Open Source alternative for your next Status Page"
+      />
+      <meta property="og:image" content="https://openstatus.dev/api/og" />
+    </>
+  ),
+  useNextSeoProps() {
+    return {
+      title: "OpenStatus Documentation",
+      titleTemplate: "%s | OpenStatus Documentation",
+    };
+  },
 };
 
 export default config;
