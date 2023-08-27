@@ -38,7 +38,7 @@ export const IncidentList = ({
                   {incident.title}
                   <StatusBadge status={incident.status} />
                 </div>
-                <div>
+                <div className="overflow-hidden text-ellipsis">
                   <p className="text-muted-foreground mb-1 text-xs">
                     Affected Monitors
                   </p>
