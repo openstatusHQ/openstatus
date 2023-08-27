@@ -19,4 +19,5 @@ export const env = createEnv({
     TEAM_ID_VERCEL: process.env.TEAM_ID_VERCEL,
     VERCEL_AUTH_BEARER_TOKEN: process.env.VERCEL_AUTH_BEARER_TOKEN,
   },
+  skipValidation: process.env.NODE_ENV === "test",
 });
