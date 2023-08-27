@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 // include update on creation
@@ -264,11 +265,12 @@ export function IncidentForm({
                               <FormLabel className="font-normal">
                                 {item.name}
                               </FormLabel>
-                              {item.active ? (
-                                <span className="rounded-full bg-green-500 p-1"></span>
-                              ) : (
-                                <span className="rounded-full bg-red-500 p-1"></span>
-                              )}
+                              <span
+                                className={cn(
+                                  "rounded-full p-1",
+                                  item.active ? "bg-green-500" : "bg-red-500",
+                                )}
+                              ></span>
                             </div>
                             <p className="text-muted-foreground truncate text-sm">
                               {item.description}
