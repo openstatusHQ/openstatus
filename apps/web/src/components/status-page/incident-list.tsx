@@ -2,7 +2,7 @@ import type { z } from "zod";
 
 import type {
   selectIncidentsPageSchema,
-  selectMonitorSchema,
+  selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { notEmpty } from "@/lib/utils";
@@ -17,7 +17,7 @@ export const IncidentList = ({
   monitors,
 }: {
   incidents: z.infer<typeof selectIncidentsPageSchema>;
-  monitors: z.infer<typeof selectMonitorSchema>[];
+  monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) => {
   // TBD
   // const currentIncidents = incidents.filter(

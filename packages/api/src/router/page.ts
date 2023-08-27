@@ -10,7 +10,7 @@ import {
   monitorsToIncidents,
   monitorsToPages,
   page,
-  selectPageSchemaWithRelation,
+  selectPublicPageSchemaWithRelation,
   user,
   usersToWorkspaces,
   workspace,
@@ -305,7 +305,7 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      return selectPageSchemaWithRelation.parse({
+      return selectPublicPageSchemaWithRelation.parse({
         ...result,
         monitors,
         incidents,

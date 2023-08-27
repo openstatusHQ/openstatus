@@ -1,11 +1,11 @@
 import type * as z from "zod";
 
-import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
 
 export function AffectedMonitors({
   monitors,
 }: {
-  monitors: z.infer<typeof selectMonitorSchema>[];
+  monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
   return (
     <ul role="list">
