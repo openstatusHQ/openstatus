@@ -37,6 +37,9 @@ const tracker = cva("h-10 rounded-full flex-1", {
   },
 });
 
+// We had issues during those dates!
+const blacklistedDates = [1692921600000, 1693008000000];
+
 interface TrackerProps {
   data: Monitor[];
   url: string;
@@ -58,6 +61,10 @@ export function Tracker({
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]); // TODO: it is better than how it is currently, but creates a small content shift on first render
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
+
+  const filledData =
+    // playground includes not only aggregated data, but data by ping (so every 10m)
+    context === "play" ? slicedData : fillMissingDates(slicedData);
 
   const reducedData = slicedData.reduce(
     (prev, curr) => {
@@ -95,7 +102,7 @@ export function Tracker({
               // TODO: use `Bar` component and `HoverCard` with empty state
               return <div key={i} className={tracker({ variant: "empty" })} />;
             })}
-          {slicedData.map((props) => {
+          {filledData.map((props) => {
             return (
               <Bar key={props.cronTimestamp} context={context} {...props} />
             );
@@ -210,8 +217,55 @@ const Bar = ({
 // FIXME this is a temporary solution
 const getStatus = (
   ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" } => {
+): { label: string; variant: "up" | "degraded" | "down" | "empty" } => {
+  if (isNaN(ratio)) return { label: "Missing", variant: "empty" };
   if (ratio >= 0.98) return { label: "Operational", variant: "up" };
   if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
   return { label: "Downtime", variant: "down" };
 };
+
+// TODO: is there a way to do it with `date-fns`?
+// Function to fill missing dates in the data array
+function fillMissingDates(data: Monitor[]) {
+  const startDate = new Date(data[0].cronTimestamp);
+  const endDate = new Date(data[data.length - 1].cronTimestamp);
+  const dateSequence = generateDateSequence(startDate, endDate);
+
+  const filledData: Monitor[] = [];
+  let dataIndex = 0;
+
+  for (const currentDate of dateSequence) {
+    const currentTimestamp = currentDate.getTime();
+    if (
+      dataIndex < data.length &&
+      data[dataIndex].cronTimestamp === currentTimestamp &&
+      // can be removed once not needed!
+      !blacklistedDates.includes(currentTimestamp)
+    ) {
+      filledData.push(data[dataIndex]);
+      dataIndex++;
+    } else {
+      filledData.push({
+        count: 0,
+        ok: 0,
+        avgLatency: 0,
+        cronTimestamp: currentTimestamp,
+      });
+    }
+  }
+
+  return filledData;
+}
+
+// Function to generate a sequence of dates between two dates
+function generateDateSequence(startDate: Date, endDate: Date) {
+  const dateSequence = [];
+  const currentDate = new Date(startDate);
+
+  while (currentDate <= endDate) {
+    dateSequence.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dateSequence;
+}
