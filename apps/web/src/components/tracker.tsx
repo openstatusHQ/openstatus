@@ -30,6 +30,7 @@ const tracker = cva("h-10 rounded-full flex-1", {
       down: "bg-red-500 data-[state=open]:bg-red-600",
       degraded: "bg-yellow-500 data-[state=open]:bg-yellow-600",
       empty: "bg-muted-foreground/20",
+      blacklist: "bg-green-400",
     },
   },
   defaultVariants: {
@@ -38,7 +39,12 @@ const tracker = cva("h-10 rounded-full flex-1", {
 });
 
 // We had issues during those dates!
-const blacklistedDates = [1692921600000, 1693008000000];
+const blacklist: Record<number, string> = {
+  1692921600000:
+    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+  1693008000000:
+    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+};
 
 interface TrackerProps {
   data: Monitor[];
@@ -164,6 +170,8 @@ const Bar = ({
   const toDate = isMidnight ? date.setDate(date.getDate() + 1) : cronTimestamp;
   const dateFormat = isMidnight ? "dd/MM/yy" : "dd/MM/yy HH:mm";
 
+  const isBlackListed = Object.keys(blacklist).includes(String(cronTimestamp));
+
   return (
     <HoverCard
       openDelay={100}
@@ -172,43 +180,55 @@ const Bar = ({
       onOpenChange={setOpen}
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
-        <div className={tracker({ variant: getStatus(ratio).variant })} />
+        <div
+          className={tracker({
+            variant: isBlackListed ? "blacklist" : getStatus(ratio).variant,
+          })}
+        />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-64">
-        <div className="flex justify-between">
-          <p className="text-sm font-semibold">{getStatus(ratio).label}</p>
-          {context === "play" ? (
-            <Link
-              href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <Eye className="h-4 w-4" />
-            </Link>
-          ) : null}
-        </div>
-        <div className="flex justify-between">
-          <p className="text-xs font-light">
-            {format(new Date(cronTimestamp), dateFormat)}
-          </p>
+        {isBlackListed ? (
           <p className="text-muted-foreground text-xs">
-            avg. <span className="font-mono">{avgLatency}ms</span>
+            {blacklist[cronTimestamp]}
           </p>
-        </div>
-        <Separator className="my-1.5" />
-        <div className="grid grid-cols-2">
-          <p className="text-left text-xs">
-            <span className="font-mono text-green-600">{count}</span>{" "}
-            <span className="text-muted-foreground font-light">
-              total requests
-            </span>
-          </p>
-          <p className="text-right text-xs">
-            <span className="font-mono text-red-600">{count - ok}</span>{" "}
-            <span className="text-muted-foreground font-light">
-              failed requests
-            </span>
-          </p>
-        </div>
+        ) : (
+          <>
+            <div className="flex justify-between">
+              <p className="text-sm font-semibold">{getStatus(ratio).label}</p>
+              {context === "play" ? (
+                <Link
+                  href={`/monitor/openstatusPing?fromDate=${cronTimestamp}&toDate=${toDate}`}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <Eye className="h-4 w-4" />
+                </Link>
+              ) : null}
+            </div>
+            <div className="flex justify-between">
+              <p className="text-xs font-light">
+                {format(new Date(cronTimestamp), dateFormat)}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                avg. <span className="font-mono">{avgLatency}ms</span>
+              </p>
+            </div>
+            <Separator className="my-1.5" />
+            <div className="grid grid-cols-2">
+              <p className="text-left text-xs">
+                <span className="font-mono text-green-600">{count}</span>{" "}
+                <span className="text-muted-foreground font-light">
+                  total requests
+                </span>
+              </p>
+              <p className="text-right text-xs">
+                <span className="font-mono text-red-600">{count - ok}</span>{" "}
+                <span className="text-muted-foreground font-light">
+                  failed requests
+                </span>
+              </p>
+            </div>
+          </>
+        )}
       </HoverCardContent>
     </HoverCard>
   );
@@ -238,9 +258,7 @@ function fillMissingDates(data: Monitor[]) {
     const currentTimestamp = currentDate.getTime();
     if (
       dataIndex < data.length &&
-      data[dataIndex].cronTimestamp === currentTimestamp &&
-      // can be removed once not needed!
-      !blacklistedDates.includes(currentTimestamp)
+      data[dataIndex].cronTimestamp === currentTimestamp
     ) {
       filledData.push(data[dataIndex]);
       dataIndex++;
