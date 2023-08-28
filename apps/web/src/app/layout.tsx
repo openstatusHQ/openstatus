@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
+import { HighlightInit } from "@highlight-run/next/client";
 import PlausibleProvider from "next-plausible";
 
 import {
@@ -40,18 +41,29 @@ export default function RootLayout({
 }) {
   // If you want to develop locally without Clerk,  Comment the provider below
   return (
-    <html lang="en">
-      {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
-      <PlausibleProvider domain="openstatus.dev">
-        <ClerkProvider>
-          <body className={`${inter.className} ${calSans.variable}`}>
-            <Background>{children}</Background>
-            <Toaster />
-            <TailwindIndicator />
-          </body>
-        </ClerkProvider>
-      </PlausibleProvider>
-      <ClientAnalytics />
-    </html>
+    <>
+      <HighlightInit
+        projectId={"kgrx8qg6"}
+        tracingOrigins
+        networkRecording={{
+          enabled: true,
+          recordHeadersAndBody: true,
+          urlBlocklist: [],
+        }}
+      />
+      <html lang="en">
+        {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
+        <PlausibleProvider domain="openstatus.dev">
+          <ClerkProvider>
+            <body className={`${inter.className} ${calSans.variable}`}>
+              <Background>{children}</Background>
+              <Toaster />
+              <TailwindIndicator />
+            </body>
+          </ClerkProvider>
+        </PlausibleProvider>
+        <ClientAnalytics />
+      </html>
+    </>
   );
 }

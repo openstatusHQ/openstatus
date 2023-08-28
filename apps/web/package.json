@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "4.23.2",
+    "@highlight-run/next": "^4.1.0",
     "@hookform/resolvers": "3.1.1",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/api": "workspace:^",
