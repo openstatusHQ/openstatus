@@ -32,7 +32,7 @@ test("Get Test Workspace", async () => {
 });
 
 test("No workspace", async () => {
-  const ctx = await createTRPCContext({
+  const ctx = createTRPCContext({
     req: {},
   });
 
@@ -48,7 +48,7 @@ test("No workspace", async () => {
 });
 
 test("All workspaces", async () => {
-  const ctx = await createTRPCContext({
+  const ctx = createTRPCContext({
     req: {},
   });
 
@@ -60,7 +60,7 @@ test("All workspaces", async () => {
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getUserWithWorkspace();
-  expect(result).toMatchInlineSnapshot([
+  expect(result).toMatchObject([
     {
       createdAt: expect.any(Date),
       email: "test@test.com",

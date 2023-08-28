@@ -51,3 +51,6 @@ openstatus.db-shm
 
 packages/tinybird/.tinyb
 apps/web/tsconfig.tsbuildinfo
+openstatus-test.db
+openstatus-test.db-shm
+openstatus-test.db-wal

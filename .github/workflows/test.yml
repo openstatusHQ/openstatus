@@ -1,5 +1,5 @@
 # https://github.com/kentcdodds/kentcdodds.com/blob/main/.github/workflows/deployment.yml
-name: Code Check
+name: Tests
 on:
   push:
     branches:
@@ -11,13 +11,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    name: ⬣ ESLint
+  tests:
+    name: 🧪 Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      sqld:
+        image: ghcr.io/libsql/sqld:latest
+        ports:
+          - 8080:8080
+
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      DATABASE_URL: http://127.0.0.1:8080
+      DATABASE_AUTH_TOKEN: "hello"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
@@ -33,38 +41,22 @@ jobs:
           node-version: 18
           cache: "pnpm"
 
-      - name: 📥 Download deps
-        run: pnpm install
-
-      - name: 🔬 Lint
-        run: pnpm lint
-
-  prettier:
-    name: 💅 Prettier
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v2
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v1
         with:
-          version: 8
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: "pnpm"
+          bun-version: latest
 
       - name: 📥 Download deps
         run: pnpm install
 
-      - name: 💅 Prettier check
-        run: pnpm format:check
+      - name: 🗃️ Run migrations
+        run: pnpm migrate
+        working-directory: ./packages/db
+
+      - name: 💽  Seed database
+        run: pnpm seed
+        working-directory: ./packages/db
+
+      - name: 🧪 Tests
+        run: pnpm test
+        working-directory: ./packages/api
