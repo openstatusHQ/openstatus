@@ -189,8 +189,7 @@ const Bar = ({
       <HoverCardContent side="top" className="w-64">
         {isBlackListed ? (
           <p className="text-muted-foreground text-xs">
-            OpenStatus faced issues between 24.08. and 27.08., preventing data
-            collection.
+            {blacklist[cronTimestamp]}
           </p>
         ) : (
           <>
