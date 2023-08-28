@@ -5,8 +5,10 @@
 import { CaptureConsole as CaptureConsoleIntegration } from "@sentry/integrations";
 import * as Sentry from "@sentry/nextjs";
 
+import { env } from "@/env";
+
 Sentry.init({
-  dsn: "https://f20616b5573f2a39dab718d99c8d9e38@o4505782661349376.ingest.sentry.io/4505782662791168",
+  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 0,
