@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 // include update on creation
@@ -260,9 +261,17 @@ export function IncidentForm({
                             />
                           </FormControl>
                           <div className="grid gap-1.5 leading-none">
-                            <FormLabel className="font-normal">
-                              {item.name}
-                            </FormLabel>
+                            <div className="flex items-center gap-2">
+                              <FormLabel className="font-normal">
+                                {item.name}
+                              </FormLabel>
+                              <span
+                                className={cn(
+                                  "rounded-full p-1",
+                                  item.active ? "bg-green-500" : "bg-red-500",
+                                )}
+                              ></span>
+                            </div>
                             <p className="text-muted-foreground truncate text-sm">
                               {item.description}
                             </p>
