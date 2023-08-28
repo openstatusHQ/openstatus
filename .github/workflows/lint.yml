@@ -6,10 +6,6 @@ on:
       - "*"
   pull_request: {}
 
-concurrency:
-  group: ${{ github.job }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   lint:
     name: ⬣ ESLint
