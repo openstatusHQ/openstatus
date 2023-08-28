@@ -79,7 +79,7 @@ importers:
         specifier: 4.23.2
         version: 4.23.2(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       '@highlight-run/next':
-        specifier: ^4.1.0
+        specifier: 4.1.0
         version: 4.1.0(@highlight-run/node@3.2.0)(highlight.run@7.4.3)(next@13.4.12)(react-dom@18.2.0)(react@18.2.0)
       '@hookform/resolvers':
         specifier: 3.1.1
@@ -3343,7 +3343,7 @@ packages:
     dependencies:
       '@opentelemetry/api': 1.4.1
       '@opentelemetry/instrumentation': 0.41.2(@opentelemetry/api@1.4.1)
-      '@opentelemetry/sdk-metrics': 1.13.0(@opentelemetry/api@1.4.1)
+      '@opentelemetry/sdk-metrics': 1.15.2(@opentelemetry/api@1.4.1)
       '@opentelemetry/semantic-conventions': 1.13.0
     transitivePeerDependencies:
       - supports-color
