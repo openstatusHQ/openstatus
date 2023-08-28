@@ -14,6 +14,7 @@ import {
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
+import { env } from "@/env";
 import { ClientAnalytics } from "./_components/analytics";
 import Background from "./_components/background";
 
@@ -43,7 +44,7 @@ export default function RootLayout({
   return (
     <>
       <HighlightInit
-        projectId={"kgrx8qg6"}
+        projectId={env.NEXT_PUBLIC_HIGHLIGHT_PROJECT_ID}
         tracingOrigins
         networkRecording={{
           enabled: true,

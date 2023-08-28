@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { H } from "@highlight-run/next/client";
 
 import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";
@@ -18,7 +20,15 @@ import { Skeleton } from "../ui/skeleton";
  */
 
 export function AppHeader() {
-  const { isLoaded, isSignedIn } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  // When the user is signed in, we want to identify them to Highlight
+  useEffect(() => {
+    if (!isSignedIn || !isLoaded) return;
+    H.identify(user.emailAddresses[0].emailAddress, {
+      id: user.id,
+    });
+  }, [user, isLoaded, isSignedIn]);
 
   return (
     <header className="border-border sticky top-3 z-50 w-full">
