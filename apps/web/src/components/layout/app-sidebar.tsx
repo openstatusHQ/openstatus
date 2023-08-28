@@ -16,14 +16,14 @@ export function AppSidebar() {
       <ul className="grid gap-1">
         {pagesConfig.map(({ title, href, icon, disabled }) => {
           const Icon = Icons[icon];
-          const link = `/app/${params.workspaceSlug}${href}`;
+          const link = `/app/${params?.workspaceSlug}${href}`;
           return (
             <li key={title} className="w-full">
               <Link
                 href={link}
                 className={cn(
                   "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-                  pathname.startsWith(link) &&
+                  pathname?.startsWith(link) &&
                     "bg-muted/50 border-border text-foreground",
                   disabled && "pointer-events-none opacity-60",
                 )}
@@ -38,10 +38,10 @@ export function AppSidebar() {
       <ul>
         <li className="w-full">
           <Link
-            href={`/app/${params.workspaceSlug}/settings`}
+            href={`/app/${params?.workspaceSlug}/settings`}
             className={cn(
               "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-              pathname.startsWith(`/app/${params.workspaceSlug}/settings`) &&
+              pathname?.startsWith(`/app/${params?.workspaceSlug}/settings`) &&
                 "bg-muted/50 border-border text-foreground",
             )}
           >

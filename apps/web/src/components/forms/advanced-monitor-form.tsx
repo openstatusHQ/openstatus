@@ -78,7 +78,7 @@ export function AdvancedMonitorForm({ defaultValues, workspaceSlug }: Props) {
   const router = useRouter();
   const { toast } = useToastAction();
   const searchParams = useSearchParams();
-  const monitorId = searchParams.get("id");
+  const monitorId = searchParams?.get("id");
   const [isPending, startTransition] = React.useTransition();
 
   const { fields, append, remove } = useFieldArray({
