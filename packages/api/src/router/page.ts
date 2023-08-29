@@ -276,11 +276,14 @@ export const pageRouter = createTRPCRouter({
         ({ monitorId }) => monitorId,
       );
 
-      const monitorsToIncidentsResult = await opts.ctx.db
-        .select()
-        .from(monitorsToIncidents)
-        .where(inArray(monitorsToIncidents.monitorId, monitorsId))
-        .all();
+      const monitorsToIncidentsResult =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(monitorsToIncidents)
+              .where(inArray(monitorsToIncidents.monitorId, monitorsId))
+              .all()
+          : [];
 
       const incidentsId = monitorsToIncidentsResult.map(
         ({ incidentId }) => incidentId,
