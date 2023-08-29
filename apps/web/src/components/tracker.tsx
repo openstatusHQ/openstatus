@@ -68,8 +68,7 @@ export function Tracker({
   const slicedData = data.slice(0, maxSize).reverse();
   const placeholderData: null[] = Array(maxSize).fill(null);
 
-  const filledData =
-    // playground includes not only aggregated data, but data by ping (so every 10m)
+  const filledData: Monitor[] =
     context === "play" ? slicedData : fillMissingDates(slicedData);
 
   const reducedData = slicedData.reduce(
@@ -247,6 +246,10 @@ const getStatus = (
 // TODO: is there a way to do it with `date-fns`?
 // Function to fill missing dates in the data array
 function fillMissingDates(data: Monitor[]) {
+  if (data.length === 0) {
+    return [];
+  }
+
   const startDate = new Date(data[0].cronTimestamp);
   const endDate = new Date(data[data.length - 1].cronTimestamp);
   const dateSequence = generateDateSequence(startDate, endDate);
