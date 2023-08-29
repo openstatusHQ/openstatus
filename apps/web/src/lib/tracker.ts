@@ -1,7 +1,7 @@
 import type { Monitor } from "@openstatus/tinybird";
 
 /**
- *
+ * Get the status of a monitor based on its ratio
  * @param ratio
  * @returns
  */
@@ -14,6 +14,11 @@ export const getStatus = (
   return { label: "Downtime", variant: "down" };
 };
 
+/**
+ *
+ * @param data Array of monitors from tinybird
+ * @returns
+ */
 export function getMonitorList(
   data: Monitor[],
   { maxSize, context }: { maxSize: number; context?: string },
@@ -48,8 +53,12 @@ export function getMonitorList(
   };
 }
 
-// TODO: is there a way to do it with `date-fns`?
-// Function to fill missing dates in the data array
+/**
+ * It happens that some monitors don't have data for a specific date
+ * This function fills the missing dates in between
+ * @param data Array of monitors from tinybird
+ * @returns
+ */
 export function fillMissingDates(data: Monitor[]) {
   if (data.length === 0) {
     return [];
@@ -57,6 +66,8 @@ export function fillMissingDates(data: Monitor[]) {
 
   const startDate = new Date(data[0].cronTimestamp);
   const endDate = new Date(data[data.length - 1].cronTimestamp);
+  // The reason why we cannot use `date-fns` is because it isn't supported on the edge
+  // const dateSequence = eachDayOfInterval({start:startDate, end:endDate})
   const dateSequence = generateDateSequence(startDate, endDate);
 
   const filledData: Monitor[] = [];
@@ -96,7 +107,9 @@ export function generateDateSequence(startDate: Date, endDate: Date) {
   return dateSequence;
 }
 
-// We had issues during those dates!
+/**
+ * Blacklist dates where we had issues with data collection
+ */
 export const blacklistDates: Record<number, string> = {
   1692921600000:
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
