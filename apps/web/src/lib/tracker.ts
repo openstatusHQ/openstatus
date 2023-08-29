@@ -29,7 +29,17 @@ export function getMonitorList(
   const filledData: Monitor[] =
     context === "play" ? slicedData : fillMissingDates(slicedData);
 
-  const reducedData = slicedData.reduce(
+  const totalUptime = getTotalUptime(filledData);
+
+  return {
+    monitors: filledData,
+    placeholder: placeholderData,
+    uptime: totalUptime,
+  };
+}
+
+export function getTotalUptime(data: Monitor[]) {
+  const reducedData = data.reduce(
     (prev, curr) => {
       prev.ok += curr.ok;
       prev.count += curr.count;
@@ -46,11 +56,7 @@ export function getMonitorList(
       ? ((reducedData.ok / reducedData.count) * 100).toFixed(2)
       : "";
 
-  return {
-    monitors: filledData,
-    placeholder: placeholderData,
-    uptime,
-  };
+  return uptime;
 }
 
 /**
