@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import useWindowSize from "@/hooks/use-window-size";
+import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -37,14 +38,6 @@ const tracker = cva("h-10 rounded-full flex-1", {
     variant: "empty",
   },
 });
-
-// We had issues during those dates!
-const blacklist: Record<number, string> = {
-  1692921600000:
-    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
-  1693008000000:
-    "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
-};
 
 interface TrackerProps {
   data: Monitor[];
@@ -65,28 +58,10 @@ export function Tracker({
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]); // TODO: it is better than how it is currently, but creates a small content shift on first render
-  const slicedData = data.slice(0, maxSize).reverse();
-  const placeholderData: null[] = Array(maxSize).fill(null);
-
-  const filledData: Monitor[] =
-    context === "play" ? slicedData : fillMissingDates(slicedData);
-
-  const reducedData = slicedData.reduce(
-    (prev, curr) => {
-      prev.ok += curr.ok;
-      prev.count += curr.count;
-      return prev;
-    },
-    {
-      count: 0,
-      ok: 0,
-    },
-  );
-
-  const uptime =
-    reducedData.count !== 0
-      ? `${((reducedData.ok / reducedData.count) * 100).toFixed(2)}% uptime`
-      : "";
+  const { monitors, placeholder, uptime } = getMonitorList(data, {
+    maxSize,
+    context,
+  });
 
   return (
     <div className="flex flex-col">
@@ -97,17 +72,17 @@ export function Tracker({
             <MoreInfo {...{ url, id, context, description }} />
           ) : null}
         </div>
-        <p className="text-muted-foreground font-light">{uptime}</p>
+        <p className="text-muted-foreground font-light">{uptime}% uptime</p>
       </div>
       <div className="relative h-full w-full">
         <div className="flex gap-0.5">
-          {Array(placeholderData.length - slicedData.length)
+          {Array(placeholder.length - monitors.length)
             .fill(null)
             .map((_, i) => {
               // TODO: use `Bar` component and `HoverCard` with empty state
               return <div key={i} className={tracker({ variant: "empty" })} />;
             })}
-          {filledData.map((props) => {
+          {monitors.map((props) => {
             return (
               <Bar key={props.cronTimestamp} context={context} {...props} />
             );
@@ -169,7 +144,9 @@ const Bar = ({
   const toDate = isMidnight ? date.setDate(date.getDate() + 1) : cronTimestamp;
   const dateFormat = isMidnight ? "dd/MM/yy" : "dd/MM/yy HH:mm";
 
-  const isBlackListed = Object.keys(blacklist).includes(String(cronTimestamp));
+  const isBlackListed = Object.keys(blacklistDates).includes(
+    String(cronTimestamp),
+  );
 
   return (
     <HoverCard
@@ -188,7 +165,7 @@ const Bar = ({
       <HoverCardContent side="top" className="w-64">
         {isBlackListed ? (
           <p className="text-muted-foreground text-xs">
-            {blacklist[cronTimestamp]}
+            {blacklistDates[cronTimestamp]}
           </p>
         ) : (
           <>
@@ -232,61 +209,3 @@ const Bar = ({
     </HoverCard>
   );
 };
-
-// FIXME this is a temporary solution
-const getStatus = (
-  ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" | "empty" } => {
-  if (isNaN(ratio)) return { label: "Missing", variant: "empty" };
-  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
-  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
-  return { label: "Downtime", variant: "down" };
-};
-
-// TODO: is there a way to do it with `date-fns`?
-// Function to fill missing dates in the data array
-function fillMissingDates(data: Monitor[]) {
-  if (data.length === 0) {
-    return [];
-  }
-
-  const startDate = new Date(data[0].cronTimestamp);
-  const endDate = new Date(data[data.length - 1].cronTimestamp);
-  const dateSequence = generateDateSequence(startDate, endDate);
-
-  const filledData: Monitor[] = [];
-  let dataIndex = 0;
-
-  for (const currentDate of dateSequence) {
-    const currentTimestamp = currentDate.getTime();
-    if (
-      dataIndex < data.length &&
-      data[dataIndex].cronTimestamp === currentTimestamp
-    ) {
-      filledData.push(data[dataIndex]);
-      dataIndex++;
-    } else {
-      filledData.push({
-        count: 0,
-        ok: 0,
-        avgLatency: 0,
-        cronTimestamp: currentTimestamp,
-      });
-    }
-  }
-
-  return filledData;
-}
-
-// Function to generate a sequence of dates between two dates
-function generateDateSequence(startDate: Date, endDate: Date) {
-  const dateSequence = [];
-  const currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    dateSequence.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dateSequence;
-}
