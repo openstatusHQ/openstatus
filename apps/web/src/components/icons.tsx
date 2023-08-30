@@ -3,6 +3,7 @@ import {
   Calendar,
   Cog,
   Fingerprint,
+  Globe,
   LayoutDashboard,
   Link,
   MessageCircle,
@@ -38,6 +39,7 @@ export const Icons = {
   calendar: Calendar,
   tag: Tag,
   trash: Trash,
+  globe: Globe,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
