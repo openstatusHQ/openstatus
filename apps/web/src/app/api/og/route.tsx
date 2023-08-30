@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/server";
 
 import { getMonitorListData } from "@/lib/tb";
+import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
 
 export const runtime = "edge";
@@ -51,14 +52,9 @@ export async function GET(req: Request) {
       }))) ||
     [];
 
-  const uptime = data?.reduce(
-    (prev, curr) => {
-      prev.ok += curr.ok;
-      prev.count += curr.count;
-      return prev;
-    },
-    { ok: 0, count: 0 },
-  );
+  const { monitors, uptime } = getMonitorList(data, {
+    maxSize: 40,
+  });
 
   return new ImageResponse(
     (
@@ -84,13 +80,11 @@ export async function GET(req: Request) {
             {title}
           </h1>
           <p tw="text-slate-600 text-3xl">{description}</p>
-          {data && data.length > 0 ? (
+          {monitors && monitors.length > 0 ? (
             <div tw="flex flex-col w-full mt-6">
               <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
                 <p tw="">{formatDate(new Date())}</p>
-                <p tw="mr-1">
-                  {((uptime.ok / uptime.count) * 100).toFixed(2)}% uptime
-                </p>
+                <p tw="mr-1">{uptime}% uptime</p>
               </div>
               <div tw="flex flex-row relative">
                 {/* Empty State */}
@@ -103,8 +97,19 @@ export async function GET(req: Request) {
                   );
                 })}
                 <div tw="flex flex-row absolute right-0">
-                  {data.map((item, i) => {
+                  {monitors.map((item, i) => {
                     const { variant } = getStatus(item.ok / item.count);
+                    const isBlackListed = Object.keys(blacklistDates).includes(
+                      String(item.cronTimestamp),
+                    );
+                    if (isBlackListed) {
+                      return (
+                        <div
+                          key={i}
+                          tw="h-16 w-3 rounded-full mr-1 bg-green-400"
+                        />
+                      );
+                    }
                     return (
                       <div
                         key={i}
@@ -152,12 +157,3 @@ export async function GET(req: Request) {
     },
   );
 }
-
-// FIXME this is a temporary solution (taken from Tracker)
-const getStatus = (
-  ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" } => {
-  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
-  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
-  return { label: "Downtime", variant: "down" };
-};
