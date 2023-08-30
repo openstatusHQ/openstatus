@@ -30,6 +30,7 @@ export function MarketingFooter({ className }: Props) {
           <FooterLink href="https://status.openstatus.dev" label="Status" />
           <FooterLink href="/blog" label="Blog" />
           <FooterLink href="https://docs.openstatus.dev" label="Docs" />
+          <FooterLink href="/oss-friends" label="OSS Friends" />
         </div>
         <div className="flex flex-col gap-3 text-sm">
           <p className="text-foreground font-semibold">Legal</p>
