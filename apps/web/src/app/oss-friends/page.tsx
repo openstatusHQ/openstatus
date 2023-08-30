@@ -42,6 +42,9 @@ const OpenSourceFriends = () => {
             </CardHeader>
             <CardFooter>
               <div className="flex items-center gap-2.5">
+                <Link href={friend.website} target="_blank">
+                  <Icons.globe className="text-muted-foreground h-6 w-6 hover:text-black" />
+                </Link>
                 {friend.socialLinks.twitter && (
                   <Link href={friend.socialLinks.twitter} target="_blank">
                     <TwitterIcon className="text-muted-foreground h-6 w-6 hover:text-black" />
