@@ -24,10 +24,13 @@ export function getMonitorList(
   { maxSize, context }: { maxSize: number; context?: string },
 ) {
   const slicedData = data.slice(0, maxSize).reverse();
-  const placeholderData: null[] = Array(maxSize).fill(null);
 
   const filledData: Monitor[] =
     context === "play" ? slicedData : fillMissingDates(slicedData);
+
+  const placeholderData: null[] = Array(
+    Math.max(maxSize, filledData.length), // we might have more data than maxSize as we are adding empty dates in between
+  ).fill(null);
 
   const totalUptime = getTotalUptime(filledData);
 

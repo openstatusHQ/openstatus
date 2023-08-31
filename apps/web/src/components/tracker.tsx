@@ -76,7 +76,7 @@ export function Tracker({
       </div>
       <div className="relative h-full w-full">
         <div className="flex gap-0.5">
-          {Array(placeholder.length - monitors.length)
+          {Array(Math.abs(placeholder.length - monitors.length))
             .fill(null)
             .map((_, i) => {
               // TODO: use `Bar` component and `HoverCard` with empty state
