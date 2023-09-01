@@ -49,7 +49,7 @@ const OpenSourceFriends = () => {
                     const Icon = value.icon;
                     return (
                       <Link href={value.link} target="_blank" key={key}>
-                        <Icon className="text-muted-foreground h-6 w-6 hover:text-black" />
+                        <Icon className="text-muted-foreground h-5 w-5 hover:text-black" />
                       </Link>
                     );
                   }
