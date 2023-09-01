@@ -42,11 +42,11 @@ const OpenSourceFriends = () => {
             <CardFooter>
               <div className="flex items-center gap-2.5">
                 <Link href={friend.website} target="_blank">
-                  <Icons.globe className="text-muted-foreground h-6 w-6 hover:text-black" />
+                  <Icons.globe className="text-muted-foreground h-5 w-5 hover:text-black" />
                 </Link>
                 {Object.entries(friend.socialLinks).map(([key, value]) => {
                   if (value) {
-                    const Icon = value.icon;
+                    const Icon = Icons[value.icon];
                     return (
                       <Link href={value.link} target="_blank" key={key}>
                         <Icon className="text-muted-foreground h-5 w-5 hover:text-black" />
