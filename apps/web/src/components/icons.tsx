@@ -16,6 +16,7 @@ import {
   Tag,
   ToyBrick,
   Trash,
+  TwitterIcon,
 } from "lucide-react";
 import type { Icon as LucideIcon, LucideProps } from "lucide-react";
 
@@ -39,6 +40,7 @@ export const Icons = {
   calendar: Calendar,
   tag: Tag,
   trash: Trash,
+  twitter: TwitterIcon,
   globe: Globe,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
