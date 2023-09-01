@@ -19,6 +19,7 @@
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
+    "@openstatus/vercel": "workspace:*",
     "@radix-ui/react-accordion": "1.1.2",
     "@radix-ui/react-alert-dialog": "1.0.4",
     "@radix-ui/react-avatar": "^1.0.3",
