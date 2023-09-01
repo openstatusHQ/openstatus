@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getMonitorListData } from "@/lib/tb";
 
+export const revalidate = 600;
+
 export default async function Page() {
   const data = await getMonitorListData({ monitorId: "openstatusPing" });
 
