@@ -67,6 +67,7 @@ export default authMiddleware({
     "/legal/(.*)",
     "/discord",
     "/github",
+    "/oss-friends",
   ],
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
