@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { TwitterIcon } from "lucide-react";
 
 import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
@@ -11,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { openSourceFriends } from "@/config/ossFriends";
+import { openSourceFriends } from "@/config/oss-friends";
 
 const OpenSourceFriends = () => {
   return (
@@ -45,21 +44,16 @@ const OpenSourceFriends = () => {
                 <Link href={friend.website} target="_blank">
                   <Icons.globe className="text-muted-foreground h-6 w-6 hover:text-black" />
                 </Link>
-                {friend.socialLinks.twitter && (
-                  <Link href={friend.socialLinks.twitter} target="_blank">
-                    <TwitterIcon className="text-muted-foreground h-6 w-6 hover:text-black" />
-                  </Link>
-                )}
-                {friend.socialLinks.github && (
-                  <Link href={friend.socialLinks.github} target="_blank">
-                    <Icons.github className="text-muted-foreground h-6 w-6 hover:text-black" />
-                  </Link>
-                )}
-                {friend.socialLinks.discord && (
-                  <Link href={friend.socialLinks.discord} target="_blank">
-                    <Icons.discord className="text-muted-foreground h-6 w-6 hover:text-black" />
-                  </Link>
-                )}
+                {Object.entries(friend.socialLinks).map(([key, value]) => {
+                  if (value) {
+                    const Icon = value.icon;
+                    return (
+                      <Link href={value.link} target="_blank" key={key}>
+                        <Icon className="text-muted-foreground h-6 w-6 hover:text-black" />
+                      </Link>
+                    );
+                  }
+                })}
               </div>
             </CardFooter>
           </Card>
