@@ -1,11 +1,18 @@
 import * as z from "zod";
 
-// we could flatten the proxy?
+/**
+ * If the response of the request returns an HTTP statusCode with a value of -1,
+ * that means there was no response returned and the lambda crashed.
+ * In the same response, if the value of proxy.statusCode is returned with -1,
+ * that means the revalidation occurred in the background.
+ */
+
+// https://vercel.com/docs/observability/log-drains-overview/log-drains-reference#json-log-drains
 export const logDrainSchema = z.object({
   id: z.string().optional(),
   timestamp: z.number().optional(),
   requestId: z.string().optional(),
-  statusCode: z.number().optional(), // min max 100 - 599
+  statusCode: z.number().optional(),
   message: z.string().optional(),
   projectId: z.string().optional(),
   deploymentId: z.string().optional(),
@@ -16,21 +23,21 @@ export const logDrainSchema = z.object({
   branch: z.string().optional(),
   destination: z.string().optional(),
   path: z.string().optional(),
-  proxy: z.unknown().optional(), // TODO: flatten it afterwards?
-  // "proxy": {
-  //     "timestamp": 1669188856020,
-  //     "region": "fra1",
-  //     "method": "GET",
-  //     "vercelCache": "MISS",
-  //     "statusCode": 301,
-  //     "path": "/external-rewrite",
-  //     "host": "my-app.vercel.app",
-  //     "scheme": "https",
-  //     "clientIp": "xxx.xxx.xxx.xxx",
-  //     "userAgent": [
-  //         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
-  //     ]
-  // },
+  entrypoint: z.string().optional(),
+  proxy: z
+    .object({
+      timestamp: z.number().optional(),
+      region: z.string().optional(), // TODO: use regions enum?
+      method: z.string().optional(), // TODO: use methods enum?
+      vercelCache: z.string().optional(), // TODO: use "HIT" / "MISS" enum?
+      statusCode: z.number().optional(),
+      path: z.string().optional(),
+      host: z.string().optional(),
+      scheme: z.string().optional(),
+      clientIp: z.string().optional(),
+      userAgent: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 export const logDrainSchemaArray = z.array(logDrainSchema);
