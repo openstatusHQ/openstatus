@@ -39,3 +39,19 @@ export function getMonitorList(tb: Tinybird) {
     },
   });
 }
+
+/**
+ * That pipe is used in the homepage to show the status while having cached data
+ * FYI We had 3TB of processed data during August. We will be able to reduce it signifcantly.
+ * The cache is only applied on the homepage.
+ */
+export function getHomeMonitorList(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "monitor_list__v0",
+    parameters: tbParameterMonitorList,
+    data: tbBuildMonitorList,
+    opts: {
+      revalidate: 600, // 10 minutes cache
+    },
+  });
+}
