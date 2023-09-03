@@ -91,6 +91,12 @@ the link you get after entering:
 $ ngrok http 3000
 ```
 
+### Videos
+
+Videos to better understand the OpenStatus codebase:
+
+* [The code behind OpenStatus and how it uses Turbopack](https://youtube.com/watch?v=PYfSJATE8v8).
+
 ## Roadmap
 
 Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
