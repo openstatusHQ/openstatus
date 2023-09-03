@@ -2,6 +2,9 @@
 
 Seamless installement into Vercel's log drains for your project.
 
+> Inspired by
+> [@valeriangalliat/vercel-custom-log-drain](https://github.com/valeriangalliat/vercel-custom-log-drain).
+
 ## Description
 
 When integrating the Vercel App into your project. Every request to
