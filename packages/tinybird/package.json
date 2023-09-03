@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "license": "MIT",
   "dependencies": {
-    "@chronark/zod-bird": "^0.1.1",
+    "@chronark/zod-bird": "0.2.0",
     "zod": "^3.21.4"
   },
   "devDependencies": {

@@ -63,7 +63,8 @@ export async function POST(request: Request) {
      * TODO: it would be nice to have a way to publish all the logs in a single request (bulky insert)
      * Injest log drains into Tinybird
      */
-    // logDrains.data.map((log) => publishVercelLogDrain()(log));
+    await publishVercelLogDrain()(logDrains.data);
+
     return NextResponse.json({ code: "ok" }, { status: 200 });
   }
   return NextResponse.json({ error: logDrains.error }, { status: 500 });
