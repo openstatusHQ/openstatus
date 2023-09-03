@@ -2,8 +2,8 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-import { getToken } from "./client";
-import { encrypt } from "./utils";
+import { getToken } from "../libs/client";
+import { encrypt } from "../libs/crypto";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

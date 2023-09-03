@@ -543,6 +543,12 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../tinybird
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -550,6 +556,12 @@ importers:
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
+      '@types/react':
+        specifier: 18.2.12
+        version: 18.2.12
+      '@types/react-dom':
+        specifier: 18.2.5
+        version: 18.2.5
       next:
         specifier: 13.4.12
         version: 13.4.12(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
@@ -579,8 +591,8 @@ importers:
   packages/tinybird:
     dependencies:
       '@chronark/zod-bird':
-        specifier: ^0.1.1
-        version: 0.1.1
+        specifier: 0.2.0
+        version: 0.2.0
       zod:
         specifier: ^3.21.4
         version: 3.21.4
@@ -905,8 +917,8 @@ packages:
     resolution: {integrity: sha512-g2hMyGSFYOvt0eeY2c2wrG1B6dVWF1be4vGxG9mI1BEHJuQm4Hie2HrooxYHBDRDi8hANIzQ8cuvBgxSVlQOTQ==}
     dev: false
 
-  /@chronark/zod-bird@0.1.1:
-    resolution: {integrity: sha512-6UD9yhNIsvIP0FUqNuZ+bByQLc0IY2eQpeQn55CsqvZziGKQuPGqJzyq6o283fDgkKXTbXmQ7zC/LDBX6yrBhA==}
+  /@chronark/zod-bird@0.2.0:
+    resolution: {integrity: sha512-xKREVm1igwX08r8Ubw8L1crsu1Ryk6IaVyYqOVkGHATTYr34htyxq8bCZ0PZYAzh4tZRMI7sJKKi3lAodnHiyA==}
     dependencies:
       zod: 3.21.4
     dev: false

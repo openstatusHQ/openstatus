@@ -1,1 +1,1 @@
-export { GET } from "@openstatus/vercel/src/callback";
+export { GET } from "@openstatus/vercel/src/routes/callback";

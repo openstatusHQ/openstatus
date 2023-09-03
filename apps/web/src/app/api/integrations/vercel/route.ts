@@ -1,1 +1,1 @@
-export { config, POST } from "@openstatus/vercel/src/webhook";
+export { config, POST } from "@openstatus/vercel/src/routes/webhook";

@@ -5,10 +5,14 @@
   "description": "Log drains Vercel integration.",
   "dependencies": {
     "zod": "^3.21.4",
-    "@openstatus/tinybird": "workspace:*"
+    "@openstatus/tinybird": "workspace:*",    
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "@types/node": "20.3.1",
+    "@types/react": "18.2.12",
+    "@types/react-dom": "18.2.5",
     "next": "13.4.12",
     "tsconfig": "workspace:*",
     "typescript": "5.1.6"

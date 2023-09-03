@@ -17,6 +17,8 @@ async function fetchOk(
       body = null;
     }
 
+    console.log({ body });
+
     throw Object.assign(new Error(`Failed to fetch: ${url}`), {
       res,
       body,
@@ -79,7 +81,7 @@ export type LogDrain = {
     | "edge"
     | "external"
     | "deployment"
-  )[];
+  )[]; // REMINDER: creating a log drain with "deployment" source won't work
 };
 
 function getQuery(teamId?: string) {
@@ -107,6 +109,8 @@ export async function createLogDrain(
   teamId?: string,
 ): Promise<LogDrain> {
   const url = `${base}/v2/integrations/log-drains${getQuery(teamId)}`;
+
+  console.log({ token, logDrain, teamId });
 
   const res = await fetchOk(url, {
     method: "post",

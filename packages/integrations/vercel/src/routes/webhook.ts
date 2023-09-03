@@ -2,8 +2,8 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import * as z from "zod";
 
-import { logDrainSchemaArray } from "./schema";
-import { publishVercelLogDrain } from "./tinybird";
+import { logDrainSchemaArray } from "../libs/schema";
+import { publishVercelLogDrain } from "../libs/tinybird";
 
 export const config = {
   api: {
