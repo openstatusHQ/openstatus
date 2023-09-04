@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
   /** Get access token from Vercel */
   const token = await getToken(code);
 
+  // TODO: automatically install log drains to the allowed projects
+
   const iv = crypto.randomBytes(16);
   const encryptedToken = encrypt(iv, Buffer.from(token));
 

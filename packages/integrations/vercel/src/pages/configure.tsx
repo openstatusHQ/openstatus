@@ -35,6 +35,7 @@ export async function Configure() {
         // TODO: update with correct url
         url: "https://f97b-2003-ec-e716-2900-cab-5249-1843-c87b.ngrok-free.app/api/integrations/vercel",
         sources: ["static", "lambda", "build", "edge", "external"],
+        // headers: { "key": "value"}
       },
       teamId,
     );
