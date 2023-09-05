@@ -32,7 +32,11 @@ export default async function MonitorPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <Button asChild={!isLimit} disabled={isLimit}>
+        <Button
+          asChild={!isLimit}
+          disabled={isLimit}
+          tooltipContent="You reached your limit"
+        >
           <Link href="./monitors/edit">Create</Link>
         </Button>
       </Header>
