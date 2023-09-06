@@ -69,8 +69,7 @@ export function Events({
             </div>
             <div className="mt-1 grid flex-1 gap-3">
               {editable ? (
-                <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex group-active:flex">
-                  {/* TODO: create action-button */}
+                <div className="absolute bottom-2 right-2 hidden gap-2 group-hover:flex group-active:flex">
                   <Button
                     size="icon"
                     variant="outline"
