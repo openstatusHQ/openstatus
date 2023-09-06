@@ -1,5 +1,5 @@
 {
-  "name": "api",
+  "name": "@openstatus/api-server",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,14 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@openstatus/rest-api": "workspace:*",
+    "@openstatus/db": "workspace:^",
+    "next": "13.4.12",
+    "next-swagger-doc": "0.4.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "swagger-ui-react": "5.6.2",
+    "zod": "3.21.4"
+  },
+  "devDependencies": {
     "@types/node": "20.5.9",
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
-    "next": "13.4.12",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
     "tsconfig": "workspace:*",
-    "typescript": "5.1.6"
+    "typescript": "5.1.6",
+    "@types/swagger-ui-react": "4.18.0"
   }
 }

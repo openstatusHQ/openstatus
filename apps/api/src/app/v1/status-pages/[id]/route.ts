@@ -1,1 +1,0 @@
-export { GET, PUT, DELETE } from "@openstatus/rest-api/src/status-pages";
