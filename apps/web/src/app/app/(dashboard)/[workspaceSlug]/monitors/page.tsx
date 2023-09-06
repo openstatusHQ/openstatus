@@ -7,7 +7,7 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ButtonWithDisableTooltip } from "@/components/ui/button-with-disable-tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
@@ -32,13 +32,13 @@ export default async function MonitorPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitors" description="Overview of all your monitors.">
-        <Button
+        <ButtonWithDisableTooltip
+          tooltip="You reached the limits"
           asChild={!isLimit}
           disabled={isLimit}
-          tooltipContent="You reached your limit"
         >
           <Link href="./monitors/edit">Create</Link>
-        </Button>
+        </ButtonWithDisableTooltip>
       </Header>
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
