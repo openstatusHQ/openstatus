@@ -44,7 +44,11 @@ export default async function Page({
         title="Status Page"
         description="Overview of all your status pages."
       >
-        <Button asChild={!disableButton} disabled={disableButton}>
+        <Button
+          asChild={!disableButton}
+          disabled={disableButton}
+          tooltipContent="You reached the limits"
+        >
           <Link href="./status-pages/edit">Create</Link>
         </Button>
       </Header>
