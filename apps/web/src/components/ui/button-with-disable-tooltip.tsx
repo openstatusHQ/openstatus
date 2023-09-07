@@ -16,7 +16,13 @@ export const ButtonWithDisableTooltip = ({
   disabled,
   ...props
 }: ButtonWithDisableTooltipProps) => {
-  const ButtonComponent = <Button {...props} disabled={disabled} />;
+  const ButtonComponent = (
+    <Button
+      {...props}
+      disabled={disabled}
+      className={cn(disabled && "pointer-events-none")}
+    />
+  );
 
   if (disabled) {
     // If the button is disabled, we wrap it in a tooltip since
