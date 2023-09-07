@@ -71,6 +71,7 @@ export default authMiddleware({
     "/discord",
     "/github",
     "/oss-friends",
+    "/status-page/(.*)",
   ].concat(process.env.NODE_ENV === "development" ? publicRoutesDev : []),
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
