@@ -52,9 +52,6 @@ export const getValidSubdomain = (host?: string | null) => {
   return subdomain;
 };
 
-// used when trying subdomain slug via status.localhost:3000/incidents
-const publicRoutesDev = ["/incidents"];
-
 export default authMiddleware({
   publicRoutes: [
     "/",
@@ -72,7 +69,8 @@ export default authMiddleware({
     "/github",
     "/oss-friends",
     "/status-page/(.*)",
-  ].concat(process.env.NODE_ENV === "development" ? publicRoutesDev : []),
+    "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
+  ],
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
   async afterAuth(auth, req) {
