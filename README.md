@@ -95,7 +95,7 @@ $ ngrok http 3000
 
 Videos to better understand the OpenStatus codebase:
 
-* [The code behind OpenStatus and how it uses Turbopack](https://youtube.com/watch?v=PYfSJATE8v8).
+- [The code behind OpenStatus and how it uses Turbopack](https://youtube.com/watch?v=PYfSJATE8v8).
 
 ## Roadmap
 

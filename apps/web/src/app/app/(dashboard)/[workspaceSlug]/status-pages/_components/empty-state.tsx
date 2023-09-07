@@ -20,7 +20,7 @@ export function EmptyState({
         description="First create a monitor before creating a page."
         action={
           <Button asChild>
-            <Link href="./monitors">Go to monitors</Link>
+            <Link href="./monitors/edit">Create a monitor</Link>
           </Button>
         }
       />
