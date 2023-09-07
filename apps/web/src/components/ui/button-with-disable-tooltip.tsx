@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import type { ButtonProps } from "./button";
 import {
@@ -30,7 +31,9 @@ export const ButtonWithDisableTooltip = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>{ButtonComponent}</TooltipTrigger>
+          <TooltipTrigger asChild>
+            <span tabIndex={0}>{ButtonComponent}</span>
+          </TooltipTrigger>
           <TooltipContent>{tooltip}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
