@@ -1,3 +1,6 @@
+import { Shell } from "@/components/dashboard/shell";
+import NavigationLink from "./_components/navigation-link";
+
 export default function StatusPageLayout({
   children,
 }: {
@@ -5,8 +8,16 @@ export default function StatusPageLayout({
 }) {
   return (
     <div className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
-      <main className="flex flex-1 flex-col items-center justify-center gap-8">
-        <div className="mx-auto w-full max-w-xl text-center">{children}</div>
+      <header className="mx-auto w-full max-w-xl">
+        <Shell className="mx-auto flex items-center justify-center gap-2 p-2 px-2 md:p-3">
+          <NavigationLink slug={null}>Status</NavigationLink>
+          <NavigationLink slug="incidents">Incidents</NavigationLink>
+        </Shell>
+      </header>
+      <main className="flex h-full w-full flex-1 flex-col">
+        <Shell className="mx-auto h-full max-w-xl flex-1 px-4 py-4">
+          {children}
+        </Shell>
       </main>
       <footer className="z-10">
         <p className="text-muted-foreground text-center text-sm">
