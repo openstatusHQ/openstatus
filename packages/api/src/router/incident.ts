@@ -86,7 +86,7 @@ export const incidentRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const { workspaceSlug, ...incidentUpdateInput } = opts.input;
+      const { workspaceSlug, id, ...incidentUpdateInput } = opts.input;
       return await opts.ctx.db
         .insert(incidentUpdate)
         .values(incidentUpdateInput)
