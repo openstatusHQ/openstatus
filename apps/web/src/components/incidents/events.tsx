@@ -55,8 +55,7 @@ export function Events({
             key={update.id}
             className={cn(
               "group relative -m-2 flex gap-4 border border-transparent p-2",
-              editable &&
-                "hover:bg-accent/40 hover:border-border hover:rounded-lg",
+              editable && "hover:bg-accent/40 hover:rounded-lg",
             )}
           >
             <div className="relative">
@@ -110,7 +109,7 @@ export function Events({
       {incidentUpdates.length > 1 ? (
         <div className="text-center">
           <Button variant="ghost" onClick={toggle}>
-            {open ? "Close all" : "All updates"}
+            {open ? "Close" : "More"}
           </Button>
         </div>
       ) : null}

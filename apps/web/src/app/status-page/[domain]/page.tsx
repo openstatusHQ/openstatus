@@ -31,7 +31,6 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      {/* Think of having a tab to switch between monitors and incidents? */}
       <MonitorList monitors={page.monitors} />
       {page.monitors?.length > 0 ? (
         <IncidentList

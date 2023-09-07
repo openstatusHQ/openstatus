@@ -35,7 +35,11 @@ export const IncidentList = ({
 
   return (
     <>
-      {_incidents?.length > 0 ? (
+      {_incidents.sort((a, b) => {
+        if (a.updatedAt == undefined) return 1;
+        if (b.updatedAt == undefined) return -1;
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      })?.length > 0 ? (
         <div className="grid gap-4">
           <h2 className="text-muted-foreground text-lg font-light">
             {context === "all" ? "All incidents" : "Latest incidents"}
