@@ -15,13 +15,14 @@ interface ButtonWithDisableTooltipProps extends ButtonProps {
 export const ButtonWithDisableTooltip = ({
   tooltip,
   disabled,
+  className,
   ...props
 }: ButtonWithDisableTooltipProps) => {
   const ButtonComponent = (
     <Button
       {...props}
       disabled={disabled}
-      className={cn(disabled && "pointer-events-none")}
+      className={cn(className, disabled && "pointer-events-none")}
     />
   );
 
