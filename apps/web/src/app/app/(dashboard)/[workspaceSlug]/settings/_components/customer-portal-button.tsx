@@ -33,7 +33,7 @@ export function CustomerPortalButton({ workspaceSlug }: Props) {
       onClick={getUserCustomerPortal}
       disabled={isPending}
     >
-      {isPending ? <LoadingAnimation /> : "Customer Portal"}
+      {isPending ? <LoadingAnimation variant="inverse" /> : "Customer Portal"}
     </Button>
   );
 }
