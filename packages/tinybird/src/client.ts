@@ -13,7 +13,7 @@ import {
 
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
-    datasource: "ping_response__v2",
+    datasource: "ping_response__v3",
     event: tbIngestPingResponse,
   });
 }
