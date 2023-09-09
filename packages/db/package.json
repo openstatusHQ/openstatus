@@ -11,7 +11,7 @@
     "seed": "bun src/seed.mts"
   },
   "dependencies": {
-    "@libsql/client": "0.3.3-pre.2",
+    "@libsql/client": "0.3.2",
     "@t3-oss/env-core": "0.6.0",
     "dotenv": "16.3.1",
     "drizzle-orm": "0.28.6",
