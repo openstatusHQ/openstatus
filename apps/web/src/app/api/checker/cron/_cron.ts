@@ -1,5 +1,5 @@
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
-import { Client } from "@upstash/qstash/cloudflare";
+import { Client } from "@upstash/qstash";
 import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";

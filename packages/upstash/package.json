@@ -5,14 +5,14 @@
   "main": "./src/index.ts",
   "dependencies": {
     "@upstash/kafka": "1.3.3",
-    "@upstash/qstash": "0.3.6",
-    "@upstash/ratelimit": "0.4.3",
+    "@upstash/qstash": "2.1.2",
+    "@upstash/ratelimit": "0.4.4",
     "@upstash/redis": "1.22.0"
   },
   "devDependencies": {
-    "@types/node": "20.3.1",
+    "@types/node": "20.6.0",
     "tsconfig": "workspace:*",
-    "tsup": "7.1.0",
-    "typescript": "5.1.6"
+    "tsup": "7.2.0",
+    "typescript": "5.2.2"
   }
 }

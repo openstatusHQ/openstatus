@@ -17,15 +17,15 @@ export default function NavigationLink({
   const isActive = slug === segment;
 
   // REMINDER: `/status-page/${params.domain}/${slug}` won't work for subdomain
-  let href = pathname;
+  let href = pathname || "";
 
   if (!isActive) {
     if (segment && slug) {
-      href = `${pathname.replace(segment, slug)}`;
+      href = `${pathname?.replace(segment, slug)}`;
     } else if (segment) {
-      href = `${pathname.replace(segment, "")}`;
+      href = `${pathname?.replace(segment, "")}`;
     } else {
-      href = `${pathname}${pathname.endsWith("/") ? "" : "/"}${slug}`;
+      href = `${pathname}${pathname?.endsWith("/") ? "" : "/"}${slug}`;
     }
   }
 

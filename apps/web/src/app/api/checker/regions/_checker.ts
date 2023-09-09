@@ -1,4 +1,4 @@
-import { Receiver } from "@upstash/qstash/cloudflare";
+import { Receiver } from "@upstash/qstash";
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 
