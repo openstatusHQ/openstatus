@@ -81,12 +81,12 @@ export const incidentRouter = createTRPCRouter({
       // update parent incident with latest status
       await opts.ctx.db
         .update(incident)
-        .set({ status: opts.input.status })
+        .set({ status: opts.input.status, updatedAt: new Date() })
         .where(eq(incident.id, opts.input.incidentId))
         .returning()
         .get();
 
-      const { workspaceSlug, ...incidentUpdateInput } = opts.input;
+      const { workspaceSlug, id, ...incidentUpdateInput } = opts.input;
       return await opts.ctx.db
         .insert(incidentUpdate)
         .values(incidentUpdateInput)
@@ -333,7 +333,7 @@ export const incidentRouter = createTRPCRouter({
             ],
           },
         },
-        orderBy: (incident, { desc }) => [desc(incident.createdAt)],
+        orderBy: (incident, { desc }) => [desc(incident.updatedAt)],
       });
 
       return z.array(selectIncidentSchemaWithRelation).parse(result);

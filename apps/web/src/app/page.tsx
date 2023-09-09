@@ -9,10 +9,12 @@ import { Plans } from "@/components/marketing/plans";
 import { Tracker } from "@/components/tracker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getMonitorListData } from "@/lib/tb";
+import { getHomeMonitorListData } from "@/lib/tb";
+
+export const revalidate = 600;
 
 export default async function Page() {
-  const data = await getMonitorListData({ monitorId: "openstatusPing" });
+  const data = await getHomeMonitorListData();
 
   return (
     <MarketingLayout>

@@ -8,6 +8,7 @@ import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonWithDisableTooltip } from "@/components/ui/button-with-disable-tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
@@ -44,9 +45,13 @@ export default async function Page({
         title="Status Page"
         description="Overview of all your status pages."
       >
-        <Button asChild={!disableButton} disabled={disableButton}>
+        <ButtonWithDisableTooltip
+          tooltip="You reached the limits"
+          asChild={!disableButton}
+          disabled={disableButton}
+        >
           <Link href="./status-pages/edit">Create</Link>
-        </Button>
+        </ButtonWithDisableTooltip>
       </Header>
       {Boolean(pages?.length) ? (
         pages?.map((page, index) => (
