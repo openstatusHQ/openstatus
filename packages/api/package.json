@@ -7,7 +7,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.23.1",
+    "@clerk/nextjs": "4.23.5",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/db": "workspace:^",
     "@openstatus/emails": "workspace:^",
