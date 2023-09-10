@@ -24,16 +24,17 @@ export async function GET(req: NextRequest) {
   const encryptedToken = encrypt(iv, Buffer.from(token));
 
   // redirect to vercel's integration page after installation
-  const res = NextResponse.redirect(next);
+  const res = NextResponse.redirect(
+    `https://020d-2a0d-3344-2324-1e04-4dc7-d06a-a389-48c0.ngrok-free.app/app/integrations/vercel/configure`,
+  );
 
+  console.log("Setting cookies");
   /** Encrypt access token and add to Cookies */
-  res.cookies.set("token", encryptedToken.toString("base64url"), {
-    secure: true,
-  });
-  res.cookies.set("iv", iv.toString("base64url"), { secure: true });
+  res.cookies.set("token", encryptedToken.toString("base64url"));
+  res.cookies.set("iv", iv.toString("base64url"));
 
   if (teamId) {
-    res.cookies.set("teamId", teamId, { secure: true });
+    res.cookies.set("teamId", teamId);
   }
 
   return res;

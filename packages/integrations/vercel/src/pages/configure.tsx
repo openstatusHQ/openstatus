@@ -1,9 +1,16 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { auth, ClerkProvider, useAuth } from "@clerk/nextjs";
 
 import { SubmitButton } from "../components/submit-button";
-import { createLogDrain, deleteLogDrain, getLogDrains } from "../libs/client";
+import type { ProjectResponse } from "../libs/client";
+import {
+  createLogDrain,
+  deleteLogDrain,
+  getLogDrains,
+  getProject,
+} from "../libs/client";
 import { decrypt } from "../libs/crypto";
 
 export async function Configure() {
@@ -13,15 +20,39 @@ export async function Configure() {
 
   if (!iv || !encryptedToken) {
     /** Redirect to access new token */
-    return redirect("./callback");
+    return redirect("/app");
   }
 
   const token = decrypt(
-    Buffer.from(iv, "base64url"),
-    Buffer.from(encryptedToken, "base64url"),
+    Buffer.from(iv || "", "base64url"),
+    Buffer.from(encryptedToken || "", "base64url"),
   ).toString();
 
-  const logDrains = await getLogDrains(token, teamId);
+  let logDrains = await getLogDrains(token, teamId);
+
+  const projects = await getProject(token, teamId);
+  const p = projects.projects as ProjectResponse[];
+  console.log(p[0].serverlessFunctionRegion);
+
+  if (logDrains.length === 0) {
+    logDrains = [
+      await createLogDrain(
+        token,
+        // @ts-expect-error We need more data - but this is a demo
+        {
+          deliveryFormat: "json",
+          name: "OpenStatus Log Drain",
+          // TODO: update with correct url
+          url: "https://f97b-2003-ec-e716-2900-cab-5249-1843-c87b.ngrok-free.app/api/integrations/vercel",
+          sources: ["static", "lambda", "build", "edge", "external"],
+          // headers: { "key": "value"}
+        },
+        teamId,
+      ),
+    ];
+
+    console.log({ logDrains });
+  }
 
   // TODO: automatically create log drain on installation
   async function create(formData: FormData) {
@@ -47,7 +78,7 @@ export async function Configure() {
     const id = formData.get("id")?.toString();
     console.log({ id });
     if (id) {
-      await deleteLogDrain(token, id, teamId);
+      await deleteLogDrain(token, id, String(teamId));
       revalidatePath("/");
     }
   }
@@ -56,9 +87,6 @@ export async function Configure() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center">
       <div className="border-border m-3 grid w-full max-w-xl gap-3 rounded-lg border p-6 backdrop-blur-[2px]">
         <h1 className="font-cal text-2xl">Configure</h1>
-        <form action={create}>
-          <SubmitButton disabled={logDrains?.length > 0}>Install</SubmitButton>
-        </form>
         <ul>
           {logDrains.map((item) => (
             <li
@@ -68,7 +96,7 @@ export async function Configure() {
               <p>{item.name}</p>
               <form action={_delete}>
                 <input name="id" value={item.id} className="hidden" />
-                <SubmitButton>Delete</SubmitButton>
+                <SubmitButton>Remove integration</SubmitButton>
               </form>
             </li>
           ))}

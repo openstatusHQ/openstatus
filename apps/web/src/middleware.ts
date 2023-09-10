@@ -42,6 +42,9 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
+  if (host && host.includes("ngrok-free.app")) {
+    return null;
+  }
   // In case the host is a custom domain
   if (
     host &&
@@ -73,7 +76,9 @@ export default authMiddleware({
   ],
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
+  debug: false,
   async afterAuth(auth, req) {
+    console.log("after auth middleware");
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
       return redirectToSignIn({ returnBackUrl: req.url });
@@ -109,10 +114,13 @@ export default authMiddleware({
           return NextResponse.redirect(orgSelection);
         }
       } else {
+        console.log("redirecting to onboarding");
         // return NextResponse.redirect(new URL("/app/onboarding", req.url));
         // probably redirect to onboarding
         // or find a way to wait for the webhook
       }
+      console.log("redirecting to onboarding");
+      return;
     }
   },
 });
@@ -121,6 +129,7 @@ export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     "/",
+    "/app/integrations/vercel/configure",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
   ],
