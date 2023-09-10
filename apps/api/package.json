@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm gen:swagger && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "gen:swagger": "next-swagger-doc-cli next-swagger-doc.json"
   },
   "dependencies": {
     "@openstatus/db": "workspace:^",
