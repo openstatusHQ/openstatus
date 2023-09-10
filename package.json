@@ -7,7 +7,12 @@
     "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
-    "tsc": "tsc"
+    "tsc": "tsc",
+    "prepare": "husky install"
+  },
+  "engines": {
+    "npm": ">=8.6.0",
+    "node": ">=18.0.0"
   },
   "pnpm": {
     "overrides": {
@@ -27,6 +32,8 @@
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "prettier-plugin-tailwindcss": "0.4.1",
     "prettier": "3.0.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^14.0.1",
     "turbo": "1.10.12",
     "typescript": "5.1.6"
   },
