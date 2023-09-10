@@ -15,23 +15,36 @@ import { StatusBadge } from "../incidents/status-badge";
 export const IncidentList = ({
   incidents,
   monitors,
+  context = "all",
 }: {
   incidents: z.infer<typeof selectIncidentsPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  context?: "all" | "latest"; // latest 7 days
 }) => {
-  // TBD
-  // const currentIncidents = incidents.filter(
-  //   ({ status }) => status !== "resolved",
-  // );
+  const lastWeek = Date.now() - 1000 * 60 * 60 * 24 * 7;
+
+  function getLastWeeksIncidents() {
+    return incidents.filter((incident) => {
+      return incident.incidentUpdates.some(
+        (update) => update.date.getTime() > lastWeek,
+      );
+    });
+  }
+
+  const _incidents = context === "all" ? incidents : getLastWeeksIncidents();
 
   return (
     <>
-      {incidents?.length > 0 ? (
+      {_incidents.sort((a, b) => {
+        if (a.updatedAt == undefined) return 1;
+        if (b.updatedAt == undefined) return -1;
+        return b.updatedAt.getTime() - a.updatedAt.getTime();
+      })?.length > 0 ? (
         <div className="grid gap-4">
           <h2 className="text-muted-foreground text-lg font-light">
-            All Incidents
+            {context === "all" ? "All incidents" : "Latest incidents"}
           </h2>
-          {incidents.map((incident) => {
+          {_incidents.map((incident) => {
             return (
               <div key={incident.id} className="grid gap-4 text-left">
                 <div className="max-w-3xl font-semibold">
@@ -39,7 +52,7 @@ export const IncidentList = ({
                   <StatusBadge status={incident.status} />
                 </div>
                 <div className="overflow-hidden text-ellipsis">
-                  <p className="text-muted-foreground mb-1 text-xs">
+                  <p className="text-muted-foreground mb-2 text-xs">
                     Affected Monitors
                   </p>
                   <AffectedMonitors
@@ -54,7 +67,7 @@ export const IncidentList = ({
                   />
                 </div>
                 <div>
-                  <p className="text-muted-foreground mb-1 text-xs">
+                  <p className="text-muted-foreground mb-2 text-xs">
                     Latest Updates
                   </p>
                   <Events incidentUpdates={incident.incidentUpdates} />
@@ -64,9 +77,11 @@ export const IncidentList = ({
           })}
         </div>
       ) : (
-        <h2 className="text-muted-foreground text-lg font-light">
-          No Incidents
-        </h2>
+        <p className="text-muted-foreground text-center text-sm font-light">
+          {context === "all"
+            ? "No incidents."
+            : "No incidents in the last week."}
+        </p>
       )}
     </>
   );

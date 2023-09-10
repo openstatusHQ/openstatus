@@ -8,7 +8,6 @@ import {
 } from "@/app/shared-metadata";
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
-import { MonitorList } from "@/components/status-page/monitor-list";
 import { api } from "@/trpc/server";
 
 type Props = {
@@ -17,13 +16,11 @@ type Props = {
 };
 
 export default async function Page({ params }: Props) {
-  // We should fetch the monitors and incident here
-  // also the page information
   if (!params.domain) return notFound();
+
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  if (!page) {
-    return notFound();
-  }
+  if (!page) return notFound();
+
   return (
     <div className="grid gap-6">
       <Header
@@ -31,14 +28,7 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      <MonitorList monitors={page.monitors} />
-      {page.monitors?.length > 0 ? (
-        <IncidentList
-          incidents={page.incidents}
-          monitors={page.monitors}
-          context="latest"
-        />
-      ) : null}
+      <IncidentList incidents={page.incidents} monitors={page.monitors} />
     </div>
   );
 }
