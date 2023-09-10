@@ -19,13 +19,19 @@ const { insertMonitorSchema, monitor } = schema;
  *     responses:
  *       200:
  *         description: The monitor
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No monitors were found
  *       500:
  *         description: Bad Request
  */
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _monitor = await db
       .select()
@@ -35,6 +41,10 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
     if (!_monitor) {
       return new Response("Not Found", { status: 404 });
+    }
+
+    if (workspaceId !== _monitor.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     return new Response(JSON.stringify(_monitor), { status: 200 });
@@ -62,6 +72,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
  *     responses:
  *       200:
  *         description: The monitor
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No monitors were found
  *       500:
@@ -72,6 +84,7 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _monitor = await db
       .select()
@@ -83,8 +96,14 @@ export async function PUT(
       return new Response("Not Found", { status: 404 });
     }
 
+    if (workspaceId !== _monitor.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     const json = await req.json();
-    const _valid = insertMonitorSchema.partial().safeParse(json);
+    const _valid = insertMonitorSchema
+      .partial()
+      .safeParse({ ...json, workspaceId });
 
     if (!_valid.success) {
       return new Response(JSON.stringify(_valid.error), { status: 400 });
@@ -131,16 +150,19 @@ export async function PUT(
  *     responses:
  *       200:
  *         description: The monitor
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No monitors were found
  *       500:
  *         description: Bad Request
  */
 export async function DELETE(
-  _: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _monitor = await db
       .select()
@@ -150,6 +172,10 @@ export async function DELETE(
 
     if (!_monitor) {
       return new Response("Not Found", { status: 404 });
+    }
+
+    if (workspaceId !== _monitor.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     await db.delete(monitor).where(eq(monitor.id, id)).run();

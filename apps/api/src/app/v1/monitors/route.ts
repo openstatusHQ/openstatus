@@ -27,8 +27,9 @@ import { insertMonitorSchema, monitor } from "@openstatus/db/src/schema";
  */
 export async function POST(req: Request) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const json = await req.json();
-    const _valid = insertMonitorSchema.safeParse(json);
+    const _valid = insertMonitorSchema.safeParse({ ...json, workspaceId });
 
     if (!_valid.success) {
       return new Response(JSON.stringify(_valid.error), { status: 400 });

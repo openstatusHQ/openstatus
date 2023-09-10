@@ -3,7 +3,7 @@ import { insertPageSchemaWithMonitors, page } from "@openstatus/db/src/schema";
 
 /**
  * @swagger
- * /v1/status-pages/{id}:
+ * /v1/pages/{id}:
  *   get:
  *     summmary: Returns the status page
  *     parameters:
@@ -18,18 +18,28 @@ import { insertPageSchemaWithMonitors, page } from "@openstatus/db/src/schema";
  *     responses:
  *       200:
  *         description: The page
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No page were found
  *       500:
  *         description: Bad Request
  */
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } },
+) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _page = await db.select().from(page).where(eq(page.id, id)).get();
 
     if (!_page) {
       return new Response("Not Found", { status: 404 });
+    }
+
+    if (workspaceId !== _page.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     return new Response(JSON.stringify(_page), { status: 200 });
@@ -42,7 +52,7 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
 
 /**
  * @swagger
- * /v1/status-pages/{id}:
+ * /v1/pages/{id}:
  *   put:
  *     summmary: Returns the status page
  *     parameters:
@@ -57,6 +67,8 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
  *     responses:
  *       200:
  *         description: The page
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No page were found
  *       500:
@@ -67,6 +79,7 @@ export async function PUT(
   { params }: { params: { id: string } },
 ) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _page = await db.select().from(page).where(eq(page.id, id)).get();
 
@@ -74,8 +87,15 @@ export async function PUT(
       return new Response("Not Found", { status: 404 });
     }
 
+    if (workspaceId !== _page.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
     const json = await req.json();
-    const _valid = insertPageSchemaWithMonitors.safeParse(json);
+    const _valid = insertPageSchemaWithMonitors.safeParse({
+      ...json,
+      workspaceId,
+    });
 
     if (!_valid.success) {
       return new Response(JSON.stringify(_valid.error), { status: 400 });
@@ -98,7 +118,7 @@ export async function PUT(
 
 /**
  * @swagger
- * /v1/status-pages/{id}:
+ * /v1/pages/{id}:
  *   delete:
  *     summmary: Returns the status page
  *     parameters:
@@ -113,20 +133,28 @@ export async function PUT(
  *     responses:
  *       200:
  *         description: The page
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: No page were found
  *       500:
  *         description: Bad Request
  */
 export async function DELETE(
-  _: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ) {
   try {
+    const workspaceId = Number(req.headers.get("x-workspace-id"));
     const id = Number(params.id);
     const _page = await db.select().from(page).where(eq(page.id, id)).get();
+
     if (!_page) {
       return new Response("Not Found", { status: 404 });
+    }
+
+    if (workspaceId !== _page.workspaceId) {
+      return new Response("Unauthorized", { status: 401 });
     }
 
     await db.delete(page).where(eq(page.id, id)).run();

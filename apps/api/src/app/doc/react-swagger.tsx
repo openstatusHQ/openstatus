@@ -9,7 +9,10 @@ type Props = {
 };
 
 function ReactSwagger({ spec }: Props) {
-  return <SwaggerUI spec={spec} />;
+  return null;
+  // FIXME: build error
+  // - error Class extends value undefined is not a constructor or null
+  // return <SwaggerUI spec={spec} />;
 }
 
 export default ReactSwagger;
