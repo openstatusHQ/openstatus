@@ -11,7 +11,6 @@
   },
   "homepage": "https://openstatus.dev",
   "dependencies": {
-    "@openstatus/api-server": "workspace:^",
     "@vercel/analytics": "^1.0.1",
     "next": "^13.4.12",
     "nextra": "2.10.0",

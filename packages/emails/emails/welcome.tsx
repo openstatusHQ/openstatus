@@ -15,7 +15,7 @@ const WelcomeEmail = () => {
           building it.
           <br />
           <br />
-          If you have any questions ab…out setting up your status page, I'm here
+          If you have any questions about setting up your status page, I'm here
           to help.
           <br />
           <br />

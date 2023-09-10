@@ -81,9 +81,6 @@ importers:
 
   apps/docs:
     dependencies:
-      '@openstatus/api-server':
-        specifier: workspace:^
-        version: link:../api
       '@vercel/analytics':
         specifier: ^1.0.1
         version: 1.0.1
