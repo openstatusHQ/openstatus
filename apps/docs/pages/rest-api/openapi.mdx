@@ -3,7 +3,7 @@ import { Callout } from "nextra/components";
 import { useData } from "nextra/data";
 
 export const getStaticProps = async ({ params }) => {
-  const res = await fetch("https://api.openstatus.dev/openapi");
+  const res = await fetch("https://api.openstatus.dev/swagger.json");
   const spec = await res.json();
   return {
     props: {
