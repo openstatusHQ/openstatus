@@ -18,8 +18,8 @@
   },
   "devDependencies": {
     "@types/node": "20.5.9",
-    "@types/react": "18.2.21",
-    "@types/react-dom": "18.2.7",
+    "@types/react": "18.2.12",
+    "@types/react-dom": "18.2.5",
     "tsconfig": "workspace:*",
     "typescript": "5.1.6"
   }

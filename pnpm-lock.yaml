@@ -67,11 +67,11 @@ importers:
         specifier: 20.5.9
         version: 20.5.9
       '@types/react':
-        specifier: 18.2.21
-        version: 18.2.21
+        specifier: 18.2.12
+        version: 18.2.12
       '@types/react-dom':
-        specifier: 18.2.7
-        version: 18.2.7
+        specifier: 18.2.5
+        version: 18.2.5
       tsconfig:
         specifier: workspace:*
         version: link:../../packages/tsconfig
@@ -94,10 +94,10 @@ importers:
         specifier: 2.10.0
         version: 2.10.0(next@13.4.19)(nextra@2.10.0)(react-dom@18.2.0)(react@18.2.0)
       react:
-        specifier: ^18.2.0
+        specifier: 18.2.0
         version: 18.2.0
       react-dom:
-        specifier: ^18.2.0
+        specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
       swagger-ui-react:
         specifier: 5.6.2
@@ -2413,7 +2413,7 @@ packages:
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.5
-      '@types/react': 18.2.21
+      '@types/react': 18.2.16
       react: 18.2.0
     dev: false
 
@@ -5304,7 +5304,7 @@ packages:
   /@types/hoist-non-react-statics@3.3.1:
     resolution: {integrity: sha512-iMIqiko6ooLrTh1joXodJK5X9xeEALT1kM5G3ZLhD3hszxBdIEd5C75U834D9mLcINgD4OyZf5uQXjkuYydWvA==}
     dependencies:
-      '@types/react': 18.2.21
+      '@types/react': 18.2.16
       hoist-non-react-statics: 3.3.2
     dev: false
 
@@ -5460,12 +5460,12 @@ packages:
   /@types/react-dom@18.2.5:
     resolution: {integrity: sha512-sRQsOS/sCLnpQhR4DSKGTtWFE3FZjpQa86KPVbhUqdYMRZ9FEFcfAytKhR/vUG2rH1oFbOOej6cuD7MFSobDRQ==}
     dependencies:
-      '@types/react': 18.2.21
+      '@types/react': 18.2.16
 
   /@types/react-dom@18.2.7:
     resolution: {integrity: sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==}
     dependencies:
-      '@types/react': 18.2.21
+      '@types/react': 18.2.16
     dev: true
 
   /@types/react@18.2.12:
@@ -5477,14 +5477,6 @@ packages:
 
   /@types/react@18.2.16:
     resolution: {integrity: sha512-LLFWr12ZhBJ4YVw7neWLe6Pk7Ey5R9OCydfuMsz1L8bZxzaawJj2p06Q8/EFEHDeTBQNFLF62X+CG7B2zIyu0Q==}
-    dependencies:
-      '@types/prop-types': 15.7.5
-      '@types/scheduler': 0.16.3
-      csstype: 3.1.2
-    dev: true
-
-  /@types/react@18.2.21:
-    resolution: {integrity: sha512-neFKG/sBAwGxHgXiIxnbm3/AAVQ/cMRS93hvBpg8xYRbeQSPVABp9U2bRnPf0iI4+Ucdv3plSxKK+3CW2ENJxA==}
     dependencies:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.3
@@ -5527,7 +5519,7 @@ packages:
   /@types/swagger-ui-react@4.18.0:
     resolution: {integrity: sha512-XtvFXmj46Zibe89tFQwSQknrq1NxEtOep2rZuxth7K88tyPEP00FnoA6H7ATYhocAEA4XUWaNHNFWFRl1KX8aQ==}
     dependencies:
-      '@types/react': 18.2.21
+      '@types/react': 18.2.16
     dev: true
 
   /@types/through@0.0.30:
