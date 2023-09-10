@@ -14,7 +14,6 @@
     "next-swagger-doc": "0.4.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "swagger-ui-react": "5.6.2",
     "zod": "3.21.4"
   },
   "devDependencies": {
@@ -22,7 +21,6 @@
     "@types/react": "18.2.21",
     "@types/react-dom": "18.2.7",
     "tsconfig": "workspace:*",
-    "typescript": "5.1.6",
-    "@types/swagger-ui-react": "4.18.0"
+    "typescript": "5.1.6"
   }
 }
