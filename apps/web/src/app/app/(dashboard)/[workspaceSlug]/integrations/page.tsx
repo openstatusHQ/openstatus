@@ -4,32 +4,41 @@ import * as React from "react";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { api } from "@/trpc/client";
 
 export default async function IncidentPage({
   params,
 }: {
   params: { workspaceSlug: string };
 }) {
+  const workspace = await api.workspace.getWorkspace.query({
+    slug: params.workspaceSlug,
+  });
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Integrations" description="All our integrations"></Header>
 
       <Container
         title="Vercel"
+        key={"vercel"}
+        description="Connect your Vercel Project get insights."
         actions={[
           <a
-            href="https://vercel.com/integrations/openstatus-staging/new"
+            href={
+              workspace?.id === 1
+                ? "https://vercel.com/integrations/openstatus-staging/new"
+                : "#"
+            }
             target="_blank"
+            key={"vercel"}
           >
-            <Button>Configure</Button>,
+            <Button>{workspace?.id === 1 ? "Configure" : "Coming soon"}</Button>
           </a>,
         ]}
-      >
-        <div className="text-foreground-secondary text-sm">
-          Connect your Vercel Project get insights.
-        </div>
-      </Container>
+      ></Container>
     </div>
   );
 }

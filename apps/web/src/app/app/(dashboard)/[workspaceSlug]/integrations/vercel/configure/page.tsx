@@ -2,16 +2,22 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { SubmitButton } from "../components/submit-button";
+import { SubmitButton } from "@openstatus/vercel/src/components/submit-button";
 import {
   createLogDrain,
   deleteLogDrain,
   getLogDrains,
   getProjects,
-} from "../libs/client";
-import { decrypt } from "../libs/crypto";
+} from "@openstatus/vercel/src/libs/client";
+import { decrypt } from "@openstatus/vercel/src/libs/crypto";
 
-export async function Configure() {
+import { api } from "@/trpc/server";
+
+export default async function Configure({
+  params,
+}: {
+  params: { workspaceSlug: string };
+}) {
   const iv = cookies().get("iv")?.value;
   const encryptedToken = cookies().get("token")?.value;
   const teamId = cookies().get("teamId")?.value;
@@ -33,6 +39,15 @@ export async function Configure() {
   for (const project of projects.projects) {
     console.log({ project });
     console.log("create integration");
+    console.log(project.id);
+    api.integration.createIntegration.mutate({
+      workspaceSlug: params.workspaceSlug,
+      input: {
+        name: "Vercel",
+        data: JSON.stringify(project),
+        externalId: project.id,
+      },
+    });
   }
   //  Create integration project if it doesn't exist
 
@@ -45,8 +60,8 @@ export async function Configure() {
           deliveryFormat: "json",
           name: "OpenStatus Log Drain",
           // TODO: update with correct url
-          url: "https://wwww.openstatus.dev/api/integrations/vercel",
-          sources: ["static", "lambda", "edge", "external"],
+          url: "https://6be9-2a0d-3344-2324-1e04-4dc7-d06a-a389-48c0.ngrok-free.app/api/integrations/vercel",
+          sources: ["static", "lambda", "build", "edge", "external"],
           // headers: { "key": "value"}
         },
         teamId,
@@ -55,23 +70,23 @@ export async function Configure() {
   }
 
   // TODO: automatically create log drain on installation
-  async function create(formData: FormData) {
-    "use server";
-    await createLogDrain(
-      token,
-      // @ts-expect-error We need more data - but this is a demo
-      {
-        deliveryFormat: "json",
-        name: "OpenStatus Log Drain",
-        // TODO: update with correct url
-        url: "https://wwww.openstatus.dev/api/integrations/vercel",
-        sources: ["static", "lambda", "edge", "external"],
-        // headers: { "key": "value"}
-      },
-      teamId,
-    );
-    revalidatePath("/");
-  }
+  // async function create(formData: FormData) {
+  //   "use server";
+  //   await createLogDrain(
+  //     token,
+  //     // @ts-expect-error We need more data - but this is a demo
+  //     {
+  //       deliveryFormat: "json",
+  //       name: "OpenStatus Log Drain",
+  //       // TODO: update with correct url
+  //       url: "https://6be9-2a0d-3344-2324-1e04-4dc7-d06a-a389-48c0.ngrok-free.app/api/integrations/vercel",
+  //       sources: ["static", "lambda", "edge", "external"],
+  //       // headers: { "key": "value"}
+  //     },
+  //     teamId,
+  //   );
+  //   revalidatePath("/");
+  // }
 
   async function _delete(formData: FormData) {
     "use server";

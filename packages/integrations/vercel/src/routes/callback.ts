@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
   // redirect to vercel's integration page after installation
   const res = NextResponse.redirect(
-    `https://020d-2a0d-3344-2324-1e04-4dc7-d06a-a389-48c0.ngrok-free.app/app/integrations/vercel/configure`,
+    `https://wwww.openstatus.dev/app/integrations/vercel/configure`,
   );
 
   console.log("Setting cookies");

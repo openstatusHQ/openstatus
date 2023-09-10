@@ -78,7 +78,6 @@ export default authMiddleware({
   beforeAuth: before,
   debug: false,
   async afterAuth(auth, req) {
-    console.log("after auth middleware");
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
       return redirectToSignIn({ returnBackUrl: req.url });
@@ -121,6 +120,35 @@ export default authMiddleware({
       }
       console.log("redirecting to onboarding");
       return;
+    }
+    if (
+      auth.userId &&
+      req.nextUrl.pathname === "/app/integrations/vercel/configure"
+    ) {
+      const userQuery = db
+        .select()
+        .from(user)
+        .where(eq(user.tenantId, auth.userId))
+        .as("userQuery");
+      const result = await db
+        .select()
+        .from(usersToWorkspaces)
+        .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
+        .all();
+      if (result.length > 0) {
+        const currentWorkspace = await db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
+          .get();
+        if (currentWorkspace) {
+          const configure = new URL(
+            `/app/${currentWorkspace.slug}/integrations/vercel/configure`,
+            req.url,
+          );
+          return NextResponse.redirect(configure);
+        }
+      }
     }
   },
 });
