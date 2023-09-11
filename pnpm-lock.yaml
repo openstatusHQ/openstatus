@@ -116,6 +116,28 @@ importers:
         specifier: 5.1.6
         version: 5.1.6
 
+  apps/rest-api:
+    dependencies:
+      '@hono/node-server':
+        specifier: ^1.1.0
+        version: 1.1.0
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@unkey/api':
+        specifier: ^0.6.21
+        version: 0.6.21
+      dotenv:
+        specifier: 16.3.1
+        version: 16.3.1
+      hono:
+        specifier: ^3.6.0
+        version: 3.6.0
+    devDependencies:
+      tsx:
+        specifier: ^3.12.2
+        version: 3.12.2
+
   apps/web:
     dependencies:
       '@clerk/nextjs':
@@ -1252,6 +1274,13 @@ packages:
     resolution: {integrity: sha512-/crHGujo0xnuHIYNc1VgP0HGJGFSoSqq88JFXe6FmFyXPpWt8Xu39LyLg7rchsxfXFeEdA9CrIZvLV5eswXV5g==}
     dev: false
 
+  /@esbuild-kit/cjs-loader@2.4.2:
+    resolution: {integrity: sha512-BDXFbYOJzT/NBEtp71cvsrGPwGAMGRB/349rwKuoxNSiKjPraNNnlK6MIIabViCjqZugu6j+xeMDlEkWdHHJSg==}
+    dependencies:
+      '@esbuild-kit/core-utils': 3.1.0
+      get-tsconfig: 4.6.2
+    dev: true
+
   /@esbuild-kit/core-utils@3.1.0:
     resolution: {integrity: sha512-Uuk8RpCg/7fdHSceR1M6XbSZFSuMrxcePFuGgyvsBn+u339dk5OeL4jv2EojwTN2st/unJGsVm4qHWjWNmJ/tw==}
     dependencies:
@@ -2153,6 +2182,11 @@ packages:
       client-only: 0.0.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /@hono/node-server@1.1.0:
+    resolution: {integrity: sha512-1dwun4NkN+SDhKmEcGwjrEwV0rqgCBsb78XvZTHa4JGXCne09bNCv0wDRyQXVj99nYLpANqANZ9ABlTGxS70MQ==}
+    engines: {node: '>=18.0.0'}
     dev: false
 
   /@hookform/resolvers@3.1.1(react-hook-form@7.45.1):
@@ -5689,6 +5723,10 @@ packages:
       eslint-visitor-keys: 3.4.1
     dev: false
 
+  /@unkey/api@0.6.21:
+    resolution: {integrity: sha512-2PLJPH6CZNNfsGCJGJT6WCVkXdfGEwDCUhV1/JLGLJufg8xp8NLUcaktQc7UeE9FjxvW5W1MVSYkICe+KC4PhQ==}
+    dev: false
+
   /@upstash/core-analytics@0.0.6:
     resolution: {integrity: sha512-cpPSR0XJAJs4Ddz9nq3tINlPS5aLfWVCqhhtHnXt4p7qr5+/Znlt1Es736poB/9rnl1hAHrOsOvVj46NEXcVqA==}
     engines: {node: '>=16.0.0'}
@@ -9131,6 +9169,11 @@ packages:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
     dependencies:
       react-is: 16.13.1
+    dev: false
+
+  /hono@3.6.0:
+    resolution: {integrity: sha512-snkW8naO1WCrQvpAGE/du30Ek0h71gSM3g4RzzdPIB2LQnl12BEwZYH3s2Kssd6kXGORqHmpoyMBMLWtc9nzKQ==}
+    engines: {node: '>=16.0.0'}
     dev: false
 
   /hosted-git-info@2.8.9:
@@ -13987,6 +14030,17 @@ packages:
       tslib: 1.14.1
       typescript: 5.1.6
     dev: false
+
+  /tsx@3.12.2:
+    resolution: {integrity: sha512-ykAEkoBg30RXxeOMVeZwar+JH632dZn9EUJVyJwhfag62k6UO/dIyJEV58YuLF6e5BTdV/qmbQrpkWqjq9cUnQ==}
+    hasBin: true
+    dependencies:
+      '@esbuild-kit/cjs-loader': 2.4.2
+      '@esbuild-kit/core-utils': 3.1.0
+      '@esbuild-kit/esm-loader': 2.5.5
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
 
   /tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
