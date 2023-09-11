@@ -84,6 +84,7 @@ export default authMiddleware({
       auth.userId &&
       (req.nextUrl.pathname === "/app" || req.nextUrl.pathname === "/app/")
     ) {
+      console.log('>>> Redirecting to "/app/workspace"');
       // improve on sign-up if the webhook has not been triggered yet
       const userQuery = db
         .select()
@@ -96,6 +97,7 @@ export default authMiddleware({
         .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
         .all();
       if (result.length > 0) {
+        console.log(">>> User has workspace");
         const currentWorkspace = await db
           .select()
           .from(workspace)
@@ -106,6 +108,7 @@ export default authMiddleware({
             `/app/${currentWorkspace.slug}/monitors`,
             req.url,
           );
+          console.log(`>>> Redirecting to ${orgSelection}`);
           return NextResponse.redirect(orgSelection);
         }
       } else {
