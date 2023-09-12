@@ -1,7 +1,4 @@
-import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-
-import "dotenv/config";
 
 import { middleware } from "./middleware";
 import { DELETE, GET, POST, PUT } from "./monitors";
@@ -28,4 +25,4 @@ monitors.delete("/:id", DELETE);
 
 app.route("/monitors", monitors);
 
-serve(app);
+export default app;

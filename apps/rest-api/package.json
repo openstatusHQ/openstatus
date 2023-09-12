@@ -1,16 +1,21 @@
+
 {
+  "name": "@openstatus/rest-api",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
   "scripts": {
-    "start": "tsx src/index.ts",
-    "dev": "tsx watch src/index.ts"
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.1.0",
     "@openstatus/db": "workspace:*",
     "@unkey/api": "^0.6.21",
-    "dotenv": "16.3.1",
     "hono": "^3.6.0"
   },
   "devDependencies": {
-    "tsx": "^3.12.2"
+    "tsconfig": "workspace:*",
+    "bun-types": "^0.6.2"
   }
 }

@@ -1,5 +1,5 @@
 import { Unkey } from "@unkey/api";
-import { Context, Env, Next } from "hono";
+import type { Context, Env, Next } from "hono";
 
 const unkey = new Unkey({ token: process.env.UNKEY_TOKEN! });
 

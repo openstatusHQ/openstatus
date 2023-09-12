@@ -1,4 +1,4 @@
-import { Context, Env } from "hono";
+import type { Context, Env } from "hono";
 
 import { db, eq, schema } from "@openstatus/db";
 
