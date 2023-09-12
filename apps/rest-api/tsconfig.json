@@ -1,28 +1,4 @@
 {
   "extends": "tsconfig/base.json",
-  "include": ["src", "*.ts", "**/*.ts"],
-  "compilerOptions": {
-    // add Bun type definitions
-    "types": ["bun-types"],
-
-    // enable latest features
-    "lib": ["esnext"],
-    "module": "esnext",
-    "target": "esnext",
-
-    // if TS 5.x+
-    "moduleResolution": "Node10", // instead of "bundler"
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "moduleDetection": "force",
-
-    "jsx": "react-jsx", // support JSX
-    "allowJs": true, // allow importing `.js` from `.ts`
-    "esModuleInterop": true, // allow default imports for CommonJS modules
-
-    // best practices
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  }
+  "include": ["src", "*.ts", "**/*.ts"]
 }

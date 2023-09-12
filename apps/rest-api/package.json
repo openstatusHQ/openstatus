@@ -11,11 +11,10 @@
   },
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "@unkey/api": "^0.6.21",
-    "hono": "^3.6.0"
+    "@unkey/api": "0.6.21",
+    "hono": "3.6.0"
   },
   "devDependencies": {
-    "tsconfig": "workspace:*",
-    "bun-types": "^0.6.2"
+    "tsconfig": "workspace:*"
   }
 }

@@ -122,15 +122,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/db
       '@unkey/api':
-        specifier: ^0.6.21
+        specifier: 0.6.21
         version: 0.6.21
       hono:
-        specifier: ^3.6.0
+        specifier: 3.6.0
         version: 3.6.0
     devDependencies:
-      bun-types:
-        specifier: ^0.6.2
-        version: 0.6.2
       tsconfig:
         specifier: workspace:*
         version: link:../../packages/tsconfig
@@ -6260,10 +6257,6 @@ packages:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
       semver: 7.5.4
-    dev: true
-
-  /bun-types@0.6.2:
-    resolution: {integrity: sha512-yJ59Nl9je54fvS/Bh32dpnuWzAEGZn46GEsUfCnc+gbR/1MveoNbzBtN37SpMihFE0MiatlpNyKFKb9W7hvdBg==}
     dev: true
 
   /bundle-name@3.0.0:
