@@ -100,7 +100,7 @@ export async function PUT(
       return new Response("Unauthorized", { status: 401 });
     }
 
-    const json = await req.json();
+    const json = (await req.json()) as Record<string, unknown>;
     const _valid = insertMonitorSchema
       .partial()
       .safeParse({ ...json, workspaceId });

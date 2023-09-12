@@ -41,7 +41,7 @@ import { insertPageSchemaWithMonitors, page } from "@openstatus/db/src/schema";
 export async function POST(req: Request) {
   try {
     const workspaceId = Number(req.headers.get("x-workspace-id"));
-    const json = await req.json();
+    const json = (await req.json()) as Record<string, unknown>;
     const _valid = insertPageSchemaWithMonitors.safeParse({
       ...json,
       workspaceId,
