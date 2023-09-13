@@ -29,7 +29,7 @@ export default async function IncidentPage({
           <a
             href={
               workspace?.id === 1
-                ? "https://vercel.com/integrations/openstatus-staging/new"
+                ? "https://vercel.com/integrations/openstatus/new"
                 : "#"
             }
             target="_blank"
