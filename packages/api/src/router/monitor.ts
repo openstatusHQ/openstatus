@@ -199,6 +199,7 @@ export const monitorRouter = createTRPCRouter({
         workspaceSlug: opts.input.workspaceSlug,
         ctx: opts.ctx,
       });
+
       if (!data) return;
 
       const monitors = await opts.ctx.db

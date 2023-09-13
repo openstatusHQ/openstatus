@@ -1,0 +1,27 @@
+{
+  "name": "@openstatus/api-server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "pnpm gen:swagger && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "gen:swagger": "next-swagger-doc-cli next-swagger-doc.json"
+  },
+  "dependencies": {
+    "@openstatus/db": "workspace:^",
+    "next": "13.4.12",
+    "next-swagger-doc": "0.4.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "zod": "3.21.4"
+  },
+  "devDependencies": {
+    "@types/node": "20.5.9",
+    "@types/react": "18.2.12",
+    "@types/react-dom": "18.2.5",
+    "tsconfig": "workspace:*",
+    "typescript": "5.1.6"
+  }
+}

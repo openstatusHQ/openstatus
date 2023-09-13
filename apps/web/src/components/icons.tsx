@@ -9,6 +9,7 @@ import {
   MessageCircle,
   PanelTop,
   Pencil,
+  Plug,
   Search,
   SearchCheck,
   Siren,
@@ -42,6 +43,7 @@ export const Icons = {
   trash: Trash,
   twitter: TwitterIcon,
   globe: Globe,
+  plug: Plug,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
