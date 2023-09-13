@@ -597,7 +597,7 @@ importers:
   packages/tinybird:
     dependencies:
       '@chronark/zod-bird':
-        specifier: ^0.1.1
+        specifier: 0.1.1
         version: 0.1.1
       zod:
         specifier: 3.21.4
