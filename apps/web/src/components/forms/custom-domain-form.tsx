@@ -27,22 +27,23 @@ import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
 import { InputWithAddons } from "../ui/input-with-addons";
 
-const customDomain = insertPageSchemaWithMonitors.pick({
-  id: true,
-  slug: true,
-  workspaceId: true,
-  title: true,
-  description: true,
-  removeBranding: true,
-  customDomain: true,
-});
-
-type Schema = z.infer<typeof customDomain>;
+type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
 
 export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   const form = useForm<Schema>({
-    resolver: zodResolver(customDomain),
-    defaultValues,
+    resolver: zodResolver(insertPageSchemaWithMonitors),
+    defaultValues: {
+      id: defaultValues?.id || 0,
+      workspaceId: defaultValues?.workspaceId || 0,
+      title: defaultValues?.title || "",
+      description: defaultValues?.description || "",
+      icon: defaultValues?.icon || "",
+      slug: defaultValues?.slug || "",
+      customDomain: defaultValues?.customDomain || "",
+      removeBranding: defaultValues?.removeBranding || false,
+      monitors: defaultValues?.monitors ?? [],
+      workspaceSlug: "",
+    },
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -57,14 +58,7 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
     startTransition(async () => {
       try {
         if (shouldUpdateBranding) {
-          await api.page.updatePage.mutate({
-            id: data.id,
-            slug: data.slug,
-            workspaceId: data.workspaceId,
-            title: data.title,
-            description: data.description,
-            removeBranding: data.removeBranding,
-          });
+          await api.page.updatePage.mutate(data);
         }
         if (defaultValues.id) {
           await api.page.addCustomDomain.mutate({
@@ -156,6 +150,7 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>
+        <pre>{JSON.stringify(form.watch())}</pre>
         <div className="sm:col-span-5">
           {defaultValues?.customDomain ? (
             <DomainConfiguration domain={defaultValues.customDomain} />
