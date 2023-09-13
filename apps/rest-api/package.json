@@ -1,4 +1,3 @@
-
 {
   "name": "@openstatus/rest-api",
   "version": "0.0.1",
@@ -15,6 +14,6 @@
     "hono": "3.6.0"
   },
   "devDependencies": {
-    "tsconfig": "workspace:*"
+    "@openstatus/tsconfig": "workspace:*"
   }
 }

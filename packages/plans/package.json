@@ -11,7 +11,7 @@
     "zod": "3.21.4"
   },
   "devDependencies": {
-    "tsconfig": "workspace:^",
+    "@openstatus/tsconfig": "workspace:^",
     "typescript": "5.1.6"
   },
   "keywords": [],

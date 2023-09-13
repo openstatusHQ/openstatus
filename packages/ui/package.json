@@ -14,7 +14,7 @@
     "eslint": "8.45.0",
     "@openstatus/eslint-config": "workspace:*",
     "react": "18.2.0",
-    "tsconfig": "workspace:*",
+    "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.1.6"
   }
 }

@@ -6,23 +6,26 @@ import { DELETE, GET, POST, PUT } from "./monitors";
 /**
  * Base Path "/v1" for our api
  */
-const app = new Hono().basePath("/v1");
+const app = new Hono();
 
+app.get("/ping", (c) => c.text("pong"));
 /**
  * Authentification Middleware
  */
-app.use("*", middleware);
 
 /**
  * REST API for monitors
  */
-const monitors = new Hono();
+const monitors = new Hono().basePath("/v1");
 
+monitors.use("*", middleware);
 monitors.get("/:id", GET);
 monitors.post("/", POST);
 monitors.put("/:id", PUT);
 monitors.delete("/:id", DELETE);
 
 app.route("/monitors", monitors);
+
+console.log("Starting server on port 3000");
 
 export default app;

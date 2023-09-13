@@ -63,6 +63,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/node':
         specifier: 20.5.9
         version: 20.5.9
@@ -72,9 +75,6 @@ importers:
       '@types/react-dom':
         specifier: 18.2.5
         version: 18.2.5
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -103,15 +103,15 @@ importers:
         specifier: 5.6.2
         version: 5.6.2(react-dom@18.2.0)(react@18.2.0)
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
       '@types/swagger-ui-react':
         specifier: 4.18.0
         version: 4.18.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -128,7 +128,7 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
     devDependencies:
-      tsconfig:
+      '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
 
@@ -354,6 +354,9 @@ importers:
       '@openstatus/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config/eslint
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/luxon':
         specifier: ^3.3.1
         version: 3.3.1
@@ -384,9 +387,6 @@ importers:
       tailwindcss:
         specifier: 3.3.2
         version: 3.3.2
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -406,15 +406,15 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@types/node@20.3.1)(typescript@5.1.6)
-      tsconfig:
-        specifier: workspace:^
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -458,7 +458,7 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
-      tsconfig:
+      '@openstatus/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
       typescript:
@@ -523,6 +523,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -538,9 +541,6 @@ importers:
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@types/node@20.3.1)(typescript@5.1.6)
-      tsconfig:
-        specifier: workspace:^
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -578,6 +578,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -587,9 +590,6 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -603,7 +603,7 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
-      tsconfig:
+      '@openstatus/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
       typescript:
@@ -619,12 +619,12 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -636,6 +636,9 @@ importers:
       '@openstatus/eslint-config':
         specifier: workspace:*
         version: link:../config/eslint
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/react':
         specifier: 18.2.16
         version: 18.2.16
@@ -648,9 +651,6 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -670,12 +670,12 @@ importers:
         specifier: 1.22.0
         version: 1.22.0
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       tsup:
         specifier: 7.1.0
         version: 7.1.0(typescript@5.1.6)
