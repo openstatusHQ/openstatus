@@ -150,7 +150,6 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>
-        <pre>{JSON.stringify(form.watch())}</pre>
         <div className="sm:col-span-5">
           {defaultValues?.customDomain ? (
             <DomainConfiguration domain={defaultValues.customDomain} />
