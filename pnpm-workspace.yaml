@@ -1,5 +1,5 @@
 packages:
   - "apps/*"
-  - "packages/*"
+  - "packages/**/*"
   - "packages/config/*"
   - "packages/emails/.react-email"

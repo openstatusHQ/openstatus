@@ -1,0 +1,29 @@
+VERSION 1
+
+SCHEMA >
+`branch` String `json:$.branch` ,
+`deploymentId` String `json:$.deploymentId` ,
+`environment` String `json:$.environment` ,
+`host` String `json:$.host` ,
+`id` String `json:$.id` ,
+`message` String `json:$.message` ,
+`path` String `json:$.path` ,
+`projectId` String `json:$.projectId` ,
+`proxy_clientIp` String `json:$.proxy.clientIp` ,
+`proxy_host` String `json:$.proxy.host` ,
+`proxy_method` String `json:$.proxy.method` ,
+`proxy_vercelCache` String `json:$.proxy.vercelCache` ,
+`proxy_path` String `json:$.proxy.path` ,
+`proxy_region` String `json:$.proxy.region` ,
+`proxy_scheme` String `json:$.proxy.scheme` ,
+`proxy_timestamp` Int64 `json:$.proxy.timestamp` ,
+`proxy_status` String `json:$.proxy.status` ,
+`proxy_userAgent` Array(String) `json:$.proxy.userAgent[:]` ,
+`requestId` String `json:$.requestId` ,
+`type` String `json:$.type` ,
+`source` String `json:$.source` ,
+`timestamp` Int64 `json:$.timestamp` ,
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "requestId, projectId"
+ENGINE_PARTITION_KEY "toYYYYMMDD(fromUnixTimestamp64Milli(timestamp))"

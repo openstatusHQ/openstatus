@@ -28,5 +28,11 @@ export const pagesConfig: Page[] = [
     href: "/incidents",
     icon: "siren",
   },
+  {
+    title: "Integrations",
+    description: "Where you can see all the integrations.",
+    href: "/integrations",
+    icon: "plug",
+  },
   // ...
 ];

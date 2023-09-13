@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import "@openstatus/db/env.mjs";
 import "@openstatus/analytics/env";
+import "@openstatus/vercel/env";
 
 export const env = createEnv({
   server: {

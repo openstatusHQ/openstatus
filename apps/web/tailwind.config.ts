@@ -3,7 +3,11 @@ const { fontFamily } = require("tailwindcss/defaultTheme");
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: ["src/**/*.{ts,tsx}"],
+  content: [
+    "src/**/*.{ts,tsx}",
+    // for vercel integration
+    "../../packages/integrations/**/*.{ts,tsx}",
+  ],
   theme: {
     container: {
       center: true,
