@@ -1,0 +1,1 @@
+ALTER TABLE page ADD `remove_branding` integer DEFAULT false;

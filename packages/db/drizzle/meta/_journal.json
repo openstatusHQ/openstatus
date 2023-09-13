@@ -57,6 +57,13 @@
       "when": 1694362217174,
       "tag": "0007_complex_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1694618938462,
+      "tag": "0008_fine_toxin",
+      "breakpoints": true
     }
   ]
 }
