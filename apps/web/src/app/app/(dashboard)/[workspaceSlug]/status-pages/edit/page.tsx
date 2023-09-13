@@ -82,8 +82,13 @@ export default async function EditPage({
             {page && isProPlan ? (
               <CustomDomainForm
                 defaultValues={{
-                  customDomain: page?.customDomain,
                   id: page?.id,
+                  slug: page?.slug,
+                  workspaceId: page?.workspaceId,
+                  title: page?.title,
+                  description: page?.description,
+                  removeBranding: page?.removeBranding,
+                  customDomain: page?.customDomain,
                 }} // to be improved
               />
             ) : (

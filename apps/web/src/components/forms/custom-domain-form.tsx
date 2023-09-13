@@ -9,6 +9,7 @@ import type * as z from "zod";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -27,8 +28,13 @@ import { LoadingAnimation } from "../loading-animation";
 import { InputWithAddons } from "../ui/input-with-addons";
 
 const customDomain = insertPageSchemaWithMonitors.pick({
-  customDomain: true,
   id: true,
+  slug: true,
+  workspaceId: true,
+  title: true,
+  description: true,
+  removeBranding: true,
+  customDomain: true,
 });
 
 type Schema = z.infer<typeof customDomain>;
@@ -45,8 +51,21 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   const { status } = domainStatus || {};
 
   async function onSubmit(data: Schema) {
+    const shouldUpdateBranding =
+      Boolean(defaultValues?.removeBranding) !== data.removeBranding;
+
     startTransition(async () => {
       try {
+        if (shouldUpdateBranding) {
+          await api.page.updatePage.mutate({
+            id: data.id,
+            slug: data.slug,
+            workspaceId: data.workspaceId,
+            title: data.title,
+            description: data.description,
+            removeBranding: data.removeBranding,
+          });
+        }
         if (defaultValues.id) {
           await api.page.addCustomDomain.mutate({
             customDomain: data.customDomain,
@@ -111,6 +130,24 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
                 The custom domain for your status page.
               </FormDescription>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="removeBranding"
+          render={({ field }) => (
+            <FormItem className="flex gap-2 space-y-0 sm:col-span-4">
+              <FormControl>
+                <Checkbox
+                  checked={Boolean(field.value)}
+                  onCheckedChange={(value) => field.onChange(Boolean(value))}
+                />
+              </FormControl>
+
+              <div className="space-y-1 leading-none">
+                <FormLabel className="font-normal">Remove branding</FormLabel>
+              </div>
             </FormItem>
           )}
         />

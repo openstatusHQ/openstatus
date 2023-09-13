@@ -124,6 +124,23 @@ export const pageRouter = createTRPCRouter({
         .all();
       const workspaceIds = result.map((workspace) => workspace.workspaceId);
 
+      const currentWorkspace = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, opts.input.workspaceId))
+        .get();
+      if (!currentWorkspace) return;
+
+      if (
+        currentWorkspace.plan === "free" &&
+        opts.input.removeBranding === true
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You can't remove branding with the free plan.",
+        });
+      }
+
       const pageToUpdate = await opts.ctx.db
         .select()
         .from(page)
