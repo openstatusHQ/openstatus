@@ -60,7 +60,7 @@ export default async function Configure({
           deliveryFormat: "json",
           name: "OpenStatus Log Drain",
           // TODO: update with correct url
-          url: "https://6be9-2a0d-3344-2324-1e04-4dc7-d06a-a389-48c0.ngrok-free.app/api/integrations/vercel",
+          url: "https://www.openstatus.dev/api/integrations/vercel",
           sources: ["static", "lambda", "build", "edge", "external"],
           // headers: { "key": "value"}
         },
