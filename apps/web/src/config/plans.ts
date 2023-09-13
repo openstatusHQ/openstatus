@@ -41,7 +41,7 @@ export const plansConfig: Record<Plans, PlanProps> = {
     features: [
       "20 monitors",
       "5 status page",
-      "custom domain",
+      "custom domain & remove branding",
       "1m, 5m, 10m, 30m, 1h checks",
       "5 team members",
     ],
