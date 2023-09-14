@@ -1,6 +1,5 @@
 const TITLE = "OpenStatus";
-const DESCRIPTION =
-  "Open-Source uptime monitoring with beautiful status pages.";
+const DESCRIPTION = "Open-Source monitoring for serverless and APIs.";
 
 export const defaultMetadata = {
   title: TITLE,

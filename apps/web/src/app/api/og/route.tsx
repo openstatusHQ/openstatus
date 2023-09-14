@@ -12,7 +12,7 @@ const size = {
 };
 
 const TITLE = "OpenStatus";
-const DESCRIPTION = "An Open Source Alternative for your next Status Page";
+const DESCRIPTION = "An Open Source monitoring platform for serverless";
 const LIMIT = 40;
 
 const interRegular = fetch(
