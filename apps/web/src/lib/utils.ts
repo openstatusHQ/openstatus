@@ -27,3 +27,7 @@ export const slugify = (str: string) => {
     .replace(/ /g, "-")
     .replace(/[^\w-]+/g, "");
 };
+
+export async function copyToClipboard(value: string) {
+  navigator.clipboard.writeText(value);
+}

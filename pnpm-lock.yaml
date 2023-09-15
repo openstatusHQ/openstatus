@@ -214,6 +214,9 @@ importers:
       '@trpc/server':
         specifier: 10.37.1
         version: 10.37.1
+      '@unkey/api':
+        specifier: 0.6.22-canary.1
+        version: 0.6.22-canary.1
       '@upstash/qstash':
         specifier: 0.3.6
         version: 0.3.6
@@ -5704,6 +5707,10 @@ packages:
 
   /@unkey/api@0.6.21:
     resolution: {integrity: sha512-2PLJPH6CZNNfsGCJGJT6WCVkXdfGEwDCUhV1/JLGLJufg8xp8NLUcaktQc7UeE9FjxvW5W1MVSYkICe+KC4PhQ==}
+    dev: false
+
+  /@unkey/api@0.6.22-canary.1:
+    resolution: {integrity: sha512-5cPFiLudeWIH1oIInYlMuOuMqJK43Z5mmU5KgH+GFO3a8YTUDn1ccFovxnld8s5LbU6i8TMaiG8DJsmv5yeFuA==}
     dev: false
 
   /@upstash/core-analytics@0.0.6:
