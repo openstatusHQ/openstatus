@@ -34,6 +34,7 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
+export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;
 
 export const RegionEnum = z.enum(availableRegions);
@@ -107,14 +108,7 @@ export const monitorsToPagesRelation = relations(
   }),
 );
 
-export const periodicityEnum = z.enum([
-  "1m",
-  "5m",
-  "10m",
-  "30m",
-  "1h",
-  "other",
-]);
+export const periodicityEnum = z.enum(periodicity);
 // Schema for inserting a Monitor - can be used to validate API requests
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,

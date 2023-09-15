@@ -5,7 +5,6 @@ const unkey = new Unkey({ token: "test-key" });
 
 export async function middleware(c: Context<Env, "/v1/*", {}>, next: Next) {
   const auth = c.req.header("x-openstatus-key");
-
   if (!auth) return c.text("Unauthorized", 401);
 
   if (process.env.NODE_ENV === "production") {

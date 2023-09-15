@@ -9,9 +9,10 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
+    "@hono/zod-openapi": "0.4.0",
     "@openstatus/db": "workspace:*",
     "@unkey/api": "0.6.21",
-    "hono": "3.6.0"
+    "hono": "3.6.1"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*"
