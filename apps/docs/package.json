@@ -22,7 +22,6 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "18.11.10",
-    "@types/react": "18.2.21",
     "@types/swagger-ui-react": "4.18.0",
     "typescript": "5.1.6"
   }

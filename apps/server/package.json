@@ -12,7 +12,7 @@
     "@hono/zod-openapi": "0.4.0",
     "@openstatus/db": "*",
     "@openstatus/tinybird": "*",
-    "@unkey/api": "0.6.21",
+    "@unkey/api": "0.6.22",
     "hono": "3.6.1"
   },
   "devDependencies": {
