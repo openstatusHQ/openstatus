@@ -1,0 +1,21 @@
+{
+  "name": "@openstatus/server",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "0.4.0",
+    "@openstatus/db": "*",
+    "@openstatus/tinybird": "*",
+    "@unkey/api": "0.6.22",
+    "hono": "3.6.1"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*"
+  }
+}

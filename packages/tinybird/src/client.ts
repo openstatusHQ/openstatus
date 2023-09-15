@@ -1,4 +1,4 @@
-import type { Tinybird } from "@chronark/zod-bird";
+import { Tinybird } from "@chronark/zod-bird";
 
 import {
   tbBuildMonitorList,
@@ -9,7 +9,7 @@ import {
 } from "./validation";
 
 // REMINDER:
-// const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
 
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({

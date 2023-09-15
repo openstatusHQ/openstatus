@@ -15,6 +15,8 @@ export const env = createEnv({
     QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
     QSTASH_TOKEN: z.string().min(1),
     STRIPE_WEBHOOK_SECRET_KEY: z.string(),
+    UNKEY_TOKEN: z.string(),
+    UNKEY_API_ID: z.string(),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -47,5 +49,7 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET_KEY: process.env.STRIPE_WEBHOOK_SECRET_KEY,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    UNKEY_TOKEN: process.env.UNKEY_TOKEN,
+    UNKEY_API_ID: process.env.UNKEY_API_ID,
   },
 });

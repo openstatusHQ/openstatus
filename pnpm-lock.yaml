@@ -25,7 +25,7 @@ importers:
         version: link:packages/config/eslint
       '@turbo/gen':
         specifier: 1.10.9
-        version: 1.10.9(@types/node@20.5.9)(typescript@5.1.6)
+        version: 1.10.9(@types/node@20.3.1)(typescript@5.1.6)
       eslint:
         specifier: 8.43.0
         version: 8.43.0
@@ -38,43 +38,6 @@ importers:
       turbo:
         specifier: 1.10.12
         version: 1.10.12
-      typescript:
-        specifier: 5.1.6
-        version: 5.1.6
-
-  apps/api:
-    dependencies:
-      '@openstatus/db':
-        specifier: workspace:^
-        version: link:../../packages/db
-      next:
-        specifier: 13.4.12
-        version: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
-      next-swagger-doc:
-        specifier: 0.4.0
-        version: 0.4.0(next@13.4.12)(openapi-types@12.1.3)
-      react:
-        specifier: 18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: 18.2.0
-        version: 18.2.0(react@18.2.0)
-      zod:
-        specifier: 3.21.4
-        version: 3.21.4
-    devDependencies:
-      '@types/node':
-        specifier: 20.5.9
-        version: 20.5.9
-      '@types/react':
-        specifier: 18.2.12
-        version: 18.2.12
-      '@types/react-dom':
-        specifier: 18.2.5
-        version: 18.2.5
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -103,18 +66,40 @@ importers:
         specifier: 5.6.2
         version: 5.6.2(react-dom@18.2.0)(react@18.2.0)
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
       '@types/swagger-ui-react':
         specifier: 4.18.0
         version: 4.18.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
+
+  apps/server:
+    dependencies:
+      '@hono/zod-openapi':
+        specifier: 0.4.0
+        version: 0.4.0(hono@3.6.1)(zod@3.21.4)
+      '@openstatus/db':
+        specifier: '*'
+        version: link:../../packages/db
+      '@openstatus/tinybird':
+        specifier: '*'
+        version: link:../../packages/tinybird
+      '@unkey/api':
+        specifier: 0.6.22
+        version: 0.6.22
+      hono:
+        specifier: 3.6.1
+        version: 3.6.1
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
 
   apps/web:
     dependencies:
@@ -232,6 +217,9 @@ importers:
       '@trpc/server':
         specifier: 10.37.1
         version: 10.37.1
+      '@unkey/api':
+        specifier: 0.6.22
+        version: 0.6.22
       '@upstash/qstash':
         specifier: 0.3.6
         version: 0.3.6
@@ -341,6 +329,9 @@ importers:
       '@openstatus/eslint-config':
         specifier: workspace:*
         version: link:../../packages/config/eslint
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
       '@types/luxon':
         specifier: ^3.3.1
         version: 3.3.1
@@ -371,9 +362,6 @@ importers:
       tailwindcss:
         specifier: 3.3.2
         version: 3.3.2
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -393,15 +381,15 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@types/node@20.3.1)(typescript@5.1.6)
-      tsconfig:
-        specifier: workspace:^
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -445,7 +433,7 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
-      tsconfig:
+      '@openstatus/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
       typescript:
@@ -492,8 +480,8 @@ importers:
   packages/db:
     dependencies:
       '@libsql/client':
-        specifier: 0.3.1
-        version: 0.3.1(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
+        specifier: 0.3.4
+        version: 0.3.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
         specifier: 0.6.0
         version: 0.6.0(typescript@5.1.6)(zod@3.21.4)
@@ -502,7 +490,7 @@ importers:
         version: 16.3.1
       drizzle-orm:
         specifier: 0.28.6
-        version: 0.28.6(@libsql/client@0.3.1)
+        version: 0.28.6(@libsql/client@0.3.4)
       drizzle-zod:
         specifier: 0.5.1
         version: 0.5.1(drizzle-orm@0.28.6)(zod@3.21.4)
@@ -510,6 +498,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:^
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -525,9 +516,6 @@ importers:
       ts-node:
         specifier: 10.9.1
         version: 10.9.1(@types/node@20.3.1)(typescript@5.1.6)
-      tsconfig:
-        specifier: workspace:^
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -565,6 +553,9 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -574,9 +565,6 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -599,6 +587,9 @@ importers:
         specifier: ^3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
@@ -611,9 +602,6 @@ importers:
       next:
         specifier: 13.4.12
         version: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
-      tsconfig:
-        specifier: workspace:*
-        version: link:../../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -627,7 +615,7 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
-      tsconfig:
+      '@openstatus/tsconfig':
         specifier: workspace:^
         version: link:../tsconfig
       typescript:
@@ -643,12 +631,12 @@ importers:
         specifier: 3.21.4
         version: 3.21.4
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -660,6 +648,9 @@ importers:
       '@openstatus/eslint-config':
         specifier: workspace:*
         version: link:../config/eslint
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/react':
         specifier: 18.2.16
         version: 18.2.16
@@ -672,9 +663,6 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       typescript:
         specifier: 5.1.6
         version: 5.1.6
@@ -694,12 +682,12 @@ importers:
         specifier: 1.22.0
         version: 1.22.0
     devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       '@types/node':
         specifier: 20.3.1
         version: 20.3.1
-      tsconfig:
-        specifier: workspace:*
-        version: link:../tsconfig
       tsup:
         specifier: 7.1.0
         version: 7.1.0(typescript@5.1.6)
@@ -772,36 +760,13 @@ packages:
     resolution: {integrity: sha512-TD+xbmsBLyYy/IxFimW/YL/9L2IEnM7/EoV9Aeh56U64Ify8o27HJcKjo38XY9Tcn0uOq1AX3thkKgvtWvwFQg==}
     dev: false
 
-  /@apidevtools/json-schema-ref-parser@9.1.2:
-    resolution: {integrity: sha512-r1w81DpR+KyRWd3f+rk6TNqMgedmAxZP5v5KWlXQWlgMUUtyEJch0DKEci1SorPMiSeM8XPl7MZ3miJ60JIpQg==}
-    dependencies:
-      '@jsdevtools/ono': 7.1.3
-      '@types/json-schema': 7.0.12
-      call-me-maybe: 1.0.2
-      js-yaml: 4.1.0
-    dev: false
-
-  /@apidevtools/openapi-schemas@2.1.0:
-    resolution: {integrity: sha512-Zc1AlqrJlX3SlpupFGpiLi2EbteyP7fXmUOGup6/DnkRgjP9bgMM/ag+n91rsv0U1Gpz0H3VILA/o3bW7Ua6BQ==}
-    engines: {node: '>=10'}
-    dev: false
-
-  /@apidevtools/swagger-methods@3.0.2:
-    resolution: {integrity: sha512-QAkD5kK2b1WfjDS/UQn/qQkbwF31uqRjPTrsCs5ZG9BQGAkjwvqGFjjPqAuzac/IYzpPtRzjCP1WrTuAIjMrXg==}
-    dev: false
-
-  /@apidevtools/swagger-parser@10.0.3(openapi-types@12.1.3):
-    resolution: {integrity: sha512-sNiLY51vZOmSPFZA5TF35KZ2HbgYklQnTSDnkghamzLb3EkNtcQnrBQEj5AOCxHpTtXpqMCRM1CrmV2rG6nw4g==}
+  /@asteasolutions/zod-to-openapi@5.5.0(zod@3.21.4):
+    resolution: {integrity: sha512-d5HwrvM6dOKr3XdeF+DmashGvfEc+1oiEfbscugsiwSTrFtuMa7ETpW9sTNnVgn+hJaz+PRxPQUYD7q9/5dUig==}
     peerDependencies:
-      openapi-types: '>=7'
+      zod: ^3.20.2
     dependencies:
-      '@apidevtools/json-schema-ref-parser': 9.1.2
-      '@apidevtools/openapi-schemas': 2.1.0
-      '@apidevtools/swagger-methods': 3.0.2
-      '@jsdevtools/ono': 7.1.3
-      call-me-maybe: 1.0.2
-      openapi-types: 12.1.3
-      z-schema: 5.0.5
+      openapi3-ts: 4.1.2
+      zod: 3.21.4
     dev: false
 
   /@babel/code-frame@7.22.5:
@@ -2195,6 +2160,29 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
+  /@hono/zod-openapi@0.4.0(hono@3.6.1)(zod@3.21.4):
+    resolution: {integrity: sha512-tyHXZMnfDAojLYeW+QxTaBGGkc/XaUvvfrJzuSPcCSu8LA+AjneGzzNYUKKB/rrJnrfBb+MkZYXlhb5/lmYxjQ==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      hono: '*'
+      zod: 3.*
+    dependencies:
+      '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.21.4)
+      '@hono/zod-validator': 0.1.8(hono@3.6.1)(zod@3.21.4)
+      hono: 3.6.1
+      zod: 3.21.4
+    dev: false
+
+  /@hono/zod-validator@0.1.8(hono@3.6.1)(zod@3.21.4):
+    resolution: {integrity: sha512-/Kd/p/dUVKM7/1TY3jafTV+ngwEh3fOLmXCJQKb9esWsCom5WOJaNmZYv8jeRhyipu1xBvmN5jceRA3Ev3rmQw==}
+    peerDependencies:
+      hono: 3.*
+      zod: ^3.19.1
+    dependencies:
+      hono: 3.6.1
+      zod: 3.21.4
+    dev: false
+
   /@hookform/resolvers@3.1.1(react-hook-form@7.45.1):
     resolution: {integrity: sha512-tS16bAUkqjITNSvbJuO1x7MXbn7Oe8ZziDTJdA9mMvsoYthnOOiznOTGBYwbdlYBgU+tgpI/BtTU3paRbCuSlg==}
     peerDependencies:
@@ -2336,15 +2324,11 @@ packages:
       tslib: 2.6.1
     dev: false
 
-  /@jsdevtools/ono@7.1.3:
-    resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
-    dev: false
-
-  /@libsql/client@0.3.1(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3):
-    resolution: {integrity: sha512-43/zF8fJguXd6ENwYhddpbR05bDVx3BQQUZ/BsJ0b4zLJge+WFa2smC3ILVGqvVu4ZoixbC0sfLTdVPdd2NjDA==}
+  /@libsql/client@0.3.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3):
+    resolution: {integrity: sha512-b1rpCzm02oQuh1zM1UKdKxhClyMMlgyFagcmsuGTve/AQxubO/FaRgoKXTcGaOqoRjymE1qf0sQM2UoyPvu3lA==}
     dependencies:
-      '@libsql/hrana-client': 0.4.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
-      better-sqlite3: 8.5.0
+      '@libsql/hrana-client': 0.5.2(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
+      better-sqlite3: 8.6.0
       js-base64: 3.7.5
     transitivePeerDependencies:
       - bufferutil
@@ -2352,11 +2336,11 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@libsql/hrana-client@0.4.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3):
-    resolution: {integrity: sha512-BevUg0UBRLs5AEqn0fjrMcl49xCtwuFavgK4MzCb3PTtxpEbQ24oGXctspN9drBiUVmqSZr7go887aiLLzSO3A==}
+  /@libsql/hrana-client@0.5.2(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3):
+    resolution: {integrity: sha512-0hVKUClh29Pb0bIIwqssfDH1nrsKO5SaBTfclIZ1d0W/rBBDsV6mBKx3FhQuULYu/5u0/gJcHdmdiA1SFIOXdQ==}
     dependencies:
-      '@libsql/isomorphic-fetch': 0.1.6(encoding@0.1.13)
-      '@libsql/isomorphic-ws': 0.1.3(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@libsql/isomorphic-fetch': 0.1.7(encoding@0.1.13)
+      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       js-base64: 3.7.5
     transitivePeerDependencies:
       - bufferutil
@@ -2364,8 +2348,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@libsql/isomorphic-fetch@0.1.6(encoding@0.1.13):
-    resolution: {integrity: sha512-8qhxEDmVBDb54E9xdW1xqw3zLNShkMZpf5YQU3PvwjtKNLOPde59Oqez+RnZHsYkt9zQxxOF+7gSHVJeP/UWqg==}
+  /@libsql/isomorphic-fetch@0.1.7(encoding@0.1.13):
+    resolution: {integrity: sha512-/lSsPe0WTHn2SDTPbgbjUY2iF0C3Adtcwu7cajTe+3YtcxsV36u7L37/hmJIQQG8vuM/TCUu4TWb+ym/299aOg==}
     dependencies:
       '@types/node-fetch': 2.6.4
       node-fetch: 2.6.12(encoding@0.1.13)
@@ -2373,8 +2357,8 @@ packages:
       - encoding
     dev: false
 
-  /@libsql/isomorphic-ws@0.1.3(bufferutil@4.0.7)(utf-8-validate@6.0.3):
-    resolution: {integrity: sha512-54dZXgYwWDKsnfWv8GCVYvhn6RDlqFDGAc8EQMd941yvGMsGzo06Gn6Iyjw//nJ1iJO97FbXgoQ1apikoFD/WA==}
+  /@libsql/isomorphic-ws@0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3):
+    resolution: {integrity: sha512-DtLWIH29onUYR00i0GlQ3UdcTRC6EP4u9w/h9LxpUZJWRMARk6dQwZ6Jkd+QdwVpuAOrdxt18v0K2uIYR3fwFg==}
     dependencies:
       '@types/ws': 8.5.5
       ws: 8.13.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
@@ -2453,7 +2437,7 @@ packages:
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.5
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
       react: 18.2.0
     dev: false
 
@@ -2575,6 +2559,7 @@ packages:
 
   /@next/env@13.4.12:
     resolution: {integrity: sha512-RmHanbV21saP/6OEPBJ7yJMuys68cIf8OBBWd7+uj40LdpmswVAwe1uzeuFyUsd6SfeITWT3XnQfn6wULeKwDQ==}
+    dev: true
 
   /@next/env@13.4.19:
     resolution: {integrity: sha512-FsAT5x0jF2kkhNkKkukhsyYOrRqtSxrEhfliniIq0bwWbuXLgyt3Gv0Ml+b91XwjwArmuP7NxCiGd++GGKdNMQ==}
@@ -2592,6 +2577,7 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-darwin-arm64@13.4.19:
@@ -2609,6 +2595,7 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-darwin-x64@13.4.19:
@@ -2626,6 +2613,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-linux-arm64-gnu@13.4.19:
@@ -2643,6 +2631,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-linux-arm64-musl@13.4.19:
@@ -2660,6 +2649,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-linux-x64-gnu@13.4.19:
@@ -2677,6 +2667,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-linux-x64-musl@13.4.19:
@@ -2694,6 +2685,7 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-win32-arm64-msvc@13.4.19:
@@ -2711,6 +2703,7 @@ packages:
     cpu: [ia32]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-win32-ia32-msvc@13.4.19:
@@ -2728,6 +2721,7 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@next/swc-win32-x64-msvc@13.4.19:
@@ -5201,7 +5195,7 @@ packages:
     resolution: {integrity: sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==}
     dev: true
 
-  /@turbo/gen@1.10.9(@types/node@20.5.9)(typescript@5.1.6):
+  /@turbo/gen@1.10.9(@types/node@20.3.1)(typescript@5.1.6):
     resolution: {integrity: sha512-EQdg4NqN032+o2Wgj9lg49puijGc4tbgKjGjDOi8+rN/RqE9CUKxKtrfaTGdDjfdC1Uy8FaaKk7y1zYK3zIojg==}
     hasBin: true
     dependencies:
@@ -5212,7 +5206,7 @@ packages:
       minimatch: 9.0.3
       node-plop: 0.26.3
       semver: 7.5.4
-      ts-node: 10.9.1(@types/node@20.5.9)(typescript@5.1.6)
+      ts-node: 10.9.1(@types/node@20.3.1)(typescript@5.1.6)
       update-check: 1.5.4
       validate-npm-package-name: 5.0.0
     transitivePeerDependencies:
@@ -5333,7 +5327,7 @@ packages:
   /@types/hoist-non-react-statics@3.3.1:
     resolution: {integrity: sha512-iMIqiko6ooLrTh1joXodJK5X9xeEALT1kM5G3ZLhD3hszxBdIEd5C75U834D9mLcINgD4OyZf5uQXjkuYydWvA==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
       hoist-non-react-statics: 3.3.2
     dev: false
 
@@ -5489,12 +5483,12 @@ packages:
   /@types/react-dom@18.2.5:
     resolution: {integrity: sha512-sRQsOS/sCLnpQhR4DSKGTtWFE3FZjpQa86KPVbhUqdYMRZ9FEFcfAytKhR/vUG2rH1oFbOOej6cuD7MFSobDRQ==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
 
   /@types/react-dom@18.2.7:
     resolution: {integrity: sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
     dev: true
 
   /@types/react@18.2.12:
@@ -5506,6 +5500,14 @@ packages:
 
   /@types/react@18.2.16:
     resolution: {integrity: sha512-LLFWr12ZhBJ4YVw7neWLe6Pk7Ey5R9OCydfuMsz1L8bZxzaawJj2p06Q8/EFEHDeTBQNFLF62X+CG7B2zIyu0Q==}
+    dependencies:
+      '@types/prop-types': 15.7.5
+      '@types/scheduler': 0.16.3
+      csstype: 3.1.2
+    dev: true
+
+  /@types/react@18.2.21:
+    resolution: {integrity: sha512-neFKG/sBAwGxHgXiIxnbm3/AAVQ/cMRS93hvBpg8xYRbeQSPVABp9U2bRnPf0iI4+Ucdv3plSxKK+3CW2ENJxA==}
     dependencies:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.3
@@ -5541,14 +5543,10 @@ packages:
     resolution: {integrity: sha512-Hl219/BT5fLAaz6NDkSuhzasy49dwQS/DSdu4MdggFB8zcXv7vflBI3xp7FEmkmdDkBUI2bPUNeMttp2knYdxw==}
     dev: false
 
-  /@types/swagger-jsdoc@6.0.1:
-    resolution: {integrity: sha512-+MUpcbyxD528dECUBCEVm6abNuORdbuGjbrUdHDeAQ+rkPuo2a+L4N02WJHF3bonSSE6SJ3dUJwF2V6+cHnf0w==}
-    dev: false
-
   /@types/swagger-ui-react@4.18.0:
     resolution: {integrity: sha512-XtvFXmj46Zibe89tFQwSQknrq1NxEtOep2rZuxth7K88tyPEP00FnoA6H7ATYhocAEA4XUWaNHNFWFRl1KX8aQ==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
     dev: true
 
   /@types/through@0.0.30:
@@ -5716,6 +5714,10 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.59.9
       eslint-visitor-keys: 3.4.1
+    dev: false
+
+  /@unkey/api@0.6.22:
+    resolution: {integrity: sha512-RcWr1/BuTAobx0fhbvKLuYTIDgmu7pvYqABWKhwHYpkwQg6wy+pWo5CBMsN5L30E9cd0RlM9TYiHuAdb1tk1iw==}
     dev: false
 
   /@upstash/core-analytics@0.0.6:
@@ -6161,8 +6163,8 @@ packages:
     resolution: {integrity: sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==}
     dev: false
 
-  /better-sqlite3@8.5.0:
-    resolution: {integrity: sha512-vbPcv/Hx5WYdyNg/NbcfyaBZyv9s/NVbxb7yCeC5Bq1pVocNxeL2tZmSu3Rlm4IEOTjYdGyzWQgyx0OSdORBzw==}
+  /better-sqlite3@8.6.0:
+    resolution: {integrity: sha512-jwAudeiTMTSyby+/SfbHDebShbmC2MCH8mU2+DXi0WJfv13ypEJm47cd3kljmy/H130CazEvkf2Li//ewcMJ1g==}
     requiresBuild: true
     dependencies:
       bindings: 1.5.0
@@ -6306,10 +6308,6 @@ packages:
     dependencies:
       function-bind: 1.1.1
       get-intrinsic: 1.2.1
-    dev: false
-
-  /call-me-maybe@1.0.2:
-    resolution: {integrity: sha512-HpX65o1Hnr9HH25ojC1YGs7HCQLq0GCOibSaWER0eNpgJ/Z1MZv2mTc7+xh6WOPxbRVcmgbv4hGU+uSQ/2xFZQ==}
     dev: false
 
   /callsites@3.1.0:
@@ -6521,13 +6519,6 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /cleye@1.3.2:
-    resolution: {integrity: sha512-MngIC2izcCz07iRKr3Pe8Z6ZBv4zbKFl/YnQEN/aMHis6PpH+MxI2e6n0bMUAmSVlMoAyQkdBCSTbfDmtcSovQ==}
-    dependencies:
-      terminal-columns: 1.4.1
-      type-flag: 3.0.0
-    dev: false
-
   /cli-color@2.0.3:
     resolution: {integrity: sha512-OkoZnxyC4ERN3zLzZaY9Emb7f/MhBOIpePv0Ycok0fJYT+Ouo00UBEIwsVsr0yoow++n5YWlSUgST9GKhNHiRQ==}
     engines: {node: '>=0.10'}
@@ -6654,11 +6645,6 @@ packages:
     engines: {node: '>= 6'}
     dev: false
 
-  /commander@6.2.0:
-    resolution: {integrity: sha512-zP4jEKbe8SHzKJYQmq8Y9gYjtO/POJLgIdKgV7B9qNmABVFVc+ctqSX6iXh4mCpJfRBOabiZ2YKPg8ciDw6C+Q==}
-    engines: {node: '>= 6'}
-    dev: false
-
   /commander@7.2.0:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
@@ -6677,6 +6663,7 @@ packages:
   /commander@9.5.0:
     resolution: {integrity: sha512-KRs7WVDKg86PWiuAqhDrAQnTXZKraVcCc6vFdL14qrZ/DcWwuRo7VoiYXalXO7S5GKpqYiVEwCbgFDfxNHKJBQ==}
     engines: {node: ^12.20.0 || >=14}
+    dev: true
 
   /comment-json@4.2.3:
     resolution: {integrity: sha512-SsxdiOf064DWoZLH799Ata6u7iV658A11PlWtZATDlXPpKGJnbJZ5Z24ybixAi+LUUqJ/GKowAejtC5GFUG7Tw==}
@@ -7491,7 +7478,7 @@ packages:
       - supports-color
     dev: true
 
-  /drizzle-orm@0.28.6(@libsql/client@0.3.1):
+  /drizzle-orm@0.28.6(@libsql/client@0.3.4):
     resolution: {integrity: sha512-yBe+F9htrlYER7uXgDJUQsTHFoIrI5yMm5A0bg0GiZ/kY5jNXTWoEy4KQtg35cE27sw1VbgzoMWHAgCckUUUww==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
@@ -7553,7 +7540,7 @@ packages:
       sqlite3:
         optional: true
     dependencies:
-      '@libsql/client': 0.3.1(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
+      '@libsql/client': 0.3.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
     dev: false
 
   /drizzle-zod@0.5.1(drizzle-orm@0.28.6)(zod@3.21.4):
@@ -7562,7 +7549,7 @@ packages:
       drizzle-orm: '>=0.23.13'
       zod: '*'
     dependencies:
-      drizzle-orm: 0.28.6(@libsql/client@0.3.1)
+      drizzle-orm: 0.28.6(@libsql/client@0.3.4)
       zod: 3.21.4
     dev: false
 
@@ -9159,6 +9146,11 @@ packages:
       react-is: 16.13.1
     dev: false
 
+  /hono@3.6.1:
+    resolution: {integrity: sha512-FaWXh0MSc2Hv2IrGI4vFvZEK69NHfggEgHUlNMXp2zrpKh23j7wS0Ku316Do9CFAl07OBNozBelcvruiBT8crQ==}
+    engines: {node: '>=16.0.0'}
+    dev: false
+
   /hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
     dev: false
@@ -10084,20 +10076,12 @@ packages:
   /lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
 
-  /lodash.isequal@4.5.0:
-    resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
-    dev: false
-
   /lodash.isplainobject@4.0.6:
     resolution: {integrity: sha512-oSXzaWypCMHkPC3NvBEaPHf0KsA5mvPrOPgQWDsbg8n7orZ290M0BmC/jgRZ4vcJ6DTAhjrsSYgdsW/F+MFOBA==}
     dev: false
 
   /lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
-
-  /lodash.mergewith@4.6.2:
-    resolution: {integrity: sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==}
-    dev: false
 
   /lodash.sortby@4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
@@ -11053,22 +11037,6 @@ packages:
       react-dom: 18.2.0(react@18.2.0)
     dev: false
 
-  /next-swagger-doc@0.4.0(next@13.4.12)(openapi-types@12.1.3):
-    resolution: {integrity: sha512-5Wt19Av4tOHVdXPJ7xTVvDJuiWuP5OYnY13BSq5SIjMtktFfhX4/9yZyaMCXImbUECu26PALn9CpRQRplIXJ3w==}
-    engines: {node: '>=12'}
-    hasBin: true
-    peerDependencies:
-      next: '>=9'
-    dependencies:
-      '@types/swagger-jsdoc': 6.0.1
-      cleye: 1.3.2
-      isarray: 2.0.5
-      next: 13.4.12(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
-      swagger-jsdoc: 6.2.8(openapi-types@12.1.3)
-    transitivePeerDependencies:
-      - openapi-types
-    dev: false
-
   /next-themes@0.2.1(next@13.4.19)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-B+AKNfYNIzh0vqQQKqQItTS8evEouKD7H5Hj3kmuPERwddR2TxvDSFZuTj6T7Jfn1oyeUyJMydPl1Bkxkh0W7A==}
     peerDependencies:
@@ -11126,6 +11094,7 @@ packages:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+    dev: true
 
   /next@13.4.19(@babel/core@7.22.9)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-HuPSzzAbJ1T4BD8e0bs6B9C1kWQ6gv8ykZoRWs5AQoiIuqbGHHdQO7Ljuvg05Q0Z24E2ABozHe6FxDvI6HfyAw==}
@@ -11470,8 +11439,10 @@ packages:
       is-wsl: 2.2.0
     dev: false
 
-  /openapi-types@12.1.3:
-    resolution: {integrity: sha512-N4YtSYJqghVu4iek2ZUvcN/0aqH1kRDuNqzcycDxhOUpg7GdvLa2F3DgS6yBNhInhv2r/6I0Flkn7CqL8+nIcw==}
+  /openapi3-ts@4.1.2:
+    resolution: {integrity: sha512-B7gOkwsYMZO7BZXwJzXCuVagym2xhqsrilVvV0dnq2Di4+iLUXKVX9gOK23ZqaAHZOwABXN0QTdW8QnkUTX6DA==}
+    dependencies:
+      yaml: 2.3.1
     dev: false
 
   /optionator@0.9.3:
@@ -13465,30 +13436,6 @@ packages:
       - encoding
     dev: false
 
-  /swagger-jsdoc@6.2.8(openapi-types@12.1.3):
-    resolution: {integrity: sha512-VPvil1+JRpmJ55CgAtn8DIcpBs0bL5L3q5bVQvF4tAW/k/9JYSj7dCpaYCAv5rufe0vcCbBRQXGvzpkWjvLklQ==}
-    engines: {node: '>=12.0.0'}
-    hasBin: true
-    dependencies:
-      commander: 6.2.0
-      doctrine: 3.0.0
-      glob: 7.1.6
-      lodash.mergewith: 4.6.2
-      swagger-parser: 10.0.3(openapi-types@12.1.3)
-      yaml: 2.0.0-1
-    transitivePeerDependencies:
-      - openapi-types
-    dev: false
-
-  /swagger-parser@10.0.3(openapi-types@12.1.3):
-    resolution: {integrity: sha512-nF7oMeL4KypldrQhac8RyHerJeGPD1p2xDh900GPvc+Nk7nWP6jX2FcC7WmkinMoAmoO774+AFXcWsW8gMWEIg==}
-    engines: {node: '>=10'}
-    dependencies:
-      '@apidevtools/swagger-parser': 10.0.3(openapi-types@12.1.3)
-    transitivePeerDependencies:
-      - openapi-types
-    dev: false
-
   /swagger-ui-react@5.6.2(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-UBjk84s+bu7KZ0vt4sU/R6Ej43Kf4prt9RRKFG+Bu1R4JQTNDXwlKz/+fsC2G98kxZDTkOrZKWnlJrHTSKGq7Q==}
     peerDependencies:
@@ -13667,10 +13614,6 @@ packages:
       fs-constants: 1.0.0
       inherits: 2.0.4
       readable-stream: 3.6.2
-    dev: false
-
-  /terminal-columns@1.4.1:
-    resolution: {integrity: sha512-IKVL/itiMy947XWVv4IHV7a0KQXvKjj4ptbi7Ew9MPMcOLzkiQeyx3Gyvh62hKrfJ0RZc4M1nbhzjNM39Kyujw==}
     dev: false
 
   /text-table@0.2.0:
@@ -13904,37 +13847,6 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /ts-node@10.9.1(@types/node@20.5.9)(typescript@5.1.6):
-    resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
-    hasBin: true
-    peerDependencies:
-      '@swc/core': '>=1.2.50'
-      '@swc/wasm': '>=1.2.50'
-      '@types/node': '*'
-      typescript: '>=2.7'
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      '@swc/wasm':
-        optional: true
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 20.5.9
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.1.6
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
-    dev: true
-
   /ts-pattern@4.3.0:
     resolution: {integrity: sha512-pefrkcd4lmIVR0LA49Imjf9DYLK8vtWhqBPA3Ya1ir8xCW0O2yjL9dsCVvI7pCodLC5q7smNpEtDR2yVulQxOg==}
     dev: false
@@ -14132,10 +14044,6 @@ packages:
   /type-fest@3.13.1:
     resolution: {integrity: sha512-tLq3bSNx+xSpwvAJnzrK0Ep5CLNWjvFTOp71URMaAEWBfRb9nnJiBoUe0tF8bI4ZFO3omgBR6NvnbzVUT3Ly4g==}
     engines: {node: '>=14.16'}
-    dev: false
-
-  /type-flag@3.0.0:
-    resolution: {integrity: sha512-3YaYwMseXCAhBB14RXW5cRQfJQlEknS6i4C8fCfeUdS3ihG9EdccdR9kt3vP73ZdeTGmPb4bZtkDn5XMIn1DLA==}
     dev: false
 
   /type@1.2.0:
@@ -14527,11 +14435,6 @@ packages:
       builtins: 5.0.1
     dev: true
 
-  /validator@13.11.0:
-    resolution: {integrity: sha512-Ii+sehpSfZy+At5nPdnyMhx78fEoPDkR2XW/zimHEL3MyGJQOCQ7WeP20jPYRz7ZCpcKLB21NxuXHF3bxjStBQ==}
-    engines: {node: '>= 0.10'}
-    dev: false
-
   /vfile-location@4.1.0:
     resolution: {integrity: sha512-YF23YMyASIIJXpktBa4vIGLJ5Gs88UB/XePgqPmTa7cDA+JeO3yclbpheQYCHjVHBn/yePzrXuygIL+xbvRYHw==}
     dependencies:
@@ -14921,11 +14824,6 @@ packages:
     engines: {node: '>= 6'}
     dev: false
 
-  /yaml@2.0.0-1:
-    resolution: {integrity: sha512-W7h5dEhywMKenDJh2iX/LABkbFnBxasD27oyXWDS/feDsxiw0dD5ncXdYXgkvAsXIY2MpW/ZKkr9IU30DBdMNQ==}
-    engines: {node: '>= 6'}
-    dev: false
-
   /yaml@2.3.1:
     resolution: {integrity: sha512-2eHWfjaoXgTBC2jNM1LRef62VQa0umtvRiDSk6HSzW7RvS5YtkabJrwYLLEKWBc8a5U2PTSCs+dJjUTJdlHsWQ==}
     engines: {node: '>= 14'}
@@ -14961,18 +14859,6 @@ packages:
     resolution: {integrity: sha512-9bnSc/HEW2uRy67wc+T8UwauLuPJVn28jb+GtJY16iiKWyvmYJRXVT4UamsAEGQfPohgr2q4Tq0sQbQlxTfi1g==}
     engines: {node: '>=12.20'}
     dev: true
-
-  /z-schema@5.0.5:
-    resolution: {integrity: sha512-D7eujBWkLa3p2sIpJA0d1pr7es+a7m0vFAnZLlCEKq/Ij2k0MLi9Br2UPxoxdYystm5K1yeBGzub0FlYUEWj2Q==}
-    engines: {node: '>=8.0.0'}
-    hasBin: true
-    dependencies:
-      lodash.get: 4.4.2
-      lodash.isequal: 4.5.0
-      validator: 13.11.0
-    optionalDependencies:
-      commander: 9.5.0
-    dev: false
 
   /zenscroll@4.0.2:
     resolution: {integrity: sha512-jEA1znR7b4C/NnaycInCU6h/d15ZzCd1jmsruqOKnZP6WXQSMH3W2GL+OXbkruslU4h+Tzuos0HdswzRUk/Vgg==}

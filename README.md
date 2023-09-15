@@ -1,10 +1,10 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-source Uptime Monitoring with Status Page
+  <h3 align="center">The Open-Source Uptime Monitoring with Status Page
    </h3>
 
   <p align="center">
-    The BetterUptime Open Source Alternative.
+    The Open-Source Serverless monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />

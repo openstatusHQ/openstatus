@@ -12,7 +12,6 @@
     "eslint-config-turbo": "^1.10.1",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-react": "7.32.2"
-
   },
   "devDependencies": {
     "eslint": "^8.42.0",

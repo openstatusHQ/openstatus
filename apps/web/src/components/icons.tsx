@@ -1,7 +1,9 @@
 import {
   Activity,
   Calendar,
+  Check,
   Cog,
+  Copy,
   Fingerprint,
   Globe,
   LayoutDashboard,
@@ -44,6 +46,8 @@ export const Icons = {
   twitter: TwitterIcon,
   globe: Globe,
   plug: Plug,
+  copy: Copy,
+  check: Check,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
