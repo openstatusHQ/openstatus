@@ -1,8 +1,14 @@
-```
-npm install
-npm run start
-```
+# OpenStatus Server
 
-```
-open http://localhost:3000
+## Tech
+
+- Bun
+- HonoJS
+
+## Deploy
+
+From root
+
+```bash
+flyctl deploy --config apps/server/fly.toml --dockerfile  apps/server/Dockerfile
 ```

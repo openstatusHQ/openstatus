@@ -3,6 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { incidentApi } from "./incident";
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
+import { VercelIngest } from "./vercel";
 
 /**
  * Base Path "/v1" for our api
@@ -16,6 +17,9 @@ app.doc("/openapi", {
   },
 });
 app.get("/ping", (c) => c.text("pong"));
+
+// Where we ingest data from Vercel
+app.post("/integration/vercel", VercelIngest);
 /**
  * Authentification Middleware
  */
