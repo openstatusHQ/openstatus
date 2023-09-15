@@ -3,7 +3,6 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import {
   availableRegions,
-  insertMonitorSchema,
   METHODS,
   monitor,
   periodicity,
@@ -100,13 +99,13 @@ const MonitorSchema = z.object({
 });
 
 const monitorInput = z.object({
-  id: z
-    .number()
-    .openapi({
-      example: 123,
-      description: "The id of the monitor",
-    })
-    .nullable(),
+  // id: z
+  //   .number()
+  //   .openapi({
+  //     example: 123,
+  //     description: "The id of the monitor",
+  //   })
+  //   .nullable(),
   periodicity: periodicityEnum.openapi({
     example: "1m",
     description: "How often the monitor should run",
@@ -216,7 +215,7 @@ const postRoute = createRoute({
   path: "/",
   request: {
     body: {
-      description: "The monitor",
+      description: "The monitor to create",
       content: {
         "application/json": {
           schema: monitorInput,
@@ -231,7 +230,7 @@ const postRoute = createRoute({
           schema: MonitorSchema,
         },
       },
-      description: "Get the monitor",
+      description: "Create  a monitor",
     },
     400: {
       content: {
@@ -263,7 +262,7 @@ monitorApi.openapi(postRoute, async (c) => {
   // // const _valid = insertMonitorSchema
   // //   .partial()
   // //   .safeParse({ ...input, workspaceId });
-  const { id, headers, ...rest } = input;
+  const { headers, ...rest } = input;
   const _newMonitor = await db
     .insert(monitor)
     .values({
@@ -278,4 +277,121 @@ monitorApi.openapi(postRoute, async (c) => {
 
   return c.jsonT(data);
 });
+
+const putRoute = createRoute({
+  method: "post",
+  path: "/",
+  request: {
+    params: ParamsSchema,
+    body: {
+      description: "The monitor to update",
+      content: {
+        "application/json": {
+          schema: monitorInput,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: MonitorSchema,
+        },
+      },
+      description: "Update a monitor",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+monitorApi.openapi(putRoute, async (c) => {
+  const input = c.req.valid("json");
+  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const { id } = c.req.valid("param");
+
+  if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
+
+  const _monitor = await db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.id, Number(id)))
+    .get();
+
+  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+
+  if (workspaceId !== _monitor.workspaceId)
+    return c.jsonT({ code: 401, message: "Unauthorized" });
+
+  const { headers, ...rest } = input;
+  const _newMonitor = await db
+    .update(monitor)
+    .set({
+      ...rest,
+      headers: input.headers ? JSON.stringify(input.headers) : undefined,
+    })
+    .returning()
+    .get();
+
+  const data = MonitorSchema.parse(_newMonitor);
+
+  return c.jsonT(data);
+});
+
+const deleteRoute = createRoute({
+  method: "delete",
+  path: "/:id",
+  request: {
+    params: ParamsSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            message: z.string().openapi({
+              example: "Deleted",
+            }),
+          }),
+        },
+      },
+      description: "Get the monitor",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+monitorApi.openapi(deleteRoute, async (c) => {
+  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const { id } = c.req.valid("param");
+
+  const monitorId = Number(id);
+  const _monitor = await db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.id, monitorId))
+    .get();
+
+  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+
+  if (workspaceId !== _monitor.workspaceId)
+    return c.jsonT({ code: 401, message: "Unauthorized" });
+
+  await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
+  return c.jsonT({ message: "Deleted" });
+});
+
 export default monitorApi;

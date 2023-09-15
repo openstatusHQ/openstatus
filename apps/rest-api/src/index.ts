@@ -1,9 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { Hono } from "hono";
 
 import { middleware } from "./middleware";
 import monitorApi from "./monitor";
-import { DELETE, GET, POST, PUT } from "./old-monitor";
 
 /**
  * Base Path "/v1" for our api
