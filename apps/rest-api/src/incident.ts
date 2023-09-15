@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   availableStatus,
   incident,
@@ -270,6 +270,18 @@ const postRouteUpdate = createRoute({
 incidentApi.openapi(postRouteUpdate, async (c) => {
   const input = c.req.valid("json");
   const { id } = c.req.valid("param");
+  const workspaceId = Number(c.req.header("x-workspace-id"));
+
+  const incidentId = Number(id);
+  const _incident = await db
+    .select()
+    .from(incident)
+    .where(
+      and(eq(incident.id, incidentId), eq(incident.workspaceId, workspaceId)),
+    )
+    .get();
+
+  if (!_incident) return c.jsonT({ code: 401, message: "Not authorized" });
 
   const _incidentUpdate = await db
     .insert(incidentUpdate)
