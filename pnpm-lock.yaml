@@ -96,6 +96,9 @@ importers:
       hono:
         specifier: 3.6.1
         version: 3.6.1
+      zod:
+        specifier: 3.21.4
+        version: 3.21.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -11160,7 +11163,7 @@ packages:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
       scroll-into-view-if-needed: 3.0.10
-      zod: 3.21.4
+      zod: 3.22.2
     dev: false
 
   /nextra@2.10.0(next@13.4.19)(react-dom@18.2.0)(react@18.2.0):
@@ -11198,7 +11201,7 @@ packages:
       title: 3.5.3
       unist-util-remove: 4.0.0
       unist-util-visit: 5.0.0
-      zod: 3.21.4
+      zod: 3.22.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -14866,6 +14869,10 @@ packages:
 
   /zod@3.21.4:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
+
+  /zod@3.22.2:
+    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+    dev: false
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
