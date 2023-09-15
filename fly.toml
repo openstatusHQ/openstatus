@@ -7,7 +7,7 @@ app = "openstatus-api"
 primary_region = "ams"
 
 [build]
-  dockerfile = "apps/rest-api/Dockerfile"
+  dockerfile = "apps/server/Dockerfile"
 
 [http_service]
   internal_port = 3000
