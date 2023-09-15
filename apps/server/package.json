@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hono/zod-openapi": "0.4.0",
+    "zod": "3.21.4",
     "@openstatus/db": "*",
     "@openstatus/tinybird": "*",
     "@unkey/api": "0.6.22",
