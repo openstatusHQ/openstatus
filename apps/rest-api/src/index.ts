@@ -1,7 +1,8 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
+import { incidentApi } from "./incident";
 import { middleware } from "./middleware";
-import monitorApi from "./monitor";
+import { monitorApi } from "./monitor";
 
 /**
  * Base Path "/v1" for our api
@@ -21,6 +22,7 @@ app.get("/ping", (c) => c.text("pong"));
 
 app.use("/v1/*", middleware);
 app.route("/v1/monitor", monitorApi);
+app.route("/v1/incident", incidentApi);
 
 if (process.env.NODE_ENV === "development") {
   app.showRoutes();

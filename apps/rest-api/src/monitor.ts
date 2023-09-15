@@ -8,7 +8,7 @@ import {
   periodicity,
 } from "@openstatus/db/src/schema/monitor";
 
-import { middleware } from "./middleware";
+import { ErrorSchema } from "./shared";
 
 const ParamsSchema = z.object({
   id: z
@@ -26,15 +26,6 @@ const ParamsSchema = z.object({
 
 export const periodicityEnum = z.enum(periodicity);
 export const regionEnum = z.enum(availableRegions);
-
-const ErrorSchema = z.object({
-  code: z.number().openapi({
-    example: 400,
-  }),
-  message: z.string().openapi({
-    example: "Bad Request",
-  }),
-});
 
 const MonitorSchema = z.object({
   id: z.number().openapi({
@@ -154,8 +145,6 @@ z.array(z.object({ key: z.string(), value: z.string() }))
 
 const monitorApi = new OpenAPIHono();
 
-monitorApi.use(middleware);
-
 const getAllRoute = createRoute({
   method: "get",
   path: "/",
@@ -220,6 +209,7 @@ const getRoute = createRoute({
     },
   },
 });
+
 monitorApi.openapi(getRoute, async (c) => {
   const workspaceId = Number(c.req.header("x-workspace-id"));
   const { id } = c.req.valid("param");
@@ -411,4 +401,4 @@ monitorApi.openapi(deleteRoute, async (c) => {
   return c.jsonT({ message: "Deleted" });
 });
 
-export default monitorApi;
+export { monitorApi };
