@@ -64,7 +64,7 @@ importers:
         version: 18.2.0(react@18.2.0)
       swagger-ui-react:
         specifier: 5.6.2
-        version: 5.6.2(react-dom@18.2.0)(react@18.2.0)
+        version: 5.6.2(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0)
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -72,6 +72,9 @@ importers:
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
+      '@types/react':
+        specifier: 18.2.21
+        version: 18.2.21
       '@types/swagger-ui-react':
         specifier: 4.18.0
         version: 4.18.0
@@ -218,8 +221,8 @@ importers:
         specifier: 10.37.1
         version: 10.37.1
       '@unkey/api':
-        specifier: 0.6.22-canary.1
-        version: 0.6.22-canary.1
+        specifier: 0.6.22
+        version: 0.6.22
       '@upstash/qstash':
         specifier: 0.3.6
         version: 0.3.6
@@ -2437,7 +2440,7 @@ packages:
       react: '>=16'
     dependencies:
       '@types/mdx': 2.0.5
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
       react: 18.2.0
     dev: false
 
@@ -5327,7 +5330,7 @@ packages:
   /@types/hoist-non-react-statics@3.3.1:
     resolution: {integrity: sha512-iMIqiko6ooLrTh1joXodJK5X9xeEALT1kM5G3ZLhD3hszxBdIEd5C75U834D9mLcINgD4OyZf5uQXjkuYydWvA==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
       hoist-non-react-statics: 3.3.2
     dev: false
 
@@ -5483,12 +5486,12 @@ packages:
   /@types/react-dom@18.2.5:
     resolution: {integrity: sha512-sRQsOS/sCLnpQhR4DSKGTtWFE3FZjpQa86KPVbhUqdYMRZ9FEFcfAytKhR/vUG2rH1oFbOOej6cuD7MFSobDRQ==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
 
   /@types/react-dom@18.2.7:
     resolution: {integrity: sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
     dev: true
 
   /@types/react@18.2.12:
@@ -5500,6 +5503,14 @@ packages:
 
   /@types/react@18.2.16:
     resolution: {integrity: sha512-LLFWr12ZhBJ4YVw7neWLe6Pk7Ey5R9OCydfuMsz1L8bZxzaawJj2p06Q8/EFEHDeTBQNFLF62X+CG7B2zIyu0Q==}
+    dependencies:
+      '@types/prop-types': 15.7.5
+      '@types/scheduler': 0.16.3
+      csstype: 3.1.2
+    dev: true
+
+  /@types/react@18.2.21:
+    resolution: {integrity: sha512-neFKG/sBAwGxHgXiIxnbm3/AAVQ/cMRS93hvBpg8xYRbeQSPVABp9U2bRnPf0iI4+Ucdv3plSxKK+3CW2ENJxA==}
     dependencies:
       '@types/prop-types': 15.7.5
       '@types/scheduler': 0.16.3
@@ -5538,7 +5549,7 @@ packages:
   /@types/swagger-ui-react@4.18.0:
     resolution: {integrity: sha512-XtvFXmj46Zibe89tFQwSQknrq1NxEtOep2rZuxth7K88tyPEP00FnoA6H7ATYhocAEA4XUWaNHNFWFRl1KX8aQ==}
     dependencies:
-      '@types/react': 18.2.16
+      '@types/react': 18.2.21
     dev: true
 
   /@types/through@0.0.30:
@@ -5712,8 +5723,8 @@ packages:
     resolution: {integrity: sha512-2PLJPH6CZNNfsGCJGJT6WCVkXdfGEwDCUhV1/JLGLJufg8xp8NLUcaktQc7UeE9FjxvW5W1MVSYkICe+KC4PhQ==}
     dev: false
 
-  /@unkey/api@0.6.22-canary.1:
-    resolution: {integrity: sha512-5cPFiLudeWIH1oIInYlMuOuMqJK43Z5mmU5KgH+GFO3a8YTUDn1ccFovxnld8s5LbU6i8TMaiG8DJsmv5yeFuA==}
+  /@unkey/api@0.6.22:
+    resolution: {integrity: sha512-RcWr1/BuTAobx0fhbvKLuYTIDgmu7pvYqABWKhwHYpkwQg6wy+pWo5CBMsN5L30E9cd0RlM9TYiHuAdb1tk1iw==}
     dev: false
 
   /@upstash/core-analytics@0.0.6:
@@ -12280,7 +12291,7 @@ packages:
     resolution: {integrity: sha512-kzmNjIgU32mO4mmH5+iUyrqlpFQhF8K2k7eZ4fdLSOPFrD1XgEuSBv9LDEgxRXTMBqMd8ppT0x6TIzqE5pdGdw==}
     dev: false
 
-  /react-redux@8.1.2(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1):
+  /react-redux@8.1.2(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1):
     resolution: {integrity: sha512-xJKYI189VwfsFc4CJvHqHlDrzyFTY/3vZACbE+rr/zQ34Xx1wQfB4OTOSeOSNrF6BDVe8OOdxIrAnMGXA3ggfw==}
     peerDependencies:
       '@types/react': ^16.8 || ^17.0 || ^18.0
@@ -12303,6 +12314,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.22.6
       '@types/hoist-non-react-statics': 3.3.1
+      '@types/react': 18.2.21
       '@types/use-sync-external-store': 0.0.3
       hoist-non-react-statics: 3.3.2
       react: 18.2.0
@@ -13432,7 +13444,7 @@ packages:
       - encoding
     dev: false
 
-  /swagger-ui-react@5.6.2(react-dom@18.2.0)(react@18.2.0):
+  /swagger-ui-react@5.6.2(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-UBjk84s+bu7KZ0vt4sU/R6Ej43Kf4prt9RRKFG+Bu1R4JQTNDXwlKz/+fsC2G98kxZDTkOrZKWnlJrHTSKGq7Q==}
     peerDependencies:
       react: '>=17.0.0'
@@ -13461,7 +13473,7 @@ packages:
       react-immutable-proptypes: 2.2.0(immutable@3.8.2)
       react-immutable-pure-component: 2.2.2(immutable@3.8.2)(react-dom@18.2.0)(react@18.2.0)
       react-inspector: 6.0.2(react@18.2.0)
-      react-redux: 8.1.2(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1)
+      react-redux: 8.1.2(@types/react@18.2.21)(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1)
       react-syntax-highlighter: 15.5.0(react@18.2.0)
       redux: 4.2.1
       redux-immutable: 4.0.0(immutable@3.8.2)

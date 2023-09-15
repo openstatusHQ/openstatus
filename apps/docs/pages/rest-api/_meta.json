@@ -1,4 +1,4 @@
 {
-  "auth": "Auth",
-  "openapi": "OpenAPI"
+  "auth": "Auth Token",
+  "openapi": "OpenAPI Specs"
 }
