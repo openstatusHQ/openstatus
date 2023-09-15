@@ -18,7 +18,7 @@ const config: DocsThemeConfig = {
       <title>OpenStatus Documentation</title>
       <meta
         name="description"
-        content="An Open Source alternative for your next Status Page"
+        content="An Open Source monitoring platform for serverless"
       />
       <meta property="og:image" content="https://openstatus.dev/api/og" />
     </>

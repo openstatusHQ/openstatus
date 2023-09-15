@@ -50,6 +50,13 @@
       "when": 1692646649111,
       "tag": "0006_tired_anita_blake",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1694362217174,
+      "tag": "0007_complex_frog_thor",
+      "breakpoints": true
     }
   ]
 }

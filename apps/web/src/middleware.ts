@@ -42,6 +42,9 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
+  if (host && host.includes("ngrok-free.app")) {
+    return null;
+  }
   // In case the host is a custom domain
   if (
     host &&
@@ -73,6 +76,7 @@ export default authMiddleware({
   ],
   ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
+  debug: false,
   async afterAuth(auth, req) {
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
@@ -112,9 +116,41 @@ export default authMiddleware({
           return NextResponse.redirect(orgSelection);
         }
       } else {
+        console.log("redirecting to onboarding");
         // return NextResponse.redirect(new URL("/app/onboarding", req.url));
         // probably redirect to onboarding
         // or find a way to wait for the webhook
+      }
+      console.log("redirecting to onboarding");
+      return;
+    }
+    if (
+      auth.userId &&
+      req.nextUrl.pathname === "/app/integrations/vercel/configure"
+    ) {
+      const userQuery = db
+        .select()
+        .from(user)
+        .where(eq(user.tenantId, auth.userId))
+        .as("userQuery");
+      const result = await db
+        .select()
+        .from(usersToWorkspaces)
+        .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
+        .all();
+      if (result.length > 0) {
+        const currentWorkspace = await db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
+          .get();
+        if (currentWorkspace) {
+          const configure = new URL(
+            `/app/${currentWorkspace.slug}/integrations/vercel/configure`,
+            req.url,
+          );
+          return NextResponse.redirect(configure);
+        }
       }
     }
   },
@@ -124,6 +160,7 @@ export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     "/",
+    "/app/integrations/vercel/configure",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
   ],
