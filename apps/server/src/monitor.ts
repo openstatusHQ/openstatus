@@ -25,7 +25,10 @@ const ParamsSchema = z.object({
 });
 
 export const periodicityEnum = z.enum(periodicity);
-export const regionEnum = z.enum(availableRegions);
+export const regionEnum = z
+  .enum(availableRegions)
+  .or(z.literal(""))
+  .transform((val) => (val === "" ? "auto" : val));
 
 const MonitorSchema = z.object({
   id: z.number().openapi({
