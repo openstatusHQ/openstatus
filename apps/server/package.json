@@ -1,5 +1,5 @@
 {
-  "name": "@openstatus/rest-api",
+  "name": "@openstatus/server",
   "version": "0.0.1",
   "description": "",
   "type": "module",
