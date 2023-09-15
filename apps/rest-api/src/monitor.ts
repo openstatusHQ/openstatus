@@ -99,13 +99,6 @@ const MonitorSchema = z.object({
 });
 
 const monitorInput = z.object({
-  // id: z
-  //   .number()
-  //   .openapi({
-  //     example: 123,
-  //     description: "The id of the monitor",
-  //   })
-  //   .nullable(),
   periodicity: periodicityEnum.openapi({
     example: "1m",
     description: "How often the monitor should run",
@@ -157,11 +150,50 @@ z.array(z.object({ key: z.string(), value: z.string() }))
     example: [{ key: "x-apikey", value: "supersecrettoken" }],
   })
   .nullable()
-  .openapi("Monitor");
+  .openapi({ description: "the monitor input" });
 
 const monitorApi = new OpenAPIHono();
 
 monitorApi.use(middleware);
+
+const getAllRoute = createRoute({
+  method: "get",
+  path: "/",
+  request: {},
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(MonitorSchema),
+        },
+      },
+      description: "Get the monitor",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+monitorApi.openapi(getAllRoute, async (c) => {
+  const workspaceId = Number(c.req.header("x-workspace-id"));
+
+  const _monitor = await db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.workspaceId, workspaceId))
+    .all();
+
+  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+
+  const data = z.array(MonitorSchema).parse(_monitor);
+
+  return c.jsonT(data);
+});
 
 const getRoute = createRoute({
   method: "get",
@@ -247,21 +279,6 @@ monitorApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.req.header("x-workspace-id"));
 
-  // if (!input.id) return c.jsonT({ code: 400, message: "Bad Request" });
-
-  // const _monitor = await db
-  //   .select()
-  //   .from(monitor)
-  //   .where(eq(monitor.id, input.id))
-  //   .get();
-
-  // if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
-
-  // if (workspaceId !== _monitor.workspaceId)
-  //   return c.jsonT({ code: 401, message: "Unauthorized" });
-  // // const _valid = insertMonitorSchema
-  // //   .partial()
-  // //   .safeParse({ ...input, workspaceId });
   const { headers, ...rest } = input;
   const _newMonitor = await db
     .insert(monitor)
@@ -279,7 +296,7 @@ monitorApi.openapi(postRoute, async (c) => {
 });
 
 const putRoute = createRoute({
-  method: "post",
+  method: "put",
   path: "/",
   request: {
     params: ParamsSchema,
@@ -362,7 +379,7 @@ const deleteRoute = createRoute({
           }),
         },
       },
-      description: "Get the monitor",
+      description: "Delete the monitor",
     },
     400: {
       content: {
