@@ -12,3 +12,5 @@ export const payloadSchema = z.object({
   cronTimestamp: z.number(),
   pageIds: z.array(z.string()),
 });
+
+export type Payload = z.infer<typeof payloadSchema>;

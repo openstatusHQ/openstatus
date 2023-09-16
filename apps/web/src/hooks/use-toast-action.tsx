@@ -22,6 +22,14 @@ const config = {
   success: { title: "Success" },
   deleted: { title: "Deleted successfully." }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
   saved: { title: "Saved successfully." },
+  "test-error": {
+    title: "Endpoint configuration failed.",
+    // description: "Be sure to include the auth headers.",
+    variant: "destructive",
+  },
+  "test-success": {
+    title: "Endpoint configuration passed.",
+  },
 } as const satisfies Record<string, Toast>;
 
 type ToastAction = keyof typeof config;

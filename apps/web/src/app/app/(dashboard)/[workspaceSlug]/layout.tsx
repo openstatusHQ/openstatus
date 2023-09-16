@@ -24,7 +24,7 @@ export default async function AppLayout({
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4 lg:p-8">
       <AppHeader />
       <div className="flex w-full flex-1 gap-6 lg:gap-8">
-        <Shell className="hidden max-h-[calc(100vh-9rem)] max-w-min shrink-0 lg:sticky lg:top-20 lg:block">
+        <Shell className="hidden max-h-[calc(100vh-9rem)] max-w-min shrink-0 lg:sticky lg:top-28 lg:block">
           <AppSidebar />
         </Shell>
         <main className="z-10 flex w-full flex-1 flex-col items-start justify-center">

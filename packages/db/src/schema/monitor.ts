@@ -117,7 +117,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
   method: z.enum(METHODS).default("GET"),
-  body: z.string().default(""),
+  body: z.string().default("").optional(),
   headers: z
     .array(z.object({ key: z.string(), value: z.string() }))
     .default([]),

@@ -21,7 +21,7 @@ export function AppHeader() {
   const { isLoaded, isSignedIn } = useUser();
 
   return (
-    <header className="border-border sticky top-3 z-50 w-full">
+    <header className="border-border sticky top-3 z-50 w-full md:top-6">
       <Shell className="bg-background/70 flex w-full items-center justify-between px-3 py-3 backdrop-blur-lg md:px-6 md:py-3">
         <Link
           href="/"
