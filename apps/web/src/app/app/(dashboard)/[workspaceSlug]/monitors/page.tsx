@@ -31,15 +31,19 @@ export default async function MonitorPage({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitors" description="Overview of all your monitors.">
-        <ButtonWithDisableTooltip
-          tooltip="You reached the limits"
-          asChild={!isLimit}
-          disabled={isLimit}
-        >
-          <Link href="./monitors/edit">Create</Link>
-        </ButtonWithDisableTooltip>
-      </Header>
+      <Header
+        title="Monitors"
+        description="Overview of all your monitors."
+        actions={
+          <ButtonWithDisableTooltip
+            tooltip="You reached the limits"
+            asChild={!isLimit}
+            disabled={isLimit}
+          >
+            <Link href="./monitors/edit">Create</Link>
+          </ButtonWithDisableTooltip>
+        }
+      />
       {Boolean(monitors?.length) ? (
         monitors?.map((monitor, index) => (
           <Container

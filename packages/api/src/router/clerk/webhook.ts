@@ -36,7 +36,21 @@ export const webhookRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const slug = generateSlug(2);
+      // guarantee the slug is unique accross our workspace entries
+      let slug: string | undefined = undefined;
+
+      while (!slug) {
+        slug = generateSlug(2);
+        const slugAlreadyExists = await opts.ctx.db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.slug, slug))
+          .get();
+        if (slugAlreadyExists) {
+          slug = undefined;
+        }
+      }
+
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
         .values({ slug, name: "" })

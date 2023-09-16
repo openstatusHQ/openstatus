@@ -19,8 +19,7 @@ export default async function IncidentPage({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Integrations" description="All our integrations"></Header>
-
+      <Header title="Integrations" description="All our integrations" />
       <Container
         title="Vercel"
         key={"vercel"}

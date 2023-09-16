@@ -44,15 +44,16 @@ export default async function Page({
       <Header
         title="Status Page"
         description="Overview of all your status pages."
-      >
-        <ButtonWithDisableTooltip
-          tooltip="You reached the limits"
-          asChild={!disableButton}
-          disabled={disableButton}
-        >
-          <Link href="./status-pages/edit">Create</Link>
-        </ButtonWithDisableTooltip>
-      </Header>
+        actions={
+          <ButtonWithDisableTooltip
+            tooltip="You reached the limits"
+            asChild={!disableButton}
+            disabled={disableButton}
+          >
+            <Link href="./status-pages/edit">Create</Link>
+          </ButtonWithDisableTooltip>
+        }
+      />
       {Boolean(pages?.length) ? (
         pages?.map((page, index) => (
           <Container
