@@ -47,6 +47,7 @@ export const webhookRouter = createTRPCRouter({
           .where(eq(workspace.slug, slug))
           .get();
         if (slugAlreadyExists) {
+          console.log(`slug already exists: '${slug}'`);
           slug = undefined;
         }
       }
