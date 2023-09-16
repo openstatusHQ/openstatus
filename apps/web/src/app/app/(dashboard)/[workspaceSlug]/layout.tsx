@@ -1,12 +1,25 @@
 import * as React from "react";
+import { notFound } from "next/navigation";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/app-header";
 import { AppMenu } from "@/components/layout/app-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
+import { api } from "@/trpc/server";
 
 // TODO: make the container min-h-screen and the footer below!
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: { workspaceSlug: string };
+}) {
+  const workspace = await api.workspace.getWorkspace.query({
+    slug: params.workspaceSlug,
+  });
+  if (!workspace) return notFound(); // TODO: discuss if we should move to middleware
+
   return (
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4 lg:p-8">
       <AppHeader />

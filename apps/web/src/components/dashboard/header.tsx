@@ -4,16 +4,17 @@ import { Skeleton } from "../ui/skeleton";
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   description?: string | null;
+  actions?: React.ReactNode | React.ReactNode[];
 }
 
 /**
  * use `children` to include a Button e.g.
  */
-function Header({ title, description, className, children }: HeaderProps) {
+function Header({ title, description, className, actions }: HeaderProps) {
   return (
     <div
       className={cn(
-        "col-span-full mr-12 flex justify-between lg:mr-0",
+        "col-span-full mr-12 flex items-start justify-between lg:mr-0",
         className,
       )}
     >
@@ -23,7 +24,9 @@ function Header({ title, description, className, children }: HeaderProps) {
           <p className="text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      {children}
+      {actions ? (
+        <div className="flex items-center gap-2">{actions}</div>
+      ) : null}
     </div>
   );
 }

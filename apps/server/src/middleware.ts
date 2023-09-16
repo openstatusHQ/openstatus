@@ -1,14 +1,12 @@
-import { Unkey } from "@unkey/api";
+import { verifyKey } from "@unkey/api";
 import type { Context, Env, Next } from "hono";
 
-const unkey = new Unkey({ token: "test-key" });
-
 export async function middleware(c: Context<Env, "/v1/*", {}>, next: Next) {
-  const auth = c.req.header("x-openstatus-key");
-  if (!auth) return c.text("Unauthorized", 401);
+  const key = c.req.header("x-openstatus-key");
+  if (!key) return c.text("Unauthorized", 401);
 
   if (process.env.NODE_ENV === "production") {
-    const { error, result } = await unkey.keys.verify({ key: auth });
+    const { error, result } = await verifyKey(key);
 
     if (error) return c.text("Bad Request", 400);
 

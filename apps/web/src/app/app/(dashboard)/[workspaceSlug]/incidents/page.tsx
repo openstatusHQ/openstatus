@@ -24,11 +24,15 @@ export default async function IncidentPage({
   });
   return (
     <div className="grid gap-6 md:grid-cols-1 md:gap-8">
-      <Header title="Incidents" description="Overview of all your incidents.">
-        <Button asChild>
-          <Link href="./incidents/edit">Create</Link>
-        </Button>
-      </Header>
+      <Header
+        title="Incidents"
+        description="Overview of all your incidents."
+        actions={
+          <Button asChild>
+            <Link href="./incidents/edit">Create</Link>
+          </Button>
+        }
+      />
       {Boolean(incidents?.length) ? (
         <div className="col-span-full grid sm:grid-cols-6">
           <ul role="list" className="grid gap-4 sm:col-span-6">
