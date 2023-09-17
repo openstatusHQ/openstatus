@@ -1,8 +1,9 @@
 import Link from "next/link";
 
+import { Button } from "@openstatus/ui/src/components/button";
+
 import { Header } from "@/components/dashboard/header";
 import { Shell } from "@/components/dashboard/shell";
-import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
   return (

@@ -1,7 +1,8 @@
 "use client";
 
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
+import { Input } from "@openstatus/ui/src/components/input";
+import { toast } from "@openstatus/ui/src/components/use-toast";
+
 import { addToWaitlist, sendWaitingListEmail } from "../action";
 import { SubmitButton } from "./submit-button";
 

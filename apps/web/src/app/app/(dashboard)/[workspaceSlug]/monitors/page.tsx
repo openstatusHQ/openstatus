@@ -2,12 +2,12 @@ import * as React from "react";
 import Link from "next/link";
 
 import { allPlans } from "@openstatus/plans";
+import { Badge } from "@openstatus/ui/src/components/badge";
+import { ButtonWithDisableTooltip } from "@openstatus/ui/src/components/button-with-disable-tooltip";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
-import { Badge } from "@/components/ui/badge";
-import { ButtonWithDisableTooltip } from "@/components/ui/button-with-disable-tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";

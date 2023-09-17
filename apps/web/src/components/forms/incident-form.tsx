@@ -12,13 +12,9 @@ import {
   insertIncidentSchema,
   StatusEnum,
 } from "@openstatus/db/src/schema";
-
-import { Preview } from "@/components/content/preview";
-import { Icons } from "@/components/icons";
-import { LoadingAnimation } from "@/components/loading-animation";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Button } from "@openstatus/ui/src/components/button";
+import { Checkbox } from "@openstatus/ui/src/components/checkbox";
+import { DateTimePicker } from "@openstatus/ui/src/components/date-time-picker";
 import {
   Form,
   FormControl,
@@ -27,11 +23,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+} from "@openstatus/ui/src/components/form";
+import { Input } from "@openstatus/ui/src/components/input";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/src/components/radio-group";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/src/components/tabs";
+import { Textarea } from "@openstatus/ui/src/components/textarea";
+
+import { Preview } from "@/components/content/preview";
+import { Icons } from "@/components/icons";
+import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { cn } from "@/lib/utils";

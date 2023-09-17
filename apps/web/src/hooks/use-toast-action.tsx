@@ -1,6 +1,6 @@
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import type { Toast } from "@/components/ui/use-toast";
+import { Button } from "@openstatus/ui/src/components/button";
+import { useToast } from "@openstatus/ui/src/components/use-toast";
+import type { Toast } from "@openstatus/ui/src/components/use-toast";
 
 const config = {
   error: {

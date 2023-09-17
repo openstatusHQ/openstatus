@@ -2,10 +2,11 @@
 
 import * as React from "react";
 
+import { Badge } from "@openstatus/ui/src/components/badge";
+import { Button } from "@openstatus/ui/src/components/button";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/client";
 
 export default async function IncidentPage({

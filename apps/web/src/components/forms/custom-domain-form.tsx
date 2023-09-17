@@ -7,8 +7,7 @@ import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
   Form,
   FormControl,
@@ -17,14 +16,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@openstatus/ui/src/components/form";
+import { InputWithAddons } from "@openstatus/ui/src/components/input-with-addons";
+
 import { useDomainStatus } from "@/hooks/use-domain-status";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
-import { InputWithAddons } from "../ui/input-with-addons";
 
 const customDomain = insertPageSchemaWithMonitors.pick({
   customDomain: true,

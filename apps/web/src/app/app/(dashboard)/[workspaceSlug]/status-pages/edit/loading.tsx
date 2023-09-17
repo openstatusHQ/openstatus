@@ -1,6 +1,7 @@
+import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+
 import { Header } from "@/components/dashboard/header";
 import { SkeletonForm } from "@/components/forms/skeleton-form";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (

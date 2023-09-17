@@ -11,9 +11,8 @@ import type * as z from "zod";
 
 import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@openstatus/ui/src/components/button";
+import { Checkbox } from "@openstatus/ui/src/components/checkbox";
 import {
   Form,
   FormControl,
@@ -22,9 +21,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { InputWithAddons } from "@/components/ui/input-with-addons";
+} from "@openstatus/ui/src/components/form";
+import { Input } from "@openstatus/ui/src/components/input";
+import { InputWithAddons } from "@openstatus/ui/src/components/input-with-addons";
+
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { slugify } from "@/lib/utils";

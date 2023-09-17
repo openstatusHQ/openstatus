@@ -3,7 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
-import { Icons } from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +11,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from "@openstatus/ui/src/components/alert-dialog";
+
+import { Icons } from "@/components/icons";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { copyToClipboard } from "@/lib/utils";
 import { create } from "./actions";

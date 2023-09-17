@@ -2,9 +2,9 @@ import Link from "next/link";
 import type * as z from "zod";
 
 import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
-import { Button } from "@/components/ui/button";
 
 export function EmptyState({
   allMonitors,

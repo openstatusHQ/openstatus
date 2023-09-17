@@ -7,8 +7,6 @@ import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
 import type { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { LoadingAnimation } from "@/components/loading-animation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,14 +17,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+} from "@openstatus/ui/src/components/alert-dialog";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@openstatus/ui/src/components/dropdown-menu";
+
+import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 

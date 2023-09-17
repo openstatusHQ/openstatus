@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/src/components/button";
 
 export default function NavigationLink({
   slug,

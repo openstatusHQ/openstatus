@@ -1,8 +1,14 @@
 import * as React from "react";
 
+import { Badge } from "@openstatus/ui/src/components/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/src/components/tabs";
+
 import { Header } from "@/components/dashboard/header";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/server";
 import { ApiKeys } from "./_components/api-keys/card";
 import { CustomerPortalButton } from "./_components/billing/customer-portal-button";

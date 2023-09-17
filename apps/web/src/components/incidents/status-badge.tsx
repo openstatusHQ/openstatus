@@ -1,7 +1,8 @@
+import { Badge } from "@openstatus/ui/src/components/badge";
+
 import { statusDict } from "@/data/incidents-dictionary";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
-import { Badge } from "../ui/badge";
 
 export function StatusBadge({ status }: { status: keyof typeof statusDict }) {
   const { label, icon } = statusDict[status];

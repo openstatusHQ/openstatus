@@ -7,6 +7,7 @@ module.exports = {
     "src/**/*.{ts,tsx}",
     // for vercel integration
     "../../packages/integrations/**/*.{ts,tsx}",
+    "../../packages/ui/**/*.{ts,tsx}",
   ],
   theme: {
     container: {

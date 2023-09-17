@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 
+import { Button } from "@openstatus/ui/src/components/button";
+
 import type { PlanProps } from "@/config/plans";
 import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
 import { LoadingAnimation } from "../loading-animation";
-import { Button } from "../ui/button";
 
 export function Plans() {
   return (

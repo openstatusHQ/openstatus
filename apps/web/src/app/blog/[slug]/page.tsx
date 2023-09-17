@@ -4,6 +4,12 @@ import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@openstatus/ui/src/components/avatar";
+
+import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
@@ -11,7 +17,6 @@ import {
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";

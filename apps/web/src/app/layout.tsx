@@ -6,13 +6,14 @@ import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
+import { Toaster } from "@openstatus/ui/src/components/toaster";
+
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { Toaster } from "@/components/ui/toaster";
 import { ClientAnalytics } from "./_components/analytics";
 import Background from "./_components/background";
 

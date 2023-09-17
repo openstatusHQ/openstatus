@@ -6,8 +6,13 @@ import type {
   DomainResponse,
   DomainVerificationStatusProps,
 } from "@openstatus/api/src/router/domain";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@openstatus/ui/src/components/tabs";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDomainStatus } from "@/hooks/use-domain-status";
 import { getSubdomain } from "@/lib/domains";
 import { cn } from "@/lib/utils";

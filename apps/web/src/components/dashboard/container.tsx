@@ -5,9 +5,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@openstatus/ui/src/components/card";
+import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+
 import { cn } from "@/lib/utils";
-import { Skeleton } from "../ui/skeleton";
 
 interface CardProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {

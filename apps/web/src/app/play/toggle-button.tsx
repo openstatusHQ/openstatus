@@ -5,14 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 
 import type { GroupByRange } from "@openstatus/tinybird";
-
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@openstatus/ui/src/components/tooltip";
+
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 
 // TODO: move to @/components folder
