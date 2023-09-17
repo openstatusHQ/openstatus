@@ -34,10 +34,14 @@ const onboardingConfig = {
   },
 } as const;
 
-export function Description({ step }: { step: keyof typeof onboardingConfig }) {
-  const config = onboardingConfig[step];
+export function Description({
+  step,
+}: {
+  step?: keyof typeof onboardingConfig;
+}) {
+  const config = step && onboardingConfig[step];
   return (
-    <div className="border-border flex h-full flex-col gap-6 border-l pl-6">
+    <div className="border-border flex h-full flex-col gap-6 border-l pl-6 md:pl-8">
       <div className="flex gap-5">
         {steps.map((item, i) => {
           const { icon, name } = onboardingConfig[item];
@@ -67,7 +71,7 @@ export function Description({ step }: { step: keyof typeof onboardingConfig }) {
           );
         })}
       </div>
-      {config.description.map(({ title, text }, i) => {
+      {config?.description.map(({ title, text }, i) => {
         return (
           <dl key={i} className="grid gap-2">
             <dt>{title}</dt>
