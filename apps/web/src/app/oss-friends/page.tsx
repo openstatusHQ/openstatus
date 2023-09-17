@@ -1,8 +1,8 @@
 import Link from "next/link";
+import { z } from "zod";
 
 import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardDescription,
@@ -10,20 +10,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { z } from "zod";
 
-
-const  OSSFriendSchema = z.object({
+const OSSFriendSchema = z.object({
   href: z.string(),
   name: z.string(),
   description: z.string(),
-})
-
+});
 
 const OpenSourceFriends = async () => {
   const res = await fetch("https://formbricks.com/api/oss-friends");
   const data = await res.json();
-  const openSourceFriends = z.array(OSSFriendSchema).parse(data.data)
+  const openSourceFriends = z.array(OSSFriendSchema).parse(data.data);
   return (
     <MarketingLayout>
       <h1 className="text-foreground font-cal mb-5 text-4xl">
@@ -34,7 +31,6 @@ const OpenSourceFriends = async () => {
           <Card key={friend.name} className="group">
             <CardHeader>
               <div className="flex items-center gap-2">
-
                 <CardTitle>
                   <Link
                     href={friend.href}
@@ -52,7 +48,6 @@ const OpenSourceFriends = async () => {
                 <Link href={friend.href} target="_blank">
                   <Icons.globe className="text-muted-foreground h-5 w-5 hover:text-black" />
                 </Link>
-
               </div>
             </CardFooter>
           </Card>
