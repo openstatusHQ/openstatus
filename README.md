@@ -1,6 +1,6 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-Source Uptime Monitoring with Status Page
+  <h3 align="center">The Open-Source Monitoring Platform with Status Page
    </h3>
 
   <p align="center">
