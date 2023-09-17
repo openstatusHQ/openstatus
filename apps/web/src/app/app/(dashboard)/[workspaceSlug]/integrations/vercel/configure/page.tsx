@@ -23,6 +23,7 @@ export default async function Configure({
   const teamId = cookies().get("teamId")?.value;
 
   if (!iv || !encryptedToken) {
+    console.log('no iv or encryptedToken');
     /** Redirect to access new token */
     return redirect("/app");
   }
@@ -59,8 +60,7 @@ export default async function Configure({
         {
           deliveryFormat: "json",
           name: "OpenStatus Log Drain",
-          // TODO: update with correct url
-          url: "https://www.openstatus.dev/api/integrations/vercel",
+          url: "https://api.openstatus.dev/integration/vercel",
           sources: ["static", "lambda", "build", "edge", "external"],
           // headers: { "key": "value"}
         },

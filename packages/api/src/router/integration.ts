@@ -41,4 +41,39 @@ export const integrationRouter = createTRPCRouter({
         .returning()
         .get();
     }),
+  getAllIntegrations: protectedProcedure
+    .input(z.object({ workspaceSlug: z.string() }))
+    .query(async (opts) => {
+      const result = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
+
+      return await opts.ctx.db
+        .select()
+        .from(integration)
+        .where(and(eq(integration.workspaceId, result.workspace.id)))
+        .all();
+    }),
+  getIntegration: protectedProcedure
+    .input(z.object({ workspaceSlug: z.string(), integrationId: z.string() }))
+    .query(async (opts) => {
+      const result = await hasUserAccessToWorkspace({
+        workspaceSlug: opts.input.workspaceSlug,
+        ctx: opts.ctx,
+      });
+      if (!result) return;
+
+      return await opts.ctx.db
+        .select()
+        .from(integration)
+        .where(
+          and(
+            eq(integration.workspaceId, result.workspace.id),
+            eq(integration.id, Number(opts.input.integrationId)),
+          ),
+        )
+        .get();
+    }),
 });
