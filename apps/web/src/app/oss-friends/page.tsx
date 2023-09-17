@@ -10,9 +10,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { openSourceFriends } from "@/config/oss-friends";
+import { z } from "zod";
 
-const OpenSourceFriends = () => {
+
+const  OSSFriendSchema = z.object({
+  href: z.string(),
+  name: z.string(),
+  description: z.string(),
+})
+
+
+const OpenSourceFriends = async () => {
+  const res = await fetch("https://formbricks.com/api/oss-friends");
+  const data = await res.json();
+  const openSourceFriends = z.array(OSSFriendSchema).parse(data.data)
   return (
     <MarketingLayout>
       <h1 className="text-foreground font-cal mb-5 text-4xl">
@@ -23,13 +34,10 @@ const OpenSourceFriends = () => {
           <Card key={friend.name} className="group">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Avatar>
-                  <AvatarImage src={friend.logo} alt={friend.name} />
-                  <AvatarFallback>{friend.name}</AvatarFallback>
-                </Avatar>
+
                 <CardTitle>
                   <Link
-                    href={friend.website}
+                    href={friend.href}
                     target="_blank"
                     className="relative cursor-pointer duration-200 after:absolute after:bottom-0 after:left-0 after:h-1 after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full group-hover:underline"
                   >
@@ -41,19 +49,10 @@ const OpenSourceFriends = () => {
             </CardHeader>
             <CardFooter>
               <div className="flex items-center gap-2.5">
-                <Link href={friend.website} target="_blank">
+                <Link href={friend.href} target="_blank">
                   <Icons.globe className="text-muted-foreground h-5 w-5 hover:text-black" />
                 </Link>
-                {Object.entries(friend.socialLinks).map(([key, value]) => {
-                  if (value) {
-                    const Icon = Icons[value.icon];
-                    return (
-                      <Link href={value.link} target="_blank" key={key}>
-                        <Icon className="text-muted-foreground h-5 w-5 hover:text-black" />
-                      </Link>
-                    );
-                  }
-                })}
+
               </div>
             </CardFooter>
           </Card>
