@@ -15,8 +15,9 @@ const WelcomeEmail = () => {
           building it.
           <br />
           <br />
-          If you have any questions about setting up your status page, I'm here
-          to help.
+          What kind of apps are going to monitor?
+          <br />
+          Where do you host your apps?
           <br />
           <br />
           Thank you,
