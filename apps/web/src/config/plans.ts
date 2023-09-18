@@ -57,7 +57,7 @@ export const plansConfig: Record<Plans, PlanProps> = {
     features: [],
     action: {
       text: "Schedule call",
-      link: "https://cal.com/thibault-openstatus/30min",
+      link: "https://cal.com/team/openstatus/30min",
     },
   },
 };
