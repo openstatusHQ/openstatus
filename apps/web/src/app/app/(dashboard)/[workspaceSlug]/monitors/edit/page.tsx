@@ -2,9 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { AdvancedMonitorForm } from "@/components/forms/advanced-monitor-form";
 import { MonitorForm } from "@/components/forms/montitor-form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/trpc/server";
 
 /**
@@ -38,36 +36,11 @@ export default async function EditPage({
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Monitor" description="Upsert your monitor." />
       <div className="col-span-full">
-        <Tabs defaultValue="settings" className="relative mr-auto w-full">
-          <TabsList className="h-9 w-full justify-start rounded-none border-b bg-transparent p-0">
-            <TabsTrigger
-              className="text-muted-foreground data-[state=active]:border-b-primary data-[state=active]:text-foreground relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold shadow-none transition-none data-[state=active]:shadow-none"
-              value="settings"
-            >
-              Settings
-            </TabsTrigger>
-            <TabsTrigger
-              className="text-muted-foreground data-[state=active]:border-b-primary data-[state=active]:text-foreground relative h-9 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-2 font-semibold shadow-none transition-none data-[state=active]:shadow-none"
-              value="advanced"
-              disabled={!monitor}
-            >
-              Advanced
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="settings" className="pt-3">
-            <MonitorForm
-              workspaceSlug={params.workspaceSlug}
-              defaultValues={monitor || undefined}
-              plan={workspace?.plan}
-            />
-          </TabsContent>
-          <TabsContent value="advanced" className="pt-3">
-            <AdvancedMonitorForm
-              workspaceSlug={params.workspaceSlug}
-              defaultValues={monitor || undefined}
-            />
-          </TabsContent>
-        </Tabs>
+        <MonitorForm
+          workspaceSlug={params.workspaceSlug}
+          defaultValues={monitor || undefined}
+          plan={workspace?.plan}
+        />
       </div>
     </div>
   );

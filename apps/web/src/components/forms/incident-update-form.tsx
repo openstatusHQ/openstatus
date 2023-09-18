@@ -176,7 +176,7 @@ export function IncidentUpdateForm({
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>
