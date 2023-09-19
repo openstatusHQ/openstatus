@@ -2,7 +2,7 @@ import type { LinkProps } from "next/link";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 
-import { Button } from "../ui/button";
+import { Button } from "@openstatus/ui";
 
 interface BackButtonProps extends LinkProps {
   children?: React.ReactNode;

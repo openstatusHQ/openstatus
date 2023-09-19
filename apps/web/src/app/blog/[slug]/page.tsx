@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@openstatus/ui";
+
 import {
   defaultMetadata,
   ogMetadata,
@@ -11,7 +13,6 @@ import {
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDate } from "@/lib/utils";
 
 export const dynamic = "force-static";

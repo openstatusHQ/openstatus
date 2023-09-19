@@ -10,8 +10,6 @@ import {
   insertIncidentSchema,
   // insertIncidentUpdateSchema,
 } from "@openstatus/db/src/schema";
-
-import { LoadingAnimation } from "@/components/loading-animation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,14 +20,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@openstatus/ui";
+
+import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 

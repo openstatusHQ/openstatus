@@ -1,8 +1,7 @@
 import type * as z from "zod";
 
 import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
-
-import { Badge } from "../ui/badge";
+import { Badge } from "@openstatus/ui";
 
 export function AffectedMonitors({
   monitors,

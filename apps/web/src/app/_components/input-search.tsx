@@ -4,13 +4,12 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
 
 import type { Ping } from "@openstatus/tinybird";
-
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from "@/components/ui/command";
+} from "@openstatus/ui";
 
 // TODO: once stable, use the shallow route to store the search params inside of the search params
 

@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { z } from "zod";
 
 import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "../dashboard/empty-state";
-import { Button } from "../ui/button";
 import { Monitor } from "./monitor";
 
 export const MonitorList = ({

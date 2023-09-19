@@ -8,10 +8,10 @@
   },
   "dependencies": {
     "@clerk/nextjs": "4.23.5",
-    "@openstatus/analytics": "workspace:^",
-    "@openstatus/db": "workspace:^",
-    "@openstatus/emails": "workspace:^",
-    "@openstatus/plans": "workspace:^",
+    "@openstatus/analytics": "workspace:*",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/emails": "workspace:*",
+    "@openstatus/plans": "workspace:*",
     "@t3-oss/env-core": "0.6.0",
     "@trpc/client": "10.37.1",
     "@trpc/server": "10.37.1",
@@ -21,7 +21,7 @@
     "zod": "3.21.4"
   },
   "devDependencies": {
-    "@openstatus/tsconfig": "workspace:^",
+    "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.1.6",
     "vitest": "0.34.3"
   },

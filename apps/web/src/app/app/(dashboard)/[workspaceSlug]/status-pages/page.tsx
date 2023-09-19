@@ -2,13 +2,11 @@ import * as React from "react";
 import Link from "next/link";
 
 import { allPlans } from "@openstatus/plans";
+import { Badge, Button, ButtonWithDisableTooltip } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Limit } from "@/components/dashboard/limit";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ButtonWithDisableTooltip } from "@/components/ui/button-with-disable-tooltip";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";

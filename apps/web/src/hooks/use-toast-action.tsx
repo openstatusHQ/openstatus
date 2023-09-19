@@ -1,6 +1,5 @@
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import type { Toast } from "@/components/ui/use-toast";
+import { Button, useToast } from "@openstatus/ui";
+import type { ToastType } from "@openstatus/ui";
 
 const config = {
   error: {
@@ -30,7 +29,7 @@ const config = {
   "test-success": {
     title: "Connection Established",
   },
-} as const satisfies Record<string, Toast>;
+} as const satisfies Record<string, ToastType>;
 
 type ToastAction = keyof typeof config;
 

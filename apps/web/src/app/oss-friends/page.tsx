@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { z } from "zod";
 
-import { Icons } from "@/components/icons";
-import { MarketingLayout } from "@/components/layout/marketing-layout";
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@openstatus/ui";
+
+import { Icons } from "@/components/icons";
+import { MarketingLayout } from "@/components/layout/marketing-layout";
 
 const OSSFriendSchema = z.object({
   href: z.string(),

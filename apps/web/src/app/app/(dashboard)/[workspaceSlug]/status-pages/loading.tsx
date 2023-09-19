@@ -1,6 +1,7 @@
+import { Skeleton } from "@openstatus/ui";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
