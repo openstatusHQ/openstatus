@@ -8,6 +8,7 @@ import {
   periodicity,
 } from "@openstatus/db/src/schema/monitor";
 
+import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
 
 const ParamsSchema = z.object({
@@ -30,126 +31,130 @@ export const regionEnum = z
   .or(z.literal(""))
   .transform((val) => (val === "" ? "auto" : val));
 
-const MonitorSchema = z.object({
-  id: z.number().openapi({
-    example: 123,
-    description: "The id of the monitor",
-  }),
-  periodicity: periodicityEnum.openapi({
-    example: "1m",
-    description: "How often the monitor should run",
-  }),
-  url: z.string().url().openapi({
-    example: "https://www.documenso.co",
-    description: "The url to monitor",
-  }),
-  regions: regionEnum.openapi({
-    example: "arn1",
-    description: "The regions to use",
-  }),
-  name: z
-    .string()
-    .openapi({
+const MonitorSchema = z
+  .object({
+    id: z.number().openapi({
+      example: 123,
+      description: "The id of the monitor",
+    }),
+    periodicity: periodicityEnum.openapi({
+      example: "1m",
+      description: "How often the monitor should run",
+    }),
+    url: z.string().url().openapi({
+      example: "https://www.documenso.co",
+      description: "The url to monitor",
+    }),
+    regions: regionEnum.openapi({
+      example: "arn1",
+      description: "The regions to use",
+    }),
+    name: z
+      .string()
+      .openapi({
+        example: "Documenso",
+        description: "The name of the monitor",
+      })
+      .nullable(),
+    description: z
+      .string()
+      .openapi({
+        example: "Documenso website",
+        description: "The description of your monitor",
+      })
+      .nullable(),
+    method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
+    body: z
+      .preprocess((val) => {
+        return String(val);
+      }, z.string())
+      .default("")
+      .openapi({
+        example: "Hello World",
+        description: "The body",
+      }),
+    headers: z
+      .preprocess(
+        (val) => {
+          if (String(val).length > 0) {
+            return JSON.parse(String(val));
+          } else {
+            return [];
+          }
+        },
+        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+      )
+      .openapi({
+        description: "The headers of your request",
+        example: [{ key: "x-apikey", value: "supersecrettoken" }],
+      }),
+    active: z
+      .boolean()
+      .default(false)
+      .openapi({ description: "If the monitor is active" }),
+  })
+  .openapi({
+    description: "The monitor",
+    required: ["periodicity", "url", "regions", "method"],
+  });
+
+const monitorInput = z
+  .object({
+    periodicity: periodicityEnum.openapi({
+      example: "1m",
+      description: "How often the monitor should run",
+    }),
+    url: z.string().url().openapi({
+      example: "https://www.documenso.co",
+      description: "The url to monitor",
+    }),
+    regions: regionEnum
+      .openapi({
+        example: "arn1",
+        description: "The regions to use",
+      })
+      .default("auto"),
+    name: z.string().openapi({
       example: "Documenso",
       description: "The name of the monitor",
-    })
-    .nullable(),
-  description: z
-    .string()
-    .openapi({
+    }),
+    description: z.string().openapi({
       example: "Documenso website",
       description: "The description of your monitor",
-    })
-    .nullable(),
-  method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
-  body: z
-    .preprocess((val) => {
-      return String(val);
-    }, z.string())
-    .default("")
-    .openapi({
+    }),
+    method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
+    body: z.string().openapi({
       example: "Hello World",
       description: "The body",
     }),
-  headers: z
-    .preprocess(
-      (val) => {
-        if (String(val).length > 0) {
-          return JSON.parse(String(val));
-        } else {
-          return [];
-        }
-      },
-      z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-    )
-    .openapi({
-      description: "The headers of your request",
-      example: [{ key: "x-apikey", value: "supersecrettoken" }],
+    active: z.boolean().default(false).openapi({
+      description: "If the monitor is active",
     }),
-  active: z
-    .boolean()
-    .default(false)
-    .openapi({ description: "If the monitor is active" }),
-});
-
-const monitorInput = z.object({
-  periodicity: periodicityEnum.openapi({
-    example: "1m",
-    description: "How often the monitor should run",
-  }),
-  url: z.string().url().openapi({
-    example: "https://www.documenso.co",
-    description: "The url to monitor",
-  }),
-  regions: regionEnum
-    .openapi({
-      example: "arn1",
-      description: "The regions to use",
-    })
-    .default("auto"),
-  name: z.string().openapi({
-    example: "Documenso",
-    description: "The name of the monitor",
-  }),
-  description: z.string().openapi({
-    example: "Documenso website",
-    description: "The description of your monitor",
-  }),
-  method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
-  body: z.string().openapi({
-    example: "Hello World",
-    description: "The body",
-  }),
-  headers: z
-    .preprocess(
-      (val) => {
-        if (String(val).length > 0) {
-          return JSON.parse(String(val));
-        } else {
-          return [];
-        }
-      },
-      z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-    )
-    .openapi({
-      description: "The headers of your request",
-      example: [{ key: "x-apikey", value: "supersecrettoken" }],
-    }),
-});
-
-z.array(z.object({ key: z.string(), value: z.string() }))
-  .default([])
-  .openapi({
-    description: "The headers of your request",
-    example: [{ key: "x-apikey", value: "supersecrettoken" }],
+    headers: z
+      .preprocess(
+        (val) => {
+          if (!!val) {
+            return val;
+          } else {
+            return [];
+          }
+        },
+        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+      )
+      .openapi({
+        description: "The headers of your request",
+        example: [{ key: "x-apikey", value: "supersecrettoken" }],
+      }),
   })
-  .nullable()
-  .openapi({ description: "the monitor input" });
+  .openapi({
+    required: ["periodicity", "url", "regions", "method"],
+  });
 
-const monitorApi = new OpenAPIHono();
+const monitorApi = new OpenAPIHono<{ Variables: Variables }>();
 
 const getAllRoute = createRoute({
   method: "get",
+  tags: ["monitor"],
   path: "/",
   request: {},
   responses: {
@@ -172,7 +177,7 @@ const getAllRoute = createRoute({
   },
 });
 monitorApi.openapi(getAllRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
 
   const _monitor = await db
     .select()
@@ -189,6 +194,7 @@ monitorApi.openapi(getAllRoute, async (c) => {
 
 const getRoute = createRoute({
   method: "get",
+  tags: ["monitor"],
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -214,7 +220,7 @@ const getRoute = createRoute({
 });
 
 monitorApi.openapi(getRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   const monitorId = Number(id);
@@ -237,6 +243,7 @@ monitorApi.openapi(getRoute, async (c) => {
 
 const postRoute = createRoute({
   method: "post",
+  tags: ["monitor"],
   path: "/",
   request: {
     body: {
@@ -269,9 +276,9 @@ const postRoute = createRoute({
 });
 
 monitorApi.openapi(postRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  console.log({ workspaceId });
   const input = c.req.valid("json");
-  const workspaceId = Number(c.req.header("x-workspace-id"));
-
   const { headers, ...rest } = input;
   const _newMonitor = await db
     .insert(monitor)
@@ -290,6 +297,7 @@ monitorApi.openapi(postRoute, async (c) => {
 
 const putRoute = createRoute({
   method: "put",
+  tags: ["monitor"],
   path: "/",
   request: {
     params: ParamsSchema,
@@ -324,7 +332,7 @@ const putRoute = createRoute({
 
 monitorApi.openapi(putRoute, async (c) => {
   const input = c.req.valid("json");
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
@@ -357,6 +365,7 @@ monitorApi.openapi(putRoute, async (c) => {
 
 const deleteRoute = createRoute({
   method: "delete",
+  tags: ["monitor"],
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -385,7 +394,7 @@ const deleteRoute = createRoute({
   },
 });
 monitorApi.openapi(deleteRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   const monitorId = Number(id);

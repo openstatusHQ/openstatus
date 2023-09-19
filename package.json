@@ -30,7 +30,7 @@
     "turbo": "1.10.12",
     "typescript": "5.1.6"
   },
-  "packageManager": "pnpm@8.6.10",
+  "packageManager": "pnpm@8.7.6",
   "name": "openstatus",
   "workspaces": [
     "apps/*",

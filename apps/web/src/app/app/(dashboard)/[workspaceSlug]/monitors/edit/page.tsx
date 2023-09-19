@@ -34,7 +34,10 @@ export default async function EditPage({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitor" description="Upsert your monitor." />
+      <Header
+        title="Monitor"
+        description={monitor ? "Update your monitor" : "Create your monitor"}
+      />
       <div className="col-span-full">
         <MonitorForm
           workspaceSlug={params.workspaceSlug}
