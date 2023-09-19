@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
+import { Button } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/montitor-form";
 import { StatusPageForm } from "@/components/forms/status-page-form";
-import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
 import { Path } from "./_components/path";

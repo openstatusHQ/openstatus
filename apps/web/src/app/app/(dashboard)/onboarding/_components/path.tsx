@@ -2,23 +2,22 @@
 
 import { useRouter } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Badge,
+  Button,
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@openstatus/ui";
+
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 
 export function Path() {
