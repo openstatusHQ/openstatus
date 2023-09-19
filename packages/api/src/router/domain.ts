@@ -1,20 +1,7 @@
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
-import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { eq } from "@openstatus/db";
-import {
-  allMonitorsSchema,
-  insertMonitorSchema,
-  monitor,
-  selectMonitorSchema,
-  user,
-  usersToWorkspaces,
-} from "@openstatus/db/src/schema";
 
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { hasUserAccessToWorkspace } from "./utils";
 
 export const domainConfigResponseSchema = z.object({
   configuredBy: z

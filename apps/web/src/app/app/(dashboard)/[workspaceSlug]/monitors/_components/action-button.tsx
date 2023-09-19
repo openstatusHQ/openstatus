@@ -50,6 +50,24 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
     });
   }
 
+  async function onTest() {
+    startTransition(async () => {
+      const { url, body, method, headers } = props;
+      const res = await fetch(`/api/checker/test`, {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ url, body, method, headers }),
+      });
+      if (res.ok) {
+        toast("test-success");
+      } else {
+        toast("test-error");
+      }
+    });
+  }
+
   return (
     <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
       <DropdownMenu>
@@ -69,6 +87,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <Link href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}>
             <DropdownMenuItem>View data</DropdownMenuItem>
           </Link>
+          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

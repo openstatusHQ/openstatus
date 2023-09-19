@@ -23,8 +23,26 @@ export default function Page() {
             <div className="grid gap-4">
               <div className="text-center">
                 <p className="mb-1 text-lg font-bold">Creating Workspace</p>
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-3">
                   Should be done in a second.
+                </p>
+                <p className="text-muted-foreground text-sm font-light">
+                  If you are stuck for longer, please contact us via{" "}
+                  <a
+                    href="https://openstatus.dev/discord"
+                    target="_blank"
+                    className="font-normal"
+                  >
+                    Discord
+                  </a>{" "}
+                  or{" "}
+                  <a
+                    href="mailto:thibault@openstatus.dev"
+                    className="font-normal"
+                  >
+                    Mail
+                  </a>
+                  .
                 </p>
               </div>
               <LoadingAnimation variant="inverse" size="lg" />

@@ -3,8 +3,8 @@ import type { ToastType } from "@openstatus/ui";
 
 const config = {
   error: {
-    title: "Something went wrong.",
-    description: "Please try again.",
+    title: "Something went wrong",
+    description: "Please try again",
     variant: "destructive",
     action: (
       <Button variant="outline" asChild className="text-foreground">
@@ -15,19 +15,19 @@ const config = {
     ),
   },
   "unique-slug": {
-    title: "Slug is already taken.",
+    title: "Slug is already taken",
     description: "Please select another slug. Every slug is unique.",
   },
   success: { title: "Success" },
-  deleted: { title: "Deleted successfully." }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
-  saved: { title: "Saved successfully." },
+  deleted: { title: "Deleted successfully" }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
+  saved: { title: "Saved successfully" },
   "test-error": {
-    title: "Endpoint configuration failed.",
+    title: "Connection Failed",
     // description: "Be sure to include the auth headers.",
     variant: "destructive",
   },
   "test-success": {
-    title: "Endpoint configuration passed.",
+    title: "Connection Established",
   },
 } as const satisfies Record<string, ToastType>;
 
