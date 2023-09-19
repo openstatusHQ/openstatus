@@ -10,7 +10,11 @@ import { user } from "@openstatus/db/src/schema";
 export async function GET() {
   const { userId } = auth();
 
-  const data = await db.select().from(user).where(eq(user.tenantId, String(userId))).get();
+  const data = await db
+    .select()
+    .from(user)
+    .where(eq(user.tenantId, String(userId)))
+    .get();
 
   await analytics.identify(data?.id, {
     userId: data?.id,

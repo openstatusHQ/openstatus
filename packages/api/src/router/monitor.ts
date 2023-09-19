@@ -73,7 +73,7 @@ export const monitorRouter = createTRPCRouter({
       // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(result.user.id, {
         userId: result.user.id,
-        email:result.user.email,
+        email: result.user.email,
       });
       await trackAnalytics({
         event: "Monitor Created",
