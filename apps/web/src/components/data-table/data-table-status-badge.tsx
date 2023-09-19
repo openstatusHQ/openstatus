@@ -1,4 +1,5 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@openstatus/ui";
+
 import { cn } from "@/lib/utils";
 
 export function DataTableStatusBadge({
