@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { InputWithAddons } from "@/components/ui/input-with-addons";
+import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
@@ -81,6 +82,7 @@ export function StatusPageForm({
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToastAction();
+  const { toast: defaultToast } = useToast();
   const updateSearchParams = useUpdateSearchParams();
 
   const checkUniqueSlug = useCallback(async () => {
@@ -131,7 +133,17 @@ export function StatusPageForm({
           const id = page?.id || null;
           router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
         }
-        toast("saved");
+        defaultToast({
+          title: "Saved successfully.",
+          description: "Your status page is ready to go.",
+          action: (
+            <Button variant="outline">
+              <a href={`https://${props.slug}.openstatus.dev`} target="_blank">
+                Visit
+              </a>
+            </Button>
+          ),
+        });
         if (nextUrl) {
           router.push(nextUrl);
         }

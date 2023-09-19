@@ -5,14 +5,12 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import {
   allMonitorsExtendedSchema,
-  allMonitorsSchema,
   insertMonitorSchema,
   METHODS,
   monitor,
   monitorsToPages,
   periodicityEnum,
   selectMonitorExtendedSchema,
-  selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 

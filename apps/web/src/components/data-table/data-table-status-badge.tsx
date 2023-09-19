@@ -1,0 +1,27 @@
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+export function DataTableStatusBadge({
+  statusCode,
+}: {
+  statusCode: string | number;
+}) {
+  const isOk = String(statusCode).startsWith("2");
+  return (
+    <Badge
+      variant="outline"
+      className={cn(
+        "px-2 py-0.5 text-xs",
+        isOk ? "border-green-100 bg-green-50" : "border-red-100 bg-red-50",
+      )}
+    >
+      {statusCode}
+      <div
+        className={cn(
+          "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
+          isOk ? "bg-green-500" : "bg-red-500",
+        )}
+      />
+    </Badge>
+  );
+}

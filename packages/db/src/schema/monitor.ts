@@ -160,6 +160,6 @@ export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   ),
 });
 
-export const allMonitorsSchema = z.array(selectMonitorExtendedSchema);
-
 export const allMonitorsExtendedSchema = z.array(selectMonitorExtendedSchema);
+export type ExtendedMonitor = z.infer<typeof selectMonitorExtendedSchema>;
+export type ExtendedMonitors = z.infer<typeof allMonitorsExtendedSchema>;
