@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  user,
+  usersToWorkspaces,
+  workspace,
+} from "@openstatus/db/src/schema";
 
 import { env } from "./env";
 
@@ -108,6 +113,21 @@ export default authMiddleware({
           .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
           .get();
         if (currentWorkspace) {
+          const firstMonitor = await db
+            .select()
+            .from(monitor)
+            .where(eq(monitor.workspaceId, currentWorkspace.id))
+            .get();
+
+          if (!firstMonitor) {
+            console.log(`>>> Redirecting to onboarding`);
+            const onboarding = new URL(
+              `/app/onboarding?workspaceSlug=${currentWorkspace.slug}`,
+              req.url,
+            );
+            return NextResponse.redirect(onboarding);
+          }
+
           const orgSelection = new URL(
             `/app/${currentWorkspace.slug}/monitors`,
             req.url,
@@ -163,5 +183,6 @@ export const config = {
     "/app/integrations/vercel/configure",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
+    "/api/analytics", // used for tracking vercel beta integration click events
   ],
 };

@@ -1,11 +1,12 @@
 "use client";
 
+import { METHODS } from "http";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { useForm } from "react-hook-form";
-import type * as z from "zod";
+import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
+import * as z from "zod";
 
 import {
   insertMonitorSchema,
@@ -36,10 +37,17 @@ import {
   SelectTrigger,
   SelectValue,
   Switch,
+  Textarea,
+  toast,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
@@ -52,7 +60,22 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-type MonitorProps = z.infer<typeof insertMonitorSchema>;
+const methods = ["POST", "GET"] as const;
+const methodsEnum = z.enum(methods);
+
+const headersSchema = z
+  .array(z.object({ key: z.string(), value: z.string() }))
+  .optional();
+
+const advancedSchema = z.object({
+  method: methodsEnum,
+  body: z.string().optional(),
+  headers: headersSchema,
+});
+
+const mergedSchema = insertMonitorSchema.merge(advancedSchema);
+
+type MonitorProps = z.infer<typeof mergedSchema>;
 
 interface Props {
   defaultValues?: MonitorProps;
@@ -66,7 +89,7 @@ export function MonitorForm({
   plan = "free",
 }: Props) {
   const form = useForm<MonitorProps>({
-    resolver: zodResolver(insertMonitorSchema), // too much - we should only validate the values we ask inside of the form!
+    resolver: zodResolver(mergedSchema), // too much - we should only validate the values we ask inside of the form!
     defaultValues: {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
@@ -75,11 +98,24 @@ export function MonitorForm({
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || undefined,
       regions: defaultValues?.regions || [],
+      headers: Boolean(defaultValues?.headers?.length)
+        ? defaultValues?.headers
+        : [{ key: "", value: "" }],
+      body: defaultValues?.body ?? "",
+      method: defaultValues?.method ?? "GET",
     },
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [isTestPending, startTestTransition] = React.useTransition();
   const { toast } = useToastAction();
+  const watchMethod = form.watch("method");
+  const updateSearchParams = useUpdateSearchParams();
+
+  const { fields, append, remove } = useFieldArray({
+    name: "headers",
+    control: form.control,
+  });
 
   const onSubmit = ({ ...props }: MonitorProps) => {
     startTransition(async () => {
@@ -92,12 +128,58 @@ export function MonitorForm({
             data: props,
             workspaceSlug,
           });
-          router.replace(`./edit?id=${monitor?.id}`); // to stay on same page and enable 'Advanced' tab
+          const id = monitor?.id || null;
+          router.replace(`?${updateSearchParams({ id })}`);
         }
         router.refresh();
         toast("saved");
       } catch {
         toast("error");
+      }
+    });
+  };
+
+  const validateJSON = (value?: string) => {
+    if (!value) return;
+    try {
+      const obj = JSON.parse(value) as Record<string, unknown>;
+      form.clearErrors("body");
+      return obj;
+    } catch (e) {
+      form.setError("body", {
+        message: "Not a valid JSON object",
+      });
+      return false;
+    }
+  };
+
+  const onPrettifyJSON = () => {
+    const body = form.getValues("body");
+    const obj = validateJSON(body);
+    if (obj) {
+      const pretty = JSON.stringify(obj, undefined, 4);
+      form.setValue("body", pretty);
+    }
+  };
+
+  const sendTestPing = () => {
+    startTestTransition(async () => {
+      const res = await fetch(`/api/checker/test`, {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          url: form.getValues("url"),
+          body: form.getValues("body"),
+          method: form.getValues("method"),
+          headers: form.getValues("headers"),
+        }),
+      });
+      if (res.ok) {
+        toast("test-success");
+      } else {
+        toast("test-error");
       }
     });
   };
@@ -119,29 +201,7 @@ export function MonitorForm({
               <FormControl>
                 <Input placeholder="Documenso" {...field} />
               </FormControl>
-              <FormDescription>
-                The name of the monitor displayed on the status page.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="url"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-4">
-              <FormLabel>URL</FormLabel>
-              <FormControl>
-                {/* Should we use `InputWithAddons here? */}
-                <Input
-                  placeholder="https://documenso.com/api/health"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Here is the URL you want to monitor.{" "}
-              </FormDescription>
+              <FormDescription>Displayed on the status page.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -167,9 +227,165 @@ export function MonitorForm({
         />
         <FormField
           control={form.control}
+          name="method"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-1 sm:col-start-1 sm:self-baseline">
+              <FormLabel>Method</FormLabel>
+              <Select
+                onValueChange={(value) => {
+                  field.onChange(methodsEnum.parse(value));
+                  form.resetField("body", { defaultValue: "" });
+                }}
+                defaultValue={field.value}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {methods.map((method) => (
+                    <SelectItem key={method} value={method}>
+                      {method}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="url"
+          render={({ field }) => (
+            <FormItem className="sm:col-span-4">
+              <FormLabel>URL</FormLabel>
+              <FormControl>
+                {/* <InputWithAddons
+                  leading="https://"
+                  placeholder="documenso.com/api/health"
+                  {...field}
+                /> */}
+                <Input
+                  placeholder="https://documenso.com/api/health"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Here is the URL you want to monitor.{" "}
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="space-y-2 sm:col-span-full">
+          {/* TODO: add FormDescription for latest key/value */}
+          <FormLabel>Request Header</FormLabel>
+          {fields.map((field, index) => (
+            <div key={field.id} className="grid grid-cols-6 gap-6">
+              <FormField
+                control={form.control}
+                name={`headers.${index}.key`}
+                render={({ field }) => (
+                  <FormItem className="col-span-2">
+                    <FormControl>
+                      <Input placeholder="key" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <div className="col-span-4 flex items-center space-x-2">
+                <FormField
+                  control={form.control}
+                  name={`headers.${index}.value`}
+                  render={({ field }) => (
+                    <FormItem className="w-full">
+                      <FormControl>
+                        <Input placeholder="value" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => remove(Number(field.id))}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          <div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => append({ key: "", value: "" })}
+            >
+              Add Custom Header
+            </Button>
+          </div>
+        </div>
+        {watchMethod === "POST" && (
+          <div className="sm:col-span-4 sm:col-start-1">
+            <FormField
+              control={form.control}
+              name="body"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-end justify-between">
+                    <FormLabel>Body</FormLabel>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={onPrettifyJSON}
+                          >
+                            <Wand2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Prettify JSON</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  <FormControl>
+                    <Textarea
+                      rows={8}
+                      placeholder='{ "hello": "world" }'
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>Write your json payload.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+        <div className="sm:col-span-2 sm:col-start-1">
+          <Button
+            type="button"
+            variant="default"
+            className="w-full md:w-auto"
+            size="lg"
+            onClick={sendTestPing}
+          >
+            {!isTestPending ? "Test Request" : <LoadingAnimation />}
+          </Button>
+        </div>
+        <FormField
+          control={form.control}
           name="periodicity"
           render={({ field }) => (
-            <FormItem className="sm:col-span-3 sm:self-baseline">
+            <FormItem className="sm:col-span-3 sm:col-start-1 sm:self-baseline">
               <FormLabel>Frequency</FormLabel>
               <Select
                 onValueChange={(value) =>
@@ -270,7 +486,7 @@ export function MonitorForm({
           control={form.control}
           name="active"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between sm:col-span-3">
+            <FormItem className="flex flex-row items-center justify-between sm:col-span-4">
               <div className="space-y-0.5">
                 <FormLabel>Active</FormLabel>
                 <FormDescription>
@@ -289,7 +505,12 @@ export function MonitorForm({
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          {/*
+           * We could think of having a 'double confirmation' one,
+           * to check if the endpoint works and approve afterwards
+           * and confirm anyways even if endpoint failed
+           */}
+          <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

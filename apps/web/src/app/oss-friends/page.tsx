@@ -29,14 +29,14 @@ const OpenSourceFriends = async () => {
       </h1>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {openSourceFriends.map((friend) => (
-          <Card key={friend.name} className="group">
-            <CardHeader>
+          <Card key={friend.name} className="group flex flex-col">
+            <CardHeader className="flex-1">
               <div className="flex items-center gap-2">
                 <CardTitle>
                   <Link
                     href={friend.href}
                     target="_blank"
-                    className="relative cursor-pointer duration-200 after:absolute after:bottom-0 after:left-0 after:h-1 after:w-0 after:bg-white after:transition-all after:duration-300 hover:after:w-full group-hover:underline"
+                    className="group-hover:underline"
                   >
                     {friend.name}
                   </Link>

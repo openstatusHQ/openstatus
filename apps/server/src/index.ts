@@ -5,10 +5,14 @@ import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
 import { VercelIngest } from "./vercel";
 
+export type Variables = {
+  workspaceId: string;
+};
+
 /**
  * Base Path "/v1" for our api
  */
-const app = new OpenAPIHono();
+const app = new OpenAPIHono<{ Variables: Variables }>();
 app.doc("/openapi", {
   openapi: "3.0.0",
   info: {

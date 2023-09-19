@@ -7,9 +7,10 @@ import {
   incidentUpdate,
 } from "@openstatus/db/src/schema";
 
+import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
 
-const incidentApi = new OpenAPIHono();
+const incidentApi = new OpenAPIHono<{ Variables: Variables }>();
 
 const ParamsSchema = z.object({
   id: z
@@ -49,6 +50,7 @@ const incidentSchema = z.object({
 
 const getAllRoute = createRoute({
   method: "get",
+  tags: ["incident"],
   path: "/",
   request: {},
   responses: {
@@ -71,7 +73,7 @@ const getAllRoute = createRoute({
   },
 });
 incidentApi.openapi(getAllRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
 
   const _incidents = await db
     .select()
@@ -88,6 +90,7 @@ incidentApi.openapi(getAllRoute, async (c) => {
 
 const getRoute = createRoute({
   method: "get",
+  tags: ["incident"],
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -112,7 +115,7 @@ const getRoute = createRoute({
   },
 });
 incidentApi.openapi(getRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   const incidentId = Number(id);
@@ -134,6 +137,7 @@ incidentApi.openapi(getRoute, async (c) => {
 
 const postRoute = createRoute({
   method: "post",
+  tags: ["incident"],
   path: "/",
   request: {
     body: {
@@ -167,7 +171,7 @@ const postRoute = createRoute({
 
 incidentApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
 
   const _newIncident = await db
     .insert(incident)
@@ -185,6 +189,7 @@ incidentApi.openapi(postRoute, async (c) => {
 
 const deleteRoute = createRoute({
   method: "delete",
+  tags: ["incident"],
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -214,7 +219,7 @@ const deleteRoute = createRoute({
 });
 
 incidentApi.openapi(deleteRoute, async (c) => {
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   const incidentId = Number(id);
@@ -235,6 +240,7 @@ incidentApi.openapi(deleteRoute, async (c) => {
 
 const postRouteUpdate = createRoute({
   method: "post",
+  tags: ["incident"],
   path: "/:id/update",
   request: {
     params: ParamsSchema,
@@ -270,7 +276,7 @@ const postRouteUpdate = createRoute({
 incidentApi.openapi(postRouteUpdate, async (c) => {
   const input = c.req.valid("json");
   const { id } = c.req.valid("param");
-  const workspaceId = Number(c.req.header("x-workspace-id"));
+  const workspaceId = Number(c.get("workspaceId"));
 
   const incidentId = Number(id);
   const _incident = await db

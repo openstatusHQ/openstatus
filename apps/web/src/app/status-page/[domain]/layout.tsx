@@ -1,5 +1,6 @@
 import { Shell } from "@/components/dashboard/shell";
 import NavigationLink from "./_components/navigation-link";
+import { UserButton } from "./_components/user-button";
 
 export default function StatusPageLayout({
   children,
