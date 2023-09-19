@@ -3,8 +3,9 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@openstatus/ui";
+
 import { LoadingAnimation } from "@/components/loading-animation";
-import { Button } from "@/components/ui/button";
 import { api } from "@/trpc/client";
 
 interface Props {

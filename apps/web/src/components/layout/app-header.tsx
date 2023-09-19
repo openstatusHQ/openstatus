@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 
+import { Button, Skeleton } from "@openstatus/ui";
+
 import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";
 import { Icons } from "../icons";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
 
 /**
  * TODO: work on a better breadcrumb navigation like Vercel

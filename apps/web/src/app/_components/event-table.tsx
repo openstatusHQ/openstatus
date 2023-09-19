@@ -4,10 +4,9 @@ import React from "react";
 import { formatDistance } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Badge,
+  Button,
   Table,
   TableBody,
   TableCaption,
@@ -15,7 +14,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@openstatus/ui";
+
 import { cn } from "@/lib/utils";
 
 export function EventTable({ events }: { events: Ping[] }) {

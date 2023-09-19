@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/montitor-form";
 import { api } from "@/trpc/server";

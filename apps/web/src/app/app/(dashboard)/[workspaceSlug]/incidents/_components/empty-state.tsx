@@ -1,7 +1,8 @@
 import Link from "next/link";
 
+import { Button } from "@openstatus/ui";
+
 import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
-import { Button } from "@/components/ui/button";
 
 export function EmptyState() {
   return (

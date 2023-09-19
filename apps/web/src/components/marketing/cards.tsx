@@ -1,7 +1,8 @@
+import { Badge } from "@openstatus/ui";
+
 import { Shell } from "../dashboard/shell";
 import { Icons } from "../icons";
 import type { ValidIcon } from "../icons";
-import { Badge } from "../ui/badge";
 
 const cardConfig: {
   icon: ValidIcon;

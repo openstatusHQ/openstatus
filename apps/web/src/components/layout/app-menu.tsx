@@ -4,14 +4,15 @@ import * as React from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 
-import { Button } from "../ui/button";
 import {
+  Button,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "../ui/sheet";
+} from "@openstatus/ui";
+
 import { AppSidebar } from "./app-sidebar";
 
 export function AppMenu() {

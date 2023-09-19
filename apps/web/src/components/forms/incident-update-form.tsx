@@ -11,13 +11,9 @@ import {
   insertIncidentUpdateSchema,
   StatusEnum,
 } from "@openstatus/db/src/schema";
-
-import { Preview } from "@/components/content/preview";
-import { Icons } from "@/components/icons";
-import { LoadingAnimation } from "@/components/loading-animation";
-import { Button } from "@/components/ui/button";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
+  Button,
+  DateTimePicker,
   Form,
   FormControl,
   FormDescription,
@@ -25,10 +21,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+  RadioGroup,
+  RadioGroupItem,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from "@openstatus/ui";
+
+import { Preview } from "@/components/content/preview";
+import { Icons } from "@/components/icons";
+import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";

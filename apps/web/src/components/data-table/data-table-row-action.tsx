@@ -5,23 +5,20 @@ import { MoreHorizontal } from "lucide-react";
 import * as z from "zod";
 
 import { tbBuildResponseList } from "@openstatus/tinybird";
-
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@openstatus/ui";
 
 // REMINDER: needed because `ResponseList` returns metadata as string, not as Record
 const schema = tbBuildResponseList.extend({

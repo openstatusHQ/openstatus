@@ -11,10 +11,9 @@ import type * as z from "zod";
 
 import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Button,
+  Checkbox,
   Form,
   FormControl,
   FormDescription,
@@ -22,9 +21,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { InputWithAddons } from "@/components/ui/input-with-addons";
+  Input,
+  InputWithAddons,
+} from "@openstatus/ui";
+
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";

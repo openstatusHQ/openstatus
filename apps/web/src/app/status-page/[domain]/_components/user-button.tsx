@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@openstatus/ui";
 
 // Create a button only displayed if you are logged in and are the owner of the status page
 export function UserButton() {

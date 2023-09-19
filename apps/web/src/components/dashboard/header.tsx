@@ -1,5 +1,6 @@
+import { Skeleton } from "@openstatus/ui";
+
 import { cn } from "@/lib/utils";
-import { Skeleton } from "../ui/skeleton";
 
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;

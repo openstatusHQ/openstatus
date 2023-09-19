@@ -2,13 +2,14 @@ import * as React from "react";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
 
+import { Button } from "@openstatus/ui";
+
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { Icons } from "@/components/icons";
 import { AffectedMonitors } from "@/components/incidents/affected-monitors";
 import { Events } from "@/components/incidents/events";
 import { StatusBadge } from "@/components/incidents/status-badge";
-import { Button } from "@/components/ui/button";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";

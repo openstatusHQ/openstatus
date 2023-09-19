@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@openstatus/ui";
 
 export function SkeletonForm() {
   return (
