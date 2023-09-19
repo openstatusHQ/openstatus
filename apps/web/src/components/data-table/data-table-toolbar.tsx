@@ -3,7 +3,7 @@
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableDateRangePicker } from "./data-table-date-ranger-picker";

@@ -6,13 +6,13 @@ import { format, formatDistance } from "date-fns";
 import type * as z from "zod";
 
 import type { selectIncidentUpdateSchema } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui/src/components/tooltip";
+} from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";

@@ -2,7 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { formatDistance } from "date-fns";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";

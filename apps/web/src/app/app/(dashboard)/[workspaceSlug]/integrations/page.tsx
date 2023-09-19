@@ -2,8 +2,7 @@
 
 import * as React from "react";
 
-import { Badge } from "@openstatus/ui/src/components/badge";
-import { Button } from "@openstatus/ui/src/components/button";
+import { Badge, Button } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";

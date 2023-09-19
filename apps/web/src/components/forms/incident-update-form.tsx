@@ -11,9 +11,9 @@ import {
   insertIncidentUpdateSchema,
   StatusEnum,
 } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/src/components/button";
-import { DateTimePicker } from "@openstatus/ui/src/components/date-time-picker";
 import {
+  Button,
+  DateTimePicker,
   Form,
   FormControl,
   FormDescription,
@@ -21,18 +21,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@openstatus/ui/src/components/form";
-import {
   RadioGroup,
   RadioGroupItem,
-} from "@openstatus/ui/src/components/radio-group";
-import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@openstatus/ui/src/components/tabs";
-import { Textarea } from "@openstatus/ui/src/components/textarea";
+  Textarea,
+} from "@openstatus/ui";
 
 import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";

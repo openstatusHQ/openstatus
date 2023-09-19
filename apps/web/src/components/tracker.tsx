@@ -11,14 +11,12 @@ import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@openstatus/ui/src/components/hover-card";
-import { Separator } from "@openstatus/ui/src/components/separator";
-import {
+  Separator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui/src/components/tooltip";
+} from "@openstatus/ui";
 
 import useWindowSize from "@/hooks/use-window-size";
 import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";

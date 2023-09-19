@@ -9,7 +9,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
-} from "@openstatus/ui/src/components/command";
+} from "@openstatus/ui";
 
 // TODO: once stable, use the shallow route to store the search params inside of the search params
 

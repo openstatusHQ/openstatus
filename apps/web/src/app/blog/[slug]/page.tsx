@@ -3,11 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { allPosts } from "contentlayer/generated";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@openstatus/ui/src/components/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@openstatus/ui";
 
 import {
   defaultMetadata,

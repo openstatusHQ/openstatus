@@ -2,9 +2,9 @@ import * as React from "react";
 import type { Column } from "@tanstack/react-table";
 import { Check, PlusCircle } from "lucide-react";
 
-import { Badge } from "@openstatus/ui/src/components/badge";
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Badge,
+  Button,
   Command,
   CommandEmpty,
   CommandGroup,
@@ -12,13 +12,11 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@openstatus/ui/src/components/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui/src/components/popover";
-import { Separator } from "@openstatus/ui/src/components/separator";
+  Separator,
+} from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 

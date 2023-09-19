@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-import { Badge } from "@openstatus/ui/src/components/badge";
-import { Button } from "@openstatus/ui/src/components/button";
+import { Badge, Button } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";

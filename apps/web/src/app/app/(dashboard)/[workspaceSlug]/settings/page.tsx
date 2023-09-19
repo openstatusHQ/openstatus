@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import { Badge } from "@openstatus/ui/src/components/badge";
 import {
+  Badge,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@openstatus/ui/src/components/tabs";
+} from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { api } from "@/trpc/server";

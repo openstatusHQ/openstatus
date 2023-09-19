@@ -1,4 +1,4 @@
-import { Badge } from "@openstatus/ui/src/components/badge";
+import { Badge } from "@openstatus/ui";
 
 import { statusDict } from "@/data/incidents-dictionary";
 import { cn } from "@/lib/utils";

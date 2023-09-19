@@ -2,8 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 
 import { allPlans } from "@openstatus/plans";
-import { Badge } from "@openstatus/ui/src/components/badge";
-import { ButtonWithDisableTooltip } from "@openstatus/ui/src/components/button-with-disable-tooltip";
+import { Badge, ButtonWithDisableTooltip } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";

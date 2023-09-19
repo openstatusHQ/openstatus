@@ -6,7 +6,7 @@ import LocalFont from "next/font/local";
 import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
-import { Toaster } from "@openstatus/ui/src/components/toaster";
+import { Toaster } from "@openstatus/ui";
 
 import {
   defaultMetadata,

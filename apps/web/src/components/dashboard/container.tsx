@@ -5,8 +5,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@openstatus/ui/src/components/card";
-import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+  Skeleton,
+} from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 

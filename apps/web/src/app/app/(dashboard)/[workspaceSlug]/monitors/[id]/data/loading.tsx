@@ -1,4 +1,4 @@
-import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+import { Skeleton } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";

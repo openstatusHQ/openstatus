@@ -1,11 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@openstatus/ui/src/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 export function ProFeatureAlert() {
   return (

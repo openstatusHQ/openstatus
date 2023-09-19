@@ -12,10 +12,10 @@ import {
   insertIncidentSchema,
   StatusEnum,
 } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/src/components/button";
-import { Checkbox } from "@openstatus/ui/src/components/checkbox";
-import { DateTimePicker } from "@openstatus/ui/src/components/date-time-picker";
 import {
+  Button,
+  Checkbox,
+  DateTimePicker,
   Form,
   FormControl,
   FormDescription,
@@ -23,19 +23,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@openstatus/ui/src/components/form";
-import { Input } from "@openstatus/ui/src/components/input";
-import {
+  Input,
   RadioGroup,
   RadioGroupItem,
-} from "@openstatus/ui/src/components/radio-group";
-import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@openstatus/ui/src/components/tabs";
-import { Textarea } from "@openstatus/ui/src/components/textarea";
+  Textarea,
+} from "@openstatus/ui";
 
 import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";

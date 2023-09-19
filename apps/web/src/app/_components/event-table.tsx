@@ -4,9 +4,9 @@ import React from "react";
 import { formatDistance } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
-import { Badge } from "@openstatus/ui/src/components/badge";
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Badge,
+  Button,
   Table,
   TableBody,
   TableCaption,
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui/src/components/table";
+} from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 

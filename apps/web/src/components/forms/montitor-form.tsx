@@ -12,15 +12,13 @@ import {
   periodicityEnum,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Button,
   Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
-} from "@openstatus/ui/src/components/command";
-import {
   Form,
   FormControl,
   FormDescription,
@@ -28,21 +26,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@openstatus/ui/src/components/form";
-import { Input } from "@openstatus/ui/src/components/input";
-import {
+  Input,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui/src/components/popover";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui/src/components/select";
-import { Switch } from "@openstatus/ui/src/components/switch";
+  Switch,
+} from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";

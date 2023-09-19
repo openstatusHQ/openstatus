@@ -7,8 +7,8 @@ import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Button,
   Form,
   FormControl,
   FormDescription,
@@ -16,8 +16,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@openstatus/ui/src/components/form";
-import { InputWithAddons } from "@openstatus/ui/src/components/input-with-addons";
+  InputWithAddons,
+} from "@openstatus/ui";
 
 import { useDomainStatus } from "@/hooks/use-domain-status";
 import { useToastAction } from "@/hooks/use-toast-action";

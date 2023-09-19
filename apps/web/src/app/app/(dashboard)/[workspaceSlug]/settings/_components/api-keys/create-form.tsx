@@ -11,7 +11,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@openstatus/ui/src/components/alert-dialog";
+} from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
 import { useToastAction } from "@/hooks/use-toast-action";

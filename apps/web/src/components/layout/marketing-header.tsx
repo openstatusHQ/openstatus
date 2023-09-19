@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 import { BrandName } from "./brand-name";

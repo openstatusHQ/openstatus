@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { api } from "@/trpc/client";

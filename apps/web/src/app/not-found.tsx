@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { Shell } from "@/components/dashboard/shell";

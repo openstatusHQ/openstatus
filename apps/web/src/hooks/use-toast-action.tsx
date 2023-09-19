@@ -1,6 +1,5 @@
-import { Button } from "@openstatus/ui/src/components/button";
-import { useToast } from "@openstatus/ui/src/components/use-toast";
-import type { Toast } from "@openstatus/ui/src/components/use-toast";
+import { Button, useToast } from "@openstatus/ui";
+import type { ToastType } from "@openstatus/ui";
 
 const config = {
   error: {
@@ -22,7 +21,7 @@ const config = {
   success: { title: "Success" },
   deleted: { title: "Deleted successfully." }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
   saved: { title: "Saved successfully." },
-} as const satisfies Record<string, Toast>;
+} as const satisfies Record<string, ToastType>;
 
 type ToastAction = keyof typeof config;
 

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 
-import { Button } from "@openstatus/ui/src/components/button";
-import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+import { Button, Skeleton } from "@openstatus/ui";
 
 import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";

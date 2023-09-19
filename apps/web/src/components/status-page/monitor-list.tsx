@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { z } from "zod";
 
 import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "../dashboard/empty-state";
 import { Monitor } from "./monitor";

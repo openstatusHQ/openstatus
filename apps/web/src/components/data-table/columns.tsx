@@ -4,7 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
-import { Badge } from "@openstatus/ui/src/components/badge";
+import { Badge } from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { cn } from "@/lib/utils";

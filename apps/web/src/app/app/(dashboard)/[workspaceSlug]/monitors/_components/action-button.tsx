@@ -17,14 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@openstatus/ui/src/components/alert-dialog";
-import { Button } from "@openstatus/ui/src/components/button";
-import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@openstatus/ui/src/components/dropdown-menu";
+} from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";

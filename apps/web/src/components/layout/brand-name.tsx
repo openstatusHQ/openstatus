@@ -6,7 +6,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@openstatus/ui/src/components/context-menu";
+} from "@openstatus/ui";
 
 export function BrandName() {
   return (

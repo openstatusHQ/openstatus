@@ -3,7 +3,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@openstatus/ui/src/components/accordion";
+} from "@openstatus/ui";
 
 // REMINDER: we can create a contentlayer document and the faq into it
 const faqsConfig: Record<"q" | "a", string>[] = [

@@ -7,8 +7,8 @@ import { Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { Button } from "@openstatus/ui/src/components/button";
 import {
+  Button,
   Form,
   FormControl,
   FormDescription,
@@ -16,22 +16,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@openstatus/ui/src/components/form";
-import { Input } from "@openstatus/ui/src/components/input";
-import {
+  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui/src/components/select";
-import { Textarea } from "@openstatus/ui/src/components/textarea";
-import {
+  Textarea,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui/src/components/tooltip";
+} from "@openstatus/ui";
 
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";

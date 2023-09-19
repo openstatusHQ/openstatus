@@ -7,7 +7,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@openstatus/ui/src/components/card";
+} from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";

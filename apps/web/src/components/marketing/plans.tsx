@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import type { PlanProps } from "@/config/plans";
 import { plansConfig } from "@/config/plans";

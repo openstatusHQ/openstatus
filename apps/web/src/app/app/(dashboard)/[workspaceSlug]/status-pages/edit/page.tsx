@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@openstatus/ui/src/components/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { CustomDomainForm } from "@/components/forms/custom-domain-form";

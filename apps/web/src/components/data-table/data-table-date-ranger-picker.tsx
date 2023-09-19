@@ -6,13 +6,13 @@ import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
-import { Button } from "@openstatus/ui/src/components/button";
-import { Calendar } from "@openstatus/ui/src/components/calendar";
 import {
+  Button,
+  Calendar,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui/src/components/popover";
+} from "@openstatus/ui";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";

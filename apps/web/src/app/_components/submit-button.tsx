@@ -2,7 +2,7 @@
 
 import { experimental_useFormStatus as useFormStatus } from "react-dom";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 

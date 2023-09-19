@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui";
 
 import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
 
