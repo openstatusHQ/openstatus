@@ -667,8 +667,11 @@ importers:
         specifier: 0.244.0
         version: 0.244.0(react@18.2.0)
       luxon:
-        specifier: ^3.3.0
+        specifier: 3.3.0
         version: 3.3.0
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
       react-day-picker:
         specifier: 8.8.0
         version: 8.8.0(date-fns@2.30.0)(react@18.2.0)
@@ -703,9 +706,6 @@ importers:
       eslint:
         specifier: 8.45.0
         version: 8.45.0
-      react:
-        specifier: 18.2.0
-        version: 18.2.0
       typescript:
         specifier: 5.1.6
         version: 5.1.6
