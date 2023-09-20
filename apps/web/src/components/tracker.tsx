@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/tooltip";
 import useWindowSize from "@/hooks/use-window-size";
 import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
+import { useI18n } from '@/yuzu/client';
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -63,6 +64,8 @@ export function Tracker({
     context,
   });
 
+  const t = useI18n()
+
   return (
     <div className="flex flex-col">
       <div className="mb-2 flex justify-between text-sm">
@@ -72,7 +75,7 @@ export function Tracker({
             <MoreInfo {...{ url, id, context, description }} />
           ) : null}
         </div>
-        <p className="text-muted-foreground font-light">{uptime}% uptime</p>
+        <p className="text-muted-foreground font-light">{uptime}% {t('uptime')}</p>
       </div>
       <div className="relative h-full w-full">
         <div className="flex gap-0.5">

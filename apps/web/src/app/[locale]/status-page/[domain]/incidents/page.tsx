@@ -9,6 +9,7 @@ import {
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
 import { api } from "@/trpc/server";
+import { getI18n } from '@/yuzu/server';
 
 type Props = {
   params: { domain: string };
@@ -17,6 +18,9 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   if (!params.domain) return notFound();
+
+  console.log("params", params)
+  const t = await getI18n()
 
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();

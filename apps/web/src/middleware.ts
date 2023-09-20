@@ -1,11 +1,18 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
+import { createI18nMiddleware } from 'next-international/middleware'
 
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { env } from "./env";
+
+const I18nMiddleware = createI18nMiddleware({
+  locales: ['en', 'es', 'fr', 'de'],
+  defaultLocale: 'en',
+  urlMappingStrategy: 'rewriteDefault'
+})
 
 const before = (req: NextRequest) => {
   const url = req.nextUrl.clone();
@@ -78,6 +85,13 @@ export default authMiddleware({
   beforeAuth: before,
   debug: false,
   async afterAuth(auth, req) {
+
+    const host = req.headers.get("host");
+    const subdomain = getValidSubdomain(host);
+    if (subdomain || req.nextUrl.pathname.includes('/status-page/')) {
+      return I18nMiddleware(req)
+    }
+
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {
       return redirectToSignIn({ returnBackUrl: req.url });

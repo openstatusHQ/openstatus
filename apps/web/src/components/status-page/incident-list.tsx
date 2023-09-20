@@ -9,10 +9,11 @@ import { notEmpty } from "@/lib/utils";
 import { AffectedMonitors } from "../incidents/affected-monitors";
 import { Events } from "../incidents/events";
 import { StatusBadge } from "../incidents/status-badge";
+import { getI18n } from '@/yuzu/server';
 
 // TODO: change layout - it is too packed with data rn
 
-export const IncidentList = ({
+export const IncidentList = async ({
   incidents,
   monitors,
   context = "all",
@@ -33,6 +34,8 @@ export const IncidentList = ({
 
   const _incidents = context === "all" ? incidents : getLastWeeksIncidents();
 
+  const t = await getI18n()
+
   return (
     <>
       {_incidents.sort((a, b) => {
@@ -42,7 +45,7 @@ export const IncidentList = ({
       })?.length > 0 ? (
         <div className="grid gap-4">
           <h2 className="text-muted-foreground text-lg font-light">
-            {context === "all" ? "All incidents" : "Latest incidents"}
+            {context === "all" ? t("All incidents") : t("Latest incidents")}
           </h2>
           {_incidents.map((incident) => {
             return (
@@ -53,7 +56,7 @@ export const IncidentList = ({
                 </div>
                 <div className="overflow-hidden text-ellipsis">
                   <p className="text-muted-foreground mb-2 text-xs">
-                    Affected Monitors
+                    {t('Affected Monitors')}
                   </p>
                   <AffectedMonitors
                     monitors={incident.monitorsToIncidents
@@ -68,7 +71,7 @@ export const IncidentList = ({
                 </div>
                 <div>
                   <p className="text-muted-foreground mb-2 text-xs">
-                    Latest Updates
+                    {t('Latest Updates')}
                   </p>
                   <Events incidentUpdates={incident.incidentUpdates} />
                 </div>
@@ -79,8 +82,8 @@ export const IncidentList = ({
       ) : (
         <p className="text-muted-foreground text-center text-sm font-light">
           {context === "all"
-            ? "No incidents."
-            : "No incidents in the last week."}
+            ? t("No incidents.")
+            : t("No incidents in the last week.")}
         </p>
       )}
     </>
