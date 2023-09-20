@@ -141,6 +141,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   method: z.enum(METHODS).default("GET"),
 });
 
+// FIXME: can be removed as we do not use the advanced tab anymore
 export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   method: z.enum(METHODS).default("GET"),
   body: z
@@ -160,6 +161,7 @@ export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   ),
 });
 
+// FIXME: ExtendedMonitor can be renamed to Monitor
 export const allMonitorsExtendedSchema = z.array(selectMonitorExtendedSchema);
 export type ExtendedMonitor = z.infer<typeof selectMonitorExtendedSchema>;
 export type ExtendedMonitors = z.infer<typeof allMonitorsExtendedSchema>;

@@ -4,7 +4,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
-import { Badge } from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableColumnHeader } from "./data-table-column-header";
