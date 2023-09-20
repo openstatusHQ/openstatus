@@ -71,6 +71,7 @@ export const pageRouter = createTRPCRouter({
       // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(data.user.id, {
         userId: data.user.id,
+        email: data.user.email,
       });
       await trackAnalytics({
         event: "Page Created",

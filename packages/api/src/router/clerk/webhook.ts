@@ -92,7 +92,7 @@ export const webhookRouter = createTRPCRouter({
   userSignedIn: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "session.created") {
       const currentUser = await opts.ctx.db
-        .select({ id: user.id })
+        .select({ id: user.id, email: user.email })
         .from(user)
         .where(eq(user.tenantId, opts.input.data.data.user_id))
         .get();
@@ -101,6 +101,7 @@ export const webhookRouter = createTRPCRouter({
 
       await analytics.identify(String(currentUser.id), {
         userId: currentUser.id,
+        email: currentUser.email,
       });
       await trackAnalytics({ event: "User Signed In" });
     }
