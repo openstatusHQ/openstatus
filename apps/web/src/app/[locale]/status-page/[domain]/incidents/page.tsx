@@ -19,9 +19,6 @@ type Props = {
 export default async function Page({ params }: Props) {
   if (!params.domain) return notFound();
 
-  console.log("params", params)
-  const t = await getI18n()
-
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 
@@ -41,6 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const firstMonitor = page?.monitors?.[0]; // temporary solution
 
+  const t = await getI18n()
+
   return {
     ...defaultMetadata,
     title: page?.title,
@@ -50,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...twitterMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}}`
         }`,
       ],
       title: page?.title,
@@ -60,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...ogMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}}`
         }`,
       ],
       title: page?.title,
