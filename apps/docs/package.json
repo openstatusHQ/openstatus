@@ -12,7 +12,7 @@
   "homepage": "https://openstatus.dev",
   "dependencies": {
     "@vercel/analytics": "^1.0.1",
-    "next": "13.4.19",
+    "next": "13.5.1",
     "nextra": "2.10.0",
     "nextra-theme-docs": "2.10.0",
     "react": "18.2.0",
