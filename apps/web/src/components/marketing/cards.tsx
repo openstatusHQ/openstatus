@@ -1,63 +1,60 @@
-import { Badge } from "@openstatus/ui";
+import Link from "next/link";
 
+import { Badge, Button } from "@openstatus/ui";
+
+import type { Feature, SpecialFeature } from "@/config/features";
 import { Shell } from "../dashboard/shell";
 import { Icons } from "../icons";
-import type { ValidIcon } from "../icons";
 
-const cardConfig: {
-  icon: ValidIcon;
-  title: string;
-  description: string;
-  badge?: "Coming soon" | "New";
-}[] = [
-  {
-    icon: "activity",
-    title: "Monitors",
-    description: "Regularly monitor your website or API.",
-  },
-  {
-    icon: "panel-top",
-    title: "Status Pages",
-    description:
-      "Create your own status page within seconds. Select the information you want to display.",
-  },
-  {
-    icon: "siren",
-    title: "Incidents",
-    description: "Inform your users when something goes wrong.",
-  },
-  {
-    icon: "toy-brick",
-    title: "Integrations",
-    description:
-      "Create incident or received failure notification in the tools you already work with.",
-    badge: "Coming soon",
-  },
-];
-
-// TBD: if we need it at the beginning
-export function Cards() {
+export function Cards(props: Feature) {
+  const Icon = Icons[props.icon];
   return (
-    <div className="z-[-1] grid grid-cols-1 gap-8 md:grid-cols-2">
-      {cardConfig.map(({ icon, title, description, badge }, i) => {
-        const Icon = Icons[icon];
-        return (
-          <Shell key={i} className="relative">
-            {badge ? (
-              <Badge
-                variant={"secondary"}
-                className="bg-background text-muted-foreground absolute -top-3 right-2"
-              >
-                {badge}
-              </Badge>
-            ) : null}
-            <h3 className="font-cal mb-1 flex items-center text-xl">
-              <Icon className="mr-2 h-4 w-4" /> {title}
-            </h3>
-            <p className="text-muted-foreground">{description}</p>
-          </Shell>
-        );
-      })}
-    </div>
+    <Shell className="grid gap-6">
+      <div className="flex flex-col items-center justify-center gap-3">
+        <div className="border-border rounded-full border p-2">
+          <Icon className="h-5 w-5" />
+        </div>
+        <h3 className="font-cal text-center text-2xl">{props.title}</h3>
+      </div>
+      <ul className="grid gap-4 md:grid-cols-3">
+        {props.features?.map((feature, i) => {
+          return (
+            <li key={i}>
+              <p className="text-muted-foreground text-sm">
+                <span className="text-foreground font-medium">
+                  {feature.catchline}
+                </span>{" "}
+                {feature.description}
+              </p>
+              {feature.badge ? (
+                <Badge variant="secondary" className="-ml-2 mt-1">
+                  {feature.badge}
+                </Badge>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+    </Shell>
+  );
+}
+
+export function SpecialCard(props: SpecialFeature) {
+  const Icon = Icons[props.icon];
+  return (
+    <Shell className="flex items-center justify-between">
+      <div>
+        <div className="flex items-center gap-3">
+          <h3 className="font-cal text-2xl">{props.title}</h3>
+          <Icon className="h-5 w-5" />
+        </div>
+        <p className="text-muted-foreground mt-2 text-sm">
+          {props.description}
+        </p>
+      </div>
+      <Button asChild>
+        <Link href="mailto:thibault@openstatus.dev">Contact Us</Link>
+      </Button>
+    </Shell>
   );
 }

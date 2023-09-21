@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { and, eq, sql } from "@openstatus/db";
 import {
   allMonitorsExtendedSchema,
   insertMonitorSchema,
@@ -14,7 +14,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { hasUserAccessToMonitor, hasUserAccessToWorkspace } from "./utils";
 
 export const monitorRouter = createTRPCRouter({
@@ -272,4 +272,12 @@ export const monitorRouter = createTRPCRouter({
         .all();
       return allPages;
     }),
+
+  getTotalActiveMonitors: publicProcedure.query(async (opts) => {
+    const monitors = await opts.ctx.db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(eq(monitor.active, true));
+    return monitors.length;
+  }),
 });

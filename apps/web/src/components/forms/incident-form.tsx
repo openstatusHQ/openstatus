@@ -187,7 +187,7 @@ export function IncidentForm({
                         <Textarea
                           placeholder="We are encountering..."
                           className="h-auto w-full resize-none"
-                          rows={7}
+                          rows={9}
                           {...field}
                         />
                       </FormControl>

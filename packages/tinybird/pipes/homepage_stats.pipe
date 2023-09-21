@@ -1,0 +1,11 @@
+VERSION 0
+
+NODE home_stats__0
+SQL >
+
+    %
+     SELECT
+        COUNT(*) as count
+        FROM ping_response__v3
+        WHERE cronTimestamp > {{ Int64(cronTimestamp, 0) }}
+

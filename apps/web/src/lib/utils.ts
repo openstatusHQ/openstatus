@@ -31,3 +31,8 @@ export const slugify = (str: string) => {
 export async function copyToClipboard(value: string) {
   navigator.clipboard.writeText(value);
 }
+
+export function numberFormatter(value: number) {
+  const formatter = Intl.NumberFormat("en", { notation: "compact" });
+  return formatter.format(value);
+}
