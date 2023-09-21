@@ -76,7 +76,8 @@ export default async function Page() {
         </Shell>
         <Partners />
         <Cards {...cardConfig.monitors} />
-        <Stats />
+        {/* FIXME: */}
+        {/* <Stats /> */}
         <Cards {...cardConfig.pages} />
         <Cards {...cardConfig.incidents} />
         <SpecialCard {...specialCardConfig} />
