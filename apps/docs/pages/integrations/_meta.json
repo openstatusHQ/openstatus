@@ -1,4 +1,7 @@
 {
-  "vercel": "Vercel",
-  "fly": "Fly.io"
+  "discord": "Discord",
+  "fly": "Fly.io",
+  "slack": "Slack",
+  "telegram": "Telegram",
+  "vercel": "Vercel"
 }
