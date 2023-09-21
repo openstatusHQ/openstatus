@@ -75,7 +75,6 @@ export default async function Page() {
           </div>
         </Shell>
         <Partners />
-        {/* <Cards /> */}
         <Cards {...cardConfig.monitors} />
         <Stats />
         <Cards {...cardConfig.pages} />

@@ -278,6 +278,7 @@ export const monitorRouter = createTRPCRouter({
       .select({ count: sql<number>`count(*)` })
       .from(monitor)
       .where(eq(monitor.active, true));
-    return monitors.length;
+    if (monitors.length === 0) return 0;
+    return monitors[0].count;
   }),
 });

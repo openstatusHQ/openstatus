@@ -1,7 +1,7 @@
+import { Shell } from "@/components/dashboard/shell";
 import { getHomeStatsData } from "@/lib/tb";
 import { numberFormatter } from "@/lib/utils";
 import { api } from "@/trpc/server";
-import { Shell } from "../dashboard/shell";
 
 export async function Stats() {
   const last10m = new Date().getTime() - 60 * 60 * 1000; // cron timestamp 10m ago
@@ -9,6 +9,7 @@ export async function Stats() {
   const tbLast10mStats = await getHomeStatsData({
     cronTimestamp: last10m,
   });
+  // FIXME:
   const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
 
   return (
@@ -33,12 +34,13 @@ export async function Stats() {
           </p>
         </div>
         <div className="text-center">
-          <h3 className="font-cal text-xl">
+          {/* FIXME: */}
+          {/* <h3 className="font-cal text-xl">
             {tbLast10mStats && tbLast10mStats?.length > 0
               ? numberFormatter(totalActiveMonitors)
               : 0}
           </h3>
-          <p className="text-muted-foreground text-xs">Active monitors</p>
+          <p className="text-muted-foreground text-xs">Active monitors</p> */}
         </div>
       </div>
     </Shell>
