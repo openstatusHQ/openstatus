@@ -46,7 +46,9 @@ export function SpecialCard(props: SpecialFeature) {
       <div>
         <div className="flex items-center gap-3">
           <h3 className="font-cal text-2xl">{props.title}</h3>
-          <Icon className="h-5 w-5" />
+          <div className="border-border rounded-full border p-2">
+            <Icon className="h-5 w-5" />
+          </div>
         </div>
         <p className="text-muted-foreground mt-2 text-sm">
           {props.description}

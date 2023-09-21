@@ -273,12 +273,13 @@ export const monitorRouter = createTRPCRouter({
       return allPages;
     }),
 
-  getTotalActiveMonitors: publicProcedure.query(async (opts) => {
-    const monitors = await opts.ctx.db
-      .select({ count: sql<number>`count(*)` })
-      .from(monitor)
-      .where(eq(monitor.active, true));
-    if (monitors.length === 0) return 0;
-    return monitors[0].count;
-  }),
+  // getTotalActiveMonitors: publicProcedure.query(async (opts) => {
+  //   const monitors = await opts.ctx.db
+  //     .select({ count: sql<number>`count(*)` })
+  //     .from(monitor)
+  //     .where(eq(monitor.active, true))
+  //     .all();
+  //   if (monitors.length === 0) return 0;
+  //   return monitors[0].count;
+  // }),
 });
