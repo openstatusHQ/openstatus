@@ -10,7 +10,7 @@ export async function Stats() {
     cronTimestamp: last10m,
   });
   // FIXME:
-  const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
+  // const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
 
   return (
     <Shell>
