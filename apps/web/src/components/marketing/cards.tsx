@@ -14,13 +14,13 @@ export function Cards(props: Feature) {
         <div className="border-border rounded-full border p-2">
           <Icon className="h-5 w-5" />
         </div>
-        <h3 className="font-cal text-center text-2xl">{props.title}</h3>
+        <h3 className="font-cal text-center text-3xl">{props.title}</h3>
       </div>
       <ul className="grid gap-4 md:grid-cols-3">
         {props.features?.map((feature, i) => {
           return (
             <li key={i}>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground">
                 <span className="text-foreground font-medium">
                   {feature.catchline}
                 </span>{" "}
@@ -45,14 +45,12 @@ export function SpecialCard(props: SpecialFeature) {
     <Shell className="flex items-center justify-between">
       <div>
         <div className="flex items-center gap-3">
-          <h3 className="font-cal text-2xl">{props.title}</h3>
+          <h3 className="font-cal text-3xl">{props.title}</h3>
           <div className="border-border rounded-full border p-2">
             <Icon className="h-5 w-5" />
           </div>
         </div>
-        <p className="text-muted-foreground mt-2 text-sm">
-          {props.description}
-        </p>
+        <p className="text-muted-foreground mt-2">{props.description}</p>
       </div>
       <Button asChild>
         <Link href="mailto:thibault@openstatus.dev">Contact Us</Link>
