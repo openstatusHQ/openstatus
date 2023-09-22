@@ -42,18 +42,25 @@ export default async function Page() {
             service with a beautiful status page.
           </p>
           {/* much better than using flex without text alignment, text stays center even thought not same length */}
-          <div className="my-4 grid grid-cols-2 gap-2">
-            <div className="text-right">
-              <Button className="rounded-full" asChild>
+          <div className="my-4 grid gap-2 sm:grid-cols-2">
+            <div className="text-center sm:block sm:text-right">
+              <Button className="w-48 rounded-full sm:w-auto" asChild>
                 <Link href="/app/sign-up">Get Started</Link>
               </Button>
             </div>
-            <div className="text-left">
-              <Button variant="outline" className="rounded-full" asChild>
+            <div className="text-center sm:block sm:text-left">
+              <Button
+                variant="outline"
+                className="w-48 rounded-full sm:w-auto"
+                asChild
+              >
                 <Link href="/github" target="_blank">
                   Star on GitHub{" "}
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-1 hidden sm:block">
                     {numberFormatter(stars)}
+                  </Badge>
+                  <Badge variant="secondary" className="ml-1 block sm:hidden">
+                    {stars}
                   </Badge>
                 </Link>
               </Button>
