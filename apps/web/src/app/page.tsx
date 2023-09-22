@@ -44,17 +44,19 @@ export default async function Page() {
           {/* much better than using flex without text alignment, text stays center even thought not same length */}
           <div className="my-4 grid grid-cols-2 gap-2">
             <div className="text-right">
-              <Button asChild className="rounded-full">
+              <Button className="rounded-full" asChild>
                 <Link href="/app/sign-up">Get Started</Link>
               </Button>
             </div>
             <div className="text-left">
-              <Button asChild variant="link">
+              <Button variant="outline" className="rounded-full" asChild>
                 <Link href="/github" target="_blank">
                   Star on GitHub{" "}
+                  <Badge variant="secondary" className="ml-1">
+                    {numberFormatter(stars)}
+                  </Badge>
                 </Link>
               </Button>
-              <Badge variant="outline">{numberFormatter(stars)}</Badge>
             </div>
           </div>
         </Shell>

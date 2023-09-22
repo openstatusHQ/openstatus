@@ -18,31 +18,31 @@ export async function Stats() {
     <Shell>
       <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-16">
         <div className="text-center">
-          <h3 className="font-cal text-xl">
+          <h3 className="font-cal text-3xl">
             {tbTotalStats && tbTotalStats?.length > 0
               ? numberFormatter(tbTotalStats[0].count)
               : 0}
           </h3>
-          <p className="text-muted-foreground text-xs">Total pings</p>
+          <p className="text-muted-foreground font-light">Total pings</p>
         </div>
         <div className="text-center">
-          <h3 className="font-cal text-xl">
+          <h3 className="font-cal text-3xl">
             {tbLast10mStats && tbLast10mStats?.length > 0
               ? numberFormatter(tbLast10mStats[0].count)
               : 0}
           </h3>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-muted-foreground font-light">
             Pings in the last 10 minutes
           </p>
         </div>
         <div className="text-center">
-          <h3 className="font-cal text-xl">
+          <h3 className="font-cal text-3xl">
             {/* {tbLast10mStats && tbLast10mStats?.length > 0
               ? numberFormatter(totalActiveMonitors)
               : 0} */}
             700+
           </h3>
-          <p className="text-muted-foreground text-xs">Active monitors</p>
+          <p className="text-muted-foreground font-light">Active monitors</p>
         </div>
       </div>
     </Shell>

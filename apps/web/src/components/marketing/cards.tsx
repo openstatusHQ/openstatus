@@ -16,15 +16,19 @@ export function Cards(props: Feature) {
         </div>
         <h3 className="font-cal text-center text-3xl">{props.title}</h3>
       </div>
-      <ul className="grid gap-4 md:grid-cols-3">
+      <ul className="grid gap-4 md:grid-cols-3 md:gap-6">
         {props.features?.map((feature, i) => {
+          const FeatureIcon = Icons[feature.icon];
           return (
             <li key={i}>
-              <p className="text-muted-foreground">
+              <p>
+                <FeatureIcon className="text-foreground/80 mb-1 mr-1.5 inline-flex h-4 w-4" />
                 <span className="text-foreground font-medium">
                   {feature.catchline}
                 </span>{" "}
-                {feature.description}
+                <span className="text-muted-foreground">
+                  {feature.description}
+                </span>
               </p>
               {feature.badge ? (
                 <Badge variant="secondary" className="-ml-2 mt-1">
@@ -42,7 +46,7 @@ export function Cards(props: Feature) {
 export function SpecialCard(props: SpecialFeature) {
   const Icon = Icons[props.icon];
   return (
-    <Shell className="flex items-center justify-between">
+    <Shell className="relative flex items-center justify-between">
       <div>
         <div className="flex items-center gap-3">
           <h3 className="font-cal text-3xl">{props.title}</h3>
@@ -52,9 +56,7 @@ export function SpecialCard(props: SpecialFeature) {
         </div>
         <p className="text-muted-foreground mt-2">{props.description}</p>
       </div>
-      <Button asChild>
-        <Link href="mailto:thibault@openstatus.dev">Contact Us</Link>
-      </Button>
+      <div />
     </Shell>
   );
 }
