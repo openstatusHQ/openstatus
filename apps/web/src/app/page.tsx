@@ -74,10 +74,10 @@ export default async function Page() {
             )}
           </div>
         </Shell>
-        <Partners />
         <Cards {...cardConfig.monitors} />
         <Stats />
         <Cards {...cardConfig.pages} />
+        <Partners />
         <Cards {...cardConfig.incidents} />
         <SpecialCard {...specialCardConfig} />
         <Plans />
