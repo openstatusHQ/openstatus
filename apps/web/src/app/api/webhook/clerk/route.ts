@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     default:
       ((d: never) => console.error(`${d} not handled here`))(event);
-      return null;
+      break;
   }
   return NextResponse.json({ success: true });
 }
