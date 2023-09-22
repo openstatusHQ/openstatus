@@ -9,8 +9,7 @@ export async function Stats() {
   const tbLast10mStats = await getHomeStatsData({
     cronTimestamp: last10m,
   });
-  // FIXME:
-  // const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
+  const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
 
   return (
     <Shell>
@@ -34,13 +33,12 @@ export async function Stats() {
           </p>
         </div>
         <div className="text-center">
-          {/* FIXME: */}
-          {/* <h3 className="font-cal text-xl">
+          <h3 className="font-cal text-xl">
             {tbLast10mStats && tbLast10mStats?.length > 0
               ? numberFormatter(totalActiveMonitors)
               : 0}
           </h3>
-          <p className="text-muted-foreground text-xs">Active monitors</p> */}
+          <p className="text-muted-foreground text-xs">Active monitors</p>
         </div>
       </div>
     </Shell>
