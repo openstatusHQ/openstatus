@@ -1,15 +1,17 @@
-import { Tinybird } from "@chronark/zod-bird";
+import type { Tinybird } from "@chronark/zod-bird";
 
 import {
+  tbBuildHomeStats,
   tbBuildMonitorList,
   tbBuildResponseList,
   tbIngestPingResponse,
+  tbParameterHomeStats,
   tbParameterMonitorList,
   tbParameterResponseList,
 } from "./validation";
 
 // REMINDER:
-const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+// const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
 
 export function publishPingResponse(tb: Tinybird) {
   return tb.buildIngestEndpoint({
@@ -50,6 +52,20 @@ export function getHomeMonitorList(tb: Tinybird) {
     pipe: "monitor_list__v0",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
+    opts: {
+      revalidate: 600, // 10 minutes cache
+    },
+  });
+}
+
+/**
+ * Homepage stats used for our marketing page.
+ */
+export function getHomeStats(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "home_stats__v0",
+    parameters: tbParameterHomeStats,
+    data: tbBuildHomeStats,
     opts: {
       revalidate: 600, // 10 minutes cache
     },

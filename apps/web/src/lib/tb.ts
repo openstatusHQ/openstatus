@@ -1,9 +1,11 @@
 import type {
+  HomeStatsParams,
   MonitorListParams,
   ResponseListParams,
 } from "@openstatus/tinybird";
 import {
   getHomeMonitorList,
+  getHomeStats,
   getMonitorList,
   getResponseList,
   Tinybird,
@@ -41,6 +43,16 @@ export async function getMonitorListData(props: Partial<MonitorListParams>) {
 export async function getHomeMonitorListData() {
   try {
     const res = await getHomeMonitorList(tb)({ monitorId: "openstatusPing" });
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
+}
+
+export async function getHomeStatsData(props: Partial<HomeStatsParams>) {
+  try {
+    const res = await getHomeStats(tb)(props);
     return res.data;
   } catch (e) {
     console.error(e);

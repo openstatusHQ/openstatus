@@ -13,7 +13,7 @@ export function MarketingFooter({ className }: Props) {
     <footer className={cn("w-full", className)}>
       <Shell className="grid grid-cols-2 gap-6 md:grid-cols-4">
         <div className="flex flex-col gap-3 text-sm">
-          <p className="text-foreground font-semibold">Twitter</p>
+          <p className="text-foreground font-semibold">People</p>
           <FooterLink
             href="https://twitter.com/thibaultleouay"
             label="@thibaultleouay"
@@ -24,6 +24,7 @@ export function MarketingFooter({ className }: Props) {
           <p className="text-foreground font-semibold">Community</p>
           <FooterLink href="/github" label="GitHub" external />
           <FooterLink href="/discord" label="Discord" external />
+          <FooterLink href="https://twitter.com/openstatusHQ" label="X" />
         </div>
         <div className="flex flex-col gap-3 text-sm">
           <p className="text-foreground font-semibold">Resources</p>
