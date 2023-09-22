@@ -1,7 +1,6 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-Source Monitoring Platform with Status Page
-   </h3>
+  <h3 align="center">The Open-Source Synthetic Monitoring Platform with Incident Management</h3>
 
   <p align="center">
     The Open-Source Serverless monitoring platform.
@@ -21,9 +20,9 @@
 
 ## About OpenStatus
 
-OpenStatus is open-source monitoring system with beautiful status page. We are
-building it publicly for everyone to see our progress. We believe great
-softwares are built this way.
+OpenStatus is open-source synthetic monitoring platform with beautiful status
+page. We are building it publicly for everyone to see our progress. We believe
+great softwares are built this way.
 
 You can choose to host it yourself or use our hosted version at
 [openstatus.dev](https://www.openstatus.dev)
