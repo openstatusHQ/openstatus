@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.23.5",
+    "@clerk/nextjs": "4.24.0",
     "@hookform/resolvers": "3.1.1",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
@@ -45,7 +45,7 @@
     "luxon": "3.3.0",
     "micro": "10.0.1",
     "nanoid": "4.0.2",
-    "next": "13.4.19",
+    "next": "13.5.2",
     "next-contentlayer": "0.3.4",
     "next-plausible": "3.7.2",
     "react": "18.2.0",
