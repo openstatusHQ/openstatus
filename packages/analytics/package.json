@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "dependencies": {
-    "@jitsu/js": "^1.2.1",
+    "@jitsu/js": "1.2.1",
     "@t3-oss/env-core": "0.6.0",
     "zod": "3.21.4"
   },
