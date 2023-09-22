@@ -9,7 +9,9 @@ export async function Stats() {
   const tbLast10mStats = await getHomeStatsData({
     cronTimestamp: last10m,
   });
-  const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
+  const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query(
+    {},
+  );
 
   return (
     <Shell>
