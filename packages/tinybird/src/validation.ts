@@ -25,7 +25,7 @@ export const availableRegions = [
 ] as const;
 
 /**
- * Values for the datasource ping_response__v2
+ * Values for the datasource ping_response__v3
  */
 export const tbIngestPingResponse = z.object({
   id: z.string(),
@@ -42,7 +42,7 @@ export const tbIngestPingResponse = z.object({
 });
 
 /**
- * Values from the pip response_list__v1
+ * Values from the pip response_list__v0
  */
 export const tbBuildResponseList = z.object({
   id: z.string(),
@@ -63,7 +63,7 @@ export const tbBuildResponseList = z.object({
 });
 
 /**
- * Params for pipe response_list__v1
+ * Params for pipe response_list__v0
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
