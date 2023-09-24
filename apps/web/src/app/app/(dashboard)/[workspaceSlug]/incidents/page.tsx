@@ -25,7 +25,6 @@ export default async function IncidentPage({
     workspaceSlug: params.workspaceSlug,
   });
   return (
-    // min-h-full grid-rows-[auto,1fr,auto]
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-1 md:gap-8">
       <Header
         title="Incidents"

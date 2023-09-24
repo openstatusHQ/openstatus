@@ -38,7 +38,6 @@ export default async function Page({
   const disableButton = isLimit || !Boolean(monitors);
 
   return (
-    // min-h-full grid-rows-[auto,1fr,auto] grid-cols-1
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-2 md:gap-8">
       <Header
         title="Status Page"
