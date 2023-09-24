@@ -12,7 +12,6 @@ import { DataTable } from "@/components/data-table/monitor/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { EmptyState } from "./_components/empty-state";
-import Loading from "./loading";
 
 export default async function MonitorPage({
   params,
