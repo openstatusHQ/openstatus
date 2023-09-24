@@ -2,6 +2,7 @@ import { Receiver } from "@upstash/qstash/cloudflare";
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 
+import { db, eq, schema } from "@openstatus/db";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -95,6 +96,7 @@ export const checker = async (request: Request, region: string) => {
         region,
         -1,
       );
+      // Here we do the alerting
     }
   }
 };
@@ -120,4 +122,24 @@ export const ping = async (
   });
 
   return res;
+};
+
+const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
+  const notifications = await db
+    .select()
+    .from(schema.notificationsToMonitors)
+    .leftJoin(
+      schema.notification,
+      eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
+    )
+    .leftJoin(
+      schema.monitor,
+      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
+    )
+    .where(eq(schema.monitor.id, Number(monitorId)))
+    .all();
+
+  for (const notif of notifications) {
+    // Send the appropriate notification
+  }
 };
