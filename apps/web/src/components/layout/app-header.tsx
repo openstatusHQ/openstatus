@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { ArrowUpRight } from "lucide-react";
 
 import { Button, Skeleton } from "@openstatus/ui";
 
@@ -30,8 +31,15 @@ export function AppHeader() {
           OpenStatus
         </Link>
         <div className="flex items-center gap-4">
-          {/* can be moved to a different place */}
           <ul className="flex gap-2">
+            <li className="w-full">
+              <Button variant="link" asChild>
+                <Link href="https://docs.openstatus.dev" target="_blank">
+                  Docs
+                  <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
+                </Link>
+              </Button>
+            </li>
             {socialsConfig.map(({ title, href, icon }) => {
               const Icon = Icons[icon];
               return (
@@ -45,11 +53,12 @@ export function AppHeader() {
               );
             })}
           </ul>
-          {!isLoaded && !isSignedIn ? (
+          <div className="relative">
             <Skeleton className="h-8 w-8 rounded-full" />
-          ) : (
-            <UserButton />
-          )}
+            <div className="absolute inset-0">
+              {isLoaded && isSignedIn && <UserButton />}
+            </div>
+          </div>
         </div>
       </Shell>
     </header>
