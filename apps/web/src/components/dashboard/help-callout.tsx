@@ -10,10 +10,10 @@ export function HelpCallout() {
       <AlertDescription className="text-muted-foreground">
         Let us know at{" "}
         <a
-          href="mailto:hello@openstatus.dev"
+          href="mailto:ping@openstatus.dev"
           className="text-foreground font-medium underline hover:no-underline"
         >
-          hello@openstatus.dev
+          ping@openstatus.dev
         </a>{" "}
         or join our{" "}
         <a

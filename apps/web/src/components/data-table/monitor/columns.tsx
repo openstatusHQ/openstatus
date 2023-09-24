@@ -4,6 +4,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
 import type { ExtendedMonitor } from "@openstatus/db/src/schema";
+import { Badge } from "@openstatus/ui";
 
 import { DataTableStatusBadge } from "../data-table-status-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -30,6 +31,7 @@ export const columns: ColumnDef<
             </span>
           )}
           <span className="max-w-[125px] truncate">{row.getValue("name")}</span>
+          {!active ? <Badge variant="outline">paused</Badge> : null}
         </div>
       );
     },

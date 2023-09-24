@@ -30,8 +30,8 @@ You can choose to host it yourself or use our hosted version at
 ## Contact us
 
 If you want to learn more about this project or have any questions, book a call
-with us or send us an email at
-[hello@openstatus.dev](mailto:hello@openstatus.dev) <br/><br/>
+with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
+<br/><br/>
 <a href="https://cal.com/team/openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
 ## Built with
