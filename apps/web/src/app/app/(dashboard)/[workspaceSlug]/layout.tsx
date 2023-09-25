@@ -28,7 +28,7 @@ export default async function AppLayout({
           <AppSidebar />
         </Shell>
         <main className="z-10 flex w-full flex-1 flex-col items-start justify-center">
-          <Shell className="relative flex-1">
+          <Shell className="relative flex-1 overflow-x-hidden">
             {/* The `top-4` is represented in Shell with a `py-4` class */}
             <nav className="absolute right-4 top-4 block md:right-6 md:top-6 lg:hidden">
               <AppMenu />
