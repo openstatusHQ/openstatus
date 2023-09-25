@@ -3,5 +3,7 @@
   "fly": "Fly.io",
   "slack": "Slack",
   "telegram": "Telegram",
-  "vercel": "Vercel"
+  "vercel": "Vercel",
+  "on-call": "On Call",
+  "otel": "OpenTelemetry"
 }
