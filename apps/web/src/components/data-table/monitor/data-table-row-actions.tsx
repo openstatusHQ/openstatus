@@ -1,14 +1,13 @@
 "use client";
 
+import * as React from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
+import { selectMonitorExtendedSchema } from "@openstatus/db/src/schema";
 import {
-  Button,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -18,12 +17,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@openstatus/ui";
-import { selectMonitorExtendedSchema } from "@openstatus/db/src/schema";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
@@ -125,5 +125,3 @@ export function DataTableRowActions<TData>({
     </AlertDialog>
   );
 }
-
-

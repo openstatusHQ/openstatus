@@ -151,6 +151,10 @@ export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
     .default(""),
   headers: z.preprocess(
     (val) => {
+      // early return in case the header is already an array
+      if (Array.isArray(val)) {
+        return val;
+      }
       if (String(val).length > 0) {
         return JSON.parse(String(val));
       } else {
