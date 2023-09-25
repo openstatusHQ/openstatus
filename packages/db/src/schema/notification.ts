@@ -11,11 +11,11 @@ import { z } from "zod";
 import { monitor } from "./monitor";
 import { workspace } from "./workspace";
 
-const name = ["email", "discord", "slack"] as const;
+export const notificationName = ["email", "discord", "slack"] as const;
 
 export const notification = sqliteTable("notification", {
   id: integer("id").primaryKey(),
-  name: text("name", { enum: name }).notNull(),
+  name: text("name", { enum: notificationName }).notNull(),
   data: text("data", { mode: "json" }).notNull().default("{}"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
