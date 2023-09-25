@@ -11,9 +11,9 @@
   },
   "homepage": "https://openstatus.dev",
   "dependencies": {
-    "@vercel/analytics": "^1.0.1",
+    "@vercel/analytics": "1.0.1",
     "next": "13.4.19",
-    "nextra": "2.10.0",
+    "nextra": "2.13.0",
     "nextra-theme-docs": "2.10.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",

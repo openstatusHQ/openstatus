@@ -1,11 +1,11 @@
-# **Configuration of the .env file**
+# Configuration of the .env file
 
 The `.env` file contains various environment variables that need to be properly
 configured for the application to work correctly. Below, I will explain how to
 obtain the values for some of these variables, focusing on the section related
 to Cleark Auth.
 
-## **Setting up Clerk for auth**
+## Setting up Clerk for auth
 
 1. Log in to your Clerk account at [https://clerk.com/](https://clerk.com/) or
    create a new account if you don't have one yet.
@@ -39,7 +39,7 @@ CLERK_SECRET_KEY=sk_test_••••••••••••••••••�
 Remember to replace the key values with the actual keys obtained from your Clerk
 account.
 
-## **Setting up Resend for sending emails**
+## Setting up Resend for sending emails
 
 The "RESEND for email" section in the `.env` file contains the "RESEND_API_KEY"
 variable, which corresponds to the Resend API key that you need to set up to
@@ -72,9 +72,9 @@ RESEND_API_KEY=re_••••••••••••••••••••�
 Replace the key with the actual Resend API key you obtained from your Resend
 account.
 
-## **Setting up UPSTASH (QStash and Redis)**
+## Setting up Upstash (QStash and Redis)
 
-The "UPSTASH for queue" section in the `.env` file contains the following
+The "Upstash for queue" section in the `.env` file contains the following
 variables related to QStash and Redis:
 
 ```
@@ -92,7 +92,7 @@ UPSTASH_REDIS_REST_TOKEN=test
 
 To configure UPSTASH correctly, follow these steps:
 
-### **Obtaining QStash Keys**
+### Obtaining QStash Keys
 
 1. Log in to your UPSTASH account at
    [https://upstash.com/](https://upstash.com/) or create a new account if you
@@ -116,7 +116,10 @@ QSTASH_URL=https://qstash.upstash.io/v1/publish/
 
 Replace the ellipsis with the actual keys you obtained from UPSTASH.
 
-### **Configuring Redis**
+### Configuring Redis
+
+> We have been using Redis for the waiting list in this project. It is not used
+> currently. However, if you want to use it, you can follow the steps below to.
 
 1. Create a Redis database in UPSTASH through
    [https://console.upstash.com/](https://console.upstash.com/).
@@ -136,7 +139,45 @@ UPSTASH_REDIS_REST_TOKEN="•••••••••"
 Replace the ellipsis with the actual URL and token of Redis you obtained from
 UPSTASH.
 
-## **Setting up Turso (SQLite or Cloud Database)**
+## Setting up Tinybird
+
+You will need to create an API token under Auth tokens > Workspace tokens > Add
+a new token.
+
+```
+# TinyBird
+TINY_BIRD_API_KEY="•••••••••"
+```
+
+The [Tinybird CLI](https://www.tinybird.co/docs/cli.html) can be used to push
+the pipes to the Tinybird server.
+
+### Datasource
+
+We ingest the monitor response into the `ping_response__v3` table. If you want
+to have some dummy data to start with, check out the
+[csv](/dummy/ping_response__v3.csv) file.
+
+> Warning: If importing the csv file, make sure to change the column names are
+> identical (e.g. `monitorId` instead of `monitorid`). Otherwise, the pipes will
+> not work.
+
+### Pipes
+
+The pipes we are using can be found under `@packages/tinybird/pipes`. Pipes are
+used to transform data from one format to another. For example, we are using a
+pipe to transform the data from the database `ping_response` into aggregated
+data.
+
+We currently have three pipes:
+
+1. `monitor_list__v0`: returns aggregated data from the `ping_response` table.
+2. `response_list__v0`: returns the list of responses from the `ping_response`
+   table.
+3. `home_stats__v0`: returns the total amount of pings during a timeframe from
+   the `ping_response` table.
+
+## Setting up Turso (SQLite or Cloud Database)
 
 The "TURSO SQLITE" section in the `.env` file allows you to configure Turso
 database, either a local SQLite database or a cloud-based database.
@@ -161,7 +202,7 @@ turso dev --db-file openstatus.db
 By doing this, you'll be able to work with the local database without modifying
 the `.env` file.
 
-### **If you want to use a cloud-based database with Turso**
+### If you want to use a cloud-based database with Turso
 
 To use a cloud-based database with Turso, follow these steps:
 
@@ -213,7 +254,7 @@ Remember to copy this information in both` app/web/.env` and `packages/db/.env`
 and save the changes to the `.env` file once you have completed all the
 configurations.
 
-## **Conclusion**
+## Conclusion
 
 Once you have collected all the necessary information, you should save it in the
 `.env` file to ensure proper configuration for your application. Following these
