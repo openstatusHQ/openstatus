@@ -15,3 +15,7 @@ CREATE TABLE `notifications_to_monitors` (
 	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`notificationId`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE no action
 );
+--> statement-breakpoint
+ALTER TABLE `monitor` DROP COLUMN `status`;
+--> statement-breakpoint
+ALTER TABLE `monitor` ADD COLUMN `status` text(2) DEFAULT 'active' NOT NULL;

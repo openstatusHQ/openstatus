@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "3b23b4c8-d890-406a-b83f-6321cea58748",
+  "id": "6d734a0d-6bdf-4a35-bbea-9b3870bfe70f",
   "prevId": "23bfc90d-3bb1-4077-81d8-8f2e874f9c62",
   "tables": {
     "incident": {
@@ -420,7 +420,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'inactive'"
+          "default": "'active'"
         },
         "active": {
           "name": "active",

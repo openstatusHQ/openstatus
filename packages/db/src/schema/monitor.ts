@@ -9,6 +9,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import { monitorsToIncidents } from "./incident";
+import { notificationsToMonitors } from "./notification";
 import { page } from "./page";
 import { workspace } from "./workspace";
 
@@ -36,7 +37,7 @@ export const availableRegions = [
 
 export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;
-
+export const status = ["active", "error"] as const;
 export const RegionEnum = z.enum(availableRegions);
 
 export const monitor = sqliteTable("monitor", {
@@ -47,7 +48,7 @@ export const monitor = sqliteTable("monitor", {
   periodicity: text("periodicity", ["1m", "5m", "10m", "30m", "1h", "other"])
     .default("other")
     .notNull(),
-  status: text("status", ["active", "inactive"]).default("inactive").notNull(),
+  status: text("status", status).default("active").notNull(),
   active: integer("active", { mode: "boolean" }).default(false),
 
   regions: text("regions").default("").notNull(),
@@ -77,6 +78,7 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
     fields: [monitor.workspaceId],
     references: [workspace.id],
   }),
+  monitorsToNotifications: many(notificationsToMonitors),
 }));
 
 export const monitorsToPages = sqliteTable(
@@ -113,7 +115,7 @@ export const periodicityEnum = z.enum(periodicity);
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
   url: z.string().url(),
-  status: z.enum(["active", "inactive"]).default("inactive"),
+  status: z.enum(status).default("active"),
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
   method: z.enum(METHODS).default("GET"),
@@ -126,7 +128,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
 // Schema for selecting a Monitor - can be used to validate API responses
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: periodicityEnum,
-  status: z.enum(["active", "inactive"]).default("inactive"),
+  status: z.enum(status).default("active"),
   jobType: z.enum(["website", "cron", "other"]).default("other"),
   active: z.boolean().default(false),
   regions: z

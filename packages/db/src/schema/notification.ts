@@ -26,6 +26,8 @@ export const notification = sqliteTable("notification", {
   ),
 });
 
+export const selectNotificationSchema = createSelectSchema(notification);
+
 export const notificationsToMonitors = sqliteTable(
   "notifications_to_monitors",
   {
@@ -41,6 +43,20 @@ export const notificationsToMonitors = sqliteTable(
   }),
 );
 
+export const notificationsToMonitorsRelation = relations(
+  notificationsToMonitors,
+  ({ one }) => ({
+    monitor: one(monitor, {
+      fields: [notificationsToMonitors.monitorId],
+      references: [monitor.id],
+    }),
+    notification: one(notification, {
+      fields: [notificationsToMonitors.notificationId],
+      references: [notification.id],
+    }),
+  }),
+);
+
 export const notificationRelations = relations(
   notification,
   ({ one, many }) => ({
@@ -48,6 +64,6 @@ export const notificationRelations = relations(
       fields: [notification.workspaceId],
       references: [workspace.id],
     }),
-    monitor: many(notification),
+    monitor: many(notificationsToMonitors),
   }),
 );

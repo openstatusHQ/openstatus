@@ -127,6 +127,9 @@ importers:
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
+      '@openstatus/resend':
+        specifier: workspace:^
+        version: link:../../packages/notifications/email
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird

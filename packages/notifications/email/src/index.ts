@@ -9,7 +9,7 @@ import type { EmailConfigurationSchema } from "./schema/config";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
-const send = async ({
+export const send = async ({
   data,
   config,
 }: {
