@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "6d734a0d-6bdf-4a35-bbea-9b3870bfe70f",
+  "id": "72f58965-4d96-43e5-9101-3ceb67dac648",
   "prevId": "23bfc90d-3bb1-4077-81d8-8f2e874f9c62",
   "tables": {
     "incident": {
@@ -834,11 +834,18 @@
           "notNull": true,
           "autoincrement": false
         },
+        "provider": {
+          "name": "provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "data": {
           "name": "data",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false,
           "default": "'{}'"
         },

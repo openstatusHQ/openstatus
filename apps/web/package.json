@@ -17,7 +17,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/plans": "workspace:*",
-    "@openstatus/resend": "workspace:^",
+    "@openstatus/notification-emails": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",

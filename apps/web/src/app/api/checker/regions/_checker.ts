@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import type { z } from "zod";
 
 import { db, eq, schema } from "@openstatus/db";
+import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -12,6 +13,7 @@ import {
 import { env } from "@/env";
 import type { Payload } from "../schema";
 import { payloadSchema } from "../schema";
+import { providerToFunction } from "../utits";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -96,6 +98,7 @@ export const checker = async (request: Request, region: string) => {
         region,
         -1,
       );
+      await triggerAlerting({ monitorId: result.data.monitorId });
       // Here we do the alerting
     }
   }
@@ -128,11 +131,11 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
-    .leftJoin(
+    .innerJoin(
       schema.notification,
       eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
     )
-    .leftJoin(
+    .innerJoin(
       schema.monitor,
       eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
     )
@@ -140,6 +143,9 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     .all();
 
   for (const notif of notifications) {
-    // Send the appropriate notification
+    await providerToFunction[notif.notification.provider]({
+      monitor: notif.monitor,
+      notification: selectNotificationSchema.parse(notif.notification),
+    });
   }
 };

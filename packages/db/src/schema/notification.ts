@@ -5,18 +5,18 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 
 import { monitor } from "./monitor";
 import { workspace } from "./workspace";
 
-export const notificationName = ["email", "discord", "slack"] as const;
+export const providerName = ["email", "discord", "slack"] as const;
 
 export const notification = sqliteTable("notification", {
   id: integer("id").primaryKey(),
-  name: text("name", { enum: notificationName }).notNull(),
-  data: text("data", { mode: "json" }).notNull().default("{}"),
+  name: text("name").notNull(),
+  provider: text("provider", { enum: providerName }).notNull(),
+  data: text("data", { mode: "json" }).default("{}"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
@@ -27,6 +27,8 @@ export const notification = sqliteTable("notification", {
 });
 
 export const selectNotificationSchema = createSelectSchema(notification);
+
+export const insertNotificationSchema = createInsertSchema(notification);
 
 export const notificationsToMonitors = sqliteTable(
   "notifications_to_monitors",

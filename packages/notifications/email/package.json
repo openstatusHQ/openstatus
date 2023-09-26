@@ -1,9 +1,10 @@
 {
-  "name": "@openstatus/resend",
+  "name": "@openstatus/notification-emails",
   "version": "0.0.0",
   "main": "src/index.ts",
   "description": "Log drains Vercel integration.",
   "dependencies": {
+    "@openstatus/db": "workspace:^",
     "@openstatus/emails": "workspace:^",
     "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.6.0",

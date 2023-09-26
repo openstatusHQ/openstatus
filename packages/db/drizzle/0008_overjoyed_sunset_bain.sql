@@ -1,7 +1,8 @@
 CREATE TABLE `notification` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
-	`data` text DEFAULT '{}' NOT NULL,
+	`provider` text NOT NULL,
+	`data` text DEFAULT '{}',
 	`workspace_id` integer,
 	`created_at` integer DEFAULT (strftime('%s', 'now')),
 	`updated_at` integer DEFAULT (strftime('%s', 'now')),
@@ -15,6 +16,7 @@ CREATE TABLE `notifications_to_monitors` (
 	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`notificationId`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE no action
 );
+--> statement-breakpoint
 --> statement-breakpoint
 ALTER TABLE `monitor` DROP COLUMN `status`;
 --> statement-breakpoint
