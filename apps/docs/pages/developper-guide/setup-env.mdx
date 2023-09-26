@@ -254,6 +254,74 @@ Remember to copy this information in both` app/web/.env` and `packages/db/.env`
 and save the changes to the `.env` file once you have completed all the
 configurations.
 
+
+## **Setting up tinybird**
+
+1. Log in to your tinybird account at https://www.tinybird.co/ or create a new account if you don't have one yet.
+
+2. Once logged in, go to your dashboard and copy the auth token and paste inside `.env` 
+> Please make sure you chose the admin token otherwise it may give an error like auth token invalid
+
+3. Then download this file  [ping_response__v3](https://docs.openstatus.dev/dummy/ping_response__v3.csv)
+
+4. install the tinybird-cli
+
+```
+cd packages/tinybird
+python3 -m venv .venv
+source .venv/bin/activate
+pip install tinybird-cli
+
+```
+
+5. Create a datasource from this file 
+> Please make sure while importing you edit the table header fields in camelcase .
+
+6. Create pipe from the datasource name as a `response_list__v0` and `monitor_list__v0` 
+
+7. Inside `response_list__v0` pipe, create a endpoint by running a following query :
+
+```
+%
+    SELECT id, latency, monitorId, pageId, region, statusCode, timestamp, url, workspaceId, cronTimestamp
+    FROM ping_response__v3
+    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
+    {% if defined(region) %}
+    AND region = {{ String(region) }}
+    {% end %}
+    {% if defined(cronTimestamp) %}
+    AND cronTimestamp = {{ Int64(cronTimestamp) }}
+    {% end %}
+    {% if defined(fromDate) %}
+    AND cronTimestamp >= {{ Int64(fromDate) }}
+    {% end %}
+    {% if defined(toDate) %}
+    AND cronTimestamp <= {{ Int64(toDate) }}
+    {% end %}
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 1000)}}
+```
+
+8. Inside `monitor_list__v0` pipe , create a endpoint by running a following query :
+
+```
+%
+    SELECT
+    {% if defined(groupBy) and groupBy == "day" %}
+    toUnixTimestamp64Milli(toDateTime64(DATE(cronTimestamp / 1000), 3))
+    {% else %}
+    cronTimestamp
+    {% end %}
+    AS cronTimestamp, ROUND(AVG(latency)) as avgLatency, COUNT(*) as count, COUNT(CASE WHEN statusCode BETWEEN 200 AND 299 THEN 1 ELSE NULL END) as ok
+    FROM ping_response__v3
+    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }} AND cronTimestamp IS NOT NULL AND cronTimestamp != 0
+    GROUP BY cronTimestamp
+    ORDER BY cronTimestamp DESC
+    LIMIT {{Int32(limit, 1000)}}
+    
+```
+
+
 ## Conclusion
 
 Once you have collected all the necessary information, you should save it in the
