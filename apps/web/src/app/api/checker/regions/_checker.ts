@@ -141,7 +141,6 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     )
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
-  console.log(notifications);
   for (const notif of notifications) {
     await providerToFunction[notif.notification.provider]({
       monitor: notif.monitor,

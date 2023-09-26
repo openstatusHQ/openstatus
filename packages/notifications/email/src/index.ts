@@ -22,21 +22,17 @@ export const send = async ({
   const config = EmailConfigurationSchema.parse(notification.data);
 
   const { to } = config;
-  const ReactDOMServer = (await import("react-dom/server")).default;
-  const data = ReactDOMServer.renderToString(
-    Alert({
+
+  await resend.emails.send({
+    to,
+    from: "Notifications <ping@openstatus.dev>",
+    subject: "Welcome to OpenStatus",
+    react: Alert({
       data: {
         monitorName: monitor.name,
         monitorUrl: monitor.url,
         recipientName: config.name,
       },
     }),
-  );
-  console.log(data);
-  await resend.emails.send({
-    to,
-    from: "Notifications <ping@openstatus.dev>",
-    subject: "Welcome to OpenStatus",
-    text: data,
   });
 };
