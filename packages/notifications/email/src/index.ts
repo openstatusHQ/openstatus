@@ -1,5 +1,4 @@
-import React from "react";
-import { renderAsync } from "@react-email/components";
+import { render, renderAsync } from "@react-email/render";
 import type { z } from "zod";
 
 import type {
@@ -8,7 +7,6 @@ import type {
 } from "@openstatus/db/src/schema";
 import { Alert, resend } from "@openstatus/emails";
 
-import { env } from "../env";
 import { EmailConfigurationSchema } from "./schema/config";
 
 export const send = async ({
@@ -20,7 +18,7 @@ export const send = async ({
 }) => {
   const config = EmailConfigurationSchema.parse(notification.data);
 
-  const html = await renderAsync(
+  const html = render(
     Alert({
       data: {
         monitorName: monitor.name,
