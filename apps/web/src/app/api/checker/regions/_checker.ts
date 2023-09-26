@@ -13,7 +13,7 @@ import {
 import { env } from "@/env";
 import type { Payload } from "../schema";
 import { payloadSchema } from "../schema";
-import { providerToFunction } from "../utits";
+import { providerToFunction } from "../utils";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
