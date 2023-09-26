@@ -1,0 +1,166 @@
+---
+title: How to secure your API with Unkey and Hono.js Middleware
+description: The simplest way to secure your API routes within seconds.
+author:
+  name: Maximilian Kaske
+  url: https://twitter.com/mxkaske
+publishedAt: 2023-09-29
+# image: /assets/posts/unkey-api-secure/catchline.png
+---
+
+## Introduction
+
+Why do we need to secure our APIs? Well, there are many reasons for that. The
+most important one is that we want to protect your data from unauthorized
+access.
+
+We will learn how to secure our [Hono.js](https://hono.dev) API server with
+[Unkey](https://unkey.dev).
+
+Unkey is a service that allows you to create and manage API keys. It includes
+useful features like:
+
+- rate limiting
+- temporary keys
+- key revocation
+
+The best part: **We have no additional database migration or setup to do. We
+just use the Unkey API and SDK to create and verify keys.**
+
+### How does it work?
+
+Whenever OpenStatus creates an API key, we will send a request to the Unkey API
+using their [Typescript SDK](https://docs.unkey.dev/libraries/js/overview) with
+the a specific `ownerId` which will be the `workspaceId` in our case. The user
+will get an API key back which they can use to access their content via our API
+route, Unkey will match the API key to the `ownerId` and we will be able to
+validate that the request is the owner of the `workspaceId`.
+
+Here our Next.js `server action` (see
+[GitHub](<https://github.com/openstatusHQ/openstatus/blob/main/apps/web/src/app/app/(dashboard)/%5BworkspaceSlug%5D/settings/_components/api-keys/actions.ts>))
+to create and revoke keys:
+
+```ts
+"use server";
+
+import { Unkey } from "@unkey/api";
+
+import { env } from "@/env";
+
+const unkey = new Unkey({ token: env.UNKEY_TOKEN });
+
+export async function create(ownerId: number) {
+  const key = await unkey.keys.create({
+    apiId: env.UNKEY_API_ID,
+    ownerId: String(ownerId), // workspaceId
+    prefix: "os", // os_1234567890
+  });
+  return key;
+}
+
+export async function revoke(keyId: string) {
+  const res = await unkey.keys.revoke({ keyId });
+  return res;
+}
+```
+
+To test the implementation, you can go to the
+[Unkey Dashboard](http://unkey.dev/app) and create an API key manually instead
+of using the SDK. It will be useful once you want your users to create API keys.
+
+## Getting started
+
+Checkout [hono.dev](https://hono.dev) if you want to set up a new project or
+follow along if you already have a Hono.js project.
+
+We will pin point the most important parts of the setup. You can find the full
+code on
+[GitHub](https://github.com/openstatusHQ/openstatus/tree/main/apps/server).
+
+### Create the base path
+
+That's as simple as is looks. Create a `new Hono()` instance and define the
+routes (`route`) and middlewares (`use`). For the sake of this example, we only
+consider the `/api/v1/monitor` route.
+
+```ts
+import { middleware } from "./middleware";
+import { monitorApi } from "./monitor";
+
+export type Variables = { workspaceId: string }; // Context
+
+const api = new Hono<{ Variables: Variables }>().basePath("/api/v1");
+
+api.use("/*", middleware);
+api.route("monitor", monitorApi);
+
+export default app;
+```
+
+### Create the middleware
+
+The middleware will automatically be applied to all routes that match the path
+`/api/v1/*`. We will use the `x-openstatus-key` header to verify the API key.
+Each request will require a valid API key.
+
+We will use the Hono [Context](https://hono.dev/api/context) to store the
+`workspaceId` we are getting from Unkey (which in fact is the `ownerId`).
+
+```ts
+import { verifyKey } from "@unkey/api";
+import type { Context, Next } from "hono";
+
+import type { Variables } from "./index";
+
+export async function middleware(
+  c: Context<{ Variables: Variables }, "/api/v1/*">,
+  next: Next,
+) {
+  const key = c.req.header("x-openstatus-key");
+
+  if (!key) return c.text("Unauthorized", 401);
+
+  const { error, result } = await verifyKey(key);
+
+  if (error) return c.text("Bad Request", 400);
+  if (!result.valid) return c.text("Unauthorized", 401);
+
+  c.set("workspaceId", `${result.ownerId}`);
+
+  await next();
+}
+```
+
+Every route, here `monitorApi`, will have access to the `workspaceId` via the
+Context and therefore can query the database for the workspace.
+
+```ts
+import type { Variables } from "./index";
+
+export const monitorApi = new Hono<{ Variables: Variables }>();
+
+monitorApi.get("/:id", async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+  // ... fetch data from database
+  return c.json({ pong: true });
+});
+```
+
+Of course a valid API key might have access to unauthorized data so make sure to
+validate that the `monitorId` has the `workspaceId` as a foreign key.
+
+### Test it locally
+
+Once the your project is runngin, you can test your implementation with the
+following curl command:
+
+```bash
+curl --location 'http://localhost:3000/api/v1/monitor/1' \
+--header 'x-openstatus-key: os_1234567890'
+```
+
+We are running our Hono.js server on [fly.io](https://fly.io) via `bun start`.
+
+We have added the `@hono/zod-openapi` plugin so that we can generate an OpenAPI
+spec out of the box.
