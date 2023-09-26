@@ -5,6 +5,7 @@ import type {
   basicMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
+import { Alert } from "@openstatus/emails";
 
 import { env } from "../env";
 import { EmailConfigurationSchema } from "./schema/config";
@@ -25,7 +26,13 @@ export const send = async ({
   await resend.emails.send({
     to,
     from: "Notifications <ping@openstatus.dev>",
-    subject: "Your monitor is down",
-    text: "Your monitor is down",
+    subject: "Your monitor is ",
+    react: Alert({
+      data: {
+        monitorName: monitor.name,
+        monitorUrl: monitor.url,
+        recipientName: config.name,
+      },
+    }),
   });
 };
