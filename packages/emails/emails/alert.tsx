@@ -64,4 +64,4 @@ const Alert = ({ data }: { data: z.infer<typeof EmailDataSchema> }) => {
   );
 };
 
-export default Alert;
+export { Alert };
