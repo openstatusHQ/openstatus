@@ -8,7 +8,7 @@
     "@openstatus/emails": "workspace:^",
     "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.6.0",
-    "resend": "1.1.0",
+    "resend": "0.17.1",
     "zod": "3.21.4"
   },
   "devDependencies": {
