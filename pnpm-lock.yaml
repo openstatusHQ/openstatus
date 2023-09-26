@@ -245,8 +245,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0
       resend:
-        specifier: 0.17.1
-        version: 0.17.1
+        specifier: 1.1.0
+        version: 1.1.0
       shiki:
         specifier: 0.14.3
         version: 0.14.3
@@ -490,8 +490,8 @@ importers:
         specifier: 1.9.4
         version: 1.9.4
       resend:
-        specifier: 0.17.1
-        version: 0.17.1
+        specifier: 1.1.0
+        version: 1.1.0
       zod:
         specifier: 3.21.4
         version: 3.21.4
@@ -560,12 +560,15 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../tinybird
+      '@react-email/components':
+        specifier: 0.0.7
+        version: 0.0.7
       '@t3-oss/env-core':
         specifier: 0.6.0
         version: 0.6.0(typescript@5.1.6)(zod@3.21.4)
       resend:
-        specifier: 0.17.1
-        version: 0.17.1
+        specifier: 1.1.0
+        version: 1.1.0
       zod:
         specifier: 3.21.4
         version: 3.21.4
@@ -6105,16 +6108,6 @@ packages:
   /axe-core@4.8.1:
     resolution: {integrity: sha512-9l850jDDPnKq48nbad8SiEelCv4OrUWrKab/cPj0GScVg6cb6NbCCt/Ulk26QEq5jP9NnGr04Bit1BHyV6r5CQ==}
     engines: {node: '>=4'}
-    dev: false
-
-  /axios@1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
-    dependencies:
-      follow-redirects: 1.15.2
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /axios@1.5.0:
@@ -12924,14 +12917,12 @@ packages:
     resolution: {integrity: sha512-ab9EmR80F/zQTMNeneUr4cv+jSwPJgIlvEmVwLerwrWVbpLlBuls9XHzIeTFy4cegU2NHBp3va0LKOzU5qFEYQ==}
     dev: false
 
-  /resend@0.17.1:
-    resolution: {integrity: sha512-cLMaKmAp1sjBJFrTAAi8XYKK1PDmPJ7xTI7lTKlVNCmU3qp5OyNjOYlv/6qQrMEAOQ03jy0c0P0rLIBBKgDzQA==}
+  /resend@1.1.0:
+    resolution: {integrity: sha512-it8TIDVT+/gAiJsUlv2tdHuvzwCCv4Zwu+udDqIm/dIuByQwe68TtFDcPccxqpSVVrNCBxxXLzsdT1tsV+P3GA==}
+    engines: {node: '>=18'}
     dependencies:
       '@react-email/render': 0.0.7
-      axios: 1.4.0
       type-fest: 3.13.0
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /resolve-from@4.0.0:

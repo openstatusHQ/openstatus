@@ -1,3 +1,5 @@
+import React from "react";
+import { renderAsync } from "@react-email/components";
 import { Resend } from "resend";
 import type { z } from "zod";
 
@@ -21,18 +23,24 @@ export const send = async ({
 }) => {
   const config = EmailConfigurationSchema.parse(notification.data);
 
+  const html = await renderAsync(
+    React.createElement(
+      Alert({
+        data: {
+          monitorName: monitor.name,
+          monitorUrl: monitor.url,
+          recipientName: config.name,
+        },
+      }),
+    ),
+  );
+
   const { to } = config;
 
   await resend.emails.send({
     to,
     from: "Notifications <ping@openstatus.dev>",
-    subject: "Your monitor is ",
-    react: Alert({
-      data: {
-        monitorName: monitor.name,
-        monitorUrl: monitor.url,
-        recipientName: config.name,
-      },
-    }),
+    subject: "Your monitor is down 🚨 ",
+    html,
   });
 };
