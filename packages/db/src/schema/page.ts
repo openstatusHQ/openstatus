@@ -3,7 +3,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { monitorsToPages } from "./monitor";
+import { monitor, monitorsToPages, selectMonitorSchema } from "./monitor";
 import { workspace } from "./workspace";
 
 export const page = sqliteTable("page", {
@@ -69,3 +69,4 @@ export const insertPageSchemaWithMonitors = insertPageSchema.extend({
 
 // Schema for selecting a Page - can be used to validate API responses
 export const selectPageSchema = createSelectSchema(page);
+export type Page = z.infer<typeof selectPageSchema>;

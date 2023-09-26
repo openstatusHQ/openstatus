@@ -49,7 +49,7 @@ export const IncidentList = ({
               <div key={incident.id} className="grid gap-4 text-left">
                 <div className="max-w-3xl font-semibold">
                   {incident.title}
-                  <StatusBadge status={incident.status} />
+                  <StatusBadge status={incident.status} className="ml-2" />
                 </div>
                 <div className="overflow-hidden text-ellipsis">
                   <p className="text-muted-foreground mb-2 text-xs">

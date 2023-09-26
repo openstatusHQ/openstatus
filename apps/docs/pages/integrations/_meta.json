@@ -1,6 +1,9 @@
 {
   "discord": "Discord",
   "fly": "Fly.io",
+  "phone-call": "Phone Call",
+  "otel": "OpenTelemetry",
+  "sms": "SMS",
   "slack": "Slack",
   "telegram": "Telegram",
   "vercel": "Vercel"

@@ -6,7 +6,8 @@ import { payloadSchema } from "../schema";
 export const runtime = "edge";
 export const preferredRegion = "auto";
 export const dynamic = "force-dynamic";
-// Fix is a random region let's figure where does vercel push it
+
+// TODO: if only ID, then we should query db for the monitor data and test endpoint
 
 export async function POST(request: Request) {
   const json = await request.json();

@@ -17,14 +17,14 @@ export function AppSidebar() {
         {pagesConfig.map(({ title, href, icon, disabled }) => {
           const Icon = Icons[icon];
           const link = `/app/${params?.workspaceSlug}${href}`;
+          const isActive = pathname?.startsWith(link);
           return (
             <li key={title} className="w-full">
               <Link
                 href={link}
                 className={cn(
                   "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-                  pathname?.startsWith(link) &&
-                    "bg-muted/50 border-border text-foreground",
+                  isActive && "bg-muted/50 border-border text-foreground", // font-semibold
                   disabled && "pointer-events-none opacity-60",
                 )}
               >
