@@ -42,7 +42,11 @@ export function DataTableFilterDropDown<TData, TValue>({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8 w-[150px] lg:w-[250px] justify-start text-left font-normal border-solid "> 
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 w-[150px] justify-start border-solid text-left font-normal lg:w-[250px] "
+        >
           <Filter className="mr-2 h-4 w-4" />
           {title}
           {selectedValues?.size > 0 && (

@@ -24,16 +24,16 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-1 items-center gap-2">
         {table.getColumn("statusCode") && (
           <DataTableFacetedFilter
-          column={table.getColumn("statusCode")}
-          title="Filter by Status Code"
-          options={Object.keys(codesDict).map((key) => {
-            const typedKey = key as keyof typeof codesDict;
-            return {
-              label: codesDict[typedKey].code,
-              value: codesDict[typedKey].status_code,
-            };
-          })}
-        />
+            column={table.getColumn("statusCode")}
+            title="Filter by Status Code"
+            options={Object.keys(codesDict).map((key) => {
+              const typedKey = key as keyof typeof codesDict;
+              return {
+                label: codesDict[typedKey].code,
+                value: codesDict[typedKey].status_code,
+              };
+            })}
+          />
         )}
         {table.getColumn("region") && (
           <DataTableFacetedFilter
