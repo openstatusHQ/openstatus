@@ -57,6 +57,7 @@ export const cron = async ({
         headers: row.headers,
         body: row.body,
         cronTimestamp: timestamp,
+        status: row.status,
         pageIds: allPages.map((p) => String(p.pageId)),
       };
 
