@@ -79,6 +79,7 @@ export const cron = async ({
           body: row.body,
           headers: row.headers,
           pageIds: allPages.map((p) => String(p.pageId)),
+          status: row.status,
         };
 
         const result = c.publishJSON({
@@ -100,6 +101,7 @@ export const cron = async ({
         cronTimestamp: timestamp,
         method: "GET",
         pageIds: ["openstatus"],
+        status: "active",
       };
 
       // TODO: fetch + try - catch + retry once
