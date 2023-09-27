@@ -34,6 +34,12 @@ export default async function EditPage({
     slug: params.workspaceSlug,
   });
 
+  const notification =
+    id &&
+    (await api.monitor.getAllNotificationsForMonitor.query({
+      id,
+    }));
+
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
@@ -45,6 +51,7 @@ export default async function EditPage({
           workspaceSlug={params.workspaceSlug}
           defaultValues={monitor || undefined}
           plan={workspace?.plan}
+          notifications={notification || undefined}
         />
       </div>
     </div>

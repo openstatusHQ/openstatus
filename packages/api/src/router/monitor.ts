@@ -9,8 +9,11 @@ import {
   METHODS,
   monitor,
   monitorsToPages,
+  notification,
+  notificationsToMonitors,
   periodicityEnum,
   selectMonitorExtendedSchema,
+  selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -283,5 +286,27 @@ export const monitorRouter = createTRPCRouter({
         .all();
       if (monitors.length === 0) return 0;
       return monitors[0].count;
+    }),
+
+  getAllNotificationsForMonitor: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    // .output(selectMonitorSchema)
+    .query(async (opts) => {
+      if (!opts.input.id) return;
+      const result = await hasUserAccessToMonitor({
+        monitorId: opts.input.id,
+        ctx: opts.ctx,
+      });
+      if (!result) return null;
+
+      const data = await opts.ctx.db
+        .select()
+        .from(notification)
+        .innerJoin(
+          notificationsToMonitors,
+          eq(notificationsToMonitors.monitorId, opts.input.id),
+        )
+        .all();
+      return data.map((d) => selectNotificationSchema.parse(d.notification));
     }),
 });

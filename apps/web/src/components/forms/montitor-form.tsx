@@ -8,12 +8,16 @@ import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 
+import { not } from "@openstatus/db";
+import type { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   insertMonitorSchema,
+  notification,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 import {
+  Badge,
   Button,
   Command,
   CommandEmpty,
@@ -51,6 +55,7 @@ import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
+import { NotificationDialog } from "./notification-dialog";
 
 const cronJobs = [
   { value: "1m", label: "1 minute" },
@@ -80,13 +85,15 @@ type MonitorProps = z.infer<typeof mergedSchema>;
 interface Props {
   defaultValues?: MonitorProps;
   workspaceSlug: string;
-  plan?: "free" | "pro"; // HOTFIX - We can think of returning `workspace` instead of `workspaceSlug`
+  plan?: "free" | "pro";
+  notifications?: z.infer<typeof selectNotificationSchema>[]; // HOTFIX - We can think of returning `workspace` instead of `workspaceSlug`
 }
 
 export function MonitorForm({
   defaultValues,
   workspaceSlug,
   plan = "free",
+  notifications,
 }: Props) {
   const form = useForm<MonitorProps>({
     resolver: zodResolver(mergedSchema), // too much - we should only validate the values we ask inside of the form!
@@ -219,7 +226,7 @@ export function MonitorForm({
                 />
               </FormControl>
               <FormDescription>
-                Provide your users with information about it.{" "}
+                Provide your users with information about it.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -380,6 +387,16 @@ export function MonitorForm({
           >
             {!isTestPending ? "Test Request" : <LoadingAnimation />}
           </Button>
+        </div>
+
+        <div className="sm:col-span-2 sm:col-start-1">
+          <>
+            {notifications?.map((notification) => (
+              // We should be able to delete them as well
+              <Badge key={notification.id}> {notification.name} </Badge>
+            ))}
+            <NotificationDialog />
+          </>
         </div>
         <FormField
           control={form.control}
