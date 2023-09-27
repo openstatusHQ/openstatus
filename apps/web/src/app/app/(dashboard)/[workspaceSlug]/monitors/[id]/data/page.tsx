@@ -48,7 +48,7 @@ export default async function Page({
 
   return (
     <div className="grid gap-6 md:gap-8">
-      <Header title={monitor.name} description={monitor.url}></Header>
+      <Header title={monitor.name} description={monitor.url} />
       {data && <DataTable columns={columns} data={data} />}
     </div>
   );

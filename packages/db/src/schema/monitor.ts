@@ -34,6 +34,7 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
+export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;
 
 export const RegionEnum = z.enum(availableRegions);
@@ -107,14 +108,7 @@ export const monitorsToPagesRelation = relations(
   }),
 );
 
-export const periodicityEnum = z.enum([
-  "1m",
-  "5m",
-  "10m",
-  "30m",
-  "1h",
-  "other",
-]);
+export const periodicityEnum = z.enum(periodicity);
 // Schema for inserting a Monitor - can be used to validate API requests
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
@@ -123,7 +117,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
   method: z.enum(METHODS).default("GET"),
-  body: z.string().default(""),
+  body: z.string().default("").optional(),
   headers: z
     .array(z.object({ key: z.string(), value: z.string() }))
     .default([]),
@@ -147,6 +141,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   method: z.enum(METHODS).default("GET"),
 });
 
+// FIXME: can be removed as we do not use the advanced tab anymore
 export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   method: z.enum(METHODS).default("GET"),
   body: z
@@ -156,6 +151,10 @@ export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
     .default(""),
   headers: z.preprocess(
     (val) => {
+      // early return in case the header is already an array
+      if (Array.isArray(val)) {
+        return val;
+      }
       if (String(val).length > 0) {
         return JSON.parse(String(val));
       } else {
@@ -166,6 +165,7 @@ export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
   ),
 });
 
-export const allMonitorsSchema = z.array(selectMonitorExtendedSchema);
-
+// FIXME: ExtendedMonitor can be renamed to Monitor
 export const allMonitorsExtendedSchema = z.array(selectMonitorExtendedSchema);
+export type ExtendedMonitor = z.infer<typeof selectMonitorExtendedSchema>;
+export type ExtendedMonitors = z.infer<typeof allMonitorsExtendedSchema>;

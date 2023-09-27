@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { ArrowUpRight } from "lucide-react";
+
+import { Button, Skeleton } from "@openstatus/ui";
 
 import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";
 import { Icons } from "../icons";
-import { Button } from "../ui/button";
-import { Skeleton } from "../ui/skeleton";
 
 /**
  * TODO: work on a better breadcrumb navigation like Vercel
@@ -21,17 +22,24 @@ export function AppHeader() {
   const { isLoaded, isSignedIn } = useUser();
 
   return (
-    <header className="border-border sticky top-3 z-50 w-full">
+    <header className="border-border sticky top-3 z-50 w-full md:top-6">
       <Shell className="bg-background/70 flex w-full items-center justify-between px-3 py-3 backdrop-blur-lg md:px-6 md:py-3">
         <Link
-          href="/"
+          href={`/${isSignedIn ? "app" : ""}`}
           className="font-cal text-muted-foreground hover:text-foreground text-lg"
         >
           OpenStatus
         </Link>
         <div className="flex items-center gap-4">
-          {/* can be moved to a different place */}
           <ul className="flex gap-2">
+            <li className="w-full">
+              <Button variant="link" asChild>
+                <Link href="https://docs.openstatus.dev" target="_blank">
+                  Docs
+                  <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
+                </Link>
+              </Button>
+            </li>
             {socialsConfig.map(({ title, href, icon }) => {
               const Icon = Icons[icon];
               return (
@@ -45,11 +53,12 @@ export function AppHeader() {
               );
             })}
           </ul>
-          {!isLoaded && !isSignedIn ? (
+          <div className="relative">
             <Skeleton className="h-8 w-8 rounded-full" />
-          ) : (
-            <UserButton />
-          )}
+            <div className="absolute inset-0">
+              {isLoaded && isSignedIn && <UserButton />}
+            </div>
+          </div>
         </div>
       </Shell>
     </header>

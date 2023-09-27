@@ -12,14 +12,10 @@ import {
   insertIncidentSchema,
   StatusEnum,
 } from "@openstatus/db/src/schema";
-
-import { Preview } from "@/components/content/preview";
-import { Icons } from "@/components/icons";
-import { LoadingAnimation } from "@/components/loading-animation";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
+  Button,
+  Checkbox,
+  DateTimePicker,
   Form,
   FormControl,
   FormDescription,
@@ -27,11 +23,19 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+  Input,
+  RadioGroup,
+  RadioGroupItem,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+  Textarea,
+} from "@openstatus/ui";
+
+import { Preview } from "@/components/content/preview";
+import { Icons } from "@/components/icons";
+import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { cn } from "@/lib/utils";
@@ -183,7 +187,7 @@ export function IncidentForm({
                         <Textarea
                           placeholder="We are encountering..."
                           className="h-auto w-full resize-none"
-                          rows={7}
+                          rows={9}
                           {...field}
                         />
                       </FormControl>
@@ -287,7 +291,7 @@ export function IncidentForm({
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

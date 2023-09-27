@@ -5,11 +5,10 @@ import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
 
-import { Badge } from "@/components/ui/badge";
 import { regionsDict } from "@/data/regions-dictionary";
-import { cn } from "@/lib/utils";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-action";
+import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
@@ -32,24 +31,7 @@ export const columns: ColumnDef<Ping>[] = [
     ),
     cell: ({ row }) => {
       const statusCode = String(row.getValue("statusCode"));
-      const isOk = statusCode.startsWith("2");
-      return (
-        <Badge
-          variant="outline"
-          className={cn(
-            "px-2 py-0.5 text-xs",
-            isOk ? "border-green-100 bg-green-50" : "border-red-100 bg-red-50",
-          )}
-        >
-          {statusCode}
-          <div
-            className={cn(
-              "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
-              isOk ? "bg-green-500" : "bg-red-500",
-            )}
-          />
-        </Badge>
-      );
+      return <DataTableStatusBadge {...{ statusCode }} />;
     },
     filterFn: (row, id, value) => {
       // needed because value is number, not string

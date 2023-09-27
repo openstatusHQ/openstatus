@@ -11,10 +11,9 @@ import type * as z from "zod";
 
 import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Button,
+  Checkbox,
   Form,
   FormControl,
   FormDescription,
@@ -22,11 +21,14 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { InputWithAddons } from "@/components/ui/input-with-addons";
+  Input,
+  InputWithAddons,
+  useToast,
+} from "@openstatus/ui";
+
 import { useDebounce } from "@/hooks/use-debounce";
 import { useToastAction } from "@/hooks/use-toast-action";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
@@ -39,12 +41,22 @@ interface Props {
   defaultValues?: Schema;
   workspaceSlug: string;
   allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
+  /**
+   * gives the possibility to check all the monitors
+   */
+  checkAllMonitors?: boolean;
+  /**
+   * on submit, allows to push a url
+   */
+  nextUrl?: string;
 }
 
 export function StatusPageForm({
   defaultValues,
   workspaceSlug,
   allMonitors,
+  checkAllMonitors,
+  nextUrl,
 }: Props) {
   const form = useForm<Schema>({
     resolver: zodResolver(insertPageSchemaWithMonitors),
@@ -54,8 +66,11 @@ export function StatusPageForm({
       description: defaultValues?.description || "",
       workspaceId: defaultValues?.workspaceId || 0,
       id: defaultValues?.id || 0,
-      monitors: defaultValues?.monitors ?? [],
-      customDomain: defaultValues?.customDomain || "", // HOTFIX: we need to keep all the other overwrites. Ideally, we append it in the api.update({ ...defaultValues, ...props })
+      monitors:
+        checkAllMonitors && allMonitors
+          ? allMonitors.map(({ id }) => id)
+          : defaultValues?.monitors ?? [],
+      customDomain: defaultValues?.customDomain || "",
       workspaceSlug: "",
       icon: defaultValues?.icon || "",
     },
@@ -67,6 +82,9 @@ export function StatusPageForm({
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
   const { toast } = useToastAction();
+  const { toast: defaultToast } = useToast();
+  const updateSearchParams = useUpdateSearchParams();
+
   const checkUniqueSlug = useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
       slug: debouncedSlug,
@@ -112,9 +130,23 @@ export function StatusPageForm({
             ...props,
             workspaceSlug,
           });
-          router.replace(`./edit?id=${page?.id}`); // to stay on same page and enable 'Advanced' tab
+          const id = page?.id || null;
+          router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
         }
-        toast("saved");
+        defaultToast({
+          title: "Saved successfully.",
+          description: "Your status page is ready to go.",
+          action: (
+            <Button variant="outline">
+              <a href={`https://${props.slug}.openstatus.dev`} target="_blank">
+                Visit
+              </a>
+            </Button>
+          ),
+        });
+        if (nextUrl) {
+          router.push(nextUrl);
+        }
         router.refresh();
       } catch {
         toast("error");
@@ -294,7 +326,7 @@ export function StatusPageForm({
                           <FormLabel className="font-normal">
                             {item.name}
                           </FormLabel>
-                          <FormDescription>{item.description}</FormDescription>
+                          <FormDescription>{item.url}</FormDescription>
                         </div>
                       </FormItem>
                     );
@@ -306,7 +338,7 @@ export function StatusPageForm({
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

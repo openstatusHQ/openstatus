@@ -7,9 +7,8 @@ import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
 import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
 import {
+  Button,
   Form,
   FormControl,
   FormDescription,
@@ -17,14 +16,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+  InputWithAddons,
+} from "@openstatus/ui";
+
 import { useDomainStatus } from "@/hooks/use-domain-status";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
-import { InputWithAddons } from "../ui/input-with-addons";
 
 const customDomain = insertPageSchemaWithMonitors.pick({
   customDomain: true,
@@ -115,7 +115,7 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

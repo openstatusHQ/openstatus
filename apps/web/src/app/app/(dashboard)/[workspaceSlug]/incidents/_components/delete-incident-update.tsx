@@ -3,8 +3,6 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 
-import { Icons } from "@/components/icons";
-import { LoadingAnimation } from "@/components/loading-animation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,8 +13,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+  Button,
+} from "@openstatus/ui";
+
+import { Icons } from "@/components/icons";
+import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 

@@ -7,19 +7,17 @@ import { format } from "date-fns";
 import { Eye, Info } from "lucide-react";
 
 import type { Monitor } from "@openstatus/tinybird";
-
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Separator } from "@/components/ui/separator";
-import {
+  Separator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@openstatus/ui";
+
 import useWindowSize from "@/hooks/use-window-size";
 import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
 

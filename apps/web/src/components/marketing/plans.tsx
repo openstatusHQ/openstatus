@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Check } from "lucide-react";
 
+import { Button } from "@openstatus/ui";
+
 import type { PlanProps } from "@/config/plans";
 import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
 import { LoadingAnimation } from "../loading-animation";
-import { Button } from "../ui/button";
 
 export function Plans() {
   return (
@@ -81,16 +82,12 @@ export function Plan({
       {action ? (
         <div>
           {"link" in action ? (
-            <Button asChild size="sm">
+            <Button asChild>
               <Link href={action.link}>{action.text}</Link>
             </Button>
           ) : null}
           {"onClick" in action ? (
-            <Button
-              onClick={action.onClick}
-              size="sm"
-              disabled={disabled || loading}
-            >
+            <Button onClick={action.onClick} disabled={disabled || loading}>
               {loading ? <LoadingAnimation /> : action.text}
             </Button>
           ) : null}

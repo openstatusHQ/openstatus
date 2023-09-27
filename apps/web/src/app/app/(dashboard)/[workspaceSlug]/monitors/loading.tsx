@@ -1,6 +1,7 @@
-import { Container } from "@/components/dashboard/container";
+import { Skeleton } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 
 export default function Loading() {
   return (
@@ -10,9 +11,9 @@ export default function Loading() {
           <Skeleton className="h-9 w-20" />
         </Header.Skeleton>
       </div>
-      <Container.Skeleton />
-      <Container.Skeleton />
-      <Container.Skeleton />
+      <div className="col-span-full w-full">
+        <DataTableSkeleton />
+      </div>
     </div>
   );
 }

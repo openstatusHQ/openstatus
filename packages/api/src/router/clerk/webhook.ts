@@ -36,7 +36,22 @@ export const webhookRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const slug = generateSlug(2);
+      // guarantee the slug is unique accross our workspace entries
+      let slug: string | undefined = undefined;
+
+      while (!slug) {
+        slug = generateSlug(2);
+        const slugAlreadyExists = await opts.ctx.db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.slug, slug))
+          .get();
+        if (slugAlreadyExists) {
+          console.log(`slug already exists: '${slug}'`);
+          slug = undefined;
+        }
+      }
+
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
         .values({ slug, name: "" })
@@ -77,7 +92,7 @@ export const webhookRouter = createTRPCRouter({
   userSignedIn: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "session.created") {
       const currentUser = await opts.ctx.db
-        .select({ id: user.id })
+        .select({ id: user.id, email: user.email })
         .from(user)
         .where(eq(user.tenantId, opts.input.data.data.user_id))
         .get();
@@ -86,6 +101,7 @@ export const webhookRouter = createTRPCRouter({
 
       await analytics.identify(String(currentUser.id), {
         userId: currentUser.id,
+        email: currentUser.email,
       });
       await trackAnalytics({ event: "User Signed In" });
     }

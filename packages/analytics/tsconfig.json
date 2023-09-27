@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "tsconfig/base.json",
+  "extends": "@openstatus/tsconfig/base.json",
   "exclude": ["dist", "node_modules"],
   "compilerOptions": {
     "outDir": "dist",

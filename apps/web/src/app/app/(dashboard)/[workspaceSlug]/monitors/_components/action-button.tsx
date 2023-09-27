@@ -7,8 +7,6 @@ import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
 import type { insertMonitorSchema } from "@openstatus/db/src/schema";
-
-import { LoadingAnimation } from "@/components/loading-animation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,14 +17,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import {
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@openstatus/ui";
+
+import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
@@ -52,6 +50,24 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
     });
   }
 
+  async function onTest() {
+    startTransition(async () => {
+      const { url, body, method, headers } = props;
+      const res = await fetch(`/api/checker/test`, {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ url, body, method, headers }),
+      });
+      if (res.ok) {
+        toast("test-success");
+      } else {
+        toast("test-error");
+      }
+    });
+  }
+
   return (
     <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
       <DropdownMenu>
@@ -71,6 +87,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
           <Link href={`/app/${props.workspaceSlug}/monitors/${props.id}/data`}>
             <DropdownMenuItem>View data</DropdownMenuItem>
           </Link>
+          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

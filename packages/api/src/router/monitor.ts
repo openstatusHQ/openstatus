@@ -2,21 +2,19 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { and, eq, sql } from "@openstatus/db";
 import {
   allMonitorsExtendedSchema,
-  allMonitorsSchema,
   insertMonitorSchema,
   METHODS,
   monitor,
   monitorsToPages,
   periodicityEnum,
   selectMonitorExtendedSchema,
-  selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { hasUserAccessToMonitor, hasUserAccessToWorkspace } from "./utils";
 
 export const monitorRouter = createTRPCRouter({
@@ -73,6 +71,7 @@ export const monitorRouter = createTRPCRouter({
       // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(result.user.id, {
         userId: result.user.id,
+        email: result.user.email,
       });
       await trackAnalytics({
         event: "Monitor Created",
@@ -272,5 +271,17 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
         .all();
       return allPages;
+    }),
+
+  getTotalActiveMonitors: publicProcedure
+    .input(z.object({}))
+    .query(async (opts) => {
+      const monitors = await opts.ctx.db
+        .select({ count: sql<number>`count(*)` })
+        .from(monitor)
+        .where(eq(monitor.active, true))
+        .all();
+      if (monitors.length === 0) return 0;
+      return monitors[0].count;
     }),
 });

@@ -1,15 +1,15 @@
 import Link from "next/link";
 import type * as z from "zod";
 
-import type { allMonitorsSchema } from "@openstatus/db/src/schema";
+import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui";
 
 import { EmptyState as DefaultEmptyState } from "@/components/dashboard/empty-state";
-import { Button } from "@/components/ui/button";
 
 export function EmptyState({
   allMonitors,
 }: {
-  allMonitors?: z.infer<typeof allMonitorsSchema>;
+  allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
 }) {
   // Navigate user to monitor if they don't have one
   if (!Boolean(allMonitors?.length)) {

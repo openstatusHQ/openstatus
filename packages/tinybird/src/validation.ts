@@ -25,7 +25,7 @@ export const availableRegions = [
 ] as const;
 
 /**
- * Values for the datasource ping_response__v2
+ * Values for the datasource ping_response__v3
  */
 export const tbIngestPingResponse = z.object({
   id: z.string(),
@@ -42,7 +42,7 @@ export const tbIngestPingResponse = z.object({
 });
 
 /**
- * Values from the pip response_list__v1
+ * Values from the pip response_list__v0
  */
 export const tbBuildResponseList = z.object({
   id: z.string(),
@@ -63,7 +63,7 @@ export const tbBuildResponseList = z.object({
 });
 
 /**
- * Params for pipe response_list__v1
+ * Params for pipe response_list__v0
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
@@ -93,7 +93,7 @@ export const tbParameterMonitorList = z.object({
 });
 
 /**
- * Values from the pip monitor_list__v0
+ * Values from the pipe monitor_list__v0
  */
 export const tbBuildMonitorList = z.object({
   count: z.number().int(),
@@ -102,9 +102,25 @@ export const tbBuildMonitorList = z.object({
   cronTimestamp: z.number().int(),
 });
 
+/**
+ * Params for pipe home_stats__v0
+ */
+export const tbParameterHomeStats = z.object({
+  cronTimestamp: z.number().int().optional(),
+});
+
+/**
+ * Values from the pipe home_stats__v0
+ */
+export const tbBuildHomeStats = z.object({
+  count: z.number().int(),
+});
+
 export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
+export type HomeStats = z.infer<typeof tbBuildHomeStats>;
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;
 export type MonitorListParams = z.infer<typeof tbParameterMonitorList>;
+export type HomeStatsParams = z.infer<typeof tbParameterHomeStats>;
 export type GroupByRange = (typeof groupByRange)[number];

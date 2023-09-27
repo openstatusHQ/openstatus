@@ -1,0 +1,81 @@
+To begin with, you need to consider the following prerequisites with minimum
+versions of certain applications (in addition to Node.js and pnpm which were
+already mentioned earlier):
+
+- Node.js >= 18.0.0
+- pnpm >= 8.6.2
+
+## Installing Node.js
+
+To install Node.js, follow the instructions based on your operating system:
+
+- For Windows or macOS, visit the official Node.js website:
+  [https://nodejs.org/](https://nodejs.org/) and download the latest or LTS
+  version (18.0.0 or above). Run the installer and follow the setup wizard.
+
+- For Linux, you can use a package manager
+  ([nvm](https://github.com/nvm-sh/nvm.git/)) or download the binaries from the
+  official Node.js website. For example, using the package manager `apt` on
+  Ubuntu:
+
+  ```bash
+  sudo apt update
+  sudo apt install nodejs
+  ```
+
+  Ensure that the installed version is 18.0.0 or above:
+
+  ```bash
+  node --version
+  ```
+
+## Installing pnpm
+
+To install pnpm, you can use npm, the Node.js package manager. Open your
+terminal or command prompt and run the following command:
+
+```bash
+npm install -g pnpm
+```
+
+Make sure that the installed version of pnpm is 8.6.2 or above:
+
+```bash
+pnpm --version
+```
+
+Alternatively you can also install it from its official website
+[https://pnpm.io/](https://pnpm.io/).
+
+## **Optional Requirements for a Local Database:**
+
+If you want to use a local database, it is recommended to install "brew" and
+"sqld".
+
+### Installing brew
+
+To install brew, it is recommended to use brew.sh from
+[https://brew.sh/](https://brew.sh/) and follow its instructions.
+
+### Installing sqld
+
+Once you have installed it and performed updates with
+`brew update --auto-update`, you can install "sqld" as follows:
+
+```bash
+brew tap libsql/sqld
+brew install sqld-beta
+sqld --help
+```
+
+This will allow you to work with the local database without modifying the ".env"
+file.
+
+Please note that these optional requirements are only necessary if you want to
+use a local database. Otherwise, you can continue with the rest of the
+configuration as mentioned previously.
+
+### Installing Turso
+
+If you want to run Turso locally you can follow the instructions in the
+[Turso CLI](https://docs.turso.tech/reference/turso-cli)

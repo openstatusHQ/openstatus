@@ -15,7 +15,7 @@ const lambdas = ["clerkRouter", "stripeRouter"];
 export const endingLink = (opts?: { headers?: HTTPHeaders }) =>
   ((runtime) => {
     const sharedOpts = {
-      headers: opts?.headers,
+      headers: opts?.headers, // REMINDER: fails when trying to `getTotalActiveMonitors()`
     } satisfies Partial<HTTPBatchLinkOptions>;
 
     const edgeLink = httpBatchLink({
