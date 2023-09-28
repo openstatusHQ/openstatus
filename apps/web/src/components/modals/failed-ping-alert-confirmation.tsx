@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 
 import {
   AlertDialog,
@@ -16,30 +16,28 @@ import type { MonitorProps } from "../forms/montitor-form";
 
 type FailedPingAlertConfirmationProps = {
   submit: ({ ...props }: MonitorProps) => void;
-  props: MonitorProps;
+  monitor: MonitorProps;
   pingFailed: boolean;
   setPingFailed: React.Dispatch<React.SetStateAction<boolean>>;
-  loading: boolean;
   handleDataInsertion: (props: MonitorProps) => void;
 };
 
 export const FailedPingAlertConfirmation = ({
-  loading,
   handleDataInsertion,
   pingFailed,
   setPingFailed,
-  ...props
+  monitor,
 }: FailedPingAlertConfirmationProps) => {
+  const [isPending, startTransition] = React.useTransition();
   const handleSubmit = () => {
-    handleDataInsertion(props.props);
+    startTransition(async () => {
+      handleDataInsertion(monitor);
+    });
     setPingFailed(false);
   };
 
   return (
-    <AlertDialog
-      open={pingFailed}
-      onOpenChange={(value) => setPingFailed(value)}
-    >
+    <AlertDialog open={pingFailed} onOpenChange={setPingFailed}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -51,10 +49,10 @@ export const FailedPingAlertConfirmation = ({
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
             type="submit"
-            disabled={loading}
+            disabled={isPending}
             onClick={handleSubmit}
           >
-            {!loading ? "Confirm" : <LoadingAnimation />}
+            {!isPending ? "Confirm" : <LoadingAnimation />}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
