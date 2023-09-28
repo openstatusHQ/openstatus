@@ -18,11 +18,11 @@ type FailedPingAlertConfirmationProps = {
   monitor: MonitorProps;
   pingFailed: boolean;
   setPingFailed: React.Dispatch<React.SetStateAction<boolean>>;
-  handleDataInsertion: (props: MonitorProps) => void;
+  onConfirm: (props: MonitorProps) => void;
 };
 
 export const FailedPingAlertConfirmation = ({
-  handleDataInsertion,
+  onConfirm: upsertMonitor,
   pingFailed,
   setPingFailed,
   monitor,
@@ -30,7 +30,7 @@ export const FailedPingAlertConfirmation = ({
   const [isPending, startTransition] = React.useTransition();
   const handleSubmit = () => {
     startTransition(async () => {
-      handleDataInsertion(monitor);
+      upsertMonitor(monitor);
     });
     setPingFailed(false);
   };
