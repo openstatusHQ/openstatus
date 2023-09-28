@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  Input,
   Label,
   Select,
   SelectContent,
@@ -41,12 +42,21 @@ export const NotificationDialog = () => {
 
             <Select>
               <SelectTrigger id="framework">
-                <SelectValue placeholder="Select" />
+                <SelectValue placeholder="Select" defaultValue={"email"} />
               </SelectTrigger>
               <SelectContent position="popper">
                 <SelectItem value="email">Email</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              defaultValue=""
+              className="col-span-3"
+              type="email"
+            />
           </div>
         </div>
         <DialogFooter>

@@ -12,7 +12,6 @@ import { not } from "@openstatus/db";
 import type { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   insertMonitorSchema,
-  notification,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
