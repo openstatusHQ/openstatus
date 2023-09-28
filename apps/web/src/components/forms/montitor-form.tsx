@@ -516,7 +516,6 @@ export function MonitorForm({
         <div className="sm:col-span-full">
           <FailedPingAlertConfirmation
             monitor={form.getValues()}
-            submit={onSubmit}
             pingFailed={pingFailed}
             setPingFailed={setPingFailed}
             handleDataInsertion={handleDataUpdateOrInsertion}
