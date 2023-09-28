@@ -514,16 +514,13 @@ export function MonitorForm({
           )}
         />
         <div className="sm:col-span-full">
-          {pingFailed && (
-            <FailedPingAlertConfirmation
-              props={form.getValues()}
-              submit={onSubmit}
-              loading={isPending}
-              pingFailed={pingFailed}
-              setPingFailed={setPingFailed}
-              handleDataInsertion={handleDataUpdateOrInsertion}
-            />
-          )}
+          <FailedPingAlertConfirmation
+            monitor={form.getValues()}
+            submit={onSubmit}
+            pingFailed={pingFailed}
+            setPingFailed={setPingFailed}
+            handleDataInsertion={handleDataUpdateOrInsertion}
+          />
           <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
