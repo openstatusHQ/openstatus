@@ -15,7 +15,6 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import type { MonitorProps } from "../forms/montitor-form";
 
 type FailedPingAlertConfirmationProps = {
-  submit: ({ ...props }: MonitorProps) => void;
   monitor: MonitorProps;
   pingFailed: boolean;
   setPingFailed: React.Dispatch<React.SetStateAction<boolean>>;
