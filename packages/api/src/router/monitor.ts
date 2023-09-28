@@ -301,11 +301,12 @@ export const monitorRouter = createTRPCRouter({
 
       const data = await opts.ctx.db
         .select()
-        .from(notification)
+        .from(notificationsToMonitors)
         .innerJoin(
-          notificationsToMonitors,
-          eq(notificationsToMonitors.monitorId, opts.input.id),
+          notification,
+          eq(notificationsToMonitors.notificationId, notification.id),
         )
+        .where(eq(notificationsToMonitors.monitorId, opts.input.id))
         .all();
       return data.map((d) => selectNotificationSchema.parse(d.notification));
     }),

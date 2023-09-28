@@ -29,8 +29,8 @@ export const send = async ({
       to,
       from: "Notifications <ping@openstatus.dev>",
 
-      subject: "Your monitor is down 🚨 ",
-      html: "<strong>it works!</strong>",
+      subject: `Your monitor ${monitor.name} is down 🚨`,
+      html: `Hey, <br/> Your monitor ${monitor.name} is down. <br/> <br/> OpenStatus`,
     }),
   });
 

@@ -88,6 +88,14 @@ export const checker = async (request: Request, region: string) => {
     const endTime = Date.now();
     const latency = endTime - startTime;
     await monitor(res, result.data, region, latency);
+    if (res.ok) {
+      if (result.data?.status === "error") {
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "active",
+        });
+      }
+    }
   } catch (e) {
     console.error(e);
     // if on the third retry we still get an error, we should report it
@@ -98,8 +106,14 @@ export const checker = async (request: Request, region: string) => {
         region,
         -1,
       );
-      await triggerAlerting({ monitorId: result.data.monitorId });
-      // Here we do the alerting
+      if (result.data?.status !== "error") {
+        await triggerAlerting({ monitorId: result.data.monitorId });
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "error",
+        });
+      }
+      // Here we do the alerting}
     }
   }
 };
@@ -147,4 +161,18 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
       notification: selectNotificationSchema.parse(notif.notification),
     });
   }
+};
+
+const updateMonitorStatus = async ({
+  monitorId,
+  status,
+}: {
+  monitorId: string;
+  status: z.infer<typeof schema.statusSchema>;
+}) => {
+  await db
+    .update(schema.monitor)
+    .set({ status })
+    .where(eq(schema.monitor.id, Number(monitorId)))
+    .run();
 };

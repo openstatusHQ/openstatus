@@ -38,6 +38,7 @@ export const availableRegions = [
 export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;
 export const status = ["active", "error"] as const;
+export const statusSchema = z.enum(status);
 export const RegionEnum = z.enum(availableRegions);
 
 export const monitor = sqliteTable("monitor", {

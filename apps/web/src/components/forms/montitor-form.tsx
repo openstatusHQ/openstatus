@@ -1,6 +1,5 @@
 "use client";
 
-import { METHODS } from "http";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,7 +7,6 @@ import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { not } from "@openstatus/db";
 import type { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   insertMonitorSchema,
@@ -123,6 +121,7 @@ export function MonitorForm({
     control: form.control,
   });
 
+  console.log(notifications);
   const onSubmit = ({ ...props }: MonitorProps) => {
     startTransition(async () => {
       try {
@@ -387,14 +386,20 @@ export function MonitorForm({
             {!isTestPending ? "Test Request" : <LoadingAnimation />}
           </Button>
         </div>
-
+        <div className="sm:col-span-2 sm:col-start-1">
+          {notifications?.map((notification, index) => (
+            // We should be able to delete them as well
+            <Badge key={index}>
+              {notification.name || notification.provider}
+            </Badge>
+          ))}
+        </div>
         <div className="sm:col-span-2 sm:col-start-1">
           <>
-            {notifications?.map((notification) => (
-              // We should be able to delete them as well
-              <Badge key={notification.id}> {notification.name} </Badge>
-            ))}
-            <NotificationDialog />
+            <NotificationDialog
+              monitorId={defaultValues?.id || 0}
+              workspaceSlug={workspaceSlug}
+            />
           </>
         </div>
         <FormField
