@@ -64,6 +64,7 @@ export const monitorRouter = createTRPCRouter({
           ...data,
           workspaceId: result.workspace.id,
           regions: regions?.join(","),
+          headers: headers ? JSON.stringify(headers) : undefined,
         })
         .returning()
         .get();
@@ -147,7 +148,12 @@ export const monitorRouter = createTRPCRouter({
       const { regions, headers, ...data } = opts.input;
       await opts.ctx.db
         .update(monitor)
-        .set({ ...data, regions: regions?.join(","), updatedAt: new Date() })
+        .set({
+          ...data,
+          regions: regions?.join(","),
+          updatedAt: new Date(),
+          headers: headers ? JSON.stringify(headers) : undefined,
+        })
         .where(eq(monitor.id, opts.input.id))
         .returning()
         .get();
