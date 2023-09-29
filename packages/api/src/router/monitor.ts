@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   allMonitorsExtendedSchema,
   insertMonitorSchema,
@@ -59,7 +59,7 @@ export const monitorRouter = createTRPCRouter({
         });
       }
       // FIXME: this is a hotfix
-      const { regions, headers, ...data } = opts.input.data;
+      const { regions, headers, notifications, ...data } = opts.input.data;
 
       const newMonitor = await opts.ctx.db
         .insert(monitor)
@@ -70,6 +70,17 @@ export const monitorRouter = createTRPCRouter({
         })
         .returning()
         .get();
+
+      if (notifications && notifications.length > 0) {
+        const allNotifications = await opts.ctx.db.query.notification.findMany({
+          where: inArray(notification.id, notifications),
+        });
+        const values = allNotifications.map((notification) => ({
+          monitorId: newMonitor.id,
+          notificationId: notification.id,
+        }));
+        await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
+      }
 
       // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
       await analytics.identify(result.user.id, {
@@ -96,33 +107,9 @@ export const monitorRouter = createTRPCRouter({
       if (!result) return;
 
       const _monitor = selectMonitorExtendedSchema.parse(result.monitor);
-      _monitor.headers;
       return _monitor;
     }),
 
-  // TODO: delete
-  updateMonitorDescription: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        description: z.string(),
-      }),
-    )
-    .mutation(async (opts) => {
-      //  We make sure user as access to this workspace and the monitor
-      if (!opts.input.id) return;
-      const result = await hasUserAccessToMonitor({
-        monitorId: opts.input.id,
-        ctx: opts.ctx,
-      });
-      if (!result) return;
-
-      await opts.ctx.db
-        .update(monitor)
-        .set({ description: opts.input.description })
-        .where(eq(monitor.id, opts.input.id))
-        .run();
-    }),
   updateMonitor: protectedProcedure
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
@@ -147,37 +134,56 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
-      const { regions, headers, ...data } = opts.input;
-      await opts.ctx.db
+      const { regions, headers, notifications, ...data } = opts.input;
+      const currentMonitor = await opts.ctx.db
         .update(monitor)
         .set({ ...data, regions: regions?.join(","), updatedAt: new Date() })
         .where(eq(monitor.id, opts.input.id))
         .returning()
         .get();
-    }),
-  // TODO: delete
-  updateMonitorPeriodicity: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        data: insertMonitorSchema.pick({ periodicity: true }),
-      }),
-    )
-    .mutation(async (opts) => {
-      const result = await hasUserAccessToMonitor({
-        monitorId: opts.input.id,
-        ctx: opts.ctx,
-      });
-      if (!result) return;
 
-      await opts.ctx.db
-        .update(monitor)
-        .set({
-          periodicity: opts.input.data.periodicity,
-          updatedAt: new Date(),
-        })
-        .where(eq(monitor.id, opts.input.id))
-        .run();
+      // TODO: optimize!
+      const currentMonitorNotifications = await opts.ctx.db
+        .select()
+        .from(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, currentMonitor.id))
+        .all();
+
+      const currentMonitorNotificationsIds = currentMonitorNotifications.map(
+        ({ notificationId }) => notificationId,
+      );
+
+      const removedNotifications = currentMonitorNotificationsIds.filter(
+        (x) => !notifications?.includes(x),
+      );
+
+      const addedNotifications = notifications?.filter(
+        (x) => !currentMonitorNotificationsIds?.includes(x),
+      );
+
+      if (addedNotifications && addedNotifications.length > 0) {
+        const values = addedNotifications.map((notificationId) => ({
+          monitorId: currentMonitor.id,
+          notificationId,
+        }));
+
+        await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
+      }
+
+      if (removedNotifications && removedNotifications.length > 0) {
+        await opts.ctx.db
+          .delete(notificationsToMonitors)
+          .where(
+            and(
+              eq(notificationsToMonitors.monitorId, currentMonitor.id),
+              inArray(
+                notificationsToMonitors.notificationId,
+                removedNotifications,
+              ),
+            ),
+          )
+          .run();
+      }
     }),
 
   deleteMonitor: protectedProcedure
@@ -193,6 +199,7 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitor.id, result.monitor.id))
         .run();
     }),
+
   getMonitorsByWorkspace: protectedProcedure
     .input(z.object({ workspaceSlug: z.string() }))
     .query(async (opts) => {
@@ -288,6 +295,7 @@ export const monitorRouter = createTRPCRouter({
       return monitors[0].count;
     }),
 
+  // TODO: return the notifications inside of the `getMonitorByID` like we do for the monitors on a status page
   getAllNotificationsForMonitor: protectedProcedure
     .input(z.object({ id: z.number() }))
     // .output(selectMonitorSchema)

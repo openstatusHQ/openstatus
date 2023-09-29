@@ -56,6 +56,7 @@ export const pageRouter = createTRPCRouter({
         .values({ workspaceId: data.workspace.id, ...pageInput })
         .returning()
         .get();
+
       if (monitors && monitors.length > 0) {
         // We should make sure the user has access to the monitors
         const allMonitors = await opts.ctx.db.query.monitor.findMany({

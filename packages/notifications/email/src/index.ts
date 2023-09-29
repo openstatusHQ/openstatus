@@ -1,4 +1,3 @@
-import { renderAsync } from "@react-email/render";
 import type { z } from "zod";
 
 import type {
@@ -17,7 +16,7 @@ export const send = async ({
   notification: z.infer<typeof selectNotificationSchema>;
 }) => {
   const config = EmailConfigurationSchema.parse(notification.data);
-  const { to } = config;
+  const { email } = config;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -26,7 +25,7 @@ export const send = async ({
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
     },
     body: JSON.stringify({
-      to,
+      to: email,
       from: "Notifications <ping@openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is down 🚨`,

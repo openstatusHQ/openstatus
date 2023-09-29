@@ -124,6 +124,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   headers: z
     .array(z.object({ key: z.string(), value: z.string() }))
     .default([]),
+}).extend({
+  notifications: z.array(z.number()).optional(),
 });
 
 export const basicMonitorSchema = createSelectSchema(monitor);

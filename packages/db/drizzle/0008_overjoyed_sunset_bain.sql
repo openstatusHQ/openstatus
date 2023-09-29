@@ -11,10 +11,10 @@ CREATE TABLE `notification` (
 --> statement-breakpoint
 CREATE TABLE `notifications_to_monitors` (
 	`monitor_id` integer NOT NULL,
-	`notificationId` integer NOT NULL,
-	PRIMARY KEY(`monitor_id`, `notificationId`),
-	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE no action,
-	FOREIGN KEY (`notificationId`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE no action
+	`notification_id` integer NOT NULL,
+	PRIMARY KEY(`monitor_id`, `notification_id`),
+	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`notification_id`) REFERENCES `notification`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 ALTER TABLE `monitor` DROP COLUMN `status`;
