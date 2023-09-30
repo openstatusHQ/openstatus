@@ -90,96 +90,110 @@ export function IncidentUpdateForm({
           e.preventDefault();
           form.handleSubmit(onSubmit)(e);
         }}
-        className="grid w-full grid-cols-1 items-center gap-6 sm:grid-cols-6"
+        className="grid w-full gap-6"
       >
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem className="col-span-full space-y-1">
-              <FormLabel>Status</FormLabel>
-              <FormDescription>Select the current status.</FormDescription>
-              <FormMessage />
-              <RadioGroup
-                onValueChange={(value) =>
-                  field.onChange(StatusEnum.parse(value))
-                } // value is a string
-                defaultValue={field.value}
-                className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-8"
-              >
-                {availableStatus.map((status) => {
-                  const { value, label, icon } = statusDict[status];
-                  const Icon = Icons[icon];
-                  return (
-                    <FormItem key={value}>
-                      <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:text-foreground">
-                        <FormControl>
-                          <RadioGroupItem value={value} className="sr-only" />
-                        </FormControl>
-                        <div className="border-border text-muted-foreground flex w-full items-center justify-center rounded-lg border p-2 px-6 py-3 text-center">
-                          <Icon className="mr-2 h-4 w-4" />
-                          {label}
-                        </div>
-                      </FormLabel>
-                    </FormItem>
-                  );
-                })}
-              </RadioGroup>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="message"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-4">
-              <FormLabel>Message</FormLabel>
-              <Tabs defaultValue="write">
-                <TabsList>
-                  <TabsTrigger value="write">Write</TabsTrigger>
-                  <TabsTrigger value="preview">Preview</TabsTrigger>
-                </TabsList>
-                <TabsContent value="write">
-                  <FormControl>
-                    <Textarea
-                      placeholder="We are encountering..."
-                      className="h-auto w-full resize-none"
-                      rows={9}
-                      {...field}
-                    />
-                  </FormControl>
-                </TabsContent>
-                <TabsContent value="preview">
-                  <Preview md={form.getValues("message")} />
-                </TabsContent>
-              </Tabs>
-              <FormDescription>
-                Tell your user what&apos;s happening. Supports markdown.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col sm:col-span-full">
-              <FormLabel>Date</FormLabel>
-              <DateTimePicker
-                date={new Date(field.value)}
-                setDate={(date) => {
-                  field.onChange(date);
-                }}
-              />
-              <FormDescription>
-                The date and time when the incident took place.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="sm:col-span-full">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="my-1.5 flex flex-col gap-2">
+            <p className="text-sm font-semibold leading-none">Inform</p>
+            <p className="text-muted-foreground text-sm">
+              Keep your users informed about what just happened.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:col-span-2 sm:grid-cols-3">
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="space-y-1 sm:col-span-full">
+                  <FormLabel>Status</FormLabel>
+                  <FormDescription>Select the current status.</FormDescription>
+                  <FormMessage />
+                  <RadioGroup
+                    onValueChange={(value) =>
+                      field.onChange(StatusEnum.parse(value))
+                    } // value is a string
+                    defaultValue={field.value}
+                    className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                  >
+                    {availableStatus.map((status) => {
+                      const { value, label, icon } = statusDict[status];
+                      const Icon = Icons[icon];
+                      return (
+                        <FormItem key={value}>
+                          <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:text-foreground">
+                            <FormControl>
+                              <RadioGroupItem
+                                value={value}
+                                className="sr-only"
+                              />
+                            </FormControl>
+                            <div className="border-border text-muted-foreground flex w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-sm">
+                              <Icon className="mr-2 h-4 w-4 shrink-0" />
+                              <span className="truncate">{label}</span>
+                            </div>
+                          </FormLabel>
+                        </FormItem>
+                      );
+                    })}
+                  </RadioGroup>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="message"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-full">
+                  <FormLabel>Message</FormLabel>
+                  <Tabs defaultValue="write">
+                    <TabsList>
+                      <TabsTrigger value="write">Write</TabsTrigger>
+                      <TabsTrigger value="preview">Preview</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="write">
+                      <FormControl>
+                        <Textarea
+                          placeholder="We are encountering..."
+                          className="h-auto w-full resize-none"
+                          rows={9}
+                          {...field}
+                        />
+                      </FormControl>
+                    </TabsContent>
+                    <TabsContent value="preview">
+                      <Preview md={form.getValues("message")} />
+                    </TabsContent>
+                  </Tabs>
+                  <FormDescription>
+                    Tell your user what&apos;s happening. Supports markdown.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col sm:col-span-2">
+                  <FormLabel>Date</FormLabel>
+                  <DateTimePicker
+                    className="w-full"
+                    date={new Date(field.value)}
+                    setDate={(date) => {
+                      field.onChange(date);
+                    }}
+                  />
+                  <FormDescription>
+                    The date and time when the incident took place.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        <div className="flex sm:justify-end">
           <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>

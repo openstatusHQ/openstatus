@@ -260,7 +260,7 @@ export function MonitorForm({
               />
             </div>
           </div>
-          <Accordion className="col-span-full" collapsible>
+          <Accordion type="single" collapsible>
             <AccordionItem value="http-request-settings">
               <AccordionTrigger>HTTP Request Settings</AccordionTrigger>
               <AccordionContent>
@@ -578,7 +578,7 @@ export function MonitorForm({
                       How do you want to get informed if things break?
                     </p>
                   </div>
-                  <div className="grid gap-6">
+                  <div className="grid gap-6 sm:col-span-2">
                     <FormField
                       control={form.control}
                       name="notifications"

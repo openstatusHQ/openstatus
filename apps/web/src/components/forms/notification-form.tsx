@@ -96,78 +96,90 @@ export function NotificationForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid w-full grid-cols-1 items-center gap-6 sm:grid-cols-6"
+        className="grid w-full gap-6"
       >
-        <FormField
-          control={form.control}
-          name="provider"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-3 sm:col-start-1 sm:self-baseline">
-              <FormLabel>Provider</FormLabel>
-              <Select
-                onValueChange={(value) =>
-                  field.onChange(providerEnum.parse(value))
-                }
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger className="capitalize">
-                    <SelectValue placeholder="Select Provider" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {providerName.map((provider) => (
-                    <SelectItem
-                      key={provider}
-                      value={provider}
-                      disabled={provider !== "email"} // only allow email for now
-                      className="capitalize"
-                    >
-                      {provider}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                What channel/provider to send a notification.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-3">
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Dev Team" {...field} />
-              </FormControl>
-              <FormDescription>Define a name for the channel.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="data"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-3">
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="dev@documenso.com"
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>The data required.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="sm:col-span-full">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="my-1.5 flex flex-col gap-2">
+            <p className="text-sm font-semibold leading-none">Alerts</p>
+            <p className="text-muted-foreground text-sm">
+              Select the notification channels you want to be informed.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:col-span-2 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="provider"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-1 sm:self-baseline">
+                  <FormLabel>Provider</FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(providerEnum.parse(value))
+                    }
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="capitalize">
+                        <SelectValue placeholder="Select Provider" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {providerName.map((provider) => (
+                        <SelectItem
+                          key={provider}
+                          value={provider}
+                          disabled={provider !== "email"} // only allow email for now
+                          className="capitalize"
+                        >
+                          {provider}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    What channel/provider to send a notification.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-1 sm:self-baseline">
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Dev Team" {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Define a name for the channel.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="data"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-full">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="email"
+                      placeholder="dev@documenso.com"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormDescription>The data required.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        <div className="flex sm:justify-end">
           <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
