@@ -20,12 +20,12 @@ We will learn how to secure our [Hono.js](https://hono.dev) API server with
 Unkey is a service that allows you to create and manage API keys. It includes
 useful features like:
 
-- Rate limiting: avoid getting DDoSed
-- Temporary keys: when working on free trials
-- Key limitation: limit the number of max. requests
+- **Rate limiting**: avoid getting DDoSed
+- **Temporary keys**: when working on free trials
+- **Key limitation**: limit the number of max. requests
 
 **The best part**: We have no additional database migration or setup to do. Just
-use the Unkey API and/or SDK to create and verify keys.
+use the Unkey API and/or SDK to create, revoke and verify keys.
 
 Hono is similar to express just hipper and runs on the edge.
 
@@ -47,9 +47,7 @@ to allow users to create and revoke their own API keys:
 
 import { Unkey } from "@unkey/api";
 
-import { env } from "@/env";
-
-const unkey = new Unkey({ token: env.UNKEY_TOKEN });
+const unkey = new Unkey({ token: process.env.UNKEY_TOKEN });
 
 export async function create(ownerId: number) {
   const key = await unkey.keys.create({
@@ -198,7 +196,7 @@ with [bun](https://bun.sh) via `bun run src/index.ts`.
 
 ## Conclusion
 
-That's it. We have secured our API with Unkey and the Hono.js middleware, only
+Et voilà. We have secured our API with Unkey and the Hono.js middleware, only
 allowing authorized users to access their data.
 
 Unkey increases our velocity and **helps us focus on what's relevant** to the
