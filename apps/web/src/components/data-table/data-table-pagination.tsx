@@ -31,6 +31,15 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
   const pathname = usePathname();
   const updateSearchParams = useUpdateSearchParams();
 
+  const updateSearchParamsWithRouter = (
+    query: Parameters<typeof updateSearchParams>[0],
+  ) => {
+    const updatedSearchParams = updateSearchParams(query);
+    return () => {
+      router.push(`${pathname}/?${updatedSearchParams.toString()}`);
+    };
+  };
+
   const page_size = searchParams.get("page_size") || "20";
 
   return (
@@ -42,15 +51,10 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Select
             value={page_size}
             onValueChange={(value) => {
-              router.push(
-                pathname +
-                  "/" +
-                  "?" +
-                  updateSearchParams({
-                    page_size: value,
-                    page: 1,
-                  }),
-              );
+              updateSearchParamsWithRouter({
+                page_size: value,
+                page: 1,
+              })();
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
@@ -72,16 +76,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => {
-              router.push(
-                pathname +
-                  "/" +
-                  "?" +
-                  updateSearchParams({
-                    page: "1",
-                  }),
-              );
-            }}
+            onClick={updateSearchParamsWithRouter({ page: "1" })}
             disabled={!(page > "1")}
           >
             <span className="sr-only">Go to first page</span>
@@ -90,16 +85,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => {
-              router.push(
-                pathname +
-                  "/" +
-                  "?" +
-                  updateSearchParams({
-                    page: parseInt(page) - 1,
-                  }),
-              );
-            }}
+            onClick={updateSearchParamsWithRouter({ page: parseInt(page) - 1 })}
             disabled={!(page > "1")}
           >
             <span className="sr-only">Go to previous page</span>
@@ -108,17 +94,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => {
-              console.log("nextpage");
-              router.push(
-                pathname +
-                  "/" +
-                  "?" +
-                  updateSearchParams({
-                    page: parseInt(page) + 1,
-                  }),
-              );
-            }}
+            onClick={updateSearchParamsWithRouter({ page: parseInt(page) + 1 })}
             disabled={page === pageCount + ""}
           >
             <span className="sr-only">Go to next page</span>
@@ -127,17 +103,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => {
-              console.log("lastpage");
-              router.push(
-                pathname +
-                  "/" +
-                  "?" +
-                  updateSearchParams({
-                    page: pageCount,
-                  }),
-              );
-            }}
+            onClick={updateSearchParamsWithRouter({ page: pageCount })}
             disabled={page === pageCount + ""}
           >
             <span className="sr-only">Go to last page</span>
