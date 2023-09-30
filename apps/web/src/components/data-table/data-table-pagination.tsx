@@ -31,7 +31,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
   const pathname = usePathname();
   const updateSearchParams = useUpdateSearchParams();
 
-  const page_size = searchParams.get("page_size") || "10";
+  const page_size = searchParams.get("page_size") || "20";
 
   return (
     <div className="flex items-center justify-between px-2">

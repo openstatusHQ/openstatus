@@ -14,7 +14,7 @@ import { api } from "@/trpc/server";
 export const revalidate = 0; // revalidate this page every 10 minutes
 
 const DEFAULT_RESPONSE_LIST_PAGE = 0;
-const DEFAULT_RESPONSE_LIST_PAGE_SIZE = 10;
+const DEFAULT_RESPONSE_LIST_PAGE_SIZE = 20;
 
 /**
  * allowed URL search params
