@@ -7,7 +7,7 @@ import {
   incidentUpdate,
 } from "@openstatus/db/src/schema";
 
-import type { Variables } from ".";
+import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 
 const incidentApi = new OpenAPIHono<{ Variables: Variables }>();
