@@ -23,6 +23,12 @@ export const pagesConfig: Page[] = [
     icon: "panel-top",
   },
   {
+    title: "Notifications",
+    description: "Where you can see all the notifications.",
+    href: "/notifications",
+    icon: "bell",
+  },
+  {
     title: "Incidents",
     description: "War room where you handle the incidents.",
     href: "/incidents",

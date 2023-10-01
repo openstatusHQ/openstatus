@@ -2,6 +2,8 @@ import { Receiver } from "@upstash/qstash/cloudflare";
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 
+import { db, eq, schema } from "@openstatus/db";
+import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -11,6 +13,7 @@ import {
 import { env } from "@/env";
 import type { Payload } from "../schema";
 import { payloadSchema } from "../schema";
+import { providerToFunction } from "../utils";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -85,6 +88,14 @@ export const checker = async (request: Request, region: string) => {
     const endTime = Date.now();
     const latency = endTime - startTime;
     await monitor(res, result.data, region, latency);
+    if (res.ok) {
+      if (result.data?.status === "error") {
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "active",
+        });
+      }
+    }
   } catch (e) {
     console.error(e);
     // if on the third retry we still get an error, we should report it
@@ -95,6 +106,14 @@ export const checker = async (request: Request, region: string) => {
         region,
         -1,
       );
+      if (result.data?.status !== "error") {
+        await triggerAlerting({ monitorId: result.data.monitorId });
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "error",
+        });
+      }
+      // Here we do the alerting}
     }
   }
 };
@@ -120,4 +139,40 @@ export const ping = async (
   });
 
   return res;
+};
+
+const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
+  const notifications = await db
+    .select()
+    .from(schema.notificationsToMonitors)
+    .innerJoin(
+      schema.notification,
+      eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
+    )
+    .innerJoin(
+      schema.monitor,
+      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
+    )
+    .where(eq(schema.monitor.id, Number(monitorId)))
+    .all();
+  for (const notif of notifications) {
+    await providerToFunction[notif.notification.provider]({
+      monitor: notif.monitor,
+      notification: selectNotificationSchema.parse(notif.notification),
+    });
+  }
+};
+
+const updateMonitorStatus = async ({
+  monitorId,
+  status,
+}: {
+  monitorId: string;
+  status: z.infer<typeof schema.statusSchema>;
+}) => {
+  await db
+    .update(schema.monitor)
+    .set({ status })
+    .where(eq(schema.monitor.id, Number(monitorId)))
+    .run();
 };

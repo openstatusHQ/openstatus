@@ -115,6 +115,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/notification-emails':
+        specifier: workspace:*
+        version: link:../../packages/notifications/email
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -242,8 +245,8 @@ importers:
         specifier: 10.1.0
         version: 10.1.0
       resend:
-        specifier: 0.15.3
-        version: 0.15.3
+        specifier: 1.1.0
+        version: 1.1.0
       shiki:
         specifier: 0.14.3
         version: 0.14.3
@@ -487,8 +490,8 @@ importers:
         specifier: 1.9.4
         version: 1.9.4
       resend:
-        specifier: 0.15.3
-        version: 0.15.3
+        specifier: 1.1.0
+        version: 1.1.0
       zod:
         specifier: 3.21.4
         version: 3.21.4
@@ -525,6 +528,52 @@ importers:
         version: 18.2.0(react@18.2.0)
       zod:
         specifier: ^3.21.4
+        version: 3.21.4
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.3.1
+        version: 20.3.1
+      '@types/react':
+        specifier: 18.2.12
+        version: 18.2.12
+      '@types/react-dom':
+        specifier: 18.2.5
+        version: 18.2.5
+      next:
+        specifier: 13.4.12
+        version: 13.4.12(@babel/core@7.22.20)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.1.6
+        version: 5.1.6
+
+  packages/notifications/email:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:^
+        version: link:../../db
+      '@openstatus/emails':
+        specifier: workspace:^
+        version: link:../../emails
+      '@openstatus/tinybird':
+        specifier: workspace:*
+        version: link:../../tinybird
+      '@react-email/components':
+        specifier: 0.0.7
+        version: 0.0.7
+      '@react-email/render':
+        specifier: ^0.0.7
+        version: 0.0.7
+      '@t3-oss/env-core':
+        specifier: 0.6.0
+        version: 0.6.0(typescript@5.1.6)(zod@3.21.4)
+      resend:
+        specifier: 1.1.0
+        version: 1.1.0
+      zod:
+        specifier: 3.21.4
         version: 3.21.4
     devDependencies:
       '@openstatus/tsconfig':
@@ -5423,7 +5472,7 @@ packages:
   /@types/react-dom@18.2.5:
     resolution: {integrity: sha512-sRQsOS/sCLnpQhR4DSKGTtWFE3FZjpQa86KPVbhUqdYMRZ9FEFcfAytKhR/vUG2rH1oFbOOej6cuD7MFSobDRQ==}
     dependencies:
-      '@types/react': 18.2.21
+      '@types/react': 18.2.12
     dev: true
 
   /@types/react-dom@18.2.7:
@@ -5437,14 +5486,6 @@ packages:
       '@types/prop-types': 15.7.6
       '@types/scheduler': 0.16.3
       csstype: 3.1.2
-
-  /@types/react@18.2.21:
-    resolution: {integrity: sha512-neFKG/sBAwGxHgXiIxnbm3/AAVQ/cMRS93hvBpg8xYRbeQSPVABp9U2bRnPf0iI4+Ucdv3plSxKK+3CW2ENJxA==}
-    dependencies:
-      '@types/prop-types': 15.7.6
-      '@types/scheduler': 0.16.3
-      csstype: 3.1.2
-    dev: true
 
   /@types/resolve@1.20.2:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -6070,16 +6111,6 @@ packages:
   /axe-core@4.8.1:
     resolution: {integrity: sha512-9l850jDDPnKq48nbad8SiEelCv4OrUWrKab/cPj0GScVg6cb6NbCCt/Ulk26QEq5jP9NnGr04Bit1BHyV6r5CQ==}
     engines: {node: '>=4'}
-    dev: false
-
-  /axios@1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
-    dependencies:
-      follow-redirects: 1.15.2
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /axios@1.5.0:
@@ -12889,13 +12920,12 @@ packages:
     resolution: {integrity: sha512-ab9EmR80F/zQTMNeneUr4cv+jSwPJgIlvEmVwLerwrWVbpLlBuls9XHzIeTFy4cegU2NHBp3va0LKOzU5qFEYQ==}
     dev: false
 
-  /resend@0.15.3:
-    resolution: {integrity: sha512-dzXHBaOjOS3ufBGjqiJjMe7LnproEn/jiAyBjg6IBtp56MCfih0O4IS4JeBcfj3y2Afm+tZITfoZAylKWLEJOg==}
+  /resend@1.1.0:
+    resolution: {integrity: sha512-it8TIDVT+/gAiJsUlv2tdHuvzwCCv4Zwu+udDqIm/dIuByQwe68TtFDcPccxqpSVVrNCBxxXLzsdT1tsV+P3GA==}
+    engines: {node: '>=18'}
     dependencies:
       '@react-email/render': 0.0.7
-      axios: 1.4.0
-    transitivePeerDependencies:
-      - debug
+      type-fest: 3.13.0
     dev: false
 
   /resolve-from@4.0.0:
@@ -14178,6 +14208,11 @@ packages:
   /type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
+    dev: false
+
+  /type-fest@3.13.0:
+    resolution: {integrity: sha512-Gur3yQGM9qiLNs0KPP7LPgeRbio2QTt4xXouobMCarR0/wyW3F+F/+OWwshg3NG0Adon7uQfSZBpB46NfhoF1A==}
+    engines: {node: '>=14.16'}
     dev: false
 
   /type-fest@3.13.1:

@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
-
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/montitor-form";
 import { api } from "@/trpc/server";
@@ -28,11 +26,23 @@ export default async function EditPage({
   }
 
   const { id } = search.data;
+  const { workspaceSlug } = params;
 
   const monitor = id && (await api.monitor.getMonitorByID.query({ id }));
   const workspace = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
+    slug: workspaceSlug,
   });
+
+  const monitorNotifications = id
+    ? await api.monitor.getAllNotificationsForMonitor.query({
+        id,
+      })
+    : [];
+
+  const notifications =
+    await api.notification.getNotificationsByWorkspace.query({
+      workspaceSlug,
+    });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
@@ -42,9 +52,16 @@ export default async function EditPage({
       />
       <div className="col-span-full">
         <MonitorForm
-          workspaceSlug={params.workspaceSlug}
-          defaultValues={monitor || undefined}
+          defaultValues={
+            monitor
+              ? {
+                  ...monitor,
+                  notifications: monitorNotifications?.map(({ id }) => id),
+                }
+              : undefined
+          }
           plan={workspace?.plan}
+          {...{ workspaceSlug, notifications }}
         />
       </div>
     </div>
