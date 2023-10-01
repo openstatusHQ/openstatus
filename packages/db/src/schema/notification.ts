@@ -33,7 +33,7 @@ export const notificationsToMonitors = sqliteTable(
     monitorId: integer("monitor_id")
       .notNull()
       .references(() => monitor.id, { onDelete: "cascade" }),
-    notificationId: integer("notificationId") // FIXME: change to `notification_id`
+    notificationId: integer("notification_id")
       .notNull()
       .references(() => notification.id, { onDelete: "cascade" }),
   },
