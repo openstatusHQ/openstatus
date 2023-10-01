@@ -13,6 +13,7 @@
     "zod": "3.21.4",
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
+    "@openstatus/upstash": "workspace:*",
     "@unkey/api": "0.6.22",
     "hono": "3.6.1"
   },

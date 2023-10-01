@@ -8,7 +8,7 @@ export async function middleware(
         workspaceId: string;
       };
     },
-    "/v1/*",
+    "/*",
     {}
   >,
   next: Next,
@@ -24,6 +24,7 @@ export async function middleware(
     if (!result.valid) return c.text("Unauthorized", 401);
     c.set("workspaceId", `${result.ownerId}`);
   } else {
+    // REMINDER: localhost only
     c.set("workspaceId", "1");
   }
   await next();

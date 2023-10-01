@@ -8,7 +8,7 @@ import {
   periodicity,
 } from "@openstatus/db/src/schema/monitor";
 
-import type { Variables } from ".";
+import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 
 const ParamsSchema = z.object({
@@ -393,6 +393,7 @@ const deleteRoute = createRoute({
     },
   },
 });
+
 monitorApi.openapi(deleteRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
