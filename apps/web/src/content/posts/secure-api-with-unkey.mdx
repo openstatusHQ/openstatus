@@ -51,7 +51,7 @@ const unkey = new Unkey({ token: process.env.UNKEY_TOKEN });
 
 export async function create(ownerId: number) {
   const key = await unkey.keys.create({
-    apiId: env.UNKEY_API_ID,
+    apiId: process.env.UNKEY_API_ID,
     ownerId: String(ownerId), // workspaceId
     prefix: "os", // os_1234567890
     // include more options like 'ratelimit', 'expires', 'remaining'
