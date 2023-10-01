@@ -23,10 +23,10 @@ export const columns: ColumnDef<Notification>[] = [
       );
     },
   },
-  {
-    accessorKey: "data",
-    header: "Data",
-  },
+  // {
+  //   accessorKey: "data",
+  //   header: "Data",
+  // },
   {
     id: "actions",
     cell: ({ row }) => {
