@@ -81,6 +81,9 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
+      '@openstatus/upstash':
+        specifier: workspace:*
+        version: link:../../packages/upstash
       '@unkey/api':
         specifier: 0.6.22
         version: 0.6.22
