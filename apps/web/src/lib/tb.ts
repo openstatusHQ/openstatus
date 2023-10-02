@@ -20,7 +20,7 @@ export async function getResponseListData(
   props: Partial<
     Pick<
       ResponseListParams,
-      "region" | "cronTimestamp" | "page_size" | "monitorId" | "page"
+      "region" | "cronTimestamp" | "limit" | "monitorId" | "offset"
     >
   >,
 ) {
@@ -29,26 +29,10 @@ export async function getResponseListData(
     return res.data;
   } catch (e) {
     console.error(e);
-  }
-  return;
-}
-
-export async function getResponseListDataCount(
-  props: Partial<
-    Pick<
-      ResponseListParams,
-      "region" | "cronTimestamp" | "page_size" | "monitorId" | "page"
-    >
-  >,
-) {
-  try {
-    const res = await getResponseList(tb)(props);
-    return res.statistics?.rows_read || 0;
-  } catch (e) {
     if (e instanceof Error) {
       throw new Error(e.message);
     }
-    throw new Error(`Something bad happened: ${JSON.stringify(e)}`);
+    throw new Error(`Something bad happened:${JSON.stringify(e)}`);
   }
 }
 
