@@ -38,8 +38,8 @@ export default async function Page() {
             Open-source monitoring service
           </h1>
           <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-            OpenStatus is an open source alternative to your current monitoring
-            service with a beautiful status page.
+            OpenStatus is an open source monitoring services with on-call
+            managements.
           </p>
           {/* much better than using flex without text alignment, text stays center even thought not same length */}
           <div className="my-4 grid gap-2 sm:grid-cols-2">
@@ -85,9 +85,9 @@ export default async function Page() {
         </Shell>
         <Cards {...cardConfig.monitors} />
         <Stats />
-        <Cards {...cardConfig.pages} />
-        <Partners />
         <Cards {...cardConfig.incidents} />
+        <Partners />
+        <Cards {...cardConfig.pages} />
         <SpecialCard {...specialCardConfig} />
         <Plans />
         <Shell>

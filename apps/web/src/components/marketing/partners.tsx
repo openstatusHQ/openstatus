@@ -38,7 +38,25 @@ export function Partners() {
           </a>
         </div>
         <div className="flex items-center justify-center">
-          <p className="text-muted-foreground text-xs">You</p>
+          <a
+            href="https://status.trigger.dev"
+            target="_blank"
+            rel="noreferrer"
+            className="group inline-flex items-center justify-center underline underline-offset-4 hover:no-underline"
+          >
+            <img
+              src="/assets/partners/triggerdev.svg"
+              alt="trigger.dev"
+              className="h-8 w-32 object-contain text-black"
+            />
+            <ArrowUpRight className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 flex-shrink-0" />
+          </a>
+        </div>
+        <div className="flex items-center justify-center">
+          {/* <p className="text-muted-foreground text-xs">You</p> */}
+        </div>
+        <div className="flex items-center justify-center">
+          <p className="text-muted-foreground text-md">You</p>
         </div>
       </div>
     </div>
