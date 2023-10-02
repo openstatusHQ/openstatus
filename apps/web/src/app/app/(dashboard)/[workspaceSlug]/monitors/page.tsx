@@ -32,7 +32,7 @@ export default async function MonitorPage({
   async function getMonitorLastStatusCode(monitorId: string) {
     const ping = await getResponseListData({
       monitorId,
-      page_size: 1,
+      limit: 1,
     });
     const lastStatusCode = ping && ping.length > 0 ? ping[0].statusCode : 0;
     return lastStatusCode;

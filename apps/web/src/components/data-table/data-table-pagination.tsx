@@ -20,12 +20,12 @@ import {
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 
 interface DataTablePaginationProps {
-  pageCount: number;
+  hasNextPage: boolean;
 }
 
-export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
+export function DataTablePagination({ hasNextPage }: DataTablePaginationProps) {
   const searchParams = useSearchParams();
-  const page = useSearchParams().get("page") || "1";
+  const offset = parseInt(useSearchParams().get("offset") || "0");
 
   const router = useRouter();
   const pathname = usePathname();
@@ -40,7 +40,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
     };
   };
 
-  const page_size = searchParams.get("page_size") || "20";
+  const limit = parseInt(searchParams.get("limit") || "20");
 
   return (
     <div className="flex items-center justify-between px-2">
@@ -49,35 +49,35 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
         <div className="flex items-center space-x-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
-            value={page_size}
+            value={limit + ""}
             onValueChange={(value) => {
               updateSearchParamsWithRouter({
-                page_size: value,
-                page: 1,
+                limit: value,
+                offset: 0,
               })();
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={page_size} />
+              <SelectValue placeholder={limit} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
+              {[1, 10, 20, 30, 40, 50].map((limit) => (
+                <SelectItem key={limit} value={`${limit}`}>
+                  {limit}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+        {/* <div className="flex w-[100px] items-center justify-center text-sm font-medium">
           Page {page} of {pageCount}
-        </div>
+        </div> */}
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
             onClick={updateSearchParamsWithRouter({ page: "1" })}
-            disabled={!(page > "1")}
+            disabled={!offset}
           >
             <span className="sr-only">Go to first page</span>
             <ChevronsLeft className="h-4 w-4" />
@@ -85,8 +85,10 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={updateSearchParamsWithRouter({ page: parseInt(page) - 1 })}
-            disabled={!(page > "1")}
+            onClick={updateSearchParamsWithRouter({
+              offset: (offset / limit - 1) * limit,
+            })}
+            disabled={!offset}
           >
             <span className="sr-only">Go to previous page</span>
             <ChevronLeft className="h-4 w-4" />
@@ -94,13 +96,15 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={updateSearchParamsWithRouter({ page: parseInt(page) + 1 })}
-            disabled={page === pageCount + ""}
+            onClick={updateSearchParamsWithRouter({
+              offset: (offset / limit + 1) * limit,
+            })}
+            disabled={!hasNextPage}
           >
             <span className="sr-only">Go to next page</span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
+          {/* <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
             onClick={updateSearchParamsWithRouter({ page: pageCount })}
@@ -108,7 +112,7 @@ export function DataTablePagination({ pageCount }: DataTablePaginationProps) {
           >
             <span className="sr-only">Go to last page</span>
             <ChevronsRight className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

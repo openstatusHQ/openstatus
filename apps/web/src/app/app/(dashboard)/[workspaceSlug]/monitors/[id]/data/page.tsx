@@ -8,13 +8,13 @@ import { Header } from "@/components/dashboard/header";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { DataTablePagination } from "@/components/data-table/data-table-pagination";
-import { getResponseListData, getResponseListDataCount } from "@/lib/tb";
+import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 
 export const revalidate = 0; // revalidate this page every 10 minutes
 
-const DEFAULT_RESPONSE_LIST_PAGE = 0;
-const DEFAULT_RESPONSE_LIST_PAGE_SIZE = 20;
+const DEFAULT_RESPONSE_LIST_OFFSET = 0;
+const DEFAULT_RESPONSE_LIST_LIMIT = 20;
 
 /**
  * allowed URL search params
@@ -25,11 +25,8 @@ const searchParamsSchema = z.object({
   cronTimestamp: z.coerce.number().optional(),
   fromDate: z.coerce.number().optional(),
   toDate: z.coerce.number().optional(),
-  page: z.coerce.number().optional().default(DEFAULT_RESPONSE_LIST_PAGE),
-  page_size: z.coerce
-    .number()
-    .optional()
-    .default(DEFAULT_RESPONSE_LIST_PAGE_SIZE),
+  offset: z.coerce.number().optional().default(DEFAULT_RESPONSE_LIST_OFFSET),
+  limit: z.coerce.number().optional().default(DEFAULT_RESPONSE_LIST_LIMIT),
 });
 
 export default async function Page({
@@ -50,29 +47,17 @@ export default async function Page({
     return notFound();
   }
 
-  const { page, ...restOfSearchParams } = search.data;
-  const queryParameters = {
+  const data = await getResponseListData({
     monitorId: id,
-    page: page ? page - 1 : page,
-    ...restOfSearchParams,
-  };
-  const [data, totalResponseListData] = await Promise.all([
-    getResponseListData(queryParameters),
-    getResponseListDataCount(queryParameters),
-  ]);
+    ...search.data,
+  });
 
   return (
     <div className="grid gap-6 md:gap-8">
       <Header title={monitor.name} description={monitor.url} />
-      {data && (
-        <DataTable columns={columns} data={data}>
-          <DataTablePagination
-            pageCount={Math.ceil(
-              totalResponseListData / queryParameters.page_size,
-            )}
-          />
-        </DataTable>
-      )}
+      <DataTable columns={columns} data={data}>
+        <DataTablePagination hasNextPage={!(data.length < search.data.limit)} />
+      </DataTable>
     </div>
   );
 }

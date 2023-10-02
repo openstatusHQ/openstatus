@@ -29,7 +29,7 @@ import { DataTableToolbar } from "./data-table-toolbar";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  children: React.ReactNode;
+  children?: React.ReactNode;
   // filters?: ColumnFiltersState; could also be an idea
 }
 
