@@ -20,7 +20,7 @@ SQL >
     AND cronTimestamp <= {{ Int64(toDate) }}
     {% end %}
     ORDER BY timestamp DESC
-    LIMIT {{Int32(page_size, 20)}}
-   OFFSET {{Int32(page, 0) * Int32(page_size, 20)}}
+    LIMIT {{Int32(limit, 20)}}
+    OFFSET {{Int32(offset, 0)}}
 
 
