@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<url><loc>https://docs.openstatus.dev</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/developer-guide/get-started</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/developer-guide/requirements</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/developer-guide/setup</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/developer-guide/setup-env</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/getting-started</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/getting-started/alerting</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/getting-started/heartbeat</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/getting-started/monitor</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/getting-started/status-page</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/discord</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/fly</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/otel</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/phone-call</loc><lastmod>2023-10-02T15:53:57.199Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/slack</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/sms</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/telegram</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/integrations/vercel</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/rest-api/auth</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+<url><loc>https://docs.openstatus.dev/rest-api/openapi</loc><lastmod>2023-10-02T15:53:57.200Z</lastmod><changefreq>daily</changefreq><priority>0.7</priority></url>
+</urlset>
