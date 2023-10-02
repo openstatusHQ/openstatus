@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import {
   allNotifications,
@@ -33,6 +34,15 @@ export const notificationRouter = createTRPCRouter({
         .values({ ...data, workspaceId: result.workspace.id })
         .returning()
         .get();
+
+      await analytics.identify(result.user.id, {
+        userId: result.user.id,
+        email: result.user.email,
+      });
+      await trackAnalytics({
+        event: "Notification Created",
+        provider: _notification.provider,
+      });
 
       return _notification;
     }),
