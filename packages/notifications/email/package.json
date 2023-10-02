@@ -4,11 +4,11 @@
   "main": "src/index.ts",
   "description": "Log drains Vercel integration.",
   "dependencies": {
-    "@openstatus/db": "workspace:^",
-    "@openstatus/emails": "workspace:^",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/emails": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@react-email/components": "0.0.7",
-    "@react-email/render": "^0.0.7",
+    "@react-email/render": "0.0.7",
     "@t3-oss/env-core": "0.6.1",
     "resend": "1.1.0",
     "zod": "3.22.2"
