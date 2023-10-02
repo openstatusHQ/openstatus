@@ -9,13 +9,13 @@
     "start": "NODE_ENV=production bun run src/index.ts"
   },
   "dependencies": {
-    "@hono/zod-openapi": "0.4.0",
-    "zod": "3.21.4",
+    "@hono/zod-openapi": "0.7.1",
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
-    "@unkey/api": "0.6.22",
-    "hono": "3.6.1"
+    "@unkey/api": "0.10.0",
+    "hono": "3.7.3",
+    "zod": "3.22.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*"
