@@ -12,6 +12,7 @@
     "@hono/zod-openapi": "0.4.0",
     "zod": "3.21.4",
     "@openstatus/db": "workspace:*",
+    "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@unkey/api": "0.6.22",

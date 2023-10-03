@@ -25,6 +25,7 @@
     "apps/*",
     "packages/*",
     "packages/config/*",
-    "packages/integrations/*"
+    "packages/integrations/*",
+    "packages/notifications/*"
   ]
 }
