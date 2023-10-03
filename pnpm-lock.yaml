@@ -81,6 +81,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@openstatus/plans':
+        specifier: workspace:*
+        version: link:../../packages/plans
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
