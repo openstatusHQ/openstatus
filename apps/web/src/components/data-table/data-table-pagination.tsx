@@ -1,12 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ChevronLeft, ChevronRight, ChevronsLeft } from "lucide-react";
 
 import {
   Button,
@@ -25,10 +20,9 @@ interface DataTablePaginationProps {
 
 export function DataTablePagination({ hasNextPage }: DataTablePaginationProps) {
   const searchParams = useSearchParams();
-  const offset = parseInt(useSearchParams().get("offset") || "0");
+  const offset = parseInt(searchParams.get("offset") || "0");
 
   const router = useRouter();
-  const pathname = usePathname();
   const updateSearchParams = useUpdateSearchParams();
 
   const updateSearchParamsWithRouter = (
@@ -36,7 +30,7 @@ export function DataTablePagination({ hasNextPage }: DataTablePaginationProps) {
   ) => {
     const updatedSearchParams = updateSearchParams(query);
     return () => {
-      router.push(`${pathname}/?${updatedSearchParams.toString()}`);
+      router.replace(`?${updatedSearchParams.toString()}`);
     };
   };
 
@@ -61,7 +55,7 @@ export function DataTablePagination({ hasNextPage }: DataTablePaginationProps) {
               <SelectValue placeholder={limit} />
             </SelectTrigger>
             <SelectContent side="top">
-              {[1, 10, 20, 30, 40, 50].map((limit) => (
+              {[10, 20, 30, 40, 50].map((limit) => (
                 <SelectItem key={limit} value={`${limit}`}>
                   {limit}
                 </SelectItem>
