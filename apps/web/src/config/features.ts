@@ -58,7 +58,7 @@ export const cardConfig = {
         icon: "puzzle",
         catchline: "Custom slug.",
         description:
-          "Great your own sudomain and inform your users about the uptime of your endpoints.",
+          "Create your own sudomain and inform your users about the uptime of your endpoints.",
       },
       {
         icon: "globe",
