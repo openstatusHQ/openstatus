@@ -1,9 +1,10 @@
 ## Setup
 
-1. Clone the repository
+1. Clone the repository and open the created directory
 
    ```sh
    git clone https://github.com/openstatushq/openstatus.git
+   cd openstatus
    ```
 
 2. Install dependencies
@@ -43,9 +44,23 @@ pnpm migrate
 
 5. Set up your .env file
 
-from `apps/web` and `packages/db` you will find .env.example create your own.
+from `apps/web` and `packages/db` you will find .env.example. Please create your own.
 
-6. Clerk Authentication
+6. Start the web app locally
+
+```sh
+pnpm dev
+```
+> 💡 If you are getting this error - ` ERROR  run failed: error preparing engine: Invalid persistent task configuration:
+You have 15 persistent tasks but `turbo` is configured for concurrency of 10. Set --concurrency to at least 16
+`
+Then `cd` into web directory and then start the web app
+> ```sh
+>  cd apps/web
+>  pnpm dev
+>  ```
+
+7. Clerk Authentication
 
 For authentication we are using [Clerk](https://clerk.dev/), you will need to
 create an account and get your API keys. If you want to work on the backend and

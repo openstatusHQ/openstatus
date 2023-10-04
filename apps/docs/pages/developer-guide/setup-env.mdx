@@ -30,6 +30,8 @@ to Cleark Auth.
 6. Paste these values into the `.env` file under their respective variables. It
    should look something like this (real values without censorship):
 
+![Create your monitor](/img/setup-env/clerk.png)
+
 ```
 # CLERK for auth
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_••••••••••••••••••••••••••••••••••••••••••
@@ -63,6 +65,8 @@ Here's how to obtain the Resend API key:
 5. Paste this API Key value into the `.env` file under the "RESEND_API_KEY"
    variable. It should look something like this (real values without
    censorship):
+
+![Create your monitor](/img/setup-env/resend.png)
 
 ```
 # RESEND for email
@@ -141,8 +145,10 @@ UPSTASH.
 
 ## Setting up Tinybird
 
-You will need to create an API token under Auth tokens > Workspace tokens > Add
-a new token.
+You will need to create an API token, Go to Auth tokens > Workspace tokens > Add
+a new token > Select your token
+
+![Create your monitor](/img/setup-env/tinybird.png)
 
 ```
 # TinyBird
@@ -255,7 +261,7 @@ and save the changes to the `.env` file once you have completed all the
 configurations.
 
 
-## **Setting up tinybird**
+## **Connect datasource using tinybird-cli**
 
 1. Log in to your tinybird account at https://www.tinybird.co/ or create a new account if you don't have one yet.
 

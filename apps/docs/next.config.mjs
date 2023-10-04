@@ -15,6 +15,7 @@ const withNextra = nextra({
   flexsearch: {
     codeblock: false,
   },
+  defaultShowCopyCode: true
 });
 
 export default withNextra({
