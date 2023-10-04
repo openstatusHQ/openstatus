@@ -2,11 +2,11 @@ import { ArrowUpRight } from "lucide-react";
 
 export function Partners() {
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-4">
       <h3 className="text-muted-foreground font-cal text-center text-sm">
         Trusted By
       </h3>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-16">
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-4 sm:gap-16">
         <div className="flex items-center justify-center">
           <a
             href="https://status.hanko.io"
@@ -53,10 +53,7 @@ export function Partners() {
           </a>
         </div>
         <div className="flex items-center justify-center">
-          {/* <p className="text-muted-foreground text-xs">You</p> */}
-        </div>
-        <div className="flex items-center justify-center">
-          <p className="text-muted-foreground text-md">You</p>
+          <p className="text-muted-foreground text-sm">You</p>
         </div>
       </div>
     </div>
