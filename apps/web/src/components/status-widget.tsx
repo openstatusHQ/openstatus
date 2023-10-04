@@ -5,6 +5,7 @@ const statusEnum = z.enum([
   "degraded_performance",
   "partial_outage",
   "major_outage",
+  "under_maintenance",
   "unknown",
 ]);
 
@@ -44,14 +45,12 @@ export async function StatusWidget({ slug }: { slug: string }) {
   const data = await res.json();
   const parsed = statusSchema.safeParse(data);
 
-  let label = "Unknown";
-  let color = "bg-gray-500";
-
-  if (parsed.success) {
-    const status = dictionary[parsed.data.status];
-    label = status.label;
-    color = status.color;
+  if (!parsed.success) {
+    return null;
   }
+
+  const key = parsed.data.status;
+  const { label, color } = dictionary[key];
 
   return (
     <a
@@ -61,7 +60,16 @@ export async function StatusWidget({ slug }: { slug: string }) {
       rel="noreferrer"
     >
       {label}
-      <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+      <span className="relative flex h-2 w-2">
+        {parsed.data.status === "operational" ? (
+          <span
+            className={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
+          />
+        ) : null}
+        <span
+          className={`relative inline-flex h-2 w-2 rounded-full ${color}`}
+        />
+      </span>
     </a>
   );
 }

@@ -14,13 +14,8 @@ export function MarketingFooter({ className }: Props) {
     <footer className={cn("w-full", className)}>
       <Shell className="grid gap-6">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-          <div className="flex flex-col gap-3 text-sm">
-            <p className="text-foreground font-semibold">People</p>
-            <FooterLink
-              href="https://twitter.com/thibaultleouay"
-              label="@thibaultleouay"
-            />
-            <FooterLink href="https://twitter.com/mxkaske" label="@mxkaske" />
+          <div>
+            <StatusWidget slug="status" />
           </div>
           <div className="flex flex-col gap-3 text-sm">
             <p className="text-foreground font-semibold">Community</p>
@@ -41,7 +36,6 @@ export function MarketingFooter({ className }: Props) {
             <FooterLink href="/legal/privacy" label="Privacy" />
           </div>
         </div>
-        <StatusWidget slug="status" />
       </Shell>
     </footer>
   );
