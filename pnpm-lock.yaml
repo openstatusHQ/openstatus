@@ -58,7 +58,7 @@ importers:
         version: 18.2.0(react@18.2.0)
       swagger-ui-react:
         specifier: 5.9.0
-        version: 5.9.0(react-dom@18.2.0)(react@18.2.0)
+        version: 5.9.0(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -66,6 +66,9 @@ importers:
       '@types/node':
         specifier: 18.11.10
         version: 18.11.10
+      '@types/react':
+        specifier: 18.2.12
+        version: 18.2.12
       '@types/swagger-ui-react':
         specifier: 4.18.1
         version: 4.18.1
@@ -12472,7 +12475,7 @@ packages:
     resolution: {integrity: sha512-kzmNjIgU32mO4mmH5+iUyrqlpFQhF8K2k7eZ4fdLSOPFrD1XgEuSBv9LDEgxRXTMBqMd8ppT0x6TIzqE5pdGdw==}
     dev: false
 
-  /react-redux@8.1.2(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1):
+  /react-redux@8.1.2(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1):
     resolution: {integrity: sha512-xJKYI189VwfsFc4CJvHqHlDrzyFTY/3vZACbE+rr/zQ34Xx1wQfB4OTOSeOSNrF6BDVe8OOdxIrAnMGXA3ggfw==}
     peerDependencies:
       '@types/react': ^16.8 || ^17.0 || ^18.0
@@ -12495,6 +12498,7 @@ packages:
     dependencies:
       '@babel/runtime': 7.22.15
       '@types/hoist-non-react-statics': 3.3.2
+      '@types/react': 18.2.12
       '@types/use-sync-external-store': 0.0.3
       hoist-non-react-statics: 3.3.2
       react: 18.2.0
@@ -13612,7 +13616,7 @@ packages:
       - debug
     dev: false
 
-  /swagger-ui-react@5.9.0(react-dom@18.2.0)(react@18.2.0):
+  /swagger-ui-react@5.9.0(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-j45ceuGHMRmI8nhOaG71VeQwrPutFHDq6QhgrxOmf4BRMOdOQgVY1POQY9ksnXZtskbD9J2NHURs4BLEDIs8gA==}
     peerDependencies:
       react: '>=17.0.0'
@@ -13641,7 +13645,7 @@ packages:
       react-immutable-proptypes: 2.2.0(immutable@3.8.2)
       react-immutable-pure-component: 2.2.2(immutable@3.8.2)(react-dom@18.2.0)(react@18.2.0)
       react-inspector: 6.0.2(react@18.2.0)
-      react-redux: 8.1.2(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1)
+      react-redux: 8.1.2(@types/react@18.2.12)(react-dom@18.2.0)(react@18.2.0)(redux@4.2.1)
       react-syntax-highlighter: 15.5.0(react@18.2.0)
       redux: 4.2.1
       redux-immutable: 4.0.0(immutable@3.8.2)
