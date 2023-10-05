@@ -11,7 +11,15 @@ const config: DocsThemeConfig = {
   docsRepositoryBase:
     "https://github.com/openstatusHQ/openstatus/tree/main/apps/docs",
   footer: {
-    text: "OpenStatus Documentation",
+    text: (
+       <span>
+        Copyright {new Date().getFullYear()} ©{' '}
+        <a href="https://www.openstatus.dev/" target="_blank">
+        OpenStatus
+        </a>
+        .
+       </span>
+    )
   },
   head: (
     <>

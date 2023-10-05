@@ -11,6 +11,7 @@
   "dependencies": {
     "@hono/zod-openapi": "0.7.1",
     "@openstatus/db": "workspace:*",
+    "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@unkey/api": "0.10.0",

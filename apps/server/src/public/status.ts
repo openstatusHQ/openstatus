@@ -41,7 +41,7 @@ status.get("/:slug", async (c) => {
     monitorData.map(async ({ monitors_to_pages }) => {
       return await getMonitorList(tb)({
         monitorId: String(monitors_to_pages.monitorId),
-        limit: 3, // limits the grouped cronTimestamps
+        limit: 5, // limits the grouped cronTimestamps
       });
     }),
   );

@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { db, eq } from "@openstatus/db";
+import { db, eq, sql } from "@openstatus/db";
 import {
   availableRegions,
   METHODS,
@@ -262,7 +262,7 @@ const postRoute = createRoute({
           schema: MonitorSchema,
         },
       },
-      description: "Create  a monitor",
+      description: "Create a monitor",
     },
     400: {
       content: {
@@ -277,8 +277,20 @@ const postRoute = createRoute({
 
 monitorApi.openapi(postRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
+  const workspacePlan = c.get("workspacePlan");
   console.log({ workspaceId });
   const input = c.req.valid("json");
+
+  const count = (
+    await db.select({ count: sql<number>`count(*)` }).from(monitor)
+  )[0].count;
+
+  if (count >= workspacePlan.limits.monitors)
+    return c.jsonT({ code: 403, message: "Forbidden" });
+
+  if (!workspacePlan.limits.periodicity.includes(input.periodicity))
+    return c.jsonT({ code: 403, message: "Forbidden" });
+
   const { headers, ...rest } = input;
   const _newMonitor = await db
     .insert(monitor)
@@ -298,7 +310,7 @@ monitorApi.openapi(postRoute, async (c) => {
 const putRoute = createRoute({
   method: "put",
   tags: ["monitor"],
-  path: "/",
+  path: "/:id",
   request: {
     params: ParamsSchema,
     body: {
@@ -333,9 +345,13 @@ const putRoute = createRoute({
 monitorApi.openapi(putRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
+  const workspacePlan = c.get("workspacePlan");
   const { id } = c.req.valid("param");
 
   if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
+
+  if (!workspacePlan.limits.periodicity.includes(input.periodicity))
+    return c.jsonT({ code: 403, message: "Forbidden" });
 
   const _monitor = await db
     .select()
