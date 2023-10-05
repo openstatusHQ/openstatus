@@ -10,14 +10,14 @@
     "tsc": "tsc"
   },
   "devDependencies": {
-    "@turbo/gen": "1.10.9",
-    "eslint": "8.43.0",
-    "@openstatus/eslint-config": "workspace:*",
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
-    "prettier-plugin-tailwindcss": "0.4.1",
-    "prettier": "3.0.0",
+    "@openstatus/eslint-config": "workspace:*",
+    "@turbo/gen": "1.10.12",
+    "eslint": "8.50.0",
+    "prettier": "3.0.3",
+    "prettier-plugin-tailwindcss": "0.5.4",
     "turbo": "1.10.12",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   },
   "packageManager": "pnpm@8.7.6",
   "name": "openstatus",

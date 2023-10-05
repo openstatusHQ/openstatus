@@ -10,21 +10,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@react-email/button": "0.0.9",
+    "@react-email/button": "0.0.10",
     "@react-email/components": "0.0.7",
     "@react-email/head": "0.0.5",
     "@react-email/html": "0.0.4",
-    "@react-email/tailwind": "0.0.8",
-    "@t3-oss/env-core": "0.6.0",
-    "react-email": "1.9.4",
+    "@react-email/tailwind": "0.0.9",
+    "@t3-oss/env-core": "0.6.1",
+    "react-email": "1.9.5",
     "resend": "1.1.0",
-    "zod": "3.21.4"
+    "zod": "3.22.2"
   },
   "devDependencies": {
-    "@types/node": "20.3.1",
-    "@types/react": "18.2.12",
-    "react": "18.2.0",
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.1.6"
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.24",
+    "react": "18.2.0",
+    "typescript": "5.2.2"
   }
 }

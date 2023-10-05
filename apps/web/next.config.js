@@ -7,6 +7,8 @@ const nextConfig = {
   transpilePackages: ["ui", "@openstatus/api"],
   experimental: {
     serverActions: true,
+    serverComponentsExternalPackages: ["libsql"],
+
   },
   images: {
     remotePatterns: [

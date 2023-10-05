@@ -13,7 +13,7 @@
   },
   "homepage": "https://openstatus.dev",
   "dependencies": {
-    "@vercel/analytics": "1.0.1",
+    "@vercel/analytics": "1.0.2",
     "next": "13.4.19",
     "next-sitemap": "4.2.3",
     "nextra": "2.13.1",
@@ -24,9 +24,9 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/node": "18.11.10",
-    "@types/react": "18.2.12",
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.24",
     "@types/swagger-ui-react": "4.18.1",
-    "typescript": "5.1.6"
+    "typescript": "5.2.2"
   }
 }
