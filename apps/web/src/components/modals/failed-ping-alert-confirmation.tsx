@@ -18,7 +18,7 @@ type FailedPingAlertConfirmationProps = {
   monitor: MonitorProps;
   pingFailed: boolean;
   setPingFailed: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirm: (props: MonitorProps) => void;
+  onConfirm: (props: MonitorProps) => Promise<void>;
 };
 
 export const FailedPingAlertConfirmation = ({
@@ -30,9 +30,9 @@ export const FailedPingAlertConfirmation = ({
   const [isPending, startTransition] = React.useTransition();
   const handleSubmit = () => {
     startTransition(async () => {
-      upsertMonitor(monitor);
+      await upsertMonitor(monitor);
+      setPingFailed(false);
     });
-    setPingFailed(false);
   };
 
   return (
@@ -49,7 +49,10 @@ export const FailedPingAlertConfirmation = ({
           <AlertDialogAction
             type="submit"
             disabled={isPending}
-            onClick={handleSubmit}
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
           >
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </AlertDialogAction>
