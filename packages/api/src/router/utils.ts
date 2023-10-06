@@ -1,6 +1,7 @@
 import { eq } from "@openstatus/db";
 import {
   monitor,
+  notification,
   user,
   usersToWorkspaces,
   workspace,
@@ -95,5 +96,49 @@ export const hasUserAccessToMonitor = async ({
     workspace: currentWorkspace,
     user: result.currentUser,
     monitor: currentMonitor,
+  };
+};
+
+export const hasUserAccessToNotification = async ({
+  notificationId,
+  ctx,
+}: {
+  notificationId: number;
+  ctx: Context;
+}) => {
+  if (!ctx.auth?.userId) return;
+
+  const currentNotification = await ctx.db
+    .select()
+    .from(notification)
+    .where(eq(notification.id, notificationId))
+    .get();
+  if (!currentNotification || !currentNotification.workspaceId) return;
+
+  // TODO: we should use hasUserAccess and pass `workspaceId` instead of `workspaceSlug`
+  const currentUser = ctx.db
+    .select()
+    .from(user)
+    .where(eq(user.tenantId, ctx.auth.userId))
+    .as("currentUser");
+
+  const result = await ctx.db
+    .select()
+    .from(usersToWorkspaces)
+    .where(eq(usersToWorkspaces.workspaceId, currentNotification.workspaceId))
+    .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+    .get();
+
+  if (!result || !result.users_to_workspaces) return;
+
+  const currentWorkspace = await ctx.db.query.workspace.findFirst({
+    where: eq(workspace.id, result.users_to_workspaces.workspaceId),
+  });
+
+  if (!currentWorkspace) return;
+  return {
+    workspace: currentWorkspace,
+    user: result.currentUser,
+    notification: currentNotification,
   };
 };

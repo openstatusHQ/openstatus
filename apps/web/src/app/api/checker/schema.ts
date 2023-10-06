@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { METHODS } from "@openstatus/db/src/schema";
+import { METHODS, status } from "@openstatus/db/src/schema";
 
 export const payloadSchema = z.object({
   workspaceId: z.string(),
@@ -11,6 +11,7 @@ export const payloadSchema = z.object({
   url: z.string(),
   cronTimestamp: z.number(),
   pageIds: z.array(z.string()),
+  status: z.enum(status),
 });
 
 export type Payload = z.infer<typeof payloadSchema>;

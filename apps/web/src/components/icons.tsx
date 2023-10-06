@@ -27,7 +27,7 @@ import {
   TwitterIcon,
   Zap,
 } from "lucide-react";
-import type { Icon as LucideIcon, LucideProps } from "lucide-react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 
 export type Icon = LucideIcon;
 export type ValidIcon = keyof typeof Icons;
