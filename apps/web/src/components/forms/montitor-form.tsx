@@ -661,23 +661,34 @@ export function MonitorForm({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-          <div className="flex flex-col gap-6 sm:col-span-full sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full sm:w-auto"
-              size="lg"
-              onClick={sendTestPing}
-            >
-              {!isTestPending ? (
-                "Test Request"
-              ) : (
-                <LoadingAnimation variant="inverse" />
-              )}
-            </Button>
-            <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
-              {!isPending ? "Confirm" : <LoadingAnimation />}
-            </Button>
+          <div className="grid justify-end gap-3">
+            <div className="flex flex-col gap-6 sm:col-span-full sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full sm:w-auto"
+                size="lg"
+                onClick={sendTestPing}
+              >
+                {!isTestPending ? (
+                  "Test Request"
+                ) : (
+                  <LoadingAnimation variant="inverse" />
+                )}
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                size="lg"
+                disabled={isPending}
+              >
+                {!isPending ? "Confirm" : <LoadingAnimation />}
+              </Button>
+            </div>
+            <div className="flex w-full justify-end">
+              <p className="text-muted-foreground text-xs">
+                We test your endpoint connection on submit.
+              </p>
+            </div>
           </div>
         </form>
       </Form>
