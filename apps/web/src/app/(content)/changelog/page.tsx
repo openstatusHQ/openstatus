@@ -5,7 +5,11 @@ import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { formatDate } from "@/lib/utils";
 
-export default async function Post() {
+/**
+ * TODO: add generateMetadata and use the last post for the description
+ */
+
+export default async function Changelog() {
   const posts = allChangelogs.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
