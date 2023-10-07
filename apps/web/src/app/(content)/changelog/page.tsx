@@ -30,7 +30,7 @@ export default async function Changelog() {
         {posts.map((post) => (
           <article
             key={post.slug}
-            className="grid gap-4 md:grid-cols-5 md:gap-6"
+            className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6"
           >
             <time className="text-muted-foreground order-2 font-mono text-sm md:order-1 md:col-span-1">
               {formatDate(new Date(post.publishedAt))}
@@ -47,7 +47,9 @@ export default async function Changelog() {
               {post.title}
             </h3>
             <div className="order-4 md:col-span-4 md:col-start-2">
+              {/* <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto max-w-prose"> */}
               <Mdx code={post.body.code} />
+              {/* </div> */}
             </div>
           </article>
         ))}

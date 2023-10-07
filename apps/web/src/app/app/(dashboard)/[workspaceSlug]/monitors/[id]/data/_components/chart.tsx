@@ -5,9 +5,7 @@ import { Card, LineChart, Title } from "@tremor/react";
 import type { Region } from "@openstatus/tinybird";
 
 const dataFormatter = (number: number) =>
-  `${Intl.NumberFormat("us")
-    .format(number / 1000)
-    .toString()}s`;
+  `${Intl.NumberFormat("us").format(number).toString()}ms`;
 
 interface ChartProps {
   data: (Partial<Record<Region, string>> & { timestamp: string })[];
@@ -20,30 +18,30 @@ export function Chart({ data, regions }: ChartProps) {
       <Title>Response Time</Title>
       <LineChart
         data={data}
+        yAxisWidth={56}
         index="timestamp"
         categories={regions}
         colors={[
           "blue",
-          "red",
-          "orange",
           "amber",
-          "yellow",
-          "lime",
-          "green",
-          "emerald",
-          "teal",
           "cyan",
-          "sky",
+          "yellow",
+          "red",
           "indigo",
-          "violet",
+          "lime",
           "purple",
+          "green",
+          "orange",
+          "sky",
+          "rose",
+          "violet",
+          "teal",
           "fuchsia",
           "pink",
-          "rose",
+          "emerald",
         ]}
-        onValueChange={(v) => void 0} // make it interactive
+        onValueChange={(v) => void 0} // that prop makes the chart interactive
         valueFormatter={dataFormatter}
-        yAxisWidth={40}
       />
     </Card>
   );

@@ -17,6 +17,7 @@ export function ChartWrapper({
 /**
  *
  * @param data expects to be sorted by cronTimestamp
+ * @param period
  * @returns
  */
 function groupDataByTimestamp(data: Ping[], period: Period) {
@@ -59,11 +60,11 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
  * @returns
  */
 function renderTimestamp(timestamp: number, period: Period) {
-  const isIn3D = ["day", "3d"].includes(period);
+  const isInDay = ["hour", "day"].includes(period);
   return new Date(timestamp).toLocaleString("en-US", {
-    year: !isIn3D ? "numeric" : undefined,
-    month: !isIn3D ? "numeric" : undefined,
-    day: !isIn3D ? "numeric" : undefined,
+    year: !isInDay ? "numeric" : undefined,
+    month: !isInDay ? "numeric" : undefined,
+    day: !isInDay ? "numeric" : undefined,
     hour: "2-digit",
     minute: "2-digit",
   });

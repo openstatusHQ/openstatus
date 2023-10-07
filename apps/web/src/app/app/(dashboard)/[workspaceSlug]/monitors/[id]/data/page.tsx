@@ -53,7 +53,7 @@ export default async function Page({
 
   const data = await getResponseListData({
     monitorId: id,
-    ...search.data, // only today
+    ...search.data,
     /**
      * We are overwriting the `fromDate` and `toDate`
      * to only support presets from the `period`
@@ -69,8 +69,12 @@ export default async function Page({
         description={monitor.url}
         actions={<DatePickerPreset period={search.data.period} />}
       />
-      {data ? <ChartWrapper period={search.data.period} data={data} /> : null}
-      {data && <DataTable columns={columns} data={data} />}
+      {data ? (
+        <>
+          <ChartWrapper period={search.data.period} data={data} />
+          <DataTable columns={columns} data={data} />
+        </>
+      ) : null}
     </div>
   );
 }

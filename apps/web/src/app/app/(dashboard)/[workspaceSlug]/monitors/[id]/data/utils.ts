@@ -1,10 +1,12 @@
-import { endOfDay, startOfDay, subDays, subMonths } from "date-fns";
+import { endOfDay, startOfDay, subDays, subHours, subMonths } from "date-fns";
 
-export const periods = ["day", "3d", "7d", "30d"] as const;
+export const periods = ["hour", "day", "3d", "7d", "30d"] as const;
 
 export type Period = (typeof periods)[number];
 
 export function getPeriodDate(period: Period) {
+  if (period === "hour")
+    return { from: subHours(new Date(), 1), to: new Date() };
   if (period === "day")
     return { from: startOfDay(new Date()), to: endOfDay(new Date()) };
   if (period === "3d")

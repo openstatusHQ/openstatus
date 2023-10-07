@@ -29,6 +29,7 @@ export function DatePickerPreset({ period }: { period: Period }) {
   }
 
   function renderLabel() {
+    if (period === "hour") return "Last hour";
     if (period === "day") return "Today";
     if (period === "3d") return "Last 3 days";
     if (period === "7d") return "Last week";
@@ -52,6 +53,9 @@ export function DatePickerPreset({ period }: { period: Period }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
+        <DropdownMenuItem onClick={() => onSelect("hour")}>
+          Last hour
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onSelect("day")}>
           Today
         </DropdownMenuItem>
