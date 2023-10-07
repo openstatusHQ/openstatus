@@ -5,3 +5,4 @@ export * from "./monitor";
 export * from "./user";
 export * from "./workspace";
 export * from "./shared";
+export * from "./notification";

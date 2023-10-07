@@ -1,5 +1,5 @@
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
-import { Client } from "@upstash/qstash/cloudflare";
+import { Client } from "@upstash/qstash";
 import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
@@ -57,6 +57,7 @@ export const cron = async ({
         headers: row.headers,
         body: row.body,
         cronTimestamp: timestamp,
+        status: row.status,
         pageIds: allPages.map((p) => String(p.pageId)),
       };
 
@@ -79,6 +80,7 @@ export const cron = async ({
           body: row.body,
           headers: row.headers,
           pageIds: allPages.map((p) => String(p.pageId)),
+          status: row.status,
         };
 
         const result = c.publishJSON({
@@ -100,6 +102,7 @@ export const cron = async ({
         cronTimestamp: timestamp,
         method: "GET",
         pageIds: ["openstatus"],
+        status: "active",
       };
 
       // TODO: fetch + try - catch + retry once

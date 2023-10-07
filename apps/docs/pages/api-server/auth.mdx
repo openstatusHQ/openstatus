@@ -1,0 +1,27 @@
+import { Callout } from "nextra/components";
+
+# Auth Token
+
+In your Settings, you can create and later revoke your API token. Once created,
+it will be shown only once so keep it safe.
+
+On every request to `https://api.openstatus.dev/v1`, you'll have to attach the
+token to the header.
+
+```ts
+const monitors = await fetch(`https://api.openstatus.dev/v1/monitors`, {
+  method: "GET",
+  headers: new Headers({
+    "x-openstatus-key": "os_xxxxxxxxx",
+  }),
+});
+```
+
+Use the above snippet to try it out.
+
+Learn more about [all the endpoints](/api-server/openapi) we provide.
+
+We currently do not have an SDK to make the best out of it. Any contributions
+are welcome.
+
+The API infrastructure is powered by [Unkey](https://unkey.dev).

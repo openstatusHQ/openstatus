@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
@@ -19,7 +20,10 @@ export const columns: ColumnDef<
       const active = row.getValue("active");
       return (
         // TODO: add Link on click when we have a better details page
-        <div className="flex items-center gap-2">
+        <Link
+          href={`./monitors/${row.original.id}/data`}
+          className="group flex items-center gap-2"
+        >
           {active ? (
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75 duration-1000" />
@@ -30,9 +34,11 @@ export const columns: ColumnDef<
               <span className="absolute inline-flex h-2 w-2 rounded-full bg-red-500" />
             </span>
           )}
-          <span className="max-w-[125px] truncate">{row.getValue("name")}</span>
+          <span className="max-w-[125px] truncate group-hover:underline">
+            {row.getValue("name")}
+          </span>
           {!active ? <Badge variant="outline">paused</Badge> : null}
-        </div>
+        </Link>
       );
     },
   },

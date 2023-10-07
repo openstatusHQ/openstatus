@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...twitterMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
+          page?.description || `The ${page?.title} status page`
         }`,
       ],
       title: page?.title,
@@ -66,7 +66,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...ogMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page}`
+          page?.description || `The ${page?.title} status page`
         }`,
       ],
       title: page?.title,

@@ -58,7 +58,7 @@ export const cardConfig = {
         icon: "puzzle",
         catchline: "Custom slug.",
         description:
-          "Great your own sudomain and inform your users about the uptime of your endpoints.",
+          "Create your own sudomain and inform your users about the uptime of your endpoints.",
       },
       {
         icon: "globe",
@@ -82,12 +82,11 @@ export const cardConfig = {
         icon: "bell",
         catchline: "Alerts.",
         description: "Be informed if your endpoint fails.",
-        badge: "Coming soon",
       },
       {
         icon: "message-circle",
         catchline: "Inform.",
-        description: "Keep your users updated with incident updates.",
+        description: "Keep your teams and users updated with incident updates.",
       },
       {
         icon: "zap",

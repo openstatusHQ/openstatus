@@ -5,7 +5,8 @@ import { createTRPCContext } from "../trpc";
 
 vi.mock("@clerk/nextjs/server");
 test("Get Test Page", async () => {
-  const ctx = await createTRPCContext({
+  const ctx = createTRPCContext({
+    // @ts-expect-error
     req: {},
   });
 
@@ -32,7 +33,7 @@ test("Get Test Page", async () => {
         jobType: "other",
         name: "OpenStatus",
         periodicity: "1m",
-        status: "inactive",
+        status: "active",
         updatedAt: expect.any(Date),
         url: "https://www.openstatus.dev",
         workspaceId: 1,
@@ -46,7 +47,8 @@ test("Get Test Page", async () => {
 });
 
 test("No Page", async () => {
-  const ctx = await createTRPCContext({
+  const ctx = createTRPCContext({
+    // @ts-expect-error
     req: {},
   });
 

@@ -2,8 +2,8 @@
   "index": "What is OpenStatus?",
   "getting-started": "Getting started",
   "integrations": "Integrations",
-  "developper-guide": "Developer guide",
-  "rest-api": "API",
+  "developer-guide": "Developer guide",
+  "api-server": "API",
   "contact": {
     "title": "🌐 Website",
     "type": "page",

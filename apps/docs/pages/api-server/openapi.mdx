@@ -1,0 +1,31 @@
+import dynamic from "next/dynamic";
+import { Callout } from "nextra/components";
+import { useData } from "nextra/data";
+
+export const getStaticProps = async ({ params }) => {
+  const res = await fetch("https://api.openstatus.dev/v1/openapi");
+  const spec = await res.json();
+  return {
+    props: {
+      // We add an `ssg` field to the page props,
+      // which will be provided to the Nextra `useData` hook.
+      ssg: { spec },
+    },
+    // The page will be considered as stale and regenerated every 60 seconds.
+    revalidate: 60,
+  };
+};
+
+export const Swagger = () => {
+  // Get the data from SSG, and render it as a component.
+  const SwaggerUI = dynamic(import("swagger-ui-react"), { ssr: false });
+  const { spec } = useData();
+  console.log(spec);
+  return <SwaggerUI spec={spec} />;
+};
+
+# OpenAPI
+
+<Callout emoji="🚧">Work in progress</Callout>
+
+<Swagger />

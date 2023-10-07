@@ -1,14 +1,21 @@
 import type { ReactElement } from "react";
 import { Resend } from "resend";
 
+import { Alert, EmailDataSchema } from "./emails/alert";
 import { validateEmailNotDisposable } from "./emails/utils/utils";
 import WaitingList from "./emails/waiting-list";
 import WelcomeEmail from "./emails/welcome";
 import { env } from "./env";
 
-export { WelcomeEmail, WaitingList, validateEmailNotDisposable };
+export {
+  WelcomeEmail,
+  WaitingList,
+  validateEmailNotDisposable,
+  Alert,
+  EmailDataSchema,
+};
 
-const resend = new Resend(env.RESEND_API_KEY);
+export const resend = new Resend(env.RESEND_API_KEY);
 
 export interface Emails {
   react: ReactElement;

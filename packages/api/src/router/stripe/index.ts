@@ -46,9 +46,9 @@ export const stripeRouter = createTRPCRouter({
           email?: string;
         } = {
           metadata: {
-            workspaceId: String(workspace.id),
+            workspaceId: String(result.id),
           },
-          email: opts.ctx.auth.user?.emailAddresses[0].emailAddress || "",
+          email: userHasAccess.currentUser.email || "",
         };
 
         const stripeUser = await stripe.customers.create(customerData);
@@ -62,7 +62,7 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const session = await stripe.billingPortal.sessions.create({
-        customer: stripeId || "",
+        customer: stripeId,
         return_url: `${url}/app/${result.slug}/settings`,
       });
 
@@ -107,7 +107,7 @@ export const stripeRouter = createTRPCRouter({
           email?: string;
         } = {
           metadata: {
-            workspaceId: String(workspace.id),
+            workspaceId: String(result.id),
           },
           email: currentUser?.email || "",
         };
