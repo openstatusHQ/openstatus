@@ -16,8 +16,6 @@ import { getPeriodDate, periods } from "./utils";
 
 export const revalidate = 0;
 
-// TODO: Twitter Quote Lee's tweet with zod usage in this file
-
 /**
  * allowed URL search params
  */
