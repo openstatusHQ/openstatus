@@ -2,8 +2,10 @@
 
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
-import { codesDict } from "@/data/code-dictionary";
+
 import { Button } from "@openstatus/ui";
+
+import { codesDict } from "@/data/code-dictionary";
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableDateRangePicker } from "./data-table-date-ranger-picker";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
@@ -24,12 +26,12 @@ export function DataTableToolbar<TData>({
         {table.getColumn("statusCode") && (
           <DataTableFacetedFilter
             column={table.getColumn("statusCode")}
-            title="Filter by Status Code"
+            title="Status Code"
             options={Object.keys(codesDict).map((key) => {
               const typedKey = key as keyof typeof codesDict;
               return {
-                label: codesDict[typedKey].code,
-                value: codesDict[typedKey].status_code,
+                label: codesDict[typedKey].label,
+                value: codesDict[typedKey].prefix,
               };
             })}
           />

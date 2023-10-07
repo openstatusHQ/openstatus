@@ -1,22 +1,27 @@
 export const codesDict = {
-  "200": {
-    code: "200",
-    name: "OK",
-    status_code: "200",
+  "1xx": {
+    prefix: 1,
+    label: "1xx",
+    name: "Informational",
   },
-  "500": {
-    code: "200",
-    name: "Internal Server Error",
-    status_code: "500",
+  "2xx": {
+    prefix: 2,
+    label: "2xx",
+    name: "Successfull",
   },
-  "404": {
-    code: "200",
-    name: "Not Found",
-    status_code: "404",
+  "3xx": {
+    prefix: 3,
+    label: "3xx",
+    name: "Redirection",
   },
-  "429": {
-    code: "200",
-    name: "Too Many Requests",
-    status_code: "429",
+  "4xx": {
+    prefix: 4,
+    label: "4xx",
+    name: "Client Error",
+  },
+  "5xx": {
+    prefix: 5,
+    label: "5xx",
+    name: "Server Error",
   },
 } as const;
