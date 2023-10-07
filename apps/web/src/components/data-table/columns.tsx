@@ -34,8 +34,8 @@ export const columns: ColumnDef<Ping>[] = [
       return <DataTableStatusBadge {...{ statusCode }} />;
     },
     filterFn: (row, id, value) => {
-      // needed because value is number, not string
-      return `${row.getValue(id)}`.includes(`${value}`);
+      // get the first digit of the status code
+      return value.includes(Number(String(row.getValue(id)).charAt(0)));
     },
   },
   {
