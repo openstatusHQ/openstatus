@@ -26,6 +26,7 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
   const _data = data.reduce(
     (acc, curr) => {
       const { cronTimestamp, latency, region } = curr;
+      regions[region] = null; // to get the region keys
       if (cronTimestamp === currentTimestamp) {
         // overwrite last object in acc
         const last = acc.pop();
@@ -35,7 +36,6 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
             [region]: latency,
           });
         }
-        return acc;
       } else if (cronTimestamp) {
         currentTimestamp = cronTimestamp;
         // create new object in acc
@@ -44,7 +44,6 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
           [region]: latency,
         });
       }
-      regions[region] = null;
       return acc;
     },
     [] as (Partial<Record<Region, string>> & { timestamp: string })[],

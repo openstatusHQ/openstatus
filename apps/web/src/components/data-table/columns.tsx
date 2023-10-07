@@ -50,10 +50,14 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Region" />
     ),
     cell: ({ row }) => {
-      const region = String(row.getValue("region"));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return <div>{regionsDict[region]?.location}</div>;
+      return (
+        <div>
+          <span className="font-mono">{String(row.getValue("region"))} </span>
+          <span className="text-muted-foreground text-xs">
+            {regionsDict[row.original.region]?.location}
+          </span>
+        </div>
+      );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));

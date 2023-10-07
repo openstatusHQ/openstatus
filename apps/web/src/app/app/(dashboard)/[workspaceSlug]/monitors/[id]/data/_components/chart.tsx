@@ -18,7 +18,7 @@ export function Chart({ data, regions }: ChartProps) {
       <Title>Response Time</Title>
       <LineChart
         data={data}
-        yAxisWidth={56}
+        yAxisWidth={64}
         index="timestamp"
         categories={regions}
         colors={[
