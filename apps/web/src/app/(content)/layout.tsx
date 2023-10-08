@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 
-export default function BlogLayout({
+export default function ContentLayout({
   children,
 }: {
   children: React.ReactNode;
