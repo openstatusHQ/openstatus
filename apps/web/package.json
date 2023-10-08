@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "4.25.1",
-    "@headlessui/react": "^1.7.17",
+    "@headlessui/react": "1.7.17",
     "@hookform/resolvers": "3.3.1",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
@@ -29,7 +29,7 @@
     "@t3-oss/env-nextjs": "0.6.1",
     "@tailwindcss/typography": "0.5.10",
     "@tanstack/react-table": "8.10.3",
-    "@tremor/react": "^3.8.2",
+    "@tremor/react": "3.8.2",
     "@trpc/client": "10.38.5",
     "@trpc/next": "10.38.5",
     "@trpc/react-query": "10.38.5",
@@ -73,7 +73,7 @@
   "devDependencies": {
     "@openstatus/eslint-config": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@types/luxon": "^3.3.1",
+    "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",
     "@types/react": "18.2.24",
     "@types/react-dom": "18.2.8",

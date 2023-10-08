@@ -113,7 +113,7 @@ importers:
         specifier: 4.25.1
         version: 4.25.1(next@13.5.3)(react-dom@18.2.0)(react@18.2.0)
       '@headlessui/react':
-        specifier: ^1.7.17
+        specifier: 1.7.17
         version: 1.7.17(react-dom@18.2.0)(react@18.2.0)
       '@hookform/resolvers':
         specifier: 3.3.1
@@ -167,7 +167,7 @@ importers:
         specifier: 8.10.3
         version: 8.10.3(react-dom@18.2.0)(react@18.2.0)
       '@tremor/react':
-        specifier: ^3.8.2
+        specifier: 3.8.2
         version: 3.8.2(prop-types@15.8.1)(react-dom@18.2.0)(react@18.2.0)(tailwindcss@3.3.2)
       '@trpc/client':
         specifier: 10.38.5
@@ -294,7 +294,7 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tsconfig
       '@types/luxon':
-        specifier: ^3.3.1
+        specifier: 3.3.1
         version: 3.3.1
       '@types/node':
         specifier: 20.8.0
