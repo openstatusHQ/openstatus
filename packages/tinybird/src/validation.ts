@@ -69,7 +69,7 @@ export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
-  limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
+  limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
   region: z.enum(availableRegions).optional(),
   cronTimestamp: z.number().int().optional(),
 });
@@ -85,7 +85,6 @@ export const groupByRange = ["day", "cron"] as const;
  * Params for pipe monitor_list__v0
  */
 export const tbParameterMonitorList = z.object({
-  siteId: z.string().optional().default("openstatus"), // REMINDER: remove default once alpha
   monitorId: z.string().optional().default(""), // REMINDER: remove default once alpha
   limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
   cronTimestamp: z.number().int().optional(),

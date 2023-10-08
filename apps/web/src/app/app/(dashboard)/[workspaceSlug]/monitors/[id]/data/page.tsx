@@ -28,7 +28,7 @@ const searchParamsSchema = z.object({
     .optional()
     .default(startOfDay(new Date()).getTime()),
   toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
-  period: z.enum(periods).optional().default("day"),
+  period: z.enum(periods).optional().default("hour"),
 });
 
 export default async function Page({
@@ -63,7 +63,8 @@ export default async function Page({
   });
 
   return (
-    <div className="grid gap-6 md:gap-8">
+    // overflow-x-scroll needed for the chart.
+    <div className="grid grid-cols-1 gap-6 md:gap-8">
       <Header
         title={monitor.name}
         description={monitor.url}

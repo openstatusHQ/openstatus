@@ -32,8 +32,6 @@ export function DatePickerPreset({ period }: { period: Period }) {
     if (period === "hour") return "Last hour";
     if (period === "day") return "Today";
     if (period === "3d") return "Last 3 days";
-    if (period === "7d") return "Last week";
-    if (period === "30d") return "Last month";
     return "Pick a range";
   }
 
@@ -61,12 +59,6 @@ export function DatePickerPreset({ period }: { period: Period }) {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onSelect("3d")}>
           Last 3 days
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSelect("7d")}>
-          Last week
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onSelect("30d")}>
-          Last month
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
