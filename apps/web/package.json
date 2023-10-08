@@ -18,6 +18,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-discord": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/ui": "workspace:*",
