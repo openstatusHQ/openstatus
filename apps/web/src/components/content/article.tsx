@@ -54,7 +54,7 @@ export function Article({ post }: { post: Post }) {
           </div>
         </div>
       </div>
-      <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto  max-w-prose ">
+      <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto max-w-prose">
         <Mdx code={post.body.code} />
       </div>
     </article>
