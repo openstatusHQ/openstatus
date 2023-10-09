@@ -54,7 +54,7 @@ export const monitor = sqliteTable("monitor", {
 
   regions: text("regions").default("").notNull(),
 
-  url: text("url", { length: 512 }).notNull(),
+  url: text("url", { length: 2048 }).notNull(),
 
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
