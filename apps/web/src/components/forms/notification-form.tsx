@@ -118,7 +118,7 @@ export function NotificationForm({
         toast("success");
         return;
       }
-      toast("error");
+      toast("test-error");
     });
   }
 
