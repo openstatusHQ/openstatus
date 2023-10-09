@@ -5,7 +5,7 @@ import type { z } from "zod";
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
-import { availableRegions } from "@openstatus/tinybird";
+import { FlyRegion } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
@@ -63,7 +63,7 @@ export const cron = async ({
 
       // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/auto`,
+        url: `https://api.openstatus.dev/checker`,
         body: payload,
         delay: Math.random() * 90,
       });
@@ -84,8 +84,11 @@ export const cron = async ({
         };
 
         const result = c.publishJSON({
-          url: `${DEFAULT_URL}/api/checker/regions/${region}`,
+          url: `https://api.openstatus.dev/checker`,
           body: payload,
+          headers: {
+            "fly-prefer-region": region,
+          },
         });
         allResult.push(result);
       }
@@ -94,7 +97,7 @@ export const cron = async ({
   // our first legacy monitor
   if (periodicity === "10m") {
     // Right now we are just checking the ping endpoint
-    for (const region of availableRegions) {
+    for (const region of FlyRegion) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: "openstatus",
         monitorId: "openstatusPing",
@@ -109,6 +112,9 @@ export const cron = async ({
       const result = c.publishJSON({
         url: `${DEFAULT_URL}/api/checker/regions/${region}`,
         body: payload,
+        headers: {
+          "fly-prefer-region": region,
+        },
         delay: Math.random() * 90,
       });
       allResult.push(result);

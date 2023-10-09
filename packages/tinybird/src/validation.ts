@@ -1,29 +1,12 @@
 import * as z from "zod";
 
-/**
- * All available Vercel (AWS) regions
- */
-export const availableRegions = [
-  "arn1",
-  "bom1",
-  "cdg1",
-  "cle1",
-  "cpt1",
-  "dub1",
-  "fra1",
-  "gru1",
-  "hkg1",
-  "hnd1",
-  "iad1",
-  "icn1",
-  "kix1",
-  "lhr1",
-  "pdx1",
-  "sfo1",
-  "sin1",
-  "syd1",
-] as const;
-
+// Frankfurt, Germany
+// Ashburn, Virginia, USA
+// Mumbai, India
+// Johannesburg, South Africa
+// Sydney, Australia
+// São Paulo, Brazil
+export const FlyRegion = ["fra", "iad", "bom", "jnb", "syd", "gru"] as const;
 /**
  * Values for the datasource ping_response__v3
  */
@@ -59,7 +42,7 @@ export const tbBuildResponseList = z.object({
     .default("{}")
     .transform((t) => JSON.parse(t))
     .nullable(),
-  region: z.enum(availableRegions),
+  region: z.enum(FlyRegion),
 });
 
 /**
@@ -70,7 +53,7 @@ export const tbParameterResponseList = z.object({
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(2500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24)
-  region: z.enum(availableRegions).optional(),
+  region: z.enum(FlyRegion).optional(),
   cronTimestamp: z.number().int().optional(),
 });
 
@@ -117,7 +100,7 @@ export const tbBuildHomeStats = z.object({
 });
 
 export type Ping = z.infer<typeof tbBuildResponseList>;
-export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
+export type Region = (typeof FlyRegion)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type HomeStats = z.infer<typeof tbBuildHomeStats>;
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;

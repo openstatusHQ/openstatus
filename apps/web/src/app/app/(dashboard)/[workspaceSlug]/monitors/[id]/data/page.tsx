@@ -2,7 +2,7 @@ import * as React from "react";
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import { availableRegions } from "@openstatus/tinybird";
+import { FlyRegion } from "@openstatus/tinybird";
 
 import { Header } from "@/components/dashboard/header";
 import { columns } from "@/components/data-table/columns";
@@ -17,7 +17,7 @@ export const revalidate = 0; // revalidate this page every 10 minutes
  */
 const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
-  region: z.enum(availableRegions).optional(),
+  region: z.enum(FlyRegion).optional(),
   cronTimestamp: z.coerce.number().optional(),
   fromDate: z.coerce.number().optional(),
   toDate: z.coerce.number().optional(),
