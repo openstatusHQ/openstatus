@@ -56,6 +56,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import { regionsDict } from "@/data/regions-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
@@ -86,7 +87,7 @@ const advancedSchema = z.object({
 
 const mergedSchema = insertMonitorSchema.merge(advancedSchema);
 
-type MonitorProps = z.infer<typeof mergedSchema>;
+export type MonitorProps = z.infer<typeof mergedSchema>;
 
 interface Props {
   defaultValues?: MonitorProps;
@@ -122,6 +123,7 @@ export function MonitorForm({
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const [isTestPending, startTestTransition] = React.useTransition();
+  const [pingFailed, setPingFailed] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
   const { toast } = useToastAction();
   const watchMethod = form.watch("method");
@@ -132,25 +134,33 @@ export function MonitorForm({
     control: form.control,
   });
 
+  const handleDataUpdateOrInsertion = async (props: MonitorProps) => {
+    try {
+      if (defaultValues) {
+        await api.monitor.updateMonitor.mutate(props);
+      } else {
+        const monitor = await api.monitor.createMonitor.mutate({
+          data: props,
+          workspaceSlug,
+        });
+        const id = monitor?.id || null;
+        router.replace(`?${updateSearchParams({ id })}`);
+      }
+      router.refresh();
+      toast("saved");
+    } catch (error) {
+      toast("error");
+    }
+  };
+
   const onSubmit = ({ ...props }: MonitorProps) => {
     startTransition(async () => {
-      try {
-        // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
-        if (defaultValues) {
-          await api.monitor.updateMonitor.mutate(props);
-        } else {
-          const monitor = await api.monitor.createMonitor.mutate({
-            data: props,
-            workspaceSlug,
-          });
-          const id = monitor?.id || null;
-          router.replace(`?${updateSearchParams({ id })}`);
-        }
-        router.refresh();
-        toast("saved");
-      } catch {
-        toast("error");
+      const pingResult = await pingEndpoint();
+      if (!pingResult) {
+        setPingFailed(true);
+        return;
       }
+      await handleDataUpdateOrInsertion(props);
     });
   };
 
@@ -177,21 +187,22 @@ export function MonitorForm({
     }
   };
 
+  const pingEndpoint = async () => {
+    const { url, body, method, headers } = form.getValues();
+    const res = await fetch(`/api/checker/test`, {
+      method: "POST",
+      headers: new Headers({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify({ url, body, method, headers }),
+    });
+    return res.ok;
+  };
+
   const sendTestPing = () => {
     startTestTransition(async () => {
-      const res = await fetch(`/api/checker/test`, {
-        method: "POST",
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({
-          url: form.getValues("url"),
-          body: form.getValues("body"),
-          method: form.getValues("method"),
-          headers: form.getValues("headers"),
-        }),
-      });
-      if (res.ok) {
+      const isSuccessful = await pingEndpoint();
+      if (isSuccessful) {
         toast("test-success");
       } else {
         toast("test-error");
@@ -650,23 +661,34 @@ export function MonitorForm({
               </AccordionContent>
             </AccordionItem>
           </Accordion>
-          <div className="flex flex-col gap-6 sm:col-span-full sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full sm:w-auto"
-              size="lg"
-              onClick={sendTestPing}
-            >
-              {!isTestPending ? (
-                "Test Request"
-              ) : (
-                <LoadingAnimation variant="inverse" />
-              )}
-            </Button>
-            <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
-              {!isPending ? "Confirm" : <LoadingAnimation />}
-            </Button>
+          <div className="grid justify-end gap-3">
+            <div className="flex flex-col gap-6 sm:col-span-full sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full sm:w-auto"
+                size="lg"
+                onClick={sendTestPing}
+              >
+                {!isTestPending ? (
+                  "Test Request"
+                ) : (
+                  <LoadingAnimation variant="inverse" />
+                )}
+              </Button>
+              <Button
+                className="w-full sm:w-auto"
+                size="lg"
+                disabled={isPending}
+              >
+                {!isPending ? "Confirm" : <LoadingAnimation />}
+              </Button>
+            </div>
+            <div className="flex w-full justify-end">
+              <p className="text-muted-foreground text-xs">
+                We test your endpoint connection on submit.
+              </p>
+            </div>
           </div>
         </form>
       </Form>
@@ -682,6 +704,11 @@ export function MonitorForm({
           {...{ workspaceSlug }}
         />
       </DialogContent>
+      <FailedPingAlertConfirmation
+        monitor={form.getValues()}
+        {...{ pingFailed, setPingFailed }}
+        onConfirm={handleDataUpdateOrInsertion}
+      />
     </Dialog>
   );
 }

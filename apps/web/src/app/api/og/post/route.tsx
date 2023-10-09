@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/server";
 
+import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+
 export const runtime = "edge";
 
 const DEFAULT_URL = process.env.VERCEL_URL
@@ -11,9 +13,6 @@ const size = {
   width: 1200,
   height: 630,
 };
-
-const TITLE = "OpenStatus";
-const DESCRIPTION = "An Open Source Alternative for your next Status Page";
 
 const interRegular = fetch(
   new URL("../../../../public/fonts/Inter-Regular.ttf", import.meta.url),

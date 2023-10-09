@@ -1,11 +1,28 @@
-import Image from "next/image";
+import type { Metadata } from "next";
 import { allChangelogs } from "contentlayer/generated";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Mdx } from "@/components/content/mdx";
+import { Timeline } from "@/components/content/timeline";
 import { Shell } from "@/components/dashboard/shell";
-import { formatDate } from "@/lib/utils";
 
-export default async function Post() {
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Changelog",
+  openGraph: {
+    ...ogMetadata,
+    title: "Changelog | OpenStatus",
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: "Changelog | OpenStatus",
+  },
+};
+export default async function Changelog() {
   const posts = allChangelogs.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
@@ -13,41 +30,21 @@ export default async function Post() {
 
   return (
     <Shell>
-      <div className="grid gap-8">
-        <div className="grid gap-4 md:grid-cols-5 md:gap-8">
-          <div className="md:col-span-1" />
-          <div className="grid gap-4 md:col-span-4">
-            <h1 className="text-foreground font-cal text-4xl">Changelog</h1>
-            <p className="text-muted-foreground">
-              All the latest features, fixes and work to OpenStatus.
-            </p>
-          </div>
-        </div>
+      <Timeline
+        title="Changelog"
+        description="All the latest features, fixes and work to OpenStatus."
+      >
         {posts.map((post) => (
-          <article
+          <Timeline.Article
             key={post.slug}
-            className="grid gap-4 md:grid-cols-5 md:gap-6"
+            publishedAt={post.publishedAt}
+            imageSrc={post.image}
+            title={post.title}
           >
-            <time className="text-muted-foreground order-2 font-mono text-sm md:order-1 md:col-span-1">
-              {formatDate(new Date(post.publishedAt))}
-            </time>
-            <div className="relative order-1 h-64 w-full md:order-2 md:col-span-4">
-              <Image
-                src={post.image}
-                fill={true}
-                alt={post.title}
-                className="border-border rounded-md border object-cover"
-              />
-            </div>
-            <h3 className="text-foreground font-cal order-3 text-2xl md:col-span-4 md:col-start-2">
-              {post.title}
-            </h3>
-            <div className="order-4 md:col-span-4 md:col-start-2">
-              <Mdx code={post.body.code} />
-            </div>
-          </article>
+            <Mdx code={post.body.code} />
+          </Timeline.Article>
         ))}
-      </div>
+      </Timeline>
     </Shell>
   );
 }

@@ -34,8 +34,8 @@ export const columns: ColumnDef<Ping>[] = [
       return <DataTableStatusBadge {...{ statusCode }} />;
     },
     filterFn: (row, id, value) => {
-      // needed because value is number, not string
-      return `${row.getValue(id)}`.includes(`${value}`);
+      // get the first digit of the status code
+      return value.includes(Number(String(row.getValue(id)).charAt(0)));
     },
   },
   {
@@ -50,10 +50,14 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Region" />
     ),
     cell: ({ row }) => {
-      const region = String(row.getValue("region"));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return <div>{regionsDict[region]?.location}</div>;
+      return (
+        <div>
+          <span className="font-mono">{String(row.getValue("region"))} </span>
+          <span className="text-muted-foreground text-xs">
+            {regionsDict[row.original.region]?.location}
+          </span>
+        </div>
+      );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));

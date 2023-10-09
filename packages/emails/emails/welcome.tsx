@@ -17,7 +17,7 @@ const WelcomeEmail = () => {
           <br />
           What kind of apps are going to monitor?
           <br />
-          Where do you host your apps?
+          How do you handle your incidents?
           <br />
           <br />
           Thank you,

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 
+import { codesDict } from "@/data/code-dictionary";
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableDateRangePicker } from "./data-table-date-ranger-picker";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
@@ -22,7 +23,19 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-1 items-center gap-2">
-        <DataTableFilterInput table={table} />
+        {table.getColumn("statusCode") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("statusCode")}
+            title="Status Code"
+            options={Object.keys(codesDict).map((key) => {
+              const typedKey = key as keyof typeof codesDict;
+              return {
+                label: codesDict[typedKey].label,
+                value: codesDict[typedKey].prefix,
+              };
+            })}
+          />
+        )}
         {table.getColumn("region") && (
           <DataTableFacetedFilter
             column={table.getColumn("region")}
@@ -47,7 +60,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableDateRangePicker />
+      {/* <DataTableDateRangePicker /> */}
     </div>
   );
 }
