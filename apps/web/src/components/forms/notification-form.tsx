@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -54,6 +53,23 @@ function getDefaultProviderData(defaultValues?: Notification) {
   } else if (defaultValues?.provider === "discord") {
     return JSON.parse(defaultValues?.data).discord;
   }
+  return "";
+}
+
+function setProviderData(provider: string, data: string) {
+  let providerJSON = {};
+  switch (provider) {
+    case "email":
+      providerJSON = { email: data };
+      break;
+    case "discord":
+      providerJSON = { discord: data };
+      break;
+    default:
+      providerJSON = {};
+      break;
+  }
+  return providerJSON;
 }
 
 export function NotificationForm({
@@ -77,27 +93,17 @@ export function NotificationForm({
   async function onSubmit({ provider, data, ...rest }: Notification) {
     startTransition(async () => {
       try {
-        let providerJSON = {};
-        switch (watchProvider) {
-          case "email":
-            providerJSON = { email: data };
-            break;
-          case "discord":
-            providerJSON = { discord: data };
-            break;
-        }
-
         if (defaultValues) {
           await api.notification.updateNotification.mutate({
-            provider: provider,
-            data: JSON.stringify(providerJSON),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         } else {
           await api.notification.createNotification.mutate({
             workspaceSlug,
-            provider: provider,
-            data: JSON.stringify(providerJSON),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         }
@@ -201,15 +207,6 @@ export function NotificationForm({
                         {watchProvider[0].toUpperCase() +
                           watchProvider.slice(1)}
                       </FormLabel>
-                      {watchProvider !== "email" && (
-                        <Link
-                          href={`https://docs.openstatus.dev/integrations/${watchProvider}`}
-                          target="_blank"
-                          className="text-muted-foreground text-xs"
-                        >
-                          How to setup your {watchProvider} webhook
-                        </Link>
-                      )}
                     </div>
                     <FormControl>
                       <Input
@@ -222,7 +219,20 @@ export function NotificationForm({
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>The data required.</FormDescription>
+                    <FormDescription className="flex items-center justify-between">
+                      The data required.
+                      <span>
+                        {watchProvider !== "email" && (
+                          <a
+                            href={`https://docs.openstatus.dev/integrations/${watchProvider}`}
+                            target="_blank"
+                            className="underline"
+                          >
+                            How to setup your {watchProvider} webhook
+                          </a>
+                        )}
+                      </span>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
