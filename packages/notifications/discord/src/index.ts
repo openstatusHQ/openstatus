@@ -44,6 +44,9 @@ export const sendDiscordMessage = async ({
 };
 
 export const sendTestDiscordMessage = async (webhookUrl: string) => {
+  if (!webhookUrl) {
+    return false;
+  }
   try {
     await postToWebhook(
       "This is a test notification from OpenStatus. \nIf you see this, it means that your webhook is working! 🎉",
