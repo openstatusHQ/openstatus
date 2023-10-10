@@ -14,6 +14,7 @@
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
+    "@t3-oss/env-core": "0.7.0",
     "@unkey/api": "0.10.0",
     "hono": "3.7.3",
     "zod": "3.22.2"

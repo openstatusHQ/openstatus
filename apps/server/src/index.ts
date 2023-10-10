@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
 import { VercelIngest } from "./vercel";
@@ -19,9 +20,7 @@ app.route("/public", publicRoute);
 /**
  * Ping Pong
  */
-app.get("/ping", (c) =>
-  c.json({ ping: "pong", region: process.env.FLY_REGION }),
-);
+app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }));
 
 /**
  * API Routes v1

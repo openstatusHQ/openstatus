@@ -12,7 +12,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/plans": "workspace:*",
-    "@t3-oss/env-core": "0.6.1",
+    "@t3-oss/env-core": "0.7.0",
     "@trpc/client": "10.38.5",
     "@trpc/server": "10.38.5",
     "random-word-slugs": "0.1.7",

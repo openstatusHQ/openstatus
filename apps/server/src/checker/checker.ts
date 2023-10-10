@@ -9,6 +9,7 @@ import {
   Tinybird,
 } from "@openstatus/tinybird";
 
+import { env } from "../env";
 import type { Payload, payloadSchema } from "./schema";
 import { providerToFunction } from "./utils";
 
@@ -17,14 +18,14 @@ export const monitorSchema = tbIngestPingResponse.pick({
   cronTimestamp: true,
 });
 
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const monitor = async (
   res: { text: () => Promise<string>; status: number },
   monitorInfo: z.infer<typeof payloadSchema>,
   latency: number,
 ) => {
-  const region = process.env.FLY_REGION || "";
+  const region = env.FLY_REGION;
   const text = (await res.text()) || "";
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {

@@ -93,6 +93,9 @@ importers:
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
+      '@t3-oss/env-core':
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       '@unkey/api':
         specifier: 0.10.0
         version: 0.10.0
@@ -158,8 +161,8 @@ importers:
         specifier: 2.1.6
         version: 2.1.6
       '@t3-oss/env-nextjs':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       '@tailwindcss/typography':
         specifier: 0.5.10
         version: 0.5.10(tailwindcss@3.3.2)
@@ -336,8 +339,8 @@ importers:
         specifier: 1.3.0
         version: 1.3.0(@types/dlv@1.1.2)
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       zod:
         specifier: 3.22.2
         version: 3.22.2
@@ -370,8 +373,8 @@ importers:
         specifier: workspace:*
         version: link:../plans
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       '@trpc/client':
         specifier: 10.38.5
         version: 10.38.5(@trpc/server@10.38.5)
@@ -441,8 +444,8 @@ importers:
         specifier: 0.3.4
         version: 0.3.4(bufferutil@4.0.7)(encoding@0.1.13)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       dotenv:
         specifier: 16.3.1
         version: 16.3.1
@@ -496,8 +499,8 @@ importers:
         specifier: 0.0.9
         version: 0.0.9
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       react-email:
         specifier: 1.9.5
         version: 1.9.5
@@ -530,8 +533,8 @@ importers:
         specifier: workspace:*
         version: link:../../tinybird
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -579,8 +582,8 @@ importers:
         specifier: 0.0.7
         version: 0.0.7
       '@t3-oss/env-core':
-        specifier: 0.6.1
-        version: 0.6.1(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.0
+        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
       resend:
         specifier: 1.1.0
         version: 1.1.0
@@ -5034,23 +5037,29 @@ packages:
     dependencies:
       tslib: 2.6.2
 
-  /@t3-oss/env-core@0.6.1(typescript@5.2.2)(zod@3.22.2):
-    resolution: {integrity: sha512-KQD7qEDJtkWIWWmTVjNvk0wnHpkvAQ6CRbUxbWMFNG/fiosBQDQvtRpBNu6USxBscJCoC4z6y7P9MN52/mLOzw==}
+  /@t3-oss/env-core@0.7.0(typescript@5.2.2)(zod@3.22.2):
+    resolution: {integrity: sha512-cgunN82CqgQOOyuMOK/bGtujX5/ooXQTwGMJVWI6mCowq6WE5EgRLOqF/DRcrElI0gSFGA9i9GrxzCnk73HZLQ==}
     peerDependencies:
       typescript: '>=4.7.2'
       zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
     dependencies:
       typescript: 5.2.2
       zod: 3.22.2
     dev: false
 
-  /@t3-oss/env-nextjs@0.6.1(typescript@5.2.2)(zod@3.22.2):
-    resolution: {integrity: sha512-z1dIC++Vxj9kmzX5nSPfcrCSkszy3dTEPC4Ssx7Ap5AqR3c2Qa7S0xf8axn6coy7D/vCXDAAnHYnCMDhtcY3SQ==}
+  /@t3-oss/env-nextjs@0.7.0(typescript@5.2.2)(zod@3.22.2):
+    resolution: {integrity: sha512-rjQIt6P3tac2eRx4BNQLNaJ+AIb2P8wXw4uFvYbEekqMGShikkUALnX3hUn1twYiGVGHXRm6UbU+LqtjIktuGg==}
     peerDependencies:
       typescript: '>=4.7.2'
       zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
     dependencies:
-      '@t3-oss/env-core': 0.6.1(typescript@5.2.2)(zod@3.22.2)
+      '@t3-oss/env-core': 0.7.0(typescript@5.2.2)(zod@3.22.2)
       typescript: 5.2.2
       zod: 3.22.2
     dev: false

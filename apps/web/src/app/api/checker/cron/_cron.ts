@@ -66,6 +66,9 @@ export const cron = async ({
         url: `https://api.openstatus.dev/checker`,
         body: payload,
         delay: Math.random() * 90,
+        headers: {
+          "fly-prefer-region": "ams",
+        },
       });
       allResult.push(result);
     } else {

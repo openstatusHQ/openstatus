@@ -1,17 +1,23 @@
 import { Receiver } from "@upstash/qstash";
 import { Hono } from "hono";
 
-import { checker, monitor, triggerAlerting, updateMonitorStatus } from "./checker";
+import { env } from "../env";
+import {
+  checker,
+  monitor,
+  triggerAlerting,
+  updateMonitorStatus,
+} from "./checker";
 import { payloadSchema } from "./schema";
 
 export const checkerRoute = new Hono();
 
-checkerRoute.post("/checker", async (c) => {
-  const r = new Receiver({
-    currentSigningKey: process.env.QSTASH_CURRENT_SIGNING_KEY || "",
-    nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY || "",
-  });
+const r = new Receiver({
+  currentSigningKey: env.QSTASH_CURRENT_SIGNING_KEY,
+  nextSigningKey: env.QSTASH_NEXT_SIGNING_KEY,
+});
 
+checkerRoute.post("/checker", async (c) => {
   const jsonData = await c.req.json();
 
   const isValid = r.verify({
