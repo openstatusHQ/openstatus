@@ -4,8 +4,7 @@ import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
-import { selectMonitorSchema } from "@openstatus/db/src/schema";
-import { FlyRegion } from "@openstatus/tinybird";
+import { FlyRegion, selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
@@ -72,8 +71,7 @@ export const cron = async ({
       });
       allResult.push(result);
     } else {
-      const allMonitorsRegions = row.regions;
-      for (const region of allMonitorsRegions) {
+      for (const region of FlyRegion) {
         const payload: z.infer<typeof payloadSchema> = {
           workspaceId: String(row.workspaceId),
           monitorId: String(row.id),
@@ -104,7 +102,7 @@ export const cron = async ({
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: "openstatus",
         monitorId: "openstatusPing",
-        url: `${DEFAULT_URL}/api/ping`,
+        url: `https://api.openstatus.dev/ping`,
         cronTimestamp: timestamp,
         method: "GET",
         pageIds: ["openstatus"],
@@ -113,7 +111,7 @@ export const cron = async ({
 
       // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
-        url: `${DEFAULT_URL}/api/checker/regions/${region}`,
+        url: `https://api.openstatus.dev/checker`,
         body: payload,
         headers: {
           "fly-prefer-region": region,
