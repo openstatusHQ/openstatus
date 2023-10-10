@@ -35,7 +35,7 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
-export const FlyRegion = ["fra", "iad", "bom", "jnb", "syd", "gru"] as const;
+export const FlyRegion = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
 export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;

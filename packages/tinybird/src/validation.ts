@@ -1,12 +1,12 @@
 import * as z from "zod";
 
-// Frankfurt, Germany
+// Amsterdam, Netherlands
 // Ashburn, Virginia, USA
-// Mumbai, India
+// Honk Kong, Honk Kong
 // Johannesburg, South Africa
 // Sydney, Australia
 // São Paulo, Brazil
-export const FlyRegion = ["fra", "iad", "bom", "jnb", "syd", "gru"] as const;
+export const FlyRegion = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 /**
  * Values for the datasource ping_response__v3
  */

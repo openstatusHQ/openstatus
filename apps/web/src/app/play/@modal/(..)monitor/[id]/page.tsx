@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-import { availableRegions } from "@openstatus/tinybird";
+import { FlyRegion } from "@openstatus/tinybird";
 
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
@@ -14,7 +14,7 @@ import { Modal } from "./modal";
  */
 const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
-  region: z.enum(availableRegions).optional(),
+  region: z.enum(FlyRegion).optional(),
   cronTimestamp: z.coerce.number().optional(),
   fromDate: z.coerce.number().optional(),
   toDate: z.coerce.number().optional(),

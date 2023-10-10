@@ -101,4 +101,36 @@ export const regionsDict = {
     name: "ap-southeast-2",
     location: "Sydney, Australia",
   },
+  //  FLY REGIONS
+  ams: {
+    code: "ams",
+    name: "ap-southeast-2",
+    location: "Amsterdam, Netherlands",
+  },
+  iad: {
+    code: "iad",
+    name: "us-east-1",
+    location: "Ashburn, Virginia, USA",
+  },
+  jnb: {
+    code: "jnb",
+    name: "",
+    location: "Johannesburg, South Africa",
+  },
+  hkg: {
+    code: "hkg",
+    name: "",
+    location: "Hong Kong, Hong Kong",
+  },
+  gru: {
+    code: "gru",
+    name: "",
+    location: "Sao Paulo, Brazil",
+  },
+
+  syd: {
+    code: "syd",
+    name: "ap-southeast-2",
+    location: "Sydney, Australia",
+  },
 } as const;
