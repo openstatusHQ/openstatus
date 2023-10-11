@@ -627,6 +627,10 @@ importers:
         version: 5.2.2
 
   packages/react:
+    dependencies:
+      react:
+        specifier: ^18.0.0
+        version: 18.2.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*

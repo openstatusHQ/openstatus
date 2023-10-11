@@ -1,6 +1,6 @@
 import { statusDictionary } from "./utils";
 
-type Status =
+export type Status =
   | "operational"
   | "degraded_performance"
   | "partial_outage"
@@ -8,7 +8,20 @@ type Status =
   | "under_maintenance"
   | "unknown";
 
-type StatusResponse = { status: Status };
+export type StatusResponse = { status: Status };
+
+export async function getStatus(slug: string): Promise<StatusResponse> {
+  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
+    cache: "no-cache",
+  });
+
+  if (res.ok) {
+    const data = (await res.json()) as StatusResponse;
+    return data;
+  }
+
+  return { status: "unknown" };
+}
 
 type StatusWidgetProps = {
   slug: string;
@@ -16,18 +29,14 @@ type StatusWidgetProps = {
 };
 
 export async function StatusWidget({ slug, href }: StatusWidgetProps) {
-  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
-    cache: "no-cache",
-  });
-
-  const data = (await res.json()) as StatusResponse;
+  const data = await getStatus(slug);
 
   const key = data.status;
   const { label, color } = statusDictionary[key];
 
   return (
     <a
-      className="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-50 px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 hover:text-black"
+      className="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 hover:text-black"
       href={href || `https://${slug}.openstatus.dev`}
       target="_blank"
       rel="noreferrer"
