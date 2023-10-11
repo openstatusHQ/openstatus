@@ -1,5 +1,8 @@
 ## Status Widget
 
+Create an account on [openstatus.dev](https://openstatus.dev) and integrate a
+simple wiget into your React Application.
+
 ### Install
 
 ```bash
