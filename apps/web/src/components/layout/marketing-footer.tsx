@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { StatusWidget } from "@/components/status-widget";
+import { StatusWidget } from "@openstatus/react";
+
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
 
