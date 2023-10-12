@@ -4,7 +4,7 @@ import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
-import { FlyRegion, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { flyRegions, selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
@@ -71,7 +71,7 @@ export const cron = async ({
       });
       allResult.push(result);
     } else {
-      for (const region of FlyRegion) {
+      for (const region of flyRegions) {
         const payload: z.infer<typeof payloadSchema> = {
           workspaceId: String(row.workspaceId),
           monitorId: String(row.id),
@@ -98,7 +98,7 @@ export const cron = async ({
   // our first legacy monitor
   if (periodicity === "10m") {
     // Right now we are just checking the ping endpoint
-    for (const region of FlyRegion) {
+    for (const region of flyRegions) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: "openstatus",
         monitorId: "openstatusPing",
