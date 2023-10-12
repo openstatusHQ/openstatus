@@ -2,7 +2,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { db, eq, sql } from "@openstatus/db";
 import {
-  FlyRegion,
+  flyRegions,
   METHODS,
   monitor,
   periodicity,
@@ -27,9 +27,9 @@ const ParamsSchema = z.object({
 
 export const periodicityEnum = z.enum(periodicity);
 export const regionEnum = z
-  .enum(FlyRegion)
+  .enum(flyRegions)
   .or(z.literal(""))
-  .transform((val) => (val === "" ? "auto" : val));
+  .transform((val) => (val === "" ? "" : val));
 
 const MonitorSchema = z
   .object({
@@ -46,7 +46,7 @@ const MonitorSchema = z
       description: "The url to monitor",
     }),
     regions: regionEnum.openapi({
-      example: "fra",
+      example: "ams",
       description: "The regions to use",
     }),
     name: z
@@ -109,7 +109,7 @@ const monitorInput = z
       description: "The url to monitor",
     }),
     regions: regionEnum.openapi({
-      example: "fra",
+      example: "ams",
       description: "The regions to use",
     }),
     name: z.string().openapi({

@@ -13,8 +13,7 @@ import { notificationsToMonitors } from "./notification";
 import { page } from "./page";
 import { workspace } from "./workspace";
 
-export const availableRegions = [
-  "auto", // randomly choose region
+export const vercelRegions = [
   "arn1",
   "bom1",
   "cdg1",
@@ -35,13 +34,13 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
-export const FlyRegion = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
+export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
 export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
 export const METHODS = ["GET", "POST"] as const;
 export const status = ["active", "error"] as const;
 export const statusSchema = z.enum(status);
-export const RegionEnum = z.enum([...FlyRegion, ...availableRegions]);
+export const RegionEnum = z.enum([...flyRegions, ...vercelRegions, "auto"]);
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),

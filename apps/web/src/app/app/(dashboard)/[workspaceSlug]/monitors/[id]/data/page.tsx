@@ -3,8 +3,6 @@ import { notFound } from "next/navigation";
 import { endOfDay, startOfDay } from "date-fns";
 import * as z from "zod";
 
-import { FlyRegion } from "@openstatus/tinybird";
-
 import { Header } from "@/components/dashboard/header";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
@@ -21,7 +19,6 @@ export const revalidate = 0;
  */
 const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
-  region: z.enum(FlyRegion).optional(),
   cronTimestamp: z.coerce.number().optional(),
   fromDate: z.coerce
     .number()

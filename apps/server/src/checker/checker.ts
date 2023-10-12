@@ -1,8 +1,6 @@
 import { nanoid } from "nanoid";
 import type { z } from "zod";
 
-import { db, eq, schema } from "@openstatus/db";
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -10,8 +8,8 @@ import {
 } from "@openstatus/tinybird";
 
 import { env } from "../env";
+import { updateMonitorStatus } from "./alerting";
 import type { Payload, payloadSchema } from "./schema";
-import { providerToFunction } from "./utils";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -20,12 +18,13 @@ export const monitorSchema = tbIngestPingResponse.pick({
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
+const region = env.FLY_REGION;
+
 export const monitor = async (
   res: { text: () => Promise<string>; status: number },
   monitorInfo: z.infer<typeof payloadSchema>,
   latency: number,
 ) => {
-  const region = env.FLY_REGION;
   const text = (await res.text()) || "";
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
@@ -33,7 +32,7 @@ export const monitor = async (
       await publishPingResponse(tb)({
         ...rest,
         id: nanoid(), // TBD: we don't need it
-        pageId: pageId,
+        pageId: pageId, // TODO: delete
         timestamp: Date.now(),
         statusCode: res.status,
         latency,
@@ -47,7 +46,7 @@ export const monitor = async (
     await publishPingResponse(tb)({
       ...rest,
       id: nanoid(), // TBD: we don't need it
-      pageId: "",
+      pageId: "", // TODO: delete
       timestamp: Date.now(),
       statusCode: res.status,
       latency,
@@ -94,40 +93,4 @@ export const ping = async (
   });
 
   return res;
-};
-
-export const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
-  const notifications = await db
-    .select()
-    .from(schema.notificationsToMonitors)
-    .innerJoin(
-      schema.notification,
-      eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
-    )
-    .innerJoin(
-      schema.monitor,
-      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
-    )
-    .where(eq(schema.monitor.id, Number(monitorId)))
-    .all();
-  for (const notif of notifications) {
-    await providerToFunction[notif.notification.provider]({
-      monitor: notif.monitor,
-      notification: selectNotificationSchema.parse(notif.notification),
-    });
-  }
-};
-
-export const updateMonitorStatus = async ({
-  monitorId,
-  status,
-}: {
-  monitorId: string;
-  status: z.infer<typeof schema.statusSchema>;
-}) => {
-  await db
-    .update(schema.monitor)
-    .set({ status })
-    .where(eq(schema.monitor.id, Number(monitorId)))
-    .run();
 };
