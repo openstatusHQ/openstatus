@@ -56,20 +56,18 @@ function getDefaultProviderData(defaultValues?: Notification) {
   return "";
 }
 
-function setProviderData(provider: string, data: string) {
-  let providerJSON = {};
+function setProviderData(
+  provider: "email" | "discord" | "slack",
+  data: string,
+) {
   switch (provider) {
     case "email":
-      providerJSON = { email: data };
-      break;
+      return { email: data };
     case "discord":
-      providerJSON = { discord: data };
-      break;
+      return { discord: data };
     default:
-      providerJSON = {};
-      break;
+      return {};
   }
-  return providerJSON;
 }
 
 export function NotificationForm({
