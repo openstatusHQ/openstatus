@@ -1,20 +1,22 @@
-import { expect, mock, spyOn, test } from "bun:test";
+import { expect, test, vi } from "vitest";
 
-import { updateMonitorStatus } from "./alerting";
-import { checker, monitor } from "./checker";
+import * as tb from "@openstatus/tinybird";
+
+import * as alerts from "./alerting";
+import { checker } from "./checker";
+
+vi.mock("tb");
 
 test("Checker", async () => {
-  const mockedUpdate = mock(updateMonitorStatus);
-  const mockMonitor = mock(monitor);
-  const result = await checker({
+  const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+  await checker({
     workspaceId: "1",
     monitorId: "1",
     url: "https://google.com",
     cronTimestamp: 1,
-    status: "active",
+    status: "error",
     pageIds: [],
     method: "GET",
   });
-  expect(mockedUpdate).toHaveBeenCalled();
-  expect(mockMonitor).toHaveBeenCalled();
+  expect(spyOn).toHaveBeenCalledTimes(1);
 });

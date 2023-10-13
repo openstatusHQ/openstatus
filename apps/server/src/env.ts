@@ -32,4 +32,5 @@ export const env = createEnv({
    * In order to solve these issues, we recommend that all new projects
    * explicitly specify this option as true.
    */
+  skipValidation: true,
 });

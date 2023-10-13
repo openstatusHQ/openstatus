@@ -112,6 +112,9 @@ importers:
       bun-types:
         specifier: 1.0.6
         version: 1.0.6
+      vitest:
+        specifier: 0.34.6
+        version: 0.34.6
 
   apps/web:
     dependencies:

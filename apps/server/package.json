@@ -6,7 +6,8 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "start": "NODE_ENV=production bun run src/index.ts"
+    "start": "NODE_ENV=production bun run src/index.ts",
+    "test":"vitest"
   },
   "dependencies": {
     "@hono/zod-openapi": "0.7.1",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "bun-types": "1.0.6"
+    "bun-types": "1.0.6",
+    "vitest": "0.34.6"
   }
 }
