@@ -15,7 +15,7 @@ export const send = async ({
   monitor: z.infer<typeof basicMonitorSchema>;
   notification: z.infer<typeof selectNotificationSchema>;
 }) => {
-  const config = EmailConfigurationSchema.parse(notification.data);
+  const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
   const { email } = config;
 
   const res = await fetch("https://api.resend.com/emails", {

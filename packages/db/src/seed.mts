@@ -7,6 +7,8 @@ import { env } from "../env.mjs";
 import {
   monitor,
   monitorsToPages,
+  notification,
+  notificationsToMonitors,
   page,
   user,
   usersToWorkspaces,
@@ -90,6 +92,20 @@ async function main() {
     .run();
 
   await db.insert(monitorsToPages).values({ monitorId: 1, pageId: 1 }).run();
+  await db
+    .insert(notification)
+    .values({
+      id: 1,
+      provider: "email",
+      name: "sample test notification",
+      data: '{"email":"ping@openstatus.dev"}',
+      workspaceId: 1,
+    })
+    .run();
+  await db
+    .insert(notificationsToMonitors)
+    .values({ monitorId: 1, notificationId: 1 })
+    .run();
   process.exit(0);
 }
 
