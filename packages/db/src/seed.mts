@@ -45,7 +45,7 @@ async function main() {
         description: "OpenStatus website",
         method: "POST",
         periodicity: "1m",
-        regions: "fra1",
+        regions: "ams",
         headers: '[{"key":"key", "value":"value"}]',
         body: '{"hello":"world"}',
       },
@@ -56,7 +56,7 @@ async function main() {
         periodicity: "10m",
         url: "https://www.google.com",
         method: "GET",
-        regions: "fra1",
+        regions: "gru",
       },
     ])
     .run();
