@@ -57,9 +57,9 @@ export const monitor = async (
 };
 
 export const checker = async (data: z.infer<typeof payloadSchema>) => {
-  const startTime = Date.now();
+  const startTime = performance.now();
   const res = await ping(data);
-  const endTime = Date.now();
+  const endTime = performance.now();
   const latency = endTime - startTime;
   await monitor(res, data, latency);
   if (res.ok) {
@@ -67,6 +67,14 @@ export const checker = async (data: z.infer<typeof payloadSchema>) => {
       await updateMonitorStatus({
         monitorId: data.monitorId,
         status: "active",
+      });
+    }
+  }
+  if (!res.ok) {
+    if (data?.status === "active") {
+      await updateMonitorStatus({
+        monitorId: data.monitorId,
+        status: "error",
       });
     }
   }

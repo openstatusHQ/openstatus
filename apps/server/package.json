@@ -20,6 +20,7 @@
     "zod": "3.22.2"
   },
   "devDependencies": {
-    "@openstatus/tsconfig": "workspace:*"
+    "@openstatus/tsconfig": "workspace:*",
+    "bun-types": "1.0.6"
   }
 }

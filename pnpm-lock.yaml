@@ -109,6 +109,9 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      bun-types:
+        specifier: 1.0.6
+        version: 1.0.6
 
   apps/web:
     dependencies:
@@ -6364,6 +6367,10 @@ packages:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
       semver: 7.5.4
+    dev: true
+
+  /bun-types@1.0.6:
+    resolution: {integrity: sha512-5QwynfXiRCRxPW3ZnC0Dv+sHHmctP4SHIuzsRKOWYO0HF/qUpsxQVexoviaxpmwDsF1hoVDDFdc4xUuafOzx1g==}
     dev: true
 
   /bundle-require@4.0.2(esbuild@0.18.20):
