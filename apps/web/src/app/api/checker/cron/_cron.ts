@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server";
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
 import { Client } from "@upstash/qstash";
 import type { z } from "zod";
@@ -26,7 +27,7 @@ export const isAuthorizedDomain = (url: string) => {
 export const cron = async ({
   periodicity,
   req,
-}: z.infer<typeof periodicityAvailable> & { req: Request }) => {
+}: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
   const c = new Client({
     token: env.QSTASH_TOKEN,
   });
