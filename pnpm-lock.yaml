@@ -115,6 +115,9 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      dotenv:
+        specifier: 16.3.1
+        version: 16.3.1
       vitest:
         specifier: 0.34.6
         version: 0.34.6
@@ -7600,7 +7603,6 @@ packages:
   /dotenv@16.3.1:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
-    dev: false
 
   /drange@1.1.1:
     resolution: {integrity: sha512-pYxfDYpued//QpnLIm4Avk7rsNtAtQkUES2cwAYSvD/wd2pKD71gN2Ebj3e7klzXwjocvE8c5vx/1fxwpqmSxA==}

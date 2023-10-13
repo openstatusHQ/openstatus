@@ -29,7 +29,7 @@ export const monitor = async (
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
       const { pageIds, ...rest } = monitorInfo;
-      await publishPingResponse(tb)({
+      await publishPingResponse({
         ...rest,
         id: nanoid(), // TBD: we don't need it
         pageId: pageId, // TODO: delete
@@ -43,7 +43,7 @@ export const monitor = async (
   } else {
     const { pageIds, ...rest } = monitorInfo;
 
-    await publishPingResponse(tb)({
+    await publishPingResponse({
       ...rest,
       id: nanoid(), // TBD: we don't need it
       pageId: "", // TODO: delete
@@ -57,25 +57,26 @@ export const monitor = async (
 };
 
 export const checker = async (data: z.infer<typeof payloadSchema>) => {
-  const startTime = performance.now();
+  const startTime = Date.now();
   const res = await ping(data);
-  const endTime = performance.now();
+  const endTime = Date.now();
   const latency = endTime - startTime;
   await monitor(res, data, latency);
-  if (res.ok) {
+  if (res.ok && !res.redirected) {
     if (data?.status === "error") {
       await updateMonitorStatus({
         monitorId: data.monitorId,
         status: "active",
       });
     }
-  }
-  if (!res.ok) {
-    if (data?.status === "active") {
-      await updateMonitorStatus({
-        monitorId: data.monitorId,
-        status: "error",
-      });
+
+    if (!res.ok || (res.ok && !res.redirected)) {
+      if (data?.status === "active") {
+        await updateMonitorStatus({
+          monitorId: data.monitorId,
+          status: "error",
+        });
+      }
     }
   }
 };

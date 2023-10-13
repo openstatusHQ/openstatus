@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "vitest": "0.34.6"
+    "vitest": "0.34.6",
+    "dotenv": "16.3.1"
   }
 }

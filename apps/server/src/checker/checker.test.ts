@@ -1,18 +1,29 @@
 import { expect, it, vi } from "vitest";
 
-import * as tb from "@openstatus/tinybird";
+import type { Tinybird } from "@openstatus/tinybird";
+import {
+  publishPingResponse,
+  tbIngestPingResponse,
+} from "@openstatus/tinybird";
 
 import * as alerts from "./alerting";
 import { checker } from "./checker";
 
-vi.mock("tb");
+vi.mock("@openstatus/tinybird", async () => {
+  const actual = await vi.importActual("@openstatus/tinybird");
+  return {
+    // @ts-ignore
+    ...actual,
+    publishPingResponse: vi.fn(),
+  };
+});
 
 it("should call updateMonitorStatus when we can fetch", async () => {
   const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
   await checker({
-    workspaceId: "2",
-    monitorId: "2",
-    url: "https://google.com",
+    workspaceId: "1",
+    monitorId: "1",
+    url: "https://www.google.com",
     cronTimestamp: 1,
     status: "error",
     pageIds: [],

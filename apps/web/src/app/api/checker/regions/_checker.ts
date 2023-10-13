@@ -32,7 +32,7 @@ const monitor = async (
   if (monitorInfo.pageIds.length > 0) {
     for (const pageId of monitorInfo.pageIds) {
       const { pageIds, ...rest } = monitorInfo;
-      await publishPingResponse(tb)({
+      await publishPingResponse({
         ...rest,
         id: nanoid(), // TBD: we don't need it
         pageId: pageId,
@@ -46,7 +46,7 @@ const monitor = async (
   } else {
     const { pageIds, ...rest } = monitorInfo;
 
-    await publishPingResponse(tb)({
+    await publishPingResponse({
       ...rest,
       id: nanoid(), // TBD: we don't need it
       pageId: "",
