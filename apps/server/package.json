@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
-    "test":"vitest"
+    "test": "vitest run"
   },
   "dependencies": {
     "@hono/zod-openapi": "0.7.1",

@@ -23,8 +23,10 @@
     },
     "lint": {},
     "dev": {
-      "cache": false,
-      "persistent": true
+      "cache": false
+    },
+    "test": {
+      "cache": false
     }
   }
 }
