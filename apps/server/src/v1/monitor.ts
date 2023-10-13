@@ -170,7 +170,7 @@ const getAllRoute = createRoute({
           schema: ErrorSchema,
         },
       },
-      description: "Returns an error",
+      description: "Not found",
     },
     401: {
       content: {
@@ -214,7 +214,15 @@ const getRoute = createRoute({
       },
       description: "Get the monitor",
     },
-    400: {
+    401: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+    404: {
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -271,6 +279,14 @@ const postRoute = createRoute({
       description: "Create a monitor",
     },
     400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+    403: {
       content: {
         "application/json": {
           schema: ErrorSchema,
