@@ -96,6 +96,15 @@ export const checker = async (request: Request, region: string) => {
         });
       }
     }
+    if (!res.ok) {
+      if (result.data?.status !== "error") {
+        await triggerAlerting({ monitorId: result.data.monitorId });
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "error",
+        });
+      }
+    }
   } catch (e) {
     console.error(e);
     // if on the third retry we still get an error, we should report it
