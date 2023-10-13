@@ -11,7 +11,7 @@ import { Article } from "@/components/content/article";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
 
-export const dynamic = "force-static";
+// export const dynamic = "force-static";
 
 export async function generateStaticParams() {
   return allPosts.map((post) => ({

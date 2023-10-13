@@ -142,6 +142,9 @@ importers:
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
+      '@openstatus/react':
+        specifier: workspace:*
+        version: link:../../packages/react
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -384,6 +387,9 @@ importers:
       '@trpc/server':
         specifier: 10.38.5
         version: 10.38.5
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.22.20)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       random-word-slugs:
         specifier: 0.1.7
         version: 0.1.7
@@ -629,6 +635,31 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
+  packages/react:
+    dependencies:
+      react:
+        specifier: ^18.0.0
+        version: 18.2.0
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      tailwindcss:
+        specifier: 3.3.2
+        version: 3.3.2
+      tsup:
+        specifier: 7.2.0
+        version: 7.2.0(postcss@8.4.31)(typescript@5.2.2)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
   packages/tinybird:
     dependencies:
       '@chronark/zod-bird':
@@ -791,7 +822,7 @@ importers:
         version: 20.8.0
       tsup:
         specifier: 7.2.0
-        version: 7.2.0(typescript@5.2.2)
+        version: 7.2.0(postcss@8.4.31)(typescript@5.2.2)
       typescript:
         specifier: 5.2.2
         version: 5.2.2
@@ -14474,7 +14505,7 @@ packages:
   /tslib@2.6.2:
     resolution: {integrity: sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==}
 
-  /tsup@7.2.0(typescript@5.2.2):
+  /tsup@7.2.0(postcss@8.4.31)(typescript@5.2.2):
     resolution: {integrity: sha512-vDHlczXbgUvY3rWvqFEbSqmC1L7woozbzngMqTtL2PGBODTtWlRwGDDawhvWzr5c1QjKe4OAKqJGfE1xeXUvtQ==}
     engines: {node: '>=16.14'}
     hasBin: true
@@ -14498,6 +14529,7 @@ packages:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
+      postcss: 8.4.31
       postcss-load-config: 4.0.1(postcss@8.4.31)
       resolve-from: 5.0.0
       rollup: 3.29.4
