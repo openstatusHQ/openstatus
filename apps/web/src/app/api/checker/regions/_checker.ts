@@ -123,6 +123,12 @@ export const checker = async (request: Request, region: string) => {
         });
       }
       // Here we do the alerting}
+    } else {
+      /**
+       * This will trigger the 'await checker()' inside of the `/api/checker/regions/fra1` to fail
+       * and therefore return status 500 to QStash which will retry until we hit "Upstash-Retried" === "2"
+       */
+      throw new Error("This is on purpose - Return status 500 for QStash");
     }
   }
 };
