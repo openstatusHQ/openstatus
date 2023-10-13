@@ -17,12 +17,11 @@
     "@openstatus/upstash": "workspace:*",
     "@t3-oss/env-core": "0.7.0",
     "@unkey/api": "0.10.0",
-    "hono": "3.7.3",
+    "hono": "3.7.6",
     "zod": "3.22.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "bun-types": "1.0.6",
     "vitest": "0.34.6"
   }
 }

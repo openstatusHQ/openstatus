@@ -80,7 +80,7 @@ importers:
     dependencies:
       '@hono/zod-openapi':
         specifier: 0.7.1
-        version: 0.7.1(hono@3.7.3)(zod@3.22.2)
+        version: 0.7.1(hono@3.7.6)(zod@3.22.2)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -100,8 +100,8 @@ importers:
         specifier: 0.10.0
         version: 0.10.0
       hono:
-        specifier: 3.7.3
-        version: 3.7.3
+        specifier: 3.7.6
+        version: 3.7.6
       zod:
         specifier: 3.22.2
         version: 3.22.2
@@ -109,9 +109,6 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
-      bun-types:
-        specifier: 1.0.6
-        version: 1.0.6
       vitest:
         specifier: 0.34.6
         version: 0.34.6
@@ -2104,7 +2101,7 @@ packages:
       tailwindcss: 3.3.2
     dev: false
 
-  /@hono/zod-openapi@0.7.1(hono@3.7.3)(zod@3.22.2):
+  /@hono/zod-openapi@0.7.1(hono@3.7.6)(zod@3.22.2):
     resolution: {integrity: sha512-zs6AURALRF0A1gkuY5iKmRBT7d0JsLC3xVPDjBdRbJqNV3XQv4i2kprZTRAcI9AjjGApTsZbLZv1pZRCB2viwQ==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
@@ -2112,18 +2109,18 @@ packages:
       zod: 3.*
     dependencies:
       '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.2)
-      '@hono/zod-validator': 0.1.9(hono@3.7.3)(zod@3.22.2)
-      hono: 3.7.3
+      '@hono/zod-validator': 0.1.9(hono@3.7.6)(zod@3.22.2)
+      hono: 3.7.6
       zod: 3.22.2
     dev: false
 
-  /@hono/zod-validator@0.1.9(hono@3.7.3)(zod@3.22.2):
+  /@hono/zod-validator@0.1.9(hono@3.7.6)(zod@3.22.2):
     resolution: {integrity: sha512-qEG5xagKzyif283ldCKzp+aF9Aebclg0sfrgyRQQNAizmXpicZ3UGduST/Jp+a9bjt3mI+VyEXMftb4rogLxQA==}
     peerDependencies:
       hono: 3.*
       zod: ^3.19.1
     dependencies:
-      hono: 3.7.3
+      hono: 3.7.6
       zod: 3.22.2
     dev: false
 
@@ -6372,10 +6369,6 @@ packages:
       semver: 7.5.4
     dev: true
 
-  /bun-types@1.0.6:
-    resolution: {integrity: sha512-5QwynfXiRCRxPW3ZnC0Dv+sHHmctP4SHIuzsRKOWYO0HF/qUpsxQVexoviaxpmwDsF1hoVDDFdc4xUuafOzx1g==}
-    dev: true
-
   /bundle-require@4.0.2(esbuild@0.18.20):
     resolution: {integrity: sha512-jwzPOChofl67PSTW2SGubV9HBQAhhR2i6nskiOThauo9dzwDUgOWQScFVaJkjEfYX+UXiD+LEx8EblQMc2wIag==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
@@ -9249,8 +9242,8 @@ packages:
       react-is: 16.13.1
     dev: false
 
-  /hono@3.7.3:
-    resolution: {integrity: sha512-BQHdLPXb30hQ9k+04byeSi4QMHk20U1GUq0nT5kGUCGZtxeYhAS7mUJ1wgjn4SCvgiw1rcc6oBOAlwJQ7jQymA==}
+  /hono@3.7.6:
+    resolution: {integrity: sha512-nuLNH9+nV6ojXK6b9I0RGZgdMuLTOXeQPs6xsIw/G5iyT8j8m7Nnx8pTxQprmSmCaEYIPv91rCcq45PQNfW68A==}
     engines: {node: '>=16.0.0'}
     dev: false
 
