@@ -5,7 +5,7 @@ import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
 
-export const dynamic = "force-static";
+// export const dynamic = "force-static";
 
 export async function generateStaticParams() {
   return allLegalPosts.map((post) => ({
