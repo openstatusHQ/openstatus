@@ -11,7 +11,7 @@ import {
 } from "./validation";
 
 // REMINDER:
-const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
   datasource: "ping_response__v3",
