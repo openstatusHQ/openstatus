@@ -84,6 +84,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@openstatus/notification-emails':
+        specifier: workspace:*
+        version: link:../../packages/notifications/email
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
