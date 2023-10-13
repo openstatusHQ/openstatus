@@ -83,9 +83,9 @@ export const checker = async (request: Request, region: string) => {
   }
 
   try {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const res = await ping(result.data);
-    const endTime = Date.now();
+    const endTime = performance.now();
     const latency = endTime - startTime;
     await monitor(res, result.data, region, latency);
     if (res.ok) {
@@ -93,6 +93,15 @@ export const checker = async (request: Request, region: string) => {
         await updateMonitorStatus({
           monitorId: result.data.monitorId,
           status: "active",
+        });
+      }
+    }
+    if (!res.ok) {
+      if (result.data?.status !== "error") {
+        await triggerAlerting({ monitorId: result.data.monitorId });
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "error",
         });
       }
     }
