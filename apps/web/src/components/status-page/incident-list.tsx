@@ -45,27 +45,35 @@ export const IncidentList = ({
             {context === "all" ? "All incidents" : "Latest incidents"}
           </h2>
           {_incidents.map((incident) => {
+            const affectedMonitors = incident.monitorsToIncidents
+              .map(({ monitorId }) => {
+                const monitor = monitors.find(({ id }) => monitorId === id);
+                return monitor || undefined;
+              })
+              .filter(notEmpty);
             return (
               <div key={incident.id} className="grid gap-4 text-left">
                 <div className="max-w-3xl font-semibold">
                   {incident.title}
                   <StatusBadge status={incident.status} className="ml-2" />
                 </div>
-                <div className="overflow-hidden text-ellipsis">
-                  <p className="text-muted-foreground mb-2 text-xs">
-                    Affected Monitors
-                  </p>
-                  <AffectedMonitors
-                    monitors={incident.monitorsToIncidents
-                      .map(({ monitorId }) => {
-                        const monitor = monitors.find(
-                          ({ id }) => monitorId === id,
-                        );
-                        return monitor || undefined;
-                      })
-                      .filter(notEmpty)}
-                  />
-                </div>
+                {Boolean(affectedMonitors.length) ? (
+                  <div className="overflow-hidden text-ellipsis">
+                    <p className="text-muted-foreground mb-2 text-xs">
+                      Affected Monitors
+                    </p>
+                    <AffectedMonitors
+                      monitors={incident.monitorsToIncidents
+                        .map(({ monitorId }) => {
+                          const monitor = monitors.find(
+                            ({ id }) => monitorId === id,
+                          );
+                          return monitor || undefined;
+                        })
+                        .filter(notEmpty)}
+                    />
+                  </div>
+                ) : null}
                 <div>
                   <p className="text-muted-foreground mb-2 text-xs">
                     Latest Updates

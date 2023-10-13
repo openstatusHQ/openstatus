@@ -41,6 +41,9 @@ export default async function IncidentPage({
             {incidents?.map((incident, i) => {
               const { label, icon } =
                 statusDict[incident.status as keyof typeof statusDict];
+              const monitors = incident.monitorsToIncidents.map(
+                ({ monitor }) => monitor,
+              );
               return (
                 <li key={i} className="grid gap-2">
                   <time className="text-muted-foreground pl-3 text-xs">
@@ -71,16 +74,14 @@ export default async function IncidentPage({
                     ]}
                   >
                     <div className="grid gap-4">
-                      <div>
-                        <p className="text-muted-foreground mb-1.5 text-xs">
-                          Affected Monitors
-                        </p>
-                        <AffectedMonitors
-                          monitors={incident.monitorsToIncidents.map(
-                            ({ monitor }) => monitor,
-                          )}
-                        />
-                      </div>
+                      {Boolean(monitors.length) ? (
+                        <div>
+                          <p className="text-muted-foreground mb-1.5 text-xs">
+                            Affected Monitors
+                          </p>
+                          <AffectedMonitors monitors={monitors} />
+                        </div>
+                      ) : null}
                       <div>
                         <p className="text-muted-foreground mb-1.5 text-xs">
                           Last Updates
