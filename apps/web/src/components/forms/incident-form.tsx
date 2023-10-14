@@ -6,7 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
+import type {
+  allMonitorsExtendedSchema,
+  Page,
+} from "@openstatus/db/src/schema";
 import {
   availableStatus,
   insertIncidentSchema,
@@ -57,12 +60,14 @@ type MonitorsProps = z.infer<typeof allMonitorsExtendedSchema>;
 interface Props {
   defaultValues?: IncidentProps;
   monitors?: MonitorsProps;
+  pages?: Page[]; //
   workspaceSlug: string;
 }
 
 export function IncidentForm({
   defaultValues,
   monitors,
+  pages,
   workspaceSlug,
 }: Props) {
   const form = useForm<IncidentProps>({
@@ -72,6 +77,7 @@ export function IncidentForm({
       title: defaultValues?.title || "",
       status: defaultValues?.status || "investigating",
       monitors: defaultValues?.monitors || [],
+      pages: defaultValues?.pages || [],
       workspaceSlug,
       // include update on creation
       message: "",
@@ -190,9 +196,11 @@ export function IncidentForm({
                 <FormItem className="sm:col-span-full">
                   <div className="mb-4">
                     <FormLabel>Monitors</FormLabel>
+                    {/* TODO: second phrase can be set inside of a (?) tooltip */}
                     <FormDescription>
                       Select the monitors that you want to refer the incident
-                      to.
+                      to. It will be displayed on the status page they are
+                      attached to.
                     </FormDescription>
                   </div>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -237,6 +245,66 @@ export function IncidentForm({
                                         : "bg-red-500",
                                     )}
                                   ></span>
+                                </div>
+                                <p className="text-muted-foreground truncate text-sm">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pages"
+              render={() => (
+                <FormItem className="sm:col-span-full">
+                  <div className="mb-4">
+                    <FormLabel>Pages</FormLabel>
+                    <FormDescription>
+                      Select the pages that you want to refer the incident to.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {pages?.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="pages"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={item.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([
+                                          ...(field.value || []),
+                                          item.id,
+                                        ])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== item.id,
+                                          ),
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="grid gap-1.5 leading-none">
+                                <div className="flex items-center gap-2">
+                                  <FormLabel className="font-normal">
+                                    {item.title}
+                                  </FormLabel>
                                 </div>
                                 <p className="text-muted-foreground truncate text-sm">
                                   {item.description}

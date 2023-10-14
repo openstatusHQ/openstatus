@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray, not, sql } from "@openstatus/db";
+import { and, eq, inArray, not, or, sql } from "@openstatus/db";
 import {
   incident,
   insertPageSchemaWithMonitors,
@@ -10,6 +10,7 @@ import {
   monitorsToIncidents,
   monitorsToPages,
   page,
+  pagesToIncidents,
   selectPublicPageSchemaWithRelation,
   user,
   usersToWorkspaces,
@@ -287,15 +288,33 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      const incidentsId = monitorsToIncidentsResult.map(
+      const incidentsToPagesResult = await opts.ctx.db
+        .select()
+        .from(pagesToIncidents)
+        .where(eq(pagesToIncidents.pageId, result.id))
+        .all();
+
+      const monitorIncidentIds = monitorsToIncidentsResult.map(
         ({ incidentId }) => incidentId,
       );
 
+      const pageIncidentIds = incidentsToPagesResult.map(
+        ({ incidentId }) => incidentId,
+      );
+
+      const incidentIds = Array.from(
+        new Set([...monitorIncidentIds, ...pageIncidentIds]),
+      );
+
       const incidents =
-        incidentsId.length > 0
+        incidentIds.length > 0
           ? await opts.ctx.db.query.incident.findMany({
-              where: and(inArray(incident.id, incidentsId)),
-              with: { incidentUpdates: true, monitorsToIncidents: true },
+              where: or(inArray(incident.id, incidentIds)),
+              with: {
+                incidentUpdates: true,
+                monitorsToIncidents: true,
+                pagesToIncidents: true,
+              },
             })
           : [];
 
