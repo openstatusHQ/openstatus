@@ -106,6 +106,7 @@ export const tbBuildMonitorList = z.object({
  */
 export const tbParameterHomeStats = z.object({
   cronTimestamp: z.number().int().optional(),
+  period: z.enum(["total", "1h", "10m"]).optional(),
 });
 
 /**
