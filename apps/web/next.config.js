@@ -8,7 +8,10 @@ const nextConfig = {
   experimental: {
     serverActions: true,
     serverComponentsExternalPackages: ["libsql"],
-
+    logging: {
+      level: "verbose",
+      fullUrl: true,
+    },
   },
   images: {
     remotePatterns: [
