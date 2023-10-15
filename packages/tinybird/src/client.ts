@@ -67,7 +67,7 @@ export function getHomeStats(tb: Tinybird) {
     parameters: tbParameterHomeStats,
     data: tbBuildHomeStats,
     opts: {
-      revalidate: 600, // 10 minutes cache
+      revalidate: 86400, // 60 * 60 * 24 = 86400s - 1d
     },
   });
 }
