@@ -46,7 +46,6 @@ export async function GET(req: Request) {
     (monitorId &&
       (await getMonitorListData({
         monitorId,
-        groupBy: "day",
         limit: LIMIT,
       }))) ||
     [];
