@@ -9,6 +9,7 @@
   ],
   "license": "MIT",
   "scripts": {
+    "dev":"tsup && pnpm run build:tailwind",
     "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "build": "tsup && pnpm run build:tailwind"
   },
