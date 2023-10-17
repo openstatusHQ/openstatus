@@ -40,28 +40,22 @@ export const tbIngestPingResponse = z.object({
 });
 
 /**
- * Values from the pip response_list__v0
+ * Values from the pipe response_list__v1
  */
 export const tbBuildResponseList = z.object({
   id: z.string(),
   workspaceId: z.string(),
-  pageId: z.string(),
   monitorId: z.string(),
   timestamp: z.number().int(),
   statusCode: z.number().int(),
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
-  metadata: z
-    .string()
-    .default("{}")
-    .transform((t) => JSON.parse(t))
-    .nullable(),
   region: z.enum(availableRegions),
 });
 
 /**
- * Params for pipe response_list__v0
+ * Params for pipe response_list__v1
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
