@@ -23,40 +23,24 @@ export const monitorSchema = tbIngestPingResponse.pick({
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
-  res: { text: () => Promise<string>; status: number },
-  monitorInfo: z.infer<typeof payloadSchema>,
+  payload: Payload,
+  statusCode: number,
   region: string,
   latency: number,
 ) => {
-  const text = (await res.text()) || "";
-  if (monitorInfo.pageIds.length > 0) {
-    for (const pageId of monitorInfo.pageIds) {
-      const { pageIds, ...rest } = monitorInfo;
-      await publishPingResponse({
-        ...rest,
-        id: nanoid(), // TBD: we don't need it
-        pageId: pageId,
-        timestamp: Date.now(),
-        statusCode: res.status,
-        latency,
-        region,
-        metadata: JSON.stringify({ text }),
-      });
-    }
-  } else {
-    const { pageIds, ...rest } = monitorInfo;
+  const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
-    await publishPingResponse({
-      ...rest,
-      id: nanoid(), // TBD: we don't need it
-      pageId: "",
-      timestamp: Date.now(),
-      statusCode: res.status,
-      latency,
-      region,
-      metadata: JSON.stringify({ text }),
-    });
-  }
+  await publishPingResponse({
+    id: nanoid(), // TBD: we don't need it
+    timestamp: Date.now(),
+    statusCode,
+    monitorId,
+    cronTimestamp,
+    url,
+    workspaceId,
+    latency,
+    region,
+  });
 };
 
 export const checker = async (request: Request, region: string) => {
@@ -87,7 +71,7 @@ export const checker = async (request: Request, region: string) => {
     const res = await ping(result.data);
     const endTime = performance.now();
     const latency = endTime - startTime;
-    await monitor(res, result.data, region, latency);
+    await monitor(result.data, res.status, region, latency);
     if (res.ok) {
       if (result.data?.status === "error") {
         await updateMonitorStatus({
@@ -109,12 +93,7 @@ export const checker = async (request: Request, region: string) => {
     console.error(e);
     // if on the third retry we still get an error, we should report it
     if (request.headers.get("Upstash-Retried") === "2") {
-      await monitor(
-        { status: 500, text: () => Promise.resolve(`${e}`) },
-        result.data,
-        region,
-        -1,
-      );
+      await monitor(result.data, 500, region, -1);
       if (result.data?.status !== "error") {
         await triggerAlerting({ monitorId: result.data.monitorId });
         await updateMonitorStatus({

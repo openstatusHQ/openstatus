@@ -4,11 +4,8 @@ import { numberFormatter } from "@/lib/utils";
 import { api } from "@/trpc/server";
 
 export async function Stats() {
-  const last10m = new Date().getTime() - 60 * 60 * 1000; // cron timestamp 10m ago
   const tbTotalStats = await getHomeStatsData({});
-  const tbLast10mStats = await getHomeStatsData({
-    cronTimestamp: last10m,
-  });
+  const tbLastHourStats = await getHomeStatsData({ period: "1h" });
   // FIXME:
   // const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query(
   //   {},
@@ -27,20 +24,18 @@ export async function Stats() {
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
-            {tbLast10mStats && tbLast10mStats?.length > 0
-              ? numberFormatter(tbLast10mStats[0].count)
+            {tbLastHourStats && tbLastHourStats?.length > 0
+              ? numberFormatter(tbLastHourStats[0].count)
               : 0}
           </h3>
           <p className="text-muted-foreground font-light">
-            Pings in the last 10 minutes
+            Pings in the last hour
           </p>
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
-            {/* {tbLast10mStats && tbLast10mStats?.length > 0
-              ? numberFormatter(totalActiveMonitors)
-              : 0} */}
-            700+
+            {/* {numberFormatter(totalActiveMonitors)} */}
+            900+
           </h3>
           <p className="text-muted-foreground font-light">Active monitors</p>
         </div>

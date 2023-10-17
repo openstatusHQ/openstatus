@@ -1,67 +1,39 @@
 import { nanoid } from "nanoid";
-import type { z } from "zod";
 
-import {
-  publishPingResponse,
-  tbIngestPingResponse,
-  Tinybird,
-} from "@openstatus/tinybird";
+import { publishPingResponse } from "@openstatus/tinybird";
 
 import { env } from "../env";
 import { updateMonitorStatus } from "./alerting";
-import type { Payload, payloadSchema } from "./schema";
-
-export const monitorSchema = tbIngestPingResponse.pick({
-  url: true,
-  cronTimestamp: true,
-});
-
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
+import type { Payload } from "./schema";
 
 const region = env.FLY_REGION;
 
 export const monitor = async (
-  res: { text: () => Promise<string>; status: number },
-  monitorInfo: z.infer<typeof payloadSchema>,
+  monitorInfo: Payload,
   latency: number,
+  statusCode: number,
 ) => {
-  const text = (await res.text()) || "";
-  if (monitorInfo.pageIds.length > 0) {
-    for (const pageId of monitorInfo.pageIds) {
-      const { pageIds, ...rest } = monitorInfo;
-      await publishPingResponse({
-        ...rest,
-        id: nanoid(), // TBD: we don't need it
-        pageId: pageId, // TODO: delete
-        timestamp: Date.now(),
-        statusCode: res.status,
-        latency,
-        region,
-        metadata: JSON.stringify({ text }),
-      });
-    }
-  } else {
-    const { pageIds, ...rest } = monitorInfo;
+  const { monitorId, cronTimestamp, url, workspaceId } = monitorInfo;
 
-    await publishPingResponse({
-      ...rest,
-      id: nanoid(), // TBD: we don't need it
-      pageId: "", // TODO: delete
-      timestamp: Date.now(),
-      statusCode: res.status,
-      latency,
-      region,
-      metadata: JSON.stringify({ text }),
-    });
-  }
+  await publishPingResponse({
+    id: nanoid(), // TBD: we don't need it
+    timestamp: Date.now(),
+    statusCode,
+    latency,
+    region,
+    url,
+    monitorId,
+    cronTimestamp,
+    workspaceId,
+  });
 };
 
-export const checker = async (data: z.infer<typeof payloadSchema>) => {
+export const checker = async (data: Payload) => {
   const startTime = Date.now();
   const res = await ping(data);
   const endTime = Date.now();
   const latency = endTime - startTime;
-  await monitor(res, data, latency);
+  await monitor(data, latency, res.status);
   if (res.ok && !res.redirected) {
     if (data?.status === "error") {
       await updateMonitorStatus({

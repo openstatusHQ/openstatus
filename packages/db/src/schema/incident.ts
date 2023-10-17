@@ -9,6 +9,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import * as z from "zod";
 
 import { monitor } from "./monitor";
+import { page } from "./page";
 import { workspace } from "./workspace";
 
 export const availableStatus = [
@@ -57,6 +58,7 @@ export const incidentUpdate = sqliteTable("incident_update", {
 
 export const incidentRelations = relations(incident, ({ one, many }) => ({
   monitorsToIncidents: many(monitorsToIncidents),
+  pagesToIncidents: many(pagesToIncidents),
   incidentUpdates: many(incidentUpdate),
   workspace: one(workspace, {
     fields: [incident.workspaceId],
@@ -100,6 +102,35 @@ export const monitorsToIncidentsRelations = relations(
   }),
 );
 
+export const pagesToIncidents = sqliteTable(
+  "incidents_to_pages",
+  {
+    pageId: integer("page_id")
+      .notNull()
+      .references(() => page.id, { onDelete: "cascade" }),
+    incidentId: integer("incident_id")
+      .notNull()
+      .references(() => incident.id, { onDelete: "cascade" }),
+  },
+  (t) => ({
+    pk: primaryKey(t.pageId, t.incidentId),
+  }),
+);
+
+export const pagesToIncidentsRelations = relations(
+  pagesToIncidents,
+  ({ one }) => ({
+    page: one(page, {
+      fields: [pagesToIncidents.pageId],
+      references: [page.id],
+    }),
+    incident: one(incident, {
+      fields: [pagesToIncidents.incidentId],
+      references: [incident.id],
+    }),
+  }),
+);
+
 // Schema for inserting a Incident - can be used to validate API requests
 export const insertIncidentSchema = createInsertSchema(incident).extend({
   title: z.string().default(""),
@@ -108,7 +139,8 @@ export const insertIncidentSchema = createInsertSchema(incident).extend({
   date: z.date().optional().default(new Date()),
   // date: z.number().optional().default(new Date().getTime()),
   workspaceSlug: z.string(),
-  monitors: z.number().array().min(1),
+  monitors: z.number().array(),
+  pages: z.number().array(),
 });
 
 export const insertIncidentUpdateSchema = createInsertSchema(
@@ -125,9 +157,9 @@ export const insertIncidentSchemaWithIncidentUpdates =
     incidentUpdates: insertIncidentUpdateSchema.array(),
   });
 
-// TODO: remove!
+// TODO: remove!!!
 export const insertIncidentSchemaWithMonitors = insertIncidentSchema.extend({
-  monitors: z.number().array().min(1),
+  monitors: z.number().array(),
 });
 
 export const selectIncidentSchema = createSelectSchema(incident).extend({
