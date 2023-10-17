@@ -26,7 +26,7 @@ export async function getResponseListData(props: Partial<ResponseListParams>) {
   return;
 }
 
-export async function getMonitorListData(props: Partial<MonitorListParams>) {
+export async function getMonitorListData(props: MonitorListParams) {
   try {
     const res = await getMonitorList(tb)(props);
     return res.data;

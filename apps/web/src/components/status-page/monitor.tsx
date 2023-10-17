@@ -10,10 +10,7 @@ export const Monitor = async ({
 }: {
   monitor: z.infer<typeof selectPublicMonitorSchema>;
 }) => {
-  const data = await getMonitorListData({
-    monitorId: String(monitor.id),
-    groupBy: "day",
-  });
+  const data = await getMonitorListData({ monitorId: String(monitor.id) });
   if (!data) return <div>Something went wrong</div>;
   return (
     <Tracker
