@@ -8,7 +8,7 @@ import type { Payload } from "./schema";
 import { providerToFunction } from "./utils";
 
 export async function catchTooManyRetry(payload: Payload) {
-  await monitor({ status: 500, text: () => Promise.resolve("") }, payload, -1);
+  await monitor({ monitorInfo: payload, latency: -1, statusCode: 500 });
   if (payload?.status !== "error") {
     await triggerAlerting({ monitorId: payload.monitorId });
     await updateMonitorStatus({

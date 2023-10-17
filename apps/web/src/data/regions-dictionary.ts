@@ -2,7 +2,7 @@
  * AWS data center informations from 18 regions, supported by vercel.
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
-export const regionsDict = {
+export const vercelRegionsDict = {
   /**
    * A random location will be chosen
    */
@@ -101,7 +101,9 @@ export const regionsDict = {
     name: "ap-southeast-2",
     location: "Sydney, Australia",
   },
-  //  FLY REGIONS
+} as const;
+
+export const flyRegionsDict = {
   ams: {
     code: "ams",
     name: "ap-southeast-2",
@@ -134,3 +136,5 @@ export const regionsDict = {
     location: "Sydney, Australia",
   },
 } as const;
+
+export const regionsDict = { ...vercelRegionsDict, ...flyRegionsDict } as const;

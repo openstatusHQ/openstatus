@@ -1,5 +1,6 @@
 import { expect, it, vi } from "vitest";
 
+// REMINDER: keep it here for the mock
 import type { Tinybird } from "@openstatus/tinybird";
 import {
   publishPingResponse,

@@ -57,7 +57,7 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { regionsDict } from "@/data/regions-dictionary";
+import { flyRegionsDict } from "@/data/regions-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
@@ -481,9 +481,9 @@ export function MonitorForm({
                                   {/* This is a hotfix */}
                                   {field.value?.length === 1 &&
                                   field.value[0].length > 0
-                                    ? regionsDict[
+                                    ? flyRegionsDict[
                                         field
-                                          .value[0] as keyof typeof regionsDict
+                                          .value[0] as keyof typeof flyRegionsDict
                                       ].location
                                     : "Select region"}
                                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -495,10 +495,10 @@ export function MonitorForm({
                                 <CommandInput placeholder="Select a region..." />
                                 <CommandEmpty>No regions found.</CommandEmpty>
                                 <CommandGroup className="max-h-[150px] overflow-y-scroll">
-                                  {Object.keys(regionsDict).map((region) => {
+                                  {Object.keys(flyRegionsDict).map((region) => {
                                     const { code, location } =
-                                      regionsDict[
-                                        region as keyof typeof regionsDict
+                                      flyRegionsDict[
+                                        region as keyof typeof flyRegionsDict
                                       ];
                                     const isSelected =
                                       field.value?.includes(code);

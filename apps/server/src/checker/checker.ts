@@ -8,11 +8,15 @@ import type { Payload } from "./schema";
 
 const region = env.FLY_REGION;
 
-export const monitor = async (
-  monitorInfo: Payload,
-  latency: number,
-  statusCode: number,
-) => {
+export const monitor = async ({
+  monitorInfo,
+  latency,
+  statusCode,
+}: {
+  monitorInfo: Payload;
+  latency: number;
+  statusCode: number;
+}) => {
   const { monitorId, cronTimestamp, url, workspaceId } = monitorInfo;
 
   await publishPingResponse({
@@ -33,7 +37,7 @@ export const checker = async (data: Payload) => {
   const res = await ping(data);
   const endTime = Date.now();
   const latency = endTime - startTime;
-  await monitor(data, latency, res.status);
+  await monitor({ monitorInfo: data, latency, statusCode: res.status });
   if (res.ok && !res.redirected) {
     if (data?.status === "error") {
       await updateMonitorStatus({
