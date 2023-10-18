@@ -5,9 +5,11 @@ import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 import { getMonitorList, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
+import { env } from "../env";
+
 // TODO: include ratelimiting
 
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
 
 enum Status {

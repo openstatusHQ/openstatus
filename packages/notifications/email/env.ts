@@ -8,4 +8,5 @@ export const env = createEnv({
   runtimeEnv: {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
+  skipValidation: process.env.NODE_ENV === "test",
 });

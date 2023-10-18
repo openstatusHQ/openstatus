@@ -1,9 +1,6 @@
 import * as z from "zod";
 
-/**
- * All available Vercel (AWS) regions
- */
-export const availableRegions = [
+export const vercelRegions = [
   "arn1",
   "bom1",
   "cdg1",
@@ -24,6 +21,10 @@ export const availableRegions = [
   "syd1",
 ] as const;
 
+export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
+
+export const availableRegions = [...vercelRegions, ...flyRegions] as const;
+
 /**
  * Values for the datasource ping_response__v4
  */
@@ -33,7 +34,7 @@ export const tbIngestPingResponse = z.object({
   monitorId: z.string(),
   timestamp: z.number().int(),
   statusCode: z.number().int(),
-  latency: z.number().int(), // in ms
+  latency: z.number(), // in ms
   cronTimestamp: z.number().int().optional().nullable().default(Date.now()),
   url: z.string().url(),
   region: z.string().min(4).max(4), // REMINDER: won't work on fy

@@ -15,7 +15,7 @@
     "@react-email/head": "0.0.5",
     "@react-email/html": "0.0.4",
     "@react-email/tailwind": "0.0.9",
-    "@t3-oss/env-core": "0.6.1",
+    "@t3-oss/env-core": "0.7.0",
     "react-email": "1.9.5",
     "resend": "1.1.0",
     "zod": "3.22.2"

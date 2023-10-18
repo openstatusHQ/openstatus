@@ -6,6 +6,7 @@
 app = "openstatus-api"
 primary_region = "ams"
 
+
 [build]
   dockerfile = "./Dockerfile"
 
