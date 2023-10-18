@@ -124,4 +124,7 @@ export const blacklistDates: Record<number, string> = {
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
   1693008000000:
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+  // Downtime on 18. Oct. 2023 between 20h40 - 23h55 - TOD0: remove error logs
+  1697587200000:
+    "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
 };
