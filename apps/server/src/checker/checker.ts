@@ -49,12 +49,27 @@ export const checker = async (data: Payload) => {
       });
     }
   } else {
-    console.log(`error for ${data.url} with status ${res.status}`);
-    if (data?.status === "active") {
-      await updateMonitorStatus({
-        monitorId: data.monitorId,
-        status: "error",
-      });
+    console.log(`first retry for ${data.url} with status ${res.status}`);
+    const startTime = Date.now();
+    const retry = await ping(data);
+    const endTime = Date.now();
+    const latency = endTime - startTime;
+    if (retry.ok) {
+      await monitor({ monitorInfo: data, latency, statusCode: res.status });
+      if (data?.status === "error") {
+        await updateMonitorStatus({
+          monitorId: data.monitorId,
+          status: "active",
+        });
+      }
+    } else {
+      console.log(`error for ${data.url} with status ${res.status}`);
+      if (data?.status === "active") {
+        await updateMonitorStatus({
+          monitorId: data.monitorId,
+          status: "error",
+        });
+      }
     }
   }
 };
