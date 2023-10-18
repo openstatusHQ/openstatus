@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
+import { checkerRoute } from "./checker";
 import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
 import { VercelIngest } from "./vercel";
-import { checkerRoute } from "./checker";
 
 const app = new Hono();
 
