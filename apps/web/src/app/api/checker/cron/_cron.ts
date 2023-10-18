@@ -89,6 +89,7 @@ export const cron = async ({
         const result = c.publishJSON({
           url: `https://api.openstatus.dev/checker`,
           body: payload,
+          delay: Math.random() * 90,
           headers: {
             "Upstash-Forward-fly-prefer-region": region,
           },
