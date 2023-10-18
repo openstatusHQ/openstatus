@@ -19,6 +19,9 @@ export const monitor = async ({
 }) => {
   const { monitorId, cronTimestamp, url, workspaceId } = monitorInfo;
 
+  console.log(
+    `publishing ping response for ${url} with status ${statusCode} and latency ${latency} and monitorId ${monitorId} `,
+  );
   await publishPingResponse({
     id: nanoid(), // TBD: we don't need it
     timestamp: Date.now(),
@@ -37,22 +40,21 @@ export const checker = async (data: Payload) => {
   const res = await ping(data);
   const endTime = Date.now();
   const latency = endTime - startTime;
-  await monitor({ monitorInfo: data, latency, statusCode: res.status });
-  if (res.ok && !res.redirected) {
+  if (res.ok) {
+    await monitor({ monitorInfo: data, latency, statusCode: res.status });
     if (data?.status === "error") {
       await updateMonitorStatus({
         monitorId: data.monitorId,
         status: "active",
       });
     }
-
-    if (!res.ok || (res.ok && !res.redirected)) {
-      if (data?.status === "active") {
-        await updateMonitorStatus({
-          monitorId: data.monitorId,
-          status: "error",
-        });
-      }
+  } else {
+    console.log(`error for ${data.url} with status ${res.status}`);
+    if (data?.status === "active") {
+      await updateMonitorStatus({
+        monitorId: data.monitorId,
+        status: "error",
+      });
     }
   }
 };

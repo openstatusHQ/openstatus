@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { checkerRoute } from "./checker";
 import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
@@ -27,6 +28,7 @@ app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }));
  */
 app.route("/v1", api);
 
+app.route("/", checkerRoute);
 if (process.env.NODE_ENV === "development") {
   app.showRoutes();
 }
