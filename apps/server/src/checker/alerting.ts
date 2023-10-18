@@ -19,6 +19,7 @@ export async function catchTooManyRetry(payload: Payload) {
 }
 
 export const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
+  console.log(`triggerAlerting for ${monitorId}`);
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)
