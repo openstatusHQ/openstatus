@@ -48,7 +48,7 @@ export const cron = async ({
       monitorId: row.id,
     });
 
-    if (row.regions.length === 0) {
+    if (row.regions.length === 0 || row.regions.includes("auto")) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
         method: row.method || "GET",
@@ -67,12 +67,13 @@ export const cron = async ({
         body: payload,
         delay: Math.random() * 90,
         headers: {
-          "fly-prefer-region": "ams",
+          "Upstash-Forward-fly-prefer-region": "ams",
         },
       });
       allResult.push(result);
     } else {
-      for (const region of flyRegions) {
+      const regions = row.regions;
+      for (const region of regions) {
         const payload: z.infer<typeof payloadSchema> = {
           workspaceId: String(row.workspaceId),
           monitorId: String(row.id),
@@ -89,7 +90,7 @@ export const cron = async ({
           url: `https://api.openstatus.dev/checker`,
           body: payload,
           headers: {
-            "fly-prefer-region": region,
+            "Upstash-Forward-fly-prefer-region": region,
           },
         });
         allResult.push(result);
@@ -115,7 +116,7 @@ export const cron = async ({
         url: `https://api.openstatus.dev/checker`,
         body: payload,
         headers: {
-          "fly-prefer-region": region,
+          "Upstash-Forward-fly-prefer-region": region,
         },
         delay: Math.random() * 90,
       });
