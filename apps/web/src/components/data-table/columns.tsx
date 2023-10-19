@@ -11,14 +11,14 @@ import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
-    accessorKey: "timestamp",
+    accessorKey: "cronTimestamp",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
       return (
         <div>
-          {format(new Date(row.getValue("timestamp")), "LLL dd, y HH:mm")}
+          {format(new Date(row.getValue("cronTimestamp")), "LLL dd, y HH:mm")}
         </div>
       );
     },
