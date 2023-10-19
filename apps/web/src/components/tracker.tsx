@@ -65,12 +65,14 @@ export function Tracker({
     <div className="flex flex-col">
       <div className="mb-2 flex justify-between text-sm">
         <div className="flex items-center gap-2">
-          <p className="text-foreground font-semibold">{name}</p>
+          <p className="text-foreground line-clamp-1 font-semibold">{name}</p>
           {description ? (
             <MoreInfo {...{ url, id, context, description }} />
           ) : null}
         </div>
-        <p className="text-muted-foreground font-light">{uptime}% uptime</p>
+        <p className="text-muted-foreground shrink-0 font-light">
+          {uptime}% uptime
+        </p>
       </div>
       <div className="relative h-full w-full">
         <div className="flex gap-0.5">
