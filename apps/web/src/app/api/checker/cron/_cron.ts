@@ -48,54 +48,28 @@ export const cron = async ({
       monitorId: row.id,
     });
 
-    if (row.regions.length === 0 || row.regions.includes("auto")) {
+    for (const region of flyRegions) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
-        method: row.method || "GET",
         monitorId: String(row.id),
         url: row.url,
-        headers: row.headers,
-        body: row.body,
+        method: row.method || "GET",
         cronTimestamp: timestamp,
-        status: row.status,
+        body: row.body,
+        headers: row.headers,
         pageIds: allPages.map((p) => String(p.pageId)),
+        status: row.status,
       };
 
-      // TODO: fetch + try - catch + retry once
       const result = c.publishJSON({
         url: `https://api.openstatus.dev/checker`,
         body: payload,
         delay: Math.random() * 90,
         headers: {
-          "Upstash-Forward-fly-prefer-region": "ams",
+          "Upstash-Forward-fly-prefer-region": region,
         },
       });
       allResult.push(result);
-    } else {
-      const regions = row.regions;
-      for (const region of regions) {
-        const payload: z.infer<typeof payloadSchema> = {
-          workspaceId: String(row.workspaceId),
-          monitorId: String(row.id),
-          url: row.url,
-          method: row.method || "GET",
-          cronTimestamp: timestamp,
-          body: row.body,
-          headers: row.headers,
-          pageIds: allPages.map((p) => String(p.pageId)),
-          status: row.status,
-        };
-
-        const result = c.publishJSON({
-          url: `https://api.openstatus.dev/checker`,
-          body: payload,
-          delay: Math.random() * 90,
-          headers: {
-            "Upstash-Forward-fly-prefer-region": region,
-          },
-        });
-        allResult.push(result);
-      }
     }
   }
   // our first legacy monitor
