@@ -39,7 +39,7 @@ export default async function Page({ params }: Props) {
   );
 
   return (
-    <div className="grid gap-6">
+    <div className="flex flex-col w-[90%] mx-auto gap-6">
       <Header
         title={page.title}
         description={page.description}
