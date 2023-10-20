@@ -159,7 +159,7 @@ const postRoute = createRoute({
           schema: incidentSchema,
         },
       },
-      description: "Create  a monitor",
+      description: "Incident created",
     },
     400: {
       content: {
@@ -208,7 +208,7 @@ const deleteRoute = createRoute({
           }),
         },
       },
-      description: "Delete the incident",
+      description: "Incident deleted",
     },
     400: {
       content: {
@@ -248,7 +248,7 @@ const postRouteUpdate = createRoute({
   request: {
     params: ParamsSchema,
     body: {
-      description: "The incident to create",
+      description: "The incident to update",
       content: {
         "application/json": {
           schema: incidentUpdateSchema,
@@ -263,7 +263,7 @@ const postRouteUpdate = createRoute({
           schema: incidentUpdateSchema,
         },
       },
-      description: "Create  a monitor",
+      description: "Incident updated",
     },
     400: {
       content: {
