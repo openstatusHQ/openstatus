@@ -47,8 +47,8 @@ export const cron = async ({
     const allPages = await caller.monitor.getAllPagesForMonitor({
       monitorId: row.id,
     });
-
-    for (const region of flyRegions) {
+    const selectedRegions = row.regions;
+    for (const region of selectedRegions) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
         monitorId: String(row.id),
