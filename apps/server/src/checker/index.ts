@@ -40,12 +40,36 @@ checkerRoute.post("/checker", async (c) => {
   }
 
   try {
-    console.log(`start checker for ${result.data.url}`);
+    console.log(
+      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
     checker(result.data);
-    console.log(`end checker for ${result.data.url}`);
+    console.log(
+      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
     return c.text("Ok", 200);
   } catch (e) {
     console.error(e);
     return c.text("Internal Server Error", 500);
   }
+});
+
+checkerRoute.post("/googleTest", async (c) => {
+  const json = await c.req.json();
+
+  const auth = c.req.header("Authorization");
+  if (auth !== `Basic ${env.CRON_SECRET}`) {
+    console.error("Unauthorized");
+    return c.text("Unauthorized", 401);
+  }
+  console.log("Retry : ", c.req.header("X-CloudTasks-TaskRetryCount"));
+  const result = payloadSchema.safeParse(json);
+
+  if (!result.success) {
+    console.error(result.error);
+    return c.text("Unprocessable Entity", 422);
+  }
+
+  console.log(`Google Checker should try this: ${result.data.url}`);
+  return c.text("Ok", 200);
 });

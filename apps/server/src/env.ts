@@ -11,6 +11,7 @@ export const env = createEnv({
     QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
     QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
     FLY_REGION: z.string(),
+    CRON_SECRET: z.string(),
   },
 
   /**
