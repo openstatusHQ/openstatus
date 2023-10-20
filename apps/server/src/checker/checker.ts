@@ -84,6 +84,7 @@ export const ping = async (
     }, {}) || {};
 
   const res = await fetch(data?.url, {
+    verbose: true,
     method: data?.method,
     cache: "no-store",
     headers: {
