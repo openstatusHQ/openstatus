@@ -55,7 +55,7 @@ export const checker = async (data: Payload) => {
     const endTime = Date.now();
     const latency = endTime - startTime;
     if (retry.ok) {
-      await monitor({ monitorInfo: data, latency, statusCode: res.status });
+      await monitor({ monitorInfo: data, latency, statusCode: retry.status });
       if (data?.status === "error") {
         await updateMonitorStatus({
           monitorId: data.monitorId,
@@ -64,12 +64,6 @@ export const checker = async (data: Payload) => {
       }
     } else {
       console.log(`error for ${data.url} with status ${res.status}`);
-      if (data?.status === "active") {
-        await updateMonitorStatus({
-          monitorId: data.monitorId,
-          status: "error",
-        });
-      }
     }
   }
 };

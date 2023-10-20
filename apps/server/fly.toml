@@ -17,3 +17,13 @@ primary_region = "ams"
   auto_start_machines = true
   min_machines_running = 0
   processes = ["app"]
+
+[deploy]
+  strategy = "bluegreen"
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "60s"
+  method = "GET"
+  timeout = "5s"
+  path = "/ping"

@@ -8,8 +8,6 @@ export const env = createEnv({
     TINY_BIRD_API_KEY: z.string().min(1),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
-    QSTASH_CURRENT_SIGNING_KEY: z.string().min(1),
-    QSTASH_NEXT_SIGNING_KEY: z.string().min(1),
     FLY_REGION: z.string(),
     CRON_SECRET: z.string(),
   },

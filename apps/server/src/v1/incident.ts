@@ -48,6 +48,9 @@ const incidentSchema = z.object({
   }),
 });
 
+const incidentExtendedSchema = incidentSchema.extend({
+  id: z.number().openapi({ description: "The id of the incident" }),
+});
 const getAllRoute = createRoute({
   method: "get",
   tags: ["incident"],
@@ -57,7 +60,7 @@ const getAllRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(incidentSchema),
+          schema: z.array(incidentExtendedSchema),
         },
       },
       description: "Get all incidents",
@@ -83,7 +86,7 @@ incidentApi.openapi(getAllRoute, async (c) => {
 
   if (!_incidents) return c.jsonT({ code: 404, message: "Not Found" });
 
-  const data = z.array(incidentSchema).parse(_incidents);
+  const data = z.array(incidentExtendedSchema).parse(_incidents);
 
   return c.jsonT(data);
 });
@@ -99,7 +102,7 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentSchema,
+          schema: incidentExtendedSchema,
         },
       },
       description: "Get all incidents",
@@ -130,7 +133,7 @@ incidentApi.openapi(getRoute, async (c) => {
   if (workspaceId !== _incident.workspaceId)
     return c.jsonT({ code: 401, message: "Unauthorized" });
 
-  const data = incidentSchema.parse(_incident);
+  const data = incidentExtendedSchema.parse(_incident);
 
   return c.jsonT(data);
 });
