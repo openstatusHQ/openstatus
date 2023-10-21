@@ -63,7 +63,7 @@ export const checker = async (data: Payload) => {
         });
       }
     } else {
-      console.log(`error for ${data.url} `);
+      console.log(`error for ${data.url} with info ${JSON.stringify(data)}`);
     }
   }
 };
