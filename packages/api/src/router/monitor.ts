@@ -6,7 +6,7 @@ import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   allMonitorsExtendedSchema,
   insertMonitorSchema,
-  METHODS,
+  methods,
   monitor,
   monitorsToPages,
   notification,
@@ -236,7 +236,7 @@ export const monitorRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        method: z.enum(METHODS).default("GET"),
+        method: z.enum(methods).default("GET"),
         body: z.string().default("").optional(),
         headers: z
           .array(z.object({ key: z.string(), value: z.string() }))

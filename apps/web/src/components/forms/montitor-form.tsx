@@ -11,6 +11,8 @@ import type { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   insertMonitorSchema,
+  methods,
+  methodsSchema,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
@@ -74,15 +76,12 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-const methods = ["POST", "GET"] as const;
-const methodsEnum = z.enum(methods);
-
 const headersSchema = z
   .array(z.object({ key: z.string(), value: z.string() }))
   .optional();
 
 const advancedSchema = z.object({
-  method: methodsEnum,
+  method: methodsSchema,
   body: z.string().optional(),
   headers: headersSchema,
 });
@@ -297,7 +296,7 @@ export function MonitorForm({
                           <FormLabel>Method</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              field.onChange(methodsEnum.parse(value));
+                              field.onChange(methodsSchema.parse(value));
                               form.resetField("body", { defaultValue: "" });
                             }}
                             defaultValue={field.value}

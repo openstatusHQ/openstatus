@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-import { METHODS, status } from "@openstatus/db/src/schema";
+import { methods, status } from "@openstatus/db/src/schema";
 
 export const payloadSchema = z.object({
   workspaceId: z.string(),
   monitorId: z.string(),
-  method: z.enum(METHODS),
+  method: z.enum(methods),
   body: z.string().optional(),
   headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
   url: z.string(),
