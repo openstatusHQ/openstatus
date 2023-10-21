@@ -58,7 +58,7 @@ export const cron = async ({
     const allPages = await caller.monitor.getAllPagesForMonitor({
       monitorId: row.id,
     });
-    const selectedRegions = row.regions;
+    const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
     for (const region of selectedRegions) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
@@ -76,7 +76,7 @@ export const cron = async ({
         httpRequest: {
           headers: {
             "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-            "fly-prefer-region": region,
+            ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
             Authorization: `Basic ${env.CRON_SECRET}`,
           },
           httpMethod: "POST",

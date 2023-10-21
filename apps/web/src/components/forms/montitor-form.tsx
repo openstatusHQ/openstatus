@@ -544,7 +544,8 @@ export function MonitorForm({
                               </PopoverContent>
                             </Popover>
                             <FormDescription>
-                              Select your regions.
+                              Select your regions. If none, region will be
+                              random.
                             </FormDescription>
                             <FormMessage />
                           </FormItem>
