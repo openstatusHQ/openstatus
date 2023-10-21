@@ -63,7 +63,9 @@ export const checker = async (data: Payload) => {
         });
       }
     } else {
-      console.log(`error for ${data.url} with info ${JSON.stringify(data)}`);
+      console.log(
+        `error for ${JSON.stringify(data)} with info ${JSON.stringify(retry)}`,
+      );
     }
   }
 };
@@ -91,7 +93,7 @@ export const ping = async (
 
     return res;
   } catch (e) {
-    console.log("fetch error for : ", JSON.stringify(data));
+    console.log(`fetch error for : ${data} with error ${e}`);
     console.log(e);
   }
 };
