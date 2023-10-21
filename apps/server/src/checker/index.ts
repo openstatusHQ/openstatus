@@ -31,7 +31,9 @@ checkerRoute.post("/checker", async (c) => {
     return c.text("Unprocessable Entity", 422);
   }
 
-  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 5) {
+  const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
+  if (retry > 3) {
+    // We should see what we are doing for that
     console.error(
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
@@ -46,7 +48,7 @@ checkerRoute.post("/checker", async (c) => {
     console.log(
       `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
-    checker(result.data);
+    checker(result.data, retry);
     console.log(
       `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
@@ -73,8 +75,8 @@ checkerRoute.post("/checkerV2", async (c) => {
     console.error(result.error);
     return c.text("Unprocessable Entity", 422);
   }
-
-  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 5) {
+  const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
+  if (retry > 5) {
     console.error(
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
@@ -89,7 +91,7 @@ checkerRoute.post("/checkerV2", async (c) => {
     console.log(
       `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
-    checker(result.data);
+    checker(result.data, retry);
     console.log(
       `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );

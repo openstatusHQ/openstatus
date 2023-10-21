@@ -35,7 +35,7 @@ export const monitor = async ({
   });
 };
 
-export const checker = async (data: Payload) => {
+export const checker = async (data: Payload, retryCount: number) => {
   const startTime = Date.now();
   const res = await ping(data);
   const endTime = Date.now();
@@ -63,6 +63,28 @@ export const checker = async (data: Payload) => {
         });
       }
     } else {
+      // We do a third retry before we save the error
+      // if at the third retry we have a reponse we should save it
+      if (retryCount === 3 && retry) {
+        await monitor({
+          monitorInfo: data,
+          latency,
+          statusCode: retry.status,
+        });
+        if (data?.status === "active") {
+          await updateMonitorStatus({
+            monitorId: data.monitorId,
+            status: "error",
+          });
+        }
+      } else {
+        // To make sure we retry the task
+        throw new Error(
+          `error for ${JSON.stringify(data)} with info ${JSON.stringify(
+            retry,
+          )}`,
+        );
+      }
       console.log(
         `error for ${JSON.stringify(data)} with info ${JSON.stringify(retry)}`,
       );
