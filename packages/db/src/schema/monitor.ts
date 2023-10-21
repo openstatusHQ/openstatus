@@ -37,7 +37,9 @@ export const vercelRegions = [
 export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
 export const periodicity = ["1m", "5m", "10m", "30m", "1h", "other"] as const;
-export const METHODS = ["GET", "POST"] as const;
+export const periodicityEnum = z.enum(periodicity);
+export const methods = ["GET", "POST", "HEAD"] as const;
+export const methodsSchema = z.enum(methods);
 export const status = ["active", "error"] as const;
 export const statusSchema = z.enum(status);
 export const RegionEnum = z.enum([...flyRegions, ...vercelRegions, "auto"]);
@@ -62,7 +64,7 @@ export const monitor = sqliteTable("monitor", {
 
   headers: text("headers").default(""),
   body: text("body").default(""),
-  method: text("method", METHODS).default("GET"),
+  method: text("method", methods).default("GET"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
@@ -112,7 +114,6 @@ export const monitorsToPagesRelation = relations(
   }),
 );
 
-export const periodicityEnum = z.enum(periodicity);
 // Schema for inserting a Monitor - can be used to validate API requests
 export const insertMonitorSchema = createInsertSchema(monitor, {
   periodicity: periodicityEnum,
@@ -120,7 +121,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: z.enum(status).default("active"),
   active: z.boolean().default(false),
   regions: z.array(RegionEnum).default([]).optional(),
-  method: z.enum(METHODS).default("GET"),
+  method: z.enum(methods).default("GET"),
   body: z.string().default("").optional(),
   headers: z
     .array(z.object({ key: z.string(), value: z.string() }))
@@ -146,12 +147,12 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
       }
     }, z.array(RegionEnum))
     .default([]),
-  method: z.enum(METHODS).default("GET"),
+  method: z.enum(methods).default("GET"),
 });
 
 // FIXME: can be removed as we do not use the advanced tab anymore
 export const selectMonitorExtendedSchema = selectMonitorSchema.extend({
-  method: z.enum(METHODS).default("GET"),
+  method: z.enum(methods).default("GET"),
   body: z
     .preprocess((val) => {
       return String(val);

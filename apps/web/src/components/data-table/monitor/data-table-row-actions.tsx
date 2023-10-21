@@ -21,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
@@ -49,6 +50,23 @@ export function DataTableRowActions<TData>({
         toast("deleted");
         router.refresh();
         setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
+    });
+  }
+
+  async function onToggleActive() {
+    startTransition(async () => {
+      try {
+        const { jobType, ...rest } = monitor;
+        if (!monitor.id) return;
+        await api.monitor.updateMonitor.mutate({
+          ...rest,
+          active: !monitor.active,
+        });
+        toast("success");
+        router.refresh();
       } catch {
         toast("error");
       }
@@ -92,7 +110,12 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/data`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleActive}>
+            {monitor.active ? "Pause" : "Resume"} monitor
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

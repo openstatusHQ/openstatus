@@ -9,7 +9,10 @@ import * as z from "zod";
 
 import type { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
+  flyRegions,
   insertMonitorSchema,
+  methods,
+  methodsSchema,
   periodicityEnum,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
@@ -62,6 +65,7 @@ import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
+import type { Writeable } from "@/types/utils";
 import { NotificationForm } from "./notification-form";
 
 const cronJobs = [
@@ -72,15 +76,12 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-const methods = ["POST", "GET"] as const;
-const methodsEnum = z.enum(methods);
-
 const headersSchema = z
   .array(z.object({ key: z.string(), value: z.string() }))
   .optional();
 
 const advancedSchema = z.object({
-  method: methodsEnum,
+  method: methodsSchema,
   body: z.string().optional(),
   headers: headersSchema,
 });
@@ -111,7 +112,8 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || undefined,
-      regions: defaultValues?.regions || [],
+      regions:
+        defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
       headers: Boolean(defaultValues?.headers?.length)
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -294,7 +296,7 @@ export function MonitorForm({
                           <FormLabel>Method</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              field.onChange(methodsEnum.parse(value));
+                              field.onChange(methodsSchema.parse(value));
                               form.resetField("body", { defaultValue: "" });
                             }}
                             defaultValue={field.value}
@@ -464,75 +466,90 @@ export function MonitorForm({
                     <FormField
                       control={form.control}
                       name="regions"
-                      render={({ field }) => (
-                        <FormItem className="sm:col-span-1 sm:self-baseline">
-                          <FormLabel>Regions</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant="outline"
-                                  role="combobox"
-                                  className={cn(
-                                    "h-10 w-full justify-between",
-                                    !field.value && "text-muted-foreground",
-                                  )}
-                                >
-                                  {/* This is a hotfix */}
-                                  {field.value?.length === 1 &&
-                                  field.value[0].length > 0
-                                    ? flyRegionsDict[
-                                        field
-                                          .value[0] as keyof typeof flyRegionsDict
-                                      ].location
-                                    : "Select region"}
-                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-full p-0">
-                              <Command>
-                                <CommandInput placeholder="Select a region..." />
-                                <CommandEmpty>No regions found.</CommandEmpty>
-                                <CommandGroup className="max-h-[150px] overflow-y-scroll">
-                                  {Object.keys(flyRegionsDict).map((region) => {
-                                    const { code, location } =
-                                      flyRegionsDict[
-                                        region as keyof typeof flyRegionsDict
-                                      ];
-                                    const isSelected =
-                                      field.value?.includes(code);
-                                    return (
-                                      <CommandItem
-                                        value={code}
-                                        key={code}
-                                        onSelect={() => {
-                                          form.setValue("regions", [code]); // TODO: allow more than one to be selected in the future
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            "mr-2 h-4 w-4",
-                                            isSelected
-                                              ? "opacity-100"
-                                              : "opacity-0",
-                                          )}
-                                        />
-                                        {location}
-                                      </CommandItem>
-                                    );
-                                  })}
-                                </CommandGroup>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                          <FormDescription>
-                            Select your region. Leave blank for random picked
-                            regions.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const numberOfSelectedRegions =
+                          field.value?.length || 0;
+                        function renderText() {
+                          if (numberOfSelectedRegions === 0)
+                            return "Select region";
+                          if (numberOfSelectedRegions === flyRegions.length)
+                            return "All regions";
+                          return `${numberOfSelectedRegions} regions`;
+                        }
+                        return (
+                          <FormItem className="sm:col-span-1 sm:self-baseline">
+                            <FormLabel>Regions</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn(
+                                      "h-10 w-full justify-between",
+                                      !field.value && "text-muted-foreground",
+                                    )}
+                                  >
+                                    {renderText()}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-full p-0">
+                                <Command>
+                                  <CommandInput placeholder="Select a region..." />
+                                  <CommandEmpty>No regions found.</CommandEmpty>
+                                  <CommandGroup className="max-h-[150px] overflow-y-scroll">
+                                    {Object.keys(flyRegionsDict).map(
+                                      (region) => {
+                                        const { code, location } =
+                                          flyRegionsDict[
+                                            region as keyof typeof flyRegionsDict
+                                          ];
+                                        const isSelected =
+                                          field.value?.includes(code);
+                                        return (
+                                          <CommandItem
+                                            value={code}
+                                            key={code}
+                                            onSelect={() => {
+                                              const currentRegions =
+                                                form.getValues("regions") || [];
+                                              form.setValue(
+                                                "regions",
+                                                currentRegions.includes(code)
+                                                  ? currentRegions.filter(
+                                                      (r) => r !== code,
+                                                    )
+                                                  : [...currentRegions, code],
+                                              );
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                isSelected
+                                                  ? "opacity-100"
+                                                  : "opacity-0",
+                                              )}
+                                            />
+                                            {location}
+                                          </CommandItem>
+                                        );
+                                      },
+                                    )}
+                                  </CommandGroup>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                              Select your regions. If none, region will be
+                              random.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     <FormField
                       control={form.control}
