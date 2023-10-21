@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
+import { CloudTasksClient } from "@google-cloud/tasks";
+import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
@@ -8,8 +10,6 @@ import { flyRegions, selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
-import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 

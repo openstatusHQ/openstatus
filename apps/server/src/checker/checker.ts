@@ -40,7 +40,7 @@ export const checker = async (data: Payload) => {
   const res = await ping(data);
   const endTime = Date.now();
   const latency = endTime - startTime;
-  if (res.ok) {
+  if (res?.ok) {
     await monitor({ monitorInfo: data, latency, statusCode: res.status });
     if (data?.status === "error") {
       await updateMonitorStatus({
@@ -49,13 +49,13 @@ export const checker = async (data: Payload) => {
       });
     }
   } else {
-    console.log(`first retry for ${data.url} with status ${res.status}`);
+    console.log(`first retry for ${data.url} with status ${res?.status}`);
     const startTime = Date.now();
     const retry = await ping(data);
     const endTime = Date.now();
     const latency = endTime - startTime;
-    if (retry.ok) {
-      await monitor({ monitorInfo: data, latency, statusCode: res.status });
+    if (retry?.ok) {
+      await monitor({ monitorInfo: data, latency, statusCode: retry.status });
       if (data?.status === "error") {
         await updateMonitorStatus({
           monitorId: data.monitorId,
@@ -63,13 +63,7 @@ export const checker = async (data: Payload) => {
         });
       }
     } else {
-      console.log(`error for ${data.url} with status ${res.status}`);
-      if (data?.status === "active") {
-        await updateMonitorStatus({
-          monitorId: data.monitorId,
-          status: "error",
-        });
-      }
+      console.log(`error for ${data.url} with info ${JSON.stringify(data)}`);
     }
   }
 };
@@ -83,17 +77,21 @@ export const ping = async (
       return { ...o, [v.key]: v.value };
     }, {}) || {};
 
-  const res = await fetch(data?.url, {
-    verbose: true,
-    method: data?.method,
-    cache: "no-store",
-    headers: {
-      "OpenStatus-Ping": "true",
-      ...headers,
-    },
-    // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-    ...(data.method !== "GET" && { body: data?.body }),
-  });
+  try {
+    const res = await fetch(data?.url, {
+      method: data?.method,
+      cache: "no-store",
+      headers: {
+        "OpenStatus-Ping": "true",
+        ...headers,
+      },
+      // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
+      ...(data.method !== "GET" && { body: data?.body }),
+    });
 
-  return res;
+    return res;
+  } catch (e) {
+    console.log("fetch error for : ", JSON.stringify(data));
+    console.log(e);
+  }
 };

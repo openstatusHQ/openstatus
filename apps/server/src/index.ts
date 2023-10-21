@@ -21,7 +21,7 @@ app.route("/public", publicRoute);
 /**
  * Ping Pong
  */
-app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }));
+app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }, 200));
 
 /**
  * API Routes v1
