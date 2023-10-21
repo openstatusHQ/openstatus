@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { MonitorForm } from "@/components/forms/montitor-form";
+import { MonitorForm } from "@/components/forms/monitor-form";
 import { api } from "@/trpc/server";
 
 /**

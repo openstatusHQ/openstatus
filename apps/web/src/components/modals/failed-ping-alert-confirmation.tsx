@@ -12,7 +12,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import type { MonitorProps } from "../forms/montitor-form";
+import type { MonitorProps } from "../forms/monitor-form";
 
 type FailedPingAlertConfirmationProps = {
   monitor: MonitorProps;
