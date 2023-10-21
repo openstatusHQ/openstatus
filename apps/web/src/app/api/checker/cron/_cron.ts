@@ -6,7 +6,7 @@ import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
-import { flyRegions, selectMonitorSchema } from "@openstatus/db/src/schema";
+import { selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
@@ -85,40 +85,6 @@ export const cron = async ({
         },
       };
       const request = { parent: parent, task: task };
-      const [response] = await client.createTask(request);
-
-      allResult.push(response);
-    }
-  }
-  // our first legacy monitor
-  if (periodicity === "10m") {
-    // Right now we are just checking the ping endpoint
-    for (const region of flyRegions) {
-      const payload: z.infer<typeof payloadSchema> = {
-        workspaceId: "openstatus",
-        monitorId: "openstatusPing",
-        url: `https://api.openstatus.dev/ping`,
-        cronTimestamp: timestamp,
-        method: "GET",
-        pageIds: ["openstatus"],
-        status: "active",
-      };
-
-      const task: google.cloud.tasks.v2beta3.ITask = {
-        httpRequest: {
-          headers: {
-            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-            "fly-prefer-region": region,
-            Authorization: `Basic ${env.CRON_SECRET}`,
-          },
-          httpMethod: "POST",
-          url: "https://api.openstatus.dev/checkerV2",
-          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
-        },
-      };
-
-      // TODO: fetch + try - catch + retry once
-      const request = { parent, task };
       const [response] = await client.createTask(request);
 
       allResult.push(response);

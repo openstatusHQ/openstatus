@@ -36,9 +36,10 @@ export async function getMonitorListData(props: MonitorListParams) {
   return;
 }
 
+// Includes caching of data for 10 minutes
 export async function getHomeMonitorListData() {
   try {
-    const res = await getHomeMonitorList(tb)({ monitorId: "openstatusPing" });
+    const res = await getHomeMonitorList(tb)({ monitorId: "1" });
     return res.data;
   } catch (e) {
     console.error(e);
