@@ -31,10 +31,9 @@ checkerRoute.post("/checker", async (c) => {
     return c.text("Unprocessable Entity", 422);
   }
 
-  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 2) {
+  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 5) {
     console.error(
-      `catchTooManyRetry for ${result.data.url} with retry nb ${c.req.header(
-        "Upstash-Retried",
+      `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
     );
     // catchTooManyRetry(result.data);
@@ -75,10 +74,9 @@ checkerRoute.post("/checkerV2", async (c) => {
     return c.text("Unprocessable Entity", 422);
   }
 
-  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 2) {
+  if (Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0) > 5) {
     console.error(
-      `catchTooManyRetry for ${result.data.url} with retry nb ${c.req.header(
-        "Upstash-Retried",
+      `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
     );
     // catchTooManyRetry(result.data);
