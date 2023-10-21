@@ -18,7 +18,7 @@ export const pagesConfig: Page[] = [
   },
   {
     title: "Status Pages",
-    description: "Wher you can see all the pages.",
+    description: "Where you can see all the pages.",
     href: "/status-pages",
     icon: "panel-top",
   },

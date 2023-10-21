@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import type { SignedInAuthObject } from "@clerk/nextjs/api";
-import { Client } from "@upstash/qstash";
+import { CloudTasksClient } from "@google-cloud/tasks";
+import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
@@ -27,9 +28,19 @@ export const cron = async ({
   periodicity,
   req,
 }: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
-  const c = new Client({
-    token: env.QSTASH_TOKEN,
+  const client = new CloudTasksClient({
+    projectId: env.GCP_PROJECT_ID,
+    credentials: {
+      client_email: process.env.GCP_CLIENT_EMAIL,
+      private_key: env.GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
   });
+  const parent = client.queuePath(
+    env.GCP_PROJECT_ID,
+    env.GCP_LOCATION,
+    periodicity,
+  );
+
   console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
@@ -61,15 +72,22 @@ export const cron = async ({
         status: row.status,
       };
 
-      const result = c.publishJSON({
-        url: `https://api.openstatus.dev/checker`,
-        body: payload,
-        delay: Math.random() * 90,
-        headers: {
-          "Upstash-Forward-fly-prefer-region": region,
+      const task: google.cloud.tasks.v2beta3.ITask = {
+        httpRequest: {
+          headers: {
+            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+            "fly-prefer-region": region,
+            Authorization: `Basic ${env.CRON_SECRET}`,
+          },
+          httpMethod: "POST",
+          url: "https://api.openstatus.dev/checkerV2",
+          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
         },
-      });
-      allResult.push(result);
+      };
+      const request = { parent: parent, task: task };
+      const [response] = await client.createTask(request);
+
+      allResult.push(response);
     }
   }
   // our first legacy monitor
@@ -86,16 +104,24 @@ export const cron = async ({
         status: "active",
       };
 
-      // TODO: fetch + try - catch + retry once
-      const result = c.publishJSON({
-        url: `https://api.openstatus.dev/checker`,
-        body: payload,
-        headers: {
-          "Upstash-Forward-fly-prefer-region": region,
+      const task: google.cloud.tasks.v2beta3.ITask = {
+        httpRequest: {
+          headers: {
+            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+            "fly-prefer-region": region,
+            Authorization: `Basic ${env.CRON_SECRET}`,
+          },
+          httpMethod: "POST",
+          url: "https://api.openstatus.dev/checkerV2",
+          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
         },
-        delay: Math.random() * 90,
-      });
-      allResult.push(result);
+      };
+
+      // TODO: fetch + try - catch + retry once
+      const request = { parent, task };
+      const [response] = await client.createTask(request);
+
+      allResult.push(response);
     }
   }
   await Promise.all(allResult);
