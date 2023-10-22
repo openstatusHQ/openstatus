@@ -53,8 +53,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
       });
     }
   } else {
+    if (retry === 0) {
+      throw new Error(`error on ping for ${data.monitorId}`);
+    }
     // Store the error on third task retry
-    if (retry === 3) {
+    if (retry === 1) {
       await publishPingRetryPolicy({
         payload: data,
         latency,
@@ -66,12 +69,6 @@ const run = async (data: Payload, retry?: number | undefined) => {
           status: "error",
         });
       }
-      // The response was not ok and we should throw an error
-      throw new Error(
-        `error ping endpoint for ${
-          data.monitorId
-        } on ${retry} retry ${JSON.stringify(data)})`,
-      );
     }
   }
   return { res, latency };
@@ -80,11 +77,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
 export const checkerRetryPolicy = async (data: Payload, retry = 0) => {
   try {
     console.log("try run checker - attempt 1 ", JSON.stringify(data));
-    await run(data, retry);
+    await run(data, 0);
   } catch {
     try {
       console.log("try run checker - attempt 2 ", JSON.stringify(data));
-      await run(data, retry);
+      await run(data, 1);
     } catch (e) {
       throw e;
     }

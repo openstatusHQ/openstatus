@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 
 import { env } from "../env";
-import { catchTooManyRetry } from "./alerting";
 import { checkerRetryPolicy } from "./checker";
 import { payloadSchema } from "./schema";
 import type { Payload } from "./schema";
@@ -30,16 +29,14 @@ checkerRoute.post("/checker", async (c) => {
     console.error(result.error);
     return c.text("Unprocessable Entity", 422);
   }
-
   const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
   if (retry > 3) {
-    // We should see what we are doing for that
     console.error(
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
     );
     // catchTooManyRetry(result.data);
-    return c.text("Ok", 200); // needs to be 200, otherwise qstash will retry
+    return c.text("Ok", 200); // finish the task
   }
 
   console.log(`Google Checker should try this: ${result.data.url}`);
@@ -48,13 +45,17 @@ checkerRoute.post("/checker", async (c) => {
     console.log(
       `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
-    checkerRetryPolicy(result.data, retry);
+    await checkerRetryPolicy(result.data, retry);
     console.log(
       `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
     return c.text("Ok", 200);
   } catch (e) {
-    console.error(e);
+    console.error(
+      `fail checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+      JSON.stringify(result.data),
+      e,
+    );
     return c.text("Internal Server Error", 500);
   }
 });
