@@ -11,7 +11,11 @@ export const publishPingRetryPolicy = async ({
   statusCode,
 }: PublishPingType) => {
   try {
-    console.log("try publish ping to tb - attempt 1 ", JSON.stringify(payload));
+    console.log(
+      `try publish ping to tb - attempt 1  ${JSON.stringify(
+        payload,
+      )}  with latency ${latency} and status code ${statusCode}`,
+    );
     await publishPing({ payload, statusCode, latency });
   } catch {
     try {
@@ -24,7 +28,11 @@ export const publishPingRetryPolicy = async ({
       throw e;
     }
   }
-  console.log("successfully publish ping to tb ", JSON.stringify(payload));
+  console.log(
+    `Successfully published  ${JSON.stringify(
+      payload,
+    )}  with latency ${latency} and status code ${statusCode}`,
+  );
 };
 
 const run = async (data: Payload, retry?: number | undefined) => {
