@@ -77,7 +77,7 @@ checkerRoute.post("/checkerV2", async (c) => {
     return c.text("Unprocessable Entity", 422);
   }
   const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
-  if (retry > 3) {
+  if (retry > 1) {
     console.error(
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
