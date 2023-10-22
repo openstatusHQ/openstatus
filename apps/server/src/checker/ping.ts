@@ -25,6 +25,7 @@ export async function pingEndpoint(data: Payload) {
   try {
     const res = await fetch(data?.url, {
       method: data?.method,
+      keepalive: false,
       cache: "no-store",
       headers: getHeaders(data),
       // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error

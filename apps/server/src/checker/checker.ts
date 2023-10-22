@@ -60,7 +60,9 @@ const run = async (data: Payload, retry?: number | undefined) => {
       }
       // The response was not ok and we should throw an error
       throw new Error(
-        `error ping endpoint for ${data.monitorId} on ${retry} retry`,
+        `error ping endpoint for ${
+          data.monitorId
+        } on ${retry} retry ${JSON.stringify(data)})`,
       );
     }
   }
