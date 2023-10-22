@@ -158,7 +158,7 @@ export const ping = async (
 
     return res;
   } catch (e) {
-    console.log(`fetch error for : ${data} with error ${e}`);
-    console.log(e);
+    console.log(`fetch error for : ${JSON.stringify(data)} with error ${e}`);
+    throw e;
   }
 };
