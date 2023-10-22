@@ -148,6 +148,8 @@ export const ping = async (
     const res = await fetch(data?.url, {
       method: data?.method,
       cache: "no-store",
+      // See https://github.com/oven-sh/bun/issues/3327
+      keepalive: false,
       headers: {
         "OpenStatus-Ping": "true",
         ...headers,
