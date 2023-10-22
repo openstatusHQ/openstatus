@@ -20,7 +20,9 @@ export const monitor = async ({
   const { monitorId, cronTimestamp, url, workspaceId } = monitorInfo;
 
   console.log(
-    `publishing ping response for ${url} with status ${statusCode} and latency ${latency} and monitorId ${monitorId} `,
+    `publishing ping response for ${JSON.stringify(
+      monitorInfo,
+    )} with latency ${latency}`,
   );
   try {
     const res = await publishPingResponse({
@@ -36,9 +38,11 @@ export const monitor = async ({
     });
     if (res.successful_rows === 0) {
       console.log(
-        `first error publishing ping response for ${url} with status ${statusCode} and latency ${latency} and monitorId ${monitorId} `,
+        `first error publishing ping response for ${JSON.stringify(
+          monitorInfo,
+        )} with res ${JSON.stringify(res)}`,
       );
-      const res = await publishPingResponse({
+      const secondRetry = await publishPingResponse({
         id: nanoid(), // TBD: we don't need it
         timestamp: Date.now(),
         statusCode,
@@ -49,15 +53,16 @@ export const monitor = async ({
         cronTimestamp,
         workspaceId,
       });
-      if (res.successful_rows === 0) {
-        console.log(e);
+      if (secondRetry.successful_rows === 0) {
         throw new Error("error publishing ping response");
       }
     }
   } catch (e) {
     console.error(e);
     console.log(
-      `error publishing ping response for ${url} with status ${statusCode} and latency ${latency} and monitorId ${monitorId} `,
+      `error publishing ping response for ${JSON.stringify(
+        monitorInfo,
+      )} with error ${e}  )`,
     );
     throw e;
   }
@@ -69,7 +74,7 @@ export const checker = async (data: Payload, retryCount: number) => {
   const endTime = Date.now();
   const latency = endTime - startTime;
   console.log(
-    `first try for ${JSON.stringify} with result ${JSON.stringify(res)}`,
+    `first try for ${JSON.stringify(data)} with result ${JSON.stringify(res)}`,
   );
   if (res?.ok) {
     await monitor({ monitorInfo: data, latency, statusCode: res.status });
@@ -80,7 +85,11 @@ export const checker = async (data: Payload, retryCount: number) => {
       });
     }
   } else {
-    console.log(`first retry for ${data.url} with status ${res?.status}`);
+    console.log(
+      `first retry for ${JSON.stringify(data)} with result ${JSON.stringify(
+        res,
+      )}`,
+    );
     const startTime = Date.now();
     const retry = await ping(data);
     const endTime = Date.now();
@@ -109,6 +118,9 @@ export const checker = async (data: Payload, retryCount: number) => {
           });
         }
       } else {
+        console.log(
+          `Could not ping ${JSON.stringify(data)} with retry ${retry}`,
+        );
         // To make sure we retry the task
         throw new Error(
           `error for ${JSON.stringify(data)} with info ${JSON.stringify(

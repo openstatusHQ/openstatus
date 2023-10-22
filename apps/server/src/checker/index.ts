@@ -45,13 +45,9 @@ checkerRoute.post("/checker", async (c) => {
   console.log(`Google Checker should try this: ${result.data.url}`);
 
   try {
-    console.log(
-      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
-    );
+    console.log(`start checker for: ${JSON.stringify(result.data)}`);
     checker(result.data, retry);
-    console.log(
-      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
-    );
+    console.log(`End checker for: ${JSON.stringify(result.data)}`);
     return c.text("Ok", 200);
   } catch (e) {
     console.error(e);
@@ -88,13 +84,9 @@ checkerRoute.post("/checkerV2", async (c) => {
   console.log(`Google Checker should try this: ${result.data.url}`);
 
   try {
-    console.log(
-      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
-    );
+    console.log(`start checker for: ${JSON.stringify(result.data)}`);
     checker(result.data, retry);
-    console.log(
-      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
-    );
+    console.log(`End checker for: ${JSON.stringify(result.data)}`);
     return c.text("Ok", 200);
   } catch (e) {
     console.error(e);
