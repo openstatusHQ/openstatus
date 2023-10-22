@@ -3,12 +3,12 @@ import type { z } from "zod";
 import { db, eq, schema } from "@openstatus/db";
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 
-import { monitor } from "./checker";
+import { publishPingRetryPolicy } from "./checker";
 import type { Payload } from "./schema";
 import { providerToFunction } from "./utils";
 
 export async function catchTooManyRetry(payload: Payload) {
-  await monitor({ monitorInfo: payload, latency: -1, statusCode: 500 });
+  await publishPingRetryPolicy({ payload, latency: -1, statusCode: 500 });
   if (payload?.status !== "error") {
     await triggerAlerting({ monitorId: payload.monitorId });
     await updateMonitorStatus({

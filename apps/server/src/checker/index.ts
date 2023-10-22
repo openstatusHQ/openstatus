@@ -2,7 +2,7 @@ import { Hono } from "hono";
 
 import { env } from "../env";
 import { catchTooManyRetry } from "./alerting";
-import { checker } from "./checker";
+import { checkerRetryPolicy } from "./checker";
 import { payloadSchema } from "./schema";
 import type { Payload } from "./schema";
 
@@ -45,9 +45,13 @@ checkerRoute.post("/checker", async (c) => {
   console.log(`Google Checker should try this: ${result.data.url}`);
 
   try {
-    console.log(`start checker for: ${JSON.stringify(result.data)}`);
-    checker(result.data, retry);
-    console.log(`End checker for: ${JSON.stringify(result.data)}`);
+    console.log(
+      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
+    checkerRetryPolicy(result.data, retry);
+    console.log(
+      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
     return c.text("Ok", 200);
   } catch (e) {
     console.error(e);
@@ -72,24 +76,32 @@ checkerRoute.post("/checkerV2", async (c) => {
     return c.text("Unprocessable Entity", 422);
   }
   const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
-  if (retry > 5) {
+  if (retry > 3) {
     console.error(
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
     );
     // catchTooManyRetry(result.data);
-    return c.text("Ok", 200); // needs to be 200, otherwise qstash will retry
+    return c.text("Ok", 200); // finish the task
   }
 
   console.log(`Google Checker should try this: ${result.data.url}`);
 
   try {
-    console.log(`start checker for: ${JSON.stringify(result.data)}`);
-    checker(result.data, retry);
-    console.log(`End checker for: ${JSON.stringify(result.data)}`);
+    console.log(
+      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
+    await checkerRetryPolicy(result.data, retry);
+    console.log(
+      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+    );
     return c.text("Ok", 200);
   } catch (e) {
-    console.error(e);
+    console.error(
+      `fail checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+      JSON.stringify(result.data),
+      e,
+    );
     return c.text("Internal Server Error", 500);
   }
 });
