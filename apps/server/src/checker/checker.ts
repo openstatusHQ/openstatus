@@ -36,9 +36,19 @@ export const publishPingRetryPolicy = async ({
 };
 
 const run = async (data: Payload, retry?: number | undefined) => {
-  const startTime = Date.now();
-  const res = await pingEndpoint(data);
-  const endTime = Date.now();
+  let startTime = 0;
+  let endTime = 0;
+  let res = null;
+  // We are doing these for wrong urls
+  try {
+    startTime = Date.now();
+    res = await pingEndpoint(data);
+    endTime = Date.now();
+  } catch (e) {
+    console.log("error on pingEndpoint", e);
+    endTime = Date.now();
+  }
+
   const latency = endTime - startTime;
   if (res?.ok) {
     await publishPingRetryPolicy({
@@ -61,7 +71,7 @@ const run = async (data: Payload, retry?: number | undefined) => {
       await publishPingRetryPolicy({
         payload: data,
         latency,
-        statusCode: res.status,
+        statusCode: res?.status || 0,
       });
       if (data?.status === "active") {
         await updateMonitorStatus({
