@@ -1,14 +1,16 @@
-# fly.toml app configuration file generated for openstatus-api on 2023-09-13T17:29:05+02:00
+# fly.toml app configuration file generated for openstatus-checker on 2023-10-23T11:41:13+02:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = "openstatus-api"
+app = "openstatus-checker"
 primary_region = "ams"
-
 
 [build]
   dockerfile = "./Dockerfile"
+
+[deploy]
+  strategy = "rolling"
 
 [http_service]
   internal_port = 3000
@@ -16,19 +18,13 @@ primary_region = "ams"
   auto_stop_machines = true
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
 
-[deploy]
-  strategy = "rolling"
-
-[[http_service.checks]]
-  grace_period = "10s"
-  interval = "60s"
-  method = "GET"
-  timeout = "5s"
-  path = "/ping"
-
-
+  [[http_service.checks]]
+    interval = "1m0s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/ping"
 
 [checks]
   [checks.name_of_your_http_check]
@@ -39,12 +35,3 @@ primary_region = "ams"
     grace_period = "30s"
     method = "get"
     path = "/ping"
-
-# [[services.http_checks]]
-#   interval = 10000
-#   grace_period = "5s"
-#   method = "get"
-#   path = "/ping"
-#   protocol = "https"
-#   timeout = 2000
-#   tls_skip_verify = false
