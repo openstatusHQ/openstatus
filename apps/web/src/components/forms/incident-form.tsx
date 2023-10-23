@@ -4,16 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
-import type {
-  allMonitorsExtendedSchema,
-  Page,
-} from "@openstatus/db/src/schema";
+import type { InsertIncident, Monitor, Page } from "@openstatus/db/src/schema";
 import {
-  availableStatus,
+  incidentStatus,
+  incidentStatusSchema,
   insertIncidentSchema,
-  StatusEnum,
 } from "@openstatus/db/src/schema";
 import {
   Accordion,
@@ -48,19 +44,10 @@ import { useToastAction } from "@/hooks/use-toast-action";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
-// include update on creation
-const insertSchema = insertIncidentSchema.extend({
-  message: z.string().optional(),
-  date: z.date().optional().default(new Date()),
-});
-
-type IncidentProps = z.infer<typeof insertSchema>;
-type MonitorsProps = z.infer<typeof allMonitorsExtendedSchema>;
-
 interface Props {
-  defaultValues?: IncidentProps;
-  monitors?: MonitorsProps;
-  pages?: Page[]; //
+  defaultValues?: InsertIncident;
+  monitors?: Monitor[];
+  pages?: Page[];
   workspaceSlug: string;
 }
 
@@ -70,25 +57,31 @@ export function IncidentForm({
   pages,
   workspaceSlug,
 }: Props) {
-  const form = useForm<IncidentProps>({
-    resolver: zodResolver(insertSchema),
-    defaultValues: {
-      id: defaultValues?.id || 0,
-      title: defaultValues?.title || "",
-      status: defaultValues?.status || "investigating",
-      monitors: defaultValues?.monitors || [],
-      pages: defaultValues?.pages || [],
-      workspaceSlug,
-      // include update on creation
-      message: "",
-      date: defaultValues?.date || new Date(),
-    },
+  const form = useForm<InsertIncident>({
+    resolver: zodResolver(insertIncidentSchema),
+    defaultValues: defaultValues
+      ? {
+          id: defaultValues?.id || 0,
+          title: defaultValues.title,
+          status: defaultValues.status,
+          monitors: defaultValues.monitors,
+          pages: defaultValues.pages,
+          workspaceSlug,
+          // include update on creation
+          message: "",
+          date: defaultValues.date,
+        }
+      : {
+          status: "investigating",
+          date: new Date(),
+          workspaceSlug,
+        },
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: IncidentProps) => {
+  const onSubmit = ({ ...props }: InsertIncident) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -99,6 +92,7 @@ export function IncidentForm({
           const incident = await api.incident.createIncident.mutate({
             workspaceSlug,
             status,
+            message,
             ...rest,
           });
           // include update on creation
@@ -119,6 +113,8 @@ export function IncidentForm({
       }
     });
   };
+
+  console.log(form.formState.errors);
   return (
     <Form {...form}>
       <form
@@ -160,12 +156,12 @@ export function IncidentForm({
                   <FormMessage />
                   <RadioGroup
                     onValueChange={(value) =>
-                      field.onChange(StatusEnum.parse(value))
+                      field.onChange(incidentStatusSchema.parse(value))
                     } // value is a string
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                   >
-                    {availableStatus.map((status) => {
+                    {incidentStatus.map((status) => {
                       const { value, label, icon } = statusDict[status];
                       const Icon = Icons[icon];
                       return (

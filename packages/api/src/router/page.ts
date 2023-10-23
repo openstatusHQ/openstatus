@@ -2,10 +2,10 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray, not, or, sql } from "@openstatus/db";
+import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
   incident,
-  insertPageSchemaWithMonitors,
+  insertPageSchema,
   monitor,
   monitorsToIncidents,
   monitorsToPages,
@@ -16,7 +16,6 @@ import {
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { hasUserAccessToWorkspace } from "./utils";
@@ -24,7 +23,7 @@ import { hasUserAccessToWorkspace } from "./utils";
 // TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
-    .input(insertPageSchemaWithMonitors)
+    .input(insertPageSchema)
     .mutation(async (opts) => {
       if (!opts.input.workspaceSlug) return;
       const data = await hasUserAccessToWorkspace({
@@ -110,7 +109,7 @@ export const pageRouter = createTRPCRouter({
       });
     }),
   updatePage: protectedProcedure
-    .input(insertPageSchemaWithMonitors)
+    .input(insertPageSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 

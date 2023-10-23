@@ -3,16 +3,15 @@ import { z } from "zod";
 import { and, eq, inArray } from "@openstatus/db";
 import {
   incident,
+  incidentStatusSchema,
   incidentUpdate,
   insertIncidentSchema,
-  insertIncidentSchemaWithMonitors,
   insertIncidentUpdateSchema,
   monitorsToIncidents,
   pagesToIncidents,
   selectIncidentSchema,
   selectIncidentUpdateSchema,
   selectMonitorSchema,
-  StatusEnum,
   user,
   usersToWorkspaces,
   workspace,
@@ -31,8 +30,15 @@ export const incidentRouter = createTRPCRouter({
       });
       if (!result) return;
 
-      const { id, workspaceSlug, monitors, pages, date, ...incidentInput } =
-        opts.input;
+      const {
+        id,
+        workspaceSlug,
+        monitors,
+        pages,
+        date,
+        message,
+        ...incidentInput
+      } = opts.input;
 
       const newIncident = await opts.ctx.db
         .insert(incident)
@@ -111,7 +117,7 @@ export const incidentRouter = createTRPCRouter({
     }),
 
   updateIncident: protectedProcedure
-    .input(insertIncidentSchemaWithMonitors)
+    .input(insertIncidentSchema)
     .mutation(async (opts) => {
       const data = await hasUserAccessToWorkspace({
         workspaceSlug: opts.input.workspaceSlug,
@@ -323,7 +329,7 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
       const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
-        status: StatusEnum.default("investigating"), // TODO: remove!
+        status: incidentStatusSchema.default("investigating"), // TODO: remove!
         monitorsToIncidents: z
           .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
           .default([]),
@@ -369,7 +375,7 @@ export const incidentRouter = createTRPCRouter({
       if (!data) return;
 
       const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
-        status: StatusEnum.default("investigating"), // TODO: remove!
+        status: incidentStatusSchema.default("investigating"), // TODO: remove!
         monitorsToIncidents: z
           .array(
             z.object({

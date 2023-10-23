@@ -1,20 +1,16 @@
-import type { z } from "zod";
-
 import type {
-  basicMonitorSchema,
-  providerName,
-  selectNotificationSchema,
+  Monitor,
+  Notification,
+  NotificationProvider,
 } from "@openstatus/db/src/schema";
 import { send as sendEmail } from "@openstatus/notification-emails";
-
-type ProviderName = (typeof providerName)[number];
 
 type sendNotificationType = ({
   monitor,
   notification,
 }: {
-  monitor: z.infer<typeof basicMonitorSchema>;
-  notification: z.infer<typeof selectNotificationSchema>;
+  monitor: Monitor;
+  notification: Notification;
 }) => Promise<void>;
 
 export const providerToFunction = {
@@ -37,4 +33,4 @@ export const providerToFunction = {
   }) => {
     /* TODO: implement */
   },
-} satisfies Record<ProviderName, sendNotificationType>;
+} satisfies Record<NotificationProvider, sendNotificationType>;

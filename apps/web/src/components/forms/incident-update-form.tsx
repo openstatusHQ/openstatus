@@ -4,12 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
 
+import type { InsertIncidentUpdate } from "@openstatus/db/src/schema";
 import {
-  availableStatus,
+  incidentStatus,
+  incidentStatusSchema,
   insertIncidentUpdateSchema,
-  StatusEnum,
 } from "@openstatus/db/src/schema";
 import {
   Button,
@@ -37,12 +37,8 @@ import { statusDict } from "@/data/incidents-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
-// TODO: for UX, using the form inside of a Dialog feels more suitable
-
-type IncidentUpdateProps = z.infer<typeof insertIncidentUpdateSchema>;
-
 interface Props {
-  defaultValues?: IncidentUpdateProps;
+  defaultValues?: InsertIncidentUpdate;
   workspaceSlug: string;
   incidentId: number;
 }
@@ -52,7 +48,7 @@ export function IncidentUpdateForm({
   workspaceSlug,
   incidentId,
 }: Props) {
-  const form = useForm<IncidentUpdateProps>({
+  const form = useForm<InsertIncidentUpdate>({
     resolver: zodResolver(insertIncidentUpdateSchema),
     defaultValues: {
       id: defaultValues?.id || 0,
@@ -67,7 +63,7 @@ export function IncidentUpdateForm({
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: IncidentUpdateProps) => {
+  const onSubmit = ({ ...props }: InsertIncidentUpdate) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -110,12 +106,12 @@ export function IncidentUpdateForm({
                   <FormMessage />
                   <RadioGroup
                     onValueChange={(value) =>
-                      field.onChange(StatusEnum.parse(value))
+                      field.onChange(incidentStatusSchema.parse(value))
                     } // value is a string
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                   >
-                    {availableStatus.map((status) => {
+                    {incidentStatus.map((status) => {
                       const { value, label, icon } = statusDict[status];
                       const Icon = Icons[icon];
                       return (

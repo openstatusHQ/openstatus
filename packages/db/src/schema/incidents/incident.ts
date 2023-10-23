@@ -5,26 +5,21 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import * as z from "zod";
 
-import { monitor } from "./monitor";
-import { page } from "./page";
-import { workspace } from "./workspace";
+import { monitor } from "../monitors";
+import { page } from "../pages";
+import { workspace } from "../workspaces";
 
-export const availableStatus = [
+export const incidentStatus = [
   "investigating",
   "identified",
   "monitoring",
   "resolved",
 ] as const;
 
-export const StatusEnum = z.enum(availableStatus);
-
-// We should have a self relation. Such that we show the parent.
 export const incident = sqliteTable("incident", {
   id: integer("id").primaryKey(),
-  status: text("status", availableStatus).notNull(), // FIXME: delete from table!
+  status: text("status", { enum: incidentStatus }).notNull(),
   title: text("title", { length: 256 }).notNull(),
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
@@ -35,13 +30,12 @@ export const incident = sqliteTable("incident", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
-  // createdBy
 });
 
 export const incidentUpdate = sqliteTable("incident_update", {
   id: integer("id").primaryKey(),
 
-  status: text("status", availableStatus).notNull(),
+  status: text("status", incidentStatus).notNull(),
   date: integer("date", { mode: "timestamp" }).notNull(),
   message: text("message").notNull(),
 
@@ -130,44 +124,3 @@ export const pagesToIncidentsRelations = relations(
     }),
   }),
 );
-
-// Schema for inserting a Incident - can be used to validate API requests
-export const insertIncidentSchema = createInsertSchema(incident).extend({
-  title: z.string().default(""),
-  // message: z.string().optional().default(""),
-  status: StatusEnum,
-  date: z.date().optional().default(new Date()),
-  // date: z.number().optional().default(new Date().getTime()),
-  workspaceSlug: z.string(),
-  monitors: z.number().array(),
-  pages: z.number().array(),
-});
-
-export const insertIncidentUpdateSchema = createInsertSchema(
-  incidentUpdate,
-).extend({
-  status: StatusEnum,
-  message: z.string().optional().default(""),
-  // date: z.number().optional().default(new Date().getTime()),
-  workspaceSlug: z.string(),
-});
-
-export const insertIncidentSchemaWithIncidentUpdates =
-  insertIncidentSchema.extend({
-    incidentUpdates: insertIncidentUpdateSchema.array(),
-  });
-
-// TODO: remove!!!
-export const insertIncidentSchemaWithMonitors = insertIncidentSchema.extend({
-  monitors: z.number().array(),
-});
-
-export const selectIncidentSchema = createSelectSchema(incident).extend({
-  status: StatusEnum,
-});
-
-export const selectIncidentUpdateSchema = createSelectSchema(
-  incidentUpdate,
-).extend({
-  status: StatusEnum,
-});

@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
-import * as z from "zod";
 
-import type { selectNotificationSchema } from "@openstatus/db/src/schema";
+import type {
+  InsertMonitor,
+  Notification,
+  WorkspacePlan,
+} from "@openstatus/db/src/schema";
 import {
   flyRegions,
   insertMonitorSchema,
-  methods,
-  methodsSchema,
-  periodicityEnum,
+  monitorMethods,
+  monitorMethodsSchema,
+  monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 import {
@@ -76,25 +79,11 @@ const cronJobs = [
   { value: "1h", label: "1 hour" },
 ] as const;
 
-const headersSchema = z
-  .array(z.object({ key: z.string(), value: z.string() }))
-  .optional();
-
-const advancedSchema = z.object({
-  method: methodsSchema,
-  body: z.string().optional(),
-  headers: headersSchema,
-});
-
-const mergedSchema = insertMonitorSchema.merge(advancedSchema);
-
-export type MonitorProps = z.infer<typeof mergedSchema>;
-
 interface Props {
-  defaultValues?: MonitorProps;
+  defaultValues?: InsertMonitor;
   workspaceSlug: string;
-  plan?: "free" | "pro";
-  notifications?: z.infer<typeof selectNotificationSchema>[]; // HOTFIX - We can think of returning `workspace` instead of `workspaceSlug`
+  plan?: WorkspacePlan;
+  notifications?: Notification[];
 }
 
 export function MonitorForm({
@@ -103,8 +92,8 @@ export function MonitorForm({
   plan = "free",
   notifications,
 }: Props) {
-  const form = useForm<MonitorProps>({
-    resolver: zodResolver(mergedSchema), // too much - we should only validate the values we ask inside of the form!
+  const form = useForm<InsertMonitor>({
+    resolver: zodResolver(insertMonitorSchema),
     defaultValues: {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
@@ -136,7 +125,7 @@ export function MonitorForm({
     control: form.control,
   });
 
-  const handleDataUpdateOrInsertion = async (props: MonitorProps) => {
+  const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
       if (defaultValues) {
         await api.monitor.updateMonitor.mutate(props);
@@ -155,7 +144,7 @@ export function MonitorForm({
     }
   };
 
-  const onSubmit = ({ ...props }: MonitorProps) => {
+  const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       const pingResult = await pingEndpoint();
       if (!pingResult) {
@@ -296,7 +285,7 @@ export function MonitorForm({
                           <FormLabel>Method</FormLabel>
                           <Select
                             onValueChange={(value) => {
-                              field.onChange(methodsSchema.parse(value));
+                              field.onChange(monitorMethodsSchema.parse(value));
                               form.resetField("body", { defaultValue: "" });
                             }}
                             defaultValue={field.value}
@@ -307,7 +296,7 @@ export function MonitorForm({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {methods.map((method) => (
+                              {monitorMethods.map((method) => (
                                 <SelectItem key={method} value={method}>
                                   {method}
                                 </SelectItem>
@@ -435,7 +424,9 @@ export function MonitorForm({
                           <FormLabel>Frequency</FormLabel>
                           <Select
                             onValueChange={(value) =>
-                              field.onChange(periodicityEnum.parse(value))
+                              field.onChange(
+                                monitorPeriodicitySchema.parse(value),
+                              )
                             }
                             defaultValue={field.value}
                           >

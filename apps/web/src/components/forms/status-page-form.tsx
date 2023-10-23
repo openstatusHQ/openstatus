@@ -7,10 +7,9 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { PutBlobResult } from "@vercel/blob";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
 
-import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
-import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
+import { insertPageSchema } from "@openstatus/db/src/schema";
+import type { InsertPage, Monitor } from "@openstatus/db/src/schema";
 import {
   Accordion,
   AccordionContent,
@@ -39,12 +38,10 @@ import { LoadingAnimation } from "../loading-animation";
 
 // REMINDER: only use the props you need!
 
-type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
-
 interface Props {
-  defaultValues?: Schema;
+  defaultValues?: InsertPage;
   workspaceSlug: string;
-  allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
+  allMonitors?: Monitor[];
   /**
    * gives the possibility to check all the monitors
    */
@@ -62,10 +59,11 @@ export function StatusPageForm({
   checkAllMonitors,
   nextUrl,
 }: Props) {
-  const form = useForm<Schema>({
-    resolver: zodResolver(insertPageSchemaWithMonitors),
+  console.log({ defaultValues });
+  const form = useForm<InsertPage>({
+    resolver: zodResolver(insertPageSchema),
     defaultValues: {
-      title: defaultValues?.title || "",
+      title: defaultValues?.title || "", // FIXME: you can save a page without title, causing unexpected slug behavior
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
       workspaceId: defaultValues?.workspaceId || 0,
@@ -121,9 +119,7 @@ export function StatusPageForm({
     }
   }, [watchTitle, form, defaultValues?.title]);
 
-  const onSubmit = async ({
-    ...props
-  }: z.infer<typeof insertPageSchemaWithMonitors>) => {
+  const onSubmit = async ({ ...props }: InsertPage) => {
     startTransition(async () => {
       // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
       try {

@@ -6,7 +6,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
-import { workspace } from "./workspace";
+import { workspace } from "../workspaces";
 
 export const user = sqliteTable("user", {
   id: integer("id").primaryKey(),
