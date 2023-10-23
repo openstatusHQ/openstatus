@@ -80,7 +80,7 @@ export const cron = async ({
             Authorization: `Basic ${env.CRON_SECRET}`,
           },
           httpMethod: "POST",
-          url: "https://api.openstatus.dev/checkerV2",
+          url: "https://checker.openstatus.dev/",
           body: Buffer.from(JSON.stringify(payload)).toString("base64"),
         },
       };
