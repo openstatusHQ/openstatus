@@ -202,6 +202,12 @@ export function MonitorForm({
   };
 
   const sendTestPing = () => {
+    const { url } = form.getValues();
+    if (!url) {
+      toast("test-warning-empty-url");
+      return false;
+    }
+
     startTestTransition(async () => {
       const isSuccessful = await pingEndpoint();
       if (isSuccessful) {
