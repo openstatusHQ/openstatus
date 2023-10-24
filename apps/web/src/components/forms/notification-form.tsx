@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -11,6 +11,7 @@ import {
   providerEnum,
   providerName,
 } from "@openstatus/db/src/schema";
+import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import {
   Button,
   Form,
@@ -30,6 +31,7 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
+import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 /**
@@ -39,6 +41,54 @@ import { api } from "@/trpc/client";
  * But Provider: Slack will maybe require `webhook` and `channel` and
  * we store it like `data: { webhook: "", channel: "" }`
  */
+
+const AVAILABLE_PROVIDERS = ["slack", "email"];
+type ProviderType = "email" | "discord" | "slack";
+
+function getDefaultProviderData(defaultValues?: Notification) {
+  if (!defaultValues?.provider) {
+    return "";
+  }
+
+  return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
+}
+
+function setProviderData(provider: ProviderType, data: string) {
+  if (!provider) {
+    return {};
+  }
+
+  return { [provider]: data };
+}
+
+function getProviderMetaData(provider: ProviderType) {
+  switch (provider) {
+    case "email":
+      return {
+        dataType: "email",
+        placeholder: "dev@documenso.com",
+        setupDocLink: null,
+        testNeeded: false,
+      };
+
+    case "slack":
+      return {
+        dataType: "url",
+        placeholder: "https://hooks.slack.com/services/xxx...",
+        setupDocLink:
+          "https://api.slack.com/messaging/webhooks#getting_started",
+        testNeeded: true,
+      };
+
+    default:
+      return {
+        dataType: "url",
+        placeholder: "xxxx",
+        setupDocLink: `https://docs.openstatus.dev/integrations/${provider}`,
+        testNeeded: false,
+      };
+  }
+}
 
 interface Props {
   defaultValues?: Notification;
@@ -52,33 +102,38 @@ export function NotificationForm({
   onSubmit: onExternalSubmit,
 }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [isTestPending, startTestTransition] = useTransition();
   const { toast } = useToastAction();
   const router = useRouter();
   const form = useForm<Notification>({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
-      data:
-        defaultValues?.provider === "email"
-          ? JSON.parse(defaultValues?.data).email
-          : "",
+      data: getDefaultProviderData(defaultValues),
     },
   });
+
+  const watchProvider = form.watch("provider");
+  const watchWebhookUrl = form.watch("data");
+  const providerMetaData = useMemo(
+    () => getProviderMetaData(watchProvider),
+    [watchProvider],
+  );
 
   async function onSubmit({ provider, data, ...rest }: Notification) {
     startTransition(async () => {
       try {
         if (defaultValues) {
           await api.notification.updateNotification.mutate({
-            provider: "email",
-            data: JSON.stringify({ email: data }),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         } else {
           await api.notification.createNotification.mutate({
             workspaceSlug,
-            provider: "email",
-            data: JSON.stringify({ email: data }),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         }
@@ -89,6 +144,30 @@ export function NotificationForm({
       } finally {
         onExternalSubmit?.();
       }
+    });
+  }
+
+  async function sendTestWebhookPing(provider: ProviderType) {
+    const webhookUrl = form.getValues("data");
+    if (!webhookUrl) {
+      return;
+    }
+    startTestTransition(async () => {
+      let isSuccessful = null;
+      switch (provider) {
+        case "slack":
+          isSuccessful = await sendTestSlackMessage(webhookUrl);
+          break;
+
+        default:
+          break;
+      }
+
+      if (isSuccessful) {
+        toast("success");
+        return;
+      }
+      toast("test-error");
     });
   }
 
@@ -128,7 +207,7 @@ export function NotificationForm({
                         <SelectItem
                           key={provider}
                           value={provider}
-                          disabled={provider !== "email"} // only allow email for now
+                          disabled={!AVAILABLE_PROVIDERS.includes(provider)} // only allow email for now
                           className="capitalize"
                         >
                           {provider}
@@ -159,27 +238,62 @@ export function NotificationForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="data"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-full">
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="dev@documenso.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>The data required.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {watchProvider && (
+              <FormField
+                control={form.control}
+                name="data"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-full">
+                    {/* make the first letter capital */}
+                    <div className="flex items-center justify-between">
+                      <FormLabel>{toCapitalize(watchProvider)}</FormLabel>
+                    </div>
+                    <FormControl>
+                      <Input
+                        type={providerMetaData.dataType}
+                        placeholder={providerMetaData.placeholder}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="flex items-center justify-between">
+                      The data required.
+                      {providerMetaData.setupDocLink && (
+                        <span>
+                          <a
+                            href={providerMetaData.setupDocLink}
+                            target="_blank"
+                            className="underline"
+                          >
+                            How to setup your {toCapitalize(watchProvider)}{" "}
+                            webhook
+                          </a>
+                        </span>
+                      )}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         </div>
-        <div className="flex sm:justify-end">
+        <div className="flex gap-4 sm:justify-end">
+          {providerMetaData.testNeeded && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              size="lg"
+              disabled={!watchWebhookUrl}
+              onClick={() => sendTestWebhookPing(watchProvider)}
+            >
+              {!isTestPending ? (
+                "Test Webhook"
+              ) : (
+                <LoadingAnimation variant="inverse" />
+              )}
+            </Button>
+          )}
           <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>

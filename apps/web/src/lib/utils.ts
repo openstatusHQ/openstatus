@@ -59,3 +59,12 @@ export function manipulateDate(
     toDate: isToDateMidnight ? addOneDayToDate : date?.to?.getTime() || null,
   };
 }
+
+export function toCapitalize(inputString: string) {
+  const words = inputString.split(/[\s_]+/); // Split the input string by spaces or underscores
+
+  // Capitalize the first letter of each word
+  return words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join("");
+}
