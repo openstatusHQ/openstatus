@@ -51,7 +51,10 @@ export async function publishPing({
 }: PublishPingType) {
   const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
-  if (process.env.NODE_ENV === "production") {
+  if (
+    process.env.NODE_ENV === "production" ||
+    process.env.NODE_ENV === "test"
+  ) {
     const res = await publishPingResponse({
       id: nanoid(), // TBD: we don't need it
       timestamp: Date.now(),
