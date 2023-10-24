@@ -123,7 +123,8 @@ export const ping = async (
       ...headers,
     },
     // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-    ...(data.method !== "GET" && { body: data?.body }),
+    ...(data.method !== "GET" &&
+      data.method !== "HEAD" && { body: data?.body }),
   });
 
   return res;
