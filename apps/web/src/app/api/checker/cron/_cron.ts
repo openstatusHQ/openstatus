@@ -88,26 +88,6 @@ export const cron = async ({
       const [response] = await client.createTask(request);
 
       allResult.push(response);
-
-      /**
-       * Pushing to our Golang endpoint
-       */
-      const tempTask: google.cloud.tasks.v2beta3.ITask = {
-        httpRequest: {
-          headers: {
-            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-            ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
-            Authorization: `Basic ${env.CRON_SECRET}`,
-          },
-          httpMethod: "POST",
-          url: "https://checker.openstatus.dev/",
-          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
-        },
-      };
-      const tempRequest = { parent: parent, task: tempTask };
-      const [tempResponse] = await client.createTask(tempRequest);
-
-      allResult.push(tempResponse);
     }
   }
   await Promise.all(allResult);
