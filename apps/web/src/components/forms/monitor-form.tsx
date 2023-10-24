@@ -202,10 +202,13 @@ export function MonitorForm({
   };
 
   const sendTestPing = () => {
+    if (isTestPending) {
+      return;
+    }
     const { url } = form.getValues();
     if (!url) {
       toast("test-warning-empty-url");
-      return false;
+      return;
     }
 
     startTestTransition(async () => {
