@@ -15,7 +15,7 @@ vi.mock("@openstatus/tinybird", async () => {
   return {
     // @ts-ignore
     ...actual,
-    publishPingResponse: vi.fn(),
+    publishPingResponse: vi.fn().mockResolvedValue({ successful_rows: 1 }),
   };
 });
 
@@ -48,11 +48,12 @@ it("should call updateMonitorStatus when status error", async () => {
   } catch (e) {
     expect(e).toBeInstanceOf(Error);
   }
-  expect(spyOn).toHaveBeenCalledTimes(0);
+  expect(spyOn).toHaveBeenCalledTimes(1);
 });
 
 it("What should we do when redirect ", async () => {
   const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+
   try {
     await checkerRetryPolicy({
       workspaceId: "1",
