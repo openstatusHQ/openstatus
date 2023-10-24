@@ -19,7 +19,7 @@ primary_region = "ams"
   processes = ["app"]
 
 [deploy]
-  strategy = "bluegreen"
+  strategy = "rolling"
 
 [[http_service.checks]]
   grace_period = "10s"

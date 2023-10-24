@@ -1,47 +1,61 @@
-import { nanoid } from "nanoid";
-
-import { publishPingResponse } from "@openstatus/tinybird";
-
-import { env } from "../env";
 import { updateMonitorStatus } from "./alerting";
+import type { PublishPingType } from "./ping";
+import { pingEndpoint, publishPing } from "./ping";
 import type { Payload } from "./schema";
 
-const region = env.FLY_REGION;
-
-export const monitor = async ({
-  monitorInfo,
+// we could have a 'retry' parameter to know how often we should retry
+// we could use a setTimeout to retry after a certain amount of time - can be random between 500ms and 10s
+export const publishPingRetryPolicy = async ({
+  payload,
   latency,
   statusCode,
-}: {
-  monitorInfo: Payload;
-  latency: number;
-  statusCode: number;
-}) => {
-  const { monitorId, cronTimestamp, url, workspaceId } = monitorInfo;
-
+}: PublishPingType) => {
+  try {
+    console.log(
+      `try publish ping to tb - attempt 1  ${JSON.stringify(
+        payload,
+      )}  with latency ${latency} and status code ${statusCode}`,
+    );
+    await publishPing({ payload, statusCode, latency });
+  } catch {
+    try {
+      console.log(
+        "try publish ping to tb - attempt 2 ",
+        JSON.stringify(payload),
+      );
+      await publishPing({ payload, statusCode, latency });
+    } catch (e) {
+      throw e;
+    }
+  }
   console.log(
-    `publishing ping response for ${url} with status ${statusCode} and latency ${latency} and monitorId ${monitorId} `,
+    `Successfully published  ${JSON.stringify(
+      payload,
+    )}  with latency ${latency} and status code ${statusCode}`,
   );
-  await publishPingResponse({
-    id: nanoid(), // TBD: we don't need it
-    timestamp: Date.now(),
-    statusCode,
-    latency,
-    region,
-    url,
-    monitorId,
-    cronTimestamp,
-    workspaceId,
-  });
 };
 
-export const checker = async (data: Payload) => {
-  const startTime = Date.now();
-  const res = await ping(data);
-  const endTime = Date.now();
+const run = async (data: Payload, retry?: number | undefined) => {
+  let startTime = 0;
+  let endTime = 0;
+  let res = null;
+  // We are doing these for wrong urls
+  try {
+    startTime = Date.now();
+    res = await pingEndpoint(data);
+    endTime = Date.now();
+  } catch (e) {
+    console.log("error on pingEndpoint", e);
+    endTime = Date.now();
+  }
+
   const latency = endTime - startTime;
   if (res?.ok) {
-    await monitor({ monitorInfo: data, latency, statusCode: res.status });
+    await publishPingRetryPolicy({
+      payload: data,
+      latency,
+      statusCode: res.status,
+    });
     if (data?.status === "error") {
       await updateMonitorStatus({
         monitorId: data.monitorId,
@@ -49,51 +63,38 @@ export const checker = async (data: Payload) => {
       });
     }
   } else {
-    console.log(`first retry for ${data.url} with status ${res?.status}`);
-    const startTime = Date.now();
-    const retry = await ping(data);
-    const endTime = Date.now();
-    const latency = endTime - startTime;
-    if (retry?.ok) {
-      await monitor({ monitorInfo: data, latency, statusCode: retry.status });
-      if (data?.status === "error") {
+    if (retry === 0) {
+      throw new Error(`error on ping for ${data.monitorId}`);
+    }
+    // Store the error on third task retry
+    if (retry === 1) {
+      await publishPingRetryPolicy({
+        payload: data,
+        latency,
+        statusCode: res?.status || 0,
+      });
+      if (data?.status === "active") {
         await updateMonitorStatus({
           monitorId: data.monitorId,
-          status: "active",
+          status: "error",
         });
       }
-    } else {
-      console.log(
-        `error for ${JSON.stringify(data)} with info ${JSON.stringify(retry)}`,
-      );
     }
   }
+  return { res, latency };
 };
 
-export const ping = async (
-  data: Pick<Payload, "headers" | "body" | "method" | "url">,
-) => {
-  const headers =
-    data?.headers?.reduce((o, v) => {
-      if (v.key.trim() === "") return o; // removes empty keys from the header
-      return { ...o, [v.key]: v.value };
-    }, {}) || {};
-
+export const checkerRetryPolicy = async (data: Payload, retry = 0) => {
   try {
-    const res = await fetch(data?.url, {
-      method: data?.method,
-      cache: "no-store",
-      headers: {
-        "OpenStatus-Ping": "true",
-        ...headers,
-      },
-      // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-      ...(data.method === "POST" && { body: data?.body }),
-    });
-
-    return res;
-  } catch (e) {
-    console.log(`fetch error for : ${data} with error ${e}`);
-    console.log(e);
+    console.log("try run checker - attempt 1 ", JSON.stringify(data));
+    await run(data, 0);
+  } catch {
+    try {
+      console.log("try run checker - attempt 2 ", JSON.stringify(data));
+      await run(data, 1);
+    } catch (e) {
+      throw e;
+    }
   }
+  console.log("successfully run checker ", JSON.stringify(data));
 };

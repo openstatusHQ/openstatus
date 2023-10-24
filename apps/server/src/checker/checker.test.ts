@@ -8,20 +8,20 @@ import {
 } from "@openstatus/tinybird";
 
 import * as alerts from "./alerting";
-import { checker } from "./checker";
+import { checkerRetryPolicy } from "./checker";
 
 vi.mock("@openstatus/tinybird", async () => {
   const actual = await vi.importActual("@openstatus/tinybird");
   return {
     // @ts-ignore
     ...actual,
-    publishPingResponse: vi.fn(),
+    publishPingResponse: vi.fn().mockResolvedValue({ successful_rows: 1 }),
   };
 });
 
 it("should call updateMonitorStatus when we can fetch", async () => {
   const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
-  await checker({
+  await checkerRetryPolicy({
     workspaceId: "1",
     monitorId: "1",
     url: "https://www.google.com",
@@ -36,7 +36,7 @@ it("should call updateMonitorStatus when we can fetch", async () => {
 it("should call updateMonitorStatus when status error", async () => {
   const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
   try {
-    await checker({
+    await checkerRetryPolicy({
       workspaceId: "1",
       monitorId: "1",
       url: "https://xxxxxxx.fake",
@@ -48,13 +48,14 @@ it("should call updateMonitorStatus when status error", async () => {
   } catch (e) {
     expect(e).toBeInstanceOf(Error);
   }
-  expect(spyOn).toHaveBeenCalledTimes(0);
+  expect(spyOn).toHaveBeenCalledTimes(1);
 });
 
 it("What should we do when redirect ", async () => {
   const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+
   try {
-    await checker({
+    await checkerRetryPolicy({
       workspaceId: "1",
       monitorId: "1",
       url: "https://www.openstatus.dev/toto",
