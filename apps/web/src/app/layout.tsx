@@ -52,7 +52,6 @@ export default function RootLayout({
           </body>
         </ClerkProvider>
       </PlausibleProvider>
-      <ClientAnalytics />
     </html>
   );
 }
