@@ -1,6 +1,5 @@
 import type { z } from "zod";
 
-import { is } from "@openstatus/db";
 import type {
   selectIncidentsPageSchema,
   selectPublicMonitorSchema,
@@ -19,8 +18,8 @@ export async function StatusCheck({
   incidents: z.infer<typeof selectIncidentsPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
-  const isIncident = incidents.some(
-    (incident) => incident.status !== "resolved",
+  const isIncident = incidents.some((incident) =>
+    ["monitoring", "resolved"].includes(incident.status),
   );
 
   const monitorsData = (
