@@ -211,9 +211,6 @@ importers:
       '@upstash/redis':
         specifier: 1.22.1
         version: 1.22.1
-      '@vercel/analytics':
-        specifier: 1.0.2
-        version: 1.0.2
       '@vercel/blob':
         specifier: 0.13.0
         version: 0.13.0
