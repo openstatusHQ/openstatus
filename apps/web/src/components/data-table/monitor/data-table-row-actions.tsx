@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { selectMonitorExtendedSchema } from "@openstatus/db/src/schema";
+import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorExtendedSchema.parse(row.original);
+  const monitor = insertMonitorSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);

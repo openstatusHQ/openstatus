@@ -1,8 +1,8 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema } from "drizzle-zod";
 
-import { workspace } from "./workspace";
+import { workspace } from "./workspaces";
 
 export const integration = sqliteTable("integration", {
   id: integer("id").primaryKey(),

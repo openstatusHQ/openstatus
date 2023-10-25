@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { Notification } from "@openstatus/db/src/schema";
+import type { InsertNotification } from "@openstatus/db/src/schema";
 import {
   insertNotificationSchema,
-  providerEnum,
-  providerName,
+  notificationProvider,
+  notificationProviderSchema,
 } from "@openstatus/db/src/schema";
 import {
   Button,
@@ -41,7 +41,7 @@ import { api } from "@/trpc/client";
  */
 
 interface Props {
-  defaultValues?: Notification;
+  defaultValues?: InsertNotification;
   workspaceSlug: string;
   onSubmit?: () => void;
 }
@@ -54,10 +54,11 @@ export function NotificationForm({
   const [isPending, startTransition] = useTransition();
   const { toast } = useToastAction();
   const router = useRouter();
-  const form = useForm<Notification>({
+  const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
+      name: defaultValues?.name || "",
       data:
         defaultValues?.provider === "email"
           ? JSON.parse(defaultValues?.data).email
@@ -65,7 +66,7 @@ export function NotificationForm({
     },
   });
 
-  async function onSubmit({ provider, data, ...rest }: Notification) {
+  async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -114,7 +115,7 @@ export function NotificationForm({
                   <FormLabel>Provider</FormLabel>
                   <Select
                     onValueChange={(value) =>
-                      field.onChange(providerEnum.parse(value))
+                      field.onChange(notificationProviderSchema.parse(value))
                     }
                     defaultValue={field.value}
                   >
@@ -124,7 +125,7 @@ export function NotificationForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {providerName.map((provider) => (
+                      {notificationProvider.map((provider) => (
                         <SelectItem
                           key={provider}
                           value={provider}
@@ -168,6 +169,7 @@ export function NotificationForm({
                   <FormControl>
                     <Input
                       type="email"
+                      required
                       placeholder="dev@documenso.com"
                       {...field}
                     />
