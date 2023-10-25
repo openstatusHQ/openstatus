@@ -53,7 +53,7 @@ export function IncidentUpdateForm({
     defaultValues: {
       id: defaultValues?.id || 0,
       status: defaultValues?.status || "investigating",
-      message: defaultValues?.message || "",
+      message: defaultValues?.message,
       date: defaultValues?.date || new Date(),
       incidentId,
       workspaceSlug,

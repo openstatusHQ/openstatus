@@ -61,14 +61,14 @@ export function IncidentForm({
     resolver: zodResolver(insertIncidentSchema),
     defaultValues: defaultValues
       ? {
-          id: defaultValues?.id || 0,
+          id: defaultValues.id,
           title: defaultValues.title,
           status: defaultValues.status,
           monitors: defaultValues.monitors,
           pages: defaultValues.pages,
           workspaceSlug,
           // include update on creation
-          message: "",
+          message: defaultValues.message,
           date: defaultValues.date,
         }
       : {
