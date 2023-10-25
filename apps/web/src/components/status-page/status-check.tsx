@@ -18,8 +18,8 @@ export async function StatusCheck({
   incidents: z.infer<typeof selectIncidentsPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
-  const isIncident = incidents.some((incident) =>
-    ["monitoring", "resolved"].includes(incident.status),
+  const isIncident = incidents.some(
+    (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
 
   const monitorsData = (
