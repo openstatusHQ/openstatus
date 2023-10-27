@@ -20,6 +20,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
+    "@openstatus/notification-slack": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/tinybird": "workspace:*",

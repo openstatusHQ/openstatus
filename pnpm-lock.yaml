@@ -157,6 +157,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-slack':
+        specifier: workspace:*
+        version: link:../../packages/notifications/slack
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -596,7 +599,7 @@ importers:
     devDependencies:
       bun-types:
         specifier: latest
-        version: 1.0.5-canary.20231008T140131
+        version: 1.0.1
 
   packages/notifications/email:
     dependencies:
@@ -643,6 +646,16 @@ importers:
       typescript:
         specifier: 5.2.2
         version: 5.2.2
+
+  packages/notifications/slack:
+    dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.2.2
+    devDependencies:
+      bun-types:
+        specifier: latest
+        version: 1.0.1
 
   packages/plans:
     dependencies:
@@ -6527,8 +6540,8 @@ packages:
       semver: 7.5.4
     dev: true
 
-  /bun-types@1.0.5-canary.20231008T140131:
-    resolution: {integrity: sha512-M1PTqYqQepL3VbrkJRcqebWfDalchmDmTjFRRpjxEIH5GQ3syTHXrKLqzdf3D/8GeTkn9SYNBFbCQNjY8ClhSg==}
+  /bun-types@1.0.1:
+    resolution: {integrity: sha512-7NrXqhMIaNKmWn2dSWEQ50znMZqrN/5Z0NBMXvQTRu/+Y1CvoXRznFy0pnqLe024CeZgVdXoEpARNO1JZLAPGw==}
     dev: true
 
   /bundle-require@4.0.2(esbuild@0.18.20):
