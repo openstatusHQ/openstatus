@@ -11,6 +11,7 @@ import {
   notificationProvider,
   notificationProviderSchema,
 } from "@openstatus/db/src/schema";
+import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import {
   Button,
   Form,
@@ -46,12 +47,36 @@ interface Props {
   onSubmit?: () => void;
 }
 
+function getDefaultProviderData(defaultValues?: InsertNotification) {
+  if (defaultValues?.provider === "email") {
+    return JSON.parse(defaultValues?.data).email;
+  } else if (defaultValues?.provider === "discord") {
+    return JSON.parse(defaultValues?.data).discord;
+  }
+  return "";
+}
+
+function setProviderData(
+  provider: "email" | "discord" | "slack",
+  data: string,
+) {
+  switch (provider) {
+    case "email":
+      return { email: data };
+    case "discord":
+      return { discord: data };
+    default:
+      return {};
+  }
+}
+
 export function NotificationForm({
   workspaceSlug,
   defaultValues,
   onSubmit: onExternalSubmit,
 }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [isTestPending, startTestTransition] = useTransition();
   const { toast } = useToastAction();
   const router = useRouter();
   const form = useForm<InsertNotification>({
@@ -59,27 +84,25 @@ export function NotificationForm({
     defaultValues: {
       ...defaultValues,
       name: defaultValues?.name || "",
-      data:
-        defaultValues?.provider === "email"
-          ? JSON.parse(defaultValues?.data).email
-          : "",
+      data: getDefaultProviderData(defaultValues),
     },
   });
+  const watchProvider = form.watch("provider");
 
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
         if (defaultValues) {
           await api.notification.updateNotification.mutate({
-            provider: "email",
-            data: JSON.stringify({ email: data }),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         } else {
           await api.notification.createNotification.mutate({
             workspaceSlug,
-            provider: "email",
-            data: JSON.stringify({ email: data }),
+            provider,
+            data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         }
@@ -90,6 +113,17 @@ export function NotificationForm({
       } finally {
         onExternalSubmit?.();
       }
+    });
+  }
+
+  async function sendTestWebhookPing() {
+    startTestTransition(async () => {
+      const isSuccessful = await sendTestDiscordMessage(form.getValues("data"));
+      if (isSuccessful) {
+        toast("success");
+        return;
+      }
+      toast("test-error");
     });
   }
 
@@ -129,7 +163,7 @@ export function NotificationForm({
                         <SelectItem
                           key={provider}
                           value={provider}
-                          disabled={provider !== "email"} // only allow email for now
+                          disabled={provider === "slack"} // disable slack for now
                           className="capitalize"
                         >
                           {provider}
@@ -160,29 +194,72 @@ export function NotificationForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="data"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-full">
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      required
-                      placeholder="dev@documenso.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>The data required.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {watchProvider && (
+              <FormField
+                control={form.control}
+                name="data"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-full">
+                    {/* make the first letter capital */}
+                    <div className="flex items-center justify-between">
+                      <FormLabel>
+                        {watchProvider[0].toUpperCase() +
+                          watchProvider.slice(1)}
+                      </FormLabel>
+                    </div>
+                    <FormControl>
+                      <Input
+                        type={watchProvider === "email" ? "email" : "url"}
+                        placeholder={
+                          watchProvider === "email"
+                            ? "dev@documenso.com"
+                            : "https://your-discord-webhook-url"
+                        }
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription className="flex items-center justify-between">
+                      The data required.
+                      <span>
+                        {watchProvider !== "email" && (
+                          <a
+                            href={`https://docs.openstatus.dev/integrations/${watchProvider}`}
+                            target="_blank"
+                            className="underline"
+                          >
+                            How to setup your {watchProvider} webhook
+                          </a>
+                        )}
+                      </span>
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
           </div>
         </div>
-        <div className="flex sm:justify-end">
-          <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
+        <div className="flex gap-4 sm:justify-end">
+          {watchProvider && watchProvider !== "email" && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              size="lg"
+              onClick={sendTestWebhookPing}
+            >
+              {!isTestPending ? (
+                "Test Webhook"
+              ) : (
+                <LoadingAnimation variant="inverse" />
+              )}
+            </Button>
+          )}
+          <Button
+            className="w-full sm:w-auto"
+            size="lg"
+            disabled={isPending || !watchProvider}
+          >
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>
