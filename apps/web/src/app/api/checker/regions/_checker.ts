@@ -1,9 +1,12 @@
 import { Receiver } from "@upstash/qstash";
 import { nanoid } from "nanoid";
-import type { z } from "zod";
 
 import { db, eq, schema } from "@openstatus/db";
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import type { MonitorStatus } from "@openstatus/db/src/schema";
+import {
+  selectMonitorSchema,
+  selectNotificationSchema,
+} from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -23,40 +26,24 @@ export const monitorSchema = tbIngestPingResponse.pick({
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
-  res: { text: () => Promise<string>; status: number },
-  monitorInfo: z.infer<typeof payloadSchema>,
+  payload: Payload,
+  statusCode: number,
   region: string,
   latency: number,
 ) => {
-  const text = (await res.text()) || "";
-  if (monitorInfo.pageIds.length > 0) {
-    for (const pageId of monitorInfo.pageIds) {
-      const { pageIds, ...rest } = monitorInfo;
-      await publishPingResponse(tb)({
-        ...rest,
-        id: nanoid(), // TBD: we don't need it
-        pageId: pageId,
-        timestamp: Date.now(),
-        statusCode: res.status,
-        latency,
-        region,
-        metadata: JSON.stringify({ text }),
-      });
-    }
-  } else {
-    const { pageIds, ...rest } = monitorInfo;
+  const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
-    await publishPingResponse(tb)({
-      ...rest,
-      id: nanoid(), // TBD: we don't need it
-      pageId: "",
-      timestamp: Date.now(),
-      statusCode: res.status,
-      latency,
-      region,
-      metadata: JSON.stringify({ text }),
-    });
-  }
+  await publishPingResponse({
+    id: nanoid(), // TBD: we don't need it
+    timestamp: Date.now(),
+    statusCode,
+    monitorId,
+    cronTimestamp,
+    url,
+    workspaceId,
+    latency,
+    region,
+  });
 };
 
 export const checker = async (request: Request, region: string) => {
@@ -83,11 +70,11 @@ export const checker = async (request: Request, region: string) => {
   }
 
   try {
-    const startTime = Date.now();
+    const startTime = performance.now();
     const res = await ping(result.data);
-    const endTime = Date.now();
+    const endTime = performance.now();
     const latency = endTime - startTime;
-    await monitor(res, result.data, region, latency);
+    await monitor(result.data, res.status, region, latency);
     if (res.ok) {
       if (result.data?.status === "error") {
         await updateMonitorStatus({
@@ -96,16 +83,20 @@ export const checker = async (request: Request, region: string) => {
         });
       }
     }
+    if (!res.ok) {
+      if (result.data?.status !== "error") {
+        await triggerAlerting({ monitorId: result.data.monitorId });
+        await updateMonitorStatus({
+          monitorId: result.data.monitorId,
+          status: "error",
+        });
+      }
+    }
   } catch (e) {
     console.error(e);
     // if on the third retry we still get an error, we should report it
     if (request.headers.get("Upstash-Retried") === "2") {
-      await monitor(
-        { status: 500, text: () => Promise.resolve(`${e}`) },
-        result.data,
-        region,
-        -1,
-      );
+      await monitor(result.data, 500, region, -1);
       if (result.data?.status !== "error") {
         await triggerAlerting({ monitorId: result.data.monitorId });
         await updateMonitorStatus({
@@ -135,7 +126,7 @@ export const ping = async (
       ...headers,
     },
     // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-    ...(data.method !== "GET" && { body: data?.body }),
+    ...(data.method === "POST" && { body: data?.body }),
   });
 
   return res;
@@ -157,7 +148,7 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     .all();
   for (const notif of notifications) {
     await providerToFunction[notif.notification.provider]({
-      monitor: notif.monitor,
+      monitor: selectMonitorSchema.parse(notif.monitor),
       notification: selectNotificationSchema.parse(notif.notification),
     });
   }
@@ -168,7 +159,7 @@ const updateMonitorStatus = async ({
   status,
 }: {
   monitorId: string;
-  status: z.infer<typeof schema.statusSchema>;
+  status: MonitorStatus;
 }) => {
   await db
     .update(schema.monitor)

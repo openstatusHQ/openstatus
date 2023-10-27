@@ -1,12 +1,10 @@
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { eq } from "@openstatus/db";
 import {
-  allNotifications,
   insertNotificationSchema,
   notification,
-  notificationsToMonitors,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 
@@ -119,7 +117,7 @@ export const notificationRouter = createTRPCRouter({
         .all();
 
       try {
-        return allNotifications.parse(notifications);
+        return z.array(selectNotificationSchema).parse(notifications);
       } catch (e) {
         console.log(e);
       }

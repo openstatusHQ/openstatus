@@ -1,9 +1,4 @@
-import type { z } from "zod";
-
-import type {
-  basicMonitorSchema,
-  selectNotificationSchema,
-} from "@openstatus/db/src/schema";
+import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
 import { env } from "../env";
 import { EmailConfigurationSchema } from "./schema/config";
@@ -12,10 +7,11 @@ export const send = async ({
   monitor,
   notification,
 }: {
-  monitor: z.infer<typeof basicMonitorSchema>;
-  notification: z.infer<typeof selectNotificationSchema>;
+  monitor: Monitor;
+  notification: Notification;
 }) => {
-  const config = EmailConfigurationSchema.parse(notification.data);
+  // FIXME:
+  const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
   const { email } = config;
 
   const res = await fetch("https://api.resend.com/emails", {

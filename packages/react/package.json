@@ -1,0 +1,27 @@
+{
+  "name": "@openstatus/react",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "files": [
+    "./dist/**"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "dev":"tsup && pnpm run build:tailwind",
+    "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "build": "tsup && pnpm run build:tailwind"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.24",
+    "tailwindcss": "3.3.2",
+    "tsup": "7.2.0",
+    "typescript": "5.2.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  }
+}

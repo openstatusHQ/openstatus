@@ -1,5 +1,6 @@
 import React from "react";
 
+import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,13 +13,12 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import type { MonitorProps } from "../forms/montitor-form";
 
 type FailedPingAlertConfirmationProps = {
-  monitor: MonitorProps;
+  monitor: InsertMonitor;
   pingFailed: boolean;
   setPingFailed: React.Dispatch<React.SetStateAction<boolean>>;
-  onConfirm: (props: MonitorProps) => Promise<void>;
+  onConfirm: (props: InsertMonitor) => Promise<void>;
 };
 
 export const FailedPingAlertConfirmation = ({

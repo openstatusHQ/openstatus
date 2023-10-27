@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { Notification } from "@openstatus/db/src/schema";
+import type { InsertNotification } from "@openstatus/db/src/schema";
 import {
   insertNotificationSchema,
-  providerEnum,
-  providerName,
+  notificationProvider,
+  notificationProviderSchema,
 } from "@openstatus/db/src/schema";
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import {
@@ -42,12 +42,12 @@ import { api } from "@/trpc/client";
  */
 
 interface Props {
-  defaultValues?: Notification;
+  defaultValues?: InsertNotification;
   workspaceSlug: string;
   onSubmit?: () => void;
 }
 
-function getDefaultProviderData(defaultValues?: Notification) {
+function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (defaultValues?.provider === "email") {
     return JSON.parse(defaultValues?.data).email;
   } else if (defaultValues?.provider === "discord") {
@@ -79,16 +79,17 @@ export function NotificationForm({
   const [isTestPending, startTestTransition] = useTransition();
   const { toast } = useToastAction();
   const router = useRouter();
-  const form = useForm<Notification>({
+  const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
+      name: defaultValues?.name || "",
       data: getDefaultProviderData(defaultValues),
     },
   });
   const watchProvider = form.watch("provider");
 
-  async function onSubmit({ provider, data, ...rest }: Notification) {
+  async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -148,7 +149,7 @@ export function NotificationForm({
                   <FormLabel>Provider</FormLabel>
                   <Select
                     onValueChange={(value) =>
-                      field.onChange(providerEnum.parse(value))
+                      field.onChange(notificationProviderSchema.parse(value))
                     }
                     defaultValue={field.value}
                   >
@@ -158,7 +159,7 @@ export function NotificationForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {providerName.map((provider) => (
+                      {notificationProvider.map((provider) => (
                         <SelectItem
                           key={provider}
                           value={provider}

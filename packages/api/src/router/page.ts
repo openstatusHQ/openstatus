@@ -2,20 +2,20 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { and, eq, inArray, not, sql } from "@openstatus/db";
+import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
   incident,
-  insertPageSchemaWithMonitors,
+  insertPageSchema,
   monitor,
   monitorsToIncidents,
   monitorsToPages,
   page,
+  pagesToIncidents,
   selectPublicPageSchemaWithRelation,
   user,
   usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { hasUserAccessToWorkspace } from "./utils";
@@ -23,7 +23,7 @@ import { hasUserAccessToWorkspace } from "./utils";
 // TODO: deletePageById - updatePageById
 export const pageRouter = createTRPCRouter({
   createPage: protectedProcedure
-    .input(insertPageSchemaWithMonitors)
+    .input(insertPageSchema)
     .mutation(async (opts) => {
       if (!opts.input.workspaceSlug) return;
       const data = await hasUserAccessToWorkspace({
@@ -109,7 +109,7 @@ export const pageRouter = createTRPCRouter({
       });
     }),
   updatePage: protectedProcedure
-    .input(insertPageSchemaWithMonitors)
+    .input(insertPageSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
@@ -287,15 +287,33 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      const incidentsId = monitorsToIncidentsResult.map(
+      const incidentsToPagesResult = await opts.ctx.db
+        .select()
+        .from(pagesToIncidents)
+        .where(eq(pagesToIncidents.pageId, result.id))
+        .all();
+
+      const monitorIncidentIds = monitorsToIncidentsResult.map(
         ({ incidentId }) => incidentId,
       );
 
+      const pageIncidentIds = incidentsToPagesResult.map(
+        ({ incidentId }) => incidentId,
+      );
+
+      const incidentIds = Array.from(
+        new Set([...monitorIncidentIds, ...pageIncidentIds]),
+      );
+
       const incidents =
-        incidentsId.length > 0
+        incidentIds.length > 0
           ? await opts.ctx.db.query.incident.findMany({
-              where: and(inArray(incident.id, incidentsId)),
-              with: { incidentUpdates: true, monitorsToIncidents: true },
+              where: or(inArray(incident.id, incidentIds)),
+              with: {
+                incidentUpdates: true,
+                monitorsToIncidents: true,
+                pagesToIncidents: true,
+              },
             })
           : [];
 
@@ -321,7 +339,7 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
       // had filter on some words we want to keep for us
-      if (["api", "app", "www", "docs"].includes(opts.input.slug)) {
+      if (["api", "app", "www", "docs", "checker"].includes(opts.input.slug)) {
         return false;
       }
       const result = await opts.ctx.db.query.page.findMany({

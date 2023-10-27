@@ -2,9 +2,10 @@ import type { Context, Env } from "hono";
 
 import { Tinybird } from "@openstatus/tinybird";
 
+import { env } from "./env";
 import { logDrainSchema, logDrainSchemaArray } from "./schema/vercel";
 
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" }); // should we use t3-env?
+const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY }); // should we use t3-env?
 
 export function publishVercelLogDrain() {
   return tb.buildIngestEndpoint({

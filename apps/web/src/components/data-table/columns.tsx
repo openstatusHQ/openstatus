@@ -7,19 +7,18 @@ import type { Ping } from "@openstatus/tinybird";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { DataTableRowActions } from "./data-table-row-action";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
-    accessorKey: "timestamp",
+    accessorKey: "cronTimestamp",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
       return (
         <div>
-          {format(new Date(row.getValue("timestamp")), "LLL dd, y HH:mm")}
+          {format(new Date(row.getValue("cronTimestamp")), "LLL dd, y HH:mm")}
         </div>
       );
     },
@@ -61,17 +60,6 @@ export const columns: ColumnDef<Ping>[] = [
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
-    },
-  },
-
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      return (
-        <div className="text-right">
-          <DataTableRowActions row={row} />
-        </div>
-      );
     },
   },
 ];

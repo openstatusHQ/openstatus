@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Post } from "contentlayer/generated";
 
@@ -20,18 +19,19 @@ export function Article({ post }: { post: Post }) {
       <div className="mx-auto grid w-full max-w-prose gap-3">
         <h1 className="font-cal mb-5 text-3xl">{post.title}</h1>
         <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
-          <Image
+          {/* <Image
             src={post.image}
             fill={true}
             alt={post.title}
             className="object-cover"
-          />
+          /> */}
           {/* HOTFIX: plain `img` */}
-          {/* <img
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={post.image}
             alt={post.title}
             className="h-full w-full object-cover"
-          /> */}
+          />
         </div>
         <div className="flex items-center gap-3">
           <Avatar>

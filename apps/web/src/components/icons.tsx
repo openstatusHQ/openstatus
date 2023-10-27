@@ -1,5 +1,6 @@
 import {
   Activity,
+  AlertTriangle,
   Bell,
   Bot,
   Calendar,
@@ -12,6 +13,7 @@ import {
   LayoutDashboard,
   Link,
   MessageCircle,
+  Minus,
   PanelTop,
   Pencil,
   Play,
@@ -60,6 +62,8 @@ export const Icons = {
   image: Image,
   bell: Bell,
   zap: Zap,
+  "alert-triangle": AlertTriangle,
+  minus: Minus,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

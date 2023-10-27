@@ -4,13 +4,12 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import * as z from "zod";
 
-import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
+import type { InsertIncident, Monitor, Page } from "@openstatus/db/src/schema";
 import {
-  availableStatus,
+  incidentStatus,
+  incidentStatusSchema,
   insertIncidentSchema,
-  StatusEnum,
 } from "@openstatus/db/src/schema";
 import {
   Accordion,
@@ -45,44 +44,44 @@ import { useToastAction } from "@/hooks/use-toast-action";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
-// include update on creation
-const insertSchema = insertIncidentSchema.extend({
-  message: z.string().optional(),
-  date: z.date().optional().default(new Date()),
-});
-
-type IncidentProps = z.infer<typeof insertSchema>;
-type MonitorsProps = z.infer<typeof allMonitorsExtendedSchema>;
-
 interface Props {
-  defaultValues?: IncidentProps;
-  monitors?: MonitorsProps;
+  defaultValues?: InsertIncident;
+  monitors?: Monitor[];
+  pages?: Page[];
   workspaceSlug: string;
 }
 
 export function IncidentForm({
   defaultValues,
   monitors,
+  pages,
   workspaceSlug,
 }: Props) {
-  const form = useForm<IncidentProps>({
-    resolver: zodResolver(insertSchema),
-    defaultValues: {
-      id: defaultValues?.id || 0,
-      title: defaultValues?.title || "",
-      status: defaultValues?.status || "investigating",
-      monitors: defaultValues?.monitors || [],
-      workspaceSlug,
-      // include update on creation
-      message: "",
-      date: defaultValues?.date || new Date(),
-    },
+  const form = useForm<InsertIncident>({
+    resolver: zodResolver(insertIncidentSchema),
+    defaultValues: defaultValues
+      ? {
+          id: defaultValues.id,
+          title: defaultValues.title,
+          status: defaultValues.status,
+          monitors: defaultValues.monitors,
+          pages: defaultValues.pages,
+          workspaceSlug,
+          // include update on creation
+          message: defaultValues.message,
+          date: defaultValues.date,
+        }
+      : {
+          status: "investigating",
+          date: new Date(),
+          workspaceSlug,
+        },
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: IncidentProps) => {
+  const onSubmit = ({ ...props }: InsertIncident) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -93,6 +92,7 @@ export function IncidentForm({
           const incident = await api.incident.createIncident.mutate({
             workspaceSlug,
             status,
+            message,
             ...rest,
           });
           // include update on creation
@@ -113,6 +113,8 @@ export function IncidentForm({
       }
     });
   };
+
+  console.log(form.formState.errors);
   return (
     <Form {...form}>
       <form
@@ -154,12 +156,12 @@ export function IncidentForm({
                   <FormMessage />
                   <RadioGroup
                     onValueChange={(value) =>
-                      field.onChange(StatusEnum.parse(value))
+                      field.onChange(incidentStatusSchema.parse(value))
                     } // value is a string
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                   >
-                    {availableStatus.map((status) => {
+                    {incidentStatus.map((status) => {
                       const { value, label, icon } = statusDict[status];
                       const Icon = Icons[icon];
                       return (
@@ -190,9 +192,11 @@ export function IncidentForm({
                 <FormItem className="sm:col-span-full">
                   <div className="mb-4">
                     <FormLabel>Monitors</FormLabel>
+                    {/* TODO: second phrase can be set inside of a (?) tooltip */}
                     <FormDescription>
                       Select the monitors that you want to refer the incident
-                      to.
+                      to. It will be displayed on the status page they are
+                      attached to.
                     </FormDescription>
                   </div>
                   <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -237,6 +241,66 @@ export function IncidentForm({
                                         : "bg-red-500",
                                     )}
                                   ></span>
+                                </div>
+                                <p className="text-muted-foreground truncate text-sm">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pages"
+              render={() => (
+                <FormItem className="sm:col-span-full">
+                  <div className="mb-4">
+                    <FormLabel>Pages</FormLabel>
+                    <FormDescription>
+                      Select the pages that you want to refer the incident to.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {pages?.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="pages"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={item.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([
+                                          ...(field.value || []),
+                                          item.id,
+                                        ])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== item.id,
+                                          ),
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="grid gap-1.5 leading-none">
+                                <div className="flex items-center gap-2">
+                                  <FormLabel className="font-normal">
+                                    {item.title}
+                                  </FormLabel>
                                 </div>
                                 <p className="text-muted-foreground truncate text-sm">
                                   {item.description}

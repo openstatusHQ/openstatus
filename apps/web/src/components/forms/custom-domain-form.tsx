@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
-import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
+import { insertPageSchema } from "@openstatus/db/src/schema";
 import {
   Button,
   Form,
@@ -26,12 +26,14 @@ import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
 
-const customDomain = insertPageSchemaWithMonitors.pick({
+const customDomain = insertPageSchema.pick({
   customDomain: true,
   id: true,
 });
 
 type Schema = z.infer<typeof customDomain>;
+
+// TODO: check
 
 export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   const form = useForm<Schema>({

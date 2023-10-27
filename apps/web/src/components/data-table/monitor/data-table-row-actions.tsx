@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { selectMonitorExtendedSchema } from "@openstatus/db/src/schema";
+import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
@@ -35,7 +36,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorExtendedSchema.parse(row.original);
+  const monitor = insertMonitorSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -49,6 +50,23 @@ export function DataTableRowActions<TData>({
         toast("deleted");
         router.refresh();
         setAlertOpen(false);
+      } catch {
+        toast("error");
+      }
+    });
+  }
+
+  async function onToggleActive() {
+    startTransition(async () => {
+      try {
+        const { jobType, ...rest } = monitor;
+        if (!monitor.id) return;
+        await api.monitor.updateMonitor.mutate({
+          ...rest,
+          active: !monitor.active,
+        });
+        toast("success");
+        router.refresh();
       } catch {
         toast("error");
       }
@@ -92,7 +110,12 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/data`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleActive}>
+            {monitor.active ? "Pause" : "Resume"} monitor
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

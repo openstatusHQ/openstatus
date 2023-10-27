@@ -1,4 +1,5 @@
-/** NOT USING THE CLIENT TO CALCULATE THE GROUPED DATA */
+"use client";
+
 import type { Ping, Region } from "@openstatus/tinybird";
 
 import type { Period } from "../utils";
@@ -66,5 +67,6 @@ function renderTimestamp(timestamp: number, period: Period) {
     day: !isInDay ? "numeric" : undefined,
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }

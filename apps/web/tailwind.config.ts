@@ -14,6 +14,7 @@ module.exports = {
     // our vercel integration
     "../../packages/integrations/**/*.{ts,tsx}",
     "../../packages/ui/**/*.{ts,tsx}",
+    "./node_modules/@openstatus/react/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     /* Tremor */

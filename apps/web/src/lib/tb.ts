@@ -26,7 +26,7 @@ export async function getResponseListData(props: Partial<ResponseListParams>) {
   return;
 }
 
-export async function getMonitorListData(props: Partial<MonitorListParams>) {
+export async function getMonitorListData(props: MonitorListParams) {
   try {
     const res = await getMonitorList(tb)(props);
     return res.data;
@@ -36,9 +36,10 @@ export async function getMonitorListData(props: Partial<MonitorListParams>) {
   return;
 }
 
+// Includes caching of data for 10 minutes
 export async function getHomeMonitorListData() {
   try {
-    const res = await getHomeMonitorList(tb)({ monitorId: "openstatusPing" });
+    const res = await getHomeMonitorList(tb)({ monitorId: "1" });
     return res.data;
   } catch (e) {
     console.error(e);

@@ -21,7 +21,7 @@ const faqsConfig: Record<"q" | "a", string>[] = [
   },
   {
     q: "What regions do we support?",
-    a: "We support all the <strong>Vercel regions</strong>. Find the full list <a href='https://vercel.com/docs/concepts/edge-network/regions' target='_blank'>here</a>.",
+    a: "We support one region for each continent to allow multi-regions monitoring.",
   },
   {
     q: "How can I help?",

@@ -1,15 +1,27 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import { Button } from "@openstatus/ui";
 
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
+import { StatusCheck } from "@/components/status-page/status-check";
+import { getMonitorListData } from "@/lib/tb";
+import { notEmpty } from "@/lib/utils";
 import { api } from "@/trpc/server";
+
+const url =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://www.openstatus.dev";
 
 type Props = {
   params: { domain: string };
@@ -24,21 +36,40 @@ export default async function Page({ params }: Props) {
   if (!page) {
     return notFound();
   }
+
+  const isEmptyState = !(
+    Boolean(page.monitors.length) || Boolean(page.incidents.length)
+  );
+
   return (
-    <div className="grid gap-6">
+    <div className="mx-auto flex w-full flex-col gap-6">
       <Header
         title={page.title}
         description={page.description}
         className="text-left"
       />
-      <MonitorList monitors={page.monitors} />
-      {page.monitors?.length > 0 ? (
-        <IncidentList
-          incidents={page.incidents}
-          monitors={page.monitors}
-          context="latest"
+      {isEmptyState ? (
+        <EmptyState
+          icon="activity"
+          title="Missing Monitors"
+          description="Fill your status page with monitors."
+          action={
+            <Button asChild>
+              <Link href={`${url}/app`}>Go to Dashboard</Link>
+            </Button>
+          }
         />
-      ) : null}
+      ) : (
+        <>
+          <StatusCheck incidents={page.incidents} monitors={page.monitors} />
+          <MonitorList monitors={page.monitors} />
+          <IncidentList
+            incidents={page.incidents}
+            monitors={page.monitors}
+            context="latest"
+          />
+        </>
+      )}
     </div>
   );
 }

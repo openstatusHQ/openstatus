@@ -1,12 +1,9 @@
 import { relations, sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { createSelectSchema } from "drizzle-zod";
-import { z } from "zod";
 
-import { page } from "./page";
-import { usersToWorkspaces } from "./user";
-
-const plan = ["free", "pro"] as const;
+import { page } from "../pages";
+import { usersToWorkspaces } from "../users";
+import { workspacePlans } from "./constants";
 
 export const workspace = sqliteTable("workspace", {
   id: integer("id").primaryKey(),
@@ -15,7 +12,7 @@ export const workspace = sqliteTable("workspace", {
 
   stripeId: text("stripe_id", { length: 256 }).unique(),
   subscriptionId: text("subscription_id"),
-  plan: text("plan", plan),
+  plan: text("plan", { enum: workspacePlans }),
   endsAt: integer("ends_at", { mode: "timestamp" }),
   paidUntil: integer("paid_until", { mode: "timestamp" }),
 
@@ -31,11 +28,3 @@ export const workspaceRelations = relations(workspace, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
   pages: many(page),
 }));
-
-export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
-  plan: z
-    .enum(plan)
-    .nullable()
-    .default("free")
-    .transform((val) => val ?? "free"),
-});

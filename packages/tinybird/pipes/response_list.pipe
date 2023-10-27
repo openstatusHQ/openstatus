@@ -1,10 +1,10 @@
-VERSION 0
+VERSION 1
 
 NODE response_list_0
 SQL >
 
     %
-    SELECT *
+    SELECT id, latency, monitorId, region, statusCode, timestamp, url, workspaceId, cronTimestamp
     FROM ping_response
     WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
     {% if defined(region) %}

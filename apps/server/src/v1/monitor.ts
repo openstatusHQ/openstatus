@@ -2,8 +2,8 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { db, eq, sql } from "@openstatus/db";
 import {
-  availableRegions,
-  METHODS,
+  flyRegions,
+  methods,
   monitor,
   periodicity,
 } from "@openstatus/db/src/schema/monitor";
@@ -27,9 +27,9 @@ const ParamsSchema = z.object({
 
 export const periodicityEnum = z.enum(periodicity);
 export const regionEnum = z
-  .enum(availableRegions)
+  .enum(flyRegions)
   .or(z.literal(""))
-  .transform((val) => (val === "" ? "auto" : val));
+  .transform((val) => (val === "" ? "" : val));
 
 const MonitorSchema = z
   .object({
@@ -46,7 +46,7 @@ const MonitorSchema = z
       description: "The url to monitor",
     }),
     regions: regionEnum.openapi({
-      example: "arn1",
+      example: "ams",
       description: "The regions to use",
     }),
     name: z
@@ -63,7 +63,7 @@ const MonitorSchema = z
         description: "The description of your monitor",
       })
       .nullable(),
-    method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
+    method: z.enum(methods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
         return String(val);
@@ -108,12 +108,10 @@ const monitorInput = z
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
-    regions: regionEnum
-      .openapi({
-        example: "arn1",
-        description: "The regions to use",
-      })
-      .default("auto"),
+    regions: regionEnum.openapi({
+      example: "ams",
+      description: "The regions to use",
+    }),
     name: z.string().openapi({
       example: "Documenso",
       description: "The name of the monitor",
@@ -122,7 +120,7 @@ const monitorInput = z
       example: "Documenso website",
       description: "The description of your monitor",
     }),
-    method: z.enum(METHODS).default("GET").openapi({ example: "GET" }),
+    method: z.enum(methods).default("GET").openapi({ example: "GET" }),
     body: z.string().openapi({
       example: "Hello World",
       description: "The body",
@@ -166,7 +164,15 @@ const getAllRoute = createRoute({
       },
       description: "Get the monitor",
     },
-    400: {
+    404: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Not found",
+    },
+    401: {
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -208,7 +214,15 @@ const getRoute = createRoute({
       },
       description: "Get the monitor",
     },
-    400: {
+    401: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+    404: {
       content: {
         "application/json": {
           schema: ErrorSchema,
@@ -265,6 +279,14 @@ const postRoute = createRoute({
       description: "Create a monitor",
     },
     400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+    403: {
       content: {
         "application/json": {
           schema: ErrorSchema,

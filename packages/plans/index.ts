@@ -1,12 +1,10 @@
-import type * as z from "zod";
-
-import type { periodicityEnum } from "@openstatus/db/src/schema";
+import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 
 export type Plan = {
   limits: {
     monitors: number;
     "status-pages": number;
-    periodicity: Partial<z.infer<typeof periodicityEnum>>[];
+    periodicity: Partial<MonitorPeriodicity>[];
   };
 };
 
