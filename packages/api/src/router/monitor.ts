@@ -4,15 +4,14 @@ import { z } from "zod";
 import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
-  allMonitorsExtendedSchema,
   insertMonitorSchema,
-  methods,
   monitor,
+  monitorMethodsSchema,
+  monitorPeriodicitySchema,
   monitorsToPages,
   notification,
   notificationsToMonitors,
-  periodicityEnum,
-  selectMonitorExtendedSchema,
+  selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
@@ -107,7 +106,7 @@ export const monitorRouter = createTRPCRouter({
       });
       if (!result) return;
 
-      const _monitor = selectMonitorExtendedSchema.parse(result.monitor);
+      const _monitor = selectMonitorSchema.parse(result.monitor);
       return _monitor;
     }),
 
@@ -225,7 +224,7 @@ export const monitorRouter = createTRPCRouter({
       // const selectMonitorsArray = selectMonitorSchema.array();
 
       try {
-        return allMonitorsExtendedSchema.parse(monitors);
+        return z.array(selectMonitorSchema).parse(monitors);
       } catch (e) {
         console.log(e);
       }
@@ -236,7 +235,7 @@ export const monitorRouter = createTRPCRouter({
     .input(
       z.object({
         id: z.number(),
-        method: z.enum(methods).default("GET"),
+        method: monitorMethodsSchema.default("GET"),
         body: z.string().default("").optional(),
         headers: z
           .array(z.object({ key: z.string(), value: z.string() }))
@@ -263,7 +262,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   getMonitorsForPeriodicity: protectedProcedure
-    .input(z.object({ periodicity: periodicityEnum }))
+    .input(z.object({ periodicity: monitorPeriodicitySchema }))
     .query(async (opts) => {
       const result = await opts.ctx.db
         .select()
@@ -275,7 +274,7 @@ export const monitorRouter = createTRPCRouter({
           ),
         )
         .all();
-      return allMonitorsExtendedSchema.parse(result);
+      return z.array(selectMonitorSchema).parse(result);
     }),
 
   getAllPagesForMonitor: protectedProcedure

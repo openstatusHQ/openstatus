@@ -14,7 +14,6 @@ import {
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { ClientAnalytics } from "./_components/analytics";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -52,7 +51,6 @@ export default function RootLayout({
           </body>
         </ClerkProvider>
       </PlausibleProvider>
-      <ClientAnalytics />
     </html>
   );
 }

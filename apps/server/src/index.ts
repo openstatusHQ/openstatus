@@ -1,3 +1,4 @@
+import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 
 import { checkerRoute } from "./checker";
@@ -7,6 +8,7 @@ import { api } from "./v1";
 import { VercelIngest } from "./vercel";
 
 const app = new Hono();
+app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
 
 /**
  * Vercel Integration

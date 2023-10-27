@@ -4,15 +4,13 @@ import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
-import type { ExtendedMonitor } from "@openstatus/db/src/schema";
+import type { Monitor } from "@openstatus/db/src/schema";
 import { Badge } from "@openstatus/ui";
 
 import { DataTableStatusBadge } from "../data-table-status-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-export const columns: ColumnDef<
-  ExtendedMonitor & { lastStatusCode?: number }
->[] = [
+export const columns: ColumnDef<Monitor & { lastStatusCode?: number }>[] = [
   {
     accessorKey: "name",
     header: "Name",

@@ -1,9 +1,12 @@
 import { Receiver } from "@upstash/qstash";
 import { nanoid } from "nanoid";
-import type { z } from "zod";
 
 import { db, eq, schema } from "@openstatus/db";
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import type { MonitorStatus } from "@openstatus/db/src/schema";
+import {
+  selectMonitorSchema,
+  selectNotificationSchema,
+} from "@openstatus/db/src/schema";
 import {
   publishPingResponse,
   tbIngestPingResponse,
@@ -123,7 +126,7 @@ export const ping = async (
       ...headers,
     },
     // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-    ...(data.method !== "GET" && { body: data?.body }),
+    ...(data.method === "POST" && { body: data?.body }),
   });
 
   return res;
@@ -145,7 +148,7 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     .all();
   for (const notif of notifications) {
     await providerToFunction[notif.notification.provider]({
-      monitor: notif.monitor,
+      monitor: selectMonitorSchema.parse(notif.monitor),
       notification: selectNotificationSchema.parse(notif.notification),
     });
   }
@@ -156,7 +159,7 @@ const updateMonitorStatus = async ({
   status,
 }: {
   monitorId: string;
-  status: z.infer<typeof schema.statusSchema>;
+  status: MonitorStatus;
 }) => {
   await db
     .update(schema.monitor)

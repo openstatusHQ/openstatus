@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { Notification } from "@openstatus/db/src/schema";
+import type {
+  InsertNotification,
+  NotificationProvider,
+} from "@openstatus/db/src/schema";
 import {
   insertNotificationSchema,
-  providerEnum,
-  providerName,
+  notificationProvider,
+  notificationProviderSchema,
 } from "@openstatus/db/src/schema";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import {
@@ -43,9 +46,8 @@ import { api } from "@/trpc/client";
  */
 
 const AVAILABLE_PROVIDERS = ["slack", "email"];
-type ProviderType = "email" | "discord" | "slack";
 
-function getDefaultProviderData(defaultValues?: Notification) {
+function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (!defaultValues?.provider) {
     return "";
   }
@@ -53,7 +55,7 @@ function getDefaultProviderData(defaultValues?: Notification) {
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
 }
 
-function setProviderData(provider: ProviderType, data: string) {
+function setProviderData(provider: NotificationProvider, data: string) {
   if (!provider) {
     return {};
   }
@@ -61,7 +63,7 @@ function setProviderData(provider: ProviderType, data: string) {
   return { [provider]: data };
 }
 
-function getProviderMetaData(provider: ProviderType) {
+function getProviderMetaData(provider: NotificationProvider) {
   switch (provider) {
     case "email":
       return {
@@ -91,7 +93,7 @@ function getProviderMetaData(provider: ProviderType) {
 }
 
 interface Props {
-  defaultValues?: Notification;
+  defaultValues?: InsertNotification;
   workspaceSlug: string;
   onSubmit?: () => void;
 }
@@ -105,10 +107,11 @@ export function NotificationForm({
   const [isTestPending, startTestTransition] = useTransition();
   const { toast } = useToastAction();
   const router = useRouter();
-  const form = useForm<Notification>({
+  const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
+      name: defaultValues?.name || "",
       data: getDefaultProviderData(defaultValues),
     },
   });
@@ -120,7 +123,7 @@ export function NotificationForm({
     [watchProvider],
   );
 
-  async function onSubmit({ provider, data, ...rest }: Notification) {
+  async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -147,7 +150,7 @@ export function NotificationForm({
     });
   }
 
-  async function sendTestWebhookPing(provider: ProviderType) {
+  async function sendTestWebhookPing(provider: NotificationProvider) {
     const webhookUrl = form.getValues("data");
     if (!webhookUrl) {
       return;
@@ -193,7 +196,7 @@ export function NotificationForm({
                   <FormLabel>Provider</FormLabel>
                   <Select
                     onValueChange={(value) =>
-                      field.onChange(providerEnum.parse(value))
+                      field.onChange(notificationProviderSchema.parse(value))
                     }
                     defaultValue={field.value}
                   >
@@ -203,7 +206,7 @@ export function NotificationForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {providerName.map((provider) => (
+                      {notificationProvider.map((provider) => (
                         <SelectItem
                           key={provider}
                           value={provider}

@@ -57,6 +57,7 @@ export default async function EditPage({
                     ({ monitorId }) => monitorId,
                   ),
                   pages: incident?.pagesToIncidents.map(({ pageId }) => pageId),
+                  message: "",
                 }
               : undefined
           }
