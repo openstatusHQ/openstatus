@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 
 export const TITLE = "OpenStatus";
-export const DESCRIPTION =
-  "Open-Source synthetic monitoring with incident management.";
+export const DESCRIPTION = "Open-Source monitoring with incident management.";
 
 export const defaultMetadata: Metadata = {
   title: {

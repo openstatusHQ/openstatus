@@ -1,6 +1,6 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-Source Synthetic Monitoring Platform with Incident Management</h3>
+  <h3 align="center">The Open-Source  Monitoring Platform with Incident Management</h3>
 
   <p align="center">
     The Open-Source Serverless monitoring platform.
