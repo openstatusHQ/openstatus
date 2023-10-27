@@ -14,6 +14,7 @@ import {
   notificationProvider,
   notificationProviderSchema,
 } from "@openstatus/db/src/schema";
+import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import {
   Button,
@@ -45,21 +46,14 @@ import { api } from "@/trpc/client";
  * we store it like `data: { webhook: "", channel: "" }`
  */
 
-const AVAILABLE_PROVIDERS = ["slack", "email"];
-
 function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (!defaultValues?.provider) {
     return "";
   }
-
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
 }
 
 function setProviderData(provider: NotificationProvider, data: string) {
-  if (!provider) {
-    return {};
-  }
-
   return { [provider]: data };
 }
 
@@ -115,7 +109,6 @@ export function NotificationForm({
       data: getDefaultProviderData(defaultValues),
     },
   });
-
   const watchProvider = form.watch("provider");
   const watchWebhookUrl = form.watch("data");
   const providerMetaData = useMemo(
@@ -165,12 +158,6 @@ export function NotificationForm({
         default:
           break;
       }
-
-      if (isSuccessful) {
-        toast("success");
-        return;
-      }
-      toast("test-error");
     });
   }
 
@@ -210,7 +197,6 @@ export function NotificationForm({
                         <SelectItem
                           key={provider}
                           value={provider}
-                          disabled={!AVAILABLE_PROVIDERS.includes(provider)} // only allow email for now
                           className="capitalize"
                         >
                           {provider}
@@ -287,7 +273,7 @@ export function NotificationForm({
               variant="secondary"
               className="w-full sm:w-auto"
               size="lg"
-              disabled={!watchWebhookUrl}
+              disabled={!watchWebhookUrl || isTestPending}
               onClick={() => sendTestWebhookPing(watchProvider)}
             >
               {!isTestPending ? (

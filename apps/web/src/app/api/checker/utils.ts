@@ -3,6 +3,7 @@ import type {
   Notification,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
+import { sendDiscordMessage } from "@openstatus/notification-discord";
 import { send as sendEmail } from "@openstatus/notification-emails";
 import { sendSlackMessage } from "@openstatus/notification-slack";
 
@@ -17,13 +18,5 @@ type sendNotificationType = ({
 export const providerToFunction = {
   email: sendEmail,
   slack: sendSlackMessage,
-  discord: async ({
-    monitor,
-    notification,
-  }: {
-    monitor: any;
-    notification: any;
-  }) => {
-    /* TODO: implement */
-  },
+  discord: sendDiscordMessage,
 } satisfies Record<NotificationProvider, sendNotificationType>;

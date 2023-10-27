@@ -151,6 +151,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/notification-discord':
+        specifier: workspace:*
+        version: link:../../packages/notifications/discord
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
@@ -588,6 +591,16 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
+  packages/notifications/discord:
+    dependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.2.2
+    devDependencies:
+      bun-types:
+        specifier: latest
+        version: 1.0.1
+
   packages/notifications/email:
     dependencies:
       '@openstatus/db':
@@ -642,7 +655,7 @@ importers:
     devDependencies:
       bun-types:
         specifier: latest
-        version: 1.0.7
+        version: 1.0.1
 
   packages/plans:
     dependencies:
@@ -6527,8 +6540,8 @@ packages:
       semver: 7.5.4
     dev: true
 
-  /bun-types@1.0.7:
-    resolution: {integrity: sha512-zlIp+SCutbbugs6xDy+3WC3KO3zKySpF/bRfiTk/VJUdKt+WHAzlCtLplS7XglRYDFzhRhlzXMW/R5BHkw+u2Q==}
+  /bun-types@1.0.1:
+    resolution: {integrity: sha512-7NrXqhMIaNKmWn2dSWEQ50znMZqrN/5Z0NBMXvQTRu/+Y1CvoXRznFy0pnqLe024CeZgVdXoEpARNO1JZLAPGw==}
     dev: true
 
   /bundle-require@4.0.2(esbuild@0.18.20):
