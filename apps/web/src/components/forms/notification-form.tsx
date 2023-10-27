@@ -38,18 +38,8 @@ import { useToastAction } from "@/hooks/use-toast-action";
 import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
-/**
- * TODO: based on the providers `data` structure, create dynamic form inputs
- * e.g. Provider: Email will need an `email` input field and
- * we store it like `data: { email: "" }`
- * But Provider: Slack will maybe require `webhook` and `channel` and
- * we store it like `data: { webhook: "", channel: "" }`
- */
-
 function getDefaultProviderData(defaultValues?: InsertNotification) {
-  if (!defaultValues?.provider) {
-    return "";
-  }
+  if (!defaultValues?.provider) return ""; // FIXME: input can empty - needs to be undefined
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
 }
 
@@ -64,7 +54,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         dataType: "email",
         placeholder: "dev@documenso.com",
         setupDocLink: null,
-        testNeeded: false,
+        sendTest: null,
       };
 
     case "slack":
@@ -73,7 +63,16 @@ function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "https://hooks.slack.com/services/xxx...",
         setupDocLink:
           "https://api.slack.com/messaging/webhooks#getting_started",
-        testNeeded: true,
+        sendTest: sendTestSlackMessage,
+      };
+
+    case "discord":
+      return {
+        dataType: "url",
+        placeholder: "https://hooks.slack.com/services/xxx...", // FIXME:
+        setupDocLink:
+          "https://api.slack.com/messaging/webhooks#getting_started", // FIXME:
+        sendTest: sendTestDiscordMessage,
       };
 
     default:
@@ -81,7 +80,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         dataType: "url",
         placeholder: "xxxx",
         setupDocLink: `https://docs.openstatus.dev/integrations/${provider}`,
-        testNeeded: false,
+        send: null,
       };
   }
 }
@@ -143,20 +142,15 @@ export function NotificationForm({
     });
   }
 
-  async function sendTestWebhookPing(provider: NotificationProvider) {
+  async function sendTestWebhookPing() {
     const webhookUrl = form.getValues("data");
-    if (!webhookUrl) {
-      return;
-    }
+    if (!webhookUrl) return;
     startTestTransition(async () => {
-      let isSuccessful = null;
-      switch (provider) {
-        case "slack":
-          isSuccessful = await sendTestSlackMessage(webhookUrl);
-          break;
-
-        default:
-          break;
+      const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
+      if (isSuccessfull) {
+        toast("test-success");
+      } else {
+        toast("test-error");
       }
     });
   }
@@ -247,16 +241,14 @@ export function NotificationForm({
                     <FormDescription className="flex items-center justify-between">
                       The data required.
                       {providerMetaData.setupDocLink && (
-                        <span>
-                          <a
-                            href={providerMetaData.setupDocLink}
-                            target="_blank"
-                            className="underline"
-                          >
-                            How to setup your {toCapitalize(watchProvider)}{" "}
-                            webhook
-                          </a>
-                        </span>
+                        <a
+                          href={providerMetaData.setupDocLink}
+                          target="_blank"
+                          className="underline hover:no-underline"
+                        >
+                          How to setup your {toCapitalize(watchProvider)}{" "}
+                          webhook
+                        </a>
                       )}
                     </FormDescription>
                     <FormMessage />
@@ -267,14 +259,14 @@ export function NotificationForm({
           </div>
         </div>
         <div className="flex gap-4 sm:justify-end">
-          {providerMetaData.testNeeded && (
+          {providerMetaData.sendTest && (
             <Button
               type="button"
               variant="secondary"
               className="w-full sm:w-auto"
               size="lg"
               disabled={!watchWebhookUrl || isTestPending}
-              onClick={() => sendTestWebhookPing(watchProvider)}
+              onClick={sendTestWebhookPing}
             >
               {!isTestPending ? (
                 "Test Webhook"

@@ -1,9 +1,4 @@
-import type { z } from "zod";
-
-import type {
-  basicMonitorSchema,
-  selectNotificationSchema,
-} from "@openstatus/db/src/schema";
+import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
   await fetch(webhookUrl, {
@@ -24,8 +19,8 @@ export const sendDiscordMessage = async ({
   monitor,
   notification,
 }: {
-  monitor: z.infer<typeof basicMonitorSchema>;
-  notification: z.infer<typeof selectNotificationSchema>;
+  monitor: Monitor;
+  notification: Notification;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { discord: webhookUrl } = notificationData; // webhook url

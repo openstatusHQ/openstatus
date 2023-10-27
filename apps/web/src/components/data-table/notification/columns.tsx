@@ -7,6 +7,8 @@ import { Badge } from "@openstatus/ui";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
+// TODO: use the getProviderMetaData function from the notification form to access the data
+
 export const columns: ColumnDef<Notification>[] = [
   {
     accessorKey: "name",

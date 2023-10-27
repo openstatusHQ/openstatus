@@ -1,9 +1,4 @@
-import type { z } from "zod";
-
-import type {
-  basicMonitorSchema,
-  selectNotificationSchema,
-} from "@openstatus/db/src/schema";
+import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
 const postToWebhook = async (body: any, webhookUrl: string) => {
   try {
@@ -21,8 +16,8 @@ export const sendSlackMessage = async ({
   monitor,
   notification,
 }: {
-  monitor: z.infer<typeof basicMonitorSchema>;
-  notification: z.infer<typeof selectNotificationSchema>;
+  monitor: Monitor;
+  notification: Notification;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
