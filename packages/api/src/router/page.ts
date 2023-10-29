@@ -339,7 +339,11 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
       // had filter on some words we want to keep for us
-      if (["api", "app", "www", "docs", "checker"].includes(opts.input.slug)) {
+      if (
+        ["api", "app", "www", "docs", "checker", "time"].includes(
+          opts.input.slug,
+        )
+      ) {
         return false;
       }
       const result = await opts.ctx.db.query.page.findMany({
