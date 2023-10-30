@@ -33,7 +33,7 @@ export default async function EditPage({
   const { workspaceSlug } = params;
 
   // TODO: too many requests to db
-  const page = id && (await api.page.getPageByID.query({ id }));
+  const page = id && (await api.page.getPageById.query({ id }));
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
     workspaceSlug,
   });
@@ -67,12 +67,10 @@ export default async function EditPage({
           <TabsContent value="settings" className="pt-3">
             <StatusPageForm
               allMonitors={monitors}
-              workspaceSlug={params.workspaceSlug}
               defaultValues={
                 page
                   ? {
                       ...page,
-                      workspaceSlug: params.workspaceSlug,
                       monitors: page.monitorsToPages.map(
                         ({ monitor }) => monitor.id,
                       ),

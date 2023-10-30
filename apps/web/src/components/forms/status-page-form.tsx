@@ -40,7 +40,6 @@ import { LoadingAnimation } from "../loading-animation";
 
 interface Props {
   defaultValues?: InsertPage;
-  workspaceSlug: string;
   allMonitors?: Monitor[];
   /**
    * gives the possibility to check all the monitors
@@ -54,7 +53,6 @@ interface Props {
 
 export function StatusPageForm({
   defaultValues,
-  workspaceSlug,
   allMonitors,
   checkAllMonitors,
   nextUrl,
@@ -73,7 +71,6 @@ export function StatusPageForm({
           ? allMonitors.map(({ id }) => id)
           : defaultValues?.monitors ?? [],
       customDomain: defaultValues?.customDomain || "",
-      workspaceSlug: "",
       icon: defaultValues?.icon || "",
     },
   });
@@ -123,16 +120,18 @@ export function StatusPageForm({
     startTransition(async () => {
       // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
       try {
-        if (defaultValues) {
-          await api.page.updatePage.mutate(props);
-        } else {
-          const page = await api.page.createPage.mutate({
-            ...props,
-            workspaceSlug,
-          });
-          const id = page?.id || null;
-          router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
-        }
+        // if (defaultValues) {
+        //   await api.page.updatePage.mutate(props);
+        // } else {
+        //   const page = await api.page.createPage.mutate(props);
+        //   const id = page?.id || null;
+        //   router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
+        // }
+        console.log({ props });
+        const page = await api.page.upsert.mutate(props);
+        const id = page?.id || null;
+        router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
+
         defaultToast({
           title: "Saved successfully.",
           description: "Your status page is ready to go.",

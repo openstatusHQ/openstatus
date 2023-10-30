@@ -44,7 +44,7 @@ export const cron = async ({
   console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
-  const ctx = createTRPCContext({ req, serverSideCall: true });
+  const ctx = await createTRPCContext({ req, serverSideCall: true });
   ctx.auth = { userId: "cron" } as SignedInAuthObject;
   const caller = edgeRouter.createCaller(ctx);
 

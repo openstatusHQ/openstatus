@@ -26,7 +26,6 @@ export const insertPageSchema = createInsertSchema(page, {
   slug: slugSchema,
 }).extend({
   monitors: z.array(z.number()).optional().default([]),
-  workspaceSlug: z.string(),
 });
 
 export const selectPageSchema = createSelectSchema(page);
