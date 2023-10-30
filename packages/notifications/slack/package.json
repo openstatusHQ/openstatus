@@ -1,12 +1,16 @@
 {
   "name": "@openstatus/notification-slack",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "main": "src/index.ts",
-  "type": "module",
-  "devDependencies": {
-    "bun-types": "latest"
+  "dependencies": {
+    "@openstatus/db": "workspace:*"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.24",
+    "@types/react-dom": "18.2.8",
+    "next": "13.5.3",
+    "typescript": "5.2.2"
   }
 }

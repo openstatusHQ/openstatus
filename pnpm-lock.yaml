@@ -599,13 +599,28 @@ importers:
 
   packages/notifications/discord:
     dependencies:
-      typescript:
-        specifier: ^5.0.0
-        version: 5.2.2
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
     devDependencies:
-      bun-types:
-        specifier: latest
-        version: 1.0.1
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      '@types/react-dom':
+        specifier: 18.2.8
+        version: 18.2.8
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/notifications/email:
     dependencies:
@@ -655,13 +670,28 @@ importers:
 
   packages/notifications/slack:
     dependencies:
-      typescript:
-        specifier: ^5.0.0
-        version: 5.2.2
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
     devDependencies:
-      bun-types:
-        specifier: latest
-        version: 1.0.1
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      '@types/react-dom':
+        specifier: 18.2.8
+        version: 18.2.8
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
 
   packages/plans:
     dependencies:
@@ -4955,6 +4985,7 @@ packages:
 
   /@swagger-api/apidom-ns-json-schema-draft-4@0.78.0:
     resolution: {integrity: sha512-19NR9lTHMOQTIEV4tJq+FlHQAYnjyH+DgI4mmRu6UMFSZjRjutYF7B8lCGogSus9Uwy8YpUk00prLFTld00wgA==}
+    requiresBuild: true
     dependencies:
       '@babel/runtime-corejs3': 7.23.2
       '@swagger-api/apidom-ast': 0.78.0
@@ -6544,10 +6575,6 @@ packages:
     resolution: {integrity: sha512-qwVpFEHNfhYJIzNRBvd2C1kyo6jz3ZSMPyyuR47OPdiKWlbYnZNyDWuyR175qDnAJLiCo5fBBqPb3RiXgWlkOQ==}
     dependencies:
       semver: 7.5.4
-    dev: true
-
-  /bun-types@1.0.1:
-    resolution: {integrity: sha512-7NrXqhMIaNKmWn2dSWEQ50znMZqrN/5Z0NBMXvQTRu/+Y1CvoXRznFy0pnqLe024CeZgVdXoEpARNO1JZLAPGw==}
     dev: true
 
   /bundle-require@4.0.2(esbuild@0.18.20):
