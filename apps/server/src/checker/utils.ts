@@ -1,40 +1,22 @@
-import type { z } from "zod";
-
 import type {
-  basicMonitorSchema,
-  providerName,
-  selectNotificationSchema,
+  Monitor,
+  Notification,
+  NotificationProvider,
 } from "@openstatus/db/src/schema";
+import { sendDiscordMessage } from "@openstatus/notification-discord";
 import { send as sendEmail } from "@openstatus/notification-emails";
+import { sendSlackMessage } from "@openstatus/notification-slack";
 
-type ProviderName = (typeof providerName)[number];
-
-type sendNotificationType = ({
+type SendNotification = ({
   monitor,
   notification,
 }: {
-  monitor: z.infer<typeof basicMonitorSchema>;
-  notification: z.infer<typeof selectNotificationSchema>;
+  monitor: Monitor;
+  notification: Notification;
 }) => Promise<void>;
 
 export const providerToFunction = {
   email: sendEmail,
-  slack: async ({
-    monitor,
-    notification,
-  }: {
-    monitor: any;
-    notification: any;
-  }) => {
-    /* TODO: implement */
-  },
-  discord: async ({
-    monitor,
-    notification,
-  }: {
-    monitor: any;
-    notification: any;
-  }) => {
-    /* TODO: implement */
-  },
-} satisfies Record<ProviderName, sendNotificationType>;
+  slack: sendSlackMessage,
+  discord: sendDiscordMessage,
+} satisfies Record<NotificationProvider, SendNotification>;
