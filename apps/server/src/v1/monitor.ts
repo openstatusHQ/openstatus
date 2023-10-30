@@ -3,10 +3,10 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { db, eq, sql } from "@openstatus/db";
 import {
   flyRegions,
-  methods,
   monitor,
-  periodicity,
-} from "@openstatus/db/src/schema/monitor";
+  monitorMethods,
+  monitorPeriodicity,
+} from "@openstatus/db/src/schema";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
@@ -25,7 +25,7 @@ const ParamsSchema = z.object({
     }),
 });
 
-export const periodicityEnum = z.enum(periodicity);
+export const periodicityEnum = z.enum(monitorPeriodicity);
 export const regionEnum = z
   .enum(flyRegions)
   .or(z.literal(""))
@@ -63,7 +63,7 @@ const MonitorSchema = z
         description: "The description of your monitor",
       })
       .nullable(),
-    method: z.enum(methods).default("GET").openapi({ example: "GET" }),
+    method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
         return String(val);
@@ -120,7 +120,7 @@ const monitorInput = z
       example: "Documenso website",
       description: "The description of your monitor",
     }),
-    method: z.enum(methods).default("GET").openapi({ example: "GET" }),
+    method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z.string().openapi({
       example: "Hello World",
       description: "The body",

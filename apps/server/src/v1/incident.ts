@@ -2,8 +2,8 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { and, db, eq } from "@openstatus/db";
 import {
-  availableStatus,
   incident,
+  incidentStatus,
   incidentUpdate,
 } from "@openstatus/db/src/schema";
 
@@ -27,7 +27,7 @@ const ParamsSchema = z.object({
 });
 
 const incidentUpdateSchema = z.object({
-  status: z.enum(availableStatus).openapi({
+  status: z.enum(incidentStatus).openapi({
     description: "The status of the update",
   }),
   date: z.string().openapi({
@@ -43,7 +43,7 @@ const incidentSchema = z.object({
     example: "Documenso",
     description: "The title of the incident",
   }),
-  status: z.enum(availableStatus).openapi({
+  status: z.enum(incidentStatus).openapi({
     description: "The current status of the incident",
   }),
 });

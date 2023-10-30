@@ -1,7 +1,9 @@
-import type { z } from "zod";
-
 import { db, eq, schema } from "@openstatus/db";
-import { selectNotificationSchema } from "@openstatus/db/src/schema";
+import type { MonitorStatus } from "@openstatus/db/src/schema";
+import {
+  selectMonitorSchema,
+  selectNotificationSchema,
+} from "@openstatus/db/src/schema";
 
 import { publishPingRetryPolicy } from "./checker";
 import type { Payload } from "./schema";
@@ -34,8 +36,9 @@ export const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
+    const monitor = selectMonitorSchema.parse(notif.monitor);
     await providerToFunction[notif.notification.provider]({
-      monitor: notif.monitor,
+      monitor,
       notification: selectNotificationSchema.parse(notif.notification),
     });
   }
@@ -46,7 +49,7 @@ export const updateMonitorStatus = async ({
   status,
 }: {
   monitorId: string;
-  status: z.infer<typeof schema.statusSchema>;
+  status: MonitorStatus;
 }) => {
   await db
     .update(schema.monitor)

@@ -87,9 +87,15 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@openstatus/notification-discord':
+        specifier: workspace:*
+        version: link:../../packages/notifications/discord
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-slack':
+        specifier: workspace:*
+        version: link:../../packages/notifications/slack
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -151,9 +157,15 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/notification-discord':
+        specifier: workspace:*
+        version: link:../../packages/notifications/discord
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-slack':
+        specifier: workspace:*
+        version: link:../../packages/notifications/slack
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -585,6 +597,31 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
+  packages/notifications/discord:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      '@types/react-dom':
+        specifier: 18.2.8
+        version: 18.2.8
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
   packages/notifications/email:
     dependencies:
       '@openstatus/db':
@@ -611,6 +648,31 @@ importers:
       zod:
         specifier: 3.22.2
         version: 3.22.2
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      '@types/react-dom':
+        specifier: 18.2.8
+        version: 18.2.8
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
+  packages/notifications/slack:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -4923,6 +4985,7 @@ packages:
 
   /@swagger-api/apidom-ns-json-schema-draft-4@0.78.0:
     resolution: {integrity: sha512-19NR9lTHMOQTIEV4tJq+FlHQAYnjyH+DgI4mmRu6UMFSZjRjutYF7B8lCGogSus9Uwy8YpUk00prLFTld00wgA==}
+    requiresBuild: true
     dependencies:
       '@babel/runtime-corejs3': 7.23.2
       '@swagger-api/apidom-ast': 0.78.0
