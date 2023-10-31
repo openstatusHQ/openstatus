@@ -104,7 +104,10 @@ export function fillMissingDates(data: Monitor[]) {
   }
 
   const startDate = new Date(data[0].cronTimestamp);
-  const endDate = new Date(data[data.length - 1].cronTimestamp);
+  const endDate = new Date(
+    new Date(data[data.length - 1].cronTimestamp).setHours(23, 59, 59, 999),
+  );
+
   // The reason why we cannot use `date-fns` is because it isn't supported on the edge
   // const dateSequence = eachDayOfInterval({start:startDate, end:endDate})
   const dateSequence = generateDateSequence(startDate, endDate);
@@ -116,7 +119,8 @@ export function fillMissingDates(data: Monitor[]) {
     const currentTimestamp = currentDate.getTime();
     if (
       dataIndex < data.length &&
-      data[dataIndex].cronTimestamp === currentTimestamp
+      (data[dataIndex].cronTimestamp === currentTimestamp ||
+        data[dataIndex].cronTimestamp + 60 * 60 * 1000 === currentTimestamp)
     ) {
       filledData.push(data[dataIndex]);
       dataIndex++;
