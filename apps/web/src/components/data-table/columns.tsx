@@ -4,23 +4,21 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
-import { Badge } from "@openstatus/ui";
 
 import { regionsDict } from "@/data/regions-dictionary";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { DataTableRowActions } from "./data-table-row-action";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
-    accessorKey: "timestamp",
+    accessorKey: "cronTimestamp",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date" />
     ),
     cell: ({ row }) => {
       return (
         <div>
-          {format(new Date(row.getValue("timestamp")), "LLL dd, y HH:mm")}
+          {format(new Date(row.getValue("cronTimestamp")), "LLL dd, y HH:mm")}
         </div>
       );
     },
@@ -35,8 +33,8 @@ export const columns: ColumnDef<Ping>[] = [
       return <DataTableStatusBadge {...{ statusCode }} />;
     },
     filterFn: (row, id, value) => {
-      // needed because value is number, not string
-      return `${row.getValue(id)}`.includes(`${value}`);
+      // get the first digit of the status code
+      return value.includes(Number(String(row.getValue(id)).charAt(0)));
     },
   },
   {
@@ -51,24 +49,17 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Region" />
     ),
     cell: ({ row }) => {
-      const region = String(row.getValue("region"));
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-expect-error
-      return <div>{regionsDict[region]?.location}</div>;
+      return (
+        <div>
+          <span className="font-mono">{String(row.getValue("region"))} </span>
+          <span className="text-muted-foreground text-xs">
+            {regionsDict[row.original.region]?.location}
+          </span>
+        </div>
+      );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
-    },
-  },
-
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      return (
-        <div className="text-right">
-          <DataTableRowActions row={row} />
-        </div>
-      );
     },
   },
 ];

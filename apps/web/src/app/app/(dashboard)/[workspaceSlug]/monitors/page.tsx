@@ -1,18 +1,16 @@
 import * as React from "react";
 import Link from "next/link";
 
-import type { ExtendedMonitor } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
-import { Badge, ButtonWithDisableTooltip } from "@openstatus/ui";
+import { ButtonWithDisableTooltip } from "@openstatus/ui";
 
-import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
+import { HelpCallout } from "@/components/dashboard/help-callout";
 import { Limit } from "@/components/dashboard/limit";
-import { DataTableStatusBadge } from "@/components/data-table/data-table-status-badge";
+import { columns } from "@/components/data-table/monitor/columns";
+import { DataTable } from "@/components/data-table/monitor/data-table";
 import { getResponseListData } from "@/lib/tb";
-import { cn } from "@/lib/utils";
 import { api } from "@/trpc/server";
-import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
 
 export default async function MonitorPage({
@@ -31,10 +29,25 @@ export default async function MonitorPage({
     (monitors?.length || 0) >=
     allPlans[workspace?.plan || "free"].limits.monitors;
 
-  const { workspaceSlug } = params;
+  async function getMonitorLastStatusCode(monitorId: string) {
+    const ping = await getResponseListData({
+      monitorId,
+      limit: 1,
+    });
+    const lastStatusCode = ping && ping.length > 0 ? ping[0].statusCode : 0;
+    return lastStatusCode;
+  }
+
+  const lastStatusCodes = (
+    await Promise.allSettled(
+      monitors?.map((monitor) =>
+        getMonitorLastStatusCode(String(monitor.id)),
+      ) || [],
+    )
+  ).map((code) => (code.status === "fulfilled" && code.value) || 0);
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+    <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-2 md:gap-8">
       <Header
         title="Monitors"
         description="Overview of all your monitors."
@@ -49,77 +62,26 @@ export default async function MonitorPage({
         }
       />
       {Boolean(monitors?.length) ? (
-        monitors?.map((monitor, index) => (
-          <Monitor key={index} {...{ monitor, workspaceSlug }} />
-        ))
+        <div className="col-span-full">
+          {monitors && (
+            <DataTable
+              columns={columns}
+              data={monitors.map((_, i) => ({
+                ..._,
+                lastStatusCode: lastStatusCodes[i],
+              }))}
+            />
+          )}
+        </div>
       ) : (
-        <EmptyState />
+        <div className="col-span-full">
+          <EmptyState />
+          <div className="mt-3">{isLimit ? <Limit /> : null}</div>
+        </div>
       )}
-      {isLimit ? <Limit /> : null}
+      <div className="mt-8 md:mt-12">
+        <HelpCallout />
+      </div>
     </div>
-  );
-}
-
-async function Monitor({
-  monitor,
-  workspaceSlug,
-}: {
-  monitor: ExtendedMonitor;
-  workspaceSlug: string;
-}) {
-  const lastResponses = await getResponseListData({
-    monitorId: String(monitor.id),
-    limit: 1,
-  });
-
-  const lastStatusCode =
-    lastResponses && lastResponses.length > 0
-      ? lastResponses[0].statusCode
-      : undefined;
-
-  return (
-    <Container
-      title={monitor.name}
-      description={monitor.description}
-      actions={[
-        <Badge
-          key="status-badge"
-          variant={monitor.active ? "default" : "outline"}
-          className="capitalize"
-        >
-          {monitor.active ? "active" : "inactive"}
-          <span
-            className={cn(
-              "ml-1 h-1.5 w-1.5 rounded-full",
-              monitor.active ? "bg-green-500" : "bg-red-500",
-            )}
-          />
-        </Badge>,
-        <ActionButton key="action-button" {...{ ...monitor, workspaceSlug }} />,
-      ]}
-    >
-      <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <dt>Frequency</dt>
-          <dd className="font-mono">{monitor.periodicity}</dd>
-        </div>
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <dt>URL</dt>
-          <dd className="overflow-hidden text-ellipsis font-semibold">
-            {monitor.url}
-          </dd>
-        </div>
-        <div className="flex min-w-0 items-center justify-between gap-3">
-          <dt>Last Status</dt>
-          <dd className="overflow-hidden text-ellipsis">
-            {lastStatusCode ? (
-              <DataTableStatusBadge statusCode={lastStatusCode} />
-            ) : (
-              <span className="text-muted-foreground">No data</span>
-            )}
-          </dd>
-        </div>
-      </dl>
-    </Container>
   );
 }

@@ -7,11 +7,14 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { PutBlobResult } from "@vercel/blob";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
 
-import type { allMonitorsExtendedSchema } from "@openstatus/db/src/schema";
-import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
+import { insertPageSchema } from "@openstatus/db/src/schema";
+import type { InsertPage, Monitor } from "@openstatus/db/src/schema";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
   Button,
   Checkbox,
   Form,
@@ -35,12 +38,10 @@ import { LoadingAnimation } from "../loading-animation";
 
 // REMINDER: only use the props you need!
 
-type Schema = z.infer<typeof insertPageSchemaWithMonitors>;
-
 interface Props {
-  defaultValues?: Schema;
+  defaultValues?: InsertPage;
   workspaceSlug: string;
-  allMonitors?: z.infer<typeof allMonitorsExtendedSchema>;
+  allMonitors?: Monitor[];
   /**
    * gives the possibility to check all the monitors
    */
@@ -58,10 +59,11 @@ export function StatusPageForm({
   checkAllMonitors,
   nextUrl,
 }: Props) {
-  const form = useForm<Schema>({
-    resolver: zodResolver(insertPageSchemaWithMonitors),
+  console.log({ defaultValues });
+  const form = useForm<InsertPage>({
+    resolver: zodResolver(insertPageSchema),
     defaultValues: {
-      title: defaultValues?.title || "",
+      title: defaultValues?.title || "", // FIXME: you can save a page without title, causing unexpected slug behavior
       slug: defaultValues?.slug || "",
       description: defaultValues?.description || "",
       workspaceId: defaultValues?.workspaceId || 0,
@@ -117,9 +119,7 @@ export function StatusPageForm({
     }
   }, [watchTitle, form, defaultValues?.title]);
 
-  const onSubmit = async ({
-    ...props
-  }: z.infer<typeof insertPageSchemaWithMonitors>) => {
+  const onSubmit = async ({ ...props }: InsertPage) => {
     startTransition(async () => {
       // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
       try {
@@ -185,159 +185,193 @@ export function StatusPageForm({
             }
           }
         }}
-        className="grid w-full grid-cols-1 items-center gap-6 sm:grid-cols-6"
+        className="grid w-full gap-6"
       >
-        <FormField
-          control={form.control}
-          name="title"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-4">
-              <FormLabel>Title</FormLabel>
-              <FormControl>
-                <Input placeholder="Documenso Status" {...field} />
-              </FormControl>
-              <FormDescription>The title of your page.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-5">
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Stay informed about our api and website health."
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Provide your users informations about it.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="slug"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-3">
-              <FormLabel>Slug</FormLabel>
-              <FormControl>
-                <InputWithAddons
-                  placeholder="documenso"
-                  trailing={".openstatus.dev"}
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                The subdomain for your status page. At least 3 chars.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="icon"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-3">
-              <FormLabel>Favicon</FormLabel>
-              <FormControl>
-                <>
-                  {!field.value && (
-                    <Input
-                      type="file"
-                      accept="image/x-icon,image/png"
-                      ref={inputFileRef}
-                      onChange={(e) => handleChange(e.target.files)}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="my-1.5 flex flex-col gap-2">
+            <p className="text-sm font-semibold leading-none">Endpoint Check</p>
+            <p className="text-muted-foreground text-sm">
+              The easiest way to get started.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:col-span-2">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Documenso Status" {...field} />
+                  </FormControl>
+                  <FormDescription>The title of your page.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="slug"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Slug</FormLabel>
+                  <FormControl>
+                    <InputWithAddons
+                      placeholder="documenso"
+                      trailing={".openstatus.dev"}
+                      {...field}
                     />
-                  )}
-                  {field.value && (
-                    <div className="flex items-center">
-                      <div className="border-border h-10 w-10 rounded-sm border p-1">
-                        <Image
-                          src={field.value}
-                          width={64}
-                          height={64}
-                          alt="Favicon"
-                        />
-                      </div>
-                      <Button
-                        variant="link"
-                        onClick={() => {
-                          form.setValue("icon", "");
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  )}
-                </>
-              </FormControl>
-              <FormDescription>Your status page favicon</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="monitors"
-          render={() => (
-            <FormItem className="sm:col-span-full">
-              <div className="mb-4">
-                <FormLabel className="text-base">Monitor</FormLabel>
-                <FormDescription>
-                  Select the monitors you want to display.
-                </FormDescription>
-              </div>
-              {allMonitors?.map((item) => (
-                <FormField
-                  key={item.id}
-                  control={form.control}
-                  name="monitors"
-                  render={({ field }) => {
-                    return (
-                      <FormItem
-                        key={item.id}
-                        className="flex flex-row items-start space-x-3 space-y-0"
-                      >
+                  </FormControl>
+                  <FormDescription>
+                    The subdomain for your status page. At least 3 chars.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="monitors"
+              render={() => (
+                <FormItem>
+                  <div className="mb-4">
+                    <FormLabel className="text-base">Monitor</FormLabel>
+                    <FormDescription>
+                      Select the monitors you want to display.
+                    </FormDescription>
+                  </div>
+                  {allMonitors?.map((item) => (
+                    <FormField
+                      key={item.id}
+                      control={form.control}
+                      name="monitors"
+                      render={({ field }) => {
+                        return (
+                          <FormItem
+                            key={item.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value?.includes(item.id)}
+                                onCheckedChange={(checked) => {
+                                  return checked
+                                    ? field.onChange([
+                                        ...(field.value || []),
+                                        item.id,
+                                      ])
+                                    : field.onChange(
+                                        field.value?.filter(
+                                          (value) => value !== item.id,
+                                        ),
+                                      );
+                                }}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="font-normal">
+                                {item.name}
+                              </FormLabel>
+                              <FormDescription className="truncate">
+                                {item.url}
+                              </FormDescription>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="advanced-settings">
+            <AccordionTrigger>Advanced Settings</AccordionTrigger>
+            <AccordionContent>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="my-1.5 flex flex-col gap-2">
+                  <p className="text-sm font-semibold leading-none">
+                    More Configurations
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    Make it your own. Contact us if you wish for more and we
+                    will implement it!
+                  </p>
+                </div>
+                <div className="grid gap-6 sm:col-span-2 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem className="sm:col-span-full">
+                        <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Checkbox
-                            checked={field.value?.includes(item.id)}
-                            onCheckedChange={(checked) => {
-                              return checked
-                                ? field.onChange([
-                                    ...(field.value || []),
-                                    item.id,
-                                  ])
-                                : field.onChange(
-                                    field.value?.filter(
-                                      (value) => value !== item.id,
-                                    ),
-                                  );
-                            }}
+                          <Input
+                            placeholder="Stay informed about our api and website health."
+                            {...field}
                           />
                         </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="font-normal">
-                            {item.name}
-                          </FormLabel>
-                          <FormDescription>{item.url}</FormDescription>
-                        </div>
+                        <FormDescription>
+                          Provide your users informations about it.
+                        </FormDescription>
+                        <FormMessage />
                       </FormItem>
-                    );
-                  }}
-                />
-              ))}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <div className="sm:col-span-full">
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="icon"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Favicon</FormLabel>
+                        <FormControl>
+                          <>
+                            {!field.value && (
+                              <Input
+                                type="file"
+                                accept="image/x-icon,image/png"
+                                ref={inputFileRef}
+                                onChange={(e) => handleChange(e.target.files)}
+                              />
+                            )}
+                            {field.value && (
+                              <div className="flex items-center">
+                                <div className="border-border h-10 w-10 rounded-sm border p-1">
+                                  <Image
+                                    src={field.value}
+                                    width={64}
+                                    height={64}
+                                    alt="Favicon"
+                                  />
+                                </div>
+                                <Button
+                                  variant="link"
+                                  onClick={() => {
+                                    form.setValue("icon", "");
+                                  }}
+                                >
+                                  Remove
+                                </Button>
+                              </div>
+                            )}
+                          </>
+                        </FormControl>
+                        <FormDescription>
+                          Your status page favicon
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <div className="flex sm:justify-end">
           <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>

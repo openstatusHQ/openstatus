@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://docs.openstatus.dev/
+
+# Sitemaps
+Sitemap: https://docs.openstatus.dev/sitemap.xml

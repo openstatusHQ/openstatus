@@ -5,17 +5,22 @@ import { Badge, Button } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
-import { Cards } from "@/components/marketing/cards";
+import { Cards, SpecialCard } from "@/components/marketing/cards";
 import { FAQs } from "@/components/marketing/faqs";
+import { Partners } from "@/components/marketing/partners";
 import { Plans } from "@/components/marketing/plans";
+import { Stats } from "@/components/marketing/stats";
 import { Tracker } from "@/components/tracker";
+import { cardConfig, specialCardConfig } from "@/config/features";
+import { getGitHubStars } from "@/lib/github";
 import { getHomeMonitorListData } from "@/lib/tb";
+import { numberFormatter } from "@/lib/utils";
 
 export const revalidate = 600;
 
 export default async function Page() {
   const data = await getHomeMonitorListData();
-
+  const stars = await getGitHubStars();
   return (
     <MarketingLayout>
       <div className="grid gap-8">
@@ -33,18 +38,33 @@ export default async function Page() {
             Open-source monitoring service
           </h1>
           <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-            OpenStatus is an open source alternative to your current monitoring
-            service with a beautiful status page.
+            OpenStatus is an open source monitoring services with on-call
+            managements.
           </p>
-          <div className="my-4 flex items-center justify-center gap-2">
-            <Button asChild className="rounded-full">
-              <Link href="/app/sign-up">Get Started</Link>
-            </Button>
-            <Button asChild variant="link">
-              <Link href="/github" target="_blank">
-                Star on GitHub
-              </Link>
-            </Button>
+          {/* much better than using flex without text alignment, text stays center even thought not same length */}
+          <div className="my-4 grid gap-2 sm:grid-cols-2">
+            <div className="text-center sm:block sm:text-right">
+              <Button className="w-48 rounded-full sm:w-auto" asChild>
+                <Link href="/app/sign-up">Get Started</Link>
+              </Button>
+            </div>
+            <div className="text-center sm:block sm:text-left">
+              <Button
+                variant="outline"
+                className="w-48 rounded-full sm:w-auto"
+                asChild
+              >
+                <Link href="/github" target="_blank">
+                  Star on GitHub{" "}
+                  <Badge variant="secondary" className="ml-1 hidden sm:block">
+                    {numberFormatter(stars)}
+                  </Badge>
+                  <Badge variant="secondary" className="ml-1 block sm:hidden">
+                    {stars}
+                  </Badge>
+                </Link>
+              </Button>
+            </div>
           </div>
         </Shell>
         <Shell className="text-center">
@@ -63,7 +83,12 @@ export default async function Page() {
             )}
           </div>
         </Shell>
-        <Cards />
+        <Cards {...cardConfig.monitors} />
+        <Stats />
+        <Cards {...cardConfig.incidents} />
+        <Partners />
+        <Cards {...cardConfig.pages} />
+        <SpecialCard {...specialCardConfig} />
         <Plans />
         <Shell>
           <FAQs />

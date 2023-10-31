@@ -91,7 +91,7 @@ export const webhookRouter = createTRPCRouter({
       .update(workspace)
       .set({
         subscriptionId: null,
-        plan: "FREE",
+        plan: "free",
         paidUntil: null,
       })
       .where(eq(workspace.stripeId, customerId))

@@ -5,7 +5,8 @@ import { X } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 
-import { regionsDict } from "@/data/regions-dictionary";
+import { codesDict } from "@/data/code-dictionary";
+import { flyRegionsDict } from "@/data/regions-dictionary";
 import { DataTableDateRangePicker } from "./data-table-date-ranger-picker";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableFilterInput } from "./data-table-filter-input";
@@ -22,16 +23,28 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-1 items-center gap-2">
-        <DataTableFilterInput table={table} />
+        {table.getColumn("statusCode") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("statusCode")}
+            title="Status Code"
+            options={Object.keys(codesDict).map((key) => {
+              const typedKey = key as keyof typeof codesDict;
+              return {
+                label: codesDict[typedKey].label,
+                value: codesDict[typedKey].prefix,
+              };
+            })}
+          />
+        )}
         {table.getColumn("region") && (
           <DataTableFacetedFilter
             column={table.getColumn("region")}
             title="Region"
-            options={Object.keys(regionsDict).map((key) => {
-              const typedKey = key as keyof typeof regionsDict;
+            options={Object.keys(flyRegionsDict).map((key) => {
+              const typedKey = key as keyof typeof flyRegionsDict;
               return {
-                label: regionsDict[typedKey].location,
-                value: regionsDict[typedKey].code,
+                label: flyRegionsDict[typedKey].location,
+                value: flyRegionsDict[typedKey].code,
               };
             })}
           />
@@ -47,7 +60,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <DataTableDateRangePicker />
+      {/* <DataTableDateRangePicker /> */}
     </div>
   );
 }

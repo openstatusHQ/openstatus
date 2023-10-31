@@ -4,9 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
-import type * as z from "zod";
 
-import type { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
+import type { Page } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,10 +27,8 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
-type PageSchema = z.infer<typeof insertPageSchemaWithMonitors>;
-
 interface ActionButtonProps {
-  page: PageSchema;
+  page: Page;
 }
 
 export function ActionButton({ page }: ActionButtonProps) {

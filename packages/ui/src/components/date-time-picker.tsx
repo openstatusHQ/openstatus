@@ -16,9 +16,14 @@ import { cn } from "../lib/utils";
 interface DateTimePickerProps {
   date: Date;
   setDate: (date: Date) => void;
+  className?: string;
 }
 
-export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
+export function DateTimePicker({
+  date,
+  setDate,
+  className,
+}: DateTimePickerProps) {
   const [selectedDateTime, setSelectedDateTime] = React.useState<DateTime>(
     DateTime.fromJSDate(date),
   );
@@ -52,6 +57,7 @@ export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
           className={cn(
             "w-[280px] justify-start text-left font-normal",
             !date && "text-muted-foreground",
+            className,
           )}
           suppressHydrationWarning // because timestamp is not same, server and client
         >

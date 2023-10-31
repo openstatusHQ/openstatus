@@ -26,6 +26,7 @@ export default async function EditPage({
   }
 
   const { id } = search.data;
+  const { workspaceSlug } = params;
 
   const incident = id
     ? await api.incident.getIncidentById.query({
@@ -34,24 +35,29 @@ export default async function EditPage({
     : undefined;
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug: params.workspaceSlug,
+    workspaceSlug,
   });
+
+  const pages = await api.page.getPagesByWorkspace.query({ workspaceSlug });
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Incident" description="Upsert your incident." />
       <div className="col-span-full">
         <IncidentForm
-          workspaceSlug={params.workspaceSlug}
+          workspaceSlug={workspaceSlug}
           monitors={monitors}
+          pages={pages}
           defaultValues={
             incident
               ? {
                   ...incident,
-                  workspaceSlug: params.workspaceSlug,
+                  workspaceSlug,
                   monitors: incident?.monitorsToIncidents.map(
                     ({ monitorId }) => monitorId,
                   ),
+                  pages: incident?.pagesToIncidents.map(({ pageId }) => pageId),
+                  message: "",
                 }
               : undefined
           }

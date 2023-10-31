@@ -6,17 +6,28 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "start": "NODE_ENV=production bun run src/index.ts"
+    "start": "NODE_ENV=production bun run src/index.ts",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@hono/zod-openapi": "0.4.0",
-    "zod": "3.21.4",
+    "@hono/sentry": "^1.0.0",
+    "@hono/zod-openapi": "0.7.1",
     "@openstatus/db": "workspace:*",
+    "@openstatus/notification-discord": "workspace:*",
+    "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-slack": "workspace:*",
+    "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@unkey/api": "0.6.22",
-    "hono": "3.6.1"
+    "@openstatus/upstash": "workspace:*",
+    "@t3-oss/env-core": "0.7.0",
+    "@unkey/api": "0.10.0",
+    "hono": "3.7.6",
+    "nanoid": "5.0.1",
+    "zod": "3.22.2"
   },
   "devDependencies": {
-    "@openstatus/tsconfig": "workspace:*"
+    "@openstatus/tsconfig": "workspace:*",
+    "dotenv": "16.3.1",
+    "vitest": "0.34.6"
   }
 }

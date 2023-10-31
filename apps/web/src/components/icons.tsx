@@ -1,17 +1,24 @@
 import {
   Activity,
+  AlertTriangle,
+  Bell,
+  Bot,
   Calendar,
   Check,
   Cog,
   Copy,
   Fingerprint,
   Globe,
+  Image,
   LayoutDashboard,
   Link,
   MessageCircle,
+  Minus,
   PanelTop,
   Pencil,
+  Play,
   Plug,
+  Puzzle,
   Search,
   SearchCheck,
   Siren,
@@ -20,8 +27,9 @@ import {
   ToyBrick,
   Trash,
   TwitterIcon,
+  Zap,
 } from "lucide-react";
-import type { Icon as LucideIcon, LucideProps } from "lucide-react";
+import type { LucideIcon, LucideProps } from "lucide-react";
 
 export type Icon = LucideIcon;
 export type ValidIcon = keyof typeof Icons;
@@ -48,6 +56,14 @@ export const Icons = {
   plug: Plug,
   copy: Copy,
   check: Check,
+  play: Play,
+  bot: Bot,
+  puzzle: Puzzle,
+  image: Image,
+  bell: Bell,
+  zap: Zap,
+  "alert-triangle": AlertTriangle,
+  minus: Minus,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

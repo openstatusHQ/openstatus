@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { z } from "zod";
 
-import type { selectWorkspaceSchema } from "@openstatus/db/src/schema/workspace";
+import type { Workspace } from "@openstatus/db/src/schema";
 
 import { Shell } from "@/components/dashboard/shell";
 import { Plan } from "@/components/marketing/plans";
@@ -18,7 +18,7 @@ export const SettingsPlan = ({
   workspaceData,
 }: {
   workspaceSlug: string;
-  workspaceData: z.infer<typeof selectWorkspaceSchema>;
+  workspaceData: Workspace;
 }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();

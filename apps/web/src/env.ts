@@ -17,6 +17,11 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET_KEY: z.string(),
     UNKEY_TOKEN: z.string(),
     UNKEY_API_ID: z.string(),
+    GCP_PROJECT_ID: z.string(),
+    GCP_LOCATION: z.string(),
+    GCP_CLIENT_EMAIL: z.string(),
+    GCP_PRIVATE_KEY: z.string(),
+    CRON_SECRET: z.string(),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -51,5 +56,10 @@ export const env = createEnv({
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     UNKEY_TOKEN: process.env.UNKEY_TOKEN,
     UNKEY_API_ID: process.env.UNKEY_API_ID,
+    GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,
+    GCP_LOCATION: process.env.GCP_LOCATION,
+    GCP_CLIENT_EMAIL: process.env.GCP_CLIENT_EMAIL,
+    GCP_PRIVATE_KEY: process.env.GCP_PRIVATE_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
 });

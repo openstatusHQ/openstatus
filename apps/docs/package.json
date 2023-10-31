@@ -3,6 +3,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:sitemap": "next build && next-sitemap",
+    "postbuild": "next-sitemap",
     "start": "next start"
   },
   "repository": {
@@ -11,18 +13,20 @@
   },
   "homepage": "https://openstatus.dev",
   "dependencies": {
-    "@vercel/analytics": "^1.0.1",
+    "@vercel/analytics": "1.0.2",
     "next": "13.4.19",
-    "nextra": "2.10.0",
-    "nextra-theme-docs": "2.10.0",
+    "next-sitemap": "4.2.3",
+    "nextra": "2.13.1",
+    "nextra-theme-docs": "2.13.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "swagger-ui-react": "5.6.2"
+    "swagger-ui-react": "5.9.0"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/node": "18.11.10",
-    "@types/swagger-ui-react": "4.18.0",
-    "typescript": "5.1.6"
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.24",
+    "@types/swagger-ui-react": "4.18.1",
+    "typescript": "5.2.2"
   }
 }

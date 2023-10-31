@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/server";
 
+import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { getMonitorListData } from "@/lib/tb";
 import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
@@ -11,8 +12,6 @@ const size = {
   height: 630,
 };
 
-const TITLE = "OpenStatus";
-const DESCRIPTION = "An Open Source monitoring platform for serverless";
 const LIMIT = 40;
 
 const interRegular = fetch(
@@ -47,7 +46,6 @@ export async function GET(req: Request) {
     (monitorId &&
       (await getMonitorListData({
         monitorId,
-        groupBy: "day",
         limit: LIMIT,
       }))) ||
     [];

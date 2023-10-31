@@ -1,17 +1,47 @@
 import type { Monitor } from "@openstatus/tinybird";
 
+export type StatusVariant = "up" | "degraded" | "down" | "empty";
+
+type GetStatusReturnType = {
+  label: string;
+  variant: StatusVariant;
+  twColor: string;
+  twBgColor: string;
+};
+
 /**
  * Get the status of a monitor based on its ratio
  * @param ratio
  * @returns
  */
-export const getStatus = (
-  ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" | "empty" } => {
-  if (isNaN(ratio)) return { label: "Missing", variant: "empty" };
-  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
-  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
-  return { label: "Downtime", variant: "down" };
+export const getStatus = (ratio: number): GetStatusReturnType => {
+  if (isNaN(ratio))
+    return {
+      label: "Missing",
+      variant: "empty",
+      twColor: "text-gray-500",
+      twBgColor: "bg-gray-500",
+    };
+  if (ratio >= 0.98)
+    return {
+      label: "Operational",
+      variant: "up",
+      twColor: "text-green-500",
+      twBgColor: "bg-green-500",
+    };
+  if (ratio >= 0.5)
+    return {
+      label: "Degraded",
+      variant: "degraded",
+      twColor: "text-yellow-500",
+      twBgColor: "bg-yellow-500",
+    };
+  return {
+    label: "Downtime",
+    variant: "down",
+    twColor: "text-red-500",
+    twBgColor: "bg-red-500",
+  };
 };
 
 /**
@@ -74,7 +104,10 @@ export function fillMissingDates(data: Monitor[]) {
   }
 
   const startDate = new Date(data[0].cronTimestamp);
-  const endDate = new Date(data[data.length - 1].cronTimestamp);
+  const endDate = new Date(
+    new Date(data[data.length - 1].cronTimestamp).setHours(23, 59, 59, 999),
+  );
+
   // The reason why we cannot use `date-fns` is because it isn't supported on the edge
   // const dateSequence = eachDayOfInterval({start:startDate, end:endDate})
   const dateSequence = generateDateSequence(startDate, endDate);
@@ -86,7 +119,8 @@ export function fillMissingDates(data: Monitor[]) {
     const currentTimestamp = currentDate.getTime();
     if (
       dataIndex < data.length &&
-      data[dataIndex].cronTimestamp === currentTimestamp
+      (data[dataIndex].cronTimestamp === currentTimestamp ||
+        data[dataIndex].cronTimestamp + 60 * 60 * 1000 === currentTimestamp)
     ) {
       filledData.push(data[dataIndex]);
       dataIndex++;
@@ -124,4 +158,7 @@ export const blacklistDates: Record<number, string> = {
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
   1693008000000:
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
+  // Downtime on 18. Oct. 2023 between 20h40 - 23h55 - TOD0: remove error logs
+  1697587200000:
+    "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
 };

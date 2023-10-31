@@ -82,16 +82,12 @@ export function Plan({
       {action ? (
         <div>
           {"link" in action ? (
-            <Button asChild size="sm">
+            <Button asChild>
               <Link href={action.link}>{action.text}</Link>
             </Button>
           ) : null}
           {"onClick" in action ? (
-            <Button
-              onClick={action.onClick}
-              size="sm"
-              disabled={disabled || loading}
-            >
+            <Button onClick={action.onClick} disabled={disabled || loading}>
               {loading ? <LoadingAnimation /> : action.text}
             </Button>
           ) : null}

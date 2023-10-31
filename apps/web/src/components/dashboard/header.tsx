@@ -19,14 +19,14 @@ function Header({ title, description, className, actions }: HeaderProps) {
         className,
       )}
     >
-      <div className="grid w-full gap-1">
+      <div className="flex w-full flex-col gap-1">
         <h1 className="font-cal text-3xl">{title}</h1>
         {description ? (
           <p className="text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex items-center gap-2">{actions}</div>
+        <div className="flex flex-1 items-center gap-2">{actions}</div>
       ) : null}
     </div>
   );

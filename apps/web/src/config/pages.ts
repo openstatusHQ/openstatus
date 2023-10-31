@@ -18,9 +18,15 @@ export const pagesConfig: Page[] = [
   },
   {
     title: "Status Pages",
-    description: "Wher you can see all the pages.",
+    description: "Where you can see all the pages.",
     href: "/status-pages",
     icon: "panel-top",
+  },
+  {
+    title: "Notifications",
+    description: "Where you can see all the notifications.",
+    href: "/notifications",
+    icon: "bell",
   },
   {
     title: "Incidents",
@@ -28,11 +34,11 @@ export const pagesConfig: Page[] = [
     href: "/incidents",
     icon: "siren",
   },
-  {
-    title: "Integrations",
-    description: "Where you can see all the integrations.",
-    href: "/integrations",
-    icon: "plug",
-  },
+  // {
+  //   title: "Integrations",
+  //   description: "Where you can see all the integrations.",
+  //   href: "/integrations",
+  //   icon: "plug",
+  // },
   // ...
 ];

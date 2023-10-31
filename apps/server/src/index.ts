@@ -1,40 +1,40 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { sentry } from "@hono/sentry";
+import { Hono } from "hono";
 
-import { incidentApi } from "./incident";
-import { middleware } from "./middleware";
-import { monitorApi } from "./monitor";
+import { checkerRoute } from "./checker";
+import { env } from "./env";
+import { publicRoute } from "./public";
+import { api } from "./v1";
 import { VercelIngest } from "./vercel";
 
-export type Variables = {
-  workspaceId: string;
-};
+const app = new Hono();
+app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
 
 /**
- * Base Path "/v1" for our api
+ * Vercel Integration
  */
-const app = new OpenAPIHono<{ Variables: Variables }>();
-app.doc("/openapi", {
-  openapi: "3.0.0",
-  info: {
-    version: "1.0.0",
-    title: "OpenStatus API",
-  },
-});
-app.get("/ping", (c) => c.text("pong"));
-
-// Where we ingest data from Vercel
 app.post("/integration/vercel", VercelIngest);
+
 /**
- * Authentification Middleware
+ * Public Routes
  */
+app.route("/public", publicRoute);
 
-app.use("/v1/*", middleware);
-app.route("/v1/monitor", monitorApi);
-app.route("/v1/incident", incidentApi);
+/**
+ * Ping Pong
+ */
+app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }, 200));
 
+/**
+ * API Routes v1
+ */
+app.route("/v1", api);
+
+app.route("/", checkerRoute);
 if (process.env.NODE_ENV === "development") {
   app.showRoutes();
 }
+
 console.log("Starting server on port 3000");
 
 export default app;
