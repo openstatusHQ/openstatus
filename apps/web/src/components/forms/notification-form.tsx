@@ -69,9 +69,8 @@ function getProviderMetaData(provider: NotificationProvider) {
     case "discord":
       return {
         dataType: "url",
-        placeholder: "https://hooks.slack.com/services/xxx...", // FIXME:
-        setupDocLink:
-          "https://api.slack.com/messaging/webhooks#getting_started", // FIXME:
+        placeholder: "https://discord.com/api/webhooks/{channelId}/xxx...",
+        setupDocLink: "https://support.discord.com/hc/en-us/articles/228383668",
         sendTest: sendTestDiscordMessage,
       };
 
