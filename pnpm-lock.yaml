@@ -127,6 +127,9 @@ importers:
       dotenv:
         specifier: 16.3.1
         version: 16.3.1
+      eslint:
+        specifier: 8.50.0
+        version: 8.50.0
       vitest:
         specifier: 0.34.6
         version: 0.34.6

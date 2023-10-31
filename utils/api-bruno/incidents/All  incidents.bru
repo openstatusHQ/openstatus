@@ -1,0 +1,15 @@
+meta {
+  name: All  incidents
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/v1/incident
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: api-key
+}

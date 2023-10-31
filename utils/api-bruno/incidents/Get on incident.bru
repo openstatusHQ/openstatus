@@ -1,0 +1,19 @@
+meta {
+  name: Get on incident
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/v1/incident/{{id}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: api-key
+}
+
+vars:pre-request {
+  id: 31
+}
