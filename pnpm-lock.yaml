@@ -79,11 +79,11 @@ importers:
   apps/server:
     dependencies:
       '@hono/sentry':
-        specifier: ^1.0.0
-        version: 1.0.0(hono@3.7.6)
+        specifier: 1.0.0
+        version: 1.0.0(hono@3.9.1)
       '@hono/zod-openapi':
-        specifier: 0.7.1
-        version: 0.7.1(hono@3.7.6)(zod@3.22.2)
+        specifier: 0.8.3
+        version: 0.8.3(hono@3.9.1)(zod@3.22.4)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -106,20 +106,20 @@ importers:
         specifier: workspace:*
         version: link:../../packages/upstash
       '@t3-oss/env-core':
-        specifier: 0.7.0
-        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.2.2)(zod@3.22.4)
       '@unkey/api':
-        specifier: 0.10.0
-        version: 0.10.0
+        specifier: 0.11.0
+        version: 0.11.0
       hono:
-        specifier: 3.7.6
-        version: 3.7.6
+        specifier: 3.9.1
+        version: 3.9.1
       nanoid:
-        specifier: 5.0.1
-        version: 5.0.1
+        specifier: 5.0.2
+        version: 5.0.2
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -128,8 +128,8 @@ importers:
         specifier: 16.3.1
         version: 16.3.1
       eslint:
-        specifier: 8.50.0
-        version: 8.50.0
+        specifier: 8.52.0
+        version: 8.52.0
       vitest:
         specifier: 0.34.6
         version: 0.34.6
@@ -969,13 +969,13 @@ packages:
     resolution: {integrity: sha512-TD+xbmsBLyYy/IxFimW/YL/9L2IEnM7/EoV9Aeh56U64Ify8o27HJcKjo38XY9Tcn0uOq1AX3thkKgvtWvwFQg==}
     dev: false
 
-  /@asteasolutions/zod-to-openapi@5.5.0(zod@3.22.2):
+  /@asteasolutions/zod-to-openapi@5.5.0(zod@3.22.4):
     resolution: {integrity: sha512-d5HwrvM6dOKr3XdeF+DmashGvfEc+1oiEfbscugsiwSTrFtuMa7ETpW9sTNnVgn+hJaz+PRxPQUYD7q9/5dUig==}
     peerDependencies:
       zod: ^3.20.2
     dependencies:
       openapi3-ts: 4.1.2
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@babel/code-frame@7.22.13:
@@ -1169,7 +1169,7 @@ packages:
   /@chronark/zod-bird@0.2.2:
     resolution: {integrity: sha512-0mmiiw4dny1aiEOmawsIJUaYW16vhWRuDGsDa62GfFhdD3F7hHrTi3lWNWYCVq2KsCS+CYwMj8nkdFuOnejCTA==}
     dependencies:
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@clerk/backend@0.30.3(react@18.2.0):
@@ -1368,7 +1368,7 @@ packages:
       ts-pattern: 4.3.0
       unified: 10.1.2
       yaml: 2.3.3
-      zod: 3.22.2
+      zod: 3.22.4
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
       - esbuild
@@ -2126,6 +2126,16 @@ packages:
       eslint: 8.50.0
       eslint-visitor-keys: 3.4.3
 
+  /@eslint-community/eslint-utils@4.4.0(eslint@8.52.0):
+    resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
+    dependencies:
+      eslint: 8.52.0
+      eslint-visitor-keys: 3.4.3
+    dev: true
+
   /@eslint-community/regexpp@4.9.1:
     resolution: {integrity: sha512-Y27x+MBLjXa+0JWDhykM3+JE+il3kHKAEqabfEWq3SDhZjLYb6/BHL/JKFnH3fe207JaXkyDo685Oc2Glt6ifA==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
@@ -2149,6 +2159,11 @@ packages:
   /@eslint/js@8.50.0:
     resolution: {integrity: sha512-NCC3zz2+nvYd+Ckfh87rA47zfu2QsQpvc6k1yzTk+b9KzRj0wkGa8LSoGOXN6Zv4lRf/EIoZ80biDh9HOI+RNQ==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  /@eslint/js@8.52.0:
+    resolution: {integrity: sha512-mjZVbpaeMZludF2fsWLD0Z9gCref1Tk4i9+wddjRvpUNqqcndPkBD09N/Mapey0b3jaXbLm2kICwFv2E64QinA==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    dev: true
 
   /@fal-works/esbuild-plugin-global-externals@2.1.2:
     resolution: {integrity: sha512-cEee/Z+I12mZcFJshKcCqC8tuX5hG3s+d+9nZ3LabqKF1vKdF41B92pJVCBggjAGORAeOzyyDDKrZwIkLffeOQ==}
@@ -2261,36 +2276,36 @@ packages:
       tailwindcss: 3.3.2
     dev: false
 
-  /@hono/sentry@1.0.0(hono@3.7.6):
+  /@hono/sentry@1.0.0(hono@3.9.1):
     resolution: {integrity: sha512-GbPxgpGuasM2zRCSaA77MPWu4KDcuk/EMf7JJykjCvnOTbjmtr7FovNxsvg7xlXCIjZDgLmqBaoJMi3AxbeIAA==}
     peerDependencies:
       hono: 3.*
     dependencies:
-      hono: 3.7.6
+      hono: 3.9.1
       toucan-js: 3.3.0
     dev: false
 
-  /@hono/zod-openapi@0.7.1(hono@3.7.6)(zod@3.22.2):
-    resolution: {integrity: sha512-zs6AURALRF0A1gkuY5iKmRBT7d0JsLC3xVPDjBdRbJqNV3XQv4i2kprZTRAcI9AjjGApTsZbLZv1pZRCB2viwQ==}
+  /@hono/zod-openapi@0.8.3(hono@3.9.1)(zod@3.22.4):
+    resolution: {integrity: sha512-TwjSf63miIF3VBqNy4V6EOqZYdTQPeIQQ9Q2HjRWFYH9f2QtBFXziuqIg2Y76gNZ3WDal67NQXmbSErHiFR44g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
-      hono: '*'
+      hono: '>=3.9.0'
       zod: 3.*
     dependencies:
-      '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.2)
-      '@hono/zod-validator': 0.1.9(hono@3.7.6)(zod@3.22.2)
-      hono: 3.7.6
-      zod: 3.22.2
+      '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.4)
+      '@hono/zod-validator': 0.1.9(hono@3.9.1)(zod@3.22.4)
+      hono: 3.9.1
+      zod: 3.22.4
     dev: false
 
-  /@hono/zod-validator@0.1.9(hono@3.7.6)(zod@3.22.2):
+  /@hono/zod-validator@0.1.9(hono@3.9.1)(zod@3.22.4):
     resolution: {integrity: sha512-qEG5xagKzyif283ldCKzp+aF9Aebclg0sfrgyRQQNAizmXpicZ3UGduST/Jp+a9bjt3mI+VyEXMftb4rogLxQA==}
     peerDependencies:
       hono: 3.*
       zod: ^3.19.1
     dependencies:
-      hono: 3.7.6
-      zod: 3.22.2
+      hono: 3.9.1
+      zod: 3.22.4
     dev: false
 
   /@hookform/resolvers@3.3.1(react-hook-form@7.47.0):
@@ -5265,6 +5280,19 @@ packages:
       zod: 3.22.2
     dev: false
 
+  /@t3-oss/env-core@0.7.1(typescript@5.2.2)(zod@3.22.4):
+    resolution: {integrity: sha512-3+SQt39OlmSaRLqYVFv8uRm1BpFepM5TIiMytRqO9cjH+wB77o6BIJdeyM5h5U4qLBMEzOJWCY4MBaU/rLwbYw==}
+    peerDependencies:
+      typescript: '>=4.7.2'
+      zod: ^3.0.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+    dependencies:
+      typescript: 5.2.2
+      zod: 3.22.4
+    dev: false
+
   /@t3-oss/env-nextjs@0.7.0(typescript@5.2.2)(zod@3.22.2):
     resolution: {integrity: sha512-rjQIt6P3tac2eRx4BNQLNaJ+AIb2P8wXw4uFvYbEekqMGShikkUALnX3hUn1twYiGVGHXRm6UbU+LqtjIktuGg==}
     peerDependencies:
@@ -5990,10 +6018,13 @@ packages:
 
   /@ungap/structured-clone@1.2.0:
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
-    dev: false
 
   /@unkey/api@0.10.0:
     resolution: {integrity: sha512-ix1XQqZPuBlNkimQniqNjwpqduGb/hBm5LAFRgPfotY97IGUcsKGV3YGl7GAnqFB9wa31OeOT/yeSbEgXiQJWw==}
+    dev: false
+
+  /@unkey/api@0.11.0:
+    resolution: {integrity: sha512-pJRuvRWFAnp6qGryvtI5+J95rtIHUCnTOw0bQTewr2+qFNLv/UimEIlR8Ef6kln/5evc3C94yPjFy59nuCMoWQ==}
     dev: false
 
   /@upstash/core-analytics@0.0.6:
@@ -7793,7 +7824,7 @@ packages:
       hanji: 0.0.5
       json-diff: 0.9.0
       minimatch: 7.4.6
-      zod: 3.22.2
+      zod: 3.22.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -8472,6 +8503,53 @@ packages:
       text-table: 0.2.0
     transitivePeerDependencies:
       - supports-color
+
+  /eslint@8.52.0:
+    resolution: {integrity: sha512-zh/JHnaixqHZsolRB/w9/02akBk9EPrOs9JwcTP2ek7yL5bVvXuRariiaAjjoJ5DvuwQ1WAE/HsMz+w17YgBCg==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    hasBin: true
+    dependencies:
+      '@eslint-community/eslint-utils': 4.4.0(eslint@8.52.0)
+      '@eslint-community/regexpp': 4.9.1
+      '@eslint/eslintrc': 2.1.2
+      '@eslint/js': 8.52.0
+      '@humanwhocodes/config-array': 0.11.13
+      '@humanwhocodes/module-importer': 1.0.1
+      '@nodelib/fs.walk': 1.2.8
+      '@ungap/structured-clone': 1.2.0
+      ajv: 6.12.6
+      chalk: 4.1.2
+      cross-spawn: 7.0.3
+      debug: 4.3.4
+      doctrine: 3.0.0
+      escape-string-regexp: 4.0.0
+      eslint-scope: 7.2.2
+      eslint-visitor-keys: 3.4.3
+      espree: 9.6.1
+      esquery: 1.5.0
+      esutils: 2.0.3
+      fast-deep-equal: 3.1.3
+      file-entry-cache: 6.0.1
+      find-up: 5.0.0
+      glob-parent: 6.0.2
+      globals: 13.23.0
+      graphemer: 1.4.0
+      ignore: 5.2.4
+      imurmurhash: 0.1.4
+      is-glob: 4.0.3
+      is-path-inside: 3.0.3
+      js-yaml: 4.1.0
+      json-stable-stringify-without-jsonify: 1.0.1
+      levn: 0.4.1
+      lodash.merge: 4.6.2
+      minimatch: 3.1.2
+      natural-compare: 1.4.0
+      optionator: 0.9.3
+      strip-ansi: 6.0.1
+      text-table: 0.2.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /espree@9.6.1:
     resolution: {integrity: sha512-oruZaFkjorTpF32kDSI5/75ViwGeZginGGy2NoOSg3Q9bnwlnmDm4HLnkl0RE3n+njDXR037aY1+x58Z/zFdwQ==}
@@ -9534,8 +9612,8 @@ packages:
       react-is: 16.13.1
     dev: false
 
-  /hono@3.7.6:
-    resolution: {integrity: sha512-nuLNH9+nV6ojXK6b9I0RGZgdMuLTOXeQPs6xsIw/G5iyT8j8m7Nnx8pTxQprmSmCaEYIPv91rCcq45PQNfW68A==}
+  /hono@3.9.1:
+    resolution: {integrity: sha512-z3nM9CjNZ8PRAH6NNntk4ESKW2POEbGanhK1QpYdQ1MOYRzZPSEE8B5mqw8bYEPa7qIQxX0vtlv7XOxtwFbosg==}
     engines: {node: '>=16.0.0'}
     dev: false
 
@@ -11687,6 +11765,12 @@ packages:
 
   /nanoid@5.0.1:
     resolution: {integrity: sha512-vWeVtV5Cw68aML/QaZvqN/3QQXc6fBfIieAlu05m7FZW2Dgb+3f0xc0TTxuJW+7u30t7iSDTV/j3kVI0oJqIfQ==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
+    dev: false
+
+  /nanoid@5.0.2:
+    resolution: {integrity: sha512-2ustYUX1R2rL/Br5B/FMhi8d5/QzvkJ912rBYxskcpu0myTHzSZfTr1LAS2Sm7jxRUObRrSBFoyzwAhL49aVSg==}
     engines: {node: ^18 || >=20}
     hasBin: true
     dev: false
@@ -15917,6 +16001,10 @@ packages:
 
   /zod@3.22.2:
     resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+    dev: false
+
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
