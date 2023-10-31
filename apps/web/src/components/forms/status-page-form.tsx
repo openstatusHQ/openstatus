@@ -36,8 +36,6 @@ import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
-// REMINDER: only use the props you need!
-
 interface Props {
   defaultValues?: InsertPage;
   allMonitors?: Monitor[];
@@ -118,19 +116,10 @@ export function StatusPageForm({
 
   const onSubmit = async ({ ...props }: InsertPage) => {
     startTransition(async () => {
-      // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
       try {
-        // if (defaultValues) {
-        //   await api.page.updatePage.mutate(props);
-        // } else {
-        //   const page = await api.page.createPage.mutate(props);
-        //   const id = page?.id || null;
-        //   router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
-        // }
-        console.log({ props });
         const page = await api.page.upsert.mutate(props);
         const id = page?.id || null;
-        router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
+        router.replace(`?${updateSearchParams({ id })}`);
 
         defaultToast({
           title: "Saved successfully.",
