@@ -45,7 +45,7 @@ const incidentUpdateSchema = z.object({
 
 const getUpdateRoute = createRoute({
   method: "get",
-  tags: ["incident"],
+  tags: ["incident_update"],
   path: "/:id",
   request: {
     params: ParamsSelectSchema,
