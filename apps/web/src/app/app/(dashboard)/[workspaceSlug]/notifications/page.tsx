@@ -16,9 +16,7 @@ export default async function MonitorPage({
   params: { workspaceSlug: string };
 }) {
   const notifications =
-    await api.notification.getNotificationsByWorkspace.query({
-      workspaceSlug: params.workspaceSlug,
-    });
+    await api.notification.getNotificationsByWorkspace.query();
 
   return (
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-2 md:gap-8">

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     /**
      * Forward to tRPC API to handle the webhook event
      */
-    const ctx = await createTRPCContext({ req });
+    const ctx = createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
     switch (event.type) {

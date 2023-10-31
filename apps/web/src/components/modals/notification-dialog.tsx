@@ -34,10 +34,7 @@ export const NotificationDialog = ({
             Get alerted when your endpoint is down.
           </DialogDescription>
         </DialogHeader>
-        <NotificationForm
-          onSubmit={() => setOpen(false)}
-          {...{ workspaceSlug }}
-        />
+        <NotificationForm onSubmit={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

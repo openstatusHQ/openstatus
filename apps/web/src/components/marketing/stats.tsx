@@ -6,7 +6,7 @@ import { api } from "@/trpc/server";
 export async function Stats() {
   const tbTotalStats = await getHomeStatsData({});
   const tbLastHourStats = await getHomeStatsData({ period: "1h" });
-  // FIXME:
+  // FIXME: is it time?
   // const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query(
   //   {},
   // );

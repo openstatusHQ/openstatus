@@ -7,8 +7,6 @@ export const incidentStatusSchema = z.enum(incidentStatus);
 
 export const insertIncidentUpdateSchema = createInsertSchema(incidentUpdate, {
   status: incidentStatusSchema,
-}).extend({
-  workspaceSlug: z.string(), // FIXME: we should do it differently!
 });
 
 export const insertIncidentSchema = createInsertSchema(incident, {
@@ -16,7 +14,6 @@ export const insertIncidentSchema = createInsertSchema(incident, {
 })
   .extend({
     date: z.date().optional().default(new Date()),
-    workspaceSlug: z.string(),
     /**
      * relationship to monitors and pages
      */

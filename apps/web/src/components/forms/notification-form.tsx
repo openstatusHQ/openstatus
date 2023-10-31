@@ -87,12 +87,10 @@ function getProviderMetaData(provider: NotificationProvider) {
 
 interface Props {
   defaultValues?: InsertNotification;
-  workspaceSlug: string;
   onSubmit?: () => void;
 }
 
 export function NotificationForm({
-  workspaceSlug,
   defaultValues,
   onSubmit: onExternalSubmit,
 }: Props) {
@@ -119,14 +117,13 @@ export function NotificationForm({
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.notification.updateNotification.mutate({
+          await api.notification.update.mutate({
             provider,
             data: JSON.stringify(setProviderData(provider, data)),
             ...rest,
           });
         } else {
-          await api.notification.createNotification.mutate({
-            workspaceSlug,
+          await api.notification.create.mutate({
             provider,
             data: JSON.stringify(setProviderData(provider, data)),
             ...rest,

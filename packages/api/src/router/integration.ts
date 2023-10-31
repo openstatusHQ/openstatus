@@ -1,13 +1,12 @@
 import { z } from "zod";
 
-import { and, eq, inArray } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
   insertIntegrationSchema,
   integration,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { hasUserAccessToWorkspace } from "./utils";
 
 export const integrationRouter = createTRPCRouter({
   createIntegration: protectedProcedure
@@ -15,18 +14,12 @@ export const integrationRouter = createTRPCRouter({
       z.object({ workspaceSlug: z.string(), input: insertIntegrationSchema }),
     )
     .mutation(async (opts) => {
-      const result = await hasUserAccessToWorkspace({
-        workspaceSlug: opts.input.workspaceSlug,
-        ctx: opts.ctx,
-      });
-      if (!result) return;
-
       const exists = await opts.ctx.db
         .select()
         .from(integration)
         .where(
           and(
-            eq(integration.workspaceId, result.workspace.id),
+            eq(integration.workspaceId, opts.ctx.workspace.id),
             eq(integration.externalId, opts.input.input.externalId),
           ),
         )
@@ -37,7 +30,7 @@ export const integrationRouter = createTRPCRouter({
       }
       await opts.ctx.db
         .insert(integration)
-        .values({ ...opts.input.input, workspaceId: result.workspace.id })
+        .values({ ...opts.input.input, workspaceId: opts.ctx.workspace.id })
         .returning()
         .get();
     }),

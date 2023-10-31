@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ctx = await createTRPCContext({ req });
+  const ctx = createTRPCContext({ req });
   const caller = lambdaRouter.createCaller(ctx);
   const event = r.data.type;
   switch (event) {

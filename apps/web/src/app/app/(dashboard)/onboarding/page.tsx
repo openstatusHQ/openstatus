@@ -45,9 +45,7 @@ export default async function Onboarding({
     );
   }
 
-  const allMonitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug,
-  });
+  const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
 
   if (!monitorId) {
     return (
@@ -63,7 +61,7 @@ export default async function Onboarding({
         />
         <div className="grid h-full w-full gap-6 md:grid-cols-3 md:gap-8">
           <div className="md:col-span-2">
-            <MonitorForm {...{ workspaceSlug }} />
+            <MonitorForm />
           </div>
           <div className="hidden h-full md:col-span-1 md:block">
             <Description step="monitor" />

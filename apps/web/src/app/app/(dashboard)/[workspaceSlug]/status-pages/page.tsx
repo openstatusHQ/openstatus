@@ -20,16 +20,10 @@ export default async function Page({
 }: {
   params: { workspaceSlug: string };
 }) {
-  const pages = await api.page.getPagesByWorkspace.query({
-    workspaceSlug: params.workspaceSlug,
-  });
-  const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug: params.workspaceSlug,
-  });
+  const pages = await api.page.getPagesByWorkspace.query();
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
-  const workspace = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
-  });
+  const workspace = await api.workspace.getWorkspace.query();
 
   const isLimit =
     (pages?.length || 0) >=

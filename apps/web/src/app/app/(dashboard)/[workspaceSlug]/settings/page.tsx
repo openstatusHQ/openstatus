@@ -19,9 +19,7 @@ export default async function Page({
 }: {
   params: { workspaceSlug: string };
 }) {
-  const data = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
-  });
+  const data = await api.workspace.getWorkspace.query();
 
   if (!data) {
     return <>Workspace not found</>;

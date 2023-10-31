@@ -117,9 +117,13 @@ export function StatusPageForm({
   const onSubmit = async ({ ...props }: InsertPage) => {
     startTransition(async () => {
       try {
-        const page = await api.page.upsert.mutate(props);
-        const id = page?.id || null;
-        router.replace(`?${updateSearchParams({ id })}`);
+        if (defaultValues) {
+          await api.page.update.mutate(props);
+        } else {
+          const page = await api.page.create.mutate(props);
+          const id = page?.id || null;
+          router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
+        }
 
         defaultToast({
           title: "Saved successfully.",

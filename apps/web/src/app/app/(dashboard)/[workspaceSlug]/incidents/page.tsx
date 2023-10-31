@@ -66,11 +66,7 @@ export default async function IncidentPage({
                           New Update
                         </Link>
                       </Button>,
-                      <ActionButton
-                        key="action-button"
-                        id={incident.id}
-                        workspaceSlug={params.workspaceSlug}
-                      />,
+                      <ActionButton key="action-button" id={incident.id} />,
                     ]}
                   >
                     <div className="grid gap-4">

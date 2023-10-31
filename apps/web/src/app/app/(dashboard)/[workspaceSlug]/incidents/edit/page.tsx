@@ -34,25 +34,21 @@ export default async function EditPage({
       })
     : undefined;
 
-  const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug,
-  });
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
-  const pages = await api.page.getPagesByWorkspace.query({ workspaceSlug });
+  const pages = await api.page.getPagesByWorkspace.query();
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Incident" description="Upsert your incident." />
       <div className="col-span-full">
         <IncidentForm
-          workspaceSlug={workspaceSlug}
           monitors={monitors}
           pages={pages}
           defaultValues={
             incident
               ? {
                   ...incident,
-                  workspaceSlug,
                   monitors: incident?.monitorsToIncidents.map(
                     ({ monitorId }) => monitorId,
                   ),

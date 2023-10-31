@@ -9,7 +9,6 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { hasUserAccessToWorkspace } from "./utils";
 
 export const workspaceRouter = createTRPCRouter({
   getUserWithWorkspace: protectedProcedure.query(async (opts) => {
@@ -25,21 +24,13 @@ export const workspaceRouter = createTRPCRouter({
     });
   }),
 
-  getWorkspace: protectedProcedure
-    .input(z.object({ slug: z.string() }))
-    .query(async (opts) => {
-      const data = await hasUserAccessToWorkspace({
-        workspaceSlug: opts.input.slug,
-        ctx: opts.ctx,
-      });
-      if (!data) return;
+  getWorkspace: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.workspace.findFirst({
+      where: eq(workspace.id, opts.ctx.workspace.id),
+    });
 
-      const result = await opts.ctx.db.query.workspace.findFirst({
-        where: eq(workspace.id, data.workspace.id),
-      });
-
-      return selectWorkspaceSchema.parse(result);
-    }),
+    return selectWorkspaceSchema.parse(result);
+  }),
 
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))

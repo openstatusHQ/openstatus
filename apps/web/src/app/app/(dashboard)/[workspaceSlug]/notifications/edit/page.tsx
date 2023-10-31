@@ -41,10 +41,7 @@ export default async function EditPage({
         }
       />
       <div className="col-span-full">
-        <NotificationForm
-          workspaceSlug={params.workspaceSlug}
-          defaultValues={notification || undefined}
-        />
+        <NotificationForm defaultValues={notification || undefined} />
       </div>
     </div>
   );

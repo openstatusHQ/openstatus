@@ -1,7 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
   incident,
@@ -12,18 +11,15 @@ import {
   page,
   pagesToIncidents,
   selectPublicPageSchemaWithRelation,
-  user,
-  usersToWorkspaces,
-  workspace,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
+import { trackNewPage } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { hasUserAccessToWorkspace } from "./utils";
 
 export const pageRouter = createTRPCRouter({
-  upsert: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
-    const { monitors, workspaceId, id, ...pageInput } = opts.input;
+  create: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
+    const { monitors, workspaceId, id, ...pageProps } = opts.input;
 
     const pageNumbers = (
       await opts.ctx.db.query.page.findMany({
@@ -31,8 +27,7 @@ export const pageRouter = createTRPCRouter({
       })
     ).length;
 
-    const limit =
-      allPlans[opts.ctx.workspace.plan || "free"].limits["status-pages"];
+    const limit = allPlans[opts.ctx.workspace.plan].limits["status-pages"];
 
     // the user has reached the limits
     if (pageNumbers >= limit) {
@@ -42,30 +37,60 @@ export const pageRouter = createTRPCRouter({
       });
     }
 
-    const currentPage = id
-      ? await opts.ctx.db
-          .update(page)
-          .set({ ...pageInput, updatedAt: new Date() })
-          .where(eq(page.id, id))
-          .returning()
-          .get()
-      : await opts.ctx.db
-          .insert(page)
-          .values({ workspaceId: opts.ctx.workspace.id, ...pageInput })
-          .returning()
-          .get();
+    const newPage = await opts.ctx.db
+      .insert(page)
+      .values({ workspaceId: opts.ctx.workspace.id, ...pageProps })
+      .returning()
+      .get();
 
-    if (!id) {
-      // TODO: check, do we have to await for the two calls? Will slow down user response for our analytics
-      await analytics.identify(opts.ctx.user.id, {
-        userId: opts.ctx.user.id,
-        email: opts.ctx.user.email,
+    if (monitors && monitors.length > 0) {
+      // We should make sure the user has access to the monitors
+      const allMonitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          inArray(monitor.id, monitors),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+        ),
       });
-      await trackAnalytics({
-        event: "Page Created",
-        slug: currentPage.slug,
-      });
+      const values = allMonitors.map((monitor) => ({
+        monitorId: monitor.id,
+        pageId: newPage.id,
+      }));
+      await opts.ctx.db.insert(monitorsToPages).values(values).run();
     }
+
+    trackNewPage(opts.ctx.user, { slug: newPage.slug });
+
+    return newPage;
+  }),
+  getPageById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      return await opts.ctx.db.query.page.findFirst({
+        where: and(
+          eq(page.id, opts.input.id),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+          // incidents: true
+        },
+      });
+    }),
+  update: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
+    const { monitors, ...pageInput } = opts.input;
+    if (!pageInput.id) return;
+
+    const currentPage = await opts.ctx.db
+      .update(page)
+      .set({ ...pageInput, updatedAt: new Date() })
+      .where(
+        and(
+          eq(page.id, pageInput.id),
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
+      )
+      .returning()
+      .get();
 
     // TODO: optimize!
     const currentMonitorsToPages = await opts.ctx.db
@@ -106,55 +131,34 @@ export const pageRouter = createTRPCRouter({
         )
         .run();
     }
-
-    return currentPage;
   }),
-  getPageById: protectedProcedure
-    .input(z.object({ id: z.number() }))
-    .query(async (opts) => {
-      return await opts.ctx.db.query.page.findFirst({
-        where: and(
-          eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
-        with: {
-          monitorsToPages: { with: { monitor: true } },
-          // incidents: true
-        },
-      });
-    }),
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const pageToDelete = await opts.ctx.db
-        .select()
-        .from(page)
+      await opts.ctx.db
+        .delete(page)
         .where(
           and(
             eq(page.id, opts.input.id),
             eq(page.workspaceId, opts.ctx.workspace.id),
           ),
         )
-        .get();
-      if (!pageToDelete) return;
-
-      await opts.ctx.db.delete(page).where(eq(page.id, pageToDelete.id)).run();
+        .run();
     }),
-  getPagesByWorkspace: protectedProcedure
-    .input(z.object({ workspaceSlug: z.string() }))
-    .query(async (opts) => {
-      return opts.ctx.db.query.page.findMany({
-        where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
-        with: {
-          monitorsToPages: { with: { monitor: true } },
-        },
-      });
-    }),
+  getPagesByWorkspace: protectedProcedure.query(async (opts) => {
+    return opts.ctx.db.query.page.findMany({
+      where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
+      with: {
+        monitorsToPages: { with: { monitor: true } },
+      },
+    });
+  }),
 
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
     .query(async (opts) => {
+      console.log(opts.input.slug);
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
       });
