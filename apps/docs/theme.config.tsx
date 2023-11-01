@@ -6,7 +6,7 @@ const config: DocsThemeConfig = {
     link: "https://github.com/openstatusHQ/openstatus",
   },
   chat: {
-    link: "https://discord.com/invite/dHD4JtSfsn",
+    link: "https://www.openstatus.dev/discord",
   },
   docsRepositoryBase:
     "https://github.com/openstatusHQ/openstatus/tree/main/apps/docs",
@@ -26,7 +26,7 @@ const config: DocsThemeConfig = {
       <title>OpenStatus Documentation</title>
       <meta
         name="description"
-        content="An Open Source monitoring platform for serverless"
+        content="An Open Source monitoring platform with incident management"
       />
       <meta property="og:image" content="https://openstatus.dev/api/og" />
     </>
