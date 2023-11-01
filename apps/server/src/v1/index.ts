@@ -3,6 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import type { Plan } from "@openstatus/plans";
 
 import { incidentApi } from "./incident";
+import { incidenUpdatetApi } from "./incidentUpdate";
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
 
@@ -27,4 +28,6 @@ api.doc("/openapi", {
 api.use("/*", middleware);
 
 api.route("/monitor", monitorApi);
+api.route("/incident_update", incidenUpdatetApi);
+
 api.route("/incident", incidentApi);

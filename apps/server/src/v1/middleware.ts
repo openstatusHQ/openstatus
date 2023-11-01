@@ -10,7 +10,6 @@ export async function middleware(
 ) {
   const key = c.req.header("x-openstatus-key");
   if (!key) return c.text("Unauthorized", 401);
-
   if (process.env.NODE_ENV === "production") {
     const { error, result } = await verifyKey(key);
 

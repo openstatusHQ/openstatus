@@ -7,11 +7,12 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint \"**/*.ts*\""
   },
   "dependencies": {
-    "@hono/sentry": "^1.0.0",
-    "@hono/zod-openapi": "0.7.1",
+    "@hono/sentry": "1.0.0",
+    "@hono/zod-openapi": "0.8.3",
     "@openstatus/db": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
@@ -19,15 +20,16 @@
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
-    "@t3-oss/env-core": "0.7.0",
-    "@unkey/api": "0.10.0",
-    "hono": "3.7.6",
-    "nanoid": "5.0.1",
+    "@t3-oss/env-core": "0.7.1",
+    "@unkey/api": "0.11.0",
+    "hono": "3.9.1",
+    "nanoid": "5.0.2",
     "zod": "3.22.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "dotenv": "16.3.1",
-    "vitest": "0.34.6"
+    "vitest": "0.34.6",
+    "eslint": "8.50.0"
   }
 }

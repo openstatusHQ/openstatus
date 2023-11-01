@@ -50,6 +50,12 @@ const incidentSchema = z.object({
 
 const incidentExtendedSchema = incidentSchema.extend({
   id: z.number().openapi({ description: "The id of the incident" }),
+  incident_updates: z
+    .array(z.number())
+    .openapi({
+      description: "The ids of the incident updates",
+    })
+    .default([]),
 });
 const getAllRoute = createRoute({
   method: "get",
@@ -75,18 +81,26 @@ const getAllRoute = createRoute({
     },
   },
 });
+
 incidentApi.openapi(getAllRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
-
-  const _incidents = await db
-    .select()
-    .from(incident)
-    .where(eq(incident.workspaceId, workspaceId))
-    .all();
+  const _incidents = await db.query.incident.findMany({
+    with: {
+      incidentUpdates: true,
+    },
+    where: eq(incident.workspaceId, workspaceId),
+  });
 
   if (!_incidents) return c.jsonT({ code: 404, message: "Not Found" });
 
-  const data = z.array(incidentExtendedSchema).parse(_incidents);
+  const data = z.array(incidentExtendedSchema).parse(
+    _incidents.map((incident) => ({
+      ...incident,
+      incident_updates: incident.incidentUpdates.map((incidentUpdate) => {
+        return incidentUpdate.id;
+      }),
+    })),
+  );
 
   return c.jsonT(data);
 });
@@ -117,23 +131,30 @@ const getRoute = createRoute({
     },
   },
 });
+
 incidentApi.openapi(getRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
   const incidentId = Number(id);
-  const _incident = await db
-    .select()
-    .from(incident)
-    .where(eq(incident.id, incidentId))
-    .get();
+  const _incident = await db.query.incident.findFirst({
+    with: {
+      incidentUpdates: true,
+    },
+    where: and(
+      eq(incident.workspaceId, workspaceId),
+      eq(incident.id, incidentId),
+    ),
+  });
 
   if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
-
-  if (workspaceId !== _incident.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
-
-  const data = incidentExtendedSchema.parse(_incident);
+  console.log(_incident);
+  const data = incidentExtendedSchema.parse({
+    ..._incident,
+    incident_updates: _incident.incidentUpdates.map(
+      (incidentUpdate) => incidentUpdate.id,
+    ),
+  });
 
   return c.jsonT(data);
 });

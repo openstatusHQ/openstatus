@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expect, it, vi } from "vitest";
 
 // REMINDER: keep it here for the mock
