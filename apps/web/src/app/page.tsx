@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ClerkProvider } from "@clerk/nextjs";
 import { ChevronRight } from "lucide-react";
 
 import { Badge, Button } from "@openstatus/ui";
@@ -38,7 +39,7 @@ export default async function Page() {
             Open-source monitoring service
           </h1>
           <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-            OpenStatus is an open source monitoring services with on-call
+            OpenStatus is an open source monitoring services with incident
             managements.
           </p>
           {/* much better than using flex without text alignment, text stays center even thought not same length */}

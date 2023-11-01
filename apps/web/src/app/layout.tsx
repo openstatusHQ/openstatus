@@ -43,13 +43,11 @@ export default function RootLayout({
     <html lang="en">
       {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
       <PlausibleProvider domain="openstatus.dev">
-        <ClerkProvider>
-          <body className={`${inter.className} ${calSans.variable}`}>
-            <Background>{children}</Background>
-            <Toaster />
-            <TailwindIndicator />
-          </body>
-        </ClerkProvider>
+        <body className={`${inter.className} ${calSans.variable}`}>
+          <Background>{children}</Background>
+          <Toaster />
+          <TailwindIndicator />
+        </body>
       </PlausibleProvider>
     </html>
   );

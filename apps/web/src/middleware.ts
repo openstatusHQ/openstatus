@@ -80,7 +80,7 @@ export default authMiddleware({
     "/status-page/(.*)",
     "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
   ],
-  ignoredRoutes: ["/api/og", "/discord", "github"], // FIXME: we should check the `publicRoutes`
+  ignoredRoutes: ["/api/og", "/discord", "github", "/status-page/(.*)"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
   debug: false,
   async afterAuth(auth, req) {
