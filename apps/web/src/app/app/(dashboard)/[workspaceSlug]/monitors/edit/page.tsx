@@ -27,7 +27,9 @@ export default async function EditPage({
 
   const { id } = search.data;
 
-  const monitor = id && (await api.monitor.getMonitorById.query({ id }));
+  const monitor = id
+    ? await api.monitor.getMonitorById.query({ id })
+    : undefined;
   const workspace = await api.workspace.getWorkspace.query();
 
   const monitorNotifications = id

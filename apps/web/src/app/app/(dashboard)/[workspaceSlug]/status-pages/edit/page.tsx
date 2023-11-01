@@ -32,7 +32,7 @@ export default async function EditPage({
   const { id } = search.data;
 
   // TODO: too many requests to db
-  const page = id && (await api.page.getPageById.query({ id }));
+  const page = id ? await api.page.getPageById.query({ id }) : undefined;
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   const workspace = await api.workspace.getWorkspace.query();
 
