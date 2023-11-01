@@ -1,0 +1,10 @@
+{
+  "name": "@openstatus/docs",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npx mintlify@latest dev"
+  },
+  "keywords": [],
+  "author": "OpenStatus"
+}
