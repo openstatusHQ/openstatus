@@ -1,0 +1,32 @@
+---
+title: Monitor
+description: "How to create your first monitor with OpenStatus.dev"
+---
+
+## What is a monitor? 🧑‍🏫
+
+A monitor is a job that runs periodically and checks the status of a service. It
+can be a website, an API, or anything else that can be checked automatically.
+
+## Configure your monitor 🛠
+
+<Frame caption="Create your first monitor">
+  <img src="/images/monitor/monitor.png" alt="Create your first monitor" />
+</Frame>
+
+A monitor requires a few things to be configured:
+
+- an endpoint to check 🔗
+- a check interval ⏰
+- a region to run the check from 🌍
+
+## Advanced configuration 🧙‍♂️
+
+Sometimes you need to configure your monitor more precisely.
+
+- set a Method (GET, POST) 🧭
+- set a custom HTTP Headers (useful if your endpoint is secured) 🔑
+- set a custom HTTP Body (for POST request only) 📦
+
+> Create an API key and use it in your HTTP Headers to create your monitor
+> programmatically API.

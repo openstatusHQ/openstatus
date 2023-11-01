@@ -1,0 +1,131 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "OpenStatus Docs",
+  "openapi": "https://api.openstatus.dev/v1/openapi",
+  "logo": {
+    "dark": "/logo/OpenStatus-dark.svg",
+    "light": "/logo/OpenStatus-light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Discord",
+      "url": "https://www.openstatus.dev/discord"
+    },
+    {
+      "name": "GitHub",
+      "url": "https://github.com/openstatushq/openstatus"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "https://www.openstatus.dev/app"
+  },
+  "tabs": [
+    {
+      "name": "API Reference",
+      "url": "api-reference"
+    }
+  ],
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/openstatushq/openstatus"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://www.openstatus.dev/discord"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Introduction",
+      "pages": [
+        "introduction",
+        {
+          "group": "Getting Started",
+          "pages": [
+            "getting-started/alerting",
+            "getting-started/heartbeat",
+            "getting-started/monitor",
+            "getting-started/status-page"
+          ]
+        },
+        "getting-started/status-widget"
+      ]
+    },
+    {
+      "group": "Incident Management",
+      "pages": ["incident-automation/get-started"]
+    },
+    {
+      "group": "Developer Guides",
+      "pages": [
+        "developer-guide/requirements",
+        "developer-guide/get-started",
+        "developer-guide/setup-env",
+        "developer-guide/setup"
+      ]
+    },
+    {
+      "group": "Integrations",
+      "pages": [
+        "integrations/discord",
+        "integrations/phone-call",
+        "integrations/slack",
+        "integrations/sms",
+        "integrations/telegram"
+      ]
+    },
+    {
+      "group": "Libraries",
+      "pages": ["packages/react"]
+    },
+    {
+      "group": "API Documentation",
+      "icon": "code",
+      "pages": [
+        "api-reference/auth",
+        {
+          "group": "Incident",
+          "pages": [
+            "api-reference/incident/get-incident:id",
+            "api-reference/incident/get-incident",
+            "api-reference/incident/delete-incident:id",
+            "api-reference/incident/post-incident",
+            "api-reference/incident/post-incident:idupdate"
+          ]
+        },
+        {
+          "group": "Monitor",
+          "pages": [
+            "api-reference/monitor/get-monitor:id",
+            "api-reference/monitor/get-monitor",
+            "api-reference/monitor/delete-monitor:id",
+            "api-reference/monitor/post-monitor",
+            "api-reference/monitor/put-monitor:id"
+          ]
+        },
+        {
+          "group": "Incident udpate",
+          "pages": ["api-reference/incident_update/get-incident_update:id"]
+        }
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/openstatushq",
+    "github": "https://github.com/openstatushq/openstatus"
+  }
+}
