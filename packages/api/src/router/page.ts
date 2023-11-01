@@ -43,7 +43,7 @@ export const pageRouter = createTRPCRouter({
       .returning()
       .get();
 
-    if (monitors && monitors.length > 0) {
+    if (Boolean(monitors.length)) {
       // We should make sure the user has access to the monitors
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
@@ -51,10 +51,12 @@ export const pageRouter = createTRPCRouter({
           eq(monitor.workspaceId, opts.ctx.workspace.id),
         ),
       });
+
       const values = allMonitors.map((monitor) => ({
         monitorId: monitor.id,
         pageId: newPage.id,
       }));
+
       await opts.ctx.db.insert(monitorsToPages).values(values).run();
     }
 
@@ -76,6 +78,7 @@ export const pageRouter = createTRPCRouter({
         },
       });
     }),
+
   update: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
     const { monitors, ...pageInput } = opts.input;
     if (!pageInput.id) return;
@@ -92,44 +95,39 @@ export const pageRouter = createTRPCRouter({
       .returning()
       .get();
 
-    // TODO: optimize!
     const currentMonitorsToPages = await opts.ctx.db
       .select()
       .from(monitorsToPages)
       .where(eq(monitorsToPages.pageId, currentPage.id))
       .all();
 
-    const currentMonitorsToPagesIds = currentMonitorsToPages.map(
-      ({ monitorId }) => monitorId,
-    );
+    const removedMonitors = currentMonitorsToPages
+      .map(({ monitorId }) => monitorId)
+      .filter((x) => !monitors?.includes(x));
 
-    const removedMonitors = currentMonitorsToPagesIds.filter(
-      (x) => !monitors?.includes(x),
-    );
-
-    const addedMonitors = monitors?.filter(
-      (x) => !currentMonitorsToPagesIds?.includes(x),
-    );
-
-    if (addedMonitors && addedMonitors.length > 0) {
-      const values = addedMonitors.map((monitorId) => ({
-        monitorId: monitorId,
-        pageId: currentPage.id,
-      }));
-
-      await opts.ctx.db.insert(monitorsToPages).values(values).run();
-    }
-
-    if (removedMonitors && removedMonitors.length > 0) {
+    if (Boolean(removedMonitors.length)) {
       await opts.ctx.db
         .delete(monitorsToPages)
         .where(
           and(
-            eq(monitorsToPages.pageId, currentPage.id),
             inArray(monitorsToPages.monitorId, removedMonitors),
+            eq(monitorsToPages.pageId, currentPage.id),
           ),
-        )
-        .run();
+        );
+    }
+
+    const addedMonitors = monitors.filter(
+      (x) =>
+        !currentMonitorsToPages.map(({ monitorId }) => monitorId)?.includes(x),
+    );
+
+    if (Boolean(addedMonitors.length)) {
+      const values = addedMonitors.map((monitorId) => ({
+        pageId: currentPage.id,
+        monitorId,
+      }));
+
+      await opts.ctx.db.insert(monitorsToPages).values(values).run();
     }
   }),
   delete: protectedProcedure

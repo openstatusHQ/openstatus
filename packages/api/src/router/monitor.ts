@@ -50,6 +50,7 @@ export const monitorRouter = createTRPCRouter({
           message: "You reached your cron job limits.",
         });
       }
+
       // FIXME: this is a hotfix
       const { regions, headers, notifications, id, ...data } = opts.input;
 
@@ -66,14 +67,17 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (notifications && notifications.length > 0) {
+      if (Boolean(notifications.length)) {
+        // We should make sure the user has access to the notifications
         const allNotifications = await opts.ctx.db.query.notification.findMany({
           where: inArray(notification.id, notifications),
         });
+
         const values = allNotifications.map((notification) => ({
           monitorId: newMonitor.id,
           notificationId: notification.id,
         }));
+
         await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
       }
 
@@ -122,6 +126,7 @@ export const monitorRouter = createTRPCRouter({
       }
 
       const { regions, headers, notifications, ...data } = opts.input;
+
       const currentMonitor = await opts.ctx.db
         .update(monitor)
         .set({
@@ -139,27 +144,20 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
-      // FIXME: optimize!
-      // TODO: optimize!
       const currentMonitorNotifications = await opts.ctx.db
         .select()
         .from(notificationsToMonitors)
         .where(eq(notificationsToMonitors.monitorId, currentMonitor.id))
         .all();
 
-      const currentMonitorNotificationsIds = currentMonitorNotifications.map(
-        ({ notificationId }) => notificationId,
+      const addedNotifications = notifications.filter(
+        (x) =>
+          !currentMonitorNotifications
+            .map(({ notificationId }) => notificationId)
+            ?.includes(x),
       );
 
-      const removedNotifications = currentMonitorNotificationsIds.filter(
-        (x) => !notifications?.includes(x),
-      );
-
-      const addedNotifications = notifications?.filter(
-        (x) => !currentMonitorNotificationsIds?.includes(x),
-      );
-
-      if (addedNotifications && addedNotifications.length > 0) {
+      if (Boolean(addedNotifications.length)) {
         const values = addedNotifications.map((notificationId) => ({
           monitorId: currentMonitor.id,
           notificationId,
@@ -168,7 +166,11 @@ export const monitorRouter = createTRPCRouter({
         await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
       }
 
-      if (removedNotifications && removedNotifications.length > 0) {
+      const removedNotifications = currentMonitorNotifications
+        .map(({ notificationId }) => notificationId)
+        .filter((x) => !notifications?.includes(x));
+
+      if (Boolean(removedNotifications.length)) {
         await opts.ctx.db
           .delete(notificationsToMonitors)
           .where(

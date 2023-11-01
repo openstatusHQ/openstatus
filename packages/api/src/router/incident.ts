@@ -32,7 +32,7 @@ export const incidentRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (monitors.length > 0) {
+      if (Boolean(monitors.length)) {
         await opts.ctx.db
           .insert(monitorsToIncidents)
           .values(
@@ -45,7 +45,7 @@ export const incidentRouter = createTRPCRouter({
           .get();
       }
 
-      if (pages.length > 0) {
+      if (Boolean(pages.length)) {
         await opts.ctx.db
           .insert(pagesToIncidents)
           .values(
@@ -112,19 +112,14 @@ export const incidentRouter = createTRPCRouter({
         .where(eq(monitorsToIncidents.incidentId, currentIncident.id))
         .all();
 
-      const currentMonitorToIncidentsIds = currentMonitorToIncidents.map(
-        ({ monitorId }) => monitorId,
+      const addedMonitors = monitors.filter(
+        (x) =>
+          !currentMonitorToIncidents
+            .map(({ monitorId }) => monitorId)
+            .includes(x),
       );
 
-      const removedMonitors = currentMonitorToIncidentsIds.filter(
-        (x) => !monitors?.includes(x),
-      );
-
-      const addedMonitors = monitors?.filter(
-        (x) => !currentMonitorToIncidentsIds?.includes(x),
-      );
-
-      if (addedMonitors && addedMonitors.length > 0) {
+      if (Boolean(addedMonitors.length)) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
           incidentId: currentIncident.id,
@@ -133,7 +128,11 @@ export const incidentRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToIncidents).values(values).run();
       }
 
-      if (removedMonitors && removedMonitors.length > 0) {
+      const removedMonitors = currentMonitorToIncidents
+        .map(({ monitorId }) => monitorId)
+        .filter((x) => !monitors?.includes(x));
+
+      if (Boolean(removedMonitors.length)) {
         await opts.ctx.db
           .delete(monitorsToIncidents)
           .where(
@@ -151,19 +150,12 @@ export const incidentRouter = createTRPCRouter({
         .where(eq(pagesToIncidents.incidentId, currentIncident.id))
         .all();
 
-      const currentPagesToIncidentsIds = currentPagesToIncidents.map(
-        ({ pageId }) => pageId,
-      );
-
-      const removedPages = currentPagesToIncidentsIds.filter(
-        (x) => !pages?.includes(x),
-      );
-
       const addedPages = pages?.filter(
-        (x) => !currentPagesToIncidentsIds?.includes(x),
+        (x) =>
+          !currentPagesToIncidents.map(({ pageId }) => pageId)?.includes(x),
       );
 
-      if (addedPages && addedPages.length > 0) {
+      if (Boolean(addedPages.length)) {
         const values = addedPages.map((pageId) => ({
           pageId,
           incidentId: currentIncident.id,
@@ -172,7 +164,11 @@ export const incidentRouter = createTRPCRouter({
         await opts.ctx.db.insert(pagesToIncidents).values(values).run();
       }
 
-      if (removedPages && removedPages.length > 0) {
+      const removedPages = currentPagesToIncidents
+        .map(({ pageId }) => pageId)
+        .filter((x) => !pages?.includes(x));
+
+      if (Boolean(removedPages.length)) {
         await opts.ctx.db
           .delete(pagesToIncidents)
           .where(
