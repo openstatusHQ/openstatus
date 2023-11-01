@@ -287,37 +287,35 @@ export const incidentRouter = createTRPCRouter({
       return selectIncidentUpdateSchema.parse(data);
     }),
 
-  getIncidentByWorkspace: protectedProcedure
-    .input(z.object({ workspaceSlug: z.string() }))
-    .query(async (opts) => {
-      // FIXME: can we get rid of that?
-      const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
-        status: incidentStatusSchema.default("investigating"), // TODO: remove!
-        monitorsToIncidents: z
-          .array(
-            z.object({
-              incidentId: z.number(),
-              monitorId: z.number(),
-              monitor: selectMonitorSchema,
-            }),
-          )
-          .default([]),
-        incidentUpdates: z.array(selectIncidentUpdateSchema),
-      });
+  getIncidentByWorkspace: protectedProcedure.query(async (opts) => {
+    // FIXME: can we get rid of that?
+    const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
+      status: incidentStatusSchema.default("investigating"), // TODO: remove!
+      monitorsToIncidents: z
+        .array(
+          z.object({
+            incidentId: z.number(),
+            monitorId: z.number(),
+            monitor: selectMonitorSchema,
+          }),
+        )
+        .default([]),
+      incidentUpdates: z.array(selectIncidentUpdateSchema),
+    });
 
-      const result = await opts.ctx.db.query.incident.findMany({
-        where: eq(incident.workspaceId, opts.ctx.workspace.id),
-        with: {
-          monitorsToIncidents: { with: { monitor: true } },
-          incidentUpdates: {
-            orderBy: (incidentUpdate, { desc }) => [
-              desc(incidentUpdate.createdAt),
-            ],
-          },
+    const result = await opts.ctx.db.query.incident.findMany({
+      where: eq(incident.workspaceId, opts.ctx.workspace.id),
+      with: {
+        monitorsToIncidents: { with: { monitor: true } },
+        incidentUpdates: {
+          orderBy: (incidentUpdate, { desc }) => [
+            desc(incidentUpdate.createdAt),
+          ],
         },
-        orderBy: (incident, { desc }) => [desc(incident.updatedAt)],
-      });
+      },
+      orderBy: (incident, { desc }) => [desc(incident.updatedAt)],
+    });
 
-      return z.array(selectIncidentSchemaWithRelation).parse(result);
-    }),
+    return z.array(selectIncidentSchemaWithRelation).parse(result);
+  }),
 });
