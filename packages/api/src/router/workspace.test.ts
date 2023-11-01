@@ -8,10 +8,6 @@ test("Get Test Workspace", async () => {
   const ctx = createTRPCContext({
     // @ts-expect-error
     req: {},
-  });
-
-  // @ts-expect-error
-  ctx = {
     auth: {
       userId: "1",
       sessionId: "1",
@@ -19,7 +15,7 @@ test("Get Test Workspace", async () => {
     workspace: {
       id: 1,
     },
-  };
+  });
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getWorkspace();
@@ -42,16 +38,12 @@ test("No workspace", async () => {
   const ctx = createTRPCContext({
     // @ts-expect-error
     req: {},
-  });
-
-  // @ts-expect-error
-  ctx = {
     auth: {
       userId: "1",
       sessionId: "1",
     },
     workspace: undefined,
-  };
+  });
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getWorkspace();
@@ -62,13 +54,11 @@ test("All workspaces", async () => {
   const ctx = createTRPCContext({
     // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
   });
-
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getUserWithWorkspace();

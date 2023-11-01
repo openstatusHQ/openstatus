@@ -8,13 +8,11 @@ test("Get Test Page", async () => {
   const ctx = createTRPCContext({
     // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
   });
-
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.page.getPageBySlug({ slug: "status" });
@@ -50,13 +48,11 @@ test("No Page", async () => {
   const ctx = createTRPCContext({
     // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
   });
-
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.page.getPageBySlug({ slug: "Dont Exist" });
