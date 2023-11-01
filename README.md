@@ -1,9 +1,9 @@
 <p align="center" style="margin-top: 120px">
 
-  <h3 align="center">The Open-Source  Monitoring Platform with Incident Management</h3>
+  <h3 align="center">OpenStatus</h3>
 
   <p align="center">
-    The Open-Source Serverless monitoring platform.
+    The Open-Source monitoring platform with incident management.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -18,23 +18,23 @@
   </p>
 </p>
 
-## About OpenStatus
+## About OpenStatus 🏓
 
 OpenStatus is open-source synthetic monitoring platform with beautiful status
-page. We are building it publicly for everyone to see our progress. We believe
-great softwares are built this way.
+page and incident management. We are building it publicly for everyone to see
+our progress. We believe great softwares are built this way.
 
 You can choose to host it yourself or use our hosted version at
 [openstatus.dev](https://www.openstatus.dev)
 
-## Contact us
+## Contact us 💌
 
 If you want to learn more about this project or have any questions, book a call
 with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 <br/><br/>
 <a href="https://cal.com/team/openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
-## Built with
+## Built with 🛠️
 
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
@@ -45,7 +45,7 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 - [clerk](https://clerk.com/)
 - [Resend](https://resend.com/)
 
-## Getting Started
+## Getting Started 🚀
 
 ### Requirements
 
@@ -95,13 +95,14 @@ $ ngrok http 3000
 Videos to better understand the OpenStatus codebase:
 
 - [The code behind OpenStatus and how it uses Turbopack](https://youtube.com/watch?v=PYfSJATE8v8).
+- [Drop Betterstack and go open source](https://www.youtube.com/watch?v=PKag0USy3eQ)
 
-## Roadmap
+## Roadmap 🗺️
 
 Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
 contribute to it.
 
-## Contributing
+## Contributing 🤝
 
 If you want to help us building the best status page and alerting system, you
 can check our
