@@ -6,6 +6,21 @@
     "dark": "/logo/OpenStatus-dark.svg",
     "light": "/logo/OpenStatus-light.svg"
   },
+  "api": {
+    "baseUrl": "https://api.openstatus.dev/v1",
+    "auth": {
+      "method": "key",
+      "name": "x-openstatus-key"
+    }
+  },
+  "metadata": {
+    "og:image": "https://www.openstatus.dev/api/og"
+  },
+  "feedback": {
+    "raiseIssue": true,
+    "suggestEdit": true,
+    "thumbsRating": true
+  },
   "favicon": "/favicon.svg",
   "colors": {
     "primary": "#0D9373",
@@ -124,8 +139,15 @@
       ]
     }
   ],
+  "analytics": {
+    "plausible": {
+      "domain": "docs.openstatus.dev"
+    }
+  },
   "footerSocials": {
+    "website": "https://www.openstatus.dev",
     "twitter": "https://twitter.com/openstatushq",
+    "discord": "https://www.openstatus.dev/discord",
     "github": "https://github.com/openstatushq/openstatus"
   }
 }
