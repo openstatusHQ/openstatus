@@ -48,15 +48,9 @@ interface Props {
   defaultValues?: InsertIncident;
   monitors?: Monitor[];
   pages?: Page[];
-  workspaceSlug: string;
 }
 
-export function IncidentForm({
-  defaultValues,
-  monitors,
-  pages,
-  workspaceSlug,
-}: Props) {
+export function IncidentForm({ defaultValues, monitors, pages }: Props) {
   const form = useForm<InsertIncident>({
     resolver: zodResolver(insertIncidentSchema),
     defaultValues: defaultValues
@@ -66,7 +60,6 @@ export function IncidentForm({
           status: defaultValues.status,
           monitors: defaultValues.monitors,
           pages: defaultValues.pages,
-          workspaceSlug,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,
@@ -74,7 +67,6 @@ export function IncidentForm({
       : {
           status: "investigating",
           date: new Date(),
-          workspaceSlug,
         },
   });
   const router = useRouter();
@@ -88,9 +80,8 @@ export function IncidentForm({
           await api.incident.updateIncident.mutate({ ...props });
         } else {
           // or use createIncident to create automaticaaly an IncidentUpdate?
-          const { message, date, status, workspaceSlug, ...rest } = props;
+          const { message, date, status, ...rest } = props;
           const incident = await api.incident.createIncident.mutate({
-            workspaceSlug,
             status,
             message,
             ...rest,
@@ -101,7 +92,6 @@ export function IncidentForm({
               message,
               date,
               status,
-              workspaceSlug,
               incidentId: incident.id,
             });
           }

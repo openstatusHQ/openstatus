@@ -18,12 +18,8 @@ export default async function MonitorPage({
 }: {
   params: { workspaceSlug: string };
 }) {
-  const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug: params.workspaceSlug,
-  });
-  const workspace = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
-  });
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
+  const workspace = await api.workspace.getWorkspace.query();
 
   const isLimit =
     (monitors?.length || 0) >=

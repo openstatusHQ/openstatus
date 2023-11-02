@@ -81,14 +81,12 @@ const cronJobs = [
 
 interface Props {
   defaultValues?: InsertMonitor;
-  workspaceSlug: string;
   plan?: WorkspacePlan;
   notifications?: Notification[];
 }
 
 export function MonitorForm({
   defaultValues,
-  workspaceSlug,
   plan = "free",
   notifications,
 }: Props) {
@@ -100,7 +98,7 @@ export function MonitorForm({
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
-      id: defaultValues?.id || undefined,
+      id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
       headers: Boolean(defaultValues?.headers?.length)
@@ -128,12 +126,9 @@ export function MonitorForm({
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
       if (defaultValues) {
-        await api.monitor.updateMonitor.mutate(props);
+        await api.monitor.update.mutate(props);
       } else {
-        const monitor = await api.monitor.createMonitor.mutate({
-          data: props,
-          workspaceSlug,
-        });
+        const monitor = await api.monitor.create.mutate(props);
         const id = monitor?.id || null;
         router.replace(`?${updateSearchParams({ id })}`);
       }
@@ -707,10 +702,7 @@ export function MonitorForm({
             Get alerted when your endpoint is down.
           </DialogDescription>
         </DialogHeader>
-        <NotificationForm
-          onSubmit={() => setOpenDialog(false)}
-          {...{ workspaceSlug }}
-        />
+        <NotificationForm onSubmit={() => setOpenDialog(false)} />
       </DialogContent>
       <FailedPingAlertConfirmation
         monitor={form.getValues()}

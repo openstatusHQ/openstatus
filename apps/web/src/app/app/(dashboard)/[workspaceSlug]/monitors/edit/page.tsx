@@ -26,12 +26,11 @@ export default async function EditPage({
   }
 
   const { id } = search.data;
-  const { workspaceSlug } = params;
 
-  const monitor = id && (await api.monitor.getMonitorByID.query({ id }));
-  const workspace = await api.workspace.getWorkspace.query({
-    slug: workspaceSlug,
-  });
+  const monitor = id
+    ? await api.monitor.getMonitorById.query({ id })
+    : undefined;
+  const workspace = await api.workspace.getWorkspace.query();
 
   const monitorNotifications = id
     ? await api.monitor.getAllNotificationsForMonitor.query({
@@ -40,9 +39,7 @@ export default async function EditPage({
     : [];
 
   const notifications =
-    await api.notification.getNotificationsByWorkspace.query({
-      workspaceSlug,
-    });
+    await api.notification.getNotificationsByWorkspace.query();
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
@@ -61,7 +58,7 @@ export default async function EditPage({
               : undefined
           }
           plan={workspace?.plan}
-          {...{ workspaceSlug, notifications }}
+          notifications={notifications}
         />
       </div>
     </div>

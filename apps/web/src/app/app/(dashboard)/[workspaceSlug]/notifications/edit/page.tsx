@@ -27,8 +27,9 @@ export default async function EditPage({
 
   const { id } = search.data;
 
-  const notification =
-    id && (await api.notification.getNotificationById.query({ id }));
+  const notification = id
+    ? await api.notification.getNotificationById.query({ id })
+    : undefined;
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
@@ -41,10 +42,7 @@ export default async function EditPage({
         }
       />
       <div className="col-span-full">
-        <NotificationForm
-          workspaceSlug={params.workspaceSlug}
-          defaultValues={notification || undefined}
-        />
+        <NotificationForm defaultValues={notification} />
       </div>
     </div>
   );

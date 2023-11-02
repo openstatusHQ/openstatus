@@ -15,9 +15,7 @@ export default async function AppLayout({
   children: React.ReactNode;
   params: { workspaceSlug: string };
 }) {
-  const workspace = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
-  });
+  const workspace = await api.workspace.getWorkspace.query();
   if (!workspace) return notFound(); // TODO: discuss if we should move to middleware
 
   return (

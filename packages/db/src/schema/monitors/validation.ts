@@ -69,7 +69,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   headers: headersSchema.default([]),
 }).extend({
   method: monitorMethodsSchema.default("GET"),
-  notifications: z.array(z.number()).optional(),
+  notifications: z.array(z.number()).optional().default([]),
   body: z.string().default("").optional(),
 });
 

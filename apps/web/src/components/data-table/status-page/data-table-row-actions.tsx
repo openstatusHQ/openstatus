@@ -45,7 +45,7 @@ export function DataTableRowActions<TData>({
     startTransition(async () => {
       try {
         if (!page.id) return;
-        await api.page.deletePage.mutate({ id: page.id });
+        await api.page.delete.mutate({ id: page.id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);

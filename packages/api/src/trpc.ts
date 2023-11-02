@@ -8,7 +8,8 @@ import { inferAsyncReturnType, initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { db } from "@openstatus/db";
+import { db, eq, schema } from "@openstatus/db";
+import type { User, Workspace } from "@openstatus/db/src/schema";
 
 /**
  * 1. CONTEXT
@@ -21,6 +22,8 @@ import { db } from "@openstatus/db";
  */
 type CreateContextOptions = {
   auth: SignedInAuthObject | SignedOutAuthObject | null;
+  workspace?: Workspace | null;
+  user?: User | null;
   req?: NextRequest;
 };
 
@@ -50,9 +53,13 @@ export const createTRPCContext = (opts: {
   serverSideCall?: boolean;
 }) => {
   const auth = !opts.serverSideCall ? getAuth(opts.req) : null;
+  const workspace = null;
+  const user = null;
 
   return createInnerTRPCContext({
     auth,
+    workspace,
+    user,
     req: opts.req,
   });
 };
@@ -106,16 +113,44 @@ export const publicProcedure = t.procedure;
  * Reusable middleware that enforces users are logged in before running the
  * procedure
  */
-const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
+const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
   if (!ctx.auth?.userId) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+
+  /**
+   * Attach `user` and `workspace` infos to context by
+   * comparing the `user.tenantId` to clerk's `auth.userId`
+   */
+  const query = await db
+    .select()
+    .from(schema.user)
+    .innerJoin(
+      schema.usersToWorkspaces,
+      eq(schema.usersToWorkspaces.userId, schema.user.id),
+    )
+    .innerJoin(
+      schema.workspace,
+      eq(schema.workspace.id, schema.usersToWorkspaces.workspaceId),
+    )
+    .where(eq(schema.user.tenantId, ctx.auth.userId))
+    .get();
+
+  const workspace = schema.selectWorkspaceSchema.parse(query?.workspace);
+  const user = schema.selectUserSchema.parse(query?.user);
+
+  if (!workspace && !user) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+
   return next({
     ctx: {
       auth: {
         ...ctx.auth,
         userId: ctx.auth.userId,
       },
+      user,
+      workspace,
     },
   });
 });

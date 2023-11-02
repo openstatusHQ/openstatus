@@ -42,16 +42,8 @@ export default async function EditPage({
       />
       <div className="col-span-full">
         <IncidentUpdateForm
-          workspaceSlug={params.workspaceSlug}
           incidentId={incidentId}
-          defaultValues={
-            incidentUpdate
-              ? {
-                  workspaceSlug: params.workspaceSlug,
-                  ...incidentUpdate,
-                }
-              : undefined
-          }
+          defaultValues={incidentUpdate || undefined}
         />
       </div>
     </div>

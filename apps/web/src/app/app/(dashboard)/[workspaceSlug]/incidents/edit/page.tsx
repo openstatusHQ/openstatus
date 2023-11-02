@@ -26,7 +26,6 @@ export default async function EditPage({
   }
 
   const { id } = search.data;
-  const { workspaceSlug } = params;
 
   const incident = id
     ? await api.incident.getIncidentById.query({
@@ -34,25 +33,24 @@ export default async function EditPage({
       })
     : undefined;
 
-  const monitors = await api.monitor.getMonitorsByWorkspace.query({
-    workspaceSlug,
-  });
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
-  const pages = await api.page.getPagesByWorkspace.query({ workspaceSlug });
+  const pages = await api.page.getPagesByWorkspace.query();
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header title="Incident" description="Upsert your incident." />
       <div className="col-span-full">
         <IncidentForm
-          workspaceSlug={workspaceSlug}
           monitors={monitors}
           pages={pages}
           defaultValues={
             incident
-              ? {
+              ? // TODO: we should move the mapping to the trpc layer
+                // so we don't have to do this in the UI
+                // it should be something like defaultValues={incident}
+                {
                   ...incident,
-                  workspaceSlug,
                   monitors: incident?.monitorsToIncidents.map(
                     ({ monitorId }) => monitorId,
                   ),

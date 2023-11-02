@@ -38,7 +38,7 @@ export default async function Page({
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
 
-  const monitor = await api.monitor.getMonitorByID.query({
+  const monitor = await api.monitor.getMonitorById.query({
     id: Number(id),
   });
 

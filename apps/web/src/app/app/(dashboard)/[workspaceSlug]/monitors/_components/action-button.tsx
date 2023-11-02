@@ -40,7 +40,7 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
     startTransition(async () => {
       try {
         if (!props.id) return;
-        await api.monitor.deleteMonitor.mutate({ id: props.id });
+        await api.monitor.delete.mutate({ id: props.id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);

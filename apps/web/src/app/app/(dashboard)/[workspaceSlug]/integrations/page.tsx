@@ -1,21 +1,17 @@
-"use client";
-
 import * as React from "react";
 
-import { Badge, Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui";
 
 import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
-import { api } from "@/trpc/client";
+import { api } from "@/trpc/server";
 
 export default async function IncidentPage({
   params,
 }: {
   params: { workspaceSlug: string };
 }) {
-  const workspace = await api.workspace.getWorkspace.query({
-    slug: params.workspaceSlug,
-  });
+  const workspace = await api.workspace.getWorkspace.query();
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">

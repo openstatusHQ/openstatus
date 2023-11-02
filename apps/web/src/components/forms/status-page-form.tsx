@@ -36,11 +36,8 @@ import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
-// REMINDER: only use the props you need!
-
 interface Props {
   defaultValues?: InsertPage;
-  workspaceSlug: string;
   allMonitors?: Monitor[];
   /**
    * gives the possibility to check all the monitors
@@ -54,7 +51,6 @@ interface Props {
 
 export function StatusPageForm({
   defaultValues,
-  workspaceSlug,
   allMonitors,
   checkAllMonitors,
   nextUrl,
@@ -73,7 +69,6 @@ export function StatusPageForm({
           ? allMonitors.map(({ id }) => id)
           : defaultValues?.monitors ?? [],
       customDomain: defaultValues?.customDomain || "",
-      workspaceSlug: "",
       icon: defaultValues?.icon || "",
     },
   });
@@ -121,18 +116,15 @@ export function StatusPageForm({
 
   const onSubmit = async ({ ...props }: InsertPage) => {
     startTransition(async () => {
-      // TODO: we could use an upsertPage function instead - insert if not exist otherwise update
       try {
         if (defaultValues) {
-          await api.page.updatePage.mutate(props);
+          await api.page.update.mutate(props);
         } else {
-          const page = await api.page.createPage.mutate({
-            ...props,
-            workspaceSlug,
-          });
+          const page = await api.page.create.mutate(props);
           const id = page?.id || null;
           router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
         }
+
         defaultToast({
           title: "Saved successfully.",
           description: "Your status page is ready to go.",

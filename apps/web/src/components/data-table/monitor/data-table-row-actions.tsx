@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { insertMonitorSchema } from "@openstatus/db/src/schema";
+import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = insertMonitorSchema.parse(row.original);
+  const monitor = selectMonitorSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -46,7 +46,7 @@ export function DataTableRowActions<TData>({
     startTransition(async () => {
       try {
         if (!monitor.id) return;
-        await api.monitor.deleteMonitor.mutate({ id: monitor.id });
+        await api.monitor.delete.mutate({ id: monitor.id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);
@@ -61,7 +61,7 @@ export function DataTableRowActions<TData>({
       try {
         const { jobType, ...rest } = monitor;
         if (!monitor.id) return;
-        await api.monitor.updateMonitor.mutate({
+        await api.monitor.update.mutate({
           ...rest,
           active: !monitor.active,
         });

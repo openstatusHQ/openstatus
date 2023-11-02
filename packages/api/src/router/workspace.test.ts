@@ -5,18 +5,21 @@ import { createTRPCContext } from "../trpc";
 
 vi.mock("@clerk/nextjs/server");
 test("Get Test Workspace", async () => {
-  const ctx = await createTRPCContext({
+  const ctx = createTRPCContext({
+    // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
+    workspace: {
+      id: 1,
+    },
   });
 
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
-
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace({ slug: "test" });
+  const result = await caller.workspace.getWorkspace();
+
   expect(result).toEqual({
     id: 1,
     slug: "test",
@@ -33,30 +36,29 @@ test("Get Test Workspace", async () => {
 
 test("No workspace", async () => {
   const ctx = createTRPCContext({
+    // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
+    workspace: undefined,
   });
 
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
-
   const caller = edgeRouter.createCaller(ctx);
-  const result = await caller.workspace.getWorkspace({ slug: "Dont Exist" });
+  const result = await caller.workspace.getWorkspace();
   expect(result).toBeUndefined();
 });
 
 test("All workspaces", async () => {
   const ctx = createTRPCContext({
+    // @ts-expect-error
     req: {},
+    auth: {
+      userId: "1",
+      sessionId: "1",
+    },
   });
-
-  // @ts-expect-error
-  ctx.auth = {
-    userId: "1",
-    sessionId: "1",
-  };
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getUserWithWorkspace();

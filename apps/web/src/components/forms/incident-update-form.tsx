@@ -39,15 +39,10 @@ import { api } from "@/trpc/client";
 
 interface Props {
   defaultValues?: InsertIncidentUpdate;
-  workspaceSlug: string;
   incidentId: number;
 }
 
-export function IncidentUpdateForm({
-  defaultValues,
-  workspaceSlug,
-  incidentId,
-}: Props) {
+export function IncidentUpdateForm({ defaultValues, incidentId }: Props) {
   const form = useForm<InsertIncidentUpdate>({
     resolver: zodResolver(insertIncidentUpdateSchema),
     defaultValues: {
@@ -56,7 +51,6 @@ export function IncidentUpdateForm({
       message: defaultValues?.message,
       date: defaultValues?.date || new Date(),
       incidentId,
-      workspaceSlug,
     },
   });
   const router = useRouter();
