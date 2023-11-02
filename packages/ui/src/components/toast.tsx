@@ -31,6 +31,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
+        // REMINDER: same keys as toastIconVariant
         default: "",
         destructive: "",
         warning: "",
@@ -91,7 +92,7 @@ const ToastIcon = ({ variant }: VariantProps<typeof toastIconVariant>) => {
         toastIconVariant({ variant }),
       )}
     >
-      <Icon className={"h-4 w-4"} color={"#fff"} />
+      <Icon className="text-background h-4 w-4" />
     </div>
   );
 };
