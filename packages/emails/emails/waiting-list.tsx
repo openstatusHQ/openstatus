@@ -6,7 +6,7 @@ const WaitingList = () => {
       <Head>
         <title>Thanks for joining OpenStatus waiting list</title>
         <Preview>
-          Thanks for joining OpenStatus waiting list waiting list
+          Thanks for joining OpenStatus waiting list
         </Preview>
         <Body>
           Hello,
