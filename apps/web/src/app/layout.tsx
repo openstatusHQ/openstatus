@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-import { ClerkProvider } from "@clerk/nextjs";
+import { GeistMono, GeistSans } from "geist/font";
 import PlausibleProvider from "next-plausible";
 
 import { Toaster } from "@openstatus/ui";
@@ -43,7 +43,9 @@ export default function RootLayout({
     <html lang="en">
       {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
       <PlausibleProvider domain="openstatus.dev">
-        <body className={`${inter.className} ${calSans.variable}`}>
+        <body
+          className={`${GeistMono.variable} ${GeistSans.variable} ${calSans.variable}`}
+        >
           <Background>{children}</Background>
           <Toaster />
           <TailwindIndicator />
