@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "vitest run",
+    "test": "bun test",
     "lint": "eslint \"**/*.ts*\""
   },
   "dependencies": {
@@ -28,8 +28,8 @@
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "bun-types": "1.0.8",
     "dotenv": "16.3.1",
-    "vitest": "0.34.6",
     "eslint": "8.50.0"
   }
 }

@@ -1,4 +1,7 @@
 {
   "extends": "@openstatus/tsconfig/nextjs.json",
-  "include": ["src", "*.ts"]
+  "include": ["src", "*.ts"],
+  "compilerOptions": {
+    "types": ["bun-types"]
+  }
 }

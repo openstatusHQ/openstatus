@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "test": "vitest run"
+    "test": "bun test"
   },
   "dependencies": {
     "@clerk/nextjs": "4.25.1",
@@ -24,7 +24,7 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.2.2",
-    "vitest": "0.34.6"
+    "bun-types": "1.0.8"
   },
   "keywords": [],
   "author": "",
