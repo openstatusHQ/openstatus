@@ -1,13 +1,12 @@
-import { expect, test, vi } from "vitest";
+import { expect, test } from "bun:test";
 
 import { edgeRouter } from "../edge";
-import { createTRPCContext } from "../trpc";
+import { createInnerTRPCContext } from "../trpc";
 
-vi.mock("@clerk/nextjs/server");
 test("Get Test Page", async () => {
-  const ctx = createTRPCContext({
+  const ctx = createInnerTRPCContext({
+    req: undefined,
     // @ts-expect-error
-    req: {},
     auth: {
       userId: "1",
       sessionId: "1",
@@ -45,9 +44,9 @@ test("Get Test Page", async () => {
 });
 
 test("No Page", async () => {
-  const ctx = createTRPCContext({
+  const ctx = createInnerTRPCContext({
+    req: undefined,
     // @ts-expect-error
-    req: {},
     auth: {
       userId: "1",
       sessionId: "1",

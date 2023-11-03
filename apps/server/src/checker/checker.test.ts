@@ -1,28 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-import { expect, it, vi } from "vitest";
+import { expect, mock, test } from "bun:test";
 
-// REMINDER: keep it here for the mock
-import type { Tinybird } from "@openstatus/tinybird";
-import {
-  publishPingResponse,
-  tbIngestPingResponse,
-} from "@openstatus/tinybird";
-
-import * as alerts from "./alerting";
 import { checkerRetryPolicy } from "./checker";
 
-vi.mock("@openstatus/tinybird", async () => {
-  const actual = await vi.importActual("@openstatus/tinybird");
+mock.module("./ping.ts", () => {
   return {
-    // @ts-ignore
-    ...actual,
-    publishPingResponse: vi.fn().mockResolvedValue({ successful_rows: 1 }),
+    publishPing: () => {},
   };
 });
 
-it("should call updateMonitorStatus when we can fetch", async () => {
-  const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+test("should call updateMonitorStatus when we can fetch", async () => {
+  const fn = mock(() => {});
+
+  mock.module("./alerting.ts", () => {
+    return {
+      updateMonitorStatus: fn,
+    };
+  });
   await checkerRetryPolicy({
     workspaceId: "1",
     monitorId: "1",
@@ -32,11 +25,17 @@ it("should call updateMonitorStatus when we can fetch", async () => {
     pageIds: [],
     method: "GET",
   });
-  expect(spyOn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledTimes(1);
 });
 
-it("should call updateMonitorStatus when status error", async () => {
-  const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+test("should call updateMonitorStatus when status error", async () => {
+  const fn = mock(() => {});
+
+  mock.module("./alerting.ts", () => {
+    return {
+      updateMonitorStatus: fn,
+    };
+  });
   try {
     await checkerRetryPolicy({
       workspaceId: "1",
@@ -50,12 +49,17 @@ it("should call updateMonitorStatus when status error", async () => {
   } catch (e) {
     expect(e).toBeInstanceOf(Error);
   }
-  expect(spyOn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalledTimes(1);
 });
 
-it("What should we do when redirect ", async () => {
-  const spyOn = vi.spyOn(alerts, "updateMonitorStatus").mockReturnThis();
+test("What should we do when redirect ", async () => {
+  const fn = mock(() => {});
 
+  mock.module("./alerting.ts", () => {
+    return {
+      updateMonitorStatus: fn,
+    };
+  });
   try {
     await checkerRetryPolicy({
       workspaceId: "1",
@@ -69,5 +73,5 @@ it("What should we do when redirect ", async () => {
   } catch (e) {
     expect(e).toBeInstanceOf(Error);
   }
-  expect(spyOn).toHaveBeenCalledTimes(0);
+  expect(fn).toHaveBeenCalledTimes(0);
 });

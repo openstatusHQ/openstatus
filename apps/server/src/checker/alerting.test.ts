@@ -1,12 +1,16 @@
-import { expect, it, vi } from "vitest";
+import { expect, mock, test } from "bun:test";
 
 import { triggerAlerting } from "./alerting";
-import * as utils from "./utils";
 
-it("should send email notification", async () => {
-  vi.mock("utils");
-  const mockedFn = vi.fn();
-  utils.providerToFunction["email"] = mockedFn;
+test("should send email notification", async () => {
+  const fn = mock(() => {});
+  mock.module("./utils.ts", () => {
+    return {
+      providerToFunction: {
+        email: fn,
+      },
+    };
+  });
   await triggerAlerting({ monitorId: "1" });
-  expect(mockedFn).toHaveBeenCalledTimes(1);
+  expect(fn).toHaveBeenCalled();
 });

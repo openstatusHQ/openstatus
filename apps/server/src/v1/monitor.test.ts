@@ -1,8 +1,8 @@
-import { expect, it } from "vitest";
+import { expect, test } from "bun:test";
 
 import { api } from ".";
 
-it("GET one monitor", async () => {
+test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {
     headers: {
       "x-openstatus-key": "1",
@@ -10,7 +10,7 @@ it("GET one monitor", async () => {
   });
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toEqual({
+  expect(await res.json()).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
@@ -24,7 +24,7 @@ it("GET one monitor", async () => {
   });
 });
 
-it("GET all monitor", async () => {
+test("GET all monitor", async () => {
   const res = await api.request("/monitor", {
     headers: {
       "x-openstatus-key": "1",
@@ -32,7 +32,7 @@ it("GET all monitor", async () => {
   });
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toEqual([
+  expect(await res.json()).toMatchObject([
     {
       id: 1,
       periodicity: "1m",

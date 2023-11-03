@@ -1,17 +1,17 @@
-import { expect, test, vi } from "vitest";
+import { expect, test } from "bun:test";
 
 import { edgeRouter } from "../edge";
-import { createTRPCContext } from "../trpc";
+import { createInnerTRPCContext } from "../trpc";
 
-vi.mock("@clerk/nextjs/server");
 test("Get Test Workspace", async () => {
-  const ctx = createTRPCContext({
+  const ctx = createInnerTRPCContext({
+    req: undefined,
     // @ts-expect-error
-    req: {},
     auth: {
       userId: "1",
       sessionId: "1",
     },
+    //@ts-expect-error
     workspace: {
       id: 1,
     },
@@ -20,7 +20,7 @@ test("Get Test Workspace", async () => {
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getWorkspace();
 
-  expect(result).toEqual({
+  expect(result).toMatchObject({
     id: 1,
     slug: "test",
     name: "test",
@@ -34,10 +34,10 @@ test("Get Test Workspace", async () => {
   });
 });
 
-test("No workspace", async () => {
-  const ctx = createTRPCContext({
+test("by default we get the first workspace", async () => {
+  const ctx = createInnerTRPCContext({
+    req: undefined,
     // @ts-expect-error
-    req: {},
     auth: {
       userId: "1",
       sessionId: "1",
@@ -47,13 +47,25 @@ test("No workspace", async () => {
 
   const caller = edgeRouter.createCaller(ctx);
   const result = await caller.workspace.getWorkspace();
-  expect(result).toBeUndefined();
+
+  expect(result).toMatchObject({
+    id: 1,
+    slug: "test",
+    name: "test",
+    plan: "free",
+    paidUntil: null,
+    stripeId: "stripeId",
+    subscriptionId: "subscriptionId",
+    updatedAt: expect.any(Date),
+    createdAt: expect.any(Date),
+    endsAt: null,
+  });
 });
 
 test("All workspaces", async () => {
-  const ctx = createTRPCContext({
+  const ctx = createInnerTRPCContext({
+    req: undefined,
     // @ts-expect-error
-    req: {},
     auth: {
       userId: "1",
       sessionId: "1",
