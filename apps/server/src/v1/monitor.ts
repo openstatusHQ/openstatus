@@ -250,7 +250,6 @@ monitorApi.openapi(getRoute, async (c) => {
   const { id } = c.req.valid("param");
 
   const monitorId = Number(id);
-  console.log({ monitorId, workspaceId });
   const _monitor = await db
     .select()
     .from(monitor)
@@ -321,7 +320,6 @@ monitorApi.openapi(postRoute, async (c) => {
 
   if (count >= workspacePlan.limits.monitors)
     return c.jsonT({ code: 403, message: "Forbidden" });
-  console.log({ input });
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
     return c.jsonT({ code: 403, message: "Forbidden" });
 
