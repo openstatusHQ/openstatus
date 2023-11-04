@@ -15,7 +15,12 @@ import {
 import { allPlans } from "@openstatus/plans";
 
 import { trackNewMonitor } from "../analytics";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import {
+  createTRPCRouter,
+  cronProcedure,
+  protectedProcedure,
+  publicProcedure,
+} from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -219,7 +224,7 @@ export const monitorRouter = createTRPCRouter({
       return z.array(selectMonitorSchema).parse(monitors);
     }),
 
-  getMonitorsForPeriodicity: protectedProcedure
+  getMonitorsForPeriodicity: cronProcedure
     .input(z.object({ periodicity: monitorPeriodicitySchema }))
     .query(async (opts) => {
       const result = await opts.ctx.db
@@ -235,7 +240,7 @@ export const monitorRouter = createTRPCRouter({
       return z.array(selectMonitorSchema).parse(result);
     }),
 
-  getAllPagesForMonitor: protectedProcedure
+  getAllPagesForMonitor: cronProcedure
     .input(z.object({ monitorId: z.number() }))
     .query(async (opts) => {
       const allPages = await opts.ctx.db
