@@ -1,7 +1,6 @@
 import "@/styles/globals.css";
 
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 import { GeistMono, GeistSans } from "geist/font";
 import PlausibleProvider from "next-plausible";
@@ -15,8 +14,6 @@ import {
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import Background from "./_components/background";
-
-const inter = Inter({ subsets: ["latin"] });
 
 const calSans = LocalFont({
   src: "../public/fonts/CalSans-SemiBold.ttf",
@@ -38,13 +35,12 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <html lang="en">
       {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
       <PlausibleProvider domain="openstatus.dev">
         <body
-          className={`${GeistMono.variable} ${GeistSans.variable} ${calSans.variable}`}
+          className={`${GeistMono.variable} ${GeistSans.variable} ${calSans.variable} font-sans`}
         >
           <Background>{children}</Background>
           <Toaster />

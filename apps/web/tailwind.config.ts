@@ -163,9 +163,9 @@ module.exports = {
       },
       /* */
       fontFamily: {
-        sans: ["var(--font-geist-sans)"],
-        cal: ["var(--font-calsans)"],
-        mono: ["var(--font-geist-mono)"],
+        sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+        cal: ["var(--font-calsans)", ...fontFamily.sans],
+        mono: ["var(--font-geist-mono)", ...fontFamily.mono],
       },
       keyframes: {
         "accordion-down": {
