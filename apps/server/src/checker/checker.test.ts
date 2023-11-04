@@ -75,3 +75,72 @@ test("What should we do when redirect ", async () => {
   }
   expect(fn).toHaveBeenCalledTimes(0);
 });
+
+test("When 404 we should trigger alerting ", async () => {
+  const fn = mock(() => {});
+  const fn1 = mock(() => {});
+  const fn2 = mock(() => {});
+
+  mock.module("./alerting.ts", () => {
+    return {
+      updateMonitorStatus: fn,
+      triggerAlerting: fn1,
+    };
+  });
+  mock.module("./ping.ts", () => {
+    return {
+      publishPing: fn2,
+    };
+  });
+  try {
+    await checkerRetryPolicy({
+      workspaceId: "1",
+      monitorId: "1",
+      url: "https://www.openstat.us/404",
+      cronTimestamp: 1,
+      status: "active",
+      pageIds: [],
+      method: "GET",
+    });
+  } catch (e) {
+    expect(e).toBeInstanceOf(Error);
+  }
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(fn1).toHaveBeenCalledTimes(1);
+  expect(fn2).toHaveBeenCalledTimes(1);
+});
+
+test("When error  404 we should not trigger alerting ", async () => {
+  const fn = mock(() => {});
+  const fn1 = mock(() => {});
+  const fn2 = mock(() => {});
+
+  mock.module("./alerting.ts", () => {
+    return {
+      updateMonitorStatus: fn,
+      triggerAlerting: fn1,
+    };
+  });
+
+  mock.module("./ping.ts", () => {
+    return {
+      publishPing: fn2,
+    };
+  });
+  try {
+    await checkerRetryPolicy({
+      workspaceId: "1",
+      monitorId: "1",
+      url: "https://www.openstat.us/404",
+      cronTimestamp: 1,
+      status: "error",
+      pageIds: [],
+      method: "GET",
+    });
+  } catch (e) {
+    expect(e).toBeInstanceOf(Error);
+  }
+  expect(fn).toHaveBeenCalledTimes(0);
+  expect(fn1).toHaveBeenCalledTimes(0);
+  expect(fn2).toHaveBeenCalledTimes(1);
+});
