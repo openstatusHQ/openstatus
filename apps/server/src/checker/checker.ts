@@ -1,4 +1,4 @@
-import { updateMonitorStatus } from "./alerting";
+import { triggerAlerting, updateMonitorStatus } from "./alerting";
 import type { PublishPingType } from "./ping";
 import { pingEndpoint, publishPing } from "./ping";
 import type { Payload } from "./schema";
@@ -78,6 +78,7 @@ const run = async (data: Payload, retry?: number | undefined) => {
           monitorId: data.monitorId,
           status: "error",
         });
+        await triggerAlerting({ monitorId: data.monitorId });
       }
     }
   }
