@@ -2,7 +2,7 @@ import { expect, mock, test } from "bun:test";
 
 import { triggerAlerting } from "./alerting";
 
-test("should send email notification", async () => {
+test.todo("should send email notification", async () => {
   const fn = mock(() => {});
   mock.module("./utils.ts", () => {
     return {

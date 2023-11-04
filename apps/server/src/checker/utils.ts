@@ -6,6 +6,7 @@ import type {
 import { sendDiscordMessage } from "@openstatus/notification-discord";
 import { send as sendEmail } from "@openstatus/notification-emails";
 import { sendSlackMessage } from "@openstatus/notification-slack";
+import type { flyRegionsDict } from "@openstatus/utils";
 
 type SendNotification = ({
   monitor,
@@ -15,7 +16,7 @@ type SendNotification = ({
 }: {
   monitor: Monitor;
   notification: Notification;
-  region: string;
+  region: keyof typeof flyRegionsDict;
   statusCode: number;
 }) => Promise<void>;
 
