@@ -26,10 +26,18 @@ const ParamsSchema = z.object({
 });
 
 export const periodicityEnum = z.enum(monitorPeriodicity);
-export const regionEnum = z
-  .enum(flyRegions)
-  .or(z.literal(""))
-  .transform((val) => (val === "" ? "" : val));
+export const regionEnum = z.preprocess(
+  (val) => {
+    if (String(val).length > 0) {
+      return String(val).split(",");
+    } else {
+      return [];
+    }
+  },
+  z.array(z.enum(flyRegions)),
+);
+
+const regionInput = z.array(z.enum(flyRegions)).transform((val) => String(val));
 
 const MonitorSchema = z
   .object({
@@ -108,7 +116,7 @@ const monitorInput = z
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
-    regions: regionEnum.openapi({
+    regions: regionInput.openapi({
       example: "ams",
       description: "The regions to use",
     }),
@@ -303,7 +311,6 @@ const postRoute = createRoute({
 monitorApi.openapi(postRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const workspacePlan = c.get("workspacePlan");
-  console.log({ workspaceId });
   const input = c.req.valid("json");
 
   const count = (
@@ -312,7 +319,7 @@ monitorApi.openapi(postRoute, async (c) => {
 
   if (count >= workspacePlan.limits.monitors)
     return c.jsonT({ code: 403, message: "Forbidden" });
-
+  console.log({ input });
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
     return c.jsonT({ code: 403, message: "Forbidden" });
 
