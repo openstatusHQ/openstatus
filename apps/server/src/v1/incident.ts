@@ -60,6 +60,7 @@ const incidentExtendedSchema = incidentSchema.extend({
 const getAllRoute = createRoute({
   method: "get",
   tags: ["incident"],
+  description: "Get all incidents",
   path: "/",
   request: {},
   responses: {
@@ -108,6 +109,7 @@ incidentApi.openapi(getAllRoute, async (c) => {
 const getRoute = createRoute({
   method: "get",
   tags: ["incident"],
+  description: "Get an incident",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -162,6 +164,7 @@ incidentApi.openapi(getRoute, async (c) => {
 const postRoute = createRoute({
   method: "post",
   tags: ["incident"],
+  description: "Create an incident",
   path: "/",
   request: {
     body: {
@@ -214,6 +217,7 @@ incidentApi.openapi(postRoute, async (c) => {
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["incident"],
+  description: "Delete an incident",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -266,10 +270,11 @@ const postRouteUpdate = createRoute({
   method: "post",
   tags: ["incident"],
   path: "/:id/update",
+  description: "Create an incident update",
   request: {
     params: ParamsSchema,
     body: {
-      description: "The incident to update",
+      description: "the incident update",
       content: {
         "application/json": {
           schema: incidentUpdateSchema,

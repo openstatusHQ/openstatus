@@ -153,6 +153,7 @@ const monitorApi = new OpenAPIHono<{ Variables: Variables }>();
 const getAllRoute = createRoute({
   method: "get",
   tags: ["monitor"],
+  description: "Get all monitors",
   path: "/",
   request: {},
   responses: {
@@ -162,7 +163,7 @@ const getAllRoute = createRoute({
           schema: z.array(MonitorSchema),
         },
       },
-      description: "Get the monitor",
+      description: "All the monitors",
     },
     404: {
       content: {
@@ -201,6 +202,7 @@ monitorApi.openapi(getAllRoute, async (c) => {
 const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
+  description: "Get a monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -212,7 +214,7 @@ const getRoute = createRoute({
           schema: MonitorSchema,
         },
       },
-      description: "Get the monitor",
+      description: "The monitor",
     },
     401: {
       content: {
@@ -258,6 +260,7 @@ monitorApi.openapi(getRoute, async (c) => {
 const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
+  description: "Create a monitor",
   path: "/",
   request: {
     body: {
@@ -332,6 +335,7 @@ monitorApi.openapi(postRoute, async (c) => {
 const putRoute = createRoute({
   method: "put",
   tags: ["monitor"],
+  description: "Update a monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -404,6 +408,7 @@ monitorApi.openapi(putRoute, async (c) => {
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["monitor"],
+  description: "Delete a monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,
