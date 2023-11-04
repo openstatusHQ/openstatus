@@ -1,0 +1,41 @@
+meta {
+  name: checker
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/checker
+  body: text
+  auth: none
+}
+
+headers {
+  Authorization: Basic test
+  X-CloudTasks-TaskRetryCount: 1
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "workspaceId": 1,
+    "monitorId": 1,
+    "method": "GET",
+    "url":"https://openstat.us/404",
+    "status": "active",
+    "cronTimestamp":1699088595307
+    "pageIds":["1"]
+  }
+}
+
+body:text {
+  {
+    "workspaceId": "1",
+    "monitorId": "1",
+    "method": "GET",
+    "url":"https://openstat.us/404",
+    "status": "active",
+    "cronTimestamp":1699088595307,
+    "pageIds":["1"]
+  }
+}

@@ -15,7 +15,6 @@ export const checkerRoute = new Hono<{ Variables: Variables }>();
 
 checkerRoute.post("/checker", async (c) => {
   const json = await c.req.json();
-
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env.CRON_SECRET}`) {
     console.error("Unauthorized");

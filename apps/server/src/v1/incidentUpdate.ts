@@ -18,7 +18,7 @@ const ParamsSelectSchema = z.object({
     .min(1)
     .openapi({
       param: {
-        name: "incidentId",
+        name: "id",
         in: "path",
       },
       description: "The id of the update",
