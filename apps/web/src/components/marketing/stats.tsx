@@ -1,7 +1,8 @@
 import { Shell } from "@/components/dashboard/shell";
 import { getHomeStatsData } from "@/lib/tb";
 import { numberFormatter } from "@/lib/utils";
-import { api } from "@/trpc/server";
+
+// import { api } from "@/trpc/server";
 
 export async function Stats() {
   const tbTotalStats = await getHomeStatsData({});

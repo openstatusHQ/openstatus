@@ -7,7 +7,6 @@ import * as z from "zod";
 import type { Page } from "@openstatus/db/src/schema";
 import { Badge } from "@openstatus/ui";
 
-import { formatDate } from "@/lib/utils";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 // TODO: add total number of monitors

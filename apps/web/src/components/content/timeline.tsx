@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 import { formatDate } from "@/lib/utils";
 
 interface TimelineProps {

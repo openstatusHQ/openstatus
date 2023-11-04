@@ -1,6 +1,4 @@
-import Link from "next/link";
-
-import { Badge, Button } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui";
 
 import type { Feature, SpecialFeature } from "@/config/features";
 import { Shell } from "../dashboard/shell";

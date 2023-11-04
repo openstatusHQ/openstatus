@@ -1,11 +1,5 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-
-import type {
-  DomainResponse,
-  DomainVerificationStatusProps,
-} from "@openstatus/api/src/router/domain";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
 import { useDomainStatus } from "@/hooks/use-domain-status";
