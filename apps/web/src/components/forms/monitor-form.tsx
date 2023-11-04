@@ -186,6 +186,15 @@ export function MonitorForm({
   };
 
   const sendTestPing = () => {
+    if (isTestPending) {
+      return;
+    }
+    const { url } = form.getValues();
+    if (!url) {
+      toast("test-warning-empty-url");
+      return;
+    }
+
     startTestTransition(async () => {
       const isSuccessful = await pingEndpoint();
       if (isSuccessful) {

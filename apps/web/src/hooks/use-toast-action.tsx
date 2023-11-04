@@ -17,6 +17,7 @@ const config = {
   "unique-slug": {
     title: "Slug is already taken",
     description: "Please select another slug. Every slug is unique.",
+    variant: "warning",
   },
   success: { title: "Success" },
   deleted: { title: "Deleted successfully" }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
@@ -25,6 +26,11 @@ const config = {
     title: "Connection Failed",
     // description: "Be sure to include the auth headers.",
     variant: "destructive",
+  },
+  "test-warning-empty-url": {
+    title: "URL is Empty",
+    description: "Please enter a valid, non-empty URL",
+    variant: "warning",
   },
   "test-success": {
     title: "Connection Established",

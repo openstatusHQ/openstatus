@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useMemo } from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { cva } from "class-variance-authority";
 import type { VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
+import { Check, ShieldAlert, X } from "lucide-react";
 
 import { cn } from "../lib/utils";
 
@@ -26,13 +27,14 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "data-[swipe=move]:transition-none group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full data-[state=closed]:slide-out-to-right-full",
+  "data-[swipe=move]:transition-none group relative pointer-events-auto flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full data-[state=closed]:slide-out-to-right-full bg-background",
   {
     variants: {
       variant: {
-        default: "bg-background border",
-        destructive:
-          "group destructive border-destructive bg-destructive text-destructive-foreground",
+        // REMINDER: same keys as toastIconVariant
+        default: "",
+        destructive: "",
+        warning: "",
       },
     },
     defaultVariants: {
@@ -40,6 +42,19 @@ const toastVariants = cva(
     },
   },
 );
+
+const toastIconVariant = cva("", {
+  variants: {
+    variant: {
+      default: "bg-green-500",
+      destructive: "bg-destructive",
+      warning: "bg-amber-500",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+});
 
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
@@ -55,6 +70,32 @@ const Toast = React.forwardRef<
   );
 });
 Toast.displayName = ToastPrimitives.Root.displayName;
+
+const ToastIcon = ({ variant }: VariantProps<typeof toastIconVariant>) => {
+  const Icon = useMemo(() => {
+    switch (variant) {
+      case "destructive":
+        return X;
+
+      case "warning":
+        return ShieldAlert;
+
+      default:
+        return Check;
+    }
+  }, [variant]);
+
+  return (
+    <div
+      className={cn(
+        "h-fit w-fit rounded-full p-2",
+        toastIconVariant({ variant }),
+      )}
+    >
+      <Icon className="text-background h-4 w-4" />
+    </div>
+  );
+};
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
@@ -127,4 +168,5 @@ export {
   ToastDescription,
   ToastClose,
   ToastAction,
+  ToastIcon,
 };
