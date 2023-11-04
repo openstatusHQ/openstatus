@@ -26,7 +26,7 @@ async function main() {
       {
         id: 1,
         slug: "test",
-        stripeId: "stripeId",
+        stripeId: "stripeId1",
         name: "test",
         subscriptionId: "subscriptionId",
         plan: "pro",
@@ -35,10 +35,10 @@ async function main() {
       },
       {
         id: 2,
-        slug: "test",
-        stripeId: "stripeId",
-        name: "test",
-        subscriptionId: "subscriptionId",
+        slug: "test2",
+        stripeId: "stripeId2",
+        name: "test2",
+        subscriptionId: "subscriptionId2",
         plan: "free",
         endsAt: null,
         paidUntil: null,

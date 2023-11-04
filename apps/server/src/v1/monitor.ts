@@ -26,16 +26,6 @@ const ParamsSchema = z.object({
 });
 
 export const periodicityEnum = z.enum(monitorPeriodicity);
-export const regionEnum = z.preprocess(
-  (val) => {
-    if (String(val).length > 0) {
-      return String(val).split(",");
-    } else {
-      return [];
-    }
-  },
-  z.array(z.enum(flyRegions)),
-);
 
 const regionInput = z.array(z.enum(flyRegions)).transform((val) => String(val));
 
@@ -53,10 +43,22 @@ const MonitorSchema = z
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
-    regions: regionEnum.openapi({
-      example: "ams",
-      description: "The regions to use",
-    }),
+    regions: z
+      .preprocess(
+        (val) => {
+          if (String(val).length > 0) {
+            return String(val).split(",");
+          } else {
+            return [];
+          }
+        },
+        z.array(z.enum(flyRegions)),
+      )
+      .default([])
+      .openapi({
+        example: ["ams"],
+        description: "The regions to use",
+      }),
     name: z
       .string()
       .openapi({
