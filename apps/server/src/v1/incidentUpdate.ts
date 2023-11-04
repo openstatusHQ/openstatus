@@ -54,7 +54,7 @@ const getUpdateRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({}),
+          schema: incidentUpdateSchema,
         },
       },
       description: "Get all incidents",

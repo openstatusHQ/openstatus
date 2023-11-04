@@ -26,10 +26,8 @@ const ParamsSchema = z.object({
 });
 
 export const periodicityEnum = z.enum(monitorPeriodicity);
-export const regionEnum = z
-  .enum(flyRegions)
-  .or(z.literal(""))
-  .transform((val) => (val === "" ? "" : val));
+
+const regionInput = z.array(z.enum(flyRegions)).transform((val) => String(val));
 
 const MonitorSchema = z
   .object({
@@ -45,10 +43,22 @@ const MonitorSchema = z
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
-    regions: regionEnum.openapi({
-      example: "ams",
-      description: "The regions to use",
-    }),
+    regions: z
+      .preprocess(
+        (val) => {
+          if (String(val).length > 0) {
+            return String(val).split(",");
+          } else {
+            return [];
+          }
+        },
+        z.array(z.enum(flyRegions)),
+      )
+      .default([])
+      .openapi({
+        example: ["ams"],
+        description: "The regions to use",
+      }),
     name: z
       .string()
       .openapi({
@@ -108,7 +118,7 @@ const monitorInput = z
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
-    regions: regionEnum.openapi({
+    regions: regionInput.openapi({
       example: "ams",
       description: "The regions to use",
     }),
@@ -240,7 +250,6 @@ monitorApi.openapi(getRoute, async (c) => {
   const { id } = c.req.valid("param");
 
   const monitorId = Number(id);
-  console.log({ monitorId, workspaceId });
   const _monitor = await db
     .select()
     .from(monitor)
@@ -303,7 +312,6 @@ const postRoute = createRoute({
 monitorApi.openapi(postRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const workspacePlan = c.get("workspacePlan");
-  console.log({ workspaceId });
   const input = c.req.valid("json");
 
   const count = (
@@ -312,7 +320,6 @@ monitorApi.openapi(postRoute, async (c) => {
 
   if (count >= workspacePlan.limits.monitors)
     return c.jsonT({ code: 403, message: "Forbidden" });
-
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
     return c.jsonT({ code: 403, message: "Forbidden" });
 

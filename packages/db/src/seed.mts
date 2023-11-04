@@ -22,16 +22,28 @@ async function main() {
   console.log("Seeding database ");
   await db
     .insert(workspace)
-    .values({
-      id: 1,
-      slug: "test",
-      stripeId: "stripeId",
-      name: "test",
-      subscriptionId: "subscriptionId",
-      plan: "free",
-      endsAt: null,
-      paidUntil: null,
-    })
+    .values([
+      {
+        id: 1,
+        slug: "test",
+        stripeId: "stripeId1",
+        name: "test",
+        subscriptionId: "subscriptionId",
+        plan: "pro",
+        endsAt: null,
+        paidUntil: null,
+      },
+      {
+        id: 2,
+        slug: "test2",
+        stripeId: "stripeId2",
+        name: "test2",
+        subscriptionId: "subscriptionId2",
+        plan: "free",
+        endsAt: null,
+        paidUntil: null,
+      },
+    ])
     .run();
   await db
     .insert(monitor)
