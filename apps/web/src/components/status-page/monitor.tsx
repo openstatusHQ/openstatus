@@ -19,7 +19,6 @@ export const Monitor = async ({
       name={monitor.name}
       url={monitor.url}
       description={monitor.description}
-      context="status-page"
     />
   );
 };

@@ -2,7 +2,7 @@ import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { getMonitorListData } from "@/lib/tb";
-import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
+import { cleanData, getStatus, isInBlacklist } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
 
 export const runtime = "edge";
@@ -50,9 +50,7 @@ export async function GET(req: Request) {
       }))) ||
     [];
 
-  const { monitors, uptime } = getMonitorList(data, {
-    maxSize: 40,
-  });
+  const { bars, uptime } = cleanData({ data, last: LIMIT });
 
   return new ImageResponse(
     (
@@ -78,7 +76,7 @@ export async function GET(req: Request) {
             {title}
           </h1>
           <p tw="text-slate-600 text-3xl">{description}</p>
-          {monitors && monitors.length > 0 ? (
+          {bars && bars.length > 0 ? (
             <div tw="flex flex-col w-full mt-6">
               <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
                 <p tw="">{formatDate(new Date())}</p>
@@ -94,12 +92,10 @@ export async function GET(req: Request) {
                     ></div>
                   );
                 })}
-                <div tw="flex flex-row absolute right-0">
-                  {monitors.map((item, i) => {
+                <div tw="flex flex-row-reverse absolute right-0">
+                  {bars.map((item, i) => {
                     const { variant } = getStatus(item.ok / item.count);
-                    const isBlackListed = Object.keys(blacklistDates).includes(
-                      String(item.cronTimestamp),
-                    );
+                    const isBlackListed = isInBlacklist(item.cronTimestamp);
                     if (isBlackListed) {
                       return (
                         <div

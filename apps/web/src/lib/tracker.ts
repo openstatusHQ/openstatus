@@ -5,8 +5,6 @@ export type StatusVariant = "up" | "degraded" | "down" | "empty";
 type GetStatusReturnType = {
   label: string;
   variant: StatusVariant;
-  twColor: string;
-  twBgColor: string;
 };
 
 /**
@@ -19,56 +17,118 @@ export const getStatus = (ratio: number): GetStatusReturnType => {
     return {
       label: "Missing",
       variant: "empty",
-      twColor: "text-gray-500",
-      twBgColor: "bg-gray-500",
     };
   if (ratio >= 0.98)
     return {
       label: "Operational",
       variant: "up",
-      twColor: "text-green-500",
-      twBgColor: "bg-green-500",
     };
   if (ratio >= 0.5)
     return {
       label: "Degraded",
       variant: "degraded",
-      twColor: "text-yellow-500",
-      twBgColor: "bg-yellow-500",
     };
   return {
     label: "Downtime",
     variant: "down",
-    twColor: "text-red-500",
-    twBgColor: "bg-red-500",
   };
 };
 
+// TODO: move into Class component sharing the same `data`
+
+export function cleanData({ data, last }: { data: Monitor[]; last: number }) {
+  const today = new Date();
+
+  const currentDay = new Date(today);
+  currentDay.setUTCDate(today.getDate());
+  currentDay.setUTCHours(0, 0, 0, 0);
+
+  const lastDay = new Date(today);
+  lastDay.setUTCDate(today.getDate() - last);
+  lastDay.setUTCHours(0, 0, 0, 0);
+
+  const dateSequence = generateDateSequence(lastDay, currentDay);
+
+  const filledData = fillEmptyData(data, dateSequence);
+
+  const uptime = getTotalUptimeString(filledData);
+
+  return { bars: filledData, uptime }; // possibly only return filledData?
+}
+
+function fillEmptyData(data: Monitor[], dateSequence: Date[]) {
+  const filledData: Monitor[] = [];
+  let dataIndex = 0;
+
+  for (const date of dateSequence) {
+    const timestamp = date.getTime();
+    const cronTimestamp =
+      dataIndex < data.length ? data[dataIndex].cronTimestamp : undefined;
+    if (
+      cronTimestamp &&
+      areDatesEqualByDayMonthYear(new Date(cronTimestamp), date)
+    ) {
+      const isBlacklisted = isInBlacklist(cronTimestamp);
+
+      /**
+       * automatically remove the data from the array to avoid wrong uptime
+       * that provides time to remove cursed logs from tinybird via mv migration
+       */
+      if (isBlacklisted) {
+        filledData.push(emptyData(timestamp));
+      } else {
+        filledData.push(data[dataIndex]);
+      }
+      dataIndex++;
+    } else {
+      filledData.push(emptyData(timestamp));
+    }
+  }
+
+  return filledData;
+}
+
+function emptyData(cronTimestamp: number) {
+  return {
+    count: 0,
+    ok: 0,
+    avgLatency: 0,
+    cronTimestamp,
+  };
+}
+
 /**
- *
- * @param data Array of monitors from tinybird
+ * equal UTC days - fixes issue with daylight saving
+ * @param date1
+ * @param date2
  * @returns
  */
-export function getMonitorList(
-  data: Monitor[],
-  { maxSize, context }: { maxSize: number; context?: string },
-) {
-  const slicedData = data.slice(0, maxSize).reverse();
+function areDatesEqualByDayMonthYear(date1: Date, date2: Date) {
+  date1.setUTCDate(date1.getDate());
+  date1.setUTCHours(0, 0, 0, 0);
 
-  const filledData: Monitor[] =
-    context === "play" ? slicedData : fillMissingDates(slicedData);
+  date2.setUTCDate(date2.getDate());
+  date2.setUTCHours(0, 0, 0, 0);
 
-  const placeholderData: null[] = Array(
-    Math.max(maxSize, filledData.length), // we might have more data than maxSize as we are adding empty dates in between
-  ).fill(null);
+  return date1.toUTCString() === date2.toUTCString();
+}
 
-  const totalUptime = getTotalUptime(filledData);
+/**
+ *
+ * @param startDate
+ * @param endDate
+ * @returns
+ */
+export function generateDateSequence(startDate: Date, endDate: Date): Date[] {
+  const dateSequence: Date[] = [];
+  const currentDate = new Date(startDate);
 
-  return {
-    monitors: filledData,
-    placeholder: placeholderData,
-    uptime: totalUptime,
-  };
+  while (currentDate <= endDate) {
+    dateSequence.push(new Date(currentDate));
+    currentDate.setUTCDate(currentDate.getDate() + 1);
+  }
+
+  return dateSequence.reverse();
 }
 
 export function getTotalUptime(data: Monitor[]) {
@@ -83,7 +143,11 @@ export function getTotalUptime(data: Monitor[]) {
       ok: 0,
     },
   );
+  return reducedData;
+}
 
+export function getTotalUptimeString(data: Monitor[]) {
+  const reducedData = getTotalUptime(data);
   const uptime =
     reducedData.count !== 0
       ? ((reducedData.ok / reducedData.count) * 100).toFixed(2)
@@ -92,62 +156,8 @@ export function getTotalUptime(data: Monitor[]) {
   return uptime;
 }
 
-/**
- * It happens that some monitors don't have data for a specific date
- * This function fills the missing dates in between
- * @param data Array of monitors from tinybird
- * @returns
- */
-export function fillMissingDates(data: Monitor[]) {
-  if (data.length === 0) {
-    return [];
-  }
-
-  const startDate = new Date(data[0].cronTimestamp);
-  const endDate = new Date(
-    new Date(data[data.length - 1].cronTimestamp).setHours(23, 59, 59, 999),
-  );
-
-  // The reason why we cannot use `date-fns` is because it isn't supported on the edge
-  // const dateSequence = eachDayOfInterval({start:startDate, end:endDate})
-  const dateSequence = generateDateSequence(startDate, endDate);
-
-  const filledData: Monitor[] = [];
-  let dataIndex = 0;
-
-  for (const currentDate of dateSequence) {
-    const currentTimestamp = currentDate.getTime();
-    if (
-      dataIndex < data.length &&
-      (data[dataIndex].cronTimestamp === currentTimestamp ||
-        data[dataIndex].cronTimestamp + 60 * 60 * 1000 === currentTimestamp)
-    ) {
-      filledData.push(data[dataIndex]);
-      dataIndex++;
-    } else {
-      filledData.push({
-        count: 0,
-        ok: 0,
-        avgLatency: 0,
-        cronTimestamp: currentTimestamp,
-      });
-    }
-  }
-
-  return filledData;
-}
-
-// Function to generate a sequence of dates between two dates
-export function generateDateSequence(startDate: Date, endDate: Date) {
-  const dateSequence = [];
-  const currentDate = new Date(startDate);
-
-  while (currentDate <= endDate) {
-    dateSequence.push(new Date(currentDate));
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-
-  return dateSequence;
+export function isInBlacklist(timestamp: number) {
+  return Object.keys(blacklistDates).includes(timestamp.toString());
 }
 
 /**
@@ -158,7 +168,6 @@ export const blacklistDates: Record<number, string> = {
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
   1693008000000:
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
-  // Downtime on 18. Oct. 2023 between 20h40 - 23h55 - TOD0: remove error logs
   1697587200000:
     "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
 };

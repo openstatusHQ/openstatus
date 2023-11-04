@@ -19,7 +19,12 @@ import {
 } from "@openstatus/ui";
 
 import useWindowSize from "@/hooks/use-window-size";
-import { blacklistDates, getMonitorList, getStatus } from "@/lib/tracker";
+import {
+  blacklistDates,
+  cleanData,
+  getStatus,
+  isInBlacklist,
+} from "@/lib/tracker";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -28,8 +33,8 @@ const tracker = cva("h-10 rounded-full flex-1", {
       up: "bg-green-500 data-[state=open]:bg-green-600",
       down: "bg-red-500 data-[state=open]:bg-red-600",
       degraded: "bg-yellow-500 data-[state=open]:bg-yellow-600",
-      empty: "bg-muted-foreground/20",
-      blacklist: "bg-green-400",
+      empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
+      blacklist: "bg-green-400 data-[state=open]:bg-green-600",
     },
   },
   defaultVariants: {
@@ -55,11 +60,9 @@ export function Tracker({
   description,
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
-  const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]); // TODO: it is better than how it is currently, but creates a small content shift on first render
-  const { monitors, placeholder, uptime } = getMonitorList(data, {
-    maxSize,
-    context,
-  });
+  // TODO: it is better than how it was currently, but creates a small content shift on first render
+  const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
+  const { bars, uptime } = cleanData({ data, last: maxSize });
 
   return (
     <div className="flex flex-col">
@@ -75,14 +78,8 @@ export function Tracker({
         </p>
       </div>
       <div className="relative h-full w-full">
-        <div className="flex gap-0.5">
-          {Array(Math.abs(placeholder.length - monitors.length))
-            .fill(null)
-            .map((_, i) => {
-              // TODO: use `Bar` component and `HoverCard` with empty state
-              return <div key={i} className={tracker({ variant: "empty" })} />;
-            })}
-          {monitors.map((props) => {
+        <div className="flex flex-row-reverse gap-0.5">
+          {bars.map((props) => {
             return (
               <Bar key={props.cronTimestamp} context={context} {...props} />
             );
@@ -138,15 +135,11 @@ const Bar = ({
 }: Monitor & Pick<TrackerProps, "context">) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
-  // FIX: this is an easy way to detect if cronTimestamps have been aggregated
-  const isMidnight = String(cronTimestamp).endsWith("00000");
   const date = new Date(cronTimestamp);
-  const toDate = isMidnight ? date.setDate(date.getDate() + 1) : cronTimestamp;
-  const dateFormat = isMidnight ? "dd/MM/yy" : "dd/MM/yy HH:mm";
+  const toDate = date.setDate(date.getDate() + 1);
+  const dateFormat = "dd/MM/yy";
 
-  const isBlackListed = Object.keys(blacklistDates).includes(
-    String(cronTimestamp),
-  );
+  const isBlackListed = isInBlacklist(cronTimestamp);
 
   return (
     <HoverCard

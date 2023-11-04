@@ -14,8 +14,6 @@ import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
-import { getMonitorListData } from "@/lib/tb";
-import { notEmpty } from "@/lib/utils";
 import { api } from "@/trpc/server";
 
 const url =
