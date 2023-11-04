@@ -1,10 +1,10 @@
 "use client";
 
-import { regionsDict } from "@roundtable/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
+import { regionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
