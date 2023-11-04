@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ClerkProvider } from "@clerk/nextjs";
 import { ChevronRight } from "lucide-react";
 
 import { Badge, Button } from "@openstatus/ui";
