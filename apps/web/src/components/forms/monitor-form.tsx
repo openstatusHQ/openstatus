@@ -60,10 +60,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
+import { flyRegionsDict } from "@openstatus/utils";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { flyRegionsDict } from "@/data/regions-dictionary";
 import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";

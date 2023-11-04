@@ -34,7 +34,6 @@ checkerRoute.post("/checker", async (c) => {
       `catchTooManyRetry for ${JSON.stringify(result.data)}
       )}`,
     );
-    // catchTooManyRetry(result.data);
     return c.text("Ok", 200); // finish the task
   }
 

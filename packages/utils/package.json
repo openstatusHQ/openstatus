@@ -1,0 +1,15 @@
+{
+  "name": "@openstatus/utils",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.2.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

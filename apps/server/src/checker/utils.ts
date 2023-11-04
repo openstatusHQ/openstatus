@@ -10,9 +10,13 @@ import { sendSlackMessage } from "@openstatus/notification-slack";
 type SendNotification = ({
   monitor,
   notification,
+  region,
+  statusCode,
 }: {
   monitor: Monitor;
   notification: Notification;
+  region: string;
+  statusCode: number;
 }) => Promise<void>;
 
 export const providerToFunction = {

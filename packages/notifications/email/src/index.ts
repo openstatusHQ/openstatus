@@ -6,9 +6,13 @@ import { EmailConfigurationSchema } from "./schema/config";
 export const send = async ({
   monitor,
   notification,
+  region,
+  statusCode,
 }: {
   monitor: Monitor;
   notification: Notification;
+  statusCode: number;
+  region: string;
 }) => {
   // FIXME:
   const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
@@ -25,7 +29,7 @@ export const send = async ({
       from: "Notifications <ping@openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is down 🚨`,
-      html: `Hey, <br/> Your monitor ${monitor.name} is down. <br/> <br/> OpenStatus`,
+      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is down in ${region}. </p><p>URL : ${monitor.url}</p><p>Status Code: ${statusCode}</p><p>OpenStatus 🏓 </p>`,
     }),
   });
 
