@@ -1,3 +1,4 @@
+import { env } from "../env";
 import { triggerAlerting, updateMonitorStatus } from "./alerting";
 import type { PublishPingType } from "./ping";
 import { pingEndpoint, publishPing } from "./ping";
@@ -78,7 +79,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
           monitorId: data.monitorId,
           status: "error",
         });
-        await triggerAlerting({ monitorId: data.monitorId });
+        await triggerAlerting({
+          monitorId: data.monitorId,
+          region: env.FLY_REGION,
+          statusCode: res?.status || 0,
+        });
       }
     }
   }

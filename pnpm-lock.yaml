@@ -64,6 +64,9 @@ importers:
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.2.2)(zod@3.22.2)
@@ -143,6 +146,9 @@ importers:
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@openstatus/vercel':
         specifier: workspace:*
         version: link:../../packages/integrations/vercel
@@ -859,6 +865,15 @@ importers:
       tsup:
         specifier: 7.2.0
         version: 7.2.0(postcss@8.4.31)(typescript@5.2.2)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
+  packages/utils:
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.2.2
         version: 5.2.2

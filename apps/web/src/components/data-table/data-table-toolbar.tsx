@@ -4,12 +4,10 @@ import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
+import { flyRegionsDict } from "@openstatus/utils";
 
 import { codesDict } from "@/data/code-dictionary";
-import { flyRegionsDict } from "@/data/regions-dictionary";
-import { DataTableDateRangePicker } from "./data-table-date-ranger-picker";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
-import { DataTableFilterInput } from "./data-table-filter-input";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;

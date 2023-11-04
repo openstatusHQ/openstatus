@@ -4,23 +4,20 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
+import type { flyRegions } from "@openstatus/utils";
+import { flyRegionsDict } from "@openstatus/utils";
 
-import { publishPingRetryPolicy } from "./checker";
-import type { Payload } from "./schema";
 import { providerToFunction } from "./utils";
 
-export async function catchTooManyRetry(payload: Payload) {
-  await publishPingRetryPolicy({ payload, latency: -1, statusCode: 500 });
-  if (payload?.status !== "error") {
-    await triggerAlerting({ monitorId: payload.monitorId });
-    await updateMonitorStatus({
-      monitorId: payload.monitorId,
-      status: "error",
-    });
-  }
-}
-
-export const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
+export const triggerAlerting = async ({
+  monitorId,
+  region,
+  statusCode,
+}: {
+  monitorId: string;
+  region: keyof typeof flyRegionsDict;
+  statusCode: number;
+}) => {
   console.log(`triggerAlerting for ${monitorId}`);
   const notifications = await db
     .select()
@@ -40,6 +37,8 @@ export const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     await providerToFunction[notif.notification.provider]({
       monitor,
       notification: selectNotificationSchema.parse(notif.notification),
+      region: flyRegionsDict[region].location,
+      statusCode,
     });
   }
 };

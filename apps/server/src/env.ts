@@ -1,6 +1,8 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+import { flyRegions } from "@openstatus/utils";
+
 export const env = createEnv({
   server: {
     UNKEY_API_ID: z.string().min(1),
@@ -8,7 +10,7 @@ export const env = createEnv({
     TINY_BIRD_API_KEY: z.string().min(1),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
-    FLY_REGION: z.string(),
+    FLY_REGION: z.enum(flyRegions),
     CRON_SECRET: z.string(),
   },
 

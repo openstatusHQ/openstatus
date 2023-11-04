@@ -14,11 +14,7 @@ import {
 
 import { NotificationForm } from "@/components/forms/notification-form";
 
-export const NotificationDialog = ({
-  workspaceSlug,
-}: {
-  workspaceSlug: string;
-}) => {
+export const NotificationDialog = ({}: { workspaceSlug: string }) => {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={(val) => setOpen(val)}>

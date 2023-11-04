@@ -11,7 +11,7 @@ export function AffectedMonitors({
   return (
     <ul role="list" className="flex gap-2">
       {monitors.length > 0 ? (
-        monitors.map(({ name, url }, i) => (
+        monitors.map(({ name }, i) => (
           <li key={i} className="text-xs">
             <Badge variant="secondary">{name}</Badge>
           </li>

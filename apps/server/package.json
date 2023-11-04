@@ -20,6 +20,7 @@
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
+    "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
     "@unkey/api": "0.11.0",
     "hono": "3.9.1",

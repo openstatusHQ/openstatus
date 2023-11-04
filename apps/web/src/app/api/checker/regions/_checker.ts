@@ -16,7 +16,6 @@ import {
 import { env } from "@/env";
 import type { Payload } from "../schema";
 import { payloadSchema } from "../schema";
-import { providerToFunction } from "../utils";
 
 export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
@@ -147,10 +146,10 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
-    await providerToFunction[notif.notification.provider]({
-      monitor: selectMonitorSchema.parse(notif.monitor),
-      notification: selectNotificationSchema.parse(notif.notification),
-    });
+    // await providerToFunction[notif.notification.provider]({
+    //   monitor: selectMonitorSchema.parse(notif.monitor),
+    //   notification: selectNotificationSchema.parse(notif.notification),
+    // });
   }
 };
 

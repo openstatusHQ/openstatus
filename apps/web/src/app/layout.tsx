@@ -3,7 +3,6 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-import { ClerkProvider } from "@clerk/nextjs";
 import PlausibleProvider from "next-plausible";
 
 import { Toaster } from "@openstatus/ui";

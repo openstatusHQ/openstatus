@@ -15,9 +15,13 @@ const postToWebhook = async (body: any, webhookUrl: string) => {
 export const sendSlackMessage = async ({
   monitor,
   notification,
+  region,
+  statusCode,
 }: {
   monitor: Monitor;
   notification: Notification;
+  statusCode: number;
+  region: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -31,7 +35,7 @@ export const sendSlackMessage = async ({
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Your monitor <${monitor.url}/|${name}> is down 🚨 \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+              text: `Your monitor <${monitor.url}/|${name}> is down in ${region} with status code ${statusCode} 🚨  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
             },
             accessory: {
               type: "button",
