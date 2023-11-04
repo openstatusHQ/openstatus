@@ -115,3 +115,7 @@ can check our
 </a>
 
 Made with [Contrib.rocks](https://contrib.rocks)
+
+### Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/180eee159c0128f683a30f15f51ac35bdbd9fa44.svg "Repobeats analytics image")
