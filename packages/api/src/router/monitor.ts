@@ -86,7 +86,7 @@ export const monitorRouter = createTRPCRouter({
         await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
       }
 
-      trackNewMonitor(opts.ctx.user, {
+      await trackNewMonitor(opts.ctx.user, {
         url: newMonitor.url,
         periodicity: newMonitor.periodicity,
       });

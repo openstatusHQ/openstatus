@@ -22,7 +22,9 @@ export const notificationRouter = createTRPCRouter({
         .returning()
         .get();
 
-      trackNewNotification(opts.ctx.user, { provider: _notification.provider });
+      await trackNewNotification(opts.ctx.user, {
+        provider: _notification.provider,
+      });
 
       return _notification;
     }),
