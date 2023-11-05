@@ -36,6 +36,10 @@ export const getStatus = (ratio: number): GetStatusReturnType => {
 
 // TODO: move into Class component sharing the same `data`
 
+export type CleanMonitor = Monitor & {
+  blacklist?: string;
+};
+
 export function cleanData({ data, last }: { data: Monitor[]; last: number }) {
   const today = new Date();
 
@@ -57,7 +61,7 @@ export function cleanData({ data, last }: { data: Monitor[]; last: number }) {
 }
 
 function fillEmptyData(data: Monitor[], dateSequence: Date[]) {
-  const filledData: Monitor[] = [];
+  const filledData: CleanMonitor[] = [];
   let dataIndex = 0;
 
   for (const date of dateSequence) {
@@ -75,7 +79,10 @@ function fillEmptyData(data: Monitor[], dateSequence: Date[]) {
        * that provides time to remove cursed logs from tinybird via mv migration
        */
       if (isBlacklisted) {
-        filledData.push(emptyData(timestamp));
+        filledData.push({
+          ...emptyData(timestamp),
+          blacklist: blacklistDates[cronTimestamp],
+        });
       } else {
         filledData.push(data[dataIndex]);
       }
@@ -148,12 +155,11 @@ export function getTotalUptime(data: Monitor[]) {
 
 export function getTotalUptimeString(data: Monitor[]) {
   const reducedData = getTotalUptime(data);
-  const uptime =
-    reducedData.count !== 0
-      ? ((reducedData.ok / reducedData.count) * 100).toFixed(2)
-      : "";
+  const uptime = (reducedData.ok / reducedData.count) * 100;
 
-  return uptime;
+  if (isNaN(uptime)) return "";
+
+  return `${uptime.toFixed(2)}% uptime`;
 }
 
 export function isInBlacklist(timestamp: number) {

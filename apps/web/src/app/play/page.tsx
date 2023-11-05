@@ -1,8 +1,8 @@
 import { Tracker } from "@/components/tracker";
-import { getMonitorListData } from "@/lib/tb";
+import { getHomeMonitorListData } from "@/lib/tb";
 
 export default async function PlayPage() {
-  const data = await getMonitorListData({ monitorId: "openstatusPing" });
+  const data = await getHomeMonitorListData();
   return (
     <div className="relative flex flex-col items-center justify-center gap-4">
       <p className="font-cal mb-1 text-3xl">Status</p>
@@ -13,7 +13,7 @@ export default async function PlayPage() {
         {data && (
           <Tracker
             data={data}
-            id="openstatusPing"
+            id="1"
             name="Ping"
             url="https://www.openstatus.dev/api/ping"
           />

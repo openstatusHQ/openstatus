@@ -80,7 +80,7 @@ export async function GET(req: Request) {
             <div tw="flex flex-col w-full mt-6">
               <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
                 <p tw="">{formatDate(new Date())}</p>
-                <p tw="mr-1">{uptime}% uptime</p>
+                <p tw="mr-1">{uptime}</p>
               </div>
               <div tw="flex flex-row relative">
                 {/* Empty State */}
@@ -95,7 +95,7 @@ export async function GET(req: Request) {
                 <div tw="flex flex-row-reverse absolute right-0">
                   {bars.map((item, i) => {
                     const { variant } = getStatus(item.ok / item.count);
-                    const isBlackListed = isInBlacklist(item.cronTimestamp);
+                    const isBlackListed = Boolean(item.blacklist);
                     if (isBlackListed) {
                       return (
                         <div

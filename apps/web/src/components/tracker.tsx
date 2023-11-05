@@ -19,12 +19,8 @@ import {
 } from "@openstatus/ui";
 
 import useWindowSize from "@/hooks/use-window-size";
-import {
-  blacklistDates,
-  cleanData,
-  getStatus,
-  isInBlacklist,
-} from "@/lib/tracker";
+import type { CleanMonitor } from "@/lib/tracker";
+import { blacklistDates, cleanData, getStatus } from "@/lib/tracker";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -73,9 +69,7 @@ export function Tracker({
             <MoreInfo {...{ url, id, context, description }} />
           ) : null}
         </div>
-        <p className="text-muted-foreground shrink-0 font-light">
-          {uptime}% uptime
-        </p>
+        <p className="text-muted-foreground shrink-0 font-light">{uptime}</p>
       </div>
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-0.5">
@@ -131,15 +125,14 @@ const Bar = ({
   ok,
   avgLatency,
   cronTimestamp,
+  blacklist,
   context,
-}: Monitor & Pick<TrackerProps, "context">) => {
+}: CleanMonitor & Pick<TrackerProps, "context">) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
   const date = new Date(cronTimestamp);
   const toDate = date.setDate(date.getDate() + 1);
   const dateFormat = "dd/MM/yy";
-
-  const isBlackListed = isInBlacklist(cronTimestamp);
 
   return (
     <HoverCard
@@ -151,15 +144,13 @@ const Bar = ({
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div
           className={tracker({
-            variant: isBlackListed ? "blacklist" : getStatus(ratio).variant,
+            variant: blacklist ? "blacklist" : getStatus(ratio).variant,
           })}
         />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-64">
-        {isBlackListed ? (
-          <p className="text-muted-foreground text-xs">
-            {blacklistDates[cronTimestamp]}
-          </p>
+        {blacklist ? (
+          <p className="text-muted-foreground text-xs">{blacklist}</p>
         ) : (
           <>
             <div className="flex justify-between">
