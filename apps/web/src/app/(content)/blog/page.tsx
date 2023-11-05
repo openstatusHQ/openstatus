@@ -43,6 +43,7 @@ export default async function Post() {
             publishedAt={post.publishedAt}
             imageSrc={post.image}
             title={post.title}
+            href={`./blog/${post.slug}`}
           >
             <div className="prose">
               <p>{post.description}</p>
