@@ -1,3 +1,4 @@
+import { cva } from "class-variance-authority";
 import type { z } from "zod";
 
 import type {
@@ -10,6 +11,21 @@ import type { StatusVariant } from "@/lib/tracker";
 import { getStatus } from "@/lib/tracker";
 import { cn, notEmpty } from "@/lib/utils";
 import { Icons } from "../icons";
+
+const check = cva("border-border rounded-full border p-2", {
+  variants: {
+    variant: {
+      up: "text-green-500 bg-green-500",
+      down: "text-red-500 bg-red-500",
+      degraded: "text-yellow-500 bg-yellow-500",
+      empty: "text-gray-500 bg-gray-500",
+      incident: "text-yellow-500 bg-yellow-500",
+    },
+  },
+  defaultVariants: {
+    variant: "up",
+  },
+});
 
 export async function StatusCheck({
   incidents,
@@ -49,19 +65,15 @@ export async function StatusCheck({
   const incident = {
     label: "Incident",
     variant: "incident",
-    twColor: "text-yellow-500",
-    twBgColor: "bg-yellow-500",
   } as const;
 
-  const { label, variant, twBgColor } = isIncident ? incident : status;
+  const { label, variant } = isIncident ? incident : status;
 
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center gap-3">
         <p className="text-lg font-semibold">{label}</p>
-        <span
-          className={cn("border-border rounded-full border p-2", twBgColor)}
-        >
+        <span className={check({ variant })}>
           <StatusIcon variant={variant} />
         </span>
       </div>
