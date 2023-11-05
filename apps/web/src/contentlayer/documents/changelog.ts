@@ -10,6 +10,10 @@ export const Changelog = defineDocumentType(() => ({
       type: "string",
       required: true,
     },
+    description: {
+      type: "string",
+      required: true,
+    },
     image: {
       type: "string",
       required: true,
