@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -16,7 +17,9 @@ export function MarketingFooter({ className }: Props) {
       <Shell className="grid gap-6">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           <div className="order-4 md:order-1">
-            <StatusWidget slug="status" />
+            <Suspense fallback={null}>
+              <StatusWidget slug="status" />
+            </Suspense>
           </div>
           <div className="order-1 flex flex-col gap-3 text-sm md:order-2">
             <p className="text-foreground font-semibold">Community</p>
