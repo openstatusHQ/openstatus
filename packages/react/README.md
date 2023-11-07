@@ -1,7 +1,7 @@
 ## Status Widget
 
-Create an account on [openstatus.dev](https://openstatus.dev) and integrate a
-simple wiget into your React Application.
+Create an account on [openstatus.dev](https://openstatus.dev), start monitoring
+your endpoints and include your own StatusWidget into your React Application.
 
 ![Image of StatusWidget on openstatus.dev](https://openstatus.dev/assets/changelog/status-widget.png)
 
@@ -88,4 +88,10 @@ export type Status =
   | "unknown";
 ```
 
-Learn more [here](https://docs.openstatus.dev/packages/react).
+Learn more in the [docs](https://docs.openstatus.dev/packages/react).
+
+#### About OpenStatus
+
+OpenStatus is an open source monitoring services with incident managements.
+
+Follow our journey [@openstatusHQ](https://x.com/openstatusHQ).
