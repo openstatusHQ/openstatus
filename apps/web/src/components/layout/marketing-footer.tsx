@@ -1,11 +1,9 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { StatusWidget } from "@openstatus/react";
-
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
+import { StatusWidgetContainer } from "./status-widget-suspense";
 
 interface Props {
   className?: string;
@@ -17,9 +15,7 @@ export function MarketingFooter({ className }: Props) {
       <Shell className="grid gap-6">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           <div className="order-4 md:order-1">
-            <Suspense fallback={null}>
-              <StatusWidget slug="status" />
-            </Suspense>
+            <StatusWidgetContainer slug="status" />
           </div>
           <div className="order-1 flex flex-col gap-3 text-sm md:order-2">
             <p className="text-foreground font-semibold">Community</p>

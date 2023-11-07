@@ -23,7 +23,7 @@ export async function getStatus(slug: string): Promise<StatusResponse> {
   return { status: "unknown" };
 }
 
-type StatusWidgetProps = {
+export type StatusWidgetProps = {
   slug: string;
   href?: string;
 };
