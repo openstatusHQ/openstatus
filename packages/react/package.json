@@ -1,6 +1,12 @@
 {
   "name": "@openstatus/react",
   "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openstatusHQ/openstatus.git"
+  },
+  "keywords": ["openstatus", "react", "monitoring"],
+  "homepage": "https://github.com/openstatusHQ/openstatus#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.mjs",
