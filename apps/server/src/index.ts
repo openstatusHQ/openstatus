@@ -1,5 +1,6 @@
 import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
+import { logger } from "hono/logger";
 
 import { checkerRoute } from "./checker";
 import { env } from "./env";
@@ -23,6 +24,7 @@ app.route("/public", publicRoute);
 /**
  * Ping Pong
  */
+app.use("/ping", logger());
 app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }, 200));
 
 /**
