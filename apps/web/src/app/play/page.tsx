@@ -13,7 +13,7 @@ export default async function PlayPage() {
         {data && (
           <Tracker
             data={data}
-            id="1"
+            id={1}
             name="Ping"
             url="https://www.openstatus.dev/api/ping"
           />

@@ -1,6 +1,12 @@
 {
   "name": "@openstatus/react",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openstatusHQ/openstatus.git"
+  },
+  "keywords": ["openstatus", "react", "monitoring"],
+  "homepage": "https://github.com/openstatusHQ/openstatus#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "module": "./dist/index.mjs",
@@ -9,7 +15,8 @@
   ],
   "license": "MIT",
   "scripts": {
-    "dev":"tsup && pnpm run build:tailwind",
+    "dev":"tsup --watch && pnpm run dev:tailwind",
+    "dev:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch",
     "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "build": "tsup && pnpm run build:tailwind"
   },
