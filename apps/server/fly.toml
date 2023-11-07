@@ -23,7 +23,7 @@ primary_region = "ams"
     soft_limit = 500
 
 [deploy]
-  strategy = "bluegreen"
+  strategy = "canary"
 
 [[http_service.checks]]
   grace_period = "10s"
