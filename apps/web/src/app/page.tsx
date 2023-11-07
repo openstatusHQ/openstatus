@@ -1,8 +1,7 @@
-import { Suspense } from "react";
-
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { Cards, SpecialCard } from "@/components/marketing/cards";
+import { Example } from "@/components/marketing/example";
 import { FAQs } from "@/components/marketing/faqs";
 import { Hero } from "@/components/marketing/hero";
 import { Partners } from "@/components/marketing/partners";
@@ -16,9 +15,8 @@ export default async function Page() {
   return (
     <MarketingLayout>
       <div className="grid gap-8">
-        <Suspense fallback={null}>
-          <Hero />
-        </Suspense>
+        <Hero />
+        <Example />
         <Cards {...cardConfig.monitors} />
         <Stats />
         <Cards {...cardConfig.incidents} />
