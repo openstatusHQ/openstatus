@@ -21,6 +21,7 @@ import {
 import useWindowSize from "@/hooks/use-window-size";
 import type { CleanMonitor } from "@/lib/tracker";
 import { blacklistDates, cleanData, getStatus } from "@/lib/tracker";
+import { useI18n } from '@/yuzu/client';
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -129,6 +130,7 @@ const Bar = ({
   context,
 }: CleanMonitor & Pick<TrackerProps, "context">) => {
   const [open, setOpen] = React.useState(false);
+  const t = useI18n()
   const ratio = ok / count;
   const date = new Date(cronTimestamp);
   const toDate = date.setDate(date.getDate() + 1);
@@ -169,7 +171,7 @@ const Bar = ({
                 {format(new Date(cronTimestamp), dateFormat)}
               </p>
               <p className="text-muted-foreground text-xs">
-                avg. <span className="font-mono">{avgLatency}ms</span>
+                {t('avg.')} <span className="font-mono">{avgLatency}{t('ms')}</span>
               </p>
             </div>
             <Separator className="my-1.5" />
@@ -177,13 +179,13 @@ const Bar = ({
               <p className="text-left text-xs">
                 <span className="font-mono text-green-600">{count}</span>{" "}
                 <span className="text-muted-foreground font-light">
-                  total requests
+                  {t('total requests')}
                 </span>
               </p>
               <p className="text-right text-xs">
                 <span className="font-mono text-red-600">{count - ok}</span>{" "}
                 <span className="text-muted-foreground font-light">
-                  failed requests
+                  {t('failed requests')}
                 </span>
               </p>
             </div>

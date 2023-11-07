@@ -9,10 +9,11 @@ import { notEmpty } from "@/lib/utils";
 import { AffectedMonitors } from "../incidents/affected-monitors";
 import { Events } from "../incidents/events";
 import { StatusBadge } from "../incidents/status-badge";
+import { getI18n } from '@/yuzu/server';
 
 // TODO: change layout - it is too packed with data rn
 
-export const IncidentList = ({
+export const IncidentList = async ({
   incidents,
   monitors,
   context = "all",
@@ -21,6 +22,7 @@ export const IncidentList = ({
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
   context?: "all" | "latest"; // latest 7 days
 }) => {
+  const t = await getI18n();
   const lastWeek = Date.now() - 1000 * 60 * 60 * 24 * 7;
 
   function getLastWeeksIncidents() {
@@ -42,7 +44,7 @@ export const IncidentList = ({
       })?.length > 0 ? (
         <div className="grid gap-4">
           <h2 className="text-muted-foreground text-lg font-light">
-            {context === "all" ? "All incidents" : "Latest incidents"}
+            {context === "all" ? t("All incidents") : t("Latest incidents")}
           </h2>
           {_incidents.map((incident) => {
             const affectedMonitors = incident.monitorsToIncidents
@@ -60,7 +62,7 @@ export const IncidentList = ({
                 {Boolean(affectedMonitors.length) ? (
                   <div className="overflow-hidden text-ellipsis">
                     <p className="text-muted-foreground mb-2 text-xs">
-                      Affected Monitors
+                      {t('Affected Monitors')}
                     </p>
                     <AffectedMonitors
                       monitors={incident.monitorsToIncidents
@@ -76,7 +78,7 @@ export const IncidentList = ({
                 ) : null}
                 <div>
                   <p className="text-muted-foreground mb-2 text-xs">
-                    Latest Updates
+                    {t('Latest Updates')}
                   </p>
                   <Events incidentUpdates={incident.incidentUpdates} />
                 </div>
@@ -87,8 +89,8 @@ export const IncidentList = ({
       ) : (
         <p className="text-muted-foreground text-center text-sm font-light">
           {context === "all"
-            ? "No incidents."
-            : "No incidents in the last week."}
+            ? t("No incidents.")
+            : t("No incidents in the last week.")}
         </p>
       )}
     </>

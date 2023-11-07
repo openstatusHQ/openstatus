@@ -4,6 +4,7 @@ import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
 
 import { getMonitorListData } from "@/lib/tb";
 import { Tracker } from "../tracker";
+import { getI18n } from '@/yuzu/server';
 
 export const Monitor = async ({
   monitor,
@@ -11,7 +12,8 @@ export const Monitor = async ({
   monitor: z.infer<typeof selectPublicMonitorSchema>;
 }) => {
   const data = await getMonitorListData({ monitorId: String(monitor.id) });
-  if (!data) return <div>Something went wrong</div>;
+  const t = await getI18n();
+  if (!data) return <div>{t('Something went wrong')}</div>;
   return (
     <Tracker
       data={data}
