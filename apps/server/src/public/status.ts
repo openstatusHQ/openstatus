@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { endTime, setMetric, startTime } from "hono/timing";
 
 import { db, eq } from "@openstatus/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
@@ -27,8 +28,12 @@ status.get("/:slug", async (c) => {
   const { slug } = c.req.param();
 
   const cache = await redis.get(slug);
-  if (cache) return c.json({ status: cache });
+  if (cache) {
+    setMetric(c, "OpenStatus-Cache", "HIT");
 
+    return c.json({ status: cache });
+  }
+  startTime(c, "database");
   // { monitors, pages, monitors_to_pages }
   const monitorData = await db
     .select()
@@ -37,7 +42,9 @@ status.get("/:slug", async (c) => {
     .leftJoin(page, eq(monitorsToPages.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
+  endTime(c, "database");
 
+  startTime(c, "clickhouse");
   // { data: [{ ok, count }] }
   const lastMonitorPings = await Promise.allSettled(
     monitorData.map(async ({ monitors_to_pages }) => {
@@ -47,7 +54,7 @@ status.get("/:slug", async (c) => {
       });
     }),
   );
-
+  endTime(c, "clickhouse");
   // { ok, count }
   const data = lastMonitorPings.reduce(
     (prev, curr) => {

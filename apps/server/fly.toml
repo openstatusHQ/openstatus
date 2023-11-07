@@ -15,11 +15,15 @@ primary_region = "ams"
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 6
+  min_machines_running = 12
   processes = ["app"]
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500
 
 [deploy]
-  strategy = "canary"
+  strategy = "bluegreen"
 
 [[http_service.checks]]
   grace_period = "10s"
