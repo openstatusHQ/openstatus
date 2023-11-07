@@ -1,11 +1,11 @@
-## Status Widget
+# Status Widget
 
 Create an account on [openstatus.dev](https://openstatus.dev), start monitoring
 your endpoints and include your own StatusWidget into your React Application.
 
 ![Image of StatusWidget on openstatus.dev](https://openstatus.dev/assets/changelog/status-widget.png)
 
-### Install
+## Install
 
 ```bash
 npm install @openstatus/react
@@ -14,9 +14,9 @@ yarn add @openstatus/react
 bun add @openstatus/react
 ```
 
-### How to use the StatusWidget in your Next.js App Router
+## How to use the StatusWidget in your Next.js App Router
 
-#### Include the styles.css
+### Include the styles.css
 
 If you are using tailwind, extend your config with:
 
@@ -53,7 +53,7 @@ export function Page() {
 }
 ```
 
-### Headless getStatus utility function
+## Headless getStatus utility function
 
 If you would like to style it yourself, you can use the `getStatus` function to
 access the type response of the api call to:
@@ -90,7 +90,7 @@ export type Status =
 
 Learn more in the [docs](https://docs.openstatus.dev/packages/react).
 
-#### About OpenStatus
+### About OpenStatus
 
 OpenStatus is an open source monitoring services with incident managements.
 

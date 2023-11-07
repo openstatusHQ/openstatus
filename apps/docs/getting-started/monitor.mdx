@@ -10,23 +10,57 @@ can be a website, an API, or anything else that can be checked automatically.
 
 ## Configure your monitor 🛠
 
-<Frame caption="Create your first monitor">
-  <img src="/images/monitor/monitor.png" alt="Create your first monitor" />
+Your endpoint check requires:
+
+- a **name** to identify your monitor
+- the **URL** to checked
+
+We will store the **response time** and the **status code** of your endpoint.
+
+<Frame caption="Monitor your endpoint">
+  <img
+    src="/images/monitor/monitor-detail.png"
+    alt="Charts with status code and response time"
+  />
 </Frame>
 
-A monitor requires a few things to be configured:
+### HTTP Request 📤
 
-- an endpoint to check 🔗
-- a check interval ⏰
-- a region to run the check from 🌍
+Customize the request sent to your endpoint.
 
-## Advanced configuration 🧙‍♂️
+Choose between one of the request **HTTP Method**: `GET` (default), `POST` or
+`HEAD`.
 
-Sometimes you need to configure your monitor more precisely.
+Add custom key-value **HTTP Headers** to your request.
 
-- set a Method (GET, POST) 🧭
-- set a custom HTTP Headers (useful if your endpoint is secured) 🔑
-- set a custom HTTP Body (for POST request only) 📦
+> OpenStatus automatically appends the `"OpenStatus-Ping": "true"` header to
+> your request. This header is used to identify the request as a ping request
+> and can be exluded from your analytics.
+
+If you select the `POST` method, you can add a custom **HTTP Body** to your
+request.
+
+### Advanced Configuration ⏱️
+
+Define the **frequency** of your checks. You can choose between: `1m`, `5m`,
+`10m` (default), `30min` or `1h`.
+
+By default, **all regions** are enabled. You can disable some regions if you
+want to. Leaving it empty will check your endpoint from a random region.
+
+The **description** is optional. If defined, an `Info` tooltip will be added to
+your monitor name.
+
+You can always pause your monitor with the **active** switch button.
+
+### Notifications 🔔
+
+Get informed whenever a check fails. You can add multiple notification channels.
+
+We send a webhook to Slack or Discord channels. Or you can also receive an
+email.
+
+---
 
 > Create an API key and use it in your HTTP Headers to create your monitor
 > programmatically API.
