@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { logger } from "hono/logger";
 
 import type { Plan } from "@openstatus/plans";
 
@@ -26,7 +27,7 @@ api.doc("/openapi", {
  * Authentification Middleware
  */
 api.use("/*", middleware);
-
+api.use("/*", logger());
 api.route("/monitor", monitorApi);
 api.route("/incident_update", incidenUpdatetApi);
 

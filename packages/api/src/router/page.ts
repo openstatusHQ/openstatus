@@ -60,7 +60,7 @@ export const pageRouter = createTRPCRouter({
       await opts.ctx.db.insert(monitorsToPages).values(values).run();
     }
 
-    trackNewPage(opts.ctx.user, { slug: newPage.slug });
+    await trackNewPage(opts.ctx.user, { slug: newPage.slug });
 
     return newPage;
   }),

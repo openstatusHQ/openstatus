@@ -15,30 +15,34 @@ primary_region = "ams"
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 0
+  min_machines_running = 12
   processes = ["app"]
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500
 
 [deploy]
-  strategy = "rolling"
+  strategy = "canary"
 
 [[http_service.checks]]
   grace_period = "10s"
-  interval = "60s"
+  interval = "15s"
   method = "GET"
   timeout = "5s"
   path = "/ping"
 
 
 
-[checks]
-  [checks.name_of_your_http_check]
-    port = 3000
-    type = "http"
-    interval = "15s"
-    timeout = "10s"
-    grace_period = "30s"
-    method = "get"
-    path = "/ping"
+# [checks]
+#   [checks.name_of_your_http_check]
+#     port = 3000
+#     type = "http"
+#     interval = "15s"
+#     timeout = "10s"
+#     grace_period = "30s"
+#     method = "get"
+#     path = "/ping"
 
 # [[services.http_checks]]
 #   interval = 10000

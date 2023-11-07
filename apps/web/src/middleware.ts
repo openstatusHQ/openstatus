@@ -73,6 +73,7 @@ export default authMiddleware({
     "/blog",
     "/blog/(.*)",
     "/changelog",
+    "/changelog/(.*)",
     "/legal/(.*)",
     "/discord",
     "/github",

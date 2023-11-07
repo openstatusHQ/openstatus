@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { allChangelogs } from "contentlayer/generated";
 
 import {
@@ -40,6 +41,7 @@ export default async function Changelog() {
             publishedAt={post.publishedAt}
             imageSrc={post.image}
             title={post.title}
+            href={`./changelog/${post.slug}`}
           >
             <Mdx code={post.body.code} />
           </Timeline.Article>
