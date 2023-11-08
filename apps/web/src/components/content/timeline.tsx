@@ -55,7 +55,7 @@ function Article({
         </Link>
       </div>
       <div className="order-3 grid grid-cols-1 gap-4 md:col-span-4 md:col-start-2">
-        <h3 className="text-foreground font-cal text-2xl">{title}</h3>
+        <h2 className="text-foreground font-cal text-2xl">{title}</h2>
         {children}
       </div>
     </article>

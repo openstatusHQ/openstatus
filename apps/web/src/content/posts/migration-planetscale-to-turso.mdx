@@ -72,9 +72,22 @@ I was playing with this [Vercel tool](https://edge-data-latency.vercel.app/) to
 determine the most suitable database for our users. Among the options, Turso
 proved to be the fastest.
 
-![Turso latency](/assets/posts/migration-planetscale-to-turso/turso-latency.png)
+<Image
+  alt="Turso latency"
+  src="/assets/posts/migration-planetscale-to-turso/turso-latency.png"
+  width={650}
+  height={575}
+/>
+
 Turso is around `60ms` for 5 serial queries globally.
-![PlanetScale latency](/assets/posts/migration-planetscale-to-turso/planetscale-latency.png)
+
+<Image
+  alt="PlanetScale latency"
+  src="/assets/posts/migration-planetscale-to-turso/planetscale-latency.png"
+  width={650}
+  height={575}
+/>
+
 While PlanetScale is around `450ms` for 5 serial queries in a different region.
 
 We considered using read replicas from PlanetScale, but I was also interested in
