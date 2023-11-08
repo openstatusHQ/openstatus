@@ -32,7 +32,7 @@ const incidentUpdateSchema = z.object({
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
   date: z
-    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
+    .preprocess((val) => String(val), z.string())
     .openapi({
       description: "The date of the update in ISO 8601 format",
     }),
