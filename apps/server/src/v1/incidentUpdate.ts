@@ -32,7 +32,7 @@ const incidentUpdateSchema = z.object({
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
   date: z
-    .preprocess((val) => String(val), z.string())
+    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
     .openapi({
       description: "The date of the update in ISO 8601 format",
     }),
@@ -41,8 +41,20 @@ const incidentUpdateSchema = z.object({
   }),
 });
 
-// const incidentUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
-
+const createIncidentUpdateSchema = z.object({
+  incident_id: z.number().openapi({
+    description: "The id of the incident",
+  }),
+  status: z.enum(incidentStatus).openapi({
+    description: "The status of the update",
+  }),
+  date: z.string().datetime().openapi({
+    description: "The date of the update in ISO 8601 format",
+  }),
+  message: z.string().openapi({
+    description: "The message of the update",
+  }),
+});
 const getUpdateRoute = createRoute({
   method: "get",
   tags: ["incident_update"],
@@ -96,7 +108,73 @@ incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
     return c.jsonT({ code: 401, message: "Not Authorized" });
 
   const data = incidentUpdateSchema.parse(update);
+
   return c.jsonT(data);
 });
 
-export { incidenUpdateApi as incidenUpdatetApi };
+const createIncidentUpdate = createRoute({
+  method: "post",
+  tags: ["incident_update"],
+  path: "/",
+  request: {
+    body: {
+      description: "the incident update",
+      content: {
+        "application/json": {
+          schema: createIncidentUpdateSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: incidentUpdateSchema,
+        },
+      },
+      description: "Get all incidents",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const input = c.req.valid("json");
+
+  const currentIncident = await db
+    .select()
+    .from(incident)
+    .where(
+      and(
+        eq(incident.id, input.incident_id),
+        eq(incident.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+  if (!currentIncident)
+    return c.jsonT({ code: 401, message: "Not Authorized" });
+
+  const res = await db
+    .insert(incidentUpdate)
+    .values({
+      ...input,
+      date: new Date(input.date),
+      incidentId: input.incident_id,
+    })
+    .returning()
+    .get();
+
+  const data = incidentUpdateSchema.parse(res);
+  return c.jsonT(data);
+});
+
+export { incidenUpdateApi };

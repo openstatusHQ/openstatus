@@ -5,6 +5,8 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
 import {
+  incident,
+  incidentUpdate,
   monitor,
   monitorsToPages,
   notification,
@@ -117,6 +119,28 @@ async function main() {
   await db
     .insert(notificationsToMonitors)
     .values({ monitorId: 1, notificationId: 1 })
+    .run();
+
+  await db
+    .insert(incident)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      title: "Test Incident",
+      status: "investigating",
+      updatedAt: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(incidentUpdate)
+    .values({
+      id: 1,
+      incidentId: 1,
+      status: "investigating",
+      message: "test",
+      date: new Date(),
+    })
     .run();
   process.exit(0);
 }

@@ -48,6 +48,10 @@ const incidentSchema = z.object({
   }),
 });
 
+const incidentResultSchema = incidentSchema.extend({
+  id: z.number().openapi({ description: "The id of the incident" }),
+});
+
 const incidentExtendedSchema = incidentSchema.extend({
   id: z.number().openapi({ description: "The id of the incident" }),
   incident_updates: z
@@ -150,7 +154,6 @@ incidentApi.openapi(getRoute, async (c) => {
   });
 
   if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
-  console.log(_incident);
   const data = incidentExtendedSchema.parse({
     ..._incident,
     incident_updates: _incident.incidentUpdates.map(
@@ -180,7 +183,7 @@ const postRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentSchema,
+          schema: incidentExtendedSchema,
         },
       },
       description: "Incident created",
@@ -209,7 +212,7 @@ incidentApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
-  const data = incidentSchema.parse(_newIncident);
+  const data = incidentExtendedSchema.parse(_newIncident);
 
   return c.jsonT(data);
 });
