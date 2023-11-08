@@ -41,8 +41,6 @@ const incidentUpdateSchema = z.object({
   }),
 });
 
-// const incidentUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
-
 const getUpdateRoute = createRoute({
   method: "get",
   tags: ["incident_update"],
@@ -99,4 +97,60 @@ incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
   return c.jsonT(data);
 });
 
-export { incidenUpdateApi as incidenUpdatetApi };
+const createIncidentUpdate = createRoute({
+  method: "post",
+  tags: ["incident_update"],
+  path: "/",
+  request: {
+    params: ParamsSelectSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: incidentUpdateSchema,
+        },
+      },
+      description: "Get all incidents",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+
+  const update = await db
+    .select()
+    .from(incidentUpdate)
+    .where(eq(incidentUpdate.id, Number(id)))
+    .get();
+
+  if (!update) return c.jsonT({ code: 404, message: "Not Found" });
+
+  const currentIncident = await db
+    .select()
+    .from(incident)
+    .where(
+      and(
+        eq(incident.id, update.incidentId),
+        eq(incident.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+  if (!currentIncident)
+    return c.jsonT({ code: 401, message: "Not Authorized" });
+
+  const data = incidentUpdateSchema.parse(update);
+  return c.jsonT(data);
+});
+
+export { incidenUpdateApi };
