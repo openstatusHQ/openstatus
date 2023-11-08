@@ -4,7 +4,7 @@ import { logger } from "hono/logger";
 import type { Plan } from "@openstatus/plans";
 
 import { incidentApi } from "./incident";
-import { incidenUpdatetApi } from "./incidentUpdate";
+import { incidenUpdateApi } from "./incidentUpdate";
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
 
@@ -29,6 +29,6 @@ api.doc("/openapi", {
 api.use("/*", middleware);
 api.use("/*", logger());
 api.route("/monitor", monitorApi);
-api.route("/incident_update", incidenUpdatetApi);
+api.route("/incident_update", incidenUpdateApi);
 
 api.route("/incident", incidentApi);
