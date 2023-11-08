@@ -2,7 +2,7 @@ import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { getMonitorListData } from "@/lib/tb";
-import { cleanData, getStatus, isInBlacklist } from "@/lib/tracker";
+import { cleanData, getStatus } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
 
 export const runtime = "edge";
@@ -76,7 +76,7 @@ export async function GET(req: Request) {
             {title}
           </h1>
           <p tw="text-slate-600 text-3xl">{description}</p>
-          {bars && bars.length > 0 ? (
+          {Boolean(data.length) && Boolean(bars.length) ? (
             <div tw="flex flex-col w-full mt-6">
               <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
                 <p tw="">{formatDate(new Date())}</p>
