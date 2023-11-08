@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Changelog } from "contentlayer/generated";
 
 import { Mdx } from "@/components/content/mdx";
@@ -12,18 +13,11 @@ export function Changelog({ post }: { post: Changelog }) {
         </p>
         <h1 className="font-cal mb-5 text-3xl">{post.title}</h1>
         <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
-          {/* <Image
+          <Image
             src={post.image}
             fill={true}
             alt={post.title}
             className="object-cover"
-          /> */}
-          {/* HOTFIX: plain `img` */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.image}
-            alt={post.title}
-            className="h-full w-full object-cover"
           />
         </div>
       </div>
