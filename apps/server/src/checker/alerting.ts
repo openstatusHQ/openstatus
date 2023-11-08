@@ -4,7 +4,6 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import type { flyRegions } from "@openstatus/utils";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { providerToFunction } from "./utils";
