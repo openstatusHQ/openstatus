@@ -54,6 +54,12 @@ checkerRoute.post("/checker", async (c) => {
       JSON.stringify(result.data),
       e,
     );
+    if (result.data.status === "error") {
+      console.log(
+        `The monitor was already in error we should not retry checker URL: ${result.data}`,
+      );
+      return c.text("Ok", 200);
+    }
     return c.text("Internal Server Error", 500);
   }
 });
@@ -96,6 +102,12 @@ checkerRoute.post("/checkerV2", async (c) => {
     );
     return c.text("Ok", 200);
   } catch (e) {
+    if (result.data.status === "error") {
+      console.log(
+        `The monitor was already in error we should not retry checker URL: ${result.data}`,
+      );
+      return c.text("Ok", 200);
+    }
     console.error(
       `fail checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
       JSON.stringify(result.data),
