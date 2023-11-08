@@ -1,4 +1,6 @@
 import * as React from "react";
+import type { ImageProps } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
 import type { TweetProps } from "react-tweet";
 import { Tweet } from "react-tweet";
@@ -34,5 +36,8 @@ export const components = {
         <Tweet {...props} />
       </div>
     );
+  },
+  Image: (props: ImageProps) => {
+    return <Image {...props} />;
   },
 };

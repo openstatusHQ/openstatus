@@ -34,7 +34,12 @@ export function MarketingMenu() {
   return (
     <Sheet open={open} onOpenChange={(value) => setOpen(value)}>
       <SheetTrigger asChild>
-        <Button size="icon" variant="outline" className="rounded-full">
+        <Button
+          size="icon"
+          variant="outline"
+          className="rounded-full"
+          aria-label="menu"
+        >
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>

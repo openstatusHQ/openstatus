@@ -12,6 +12,7 @@ const nextConfig = {
       level: "verbose",
       fullUrl: true,
     },
+    optimizePackageImports: ["@tremor/react"],
   },
   images: {
     remotePatterns: [

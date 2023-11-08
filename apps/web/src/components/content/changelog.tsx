@@ -6,8 +6,8 @@ import { formatDate } from "@/lib/utils";
 
 export function Changelog({ post }: { post: Changelog }) {
   return (
-    <article className="grid gap-8">
-      <div className="mx-auto grid w-full max-w-prose gap-3">
+    <article className="relative mx-auto flex max-w-prose flex-col gap-8">
+      <div className="grid w-full gap-3">
         <p className="text-muted-foreground font-mono text-sm">
           {formatDate(new Date(post.publishedAt))}
         </p>
@@ -21,9 +21,7 @@ export function Changelog({ post }: { post: Changelog }) {
           />
         </div>
       </div>
-      <div className="prose-pre:overflow-y-auto prose-pre:max-w-xs md:prose-pre:max-w-none mx-auto max-w-prose">
-        <Mdx code={post.body.code} />
-      </div>
+      <Mdx code={post.body.code} />
     </article>
   );
 }
