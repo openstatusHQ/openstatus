@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { formatDate } from "@/lib/utils";
@@ -45,17 +46,11 @@ function Article({
       </time>
       <div className="relative order-1 h-64 w-full md:order-2 md:col-span-4">
         <Link href={href}>
-          {/* same reason as blog post - missing image on prod */}
-          {/* <Image
-          src={imageSrc}
-          fill={true}
-          alt={title}
-          className="border-border rounded-md border object-cover"
-        /> */}
-          <img
+          <Image
             src={imageSrc}
+            fill={true}
             alt={title}
-            className="border-border h-64 w-full rounded-md border object-cover"
+            className="border-border rounded-md border object-cover"
           />
         </Link>
       </div>
