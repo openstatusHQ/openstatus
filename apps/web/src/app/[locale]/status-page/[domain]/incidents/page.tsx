@@ -9,6 +9,7 @@ import {
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
 import { api } from "@/trpc/server";
+import { getI18n } from '@/yuzu/server';
 
 type Props = {
   params: { domain: string };
@@ -36,6 +37,7 @@ export default async function Page({ params }: Props) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const firstMonitor = page?.monitors?.[0]; // temporary solution
+  const t = await getI18n();
 
   return {
     ...defaultMetadata,
@@ -46,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...twitterMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}`
         }`,
       ],
       title: page?.title,
@@ -56,7 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...ogMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}`
         }`,
       ],
       title: page?.title,

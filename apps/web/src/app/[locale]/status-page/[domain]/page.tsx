@@ -15,6 +15,7 @@ import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
+import { getI18n } from '@/yuzu/server';
 
 const url =
   process.env.NODE_ENV === "development"
@@ -39,6 +40,8 @@ export default async function Page({ params }: Props) {
     Boolean(page.monitors.length) || Boolean(page.incidents.length)
   );
 
+  const t = await getI18n();
+
   return (
     <div className="mx-auto flex w-full flex-col gap-6">
       <Header
@@ -49,11 +52,11 @@ export default async function Page({ params }: Props) {
       {isEmptyState ? (
         <EmptyState
           icon="activity"
-          title="Missing Monitors"
-          description="Fill your status page with monitors."
+          title={t("Missing Monitors")}
+          description={t("Fill your status page with monitors.")}
           action={
             <Button asChild>
-              <Link href={`${url}/app`}>Go to Dashboard</Link>
+              <Link href={`${url}/app`}>{t('Go to Dashboard')}</Link>
             </Button>
           }
         />
@@ -75,6 +78,7 @@ export default async function Page({ params }: Props) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const firstMonitor = page?.monitors?.[0]; // temporary solution
+  const t = await getI18n();
 
   return {
     ...defaultMetadata,
@@ -85,7 +89,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...twitterMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}`
         }`,
       ],
       title: page?.title,
@@ -95,7 +99,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ...ogMetadata,
       images: [
         `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
+          page?.description || `${t('The')} ${page?.title} ${t('status page')}`
         }`,
       ],
       title: page?.title,
