@@ -20,7 +20,7 @@ import {
 
 import useWindowSize from "@/hooks/use-window-size";
 import type { CleanMonitor } from "@/lib/tracker";
-import { blacklistDates, cleanData, getStatus } from "@/lib/tracker";
+import { cleanData, getStatus } from "@/lib/tracker";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -52,7 +52,7 @@ export function Tracker({
   url,
   id,
   name,
-  context = "play",
+  context = "status-page",
   description,
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
