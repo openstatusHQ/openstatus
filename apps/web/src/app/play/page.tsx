@@ -16,6 +16,7 @@ export default async function PlayPage() {
             id={1}
             name="Ping"
             url="https://www.openstatus.dev/api/ping"
+            context="play"
           />
         )}
       </div>

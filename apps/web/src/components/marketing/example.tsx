@@ -42,6 +42,7 @@ async function ExampleTracker() {
       data={data}
       id={1}
       name="Ping"
+      context="play"
       url="https://www.openstatus.dev/api/ping"
     />
   );
