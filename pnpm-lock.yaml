@@ -671,16 +671,16 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.2.2)(zod@3.22.4)
+        version: 0.7.1(typescript@5.2.2)(zod@3.22.2)
       '@types/validator':
-        specifier: ^13.11.6
+        specifier: 13.11.6
         version: 13.11.6
       validator:
         specifier: 13.11.0
         version: 13.11.0
       zod:
-        specifier: ^3.22.4
-        version: 3.22.4
+        specifier: 3.22.2
+        version: 3.22.2
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -4765,19 +4765,6 @@ packages:
     dependencies:
       typescript: 5.2.2
       zod: 3.22.2
-    dev: false
-
-  /@t3-oss/env-core@0.7.1(typescript@5.2.2)(zod@3.22.4):
-    resolution: {integrity: sha512-3+SQt39OlmSaRLqYVFv8uRm1BpFepM5TIiMytRqO9cjH+wB77o6BIJdeyM5h5U4qLBMEzOJWCY4MBaU/rLwbYw==}
-    peerDependencies:
-      typescript: '>=4.7.2'
-      zod: ^3.0.0
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-    dependencies:
-      typescript: 5.2.2
-      zod: 3.22.4
     dev: false
 
   /@t3-oss/env-nextjs@0.7.0(typescript@5.2.2)(zod@3.22.2):
@@ -13229,10 +13216,6 @@ packages:
 
   /zod@3.22.2:
     resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
-
-  /zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: false
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
