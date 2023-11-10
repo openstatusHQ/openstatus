@@ -1,4 +1,0 @@
-id;latency;monitorId;pageId;region;statusCode;timestamp;url;workspaceId;cronTimestamp;metadata
-JCnILXx7nLkiF3g9Yk-Qr;290;openstatusPing;openstatus;kix1;200;1695573755478;https://openstatus.dev/api/ping;openstatus;1695573646204;{}
-nrxgkZ_D6Dq3gWj8mqKwP;240;openstatusPing;openstatus;gru1;200;1695573755337;https://openstatus.dev/api/ping;openstatus;1695573646204;{}
-Y4POia0YWtxx3bx6Gc1qt;277;openstatusPing;openstatus;hkg1;200;1695573743935;https://openstatus.dev/api/ping;openstatus;1695573646204;{}
