@@ -6,6 +6,7 @@ import type {
 import { sendDiscordMessage } from "@openstatus/notification-discord";
 import { send as sendEmail } from "@openstatus/notification-emails";
 import { sendSlackMessage } from "@openstatus/notification-slack";
+import { sendTextMessage } from "@openstatus/notification-twillio-sms";
 import type { flyRegionsDict } from "@openstatus/utils";
 
 type SendNotification = ({
@@ -24,4 +25,5 @@ export const providerToFunction = {
   email: sendEmail,
   slack: sendSlackMessage,
   discord: sendDiscordMessage,
+  sms: sendTextMessage,
 } satisfies Record<NotificationProvider, SendNotification>;

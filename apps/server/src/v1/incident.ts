@@ -7,6 +7,7 @@ import {
   incidentUpdate,
 } from "@openstatus/db/src/schema";
 
+import { incidentUpdateSchema } from "./incidentUpdate";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 
@@ -26,7 +27,7 @@ const ParamsSchema = z.object({
     }),
 });
 
-const incidentUpdateSchema = z.object({
+const createIncidentUpdateSchema = z.object({
   status: z.enum(incidentStatus).openapi({
     description: "The status of the update",
   }),
@@ -280,7 +281,7 @@ const postRouteUpdate = createRoute({
       description: "the incident update",
       content: {
         "application/json": {
-          schema: incidentUpdateSchema,
+          schema: createIncidentUpdateSchema,
         },
       },
     },

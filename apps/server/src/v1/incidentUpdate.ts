@@ -26,7 +26,7 @@ const ParamsSelectSchema = z.object({
     }),
 });
 
-const incidentUpdateSchema = z.object({
+export const incidentUpdateSchema = z.object({
   status: z.enum(incidentStatus).openapi({
     description: "The status of the update",
   }),

@@ -13,7 +13,6 @@ const searchParamsSchema = z.object({
 });
 
 export default async function EditPage({
-  params,
   searchParams,
 }: {
   params: { workspaceSlug: string };
@@ -24,6 +23,7 @@ export default async function EditPage({
   if (!search.success) {
     return notFound();
   }
+  const workspace = await api.workspace.getWorkspace.query();
 
   const { id } = search.data;
 
@@ -42,7 +42,10 @@ export default async function EditPage({
         }
       />
       <div className="col-span-full">
-        <NotificationForm defaultValues={notification} />
+        <NotificationForm
+          defaultValues={notification}
+          workspacePlan={workspace.plan}
+        />
       </div>
     </div>
   );
