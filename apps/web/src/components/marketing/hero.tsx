@@ -24,8 +24,8 @@ export function Hero() {
         Open-source monitoring service
       </h1>
       <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-        OpenStatus is an open source monitoring services with incident
-        managements.
+        OpenStatus is an open-source monitoring service with incident
+        management.
       </p>
       {/* much better than using flex without text alignment, text stays center even thought not same length */}
       <div className="my-4 grid gap-2 sm:grid-cols-2">
