@@ -19,11 +19,13 @@ export function Cards(props: Feature) {
           const FeatureIcon = Icons[feature.icon];
           return (
             <li key={i}>
-              <p>
-                <FeatureIcon className="text-foreground/80 mb-1 mr-1.5 inline-flex h-4 w-4" />
-                <span className="text-foreground font-medium">
-                  {feature.catchline}
-                </span>{" "}
+              <p className="flex flex-col">
+                <p>
+                  <FeatureIcon className="text-foreground/80 mb-1 mr-1.5 inline-flex h-4 w-4" />
+                  <span className="text-foreground font-medium">
+                    {feature.catchline.replace(".", "")}
+                  </span>{" "}
+                </p>
                 <span className="text-muted-foreground">
                   {feature.description}
                 </span>
