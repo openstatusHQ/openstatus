@@ -39,10 +39,10 @@ importers:
     dependencies:
       '@hono/sentry':
         specifier: 1.0.0
-        version: 1.0.0(hono@3.9.1)
+        version: 1.0.0(hono@3.9.2)
       '@hono/zod-openapi':
         specifier: 0.8.3
-        version: 0.8.3(hono@3.9.1)(zod@3.22.2)
+        version: 0.8.3(hono@3.9.2)(zod@3.22.2)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -74,8 +74,8 @@ importers:
         specifier: 0.11.0
         version: 0.11.0
       hono:
-        specifier: 3.9.1
-        version: 3.9.1
+        specifier: 3.9.2
+        version: 3.9.2
       nanoid:
         specifier: 5.0.2
         version: 5.0.2
@@ -87,8 +87,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tsconfig
       bun-types:
-        specifier: 1.0.8
-        version: 1.0.8
+        specifier: 1.0.11
+        version: 1.0.11
       dotenv:
         specifier: 16.3.1
         version: 16.3.1
@@ -2223,16 +2223,16 @@ packages:
       tailwindcss: 3.3.2
     dev: false
 
-  /@hono/sentry@1.0.0(hono@3.9.1):
+  /@hono/sentry@1.0.0(hono@3.9.2):
     resolution: {integrity: sha512-GbPxgpGuasM2zRCSaA77MPWu4KDcuk/EMf7JJykjCvnOTbjmtr7FovNxsvg7xlXCIjZDgLmqBaoJMi3AxbeIAA==}
     peerDependencies:
       hono: 3.*
     dependencies:
-      hono: 3.9.1
+      hono: 3.9.2
       toucan-js: 3.3.0
     dev: false
 
-  /@hono/zod-openapi@0.8.3(hono@3.9.1)(zod@3.22.2):
+  /@hono/zod-openapi@0.8.3(hono@3.9.2)(zod@3.22.2):
     resolution: {integrity: sha512-TwjSf63miIF3VBqNy4V6EOqZYdTQPeIQQ9Q2HjRWFYH9f2QtBFXziuqIg2Y76gNZ3WDal67NQXmbSErHiFR44g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
@@ -2240,18 +2240,18 @@ packages:
       zod: 3.*
     dependencies:
       '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.2)
-      '@hono/zod-validator': 0.1.9(hono@3.9.1)(zod@3.22.2)
-      hono: 3.9.1
+      '@hono/zod-validator': 0.1.9(hono@3.9.2)(zod@3.22.2)
+      hono: 3.9.2
       zod: 3.22.2
     dev: false
 
-  /@hono/zod-validator@0.1.9(hono@3.9.1)(zod@3.22.2):
+  /@hono/zod-validator@0.1.9(hono@3.9.2)(zod@3.22.2):
     resolution: {integrity: sha512-qEG5xagKzyif283ldCKzp+aF9Aebclg0sfrgyRQQNAizmXpicZ3UGduST/Jp+a9bjt3mI+VyEXMftb4rogLxQA==}
     peerDependencies:
       hono: 3.*
       zod: ^3.19.1
     dependencies:
-      hono: 3.9.1
+      hono: 3.9.2
       zod: 3.22.2
     dev: false
 
@@ -5884,6 +5884,10 @@ packages:
       semver: 7.5.4
     dev: true
 
+  /bun-types@1.0.11:
+    resolution: {integrity: sha512-XaDwjnBlkdTOtBEAcXhDnPSKFMlwFK/526z0iyairYIDhZJMzZM1QU4D7XRiEI2SpKQWexn0S/LN9Mwx5xSJNg==}
+    dev: true
+
   /bun-types@1.0.8:
     resolution: {integrity: sha512-2dNB+dBwAcFW7RSd4y5vKycRjouKVklSwPk4EjBKWvcMYUBOqZGGNzV7+b2tfKBG3BeRXnozbnegVKR1azuATg==}
     dev: true
@@ -8272,8 +8276,8 @@ packages:
       react-is: 16.13.1
     dev: false
 
-  /hono@3.9.1:
-    resolution: {integrity: sha512-z3nM9CjNZ8PRAH6NNntk4ESKW2POEbGanhK1QpYdQ1MOYRzZPSEE8B5mqw8bYEPa7qIQxX0vtlv7XOxtwFbosg==}
+  /hono@3.9.2:
+    resolution: {integrity: sha512-180NOiMadqU3lGmN6ajPDZvZPWus3a9mtVaAUR9uG0SImngBwRLA8vbnV0oUfUAgFT4nX55sGV9dVA06OuikHA==}
     engines: {node: '>=16.0.0'}
     dev: false
 
