@@ -37,8 +37,6 @@ checkerRoute.post("/checker", async (c) => {
     return c.text("Ok", 200); // finish the task
   }
 
-  console.log(`Google Checker should try this: ${result.data.url}`);
-
   try {
     console.log(
       `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
@@ -90,26 +88,24 @@ checkerRoute.post("/checkerV2", async (c) => {
     return c.text("Ok", 200); // finish the task
   }
 
-  console.log(`Google Checker should try this: ${result.data.url}`);
-
   try {
     console.log(
-      `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+      `🧭 start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
     await checkerRetryPolicy(result.data, retry);
     console.log(
-      `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+      `🔚 end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
     return c.text("Ok", 200);
   } catch (e) {
     if (result.data.status === "error") {
       console.log(
-        `The monitor was already in error we should not retry checker URL: ${result.data}`,
+        `🗑️  The monitor was already in error we should not retry checker URL: ${result.data}`,
       );
       return c.text("Ok", 200);
     }
     console.error(
-      `fail checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
+      `🔴 fail checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
       JSON.stringify(result.data),
       e,
     );
