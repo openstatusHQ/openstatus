@@ -13,7 +13,7 @@ export const publishPingRetryPolicy = async ({
 }: PublishPingType) => {
   try {
     console.log(
-      `try publish ping to tb - attempt 1  ${JSON.stringify(
+      `1️⃣ try publish ping to tb - attempt 1  ${JSON.stringify(
         payload,
       )}  with latency ${latency} and status code ${statusCode}`,
     );
@@ -21,7 +21,7 @@ export const publishPingRetryPolicy = async ({
   } catch {
     try {
       console.log(
-        "try publish ping to tb - attempt 2 ",
+        "2️⃣ try publish ping to tb - attempt 2 ",
         JSON.stringify(payload),
       );
       await publishPing({ payload, statusCode, latency });
@@ -30,7 +30,7 @@ export const publishPingRetryPolicy = async ({
     }
   }
   console.log(
-    `Successfully published  ${JSON.stringify(
+    `🗃️ Successfully published ${JSON.stringify(
       payload,
     )}  with latency ${latency} and status code ${statusCode}`,
   );
@@ -69,6 +69,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
     }
     // Store the error on third task retry
     if (retry === 1) {
+      console.info(
+        `🐛 error on fetching data for ${JSON.stringify(
+          data,
+        )}  with result ${JSON.stringify(res)}`,
+      );
       await publishPingRetryPolicy({
         payload: data,
         latency,
@@ -92,15 +97,15 @@ const run = async (data: Payload, retry?: number | undefined) => {
 
 export const checkerRetryPolicy = async (data: Payload, retry = 0) => {
   try {
-    console.log("try run checker - attempt 1 ", JSON.stringify(data));
+    console.log("🥇 try run checker - attempt 1 ", JSON.stringify(data));
     await run(data, 0);
   } catch {
     try {
-      console.log("try run checker - attempt 2 ", JSON.stringify(data));
+      console.log("🥈 try run checker - attempt 2 ", JSON.stringify(data));
       await run(data, 1);
     } catch (e) {
       throw e;
     }
   }
-  console.log("successfully run checker ", JSON.stringify(data));
+  console.log("🔥 successfully run checker ", JSON.stringify(data));
 };
