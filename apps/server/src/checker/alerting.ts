@@ -17,7 +17,7 @@ export const triggerAlerting = async ({
   region: keyof typeof flyRegionsDict;
   statusCode: number;
 }) => {
-  console.log(`triggerAlerting for ${monitorId}`);
+  console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db
     .select()
     .from(schema.notificationsToMonitors)

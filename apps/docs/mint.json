@@ -135,7 +135,10 @@
         },
         {
           "group": "Incident udpate",
-          "pages": ["api-reference/incident_update/get-incident_update:id"]
+          "pages": [
+            "api-reference/incident_update/get-incident_update:id",
+            "api-reference/incident_update/post-incident_update"
+          ]
         }
       ]
     }
