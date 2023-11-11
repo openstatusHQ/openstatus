@@ -46,8 +46,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
     res = await pingEndpoint(data);
     endTime = Date.now();
   } catch (e) {
-    console.log("error on pingEndpoint", e);
     endTime = Date.now();
+    console.log(
+      `🚨 error on pingEndpoint for ${JSON.stringify(data)} error: `,
+      e,
+    );
   }
 
   const latency = endTime - startTime;

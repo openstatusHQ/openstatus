@@ -4,7 +4,7 @@ const { withContentlayer } = require("next-contentlayer");
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: ["ui", "@openstatus/api"],
+  transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
     serverActions: true,
     serverComponentsExternalPackages: ["libsql"],

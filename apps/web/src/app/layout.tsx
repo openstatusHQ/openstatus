@@ -3,7 +3,6 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-import PlausibleProvider from "next-plausible";
 
 import { Toaster } from "@openstatus/ui";
 
@@ -40,14 +39,11 @@ export default function RootLayout({
   // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <html lang="en">
-      {/* TODO: remove plausible from root layout (to avoid tracking subdomains) */}
-      <PlausibleProvider domain="openstatus.dev">
-        <body className={`${inter.className} ${calSans.variable}`}>
-          <Background>{children}</Background>
-          <Toaster />
-          <TailwindIndicator />
-        </body>
-      </PlausibleProvider>
+      <body className={`${inter.className} ${calSans.variable}`}>
+        <Background>{children}</Background>
+        <Toaster />
+        <TailwindIndicator />
+      </body>
     </html>
   );
 }

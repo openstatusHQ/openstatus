@@ -70,7 +70,6 @@ checkerRoute.post("/checkerV2", async (c) => {
     console.error("Unauthorized");
     return c.text("Unauthorized", 401);
   }
-  console.log("Retry : ", c.req.header("X-CloudTasks-TaskRetryCount"));
 
   const result = payloadSchema.safeParse(json);
 
@@ -81,7 +80,7 @@ checkerRoute.post("/checkerV2", async (c) => {
   const retry = Number(c.req.header("X-CloudTasks-TaskRetryCount") || 0);
   if (retry > 1) {
     console.error(
-      `catchTooManyRetry for ${JSON.stringify(result.data)}
+      `⛔ Too many retry for ${JSON.stringify(result.data)}
       )}`,
     );
     // catchTooManyRetry(result.data);
