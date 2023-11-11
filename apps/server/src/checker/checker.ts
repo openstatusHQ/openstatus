@@ -69,10 +69,10 @@ const run = async (data: Payload, retry?: number | undefined) => {
     }
     // Store the error on third task retry
     if (retry === 1) {
-      console.info(
+      console.log(
         `🐛 error on fetching data for ${JSON.stringify(
           data,
-        )}  with result ${JSON.stringify(res)}`,
+        )} with result ${JSON.stringify(res)}`,
       );
       await publishPingRetryPolicy({
         payload: data,

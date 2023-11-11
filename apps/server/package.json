@@ -23,13 +23,13 @@
     "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
     "@unkey/api": "0.11.0",
-    "hono": "3.9.1",
+    "hono": "3.9.2",
     "nanoid": "5.0.2",
     "zod": "3.22.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "bun-types": "1.0.8",
+    "bun-types": "1.0.11",
     "dotenv": "16.3.1",
     "eslint": "8.50.0"
   }
