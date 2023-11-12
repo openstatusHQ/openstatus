@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   twitter: {
     ...twitterMetadata,
-    images: [`/api/og?monitorId=openstatus`],
+    images: [`/api/og?monitorId=1`],
   },
   openGraph: {
     ...ogMetadata,
-    images: [`/api/og?monitorId=openstatus`],
+    images: [`/api/og?monitorId=1`],
   },
 };
 
