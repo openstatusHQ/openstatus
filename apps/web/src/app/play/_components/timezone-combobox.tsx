@@ -40,11 +40,13 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="w-[220px] justify-between"
         >
-          {value
-            ? timezones.find((timezone) => timezone.value === value)?.label
-            : "Select timezone..."}
+          <span className="truncate">
+            {value
+              ? timezones.find((timezone) => timezone.value === value)?.label
+              : "Select timezone..."}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
