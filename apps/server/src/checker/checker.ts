@@ -36,7 +36,7 @@ export const publishPingRetryPolicy = async ({
   );
 };
 
-const run = async (data: Payload, retry?: number | undefined) => {
+const run = async (data: Payload, retry: number) => {
   let startTime = 0;
   let endTime = 0;
   let res = null;
@@ -67,11 +67,11 @@ const run = async (data: Payload, retry?: number | undefined) => {
       });
     }
   } else {
-    if (retry === 0) {
+    if (retry < 2) {
       throw new Error(`error on ping for ${data.monitorId}`);
     }
     // Store the error on third task retry
-    if (retry === 1) {
+    if (retry === 2) {
       console.log(
         `🐛 error on fetching data for ${JSON.stringify(
           data,
@@ -107,7 +107,12 @@ export const checkerRetryPolicy = async (data: Payload, retry = 0) => {
       console.log("🥈 try run checker - attempt 2 ", JSON.stringify(data));
       await run(data, 1);
     } catch (e) {
-      throw e;
+      try {
+        console.log("🥉 try run checker - attempt 3 ", JSON.stringify(data));
+        await run(data, 2);
+      } catch (e) {
+        throw e;
+      }
     }
   }
   console.log("🔥 successfully run checker ", JSON.stringify(data));
