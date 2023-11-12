@@ -24,7 +24,8 @@ export function getResponseList(tb: Tinybird) {
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
-      cache: "no-store",
+      // cache: "no-store",
+      revalidate: 30, // 30 seconds cache
     },
   });
 }
@@ -35,7 +36,8 @@ export function getMonitorList(tb: Tinybird) {
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      cache: "no-store",
+      // cache: "no-store",
+      revalidate: 30, // 30 seconds cache
     },
   });
 }
@@ -51,8 +53,7 @@ export function getHomeMonitorList(tb: Tinybird) {
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      cache: "no-store",
-      // revalidate: 600, // 10 minutes cache
+      revalidate: 600, // 10 minutes cache
     },
   });
 }
@@ -66,7 +67,7 @@ export function getHomeStats(tb: Tinybird) {
     parameters: tbParameterHomeStats,
     data: tbBuildHomeStats,
     opts: {
-      revalidate: 86400, // 60 * 60 * 24 = 86400s - 1d
+      revalidate: 86400, // 60 * 60 * 24 = 86400s = 1d
     },
   });
 }
