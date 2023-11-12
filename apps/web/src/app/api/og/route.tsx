@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
@@ -13,6 +14,7 @@ const size = {
 };
 
 const LIMIT = 40;
+const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const interRegular = fetch(
   new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url),
@@ -41,12 +43,16 @@ export async function GET(req: Request) {
     ? searchParams.get("monitorId")
     : undefined;
 
+  const headersList = headers();
+  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
+
   // currently, we only show the tracker for a single(!) monitor
   const data =
     (monitorId &&
       (await getMonitorListData({
         monitorId,
         limit: LIMIT,
+        timezone,
       }))) ||
     [];
 

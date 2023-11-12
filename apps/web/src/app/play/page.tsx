@@ -8,6 +8,7 @@ import { getHomeMonitorListData } from "@/lib/tb";
 import { TimezoneCombobox } from "./_components/timezone-combobox";
 
 const supportedTimezones = Intl.supportedValuesOf("timeZone");
+const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /**
  * allowed URL search params
@@ -22,7 +23,7 @@ export default async function PlayPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const headersList = headers();
-  const timezone = headersList.get("x-vercel-ip-timezone") || undefined;
+  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
 
   const search = searchParamsSchema.safeParse(searchParams);
 

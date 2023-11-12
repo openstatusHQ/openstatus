@@ -19,14 +19,16 @@ import {
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 
+const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const supportedTimezones = Intl.supportedValuesOf("timeZone");
+
 export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
   const [open, setOpen] = React.useState(false);
-  const [value, setValue] = React.useState(defaultValue?.toLowerCase());
   const pathname = usePathname();
   const router = useRouter();
   const updateSearchParams = useUpdateSearchParams();
 
-  const supportedTimezones = Intl.supportedValuesOf("timeZone");
+  const value = defaultValue?.toLowerCase();
 
   const timezones = supportedTimezones.map((timezone) => ({
     value: timezone.toLowerCase(),
@@ -46,6 +48,11 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
             {value
               ? timezones.find((timezone) => timezone.value === value)?.label
               : "Select timezone..."}
+            {defaultValue?.toLowerCase() === currentTimezone?.toLowerCase() ? (
+              <span className="text-muted-foreground ml-1 text-xs font-light">
+                (default)
+              </span>
+            ) : null}
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -60,7 +67,6 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
                 key={timezone.value}
                 value={timezone.value}
                 onSelect={(currentValue) => {
-                  setValue(currentValue === value ? "" : currentValue);
                   setOpen(false);
 
                   // update search params

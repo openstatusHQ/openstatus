@@ -8,6 +8,8 @@ import { Shell } from "@/components/dashboard/shell";
 import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
 
+const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 export async function Example() {
   return (
     <Shell className="text-center">
@@ -37,7 +39,7 @@ function ExampleTrackerFallback() {
 
 async function ExampleTracker() {
   const headersList = headers();
-  const timezone = headersList.get("x-vercel-ip-timezone") || undefined; // GTM
+  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
   const data = await getHomeMonitorListData({ timezone });
   if (!data) return null;
   return (
