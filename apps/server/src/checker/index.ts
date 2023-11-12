@@ -41,7 +41,7 @@ checkerRoute.post("/checker", async (c) => {
     console.log(
       `start checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
-    await checkerRetryPolicy(result.data, retry);
+    await checkerRetryPolicy(result.data);
     console.log(
       `end checker URL: ${result.data.url} monitorId ${result.data.monitorId}`,
     );
@@ -89,7 +89,7 @@ checkerRoute.post("/checkerV2", async (c) => {
 
   try {
     console.log(`🧭 start checker for: ${JSON.stringify(result.data)}`);
-    await checkerRetryPolicy(result.data, retry);
+    await checkerRetryPolicy(result.data);
     console.log(`🔚 end checker for: ${JSON.stringify(result.data)} `);
     return c.text("Ok", 200);
   } catch (e) {

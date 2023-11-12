@@ -100,7 +100,7 @@ const run = async (data: Payload, retry: number) => {
 
 // We have this extensible retry policy because sometimes we have this error :
 // ConnectionClosed: The socket connection was closed unexpectedly.
-export const checkerRetryPolicy = async (data: Payload, retry = 0) => {
+export const checkerRetryPolicy = async (data: Payload) => {
   try {
     console.log("🥇 try run checker - attempt 1 ", JSON.stringify(data));
     await run(data, 0);
