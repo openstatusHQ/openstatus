@@ -61,7 +61,6 @@ export function Tracker({
   // TODO: it is better than how it was currently, but creates a small content shift on first render
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
   const { bars, uptime } = cleanData(data, maxSize, timezone);
-  // console.log({ uptime, bars });
 
   return (
     <div className="flex flex-col">

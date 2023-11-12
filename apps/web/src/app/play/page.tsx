@@ -57,6 +57,7 @@ export default async function PlayPage({
             name="Ping"
             url="https://www.openstatus.dev/api/ping"
             context="play"
+            timezone={defaultValue}
           />
         )}
       </div>

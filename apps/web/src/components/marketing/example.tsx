@@ -37,9 +37,7 @@ function ExampleTrackerFallback() {
 
 async function ExampleTracker() {
   const headersList = headers();
-  // "Asia/Tokyo" | "Europe/London" | "America/New_York" | "Australia/Sydney" ...
-  const timezone =
-    headersList.get("x-vercel-ip-timezone") || "Australia/Sydney"; // GTM
+  const timezone = headersList.get("x-vercel-ip-timezone") || undefined; // GTM
   const data = await getHomeMonitorListData({ timezone });
   if (!data) return null;
   return (
