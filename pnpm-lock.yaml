@@ -55,6 +55,9 @@ importers:
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
+      '@openstatus/notification-twillio-sms':
+        specifier: workspace:*
+        version: link:../../packages/notifications/twillio-sms
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../../packages/plans
@@ -641,6 +644,43 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../db
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.24
+        version: 18.2.24
+      '@types/react-dom':
+        specifier: 18.2.8
+        version: 18.2.8
+      next:
+        specifier: 13.5.3
+        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
+  packages/notifications/twillio-sms:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@t3-oss/env-core':
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.2.2)(zod@3.22.2)
+      '@types/validator':
+        specifier: 13.11.6
+        version: 13.11.6
+      validator:
+        specifier: 13.11.0
+        version: 13.11.0
+      zod:
+        specifier: 3.22.2
+        version: 3.22.2
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -5222,6 +5262,10 @@ packages:
 
   /@types/unist@2.0.9:
     resolution: {integrity: sha512-zC0iXxAv1C1ERURduJueYzkzZ2zaGyc+P2c95hgkikHPr3z8EdUZOlgEQ5X0DRmwDZn+hekycQnoeiiRVrmilQ==}
+
+  /@types/validator@13.11.6:
+    resolution: {integrity: sha512-HUgHujPhKuNzgNXBRZKYexwoG+gHKU+tnfPqjWXFghZAnn73JElicMkuSKJyLGr9JgyA8IgK7fj88IyA9rwYeQ==}
+    dev: false
 
   /@types/ws@8.5.8:
     resolution: {integrity: sha512-flUksGIQCnJd6sZ1l5dqCEG/ksaoAg/eUwiLAGTJQcfgvZJKF++Ta4bJA6A5aPSJmsr+xlseHn4KLgVlNnvPTg==}
@@ -12865,6 +12909,11 @@ packages:
     dependencies:
       builtins: 5.0.1
     dev: true
+
+  /validator@13.11.0:
+    resolution: {integrity: sha512-Ii+sehpSfZy+At5nPdnyMhx78fEoPDkR2XW/zimHEL3MyGJQOCQ7WeP20jPYRz7ZCpcKLB21NxuXHF3bxjStBQ==}
+    engines: {node: '>= 0.10'}
+    dev: false
 
   /vfile-location@4.1.0:
     resolution: {integrity: sha512-YF23YMyASIIJXpktBa4vIGLJ5Gs88UB/XePgqPmTa7cDA+JeO3yclbpheQYCHjVHBn/yePzrXuygIL+xbvRYHw==}

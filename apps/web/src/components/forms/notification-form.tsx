@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import type {
   InsertNotification,
   NotificationProvider,
+  WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import {
   insertNotificationSchema,
@@ -73,6 +74,14 @@ function getProviderMetaData(provider: NotificationProvider) {
         setupDocLink: "https://support.discord.com/hc/en-us/articles/228383668",
         sendTest: sendTestDiscordMessage,
       };
+    case "sms":
+      return {
+        dataType: "tel",
+        placeholder: "+123456789",
+        setupDocLink: null,
+        sendTest: null,
+        isPro: true,
+      };
 
     default:
       return {
@@ -87,11 +96,13 @@ function getProviderMetaData(provider: NotificationProvider) {
 interface Props {
   defaultValues?: InsertNotification;
   onSubmit?: () => void;
+  workspacePlan: WorkspacePlan;
 }
 
 export function NotificationForm({
   defaultValues,
   onSubmit: onExternalSubmit,
+  workspacePlan,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
@@ -232,6 +243,9 @@ export function NotificationForm({
                         type={providerMetaData.dataType}
                         placeholder={providerMetaData.placeholder}
                         {...field}
+                        disabled={
+                          providerMetaData.isPro && workspacePlan !== "pro"
+                        }
                       />
                     </FormControl>
                     <FormDescription className="flex items-center justify-between">
