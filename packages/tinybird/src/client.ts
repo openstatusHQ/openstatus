@@ -31,7 +31,7 @@ export function getResponseList(tb: Tinybird) {
 
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "monitor_list__v1",
+    pipe: "status_timezone__v0",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
@@ -47,7 +47,7 @@ export function getMonitorList(tb: Tinybird) {
  */
 export function getHomeMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "monitor_list__v1",
+    pipe: "status_timezone__v0",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {

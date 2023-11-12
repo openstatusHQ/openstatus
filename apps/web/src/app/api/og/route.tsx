@@ -50,7 +50,7 @@ export async function GET(req: Request) {
       }))) ||
     [];
 
-  const { bars, uptime } = cleanData({ data, last: LIMIT });
+  const { bars, uptime } = cleanData(data, LIMIT);
 
   return new ImageResponse(
     (

@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { z } from "zod";
 
 import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
@@ -10,8 +11,15 @@ export const Monitor = async ({
 }: {
   monitor: z.infer<typeof selectPublicMonitorSchema>;
 }) => {
-  const data = await getMonitorListData({ monitorId: String(monitor.id) });
+  const headersList = headers();
+  const timezone = headersList.get("x-vercel-ip-timezone") || undefined;
+
+  const data = await getMonitorListData({
+    monitorId: String(monitor.id),
+    timezone,
+  });
   if (!data) return <div>Something went wrong</div>;
+
   return (
     <Tracker
       data={data}

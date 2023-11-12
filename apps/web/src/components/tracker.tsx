@@ -45,6 +45,7 @@ interface TrackerProps {
   name: string;
   description?: string;
   context?: "play" | "status-page"; // TODO: we might need to extract those two different use cases - for now it's ok I'd say.
+  timezone?: string;
 }
 
 export function Tracker({
@@ -54,11 +55,13 @@ export function Tracker({
   name,
   context = "status-page",
   description,
+  timezone,
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
   // TODO: it is better than how it was currently, but creates a small content shift on first render
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
-  const { bars, uptime } = cleanData({ data, last: maxSize });
+  const { bars, uptime } = cleanData(data, maxSize, timezone);
+  // console.log({ uptime, bars });
 
   return (
     <div className="flex flex-col">
@@ -134,6 +137,11 @@ const Bar = ({
   const toDate = date.setDate(date.getDate() + 1);
   const dateFormat = "dd/MM/yy";
 
+  const className = tracker({
+    variant: blacklist ? "blacklist" : getStatus(ratio).variant,
+  });
+  // console.log({ className, blacklist });
+
   return (
     <HoverCard
       openDelay={100}
@@ -143,9 +151,8 @@ const Bar = ({
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div
-          className={tracker({
-            variant: blacklist ? "blacklist" : getStatus(ratio).variant,
-          })}
+          // suppressHydrationWarning
+          className={className}
         />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-64">

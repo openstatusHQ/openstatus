@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
@@ -35,7 +36,11 @@ function ExampleTrackerFallback() {
 }
 
 async function ExampleTracker() {
-  const data = await getHomeMonitorListData();
+  const headersList = headers();
+  // "Asia/Tokyo" | "Europe/London" | "America/New_York" | "Australia/Sydney" ...
+  const timezone =
+    headersList.get("x-vercel-ip-timezone") || "Australia/Sydney"; // GTM
+  const data = await getHomeMonitorListData({ timezone });
   if (!data) return null;
   return (
     <Tracker
@@ -44,6 +49,7 @@ async function ExampleTracker() {
       name="Ping"
       context="play"
       url="https://www.openstatus.dev/api/ping"
+      timezone={timezone}
     />
   );
 }

@@ -72,6 +72,7 @@ export const tbParameterResponseList = z.object({
  */
 export const tbParameterMonitorList = z.object({
   monitorId: z.string(),
+  timezone: z.string().optional(),
   limit: z.number().int().default(60).optional(), // 40 days
 });
 
@@ -81,8 +82,9 @@ export const tbParameterMonitorList = z.object({
 export const tbBuildMonitorList = z.object({
   count: z.number().int(),
   ok: z.number().int(),
-  avgLatency: z.number().int(), // in ms
-  cronTimestamp: z.number().int(),
+  avgLatency: z.number(), // .int(), // in ms
+  // cronTimestamp: z.number().int(),
+  day: z.coerce.date(),
 });
 
 /**
