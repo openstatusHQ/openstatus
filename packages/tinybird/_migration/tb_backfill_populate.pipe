@@ -1,4 +1,3 @@
-#tb_materialize_until_change_ingest.pipe
 NODE mat_node
 SQL >
 

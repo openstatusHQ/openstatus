@@ -8,17 +8,28 @@ The `_migration` folder includes:
   datasource
 - `ping_response.datasource` which has the upgraded schema and a new `VERSION 5`
 - `tb_backfill_populate.pipe` will fill the datasource with all the data until a
-  set date X
-- `tb_materialized_until_change_ingest.pipe` will fill teh dat from the date X
+  given timestamp
+- `tb_materialized_until_change_ingest.pipe` will fill the data from a given
+  timestamp
 
 ```
-tb push datasources/ping_response.datasource
-tb push pipes/tb_materialize_until_change_ingest.pipe
+tb push _migration/ping_response.datasource
+tb push _migration/tb_materialized_until_change_ingest.pipe
 # after the given ts, it is time to run the backfill populate
-tb push pipes/tb_backfill_populate.pipe --populate --wait
+tb push _migration/tb_backfill_populate.pipe --populate --wait
 # after populate ends, it is time to remove the pipe
 tb pipe rm tb_backfill_populate  --yes
 ```
+
+Check if all the rows have been migrated:
+
+```
+tb pipe _migration/tb_datasource_union.pipe
+# after checking the result of the pipe
+tb pipe rm tb_datasource_union.pipe --yes
+```
+
+---
 
 Link to the [issue](https://github.com/openstatusHQ/openstatus/issues/278) from
 Gonzalo as reference.
