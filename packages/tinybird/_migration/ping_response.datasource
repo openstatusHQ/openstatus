@@ -1,7 +1,6 @@
 VERSION 5
 
 SCHEMA >
-    `id` String `json:$.id`,
     `latency` Int64 `json:$.latency`,
     `monitorId` String `json:$.monitorId`,
     `region` LowCardinality(String) `json:$.region`,
@@ -9,8 +8,8 @@ SCHEMA >
     `timestamp` Int64 `json:$.timestamp`,
     `url` String `json:$.url`,
     `workspaceId` String `json:$.workspaceId`,
-    `cronTimestamp` Int64 `json:$.cronTimestamp`
-    `message` Nullable(String) `json:$.message` ,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
+    `message` Nullable(String) `json:$.message`
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "monitorId, cronTimestamp"

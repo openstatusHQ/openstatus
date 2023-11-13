@@ -3,7 +3,6 @@ NODE mat_node
 SQL >
 
     SELECT
-        id,
         latency,
         monitorId,
         toLowCardinality(region) region,
