@@ -1,5 +1,3 @@
-import { nanoid } from "nanoid";
-
 import { publishPingResponse } from "@openstatus/tinybird";
 
 import { env } from "../env";
@@ -40,14 +38,16 @@ export async function pingEndpoint(data: Payload) {
 
 export type PublishPingType = {
   payload: Payload;
-  statusCode: number;
+  statusCode: number | null;
   latency: number;
+  message?: string | null;
 };
 
 export async function publishPing({
   payload,
   statusCode,
   latency,
+  message,
 }: PublishPingType) {
   const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
@@ -56,7 +56,6 @@ export async function publishPing({
     process.env.NODE_ENV === "test"
   ) {
     const res = await publishPingResponse({
-      id: nanoid(), // TBD: we don't need it
       timestamp: Date.now(),
       statusCode,
       latency,
@@ -65,6 +64,7 @@ export async function publishPing({
       monitorId,
       cronTimestamp,
       workspaceId,
+      message,
     });
     if (res.successful_rows === 0) {
       throw new Error(`error 0 rows on publish ping for ${payload.monitorId}`);

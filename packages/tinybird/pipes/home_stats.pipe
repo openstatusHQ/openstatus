@@ -5,7 +5,7 @@ SQL >
 
     %
     SELECT COUNT(*) as count
-    FROM ping_response__v4
+    FROM ping_response__v5
     {% if defined(period) %}
      {% if String(period) == "1h" %}
        WHERE cronTimestamp > toUnixTimestamp(now() - INTERVAL 1 HOUR) * 1000

@@ -16,7 +16,7 @@ SQL >
         avg(latency) AS avgLatency,
         count() AS count,
         count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
-    FROM ping_response__v4
+    FROM ping_response__v5
     WHERE
         (day IS NOT NULL)
         AND (day != 0)

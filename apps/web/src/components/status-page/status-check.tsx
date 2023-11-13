@@ -52,6 +52,7 @@ export async function StatusCheck({
   function calcStatus() {
     const { count, ok } = monitorsData.flat(1).reduce(
       (prev, curr) => {
+        if (!curr.statusCode) return prev; // TODO: handle this better
         const isOk = curr.statusCode <= 299 && curr.statusCode >= 200;
         return { count: prev.count + 1, ok: prev.ok + (isOk ? 1 : 0) };
       },

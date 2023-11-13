@@ -59,7 +59,7 @@ export function InputSearch({
         },
         // defaultState
         { limit: [10, 25, 50], status: [], region: [] } as {
-          status: number[];
+          status: (number | null)[];
           limit: number[];
           region: string[];
         },

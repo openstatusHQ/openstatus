@@ -26,37 +26,37 @@ export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 export const availableRegions = [...vercelRegions, ...flyRegions] as const;
 
 /**
- * Values for the datasource ping_response__v4
+ * Values for the datasource ping_response
  */
 export const tbIngestPingResponse = z.object({
-  id: z.string(),
   workspaceId: z.string(),
   monitorId: z.string(),
   timestamp: z.number().int(),
-  statusCode: z.number().int(),
+  statusCode: z.number().int().nullable().optional(),
   latency: z.number(), // in ms
   cronTimestamp: z.number().int().optional().nullable().default(Date.now()),
   url: z.string().url(),
   region: z.string().min(3).max(4), // REMINDER: won't work on fy
+  message: z.string().nullable().optional(),
 });
 
 /**
- * Values from the pipe response_list__v1
+ * Values from the pipe response_list
  */
 export const tbBuildResponseList = z.object({
-  id: z.string(),
   workspaceId: z.string(),
   monitorId: z.string(),
   timestamp: z.number().int(),
-  statusCode: z.number().int(),
+  statusCode: z.number().int().nullable().default(null),
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
   region: z.enum(availableRegions),
+  message: z.string().nullable().optional(),
 });
 
 /**
- * Params for pipe response_list__v1
+ * Params for pipe response_list
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
@@ -68,7 +68,7 @@ export const tbParameterResponseList = z.object({
 });
 
 /**
- * Params for pipe status_timezone__v0
+ * Params for pipe status_timezone
  */
 export const tbParameterMonitorList = z.object({
   monitorId: z.string(),
@@ -77,7 +77,7 @@ export const tbParameterMonitorList = z.object({
 });
 
 /**
- * Values from the pipe status_timezone__v0
+ * Values from the pipe status_timezone
  */
 export const tbBuildMonitorList = z.object({
   count: z.number().int(),
@@ -87,7 +87,7 @@ export const tbBuildMonitorList = z.object({
 });
 
 /**
- * Params for pipe home_stats__v0
+ * Params for pipe home_stats
  */
 export const tbParameterHomeStats = z.object({
   cronTimestamp: z.number().int().optional(),
@@ -95,7 +95,7 @@ export const tbParameterHomeStats = z.object({
 });
 
 /**
- * Values from the pipe home_stats__v0
+ * Values from the pipe home_stats
  */
 export const tbBuildHomeStats = z.object({
   count: z.number().int(),

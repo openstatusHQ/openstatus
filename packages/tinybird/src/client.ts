@@ -14,13 +14,13 @@ import {
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
-  datasource: "ping_response__v4",
+  datasource: "ping_response__v5",
   event: tbIngestPingResponse,
 });
 
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "response_list__v1",
+    pipe: "response_list__v2",
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
