@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
@@ -6,6 +7,8 @@ import { Button } from "@openstatus/ui";
 import { Shell } from "@/components/dashboard/shell";
 import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
+
+const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export async function Example() {
   return (
@@ -35,7 +38,9 @@ function ExampleTrackerFallback() {
 }
 
 async function ExampleTracker() {
-  const data = await getHomeMonitorListData();
+  const headersList = headers();
+  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
+  const data = await getHomeMonitorListData({ timezone });
   if (!data) return null;
   return (
     <Tracker
@@ -44,6 +49,7 @@ async function ExampleTracker() {
       name="Ping"
       context="play"
       url="https://www.openstatus.dev/api/ping"
+      timezone={timezone}
     />
   );
 }

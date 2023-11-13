@@ -36,20 +36,33 @@ export const getStatus = (ratio: number): GetStatusReturnType => {
 
 // TODO: move into Class component sharing the same `data`
 
-export type CleanMonitor = Monitor & {
+// FIXME: name TrackerMonitor
+
+export type CleanMonitor = {
+  count: number;
+  ok: number;
+  avgLatency: number;
+  cronTimestamp: number;
   blacklist?: string;
 };
 
-export function cleanData({ data, last }: { data: Monitor[]; last: number }) {
-  const today = new Date();
+/**
+ * Clean the data to show only the last X days
+ * @param data array of monitors
+ * @param last number of days to show
+ * @param timeZone timezone of the monitor
+ * @returns
+ */
+export function cleanData(data: Monitor[], last: number, timeZone?: string) {
+  const today = new Date(new Date().toLocaleString("en-US", { timeZone }));
 
   const currentDay = new Date(today);
-  currentDay.setUTCDate(today.getDate());
-  currentDay.setUTCHours(0, 0, 0, 0);
+  currentDay.setDate(today.getDate());
+  currentDay.setHours(0, 0, 0, 0);
 
   const lastDay = new Date(today);
-  lastDay.setUTCDate(today.getDate() - last);
-  lastDay.setUTCHours(0, 0, 0, 0);
+  lastDay.setDate(today.getDate() - last);
+  lastDay.setHours(0, 0, 0, 0);
 
   const dateSequence = generateDateSequence(lastDay, currentDay);
 
@@ -67,24 +80,26 @@ function fillEmptyData(data: Monitor[], dateSequence: Date[]) {
   for (const date of dateSequence) {
     const timestamp = date.getTime();
     const cronTimestamp =
-      dataIndex < data.length ? data[dataIndex].cronTimestamp : undefined;
+      dataIndex < data.length ? data[dataIndex].day.getTime() : undefined;
+
     if (
       cronTimestamp &&
-      areDatesEqualByDayMonthYear(new Date(cronTimestamp), date)
+      areDatesEqualByDayMonthYear(date, new Date(cronTimestamp))
     ) {
-      const isBlacklisted = isInBlacklist(cronTimestamp);
+      const blacklist = isInBlacklist(cronTimestamp);
 
       /**
        * automatically remove the data from the array to avoid wrong uptime
        * that provides time to remove cursed logs from tinybird via mv migration
        */
-      if (isBlacklisted) {
+      if (blacklist) {
         filledData.push({
-          ...emptyData(timestamp),
-          blacklist: blacklistDates[cronTimestamp],
+          ...emptyData(cronTimestamp),
+          blacklist,
         });
       } else {
-        filledData.push(data[dataIndex]);
+        const { day, ...props } = data[dataIndex];
+        filledData.push({ ...props, cronTimestamp });
       }
       dataIndex++;
     } else {
@@ -105,17 +120,17 @@ function emptyData(cronTimestamp: number) {
 }
 
 /**
- * equal UTC days - fixes issue with daylight saving
+ * equal days - fixes issue with daylight saving
  * @param date1
  * @param date2
  * @returns
  */
 function areDatesEqualByDayMonthYear(date1: Date, date2: Date) {
-  date1.setUTCDate(date1.getDate());
-  date1.setUTCHours(0, 0, 0, 0);
+  date1.setDate(date1.getDate());
+  date1.setHours(0, 0, 0, 0);
 
-  date2.setUTCDate(date2.getDate());
-  date2.setUTCHours(0, 0, 0, 0);
+  date2.setDate(date2.getDate());
+  date2.setHours(0, 0, 0, 0);
 
   return date1.toUTCString() === date2.toUTCString();
 }
@@ -132,13 +147,13 @@ export function generateDateSequence(startDate: Date, endDate: Date): Date[] {
 
   while (currentDate <= endDate) {
     dateSequence.push(new Date(currentDate));
-    currentDate.setUTCDate(currentDate.getDate() + 1);
+    currentDate.setDate(currentDate.getDate() + 1);
   }
 
   return dateSequence.reverse();
 }
 
-export function getTotalUptime(data: Monitor[]) {
+export function getTotalUptime(data: { ok: number; count: number }[]) {
   const reducedData = data.reduce(
     (prev, curr) => {
       prev.ok += curr.ok;
@@ -153,7 +168,7 @@ export function getTotalUptime(data: Monitor[]) {
   return reducedData;
 }
 
-export function getTotalUptimeString(data: Monitor[]) {
+export function getTotalUptimeString(data: { ok: number; count: number }[]) {
   const reducedData = getTotalUptime(data);
   const uptime = (reducedData.ok / reducedData.count) * 100;
 
@@ -163,17 +178,20 @@ export function getTotalUptimeString(data: Monitor[]) {
 }
 
 export function isInBlacklist(timestamp: number) {
-  return Object.keys(blacklistDates).includes(timestamp.toString());
+  const el = Object.keys(blacklistDates).find((date) =>
+    areDatesEqualByDayMonthYear(new Date(date), new Date(timestamp)),
+  );
+  return el ? blacklistDates[el] : undefined;
 }
 
 /**
  * Blacklist dates where we had issues with data collection
  */
-export const blacklistDates: Record<number, string> = {
-  1692921600000:
+export const blacklistDates: Record<string, string> = {
+  "Fri Aug 25 2023":
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
-  1693008000000:
+  "Sat Aug 26 2023":
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
-  1697587200000:
+  "Wed Oct 18 2023":
     "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
 };

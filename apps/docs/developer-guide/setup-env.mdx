@@ -164,7 +164,7 @@ the pipes to the Tinybird server.
 
 ### Datasource
 
-We ingest the monitor response into the `ping_response__v3` table. If you want
+We ingest the monitor response into the `ping_response__v4` table. If you want
 to have some dummy data to start with, check out the
 [csv](/dummy/ping_response__v3.csv) file.
 
@@ -181,7 +181,8 @@ data.
 
 We currently have three pipes:
 
-1. `monitor_list__v0`: returns aggregated data from the `ping_response` table.
+1. `status_timezone__v0`: returns aggregated data from the `ping_response`
+   table.
 2. `response_list__v0`: returns the list of responses from the `ping_response`
    table.
 3. `home_stats__v0`: returns the total amount of pings during a timeframe from
@@ -293,8 +294,8 @@ pip install tinybird-cli
    > Please make sure while importing you edit the table header fields in
    > camelcase .
 
-6. Create pipe from the datasource name as a `response_list__v0` and
-   `monitor_list__v0`
+6. Create pipe from the datasource name as a `response_list__v1` and
+   `status_timezone__v0`
 
 7. Inside `response_list__v0` pipe, create a endpoint by running a following
    query :
@@ -302,7 +303,7 @@ pip install tinybird-cli
 ```
 %
     SELECT id, latency, monitorId, pageId, region, statusCode, timestamp, url, workspaceId, cronTimestamp
-    FROM ping_response__v3
+    FROM ping_response__v4
     WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
     {% if defined(region) %}
     AND region = {{ String(region) }}
@@ -320,23 +321,52 @@ pip install tinybird-cli
     LIMIT {{Int32(limit, 1000)}}
 ```
 
-8. Inside `monitor_list__v0` pipe , create a endpoint by running a following
+8. Inside `status_timezone__v0` pipe , create a endpoint by running a following
    query :
 
 ```
-%
+VERSION 0
+
+NODE group_by_cronTimestamp
+SQL >
+
+    %
     SELECT
-    {% if defined(groupBy) and groupBy == "day" %}
-    toUnixTimestamp64Milli(toDateTime64(DATE(cronTimestamp / 1000), 3))
-    {% else %}
-    cronTimestamp
-    {% end %}
-    AS cronTimestamp, ROUND(AVG(latency)) as avgLatency, COUNT(*) as count, COUNT(CASE WHEN statusCode BETWEEN 200 AND 299 THEN 1 ELSE NULL END) as ok
-    FROM ping_response__v3
-    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }} AND cronTimestamp IS NOT NULL AND cronTimestamp != 0
-    GROUP BY cronTimestamp
-    ORDER BY cronTimestamp DESC
-    LIMIT {{Int32(limit, 1000)}}
+        toDateTime(cronTimestamp / 1000, 'UTC') AS day,
+        -- only for debugging purposes
+        toTimezone(day, {{ String(timezone, 'Europe/Berlin') }}) as with_timezone,
+        toStartOfDay(with_timezone) as start_of_day,
+        avg(latency) AS avgLatency,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM ping_response__v4
+    WHERE
+        (day IS NOT NULL)
+        AND (day != 0)
+        AND monitorId = {{ String(monitorId, '1') }}
+        -- By default, we only only query the last 45 days
+        AND cronTimestamp >= toUnixTimestamp64Milli(
+            toDateTime64(toStartOfDay(date_sub(DAY, 45, now())), 3)
+        )
+    GROUP BY cronTimestamp, monitorId
+    ORDER BY day DESC
+
+
+
+NODE group_by_day
+SQL >
+
+    %
+    SELECT
+        start_of_day as day,
+        sum(count) as count,
+        sum(ok) as ok,
+        round(avg(avgLatency)) as avgLatency
+    FROM group_by_cronTimestamp
+    GROUP BY start_of_day
+    ORDER BY start_of_day DESC
+    LIMIT {{ Int32(limit, 100) }}
+
 
 ```
 

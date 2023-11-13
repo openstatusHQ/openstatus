@@ -1,0 +1,47 @@
+VERSION 0
+
+DESCRIPTION >
+	TODO: descripe what it is for!
+
+
+NODE group_by_cronTimestamp
+SQL >
+
+    %
+    SELECT
+        toDateTime(cronTimestamp / 1000, 'UTC') AS day,
+        -- only for debugging purposes
+        toTimezone(day, {{ String(timezone, 'Europe/Berlin') }}) as with_timezone,
+        toStartOfDay(with_timezone) as start_of_day,
+        avg(latency) AS avgLatency,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM ping_response__v4
+    WHERE
+        (day IS NOT NULL)
+        AND (day != 0)
+        AND monitorId = {{ String(monitorId, '1') }}
+        -- By default, we only only query the last 45 days
+        AND cronTimestamp >= toUnixTimestamp64Milli(
+            toDateTime64(toStartOfDay(date_sub(DAY, 45, now())), 3)
+        )
+    GROUP BY cronTimestamp, monitorId
+    ORDER BY day DESC
+
+
+
+NODE group_by_day
+SQL >
+
+    %
+    SELECT
+        start_of_day as day,
+        sum(count) as count,
+        sum(ok) as ok,
+        round(avg(avgLatency)) as avgLatency
+    FROM group_by_cronTimestamp
+    GROUP BY start_of_day
+    ORDER BY start_of_day DESC
+    LIMIT {{ Int32(limit, 100) }}
+
+

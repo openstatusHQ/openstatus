@@ -68,21 +68,22 @@ export const tbParameterResponseList = z.object({
 });
 
 /**
- * Params for pipe monitor_list__v1
+ * Params for pipe status_timezone__v0
  */
 export const tbParameterMonitorList = z.object({
   monitorId: z.string(),
-  limit: z.number().int().default(60).optional(), // 40 days
+  timezone: z.string().optional(),
+  limit: z.number().int().default(46).optional(), // 46 days
 });
 
 /**
- * Values from the pipe monitor_list__v1
+ * Values from the pipe status_timezone__v0
  */
 export const tbBuildMonitorList = z.object({
   count: z.number().int(),
   ok: z.number().int(),
-  avgLatency: z.number().int(), // in ms
-  cronTimestamp: z.number().int(),
+  avgLatency: z.number().int(),
+  day: z.coerce.date(),
 });
 
 /**

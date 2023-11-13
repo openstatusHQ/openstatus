@@ -37,9 +37,11 @@ export async function getMonitorListData(props: MonitorListParams) {
 }
 
 // Includes caching of data for 10 minutes
-export async function getHomeMonitorListData() {
+export async function getHomeMonitorListData(
+  props: Pick<MonitorListParams, "timezone">,
+) {
   try {
-    const res = await getHomeMonitorList(tb)({ monitorId: "1" });
+    const res = await getHomeMonitorList(tb)({ monitorId: "1", ...props });
     return res.data;
   } catch (e) {
     console.error(e);
