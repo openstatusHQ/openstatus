@@ -1,0 +1,19 @@
+#tb_materialize_until_change_ingest.pipe
+NODE mat_node
+SQL >
+
+    SELECT
+        id,
+        latency,
+        monitorId,
+        toLowCardinality(region) region,
+        statusCode,
+        timestamp,
+        url,
+        workspaceId,
+        cronTimestamp,
+    FROM ping_response__v4
+    WHERE fromUnixTimestamp64Milli(cronTimestamp) > '2023-11-13 18:16:00.000'
+
+TYPE materialized
+DATASOURCE ping_response__v5
