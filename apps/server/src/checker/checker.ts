@@ -19,10 +19,10 @@ export const publishPingRetryPolicy = async ({
       )}  with latency ${latency} and status code ${statusCode}`,
     );
     await publishPing({
-      payload: payload,
-      statusCode: statusCode,
-      latency: latency,
-      message: message,
+      payload,
+      statusCode,
+      latency,
+      message,
     });
   } catch {
     try {
@@ -32,10 +32,10 @@ export const publishPingRetryPolicy = async ({
       );
 
       await publishPing({
-        payload: payload,
-        statusCode: statusCode,
-        latency: latency,
-        message: message,
+        payload,
+        statusCode,
+        latency,
+        message,
       });
     } catch (e) {
       throw e;

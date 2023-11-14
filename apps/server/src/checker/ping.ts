@@ -57,8 +57,8 @@ export async function publishPing({
   ) {
     const res = await publishPingResponse({
       timestamp: Date.now(),
-      statusCode: statusCode,
-      latency: latency,
+      statusCode,
+      latency,
       region,
       url,
       monitorId,
