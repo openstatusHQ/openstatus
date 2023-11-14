@@ -2,14 +2,12 @@
 
 import { Card, LineChart, Title } from "@tremor/react";
 
-import type { Region } from "@openstatus/tinybird";
-
 const dataFormatter = (number: number) =>
   `${Intl.NumberFormat("us").format(number).toString()}ms`;
 
 interface ChartProps {
-  data: (Partial<Record<Region, string>> & { timestamp: string })[];
-  regions: Region[];
+  data: { timestamp: string; [key: string]: string }[];
+  regions: string[];
 }
 
 export function Chart({ data, regions }: ChartProps) {
