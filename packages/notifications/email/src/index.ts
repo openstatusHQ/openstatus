@@ -8,11 +8,13 @@ export const send = async ({
   notification,
   region,
   statusCode,
+  message,
 }: {
   monitor: Monitor;
   notification: Notification;
-  statusCode: number;
+  statusCode?: number;
   region: string;
+  message?: string;
 }) => {
   // FIXME:
   const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
@@ -29,7 +31,13 @@ export const send = async ({
       from: "Notifications <ping@openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is down 🚨`,
-      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is down in ${region}. </p><p>URL : ${monitor.url}</p><p>Status Code: ${statusCode}</p><p>OpenStatus 🏓 </p>`,
+      html: `<p>Hi,<br><br>Your monitor ${
+        monitor.name
+      } is down in ${region}. </p><p>URL : ${monitor.url}</p> ${
+        statusCode
+          ? `<p>Status Code: ${statusCode}</p>`
+          : `<p>Error message: ${message}</p>`
+      }<p>OpenStatus 🏓 </p>`,
     }),
   });
 

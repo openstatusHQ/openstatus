@@ -20,12 +20,12 @@ export function Cards(props: Feature) {
           return (
             <li key={i}>
               <p className="flex flex-col">
-                <p>
+                <span>
                   <FeatureIcon className="text-foreground/80 mb-1 mr-1.5 inline-flex h-4 w-4" />
                   <span className="text-foreground font-medium">
                     {feature.catchline.replace(".", "")}
                   </span>{" "}
-                </p>
+                </span>
                 <span className="text-muted-foreground">
                   {feature.description}
                 </span>

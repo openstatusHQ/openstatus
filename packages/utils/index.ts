@@ -160,4 +160,6 @@ export const vercelRegions = [
 
 export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
+export const availableRegions = [...vercelRegions, ...flyRegions] as const;
+
 export const regionsDict = { ...vercelRegionsDict, ...flyRegionsDict } as const;

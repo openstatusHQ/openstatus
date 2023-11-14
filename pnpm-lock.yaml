@@ -754,6 +754,9 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../utils
       '@types/node':
         specifier: 20.8.0
         version: 20.8.0

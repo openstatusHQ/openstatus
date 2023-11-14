@@ -33,7 +33,6 @@ const monitor = async (
   const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
   await publishPingResponse({
-    id: nanoid(), // TBD: we don't need it
     timestamp: Date.now(),
     statusCode,
     monitorId,

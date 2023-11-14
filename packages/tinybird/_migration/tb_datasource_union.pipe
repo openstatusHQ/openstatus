@@ -1,0 +1,6 @@
+NODE union_all
+SQL >
+
+    SELECT count() FROM ping_response__v5
+    UNION ALL
+    SELECT count() FROM ping_response__v4
