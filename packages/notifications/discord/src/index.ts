@@ -20,11 +20,13 @@ export const sendDiscordMessage = async ({
   notification,
   region,
   statusCode,
+  message,
 }: {
   monitor: Monitor;
   notification: Notification;
-  statusCode: number;
+  statusCode?: number;
   region: string;
+  message?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { discord: webhookUrl } = notificationData; // webhook url
@@ -34,7 +36,9 @@ export const sendDiscordMessage = async ({
     await postToWebhook(
       `Your monitor ${name} is down 🚨
 
-      Your monitor with url ${monitor.url} is down in ${region} with status code ${statusCode}.`,
+      Your monitor with url ${monitor.url} is down in ${region} with ${
+        statusCode ? `status code ${statusCode}` : `error message ${message}`
+      }.`,
       webhookUrl,
     );
   } catch (err) {

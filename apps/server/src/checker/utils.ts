@@ -18,7 +18,8 @@ type SendNotification = ({
   monitor: Monitor;
   notification: Notification;
   region: keyof typeof flyRegionsDict;
-  statusCode: number;
+  statusCode?: number;
+  message?: string;
 }) => Promise<void>;
 
 export const providerToFunction = {

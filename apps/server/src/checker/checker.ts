@@ -10,6 +10,7 @@ export const publishPingRetryPolicy = async ({
   payload,
   latency,
   statusCode,
+  message,
 }: PublishPingType) => {
   try {
     console.log(
@@ -17,14 +18,25 @@ export const publishPingRetryPolicy = async ({
         payload,
       )}  with latency ${latency} and status code ${statusCode}`,
     );
-    await publishPing({ payload, statusCode, latency });
+    await publishPing({
+      payload: payload,
+      statusCode: statusCode,
+      latency: latency,
+      message: message,
+    });
   } catch {
     try {
       console.log(
         "2️⃣ try publish ping to tb - attempt 2 ",
         JSON.stringify(payload),
       );
-      await publishPing({ payload, statusCode, latency });
+
+      await publishPing({
+        payload: payload,
+        statusCode: statusCode,
+        latency: latency,
+        message: message,
+      });
     } catch (e) {
       throw e;
     }
@@ -40,6 +52,7 @@ const run = async (data: Payload, retry: number) => {
   let startTime = 0;
   let endTime = 0;
   let res = null;
+  let message = undefined;
   // We are doing these for wrong urls
   try {
     startTime = Date.now();
@@ -47,6 +60,7 @@ const run = async (data: Payload, retry: number) => {
     endTime = Date.now();
   } catch (e) {
     endTime = Date.now();
+    message = `${e}`;
     console.log(
       `🚨 error on pingEndpoint for ${JSON.stringify(data)} error: `,
       e,
@@ -59,6 +73,7 @@ const run = async (data: Payload, retry: number) => {
       payload: data,
       latency,
       statusCode: res.status,
+      message: undefined,
     });
     if (data?.status === "error") {
       await updateMonitorStatus({
@@ -80,8 +95,10 @@ const run = async (data: Payload, retry: number) => {
       await publishPingRetryPolicy({
         payload: data,
         latency,
-        statusCode: res?.status || 0,
+        statusCode: res?.status,
+        message: message,
       });
+
       if (data?.status === "active") {
         await updateMonitorStatus({
           monitorId: data.monitorId,

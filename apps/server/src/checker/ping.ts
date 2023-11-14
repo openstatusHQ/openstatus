@@ -38,16 +38,16 @@ export async function pingEndpoint(data: Payload) {
 
 export type PublishPingType = {
   payload: Payload;
-  statusCode: number | null;
   latency: number;
-  message?: string | null;
+  statusCode?: number | undefined;
+  message?: string | undefined;
 };
 
 export async function publishPing({
   payload,
-  statusCode,
   latency,
   message,
+  statusCode,
 }: PublishPingType) {
   const { monitorId, cronTimestamp, url, workspaceId } = payload;
 
@@ -57,14 +57,14 @@ export async function publishPing({
   ) {
     const res = await publishPingResponse({
       timestamp: Date.now(),
-      statusCode,
-      latency,
+      statusCode: statusCode,
+      latency: latency,
       region,
       url,
       monitorId,
       cronTimestamp,
       workspaceId,
-      message,
+      message: message,
     });
     if (res.successful_rows === 0) {
       throw new Error(`error 0 rows on publish ping for ${payload.monitorId}`);

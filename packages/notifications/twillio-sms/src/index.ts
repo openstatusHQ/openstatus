@@ -8,11 +8,13 @@ export const sendTextMessage = async ({
   notification,
   region,
   statusCode,
+  message,
 }: {
   monitor: Monitor;
   notification: Notification;
-  statusCode: number;
+  statusCode?: number;
   region: string;
+  message?: string;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),
@@ -24,7 +26,9 @@ export const sendTextMessage = async ({
   body.set("From", "+14807252613");
   body.set(
     "Body",
-    `Your monitor ${name} / ${monitor.url} is down in ${region} with status code ${statusCode}`,
+    `Your monitor ${name} / ${monitor.url} is down in ${region} with ${
+      statusCode ? `status code ${statusCode}` : `error: ${message}`
+    }`,
   );
 
   try {
