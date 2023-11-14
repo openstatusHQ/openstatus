@@ -12,10 +12,12 @@ export const triggerAlerting = async ({
   monitorId,
   region,
   statusCode,
+  message,
 }: {
   monitorId: string;
   region: keyof typeof flyRegionsDict;
-  statusCode: number;
+  statusCode?: number;
+  message?: string;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db
@@ -38,6 +40,7 @@ export const triggerAlerting = async ({
       notification: selectNotificationSchema.parse(notif.notification),
       region: flyRegionsDict[region].location,
       statusCode,
+      message,
     });
   }
 };

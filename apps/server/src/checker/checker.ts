@@ -107,7 +107,8 @@ const run = async (data: Payload, retry: number) => {
         await triggerAlerting({
           monitorId: data.monitorId,
           region: env.FLY_REGION,
-          statusCode: res?.status || 0,
+          statusCode: res?.status,
+          message,
         });
       }
     }
