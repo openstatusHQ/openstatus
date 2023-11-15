@@ -27,7 +27,7 @@ async function main() {
     .values([
       {
         id: 1,
-        slug: "test",
+        slug: "love-openstatus",
         stripeId: "stripeId1",
         name: "test",
         subscriptionId: "subscriptionId",
