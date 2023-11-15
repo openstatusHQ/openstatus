@@ -164,9 +164,10 @@ the pipes to the Tinybird server.
 
 ### Datasource
 
-We ingest the monitor response into the `ping_response__v4` table. If you want
+We ingest the monitor response into the `ping_response__v5` table. If you want
 to have some dummy data to start with, check out the
-[csv](/dummy/ping_response__v3.csv) file.
+[csv](https://raw.githubusercontent.com/openstatusHQ/openstatus/main/apps/docs/dummy/ping_response__v5.csv)
+file.
 
 > Warning: If importing the csv file, make sure to change the column names are
 > identical (e.g. `monitorId` instead of `monitorid`). Otherwise, the pipes will
