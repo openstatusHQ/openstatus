@@ -277,7 +277,7 @@ configurations.
    > like auth token invalid
 
 3. Then download this file
-   [ping_response\_\_v3](https://docs.openstatus.dev/dummy/ping_response__v3.csv)
+   [ping_response\_\_v5](https://raw.githubusercontent.com/openstatusHQ/openstatus/8d5c997aacd93becff2cf24ea1d08d33274d2c20/apps/docs/dummy/ping_response__v5.csv)
 
 4. install the tinybird-cli
 
@@ -368,6 +368,41 @@ SQL >
     LIMIT {{ Int32(limit, 100) }}
 
 
+```
+
+### Setting up the database
+
+We have an example database that you can use to get started. You can run it with
+the following command:
+
+```bash
+ turso dev --db-file openstatus-dev.db
+```
+
+It contains some dummy data that you can use to test the application. You still
+need to update the `tenant_id` in table `user` with your user account from
+Clerk.
+
+Do the following to get your `tenant_id`:
+
+![Sign up with clerk](/images/setup-env/clerk-step1.png)
+
+Then go in the user section:
+
+![Sign up with clerk](/images/setup-env/clerk-step2.png)
+
+Then copy the `tenant_id`:
+
+![Sign up with clerk](/images/setup-env/clerk-step3.png)
+
+then update the `tenant_id` in the database, for this you can use
+drizzle-studio:
+
+![Drizzle studio](/images/setup-env/drizzle-studio.png)
+
+```bash
+cd packages/db
+pnpm studio
 ```
 
 ## Conclusion
