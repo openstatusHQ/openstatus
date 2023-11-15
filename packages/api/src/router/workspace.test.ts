@@ -22,7 +22,7 @@ test("Get Test Workspace", async () => {
 
   expect(result).toMatchObject({
     id: 1,
-    slug: "test",
+    slug: "love-openstatus",
     name: "test",
     plan: "pro",
     paidUntil: null,
@@ -50,7 +50,7 @@ test("by default we get the first workspace", async () => {
 
   expect(result).toMatchObject({
     id: 1,
-    slug: "test",
+    slug: "love-openstatus",
     name: "test",
     plan: "pro",
     paidUntil: null,
@@ -94,7 +94,7 @@ test("All workspaces", async () => {
             name: "test",
             paidUntil: null,
             plan: "pro",
-            slug: "test",
+            slug: "love-openstatus",
             stripeId: "stripeId1",
             subscriptionId: "subscriptionId",
             updatedAt: expect.any(Date),
