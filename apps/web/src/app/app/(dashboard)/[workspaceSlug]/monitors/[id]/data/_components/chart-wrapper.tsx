@@ -1,6 +1,7 @@
 "use client";
 
 import type { Ping, Region } from "@openstatus/tinybird";
+import { regionsDict } from "@openstatus/utils";
 
 import type { Period } from "../utils";
 import { Chart } from "./chart";
@@ -23,18 +24,20 @@ export function ChartWrapper({
  */
 function groupDataByTimestamp(data: Ping[], period: Period) {
   let currentTimestamp = 0;
-  const regions: Partial<Record<Region, null>> = {};
+  const regions: Record<string, null> = {};
   const _data = data.reduce(
     (acc, curr) => {
       const { cronTimestamp, latency, region } = curr;
-      regions[region] = null; // to get the region keys
+      const { flag, code } = regionsDict[region];
+      const fullNameRegion = `${flag} ${code}`;
+      regions[fullNameRegion] = null; // to get the region keys
       if (cronTimestamp === currentTimestamp) {
         // overwrite last object in acc
         const last = acc.pop();
         if (last) {
           acc.push({
             ...last,
-            [region]: latency,
+            [fullNameRegion]: latency,
           });
         }
       } else if (cronTimestamp) {
@@ -42,14 +45,15 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
         // create new object in acc
         acc.push({
           timestamp: renderTimestamp(cronTimestamp, period),
-          [region]: latency,
+          [fullNameRegion]: latency,
         });
       }
       return acc;
     },
     [] as (Partial<Record<Region, string>> & { timestamp: string })[],
   );
-  return { regions: Object.keys(regions) as Region[], data: _data.reverse() };
+
+  return { regions: Object.keys(regions), data: _data.reverse() };
 }
 
 /**
