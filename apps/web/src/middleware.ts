@@ -72,6 +72,8 @@ export default authMiddleware({
     "/api/checker/cron/10m",
     "/blog",
     "/blog/(.*)",
+    "/status",
+    "/status/(.*)",
     "/changelog",
     "/changelog/(.*)",
     "/legal/(.*)",

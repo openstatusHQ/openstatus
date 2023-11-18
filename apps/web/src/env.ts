@@ -22,6 +22,7 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: z.string(),
     GCP_PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
+    EXTERNAL_API_URL: z.string().url(),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -61,5 +62,6 @@ export const env = createEnv({
     GCP_CLIENT_EMAIL: process.env.GCP_CLIENT_EMAIL,
     GCP_PRIVATE_KEY: process.env.GCP_PRIVATE_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
+    EXTERNAL_API_URL: process.env.EXTERNAL_API_URL,
   },
 });
