@@ -1,4 +1,5 @@
 import { env } from "../env";
+import { checkerAudit } from "../utils/audit-log";
 import { triggerAlerting, upsertMonitorStatus } from "./alerting";
 import type { PublishPingType } from "./ping";
 import { pingEndpoint, publishPing } from "./ping";
@@ -80,6 +81,13 @@ const run = async (data: Payload, retry: number) => {
         monitorId: data.monitorId,
         status: "active",
       });
+      // ALPHA
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${data.monitorId}`,
+        action: "monitor.recovered",
+        metadata: { region: env.FLY_REGION },
+      });
+      //
     }
   } else {
     if (retry < 2) {
@@ -110,6 +118,13 @@ const run = async (data: Payload, retry: number) => {
           statusCode: res?.status,
           message,
         });
+        // ALPHA
+        await checkerAudit.publishAuditLog({
+          id: `monitor:${data.monitorId}`,
+          action: "monitor.failed",
+          metadata: { region: env.FLY_REGION },
+        });
+        //
       }
     }
   }
