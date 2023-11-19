@@ -71,6 +71,13 @@
       "when": 1697285841283,
       "tag": "0009_small_maximus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1700427552207,
+      "tag": "0010_easy_fenris",
+      "breakpoints": true
     }
   ]
 }

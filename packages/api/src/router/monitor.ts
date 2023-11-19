@@ -6,6 +6,7 @@ import {
   insertMonitorSchema,
   monitor,
   monitorPeriodicitySchema,
+  monitorStatusTable,
   monitorsToPages,
   notification,
   notificationsToMonitors,

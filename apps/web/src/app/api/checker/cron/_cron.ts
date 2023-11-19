@@ -55,6 +55,7 @@ export const cron = async ({
   const allResult = [];
 
   for (const row of monitors) {
+    // TODO: remove - this is not used anymore | remember to update the `type Payload`
     const allPages = await caller.monitor.getAllPagesForMonitor({
       monitorId: row.id,
     });
@@ -69,7 +70,7 @@ export const cron = async ({
         body: row.body,
         headers: row.headers,
         pageIds: allPages.map((p) => String(p.pageId)),
-        status: row.status,
+        status: row.status, // TODO: add correct status to the payload
       };
 
       const task: google.cloud.tasks.v2beta3.ITask = {
