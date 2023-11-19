@@ -3,6 +3,6 @@ VERSION 0
 NODE endpoint_audit_pipe_0
 SQL >
 
-    % SELECT * FROM audit_log__v0 WHERE id = {{ String(event_id, 1) }}
+    % SELECT * FROM audit_log__v0 WHERE id = {{ String(event_id, 1) }} ORDER BY timestamp DESC
 
 
