@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { z } from "zod";
 
 /**
  * The base schema for every event, used to validate it's structure
@@ -7,7 +7,12 @@ import * as z from "zod";
 export const baseSchema = z.object({
   id: z.string().min(1),
   action: z.string(),
-  timestamp: z.number().int().default(Date.now()),
+  // REMINDER: do not use .default(Date.now()), it will be evaluated only once
+  timestamp: z
+    .number()
+    .int()
+    .optional()
+    .transform((val) => val || Date.now()),
   version: z.number().int().default(1),
 });
 
@@ -38,25 +43,18 @@ export const targetsSchema = z
   .optional();
 
 /**
- * The schema for the metadata object.
- * All the extra information that is not part of the base schema.
- */
-export const metadataSchema = z.record(z.unknown()).optional();
-
-/**
  * The schema for the event object.
- * It extends the base schema and transforms the actor, targets and metadata
+ * It extends the base schema and transforms the actor, targets
  * objects into strings.
  */
 export const ingestEventSchema = baseSchema.extend({
   actor: actorSchema.transform((val) => JSON.stringify(val)),
   targets: targetsSchema.transform((val) => JSON.stringify(val)),
-  metadata: metadataSchema.transform((val) => JSON.stringify(val)),
 });
 
 /**
  * The schema for the response object.
- * It extends the base schema and transforms the actor, targets and metadata objects
+ * It extends the base schema and transforms the actor, targets
  * back into typed objects.
  */
 export const pipeResponseData = baseSchema.extend({
@@ -65,7 +63,6 @@ export const pipeResponseData = baseSchema.extend({
     (val) => (val ? JSON.parse(String(val)) : undefined),
     targetsSchema,
   ),
-  metadata: z.preprocess((val) => JSON.parse(String(val)), metadataSchema),
 });
 
 /**
@@ -73,15 +70,3 @@ export const pipeResponseData = baseSchema.extend({
  * It represents the parameters that are passed to the pipe.
  */
 export const pipeParameterData = z.object({ event_id: z.string().min(1) });
-
-export type BaseSchemaInput = z.input<typeof baseSchema>;
-export type IngestEventSchemaInput = z.input<typeof ingestEventSchema>;
-
-export type BaseSchema = z.infer<typeof baseSchema>;
-export type ActorSchema = z.infer<typeof actorSchema>;
-export type TargetsSchema = z.infer<typeof targetsSchema>;
-export type MetadataSchema = z.infer<typeof metadataSchema>;
-
-export type IngestEventSchema = z.infer<typeof ingestEventSchema>;
-export type PipeResponseDataSchema = z.infer<typeof pipeResponseData>;
-export type PipeParameterDataSchema = z.infer<typeof pipeParameterData>;

@@ -1,33 +1,31 @@
 import { Tinybird } from "@chronark/zod-bird";
+import { z } from "zod";
 
-import { getAuditLog, publishAuditLog } from "./client";
+import { AuditLog } from "./client";
 
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+const metadataSchema = z.object({ region: z.string() });
+const name = "audit_log__v0";
+
+const auditLog = new AuditLog({ tb, name, metadataSchema });
 
 async function seed() {
-  await publishAuditLog(tb)({
+  await auditLog.publishAuditLog({
     id: "monitor:1",
     action: "monitor.down",
-    timestamp: Date.now(),
-    metadata: { region: "gru" },
-  });
-  await wait(1000);
-  await publishAuditLog(tb)({
-    id: "monitor:1",
-    action: "monitor.up",
-    timestamp: Date.now(),
     metadata: { region: "gru" },
   });
 }
 
 async function history() {
-  return await getAuditLog(tb)({
-    event_id: "monitor:1",
-  });
+  return await auditLog.getAuditLog({ event_id: "monitor:1" });
 }
 
-// seed();
-// await history();
+seed();
+// const all = await history();
+// console.log(all);
+
+// ========
 
 async function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

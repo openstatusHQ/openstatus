@@ -52,9 +52,9 @@ export type Event = {
   version?: number;
 
   /**
-   * Metadata for the event.
+   * Metadata for the event. Defined via zod schema.
    */
-  metadata?: Record<string, unknown>;
+  metadata?: unknown;
 };
 ```
 
@@ -62,20 +62,22 @@ The objects are parsed and stored as string via
 `schema.transform(val => JSON.stringify(val))` and transformed back into an
 object before parsing via `z.preprocess(val => JSON.parse(val), schema)`.
 
-### Improvements
-
-Right now, the `metadata` object is not very typesafe. It would be great if we
-could make `zod` generics work and extend/merge the base schema such that we get
-the correct metadata types after validation.
-
-Something like:
+### Example
 
 ```ts
-const schemaExtender = <T extends z.ZodRawShape>(p: z.ZodObject<T>) =>
-  z.object({ foo: z.boolean() }).merge(p);
-const schema = schemaExtender(z.object({ bar: z.number() }));
-type Schema = z.infer<typeof schema>;
-// ^? { foo: boolean; bar: number; }
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+const metadataSchema = z.object({ region: z.string() });
+const name = "audit_log__v0";
+
+const auditLog = new AuditLog({ tb, name, metadataSchema });
+
+await auditLog.publishAuditLog({
+  id: "monitor:1",
+  action: "monitor.down",
+  metadata: { region: "gru" },
+});
+
+await auditLog.getAuditLog({ event_id: "monitor:1" });
 ```
 
 ### Inspiration
