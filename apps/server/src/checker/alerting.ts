@@ -46,7 +46,7 @@ export const triggerAlerting = async ({
   }
 };
 
-export const updateMonitorStatus = async ({
+export const upsertMonitorStatus = async ({
   monitorId,
   status,
 }: {

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
+  insertMonitorStatusSchema,
   monitor,
   monitorPeriodicitySchema,
   monitorStatusTable,
@@ -11,6 +12,7 @@ import {
   notification,
   notificationsToMonitors,
   selectMonitorSchema,
+  selectMonitorStatusSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
@@ -239,6 +241,30 @@ export const monitorRouter = createTRPCRouter({
         )
         .all();
       return z.array(selectMonitorSchema).parse(result);
+    }),
+
+  getMonitorStatusByMonitorId: cronProcedure
+    .input(z.object({ monitorId: z.number() }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db
+        .select()
+        .from(monitorStatusTable)
+        .where(eq(monitorStatusTable.monitorId, opts.input.monitorId))
+        .all();
+      return z.array(selectMonitorStatusSchema).parse(result);
+    }),
+
+  upsertMonitorStatus: cronProcedure
+    .input(insertMonitorStatusSchema)
+    .query(async (opts) => {
+      const { status, region, monitorId } = opts.input;
+      await opts.ctx.db
+        .insert(monitorStatusTable)
+        .values({ status, region, monitorId: Number(monitorId) })
+        .onConflictDoUpdate({
+          target: [monitorStatusTable.monitorId, monitorStatusTable.region],
+          set: { status },
+        });
     }),
 
   getAllPagesForMonitor: cronProcedure
