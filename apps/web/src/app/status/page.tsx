@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { z } from "zod";
 
 import {
   Card,
@@ -12,25 +11,12 @@ import {
 import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { env } from "@/env";
-
-const ExternalStatus = z.object({
-  id: z.number(),
-  name: z.string(),
-  url: z.string(),
-  external_id: z.string(),
-  last_updated_at: z.string().datetime({ offset: true }),
-  time_zone: z.string(),
-  status_indicator: z.string(),
-  status_description: z.string(),
-  created_at: z.string(),
-  updated_at: z.string().datetime(),
-});
+import { externalStatusArray, getClassname } from "./utils";
 
 const ExternalStatusPage = async () => {
-  console.log(env.EXTERNAL_API_URL);
   const res = await fetch(env.EXTERNAL_API_URL);
   const data = await res.json();
-  const openSourceFriends = z.array(ExternalStatus).parse(data);
+  const externalStatus = externalStatusArray.parse(data);
 
   return (
     <MarketingLayout>
@@ -41,7 +27,7 @@ const ExternalStatusPage = async () => {
         Easily check if your external providers is working properly
       </div>
       <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
-        {openSourceFriends.map((status) => (
+        {externalStatus.map((status) => (
           <Card key={status.name} className="group flex flex-col">
             <CardHeader className="flex-1">
               <div className="flex items-center gap-2">
@@ -55,7 +41,9 @@ const ExternalStatusPage = async () => {
                   </Link>
                 </CardTitle>
               </div>
-              <CardDescription>{status.status_description}</CardDescription>
+              <CardDescription className={getClassname(status)}>
+                {status.status_description}
+              </CardDescription>
             </CardHeader>
             <CardFooter>
               <div className="flex items-center gap-2.5">
