@@ -263,7 +263,7 @@ export const monitorRouter = createTRPCRouter({
         .values({ status, region, monitorId: Number(monitorId) })
         .onConflictDoUpdate({
           target: [monitorStatusTable.monitorId, monitorStatusTable.region],
-          set: { status },
+          set: { status, updatedAt: new Date() },
         });
     }),
 

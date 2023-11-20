@@ -62,6 +62,6 @@ export const upsertMonitorStatus = async ({
         schema.monitorStatusTable.monitorId,
         schema.monitorStatusTable.region,
       ],
-      set: { status },
+      set: { status, updatedAt: new Date() },
     });
 };
