@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "0ca598db-9a73-40b1-83d0-7e036aeb6a60",
+  "id": "452e7037-85cf-4d9a-b4e2-375a695d5fa8",
   "prevId": "0f3dddb6-09cf-46a4-b12c-c5bb82475b94",
   "tables": {
     "incident": {
@@ -1049,7 +1049,16 @@
           "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "monitor_status_idx": {
+          "name": "monitor_status_idx",
+          "columns": [
+            "monitor_id",
+            "region"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "monitor_status_monitor_id_monitor_id_fk": {
           "name": "monitor_status_monitor_id_monitor_id_fk",

@@ -254,9 +254,10 @@ export const monitorRouter = createTRPCRouter({
       return z.array(selectMonitorStatusSchema).parse(result);
     }),
 
+  // FOR TESTING
   upsertMonitorStatus: cronProcedure
     .input(insertMonitorStatusSchema)
-    .query(async (opts) => {
+    .mutation(async (opts) => {
       const { status, region, monitorId } = opts.input;
       await opts.ctx.db
         .insert(monitorStatusTable)

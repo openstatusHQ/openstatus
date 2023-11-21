@@ -7,3 +7,5 @@ CREATE TABLE `monitor_status` (
 	PRIMARY KEY(`monitor_id`, `region`),
 	FOREIGN KEY (`monitor_id`) REFERENCES `monitor`(`id`) ON UPDATE no action ON DELETE cascade
 );
+--> statement-breakpoint
+CREATE INDEX `monitor_status_idx` ON `monitor_status` (`monitor_id`,`region`);

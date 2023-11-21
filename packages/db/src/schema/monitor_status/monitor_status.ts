@@ -30,8 +30,10 @@ export const monitorStatusTable = sqliteTable(
   (table) => {
     return {
       primaryKey: primaryKey(table.monitorId, table.region),
-      monitorIdIdx: index("monitor_id_idx").on(table.monitorId),
-      regionIdx: index("region_idx").on(table.region),
+      monitorStatusIdx: index("monitor_status_idx").on(
+        table.monitorId,
+        table.region,
+      ),
     };
   },
 );
