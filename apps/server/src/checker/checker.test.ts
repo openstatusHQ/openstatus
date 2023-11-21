@@ -8,12 +8,12 @@ mock.module("./ping.ts", () => {
   };
 });
 
-test("should call updateMonitorStatus when we can fetch", async () => {
+test("should call upsertMonitorStatus when we can fetch", async () => {
   const fn = mock(() => {});
 
   mock.module("./alerting.ts", () => {
     return {
-      updateMonitorStatus: fn,
+      upsertMonitorStatus: fn,
     };
   });
   await checkerRetryPolicy({
@@ -28,12 +28,12 @@ test("should call updateMonitorStatus when we can fetch", async () => {
   expect(fn).toHaveBeenCalledTimes(1);
 });
 
-test("should call updateMonitorStatus when status error", async () => {
+test("should call upsertMonitorStatus when status error", async () => {
   const fn = mock(() => {});
 
   mock.module("./alerting.ts", () => {
     return {
-      updateMonitorStatus: fn,
+      upsertMonitorStatus: fn,
     };
   });
   try {
@@ -57,7 +57,7 @@ test("What should we do when redirect ", async () => {
 
   mock.module("./alerting.ts", () => {
     return {
-      updateMonitorStatus: fn,
+      upsertMonitorStatus: fn,
     };
   });
   try {
@@ -83,7 +83,7 @@ test("When 404 we should trigger alerting ", async () => {
 
   mock.module("./alerting.ts", () => {
     return {
-      updateMonitorStatus: fn,
+      upsertMonitorStatus: fn,
       triggerAlerting: fn1,
     };
   });
@@ -117,7 +117,7 @@ test("When error  404 we should not trigger alerting ", async () => {
 
   mock.module("./alerting.ts", () => {
     return {
-      updateMonitorStatus: fn,
+      upsertMonitorStatus: fn,
       triggerAlerting: fn1,
     };
   });
