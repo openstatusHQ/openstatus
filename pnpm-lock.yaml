@@ -408,22 +408,6 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
-  packages/audit-trail:
-    dependencies:
-      '@chronark/zod-bird':
-        specifier: 0.3.1-canary.1
-        version: 0.3.1-canary.1
-      zod:
-        specifier: 3.22.2
-        version: 3.22.2
-    devDependencies:
-      '@openstatus/tsconfig':
-        specifier: workspace:*
-        version: link:../tsconfig
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
-
   packages/config/eslint:
     dependencies:
       '@types/eslint':
@@ -1198,12 +1182,6 @@ packages:
 
   /@chronark/zod-bird@0.3.1:
     resolution: {integrity: sha512-4PNJx41m37Psk/3XAxdXxMb9VGAep43/puiwxAyFWYzIoQ1kq3Cwh1sA51LkTFSVHm+B2peMmW+p3/+oCHH9zg==}
-    dependencies:
-      zod: 3.22.2
-    dev: false
-
-  /@chronark/zod-bird@0.3.1-canary.1:
-    resolution: {integrity: sha512-dAbebH6emwAznrKWiFy894O22iNKtvYgwXat6bjASHfNYT15UCWYQOOpbV7rm1nukphtrpYCTJu+ONtJFaHANQ==}
     dependencies:
       zod: 3.22.2
     dev: false

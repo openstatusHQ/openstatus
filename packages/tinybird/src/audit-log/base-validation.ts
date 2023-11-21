@@ -47,7 +47,7 @@ export const targetsSchema = z
  * It extends the base schema and transforms the actor, targets
  * objects into strings.
  */
-export const ingestEventSchema = baseSchema.extend({
+export const ingestBaseEventSchema = baseSchema.extend({
   actor: actorSchema.transform((val) => JSON.stringify(val)),
   targets: targetsSchema.transform((val) => JSON.stringify(val)),
 });
@@ -57,7 +57,7 @@ export const ingestEventSchema = baseSchema.extend({
  * It extends the base schema and transforms the actor, targets
  * back into typed objects.
  */
-export const pipeResponseData = baseSchema.extend({
+export const pipeBaseResponseData = baseSchema.extend({
   actor: z.preprocess((val) => JSON.parse(String(val)), actorSchema),
   targets: z.preprocess(
     (val) => (val ? JSON.parse(String(val)) : undefined),

@@ -2,10 +2,10 @@ import type { Tinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
 import {
-  ingestEventSchema,
+  ingestBaseEventSchema,
+  pipeBaseResponseData,
   pipeParameterData,
-  pipeResponseData,
-} from "./validation";
+} from "./base-validation";
 
 export class AuditLog<T extends z.ZodRawShape> {
   private readonly tb: Tinybird;
@@ -25,7 +25,7 @@ export class AuditLog<T extends z.ZodRawShape> {
   }
 
   private metadataIngestExtender() {
-    return ingestEventSchema.merge(
+    return ingestBaseEventSchema.merge(
       z.object({
         metadata: this.metadataSchema.transform((val) => JSON.stringify(val)),
       }),
@@ -33,7 +33,7 @@ export class AuditLog<T extends z.ZodRawShape> {
   }
 
   private metadataPipeExtender() {
-    return pipeResponseData.merge(
+    return pipeBaseResponseData.merge(
       z.object({
         metadata: z.preprocess(
           (val) => (val ? JSON.parse(String(val)) : undefined),
