@@ -1,5 +1,5 @@
 import { env } from "../env";
-import { triggerAlerting, updateMonitorStatus } from "./alerting";
+import { triggerAlerting, upsertMonitorStatus } from "./alerting";
 import type { PublishPingType } from "./ping";
 import { pingEndpoint, publishPing } from "./ping";
 import type { Payload } from "./schema";
@@ -76,7 +76,7 @@ const run = async (data: Payload, retry: number) => {
       message: undefined,
     });
     if (data?.status === "error") {
-      await updateMonitorStatus({
+      await upsertMonitorStatus({
         monitorId: data.monitorId,
         status: "active",
       });
@@ -100,7 +100,7 @@ const run = async (data: Payload, retry: number) => {
       });
 
       if (data?.status === "active") {
-        await updateMonitorStatus({
+        await upsertMonitorStatus({
           monitorId: data.monitorId,
           status: "error",
         });

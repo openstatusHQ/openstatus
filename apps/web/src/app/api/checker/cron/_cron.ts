@@ -55,10 +55,16 @@ export const cron = async ({
   const allResult = [];
 
   for (const row of monitors) {
+    // TODO: remove - this is not used anymore | remember to update the `type Payload`
     const allPages = await caller.monitor.getAllPagesForMonitor({
       monitorId: row.id,
     });
     const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
+
+    const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
+      monitorId: row.id,
+    });
+
     for (const region of selectedRegions) {
       const payload: z.infer<typeof payloadSchema> = {
         workspaceId: String(row.workspaceId),
@@ -69,7 +75,9 @@ export const cron = async ({
         body: row.body,
         headers: row.headers,
         pageIds: allPages.map((p) => String(p.pageId)),
-        status: row.status,
+        status:
+          monitorStatus.find(({ region }) => region === region)?.status ||
+          "active",
       };
 
       const task: google.cloud.tasks.v2beta3.ITask = {
