@@ -1,23 +1,42 @@
 import { z } from "zod";
 
-import { ingestBaseEventSchema } from "./base-validation";
+import { ingestBaseEventSchema, pipeBaseResponseData } from "./base-validation";
+
+// TODO: add description to every action
 
 const monitorUpSchema = z.object({
-  action: z.literal("monitor.up"),
-  metadata: z.object({ region: z.string() }),
+  action: z.literal("monitor.recovered"),
+  metadata: z.object({ region: z.string(), statusCode: z.number() }),
 });
 
 const monitorDownSchema = z.object({
-  action: z.literal("monitor.down"),
-  metadata: z.object({ test: z.string() }),
+  action: z.literal("monitor.failed"),
+  metadata: z.object({
+    region: z.string(),
+    statusCode: z.number().optional(),
+    message: z.string().optional(),
+  }),
+});
+
+const notificationSendSchema = z.object({
+  action: z.literal("notification.send"),
+  // we could use the notificationProviderSchema for more type safety
+  metadata: z.object({ provider: z.string() }),
 });
 
 export const ingestActionEventSchema = z
   .intersection(
-    z.discriminatedUnion("action", [monitorUpSchema, monitorDownSchema]), // Unfortunately, the array cannot be dynamic
+    // Unfortunately, the array cannot be dynamic, otherwise could be added to the Client
+    // and made available to devs as library
+    z.discriminatedUnion("action", [
+      monitorUpSchema,
+      monitorDownSchema,
+      notificationSendSchema,
+    ]),
     ingestBaseEventSchema,
   )
   .transform((val) => ({
+    ...val,
     metadata: JSON.stringify(val.metadata),
   }));
 
@@ -35,23 +54,15 @@ export const pipeActionResponseData = z.intersection(
         monitorDownSchema.shape.metadata,
       ),
     }),
+    notificationSendSchema.extend({
+      metadata: z.preprocess(
+        (val) => JSON.parse(String(val)),
+        notificationSendSchema.shape.metadata,
+      ),
+    }),
   ]),
-  ingestBaseEventSchema,
+  pipeBaseResponseData,
 );
 
 export type IngestActionEventSchema = z.input<typeof ingestActionEventSchema>;
 export type PipeActionResponseData = z.output<typeof pipeActionResponseData>;
-
-//
-
-export const logEvent: IngestActionEventSchema = {
-  id: "monitor:1",
-  action: "monitor.up",
-  metadata: { region: "gru" },
-};
-
-// export const outputEvent: PipeActionResponseData = {
-//   id: "monitor:1",
-//   action: "monitor.up",
-//   metadata: { region: "gru" },
-// };

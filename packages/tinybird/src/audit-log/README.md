@@ -66,15 +66,13 @@ object before parsing via `z.preprocess(val => JSON.parse(val), schema)`.
 
 ```ts
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
-const metadataSchema = z.object({ region: z.string() });
-const name = "audit_log__v0";
 
-const auditLog = new AuditLog({ tb, name, metadataSchema });
+const auditLog = new AuditLog({ tb });
 
 await auditLog.publishAuditLog({
   id: "monitor:1",
   action: "monitor.down",
-  metadata: { region: "gru" },
+  metadata: { region: "gru", statusCode: 400, message: "timeout" },
 });
 
 await auditLog.getAuditLog({ event_id: "monitor:1" });

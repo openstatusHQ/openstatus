@@ -1,60 +1,30 @@
 import type { Tinybird } from "@chronark/zod-bird";
-import { z } from "zod";
 
 import {
-  ingestBaseEventSchema,
-  pipeBaseResponseData,
-  pipeParameterData,
-} from "./base-validation";
+  ingestActionEventSchema,
+  pipeActionResponseData,
+} from "./action-validation";
+import { pipeParameterData } from "./base-validation";
 
-export class AuditLog<T extends z.ZodRawShape> {
+export class AuditLog {
   private readonly tb: Tinybird;
-  private readonly metadataSchema: z.ZodObject<T>;
-  private readonly datasource: string;
-  private readonly pipe: string;
 
-  constructor(opts: {
-    tb: Tinybird;
-    name: string;
-    metadataSchema: z.ZodObject<T>;
-  }) {
+  constructor(opts: { tb: Tinybird }) {
     this.tb = opts.tb;
-    this.metadataSchema = opts.metadataSchema;
-    this.datasource = `${opts.name}`;
-    this.pipe = `endpoint_${opts.name}`;
-  }
-
-  private metadataIngestExtender() {
-    return ingestBaseEventSchema.merge(
-      z.object({
-        metadata: this.metadataSchema.transform((val) => JSON.stringify(val)),
-      }),
-    );
-  }
-
-  private metadataPipeExtender() {
-    return pipeBaseResponseData.merge(
-      z.object({
-        metadata: z.preprocess(
-          (val) => (val ? JSON.parse(String(val)) : undefined),
-          this.metadataSchema,
-        ),
-      }),
-    );
   }
 
   get publishAuditLog() {
     return this.tb.buildIngestEndpoint({
-      datasource: this.datasource,
-      event: this.metadataIngestExtender(),
+      datasource: "audit_log__v0",
+      event: ingestActionEventSchema,
     });
   }
 
   get getAuditLog() {
     return this.tb.buildPipe({
-      pipe: this.pipe,
+      pipe: "endpoint_audit_log__v0",
       parameters: pipeParameterData,
-      data: this.metadataPipeExtender(),
+      data: pipeActionResponseData,
     });
   }
 }
