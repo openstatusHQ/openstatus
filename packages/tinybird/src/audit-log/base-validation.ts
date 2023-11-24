@@ -88,3 +88,7 @@ export const pipeBaseResponseData = baseSchema.extend({
  * It represents the parameters that are passed to the pipe.
  */
 export const pipeParameterData = z.object({ event_id: z.string().min(1) });
+
+export type PipeParameterData = z.infer<typeof pipeParameterData>;
+export type PipeBaseResponseData = z.infer<typeof pipeBaseResponseData>;
+export type IngestBaseEvent = z.infer<typeof ingestBaseEventSchema>;

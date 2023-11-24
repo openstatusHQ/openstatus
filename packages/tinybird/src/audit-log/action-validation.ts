@@ -89,3 +89,6 @@ export const pipeActionResponseData = z.intersection(
   ]),
   pipeBaseResponseData,
 );
+
+export type IngestActionEvent = z.infer<typeof ingestActionEventSchema>;
+export type PipeActionResponseData = z.infer<typeof pipeActionResponseData>;
