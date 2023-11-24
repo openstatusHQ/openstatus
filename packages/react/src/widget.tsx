@@ -6,7 +6,8 @@ export type Status =
   | "partial_outage"
   | "major_outage"
   | "under_maintenance"
-  | "unknown";
+  | "unknown"
+  | "incident";
 
 export type StatusResponse = { status: Status };
 
@@ -29,10 +30,9 @@ export type StatusWidgetProps = {
 };
 
 export async function StatusWidget({ slug, href }: StatusWidgetProps) {
-  const data = await getStatus(slug);
+  const { status } = await getStatus(slug);
 
-  const key = data.status;
-  const { label, color } = statusDictionary[key];
+  const { label, color } = statusDictionary[status];
 
   return (
     <a
@@ -43,7 +43,7 @@ export async function StatusWidget({ slug, href }: StatusWidgetProps) {
     >
       {label}
       <span className="relative flex h-2 w-2">
-        {data.status === "operational" ? (
+        {status === "operational" ? (
           <span
             className={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
           />

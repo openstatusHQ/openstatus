@@ -32,6 +32,7 @@ enum Status {
   MajorOutage = "major_outage",
   UnderMaintenance = "under_maintenance", // currently not in use
   Unknown = "unknown",
+  Incident = "incident",
 }
 ```
 
@@ -53,6 +54,10 @@ function getStatus(ratio: number) {
 ```
 
 We are caching the result for `30 seconds` to reduce the load on our database.
+
+The `Status.Incident` will always be returned when then status of any incident
+on your page is **not** _"monitoring"_ or _"resolved"_. You can attach an
+incident to a monitor (implicit) or a page (explicit).
 
 > If you have a doubt about the above calculation, feel free to contact us via
 > [ping@openstatus.dev](mailto:ping@openstatus.dev) or
@@ -82,6 +87,7 @@ const statusEnum = z.enum([
   "major_outage",
   "under_maintenance",
   "unknown",
+  "incident",
 ]);
 
 const statusSchema = z.object({ status: statusEnum });
@@ -106,6 +112,10 @@ const dictionary = {
   unknown: {
     label: "Unknown",
     color: "bg-gray-500",
+  },
+  incident: {
+    label: "Incident",
+    color: "bg-yellow-500",
   },
   under_maintenance: {
     label: "Under Maintenance",

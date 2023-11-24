@@ -2,7 +2,14 @@ import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
 import { db, eq } from "@openstatus/db";
-import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
+import {
+  incident,
+  monitor,
+  monitorsToIncidents,
+  monitorsToPages,
+  page,
+  pagesToIncidents,
+} from "@openstatus/db/src/schema";
 import { getMonitorList, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
@@ -20,6 +27,7 @@ enum Status {
   MajorOutage = "major_outage",
   UnderMaintenance = "under_maintenance",
   Unknown = "unknown",
+  Incident = "incident",
 }
 
 export const status = new Hono();
@@ -33,16 +41,36 @@ status.get("/:slug", async (c) => {
 
     return c.json({ status: cache });
   }
+
   startTime(c, "database");
   // { monitors, pages, monitors_to_pages }
   const monitorData = await db
     .select()
     .from(monitorsToPages)
     .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+    .leftJoin(
+      monitorsToIncidents,
+      eq(monitor.id, monitorsToIncidents.monitorId),
+    )
+    .leftJoin(incident, eq(monitorsToIncidents.incidentId, incident.id))
     .leftJoin(page, eq(monitorsToPages.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
+
+  const pageIncidentData = await db
+    .select()
+    .from(pagesToIncidents)
+    .leftJoin(incident, eq(pagesToIncidents.incidentId, incident.id))
+    .leftJoin(page, eq(pagesToIncidents.pageId, page.id))
+    .where(eq(page.slug, slug))
+    .all();
+
   endTime(c, "database");
+
+  const isIncident = [...pageIncidentData, ...monitorData].some((data) => {
+    if (!data.incident) return false;
+    return !["monitoring", "resolved"].includes(data.incident.status);
+  });
 
   startTime(c, "clickhouse");
   // { data: [{ ok, count }] }
@@ -77,7 +105,8 @@ status.get("/:slug", async (c) => {
 
   const ratio = data.ok / data.count;
 
-  const status = getStatus(ratio);
+  const status: Status = isIncident ? Status.Incident : getStatus(ratio);
+
   await redis.set(slug, status, { ex: 30 });
 
   return c.json({ status });

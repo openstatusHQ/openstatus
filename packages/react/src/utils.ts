@@ -1,4 +1,9 @@
-export const statusDictionary = {
+import type { Status } from "./widget";
+
+export const statusDictionary: Record<
+  Status,
+  { label: string; color: string }
+> = {
   operational: {
     label: "Operational",
     color: "bg-green-500",
@@ -18,6 +23,10 @@ export const statusDictionary = {
   unknown: {
     label: "Unknown",
     color: "bg-gray-500",
+  },
+  incident: {
+    label: "Incident",
+    color: "bg-yellow-500",
   },
   under_maintenance: {
     label: "Under Maintenance",
