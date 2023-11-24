@@ -17,17 +17,23 @@ export const baseSchema = z.object({
 });
 
 /**
+ * The schema for the actor type.
+ * It represents the type of the user that triggered the event.
+ */
+export const actorTypeSchema = z.enum(["user", "system"]);
+
+/**
  * The schema for the actor object.
  * It represents the user that triggered the event.
  */
 export const actorSchema = z
   .object({
     id: z.string(),
-    name: z.string(),
+    type: actorTypeSchema,
   })
   .default({
     id: "",
-    name: "system",
+    type: "system",
   });
 
 /**

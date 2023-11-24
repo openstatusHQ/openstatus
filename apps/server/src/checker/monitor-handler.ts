@@ -22,6 +22,10 @@ export async function handleMonitorFailed(
   res: Response | null,
   message?: string,
 ) {
+  await upsertMonitorStatus({
+    monitorId: data.monitorId,
+    status: "error",
+  });
   // ALPHA
   await checkerAudit.publishAuditLog({
     id: `monitor:${data.monitorId}`,
@@ -33,10 +37,6 @@ export async function handleMonitorFailed(
     },
   });
   //
-  await upsertMonitorStatus({
-    monitorId: data.monitorId,
-    status: "error",
-  });
   await triggerAlerting({
     monitorId: data.monitorId,
     region: env.FLY_REGION,

@@ -81,3 +81,12 @@ await auditLog.getAuditLog({ event_id: "monitor:1" });
 ### Inspiration
 
 - WorkOS [Audit Logs](https://workos.com/docs/audit-logs)
+
+### Tinybird
+
+Push the pipe and datasource to tinybird:
+
+```
+tb push datasources/audit_log.datasource
+tb push pipes/endpoint_audit_log.pipe
+```
