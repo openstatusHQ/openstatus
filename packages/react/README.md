@@ -85,7 +85,8 @@ export type Status =
   | "partial_outage"
   | "major_outage"
   | "under_maintenance"
-  | "unknown";
+  | "unknown"
+  | "incident";
 ```
 
 Learn more in the [docs](https://docs.openstatus.dev/packages/react).
