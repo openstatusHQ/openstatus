@@ -26,7 +26,7 @@ export type Event = {
 
   /**
    * The ressources affected by the action taken.
-   * @example [{ id: "1", name: "organization" }]
+   * @example [{ id: "1", name: "monitor" }]
    */
   targets?: {
     id: string;
@@ -72,6 +72,7 @@ const auditLog = new AuditLog({ tb });
 await auditLog.publishAuditLog({
   id: "monitor:1",
   action: "monitor.down",
+  targets: [{ id: "1", type: "monitor" }], // not mandatory, but could be useful later on
   metadata: { region: "gru", statusCode: 400, message: "timeout" },
 });
 

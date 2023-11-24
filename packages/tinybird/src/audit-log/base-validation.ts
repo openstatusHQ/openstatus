@@ -5,7 +5,7 @@ import { z } from "zod";
  * on datasource ingestion and pipe retrieval.
  */
 export const baseSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().min(1), // DISCUSS: we could use the `${targets.type}:${targets.id}` format automatic generation
   action: z.string(),
   // REMINDER: do not use .default(Date.now()), it will be evaluated only once
   timestamp: z
@@ -37,13 +37,25 @@ export const actorSchema = z
   });
 
 /**
+ * The schema for the target type.
+ * It represents the type of the target that is affected by the event.
+ */
+export const targetTypeSchema = z.enum([
+  "monitor",
+  "page",
+  "incident",
+  "user",
+  "notification",
+]);
+
+/**
  * The schema for the targets object.
- * It represents the targets that are permitted to access the entry.
+ * It represents the targets that are affected by the event.
  */
 export const targetsSchema = z
   .object({
     id: z.string(),
-    name: z.string(),
+    type: targetTypeSchema,
   })
   .array()
   .optional();

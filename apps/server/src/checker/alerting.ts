@@ -48,6 +48,7 @@ export const triggerAlerting = async ({
     await checkerAudit.publishAuditLog({
       id: `monitor:${monitorId}`,
       action: "notification.send",
+      targets: [{ id: monitorId, type: "monitor" }],
       metadata: { provider: notif.notification.provider },
     });
     //

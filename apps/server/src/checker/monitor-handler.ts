@@ -12,6 +12,7 @@ export async function handleMonitorRecovered(data: Payload, res: Response) {
   await checkerAudit.publishAuditLog({
     id: `monitor:${data.monitorId}`,
     action: "monitor.recovered",
+    targets: [{ id: data.monitorId, type: "monitor" }],
     metadata: { region: env.FLY_REGION, statusCode: res.status },
   });
   //
@@ -30,6 +31,7 @@ export async function handleMonitorFailed(
   await checkerAudit.publishAuditLog({
     id: `monitor:${data.monitorId}`,
     action: "monitor.failed",
+    targets: [{ id: data.monitorId, type: "monitor" }],
     metadata: {
       region: env.FLY_REGION,
       statusCode: res?.status,
