@@ -26,7 +26,7 @@ async function seed() {
       id: "1",
     },
     targets: [{ id: "1", type: "user" }],
-    action: "notification.send",
+    action: "notification.sent",
     metadata: { provider: "email" },
   });
 }

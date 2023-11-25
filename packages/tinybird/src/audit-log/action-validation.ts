@@ -6,7 +6,7 @@ import { ingestBaseEventSchema, pipeBaseResponseData } from "./base-validation";
  * The schema for the monitor.recovered action.
  * It represents the event when a monitor has recovered from a failure.
  */
-const monitorUpSchema = z.object({
+const monitorRecoveredSchema = z.object({
   action: z.literal("monitor.recovered"),
   metadata: z.object({ region: z.string(), statusCode: z.number() }),
 });
@@ -15,7 +15,7 @@ const monitorUpSchema = z.object({
  * The schema for the monitor.failed action.
  * It represents the event when a monitor has failed.
  */
-const monitorDownSchema = z.object({
+const monitorFailedSchema = z.object({
   action: z.literal("monitor.failed"),
   metadata: z.object({
     region: z.string(),
@@ -28,8 +28,8 @@ const monitorDownSchema = z.object({
  * The schema for the notification.send action.
  *
  */
-const notificationSendSchema = z.object({
-  action: z.literal("notification.send"),
+const notificationSentSchema = z.object({
+  action: z.literal("notification.sent"),
   // we could use the notificationProviderSchema for more type safety
   metadata: z.object({ provider: z.string() }),
 });
@@ -47,9 +47,9 @@ export const ingestActionEventSchema = z
     // Unfortunately, the array cannot be dynamic, otherwise could be added to the Client
     // and made available to devs as library
     z.discriminatedUnion("action", [
-      monitorUpSchema,
-      monitorDownSchema,
-      notificationSendSchema,
+      monitorRecoveredSchema,
+      monitorFailedSchema,
+      notificationSentSchema,
     ]),
     ingestBaseEventSchema,
   )
@@ -68,22 +68,22 @@ export const ingestActionEventSchema = z
  */
 export const pipeActionResponseData = z.intersection(
   z.discriminatedUnion("action", [
-    monitorUpSchema.extend({
+    monitorRecoveredSchema.extend({
       metadata: z.preprocess(
         (val) => JSON.parse(String(val)),
-        monitorUpSchema.shape.metadata,
+        monitorRecoveredSchema.shape.metadata,
       ),
     }),
-    monitorDownSchema.extend({
+    monitorFailedSchema.extend({
       metadata: z.preprocess(
         (val) => JSON.parse(String(val)),
-        monitorDownSchema.shape.metadata,
+        monitorFailedSchema.shape.metadata,
       ),
     }),
-    notificationSendSchema.extend({
+    notificationSentSchema.extend({
       metadata: z.preprocess(
         (val) => JSON.parse(String(val)),
-        notificationSendSchema.shape.metadata,
+        notificationSentSchema.shape.metadata,
       ),
     }),
   ]),
