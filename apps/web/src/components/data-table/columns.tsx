@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
 import {
@@ -35,7 +36,8 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const statusCode = row.getValue("statusCode") as number | null;
+      const unsafe_StatusCode = row.getValue("statusCode");
+      const statusCode = z.number().nullable().parse(unsafe_StatusCode);
       const message = row.original.message;
 
       if (statusCode !== null) {
@@ -48,8 +50,10 @@ export const columns: ColumnDef<Ping>[] = [
             <TooltipTrigger>
               <DataTableStatusBadge {...{ statusCode }} />
             </TooltipTrigger>
-            <TooltipContent className="max-w-sm">
-              <p>{message}</p>
+            <TooltipContent>
+              <p className="text-muted-foreground max-w-xs sm:max-w-sm">
+                {message}
+              </p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
