@@ -4,6 +4,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 
 import type { Ping } from "@openstatus/tinybird";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 import { regionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
@@ -29,8 +35,25 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const statusCode = String(row.getValue("statusCode"));
-      return <DataTableStatusBadge {...{ statusCode }} />;
+      const statusCode = row.getValue("statusCode") as number | null;
+      const message = row.original.message;
+
+      if (statusCode !== null) {
+        return <DataTableStatusBadge {...{ statusCode }} />;
+      }
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <DataTableStatusBadge {...{ statusCode }} />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-sm">
+              <p>{message}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     },
     filterFn: (row, id, value) => {
       // get the first digit of the status code
