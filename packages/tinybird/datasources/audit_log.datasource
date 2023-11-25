@@ -10,4 +10,4 @@ SCHEMA >
     `version` Int16 `json:$.version`
 
 ENGINE "MergeTree"
-ENGINE_SORTING_KEY "id, timestamp action, targets"
+ENGINE_SORTING_KEY "id, timestamp, targets, action"

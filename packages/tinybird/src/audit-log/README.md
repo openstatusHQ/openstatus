@@ -1,4 +1,4 @@
-### Motivation
+## Motivation
 
 We want to track every change made for the `incident` and `monitor`. Therefore,
 it requires us to build some audit log / event sourcing foundation.
@@ -62,7 +62,7 @@ The objects are parsed and stored as string via
 `schema.transform(val => JSON.stringify(val))` and transformed back into an
 object before parsing via `z.preprocess(val => JSON.parse(val), schema)`.
 
-### Example
+## Example
 
 ```ts
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
@@ -79,11 +79,11 @@ await auditLog.publishAuditLog({
 await auditLog.getAuditLog({ event_id: "monitor:1" });
 ```
 
-### Inspiration
+## Inspiration
 
 - WorkOS [Audit Logs](https://workos.com/docs/audit-logs)
 
-### Tinybird
+## Tinybird
 
 Push the pipe and datasource to tinybird:
 
@@ -91,3 +91,9 @@ Push the pipe and datasource to tinybird:
 tb push datasources/audit_log.datasource
 tb push pipes/endpoint_audit_log.pipe
 ```
+
+---
+
+### Possible extention
+
+> TODO: Remove `Nullable` from `targets` to better index and query it.

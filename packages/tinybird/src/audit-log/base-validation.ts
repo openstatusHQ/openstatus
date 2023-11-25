@@ -32,7 +32,7 @@ export const actorSchema = z
     type: actorTypeSchema,
   })
   .default({
-    id: "",
+    id: "server",
     type: "system",
   });
 
@@ -46,6 +46,7 @@ export const targetTypeSchema = z.enum([
   "incident",
   "user",
   "notification",
+  "organization",
 ]);
 
 /**

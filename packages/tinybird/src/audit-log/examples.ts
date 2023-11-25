@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tinybird } from "@chronark/zod-bird";
 
 import { AuditLog } from "./client";
@@ -43,9 +44,3 @@ async function history() {
 // if (first.action === "monitor.failed") {
 //   first.metadata.message;
 // }
-
-// ========
-
-async function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

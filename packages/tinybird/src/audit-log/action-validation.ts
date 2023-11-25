@@ -1,38 +1,11 @@
 import { z } from "zod";
 
+import {
+  monitorFailedSchema,
+  monitorRecoveredSchema,
+  notificationSentSchema,
+} from "./action-schema";
 import { ingestBaseEventSchema, pipeBaseResponseData } from "./base-validation";
-
-/**
- * The schema for the monitor.recovered action.
- * It represents the event when a monitor has recovered from a failure.
- */
-const monitorRecoveredSchema = z.object({
-  action: z.literal("monitor.recovered"),
-  metadata: z.object({ region: z.string(), statusCode: z.number() }),
-});
-
-/**
- * The schema for the monitor.failed action.
- * It represents the event when a monitor has failed.
- */
-const monitorFailedSchema = z.object({
-  action: z.literal("monitor.failed"),
-  metadata: z.object({
-    region: z.string(),
-    statusCode: z.number().optional(),
-    message: z.string().optional(),
-  }),
-});
-
-/**
- * The schema for the notification.send action.
- *
- */
-const notificationSentSchema = z.object({
-  action: z.literal("notification.sent"),
-  // we could use the notificationProviderSchema for more type safety
-  metadata: z.object({ provider: z.string() }),
-});
 
 /**
  * The schema for the event object.
