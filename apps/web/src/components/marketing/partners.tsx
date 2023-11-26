@@ -47,7 +47,7 @@ export function Partners() {
             <img
               src="/assets/partners/triggerdev.svg"
               alt="trigger.dev"
-              className="h-8 w-32 object-contain text-black"
+              className="h-8 w-32 object-contain"
             />
             <ArrowUpRight className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 flex-shrink-0" />
           </a>

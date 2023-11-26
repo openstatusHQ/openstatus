@@ -19,13 +19,13 @@ export function StatusBadge({
       className={cn(
         "font-normal",
         {
-          "border-red-600/20 bg-red-50 text-red-600":
+          "border-red-500/20 bg-red-500/10 text-red-500":
             status === "investigating",
-          "border-yellow-600/20 bg-yellow-50 text-yellow-600":
+          "border-yellow-500/20 bg-yellow-500/10 text-yellow-500":
             status === "identified",
-          "border-blue-600/20 bg-blue-50 text-blue-600":
+          "border-blue-500/20 bg-blue-500/10 text-blue-500":
             status === "monitoring",
-          "border-green-600/20 bg-green-50 text-green-600":
+          "border-green-500/20 bg-green-500/10 text-green-500":
             status === "resolved",
         },
         className,

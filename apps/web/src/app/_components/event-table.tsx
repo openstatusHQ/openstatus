@@ -52,8 +52,8 @@ export function EventTable({ events }: { events: Ping[] }) {
                       className={cn(
                         "px-2 py-0.5 text-xs",
                         isOk
-                          ? "border-green-100 bg-green-50"
-                          : "border-red-100 bg-red-50",
+                          ? "border-green-500/20 bg-green-500/10"
+                          : "border-red-500/20 bg-red-500/10",
                       )}
                     >
                       {event.statusCode}

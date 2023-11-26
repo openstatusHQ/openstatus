@@ -48,7 +48,7 @@ const ExternalStatusPage = async () => {
             <CardFooter>
               <div className="flex items-center gap-2.5">
                 <Link href={status.url} target="_blank">
-                  <Icons.globe className="text-muted-foreground h-5 w-5 hover:text-black" />
+                  <Icons.globe className="text-muted-foreground hover:text-foreground h-5 w-5" />
                 </Link>
               </div>
             </CardFooter>

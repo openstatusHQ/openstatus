@@ -1,6 +1,6 @@
 import { Shell } from "@/components/dashboard/shell";
+import { ThemeToggle } from "@/components/theme-toggle";
 import NavigationLink from "./_components/navigation-link";
-import { UserButton } from "./_components/user-button";
 
 export default function StatusPageLayout({
   children,
@@ -20,7 +20,8 @@ export default function StatusPageLayout({
           {children}
         </Shell>
       </main>
-      <footer className="z-10">
+      <footer className="z-10 mx-auto flex w-full max-w-xl items-center justify-between">
+        <div />
         <p className="text-muted-foreground text-center text-sm">
           powered by{" "}
           <a
@@ -32,6 +33,7 @@ export default function StatusPageLayout({
             openstatus.dev
           </a>
         </p>
+        <ThemeToggle />
       </footer>
     </div>
   );

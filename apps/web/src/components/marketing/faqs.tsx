@@ -39,7 +39,7 @@ export function FAQs() {
             <AccordionTrigger>{q}</AccordionTrigger>
             <AccordionContent>
               <div
-                className="prose prose-sm"
+                className="prose dark:prose-invert prose-sm"
                 dangerouslySetInnerHTML={{ __html: a }}
               />
             </AccordionContent>
