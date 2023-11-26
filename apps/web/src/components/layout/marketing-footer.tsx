@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
+import { ThemeToggle } from "../theme-toggle";
 import { StatusWidgetContainer } from "./status-widget-suspense";
 
 interface Props {
@@ -14,8 +15,11 @@ export function MarketingFooter({ className }: Props) {
     <footer className={cn("w-full", className)}>
       <Shell className="grid gap-6">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-          <div className="order-4 md:order-1">
+          <div className="order-4 flex flex-col justify-between gap-3 md:order-1">
             <StatusWidgetContainer slug="status" />
+            <div className="text-right md:text-left">
+              <ThemeToggle />
+            </div>
           </div>
           <div className="order-1 flex flex-col gap-3 text-sm md:order-2">
             <p className="text-foreground font-semibold">Community</p>
