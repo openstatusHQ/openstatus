@@ -70,20 +70,13 @@ export const columns: ColumnDef<Monitor & { lastStatusCode?: number }>[] = [
     header: "Last Status",
     cell: ({ row }) => {
       const lastStatusCode = row.getValue("lastStatusCode");
-      const statusCode = z
-        .string()
-        .or(z.number())
-        .optional()
-        .parse(lastStatusCode);
-      return (
-        <>
-          {statusCode ? (
-            <DataTableStatusBadge {...{ statusCode }} />
-          ) : (
-            <span className="text-muted-foreground">Missing</span>
-          )}
-        </>
-      );
+      const statusCode = z.number().nullable().optional().parse(lastStatusCode);
+
+      if (statusCode === undefined) {
+        return <span className="text-muted-foreground">Missing</span>;
+      }
+
+      return <DataTableStatusBadge {...{ statusCode }} />;
     },
   },
   {

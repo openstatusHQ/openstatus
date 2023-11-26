@@ -1,3 +1,4 @@
+import type { Ping } from "@openstatus/tinybird";
 import { Badge } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
@@ -5,7 +6,7 @@ import { cn } from "@/lib/utils";
 export function DataTableStatusBadge({
   statusCode,
 }: {
-  statusCode: string | number;
+  statusCode: Ping["statusCode"];
 }) {
   const isOk = String(statusCode).startsWith("2");
   return (
@@ -16,7 +17,7 @@ export function DataTableStatusBadge({
         isOk ? "border-green-100 bg-green-50" : "border-red-100 bg-red-50",
       )}
     >
-      {statusCode}
+      {statusCode || "Error"}
       <div
         className={cn(
           "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",

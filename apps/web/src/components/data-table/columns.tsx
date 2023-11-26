@@ -2,8 +2,15 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 import { regionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
@@ -29,8 +36,28 @@ export const columns: ColumnDef<Ping>[] = [
       <DataTableColumnHeader column={column} title="Status" />
     ),
     cell: ({ row }) => {
-      const statusCode = String(row.getValue("statusCode"));
-      return <DataTableStatusBadge {...{ statusCode }} />;
+      const unsafe_StatusCode = row.getValue("statusCode");
+      const statusCode = z.number().nullable().parse(unsafe_StatusCode);
+      const message = row.original.message;
+
+      if (statusCode !== null) {
+        return <DataTableStatusBadge {...{ statusCode }} />;
+      }
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <DataTableStatusBadge {...{ statusCode }} />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-muted-foreground max-w-xs sm:max-w-sm">
+                {message}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     },
     filterFn: (row, id, value) => {
       // get the first digit of the status code
