@@ -7,6 +7,7 @@ import {
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { env } from "../env";
+import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
 export const triggerAlerting = async ({
@@ -43,6 +44,14 @@ export const triggerAlerting = async ({
       statusCode,
       message,
     });
+    // ALPHA
+    await checkerAudit.publishAuditLog({
+      id: `monitor:${monitorId}`,
+      action: "notification.sent",
+      targets: [{ id: monitorId, type: "monitor" }],
+      metadata: { provider: notif.notification.provider },
+    });
+    //
   }
 };
 

@@ -1,5 +1,4 @@
-import { env } from "../env";
-import { triggerAlerting, upsertMonitorStatus } from "./alerting";
+import { handleMonitorFailed, handleMonitorRecovered } from "./monitor-handler";
 import type { PublishPingType } from "./ping";
 import { pingEndpoint, publishPing } from "./ping";
 import type { Payload } from "./schema";
@@ -76,10 +75,7 @@ const run = async (data: Payload, retry: number) => {
       message: undefined,
     });
     if (data?.status === "error") {
-      await upsertMonitorStatus({
-        monitorId: data.monitorId,
-        status: "active",
-      });
+      handleMonitorRecovered(data, res);
     }
   } else {
     if (retry < 2) {
@@ -96,20 +92,10 @@ const run = async (data: Payload, retry: number) => {
         payload: data,
         latency,
         statusCode: res?.status,
-        message: message,
+        message,
       });
-
       if (data?.status === "active") {
-        await upsertMonitorStatus({
-          monitorId: data.monitorId,
-          status: "error",
-        });
-        await triggerAlerting({
-          monitorId: data.monitorId,
-          region: env.FLY_REGION,
-          statusCode: res?.status,
-          message,
-        });
+        handleMonitorFailed(data, res, message);
       }
     }
   }
