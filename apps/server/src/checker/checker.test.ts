@@ -11,11 +11,13 @@ mock.module("./ping.ts", () => {
 test("should call upsertMonitorStatus when we can fetch", async () => {
   const fn = mock(() => {});
 
-  mock.module("./alerting.ts", () => {
+  mock.module("./monitor-handler.ts", () => {
     return {
-      upsertMonitorStatus: fn,
+      handleMonitorFailed: mock(() => {}),
+      handleMonitorRecovered: fn,
     };
   });
+
   await checkerRetryPolicy({
     workspaceId: "1",
     monitorId: "1",
@@ -31,9 +33,10 @@ test("should call upsertMonitorStatus when we can fetch", async () => {
 test("should call upsertMonitorStatus when status error", async () => {
   const fn = mock(() => {});
 
-  mock.module("./alerting.ts", () => {
+  mock.module("./monitor-handler.ts", () => {
     return {
-      upsertMonitorStatus: fn,
+      handleMonitorFailed: fn,
+      handleMonitorRecovered: mock(() => {}),
     };
   });
   try {
@@ -55,9 +58,9 @@ test("should call upsertMonitorStatus when status error", async () => {
 test("What should we do when redirect ", async () => {
   const fn = mock(() => {});
 
-  mock.module("./alerting.ts", () => {
+  mock.module("./monitor-handler.ts", () => {
     return {
-      upsertMonitorStatus: fn,
+      handleMonitorFailed: fn,
     };
   });
   try {
@@ -79,17 +82,15 @@ test("What should we do when redirect ", async () => {
 test("When 404 we should trigger alerting ", async () => {
   const fn = mock(() => {});
   const fn1 = mock(() => {});
-  const fn2 = mock(() => {});
 
-  mock.module("./alerting.ts", () => {
-    return {
-      upsertMonitorStatus: fn,
-      triggerAlerting: fn1,
-    };
-  });
   mock.module("./ping.ts", () => {
     return {
-      publishPing: fn2,
+      publishPing: fn,
+    };
+  });
+  mock.module("./monitor-handler.ts", () => {
+    return {
+      handleMonitorFailed: fn1,
     };
   });
   try {
@@ -107,24 +108,20 @@ test("When 404 we should trigger alerting ", async () => {
   }
   expect(fn).toHaveBeenCalledTimes(1);
   expect(fn1).toHaveBeenCalledTimes(1);
-  expect(fn2).toHaveBeenCalledTimes(1);
 });
 
 test("When error  404 we should not trigger alerting ", async () => {
   const fn = mock(() => {});
   const fn1 = mock(() => {});
-  const fn2 = mock(() => {});
-
-  mock.module("./alerting.ts", () => {
-    return {
-      upsertMonitorStatus: fn,
-      triggerAlerting: fn1,
-    };
-  });
 
   mock.module("./ping.ts", () => {
     return {
-      publishPing: fn2,
+      publishPing: fn,
+    };
+  });
+  mock.module("./monitor-handler.ts", () => {
+    return {
+      handleMonitorFailed: fn1,
     };
   });
   try {
@@ -140,7 +137,6 @@ test("When error  404 we should not trigger alerting ", async () => {
   } catch (e) {
     expect(e).toBeInstanceOf(Error);
   }
-  expect(fn).toHaveBeenCalledTimes(0);
+  expect(fn).toHaveBeenCalledTimes(1);
   expect(fn1).toHaveBeenCalledTimes(0);
-  expect(fn2).toHaveBeenCalledTimes(1);
 });

@@ -5,3 +5,4 @@
 **/.next
 **/.git
 node_modules
+openstatus.db

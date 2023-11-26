@@ -75,7 +75,7 @@ const run = async (data: Payload, retry: number) => {
       message: undefined,
     });
     if (data?.status === "error") {
-      handleMonitorRecovered(data, res);
+      await handleMonitorRecovered(data, res);
     }
   } else {
     if (retry < 2) {
@@ -94,8 +94,8 @@ const run = async (data: Payload, retry: number) => {
         statusCode: res?.status,
         message,
       });
-      if (data?.status === "active") {
-        handleMonitorFailed(data, res, message);
+      if (data.status === "active") {
+        await handleMonitorFailed(data, res, message);
       }
     }
   }
