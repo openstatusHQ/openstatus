@@ -30,7 +30,7 @@ export const selectPublicMonitorSchema = selectMonitorSchema.omit({
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
-    statusReport: selectStatusReportPageSchema,
+    statusReports: selectStatusReportPageSchema,
   })
   .omit({
     workspaceId: true,

@@ -36,7 +36,7 @@ export default async function Page({ params }: Props) {
   }
 
   const isEmptyState = !(
-    Boolean(page.monitors.length) || Boolean(page.statusReport.length)
+    Boolean(page.monitors.length) || Boolean(page.statusReports.length)
   );
 
   return (
@@ -59,10 +59,13 @@ export default async function Page({ params }: Props) {
         />
       ) : (
         <>
-          <StatusCheck incidents={page.statusReport} monitors={page.monitors} />
+          <StatusCheck
+            incidents={page.statusReports}
+            monitors={page.monitors}
+          />
           <MonitorList monitors={page.monitors} />
           <IncidentList
-            incidents={page.statusReport}
+            incidents={page.statusReports}
             monitors={page.monitors}
             context="latest"
           />
