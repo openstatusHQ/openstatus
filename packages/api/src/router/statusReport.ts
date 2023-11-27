@@ -2,29 +2,29 @@ import { z } from "zod";
 
 import { and, eq, inArray } from "@openstatus/db";
 import {
-  incident,
-  incidentStatusSchema,
-  incidentUpdate,
-  insertIncidentSchema,
-  insertIncidentUpdateSchema,
-  monitorsToIncidents,
-  pagesToIncidents,
-  selectIncidentSchema,
-  selectIncidentUpdateSchema,
+  insertStatusReportSchema,
+  insertStatusReportUpdateSchema,
+  monitorsToStatusReport,
+  pagesToStatusReports,
   selectMonitorSchema,
+  selectStatusReportSchema,
+  selectStatusReportUpdateUpdateSchema,
+  statusReport,
+  statusReportStatusSchema,
+  statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-export const incidentRouter = createTRPCRouter({
+export const statusReportRouter = createTRPCRouter({
   createIncident: protectedProcedure
-    .input(insertIncidentSchema)
+    .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { id, monitors, pages, date, message, ...incidentInput } =
         opts.input;
 
-      const newIncident = await opts.ctx.db
-        .insert(incident)
+      const newStatusReport = await opts.ctx.db
+        .insert(statusReport)
         .values({
           workspaceId: opts.ctx.workspace.id,
           ...incidentInput,
@@ -34,11 +34,11 @@ export const incidentRouter = createTRPCRouter({
 
       if (Boolean(monitors.length)) {
         await opts.ctx.db
-          .insert(monitorsToIncidents)
+          .insert(monitorsToStatusReport)
           .values(
             monitors.map((monitor) => ({
               monitorId: monitor,
-              incidentId: newIncident.id,
+              statusReportId: newStatusReport.id,
             })),
           )
           .returning()
@@ -47,31 +47,31 @@ export const incidentRouter = createTRPCRouter({
 
       if (Boolean(pages.length)) {
         await opts.ctx.db
-          .insert(pagesToIncidents)
+          .insert(pagesToStatusReports)
           .values(
             pages.map((page) => ({
               pageId: page,
-              incidentId: newIncident.id,
+              statusReportId: newStatusReport.id,
             })),
           )
           .returning()
           .get();
       }
 
-      return newIncident;
+      return newStatusReport;
     }),
 
   createIncidentUpdate: protectedProcedure
-    .input(insertIncidentUpdateSchema)
+    .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       // update parent incident with latest status
       await opts.ctx.db
-        .update(incident)
+        .update(statusReport)
         .set({ status: opts.input.status, updatedAt: new Date() })
         .where(
           and(
-            eq(incident.id, opts.input.incidentId),
-            eq(incident.workspaceId, opts.ctx.workspace.id),
+            eq(statusReport.id, opts.input.statusReportId),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
           ),
         )
         .returning()
@@ -79,14 +79,14 @@ export const incidentRouter = createTRPCRouter({
 
       const { id, ...incidentUpdateInput } = opts.input;
       return await opts.ctx.db
-        .insert(incidentUpdate)
+        .insert(statusReportUpdate)
         .values(incidentUpdateInput)
         .returning()
         .get();
     }),
 
   updateIncident: protectedProcedure
-    .input(insertIncidentSchema)
+    .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { monitors, pages, ...incidentInput } = opts.input;
 
@@ -94,13 +94,13 @@ export const incidentRouter = createTRPCRouter({
 
       const { title, status } = incidentInput;
 
-      const currentIncident = await opts.ctx.db
-        .update(incident)
+      const currentStatusReport = await opts.ctx.db
+        .update(statusReport)
         .set({ title, status, updatedAt: new Date() })
         .where(
           and(
-            eq(incident.id, incidentInput.id),
-            eq(incident.workspaceId, opts.ctx.workspace.id),
+            eq(statusReport.id, incidentInput.id),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
           ),
         )
         .returning()
@@ -108,8 +108,10 @@ export const incidentRouter = createTRPCRouter({
 
       const currentMonitorToIncidents = await opts.ctx.db
         .select()
-        .from(monitorsToIncidents)
-        .where(eq(monitorsToIncidents.incidentId, currentIncident.id))
+        .from(monitorsToStatusReport)
+        .where(
+          eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
+        )
         .all();
 
       const addedMonitors = monitors.filter(
@@ -122,10 +124,10 @@ export const incidentRouter = createTRPCRouter({
       if (Boolean(addedMonitors.length)) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
-          incidentId: currentIncident.id,
+          statusReportId: currentStatusReport.id,
         }));
 
-        await opts.ctx.db.insert(monitorsToIncidents).values(values).run();
+        await opts.ctx.db.insert(monitorsToStatusReport).values(values).run();
       }
 
       const removedMonitors = currentMonitorToIncidents
@@ -134,11 +136,11 @@ export const incidentRouter = createTRPCRouter({
 
       if (Boolean(removedMonitors.length)) {
         await opts.ctx.db
-          .delete(monitorsToIncidents)
+          .delete(monitorsToStatusReport)
           .where(
             and(
-              eq(monitorsToIncidents.incidentId, currentIncident.id),
-              inArray(monitorsToIncidents.monitorId, removedMonitors),
+              eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
+              inArray(monitorsToStatusReport.monitorId, removedMonitors),
             ),
           )
           .run();
@@ -146,8 +148,8 @@ export const incidentRouter = createTRPCRouter({
 
       const currentPagesToIncidents = await opts.ctx.db
         .select()
-        .from(pagesToIncidents)
-        .where(eq(pagesToIncidents.incidentId, currentIncident.id))
+        .from(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.statusReportId, currentStatusReport.id))
         .all();
 
       const addedPages = pages?.filter(
@@ -158,10 +160,10 @@ export const incidentRouter = createTRPCRouter({
       if (Boolean(addedPages.length)) {
         const values = addedPages.map((pageId) => ({
           pageId,
-          incidentId: currentIncident.id,
+          statusReportId: currentStatusReport.id,
         }));
 
-        await opts.ctx.db.insert(pagesToIncidents).values(values).run();
+        await opts.ctx.db.insert(pagesToStatusReports).values(values).run();
       }
 
       const removedPages = currentPagesToIncidents
@@ -170,30 +172,30 @@ export const incidentRouter = createTRPCRouter({
 
       if (Boolean(removedPages.length)) {
         await opts.ctx.db
-          .delete(pagesToIncidents)
+          .delete(pagesToStatusReports)
           .where(
             and(
-              eq(pagesToIncidents.incidentId, currentIncident.id),
-              inArray(pagesToIncidents.pageId, removedPages),
+              eq(pagesToStatusReports.statusReportId, currentStatusReport.id),
+              inArray(pagesToStatusReports.pageId, removedPages),
             ),
           )
           .run();
       }
 
-      return currentIncident;
+      return currentStatusReport;
     }),
 
   updateIncidentUpdate: protectedProcedure
-    .input(insertIncidentUpdateSchema)
+    .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       const incidentUpdateInput = opts.input;
 
       if (!incidentUpdateInput.id) return;
 
       const currentIncident = await opts.ctx.db
-        .update(incidentUpdate)
+        .update(statusReportUpdate)
         .set(incidentUpdateInput)
-        .where(eq(incidentUpdate.id, incidentUpdateInput.id))
+        .where(eq(statusReportUpdate.id, incidentUpdateInput.id))
         .returning()
         .get();
 
@@ -205,19 +207,19 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const incidentToDelete = await opts.ctx.db
         .select()
-        .from(incident)
+        .from(statusReport)
         .where(
           and(
-            eq(incident.id, opts.input.id),
-            eq(incident.workspaceId, opts.ctx.workspace.id),
+            eq(statusReport.id, opts.input.id),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id),
           ),
         )
         .get();
       if (!incidentToDelete) return;
 
       await opts.ctx.db
-        .delete(incident)
-        .where(eq(incident.id, incidentToDelete.id))
+        .delete(statusReport)
+        .where(eq(statusReport.id, incidentToDelete.id))
         .run();
     }),
 
@@ -226,8 +228,8 @@ export const incidentRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const incidentUpdateToDelete = await opts.ctx.db
         .select()
-        .from(incidentUpdate)
-        .where(and(eq(incidentUpdate.id, opts.input.id)))
+        .from(statusReportUpdate)
+        .where(and(eq(statusReportUpdate.id, opts.input.id)))
         // FIXME: check if incident related to workspaceId
         // .innerJoin(incident, inArray(incident.workspaceId, workspaceIds))
         .get();
@@ -235,35 +237,35 @@ export const incidentRouter = createTRPCRouter({
       if (!incidentUpdateToDelete) return;
 
       await opts.ctx.db
-        .delete(incidentUpdate)
-        .where(eq(incidentUpdate.id, opts.input.id))
+        .delete(statusReportUpdate)
+        .where(eq(statusReportUpdate.id, opts.input.id))
         .run();
     }),
 
   getIncidentById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
-        status: incidentStatusSchema.default("investigating"), // TODO: remove!
+      const selectIncidentSchemaWithRelation = selectStatusReportSchema.extend({
+        status: statusReportStatusSchema.default("investigating"), // TODO: remove!
         monitorsToIncidents: z
           .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
           .default([]),
         pagesToIncidents: z
           .array(z.object({ incidentId: z.number(), pageId: z.number() }))
           .default([]),
-        incidentUpdates: z.array(selectIncidentUpdateSchema),
+        incidentUpdates: z.array(selectStatusReportUpdateUpdateSchema),
         date: z.date().default(new Date()),
       });
 
-      const data = await opts.ctx.db.query.incident.findFirst({
+      const data = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
-          eq(incident.id, opts.input.id),
-          eq(incident.workspaceId, opts.ctx.workspace.id),
+          eq(statusReport.id, opts.input.id),
+          eq(statusReport.workspaceId, opts.ctx.workspace.id),
         ),
         with: {
-          monitorsToIncidents: true,
-          pagesToIncidents: true,
-          incidentUpdates: {
+          monitorsToStatusReports: true,
+          pagesToStatusReport: true,
+          statusReportUpdates: {
             orderBy: (incidentUpdate, { desc }) => [
               desc(incidentUpdate.createdAt),
             ],
@@ -277,16 +279,16 @@ export const incidentRouter = createTRPCRouter({
   getIncidentUpdateById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      const data = await opts.ctx.db.query.incidentUpdate.findFirst({
-        where: and(eq(incidentUpdate.id, opts.input.id)),
+      const data = await opts.ctx.db.query.statusReportUpdate.findFirst({
+        where: and(eq(statusReportUpdate.id, opts.input.id)),
       });
-      return selectIncidentUpdateSchema.parse(data);
+      return selectStatusReportUpdateUpdateSchema.parse(data);
     }),
 
   getIncidentByWorkspace: protectedProcedure.query(async (opts) => {
     // FIXME: can we get rid of that?
-    const selectIncidentSchemaWithRelation = selectIncidentSchema.extend({
-      status: incidentStatusSchema.default("investigating"), // TODO: remove!
+    const selectIncidentSchemaWithRelation = selectStatusReportSchema.extend({
+      status: statusReportStatusSchema.default("investigating"), // TODO: remove!
       monitorsToIncidents: z
         .array(
           z.object({
@@ -296,14 +298,14 @@ export const incidentRouter = createTRPCRouter({
           }),
         )
         .default([]),
-      incidentUpdates: z.array(selectIncidentUpdateSchema),
+      incidentUpdates: z.array(selectStatusReportUpdateUpdateSchema),
     });
 
-    const result = await opts.ctx.db.query.incident.findMany({
-      where: eq(incident.workspaceId, opts.ctx.workspace.id),
+    const result = await opts.ctx.db.query.statusReport.findMany({
+      where: eq(statusReport.workspaceId, opts.ctx.workspace.id),
       with: {
-        monitorsToIncidents: { with: { monitor: true } },
-        incidentUpdates: {
+        monitorsToStatusReports: { with: { monitor: true } },
+        statusReportUpdates: {
           orderBy: (incidentUpdate, { desc }) => [
             desc(incidentUpdate.createdAt),
           ],

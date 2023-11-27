@@ -18,7 +18,7 @@ export {
 export const resend = new Resend(env.RESEND_API_KEY);
 
 export interface Emails {
-  react: ReactElement;
+  react: JSX.Element;
   subject: "Welcome to OpenStatus.dev 👋";
   to: string[];
   from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>";

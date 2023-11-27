@@ -15,7 +15,6 @@ primary_region = "ams"
   force_https = true
   auto_stop_machines = false
   auto_start_machines = false
-  min_machines_running = 12
   processes = ["app"]
   [http_service.concurrency]
     type = "requests"

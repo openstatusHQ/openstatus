@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
-  incident,
   insertPageSchema,
   monitor,
-  monitorsToIncidents,
   monitorsToPages,
+  monitorsToStatusReport,
   page,
-  pagesToIncidents,
+  pagesToStatusReports,
   selectPublicPageSchemaWithRelation,
+  statusReport,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -180,15 +180,15 @@ export const pageRouter = createTRPCRouter({
         monitorsId.length > 0
           ? await opts.ctx.db
               .select()
-              .from(monitorsToIncidents)
-              .where(inArray(monitorsToIncidents.monitorId, monitorsId))
+              .from(monitorsToStatusReport)
+              .where(inArray(monitorsToStatusReport.monitorId, monitorsId))
               .all()
           : [];
 
       const incidentsToPagesResult = await opts.ctx.db
         .select()
-        .from(pagesToIncidents)
-        .where(eq(pagesToIncidents.pageId, result.id))
+        .from(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.pageId, result.id))
         .all();
 
       const monitorIncidentIds = monitorsToIncidentsResult.map(
@@ -205,11 +205,11 @@ export const pageRouter = createTRPCRouter({
 
       const incidents =
         incidentIds.length > 0
-          ? await opts.ctx.db.query.incident.findMany({
-              where: or(inArray(incident.id, incidentIds)),
+          ? await opts.ctx.db.query.statusReport.findMany({
+              where: or(inArray(statusReport.id, incidentIds)),
               with: {
-                incidentUpdates: true,
-                monitorsToIncidents: true,
+                statusReportUpdates: true,
+                monitorsToStatusReports: true,
                 pagesToIncidents: true,
               },
             })

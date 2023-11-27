@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { api } from ".";
 
 test("GET one incident update ", async () => {
-  const res = await api.request("/incident_update/1", {
+  const res = await api.request("/status_update/1", {
     headers: {
       "x-openstatus-key": "1",
     },
@@ -16,7 +16,7 @@ test("GET one incident update ", async () => {
 });
 
 test("create one incident update ", async () => {
-  const res = await api.request("/incident_update", {
+  const res = await api.request("/status_update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",

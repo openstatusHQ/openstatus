@@ -2,9 +2,9 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { and, db, eq } from "@openstatus/db";
 import {
-  incident,
-  incidentStatus,
-  incidentUpdate,
+  statusReport,
+  statusReportStatus,
+  statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
 import type { Variables } from ".";
@@ -27,7 +27,7 @@ const ParamsSelectSchema = z.object({
 });
 
 export const incidentUpdateSchema = z.object({
-  status: z.enum(incidentStatus).openapi({
+  status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
@@ -45,7 +45,7 @@ const createIncidentUpdateSchema = z.object({
   incident_id: z.number().openapi({
     description: "The id of the incident",
   }),
-  status: z.enum(incidentStatus).openapi({
+  status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
   date: z.string().datetime().openapi({
@@ -57,7 +57,7 @@ const createIncidentUpdateSchema = z.object({
 });
 const getUpdateRoute = createRoute({
   method: "get",
-  tags: ["incident_update"],
+  tags: ["status_update"],
   path: "/:id",
   request: {
     params: ParamsSelectSchema,
@@ -88,19 +88,19 @@ incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
 
   const update = await db
     .select()
-    .from(incidentUpdate)
-    .where(eq(incidentUpdate.id, Number(id)))
+    .from(statusReportUpdate)
+    .where(eq(statusReportUpdate.id, Number(id)))
     .get();
 
   if (!update) return c.jsonT({ code: 404, message: "Not Found" });
 
   const currentIncident = await db
     .select()
-    .from(incident)
+    .from(statusReport)
     .where(
       and(
-        eq(incident.id, update.incidentId),
-        eq(incident.workspaceId, workspaceId),
+        eq(statusReport.id, update.statusReportId),
+        eq(statusReport.workspaceId, workspaceId),
       ),
     )
     .get();
@@ -114,7 +114,7 @@ incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
 
 const createIncidentUpdate = createRoute({
   method: "post",
-  tags: ["incident_update"],
+  tags: ["status_update"],
   path: "/",
   request: {
     body: {
@@ -152,11 +152,11 @@ incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
 
   const currentIncident = await db
     .select()
-    .from(incident)
+    .from(statusReport)
     .where(
       and(
-        eq(incident.id, input.incident_id),
-        eq(incident.workspaceId, workspaceId),
+        eq(statusReport.id, input.incident_id),
+        eq(statusReport.workspaceId, workspaceId),
       ),
     )
     .get();
@@ -164,11 +164,11 @@ incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
     return c.jsonT({ code: 401, message: "Not Authorized" });
 
   const res = await db
-    .insert(incidentUpdate)
+    .insert(statusReportUpdate)
     .values({
       ...input,
       date: new Date(input.date),
-      incidentId: input.incident_id,
+      statusReportId: input.incident_id,
     })
     .returning()
     .get();
