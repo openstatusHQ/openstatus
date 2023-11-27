@@ -29,7 +29,7 @@ export default async function IncidentPage({
         description="Overview of all your status updates."
         actions={
           <Button asChild>
-            <Link href="./incidents/edit">Create</Link>
+            <Link href="./status/edit">Create</Link>
           </Button>
         }
       />

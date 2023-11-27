@@ -71,7 +71,7 @@ export function ActionButton(props: Schema) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./incidents/edit?id=${props.id}`}>
+          <Link href={`./status/edit?id=${props.id}`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>

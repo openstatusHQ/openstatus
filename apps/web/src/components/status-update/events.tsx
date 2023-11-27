@@ -75,7 +75,7 @@ export function Events({
                     className="h-7 w-7 p-0"
                     onClick={() => {
                       router.push(
-                        `./status/update/edit?incidentId=${update.status}&id=${update.id}`,
+                        `./status/update/edit?id=${update.statusReportId}&statusUpdate=${update.id}`,
                       );
                     }}
                   >

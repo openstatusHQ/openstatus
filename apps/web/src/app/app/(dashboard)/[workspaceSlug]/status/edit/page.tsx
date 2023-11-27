@@ -39,7 +39,10 @@ export default async function EditPage({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Incident" description="Upsert your incident." />
+      <Header
+        title="Incident"
+        description="Create a public report for your Incident"
+      />
       <div className="col-span-full">
         <IncidentForm
           monitors={monitors}

@@ -12,6 +12,7 @@ import {
   Image,
   LayoutDashboard,
   Link,
+  Megaphone,
   MessageCircle,
   Minus,
   PanelTop,
@@ -63,6 +64,7 @@ export const Icons = {
   bell: Bell,
   zap: Zap,
   "alert-triangle": AlertTriangle,
+  megaphone: Megaphone,
   minus: Minus,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>

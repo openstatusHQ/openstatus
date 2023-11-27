@@ -9,8 +9,8 @@ import { api } from "@/trpc/server";
  * allowed URL search params
  */
 const searchParamsSchema = z.object({
-  id: z.coerce.number().optional(),
-  statusReportId: z.coerce.number(),
+  id: z.coerce.number(),
+  statusUpdate: z.coerce.number().optional(),
 });
 
 export default async function EditPage({
@@ -26,11 +26,11 @@ export default async function EditPage({
     return notFound();
   }
 
-  const { id, statusReportId } = search.data;
+  const { id, statusUpdate } = search.data;
 
-  const statusUpdate = id
+  const data = statusUpdate
     ? await api.statusReport.getStatusReportUpdateById.query({
-        id,
+        id: statusUpdate,
       })
     : undefined;
 
@@ -38,12 +38,12 @@ export default async function EditPage({
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
         title="Incident Update"
-        description="Upsert your incident update."
+        description="Create a public update for your incident"
       />
       <div className="col-span-full">
         <StatusUpdateForm
-          statusReportId={statusReportId}
-          defaultValues={statusUpdate || undefined}
+          statusReportId={id}
+          defaultValues={data || undefined}
         />
       </div>
     </div>
