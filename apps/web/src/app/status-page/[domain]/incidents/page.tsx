@@ -28,7 +28,7 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      <IncidentList incidents={page.incidents} monitors={page.monitors} />
+      <IncidentList incidents={page.statusReport} monitors={page.monitors} />
     </div>
   );
 }

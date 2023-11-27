@@ -2,8 +2,8 @@ import { cva } from "class-variance-authority";
 import type { z } from "zod";
 
 import type {
-  selectIncidentsPageSchema,
   selectPublicMonitorSchema,
+  selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { getResponseListData } from "@/lib/tb";
@@ -31,7 +31,7 @@ export async function StatusCheck({
   incidents,
   monitors,
 }: {
-  incidents: z.infer<typeof selectIncidentsPageSchema>;
+  incidents: z.infer<typeof selectStatusReportPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
   const isIncident = incidents.some(

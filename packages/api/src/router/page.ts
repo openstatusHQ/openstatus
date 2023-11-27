@@ -176,7 +176,7 @@ export const pageRouter = createTRPCRouter({
         ({ monitorId }) => monitorId,
       );
 
-      const monitorsToIncidentsResult =
+      const monitorsToStatusReportResult =
         monitorsId.length > 0
           ? await opts.ctx.db
               .select()
@@ -185,32 +185,32 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      const incidentsToPagesResult = await opts.ctx.db
+      const statusReportsToPagesResult = await opts.ctx.db
         .select()
         .from(pagesToStatusReports)
         .where(eq(pagesToStatusReports.pageId, result.id))
         .all();
 
-      const monitorIncidentIds = monitorsToIncidentsResult.map(
-        ({ incidentId }) => incidentId,
+      const monitorIncidentIds = monitorsToStatusReportResult.map(
+        ({ statusReportId }) => statusReportId,
       );
 
-      const pageIncidentIds = incidentsToPagesResult.map(
-        ({ incidentId }) => incidentId,
+      const pageIncidentIds = statusReportsToPagesResult.map(
+        ({ statusReportId }) => statusReportId,
       );
 
       const incidentIds = Array.from(
         new Set([...monitorIncidentIds, ...pageIncidentIds]),
       );
 
-      const incidents =
+      const statusReports =
         incidentIds.length > 0
           ? await opts.ctx.db.query.statusReport.findMany({
               where: or(inArray(statusReport.id, incidentIds)),
               with: {
                 statusReportUpdates: true,
                 monitorsToStatusReports: true,
-                pagesToIncidents: true,
+                pagesToStatusReport: true,
               },
             })
           : [];
@@ -229,7 +229,7 @@ export const pageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
         monitors,
-        incidents,
+        statusReports,
       });
     }),
 

@@ -7,17 +7,17 @@ import {
   selectStatusReportUpdateSchema,
 } from "./status_reports";
 
-export const selectIncidentsPageSchema = z.array(
+export const selectStatusReportPageSchema = z.array(
   selectStatusReportSchema.extend({
-    incidentUpdates: z.array(selectStatusReportUpdateSchema),
-    monitorsToIncidents: z.array(
+    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
+    monitorsToStatusReport: z.array(
       z.object({ monitorId: z.number(), incidentId: z.number() }),
     ),
   }),
 );
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
-  incidents: selectIncidentsPageSchema,
+  statusReports: selectStatusReportPageSchema,
 });
 
 export const selectPublicMonitorSchema = selectMonitorSchema.omit({
@@ -30,7 +30,7 @@ export const selectPublicMonitorSchema = selectMonitorSchema.omit({
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
-    incidents: selectIncidentsPageSchema,
+    statusReport: selectStatusReportPageSchema,
   })
   .omit({
     workspaceId: true,
