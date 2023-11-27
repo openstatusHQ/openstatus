@@ -202,7 +202,7 @@ export const statusReportRouter = createTRPCRouter({
       return currentIncident;
     }),
 
-  deleteIncident: protectedProcedure
+  deleteStatusReport: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const incidentToDelete = await opts.ctx.db
@@ -223,7 +223,7 @@ export const statusReportRouter = createTRPCRouter({
         .run();
     }),
 
-  deleteIncidentUpdate: protectedProcedure
+  deleteStatusReportUpdate: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const incidentUpdateToDelete = await opts.ctx.db
@@ -288,9 +288,9 @@ export const statusReportRouter = createTRPCRouter({
 
   getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
     // FIXME: can we get rid of that?
-    const selectIncidentSchemaWithRelation = selectStatusReportSchema.extend({
+    const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
       status: statusReportStatusSchema.default("investigating"), // TODO: remove!
-      monitorsToIncidents: z
+      monitorsToStatusReports: z
         .array(
           z.object({
             incidentId: z.number(),
@@ -299,7 +299,7 @@ export const statusReportRouter = createTRPCRouter({
           }),
         )
         .default([]),
-      incidentUpdates: z.array(selectStatusReportUpdateSchema),
+      statusReportUpdates: z.array(selectStatusReportUpdateSchema),
     });
 
     const result = await opts.ctx.db.query.statusReport.findMany({
@@ -307,14 +307,14 @@ export const statusReportRouter = createTRPCRouter({
       with: {
         monitorsToStatusReports: { with: { monitor: true } },
         statusReportUpdates: {
-          orderBy: (incidentUpdate, { desc }) => [
-            desc(incidentUpdate.createdAt),
+          orderBy: (statusReportUpdate, { desc }) => [
+            desc(statusReportUpdate.createdAt),
           ],
         },
       },
-      orderBy: (incident, { desc }) => [desc(incident.updatedAt)],
+      orderBy: (statusReport, { desc }) => [desc(statusReport.updatedAt)],
     });
-
-    return z.array(selectIncidentSchemaWithRelation).parse(result);
+    console.log(result);
+    return z.array(selectStatusSchemaWithRelation).parse(result);
   }),
 });

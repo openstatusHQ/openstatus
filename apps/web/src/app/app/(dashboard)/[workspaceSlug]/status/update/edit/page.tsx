@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { StatusUpdateForm } from "@/components/forms/incident-update-form";
+import { StatusUpdateForm } from "@/components/forms/status-update-form";
 import { api } from "@/trpc/server";
 
 /**
@@ -29,7 +29,7 @@ export default async function EditPage({
   const { id, statusReportId } = search.data;
 
   const statusUpdate = id
-    ? await api.statusReport.getStatusReportById.query({
+    ? await api.statusReport.getStatusReportUpdateById.query({
         id,
       })
     : undefined;

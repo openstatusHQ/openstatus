@@ -29,9 +29,9 @@ export const pagesConfig: Page[] = [
     icon: "bell",
   },
   {
-    title: "Incidents",
+    title: "Status Updates",
     description: "War room where you handle the incidents.",
-    href: "/incidents",
+    href: "/status",
     icon: "siren",
   },
   // {

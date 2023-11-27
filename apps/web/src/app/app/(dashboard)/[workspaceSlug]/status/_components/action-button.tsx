@@ -48,7 +48,7 @@ export function ActionButton(props: Schema) {
     startTransition(async () => {
       try {
         if (!props.id) return;
-        await api.statusReport.deleteIncident.mutate({ id: props.id });
+        await api.statusReport.deleteStatusReport.mutate({ id: props.id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);

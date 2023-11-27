@@ -25,8 +25,8 @@ export default async function IncidentPage({
   return (
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-1 md:gap-8">
       <Header
-        title="Incidents"
-        description="Overview of all your incidents."
+        title="Status Updates"
+        description="Overview of all your status updates."
         actions={
           <Button asChild>
             <Link href="./incidents/edit">Create</Link>
@@ -39,7 +39,7 @@ export default async function IncidentPage({
             {incidents?.map((incident, i) => {
               const { label, icon } =
                 statusDict[incident.status as keyof typeof statusDict];
-              const monitors = incident.monitorsToIncidents.map(
+              const monitors = incident.monitorsToStatusReports.map(
                 ({ monitor }) => monitor,
               );
               return (
@@ -58,9 +58,7 @@ export default async function IncidentPage({
                     }
                     actions={[
                       <Button key="status-button" variant="outline" size="sm">
-                        <Link
-                          href={`./incidents/update/edit?incidentId=${incident.id}`}
-                        >
+                        <Link href={`./status/update/edit?id=${incident.id}`}>
                           New Update
                         </Link>
                       </Button>,
@@ -82,7 +80,7 @@ export default async function IncidentPage({
                         </p>
                         {/* Make it ordered by desc and make it toggable if you want the whole history! */}
                         <Events
-                          statusReportUpdates={incident.incidentUpdates}
+                          statusReportUpdates={incident.statusReportUpdates}
                           editable
                         />
                       </div>
