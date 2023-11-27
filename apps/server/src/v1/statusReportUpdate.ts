@@ -10,7 +10,7 @@ import {
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
 
-const incidenUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
+const statusUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
 
 const ParamsSelectSchema = z.object({
   id: z
@@ -26,7 +26,7 @@ const ParamsSelectSchema = z.object({
     }),
 });
 
-export const incidentUpdateSchema = z.object({
+export const statusUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
@@ -66,7 +66,7 @@ const getUpdateRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentUpdateSchema,
+          schema: statusUpdateSchema,
         },
       },
       description: "Get all incidents",
@@ -82,7 +82,7 @@ const getUpdateRoute = createRoute({
   },
 });
 
-incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
+statusUpdateApi.openapi(getUpdateRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
@@ -107,12 +107,12 @@ incidenUpdateApi.openapi(getUpdateRoute, async (c) => {
   if (!currentIncident)
     return c.jsonT({ code: 401, message: "Not Authorized" });
 
-  const data = incidentUpdateSchema.parse(update);
+  const data = statusUpdateSchema.parse(update);
 
   return c.jsonT(data);
 });
 
-const createIncidentUpdate = createRoute({
+const createStatusUpdate = createRoute({
   method: "post",
   tags: ["status_update"],
   path: "/",
@@ -130,7 +130,7 @@ const createIncidentUpdate = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentUpdateSchema,
+          schema: statusUpdateSchema,
         },
       },
       description: "Get all incidents",
@@ -146,7 +146,7 @@ const createIncidentUpdate = createRoute({
   },
 });
 
-incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
+statusUpdateApi.openapi(createStatusUpdate, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const input = c.req.valid("json");
 
@@ -173,8 +173,8 @@ incidenUpdateApi.openapi(createIncidentUpdate, async (c) => {
     .returning()
     .get();
 
-  const data = incidentUpdateSchema.parse(res);
+  const data = statusUpdateSchema.parse(res);
   return c.jsonT(data);
 });
 
-export { incidenUpdateApi };
+export { statusUpdateApi };

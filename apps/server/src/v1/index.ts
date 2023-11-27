@@ -5,8 +5,8 @@ import type { Plan } from "@openstatus/plans";
 
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
-import { incidentApi } from "./statusReport";
-import { incidenUpdateApi } from "./statusReportUpdate";
+import { statusApi } from "./statusReport";
+import { statusUpdateApi } from "./statusReportUpdate";
 
 export type Variables = {
   workspaceId: string;
@@ -29,6 +29,6 @@ api.doc("/openapi", {
 api.use("/*", middleware);
 api.use("/*", logger());
 api.route("/monitor", monitorApi);
-api.route("/status_update", incidenUpdateApi);
+api.route("/status_update", statusUpdateApi);
 
-api.route("/status", incidentApi);
+api.route("/status", statusApi);

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { IncidentForm } from "@/components/forms/incident-form";
+import { StatusForm } from "@/components/forms/status-form";
 import { api } from "@/trpc/server";
 
 /**
@@ -44,7 +44,7 @@ export default async function EditPage({
         description="Create a public report for your Incident"
       />
       <div className="col-span-full">
-        <IncidentForm
+        <StatusForm
           monitors={monitors}
           pages={pages}
           defaultValues={

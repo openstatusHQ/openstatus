@@ -54,7 +54,7 @@ interface Props {
   pages?: Page[];
 }
 
-export function IncidentForm({ defaultValues, monitors, pages }: Props) {
+export function StatusForm({ defaultValues, monitors, pages }: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
     defaultValues: defaultValues
