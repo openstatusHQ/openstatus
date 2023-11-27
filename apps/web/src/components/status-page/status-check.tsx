@@ -15,11 +15,11 @@ import { Icons } from "../icons";
 const check = cva("border-border rounded-full border p-2", {
   variants: {
     variant: {
-      up: "text-green-500 bg-green-500",
-      down: "text-red-500 bg-red-500",
-      degraded: "text-yellow-500 bg-yellow-500",
-      empty: "text-gray-500 bg-gray-500",
-      incident: "text-yellow-500 bg-yellow-500",
+      up: "bg-green-500/80 border-green-500",
+      down: "bg-red-500/80 border-red-500",
+      degraded: "bg-yellow-500/80 border-yellow-500",
+      empty: "bg-gray-500/80 border-gray-500",
+      incident: "bg-yellow-500/80 border-yellow-500",
     },
   },
   defaultVariants: {

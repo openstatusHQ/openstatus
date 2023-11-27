@@ -10,10 +10,12 @@ import {
   Fingerprint,
   Globe,
   Image,
+  Laptop,
   LayoutDashboard,
   Link,
   MessageCircle,
   Minus,
+  Moon,
   PanelTop,
   Pencil,
   Play,
@@ -22,6 +24,7 @@ import {
   Search,
   SearchCheck,
   Siren,
+  SunMedium,
   Table,
   Tag,
   ToyBrick,
@@ -64,6 +67,9 @@ export const Icons = {
   zap: Zap,
   "alert-triangle": AlertTriangle,
   minus: Minus,
+  sun: SunMedium,
+  moon: Moon,
+  laptop: Laptop,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

@@ -26,11 +26,11 @@ import { cleanData, getStatus } from "@/lib/tracker";
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
-      up: "bg-green-500 data-[state=open]:bg-green-600",
-      down: "bg-red-500 data-[state=open]:bg-red-600",
-      degraded: "bg-yellow-500 data-[state=open]:bg-yellow-600",
+      up: "bg-green-500/90 data-[state=open]:bg-green-500",
+      down: "bg-red-500/90 data-[state=open]:bg-red-500",
+      degraded: "bg-yellow-500/90 data-[state=open]:bg-yellow-500",
       empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
-      blacklist: "bg-green-400 data-[state=open]:bg-green-600",
+      blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
     },
   },
   defaultVariants: {

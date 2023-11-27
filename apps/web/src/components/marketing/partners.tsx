@@ -1,5 +1,9 @@
 import { ArrowUpRight } from "lucide-react";
 
+import { Documenso } from "@/components/svg/documenso";
+import { Hanko } from "@/components/svg/hanko";
+import { Trigger } from "@/components/svg/trigger";
+
 export function Partners() {
   return (
     <div className="grid gap-4">
@@ -14,11 +18,7 @@ export function Partners() {
             rel="noreferrer"
             className="group inline-flex items-center justify-center underline underline-offset-4 hover:no-underline"
           >
-            <img
-              src="/assets/partners/hanko.svg"
-              alt="hanko"
-              className="h-8 w-16 object-contain"
-            />
+            <Hanko className="h-8 w-24" />
             <ArrowUpRight className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 flex-shrink-0" />
           </a>
         </div>
@@ -29,11 +29,7 @@ export function Partners() {
             rel="noreferrer"
             className="group inline-flex items-center justify-center underline underline-offset-4 hover:no-underline"
           >
-            <img
-              src="/assets/partners/documenso.svg"
-              alt="hanko"
-              className="h-8 w-32 object-contain"
-            />
+            <Documenso className="h-8 w-32" />
             <ArrowUpRight className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 flex-shrink-0" />
           </a>
         </div>
@@ -44,11 +40,7 @@ export function Partners() {
             rel="noreferrer"
             className="group inline-flex items-center justify-center underline underline-offset-4 hover:no-underline"
           >
-            <img
-              src="/assets/partners/triggerdev.svg"
-              alt="trigger.dev"
-              className="h-8 w-32 object-contain text-black"
-            />
+            <Trigger className="h-8 w-32" />
             <ArrowUpRight className="text-muted-foreground group-hover:text-foreground ml-1 h-4 w-4 flex-shrink-0" />
           </a>
         </div>

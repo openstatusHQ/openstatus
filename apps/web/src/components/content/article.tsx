@@ -36,7 +36,7 @@ export function Article({ post }: { post: Post }) {
             <Link
               href={post.author.url ?? "#"}
               target="_blank"
-              className="cursor-pointer font-medium text-black hover:underline"
+              className="text-foreground cursor-pointer font-medium hover:underline"
             >
               {post.author.name}
             </Link>

@@ -45,7 +45,7 @@ export default async function Post() {
             title={post.title}
             href={`./blog/${post.slug}`}
           >
-            <div className="prose">
+            <div className="prose dark:prose-invert">
               <p>{post.description}</p>
             </div>
             <div>
