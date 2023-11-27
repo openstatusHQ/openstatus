@@ -29,7 +29,7 @@ export const page = sqliteTable("page", {
 
 export const pageRelations = relations(page, ({ many, one }) => ({
   monitorsToPages: many(monitorsToPages),
-  pagesToIncidents: many(pagesToStatusReports),
+  pagesToStatusReports: many(pagesToStatusReports),
   workspace: one(workspace, {
     fields: [page.workspaceId],
     references: [workspace.id],

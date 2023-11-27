@@ -50,7 +50,7 @@ export const monitor = sqliteTable("monitor", {
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToPages: many(monitorsToPages),
-  monitorsToIncidents: many(monitorsToStatusReport),
+  monitorsToStatusReports: many(monitorsToStatusReport),
   workspace: one(workspace, {
     fields: [monitor.workspaceId],
     references: [workspace.id],
