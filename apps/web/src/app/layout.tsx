@@ -12,6 +12,7 @@ import {
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
+import { ThemeProvider } from "@/components/theme-provider";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -40,9 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${calSans.variable}`}>
-        <Background>{children}</Background>
-        <Toaster />
-        <TailwindIndicator />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+          <Background>{children}</Background>
+          <Toaster />
+          <TailwindIndicator />
+        </ThemeProvider>
       </body>
     </html>
   );

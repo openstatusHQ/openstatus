@@ -55,6 +55,7 @@
     "next": "13.5.3",
     "next-contentlayer": "0.3.4",
     "next-plausible": "3.11.1",
+    "next-themes": "^0.2.1",
     "react": "18.2.0",
     "react-day-picker": "8.8.2",
     "react-dom": "18.2.0",
