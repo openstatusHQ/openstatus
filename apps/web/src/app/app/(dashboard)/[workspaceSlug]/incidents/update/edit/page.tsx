@@ -28,8 +28,8 @@ export default async function EditPage({
 
   const { id, incidentId } = search.data;
 
-  const incidentUpdate = id
-    ? await api.incident.getIncidentUpdateById.query({
+  const statusUpdate = id
+    ? await api.statusReport.getStatusReportById.query({
         id,
       })
     : undefined;
@@ -42,8 +42,8 @@ export default async function EditPage({
       />
       <div className="col-span-full">
         <IncidentUpdateForm
-          incidentId={incidentId}
-          defaultValues={incidentUpdate || undefined}
+          statusReportId={incidentId}
+          defaultValues={statusUpdate || undefined}
         />
       </div>
     </div>

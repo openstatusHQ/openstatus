@@ -13,7 +13,7 @@ export const edgeRouter = createTRPCRouter({
   workspace: workspaceRouter,
   monitor: monitorRouter,
   page: pageRouter,
-  incident: statusReportRouter,
+  statusReport: statusReportRouter,
   domain: domainRouter,
   integration: integrationRouter,
   user: userRouter,

@@ -7,7 +7,7 @@ import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
 import {
-  insertIncidentSchema,
+  insertStatusReportSchema,
   // insertIncidentUpdateSchema,
 } from "@openstatus/db/src/schema";
 import {
@@ -31,7 +31,10 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
-const temporary = insertIncidentSchema.pick({ id: true, workspaceSlug: true });
+const temporary = insertStatusReportSchema.pick({
+  id: true,
+  workspaceSlug: true,
+});
 
 type Schema = z.infer<typeof temporary>;
 
@@ -45,7 +48,7 @@ export function ActionButton(props: Schema) {
     startTransition(async () => {
       try {
         if (!props.id) return;
-        await api.incident.deleteIncident.mutate({ id: props.id });
+        await api.statusReport.deleteIncident.mutate({ id: props.id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);

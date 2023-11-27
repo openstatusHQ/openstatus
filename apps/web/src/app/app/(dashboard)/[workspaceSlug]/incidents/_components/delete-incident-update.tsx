@@ -30,7 +30,7 @@ export function DeleteIncidentUpdateButtonIcon({ id }: { id: number }) {
   async function onDelete() {
     startTransition(async () => {
       try {
-        await api.incident.deleteIncidentUpdate.mutate({ id });
+        await api.statusReport.deleteIncidentUpdate.mutate({ id });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);

@@ -17,7 +17,7 @@ import {
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const statusReportRouter = createTRPCRouter({
-  createIncident: protectedProcedure
+  createStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { id, monitors, pages, date, message, ...incidentInput } =
@@ -61,7 +61,7 @@ export const statusReportRouter = createTRPCRouter({
       return newStatusReport;
     }),
 
-  createIncidentUpdate: protectedProcedure
+  createStatusReportUpdate: protectedProcedure
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       // update parent incident with latest status
@@ -85,7 +85,7 @@ export const statusReportRouter = createTRPCRouter({
         .get();
     }),
 
-  updateIncident: protectedProcedure
+  updateStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { monitors, pages, ...incidentInput } = opts.input;
@@ -185,7 +185,7 @@ export const statusReportRouter = createTRPCRouter({
       return currentStatusReport;
     }),
 
-  updateIncidentUpdate: protectedProcedure
+  updateStatusReportUpdate: protectedProcedure
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       const incidentUpdateInput = opts.input;
@@ -242,20 +242,21 @@ export const statusReportRouter = createTRPCRouter({
         .run();
     }),
 
-  getIncidentById: protectedProcedure
+  getStatusReportById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      const selectIncidentSchemaWithRelation = selectStatusReportSchema.extend({
-        status: statusReportStatusSchema.default("investigating"), // TODO: remove!
-        monitorsToIncidents: z
-          .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
-          .default([]),
-        pagesToIncidents: z
-          .array(z.object({ incidentId: z.number(), pageId: z.number() }))
-          .default([]),
-        incidentUpdates: z.array(selectStatusReportUpdateUpdateSchema),
-        date: z.date().default(new Date()),
-      });
+      const selectStatusReportSchemaWithRelation =
+        selectStatusReportSchema.extend({
+          status: statusReportStatusSchema.default("investigating"), // TODO: remove!
+          monitorsToIncidents: z
+            .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
+            .default([]),
+          pagesToIncidents: z
+            .array(z.object({ incidentId: z.number(), pageId: z.number() }))
+            .default([]),
+          statusUpdates: z.array(selectStatusReportUpdateUpdateSchema),
+          date: z.date().default(new Date()),
+        });
 
       const data = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
@@ -266,17 +267,17 @@ export const statusReportRouter = createTRPCRouter({
           monitorsToStatusReports: true,
           pagesToStatusReport: true,
           statusReportUpdates: {
-            orderBy: (incidentUpdate, { desc }) => [
-              desc(incidentUpdate.createdAt),
+            orderBy: (statusReportUpdate, { desc }) => [
+              desc(statusReportUpdate.createdAt),
             ],
           },
         },
       });
 
-      return selectIncidentSchemaWithRelation.parse(data);
+      return selectStatusReportSchemaWithRelation.parse(data);
     }),
 
-  getIncidentUpdateById: protectedProcedure
+  getStatusReportUpdateById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
       const data = await opts.ctx.db.query.statusReportUpdate.findFirst({
@@ -285,7 +286,7 @@ export const statusReportRouter = createTRPCRouter({
       return selectStatusReportUpdateUpdateSchema.parse(data);
     }),
 
-  getIncidentByWorkspace: protectedProcedure.query(async (opts) => {
+  getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
     // FIXME: can we get rid of that?
     const selectIncidentSchemaWithRelation = selectStatusReportSchema.extend({
       status: statusReportStatusSchema.default("investigating"), // TODO: remove!

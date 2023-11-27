@@ -27,8 +27,8 @@ export default async function EditPage({
 
   const { id } = search.data;
 
-  const incident = id
-    ? await api.incident.getIncidentById.query({
+  const statusUpdate = id
+    ? await api.statusReport.getStatusReportById.query({
         id,
       })
     : undefined;
@@ -45,16 +45,18 @@ export default async function EditPage({
           monitors={monitors}
           pages={pages}
           defaultValues={
-            incident
+            statusUpdate
               ? // TODO: we should move the mapping to the trpc layer
                 // so we don't have to do this in the UI
                 // it should be something like defaultValues={incident}
                 {
-                  ...incident,
-                  monitors: incident?.monitorsToIncidents.map(
+                  ...statusUpdate,
+                  monitors: statusUpdate?.monitorsToIncidents.map(
                     ({ monitorId }) => monitorId,
                   ),
-                  pages: incident?.pagesToIncidents.map(({ pageId }) => pageId),
+                  pages: statusUpdate?.pagesToIncidents.map(
+                    ({ pageId }) => pageId,
+                  ),
                   message: "",
                 }
               : undefined
