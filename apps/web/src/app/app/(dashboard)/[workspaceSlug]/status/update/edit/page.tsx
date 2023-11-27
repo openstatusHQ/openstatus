@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { IncidentUpdateForm } from "@/components/forms/incident-update-form";
+import { StatusUpdateForm } from "@/components/forms/incident-update-form";
 import { api } from "@/trpc/server";
 
 /**
@@ -10,7 +10,7 @@ import { api } from "@/trpc/server";
  */
 const searchParamsSchema = z.object({
   id: z.coerce.number().optional(),
-  incidentId: z.coerce.number(),
+  statusReportId: z.coerce.number(),
 });
 
 export default async function EditPage({
@@ -26,7 +26,7 @@ export default async function EditPage({
     return notFound();
   }
 
-  const { id, incidentId } = search.data;
+  const { id, statusReportId } = search.data;
 
   const statusUpdate = id
     ? await api.statusReport.getStatusReportById.query({
@@ -41,8 +41,8 @@ export default async function EditPage({
         description="Upsert your incident update."
       />
       <div className="col-span-full">
-        <IncidentUpdateForm
-          statusReportId={incidentId}
+        <StatusUpdateForm
+          statusReportId={statusReportId}
           defaultValues={statusUpdate || undefined}
         />
       </div>

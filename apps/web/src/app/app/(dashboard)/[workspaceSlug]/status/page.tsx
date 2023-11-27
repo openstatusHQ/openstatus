@@ -8,9 +8,9 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { HelpCallout } from "@/components/dashboard/help-callout";
 import { Icons } from "@/components/icons";
-import { AffectedMonitors } from "@/components/incidents/affected-monitors";
-import { Events } from "@/components/incidents/events";
-import { StatusBadge } from "@/components/incidents/status-badge";
+import { AffectedMonitors } from "@/components/status-update/affected-monitors";
+import { Events } from "@/components/status-update/events";
+import { StatusBadge } from "@/components/status-update/status-badge";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
@@ -82,7 +82,7 @@ export default async function IncidentPage({
                         </p>
                         {/* Make it ordered by desc and make it toggable if you want the whole history! */}
                         <Events
-                          incidentUpdates={incident.incidentUpdates}
+                          statusReportUpdates={incident.incidentUpdates}
                           editable
                         />
                       </div>

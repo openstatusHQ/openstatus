@@ -38,7 +38,7 @@ export const selectStatusReportSchema = createSelectSchema(statusReport, {
   status: statusReportStatusSchema,
 });
 
-export const selectStatusReportUpdateUpdateSchema = createSelectSchema(
+export const selectStatusReportUpdateSchema = createSelectSchema(
   statusReportUpdate,
   {
     status: statusReportStatusSchema,
@@ -50,6 +50,4 @@ export type StatusReport = z.infer<typeof selectStatusReportSchema>;
 export type InsertStatusReportUpdate = z.infer<
   typeof insertStatusReportUpdateSchema
 >;
-export type StatusReportUpdate = z.infer<
-  typeof selectStatusReportUpdateUpdateSchema
->;
+export type StatusReportUpdate = z.infer<typeof selectStatusReportUpdateSchema>;

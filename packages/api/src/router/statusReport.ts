@@ -8,7 +8,7 @@ import {
   pagesToStatusReports,
   selectMonitorSchema,
   selectStatusReportSchema,
-  selectStatusReportUpdateUpdateSchema,
+  selectStatusReportUpdateSchema,
   statusReport,
   statusReportStatusSchema,
   statusReportUpdate,
@@ -254,7 +254,7 @@ export const statusReportRouter = createTRPCRouter({
           pagesToIncidents: z
             .array(z.object({ incidentId: z.number(), pageId: z.number() }))
             .default([]),
-          statusUpdates: z.array(selectStatusReportUpdateUpdateSchema),
+          statusUpdates: z.array(selectStatusReportUpdateSchema),
           date: z.date().default(new Date()),
         });
 
@@ -283,7 +283,7 @@ export const statusReportRouter = createTRPCRouter({
       const data = await opts.ctx.db.query.statusReportUpdate.findFirst({
         where: and(eq(statusReportUpdate.id, opts.input.id)),
       });
-      return selectStatusReportUpdateUpdateSchema.parse(data);
+      return selectStatusReportUpdateSchema.parse(data);
     }),
 
   getStatusReportByWorkspace: protectedProcedure.query(async (opts) => {
@@ -299,7 +299,7 @@ export const statusReportRouter = createTRPCRouter({
           }),
         )
         .default([]),
-      incidentUpdates: z.array(selectStatusReportUpdateUpdateSchema),
+      incidentUpdates: z.array(selectStatusReportUpdateSchema),
     });
 
     const result = await opts.ctx.db.query.statusReport.findMany({

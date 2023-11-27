@@ -4,12 +4,12 @@ import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
   selectStatusReportSchema,
-  selectStatusReportUpdateUpdateSchema,
+  selectStatusReportUpdateSchema,
 } from "./status_reports";
 
 export const selectIncidentsPageSchema = z.array(
   selectStatusReportSchema.extend({
-    incidentUpdates: z.array(selectStatusReportUpdateUpdateSchema),
+    incidentUpdates: z.array(selectStatusReportUpdateSchema),
     monitorsToIncidents: z.array(
       z.object({ monitorId: z.number(), incidentId: z.number() }),
     ),

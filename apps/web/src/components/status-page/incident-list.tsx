@@ -6,9 +6,9 @@ import type {
 } from "@openstatus/db/src/schema";
 
 import { notEmpty } from "@/lib/utils";
-import { AffectedMonitors } from "../incidents/affected-monitors";
-import { Events } from "../incidents/events";
-import { StatusBadge } from "../incidents/status-badge";
+import { AffectedMonitors } from "../status-update/affected-monitors";
+import { Events } from "../status-update/events";
+import { StatusBadge } from "../status-update/status-badge";
 
 // TODO: change layout - it is too packed with data rn
 
@@ -78,7 +78,7 @@ export const IncidentList = ({
                   <p className="text-muted-foreground mb-2 text-xs">
                     Latest Updates
                   </p>
-                  <Events incidentUpdates={incident.incidentUpdates} />
+                  <Events statusReportUpdates={incident.incidentUpdates} />
                 </div>
               </div>
             );
