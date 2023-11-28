@@ -54,10 +54,10 @@ export default async function EditPage({
                 // it should be something like defaultValues={incident}
                 {
                   ...statusUpdate,
-                  monitors: statusUpdate?.monitorsToIncidents.map(
+                  monitors: statusUpdate?..map(
                     ({ monitorId }) => monitorId,
                   ),
-                  pages: statusUpdate?.pagesToIncidents.map(
+                  pages: statusUpdate?.pagesToStatusReports.map(
                     ({ pageId }) => pageId,
                   ),
                   message: "",

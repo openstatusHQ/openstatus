@@ -248,11 +248,13 @@ export const statusReportRouter = createTRPCRouter({
       const selectStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
           status: statusReportStatusSchema.default("investigating"), // TODO: remove!
-          monitorsToIncidents: z
-            .array(z.object({ incidentId: z.number(), monitorId: z.number() }))
+          monitorsToStatusReports: z
+            .array(
+              z.object({ statusReportId: z.number(), monitorId: z.number() }),
+            )
             .default([]),
-          pagesToIncidents: z
-            .array(z.object({ incidentId: z.number(), pageId: z.number() }))
+          pagesToStatusReports: z
+            .array(z.object({ statusReportId: z.number(), pageId: z.number() }))
             .default([]),
           statusUpdates: z.array(selectStatusReportUpdateSchema),
           date: z.date().default(new Date()),
@@ -293,7 +295,7 @@ export const statusReportRouter = createTRPCRouter({
       monitorsToStatusReports: z
         .array(
           z.object({
-            incidentId: z.number(),
+            statusReportId: z.number(),
             monitorId: z.number(),
             monitor: selectMonitorSchema,
           }),

@@ -88,7 +88,7 @@ export const monitorsToStatusReport = sqliteTable(
   }),
 );
 
-export const monitorsToIncidentsRelations = relations(
+export const monitorsToStatusReportRelations = relations(
   monitorsToStatusReport,
   ({ one }) => ({
     monitor: one(monitor, {

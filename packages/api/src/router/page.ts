@@ -191,22 +191,22 @@ export const pageRouter = createTRPCRouter({
         .where(eq(pagesToStatusReports.pageId, result.id))
         .all();
 
-      const monitorIncidentIds = monitorsToStatusReportResult.map(
+      const monitorStatusReportIds = monitorsToStatusReportResult.map(
         ({ statusReportId }) => statusReportId,
       );
 
-      const pageIncidentIds = statusReportsToPagesResult.map(
+      const pageStatusReportIds = statusReportsToPagesResult.map(
         ({ statusReportId }) => statusReportId,
       );
 
-      const incidentIds = Array.from(
-        new Set([...monitorIncidentIds, ...pageIncidentIds]),
+      const statusReportIds = Array.from(
+        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
       );
 
       const statusReports =
-        incidentIds.length > 0
+        statusReportIds.length > 0
           ? await opts.ctx.db.query.statusReport.findMany({
-              where: or(inArray(statusReport.id, incidentIds)),
+              where: or(inArray(statusReport.id, statusReportIds)),
               with: {
                 statusReportUpdates: true,
                 monitorsToStatusReports: true,

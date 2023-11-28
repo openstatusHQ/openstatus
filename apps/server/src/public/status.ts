@@ -3,12 +3,12 @@ import { endTime, setMetric, startTime } from "hono/timing";
 
 import { db, eq } from "@openstatus/db";
 import {
-  incident,
   monitor,
-  monitorsToIncidents,
   monitorsToPages,
+  monitorsToStatusReport,
   page,
-  pagesToIncidents,
+  pagesToStatusReports,
+  statusReport,
 } from "@openstatus/db/src/schema";
 import { getMonitorList, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
@@ -49,27 +49,30 @@ status.get("/:slug", async (c) => {
     .from(monitorsToPages)
     .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
     .leftJoin(
-      monitorsToIncidents,
-      eq(monitor.id, monitorsToIncidents.monitorId),
+      monitorsToStatusReport,
+      eq(monitor.id, monitorsToStatusReport.monitorId),
     )
-    .leftJoin(incident, eq(monitorsToIncidents.incidentId, incident.id))
+    .leftJoin(
+      statusReport,
+      eq(monitorsToStatusReport.statusReportId, statusReport.id),
+    )
     .leftJoin(page, eq(monitorsToPages.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
 
   const pageIncidentData = await db
     .select()
-    .from(pagesToIncidents)
-    .leftJoin(incident, eq(pagesToIncidents.incidentId, incident.id))
-    .leftJoin(page, eq(pagesToIncidents.pageId, page.id))
+    .from(pagesToStatusReports)
+    .leftJoin(incident, eq(pagesToStatusReports.statusReportId, incident.id))
+    .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
 
   endTime(c, "database");
 
   const isIncident = [...pageIncidentData, ...monitorData].some((data) => {
-    if (!data.incident) return false;
-    return !["monitoring", "resolved"].includes(data.incident.status);
+    if (!data.status_report) return false;
+    return !["monitoring", "resolved"].includes(data.status_report.status);
   });
 
   startTime(c, "clickhouse");

@@ -11,7 +11,7 @@ export const selectStatusReportPageSchema = z.array(
   selectStatusReportSchema.extend({
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),
     monitorsToStatusReport: z.array(
-      z.object({ monitorId: z.number(), incidentId: z.number() }),
+      z.object({ monitorId: z.number(), statusReportId: z.number() }),
     ),
   }),
 );
