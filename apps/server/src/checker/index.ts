@@ -86,6 +86,12 @@ checkerRoute.post("/checkerV2", async (c) => {
     // catchTooManyRetry(result.data);
     return c.text("Ok", 200); // finish the task
   }
+  if (retry > 0 && result.data.status === "error") {
+    console.log(
+      `🗑️  The monitor was already in error we should not checked the URL: ${result.data}`,
+    );
+    return c.text("Ok", 200);
+  }
 
   try {
     console.log(`🧭 start checker for: ${JSON.stringify(result.data)}`);
