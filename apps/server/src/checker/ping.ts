@@ -6,7 +6,7 @@ import type { Payload } from "./schema";
 
 const region = env.FLY_REGION;
 
-function getHeaders(data?: Payload) {
+export function getHeaders(data?: Payload) {
   const customHeaders =
     data?.headers?.reduce((o, v) => {
       // removes empty keys from the header
@@ -17,23 +17,6 @@ function getHeaders(data?: Payload) {
     "OpenStatus-Ping": "true",
     ...customHeaders,
   };
-}
-
-export async function pingEndpoint(data: Payload) {
-  try {
-    const res = await fetch(data?.url, {
-      method: data?.method,
-      keepalive: false,
-      cache: "no-store",
-      headers: getHeaders(data),
-      // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
-      ...(data.method === "POST" && { body: data?.body }),
-    });
-
-    return res;
-  } catch (e) {
-    throw e;
-  }
 }
 
 export type PublishPingType = {
