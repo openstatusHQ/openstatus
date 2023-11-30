@@ -92,10 +92,24 @@ export const cron = async ({
           body: Buffer.from(JSON.stringify(payload)).toString("base64"),
         },
       };
+      const newTask: google.cloud.tasks.v2beta3.ITask = {
+        httpRequest: {
+          headers: {
+            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+            ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
+            Authorization: `Basic ${env.CRON_SECRET}`,
+          },
+          httpMethod: "POST",
+          url: "https://openstatus-checker.fly.dev",
+          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
+        },
+      };
+
       const request = { parent: parent, task: task };
       const [response] = await client.createTask(request);
-
-      allResult.push(response);
+      const requestNew = { parent: parent, task: newTask };
+      const [responseNew] = await client.createTask(requestNew);
+      allResult.push(response, responseNew);
     }
   }
   await Promise.all(allResult);

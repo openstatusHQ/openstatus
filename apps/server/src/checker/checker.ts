@@ -1,6 +1,6 @@
 import { handleMonitorFailed, handleMonitorRecovered } from "./monitor-handler";
 import type { PublishPingType } from "./ping";
-import { pingEndpoint, publishPing } from "./ping";
+import { getHeaders, publishPing } from "./ping";
 import type { Payload } from "./schema";
 
 // we could have a 'retry' parameter to know how often we should retry
@@ -54,11 +54,22 @@ const run = async (data: Payload, retry: number) => {
   let message = undefined;
   // We are doing these for wrong urls
   try {
-    startTime = Date.now();
-    res = await pingEndpoint(data);
-    endTime = Date.now();
+    const headers = getHeaders(data);
+    console.log(`🆕 fetch is about to start for ${JSON.stringify(data)}`);
+    startTime = performance.now();
+    res = await fetch(data.url, {
+      method: data.method,
+      keepalive: false,
+      cache: "no-store",
+      headers,
+      // Avoid having "TypeError: Request with a GET or HEAD method cannot have a body." error
+      ...(data.method === "POST" && { body: data?.body }),
+    });
+
+    endTime = performance.now();
+    console.log(`✅ fetch is done for ${JSON.stringify(data)}`);
   } catch (e) {
-    endTime = Date.now();
+    endTime = performance.now();
     message = `${e}`;
     console.log(
       `🚨 error on pingEndpoint for ${JSON.stringify(data)} error: `,
@@ -66,7 +77,7 @@ const run = async (data: Payload, retry: number) => {
     );
   }
 
-  const latency = endTime - startTime;
+  const latency = Number((endTime - startTime).toFixed(0));
   if (res?.ok) {
     await publishPingRetryPolicy({
       payload: data,
