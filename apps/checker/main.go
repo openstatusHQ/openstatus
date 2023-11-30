@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -44,7 +45,7 @@ func main() {
 
 		err := json.NewDecoder(r.Body).Decode(&u)
 
-		fmt.Printf("Start checker for   %+v", u)
+		fmt.Printf("Start checker for   %+v \n", u)
 
 		if err != nil {
 			http.Error(w, err.Error(), 400)
@@ -59,7 +60,6 @@ func main() {
 				request.Header.Set(header.Key, header.Value)
 			}
 		}
-
 		if error != nil {
 			fmt.Println(error)
 		}
@@ -67,18 +67,18 @@ func main() {
 		client := &http.Client{}
 		start := time.Now().UTC().UnixMilli()
 		response, error := client.Do(request)
-		end := time.Now().UTC().UnixMilli()
 
-		// Retry if error
-		if error != nil {
-			response, error = client.Do(request)
-			end = time.Now().UTC().UnixMilli()
+		if response.Body != nil {
+			defer response.Body.Close()
 		}
+		end := time.Now().UTC().UnixMilli()
+		_, err = io.ReadAll(response.Body)
 
 		latency := end - start
-		fmt.Println("🚀 Checked url: %v with latency  %v in region %v ", u.Url, latency, region)
-		fmt.Printf("Response %+v for %+v", response, u)
+		fmt.Println("🚀 Checked url:", u.Url," with latency",latency, " in region",region )
 		if error != nil {
+			fmt.Println("Error")
+			fmt.Println(error.Error())
 			tiny((PingData{
 				Latency:     (latency),
 				MonitorId:   u.MonitorId,
@@ -87,6 +87,7 @@ func main() {
 				Timestamp:   time.Now().UTC().UnixMilli(),
 				Url:         u.Url,
 				Message:     error.Error(),
+				CronTimestamp: u.CronTimestamp,
 			}))
 		} else {
 			tiny((PingData{
@@ -97,6 +98,7 @@ func main() {
 				StatusCode:  int16(response.StatusCode),
 				Timestamp:   time.Now().UTC().UnixMilli(),
 				Url:         u.Url,
+				CronTimestamp: u.CronTimestamp,
 			}))
 		}
 
@@ -122,3 +124,4 @@ func main() {
 
 	http.ListenAndServe(":8080", r)
 }
+

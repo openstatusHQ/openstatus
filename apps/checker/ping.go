@@ -14,16 +14,16 @@ type PingData struct {
 	WorkspaceId   string `json:"workspaceId"`
 	MonitorId     string `json:"monitorId"`
 	Timestamp     int64  `json:"timestamp"`
-	StatusCode    int16  `json:"statusCode"`
+	StatusCode    int16  `json:"statusCode,omitempty"`
 	Latency       int64  `json:"latency"`
 	CronTimestamp int64  `json:"cronTimestamp"`
 	Url           string `json:"url"`
 	Region        string `json:"region"`
-	Message       string `json:"message"`
+	Message       string `json:"message,omitempty"`
 }
 
 func tiny(pingData PingData) {
-	url := "https://api.tinybird.co/v0/events?name=golang_ping_response__v1"
+	url := "https://api.tinybird.co/v0/events?name=golang_ping_response__v3"
 	fmt.Println("URL:>", url)
 	bearer := "Bearer " + os.Getenv("TINYBIRD_TOKEN")
 	payloadBuf := new(bytes.Buffer)

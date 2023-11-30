@@ -26,5 +26,13 @@ primary_region = "ams"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 2
-  memory_mb = 512
+  cpus = 1
+  memory_mb = 256
+
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "15s"
+  method = "GET"
+  timeout = "5s"
+  path = "/ping"
