@@ -32,10 +32,10 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		 if r.Header.Get("Authorization") != "Basic "+ os.Getenv("CRON_SECRET") {
+		if r.Header.Get("Authorization") != "Basic "+os.Getenv("CRON_SECRET") {
 			http.Error(w, "Unauthorized", 401)
 			return
-		 }
+		}
 		region := os.Getenv("FLY_REGION")
 		if r.Body == nil {
 			http.Error(w, "Please send a request body", 400)
@@ -65,39 +65,38 @@ func main() {
 		}
 
 		client := &http.Client{}
-		start := time.Now().UTC().UnixMilli()
+		start := time.Now()
 		response, error := client.Do(request)
-
-		if response.Body != nil {
-			defer response.Body.Close()
-		}
-		end := time.Now().UTC().UnixMilli()
-		_, err = io.ReadAll(response.Body)
-
-		latency := end - start
-		fmt.Println("🚀 Checked url:", u.Url," with latency",latency, " in region",region )
+		latency := time.Since(start).Milliseconds()
 		if error != nil {
 			fmt.Println("Error")
 			fmt.Println(error.Error())
 			tiny((PingData{
-				Latency:     (latency),
-				MonitorId:   u.MonitorId,
-				Region:      region,
-				WorkspaceId: u.WorkspaceId,
-				Timestamp:   time.Now().UTC().UnixMilli(),
-				Url:         u.Url,
-				Message:     error.Error(),
+				Latency:       (latency),
+				MonitorId:     u.MonitorId,
+				Region:        region,
+				WorkspaceId:   u.WorkspaceId,
+				Timestamp:     time.Now().UTC().UnixMilli(),
+				Url:           u.Url,
+				Message:       error.Error(),
 				CronTimestamp: u.CronTimestamp,
 			}))
-		} else {
+		}
+
+		defer response.Body.Close()
+
+		_, err = io.ReadAll(response.Body)
+
+		fmt.Println("🚀 Checked url:", u.Url, " with latency", latency, " in region", region)
+		{
 			tiny((PingData{
-				Latency:     (latency),
-				MonitorId:   u.MonitorId,
-				Region:      region,
-				WorkspaceId: u.WorkspaceId,
-				StatusCode:  int16(response.StatusCode),
-				Timestamp:   time.Now().UTC().UnixMilli(),
-				Url:         u.Url,
+				Latency:       (latency),
+				MonitorId:     u.MonitorId,
+				Region:        region,
+				WorkspaceId:   u.WorkspaceId,
+				StatusCode:    int16(response.StatusCode),
+				Timestamp:     time.Now().UTC().UnixMilli(),
+				Url:           u.Url,
 				CronTimestamp: u.CronTimestamp,
 			}))
 		}
@@ -124,4 +123,3 @@ func main() {
 
 	http.ListenAndServe(":8080", r)
 }
-
