@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -36,6 +37,15 @@ func main() {
 			http.Error(w, "Unauthorized", 401)
 			return
 		}
+		i, err := strconv.Atoi(r.Header.Get("X-CloudTasks-TaskRetryCount"))
+		if err != nil {
+			http.Error(w, "Wrong", 400)
+			return
+		}
+		if i > 1 {
+			http.Error(w, "Wrong", 200)
+			return
+		}
 		region := os.Getenv("FLY_REGION")
 		if r.Body == nil {
 			http.Error(w, "Please send a request body", 400)
@@ -43,12 +53,14 @@ func main() {
 		}
 		var u InputData
 
-		err := json.NewDecoder(r.Body).Decode(&u)
+		err = json.NewDecoder(r.Body).Decode(&u)
 
 		fmt.Printf("Start checker for   %+v \n", u)
 
 		if err != nil {
-			http.Error(w, err.Error(), 400)
+
+			w.Write([]byte("Ok"))
+			w.WriteHeader(200)
 			return
 		}
 		request, error := http.NewRequest(u.Method, u.Url, bytes.NewReader([]byte(u.Body)))
