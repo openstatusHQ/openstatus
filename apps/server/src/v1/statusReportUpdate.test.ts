@@ -26,7 +26,7 @@ test("create one status report update ", async () => {
       status: "investigating",
       date: "2023-11-08T21:03:13.000Z",
       message: "test",
-      incident_id: 1,
+      status_report_id: 1,
     }),
   });
   expect(res.status).toBe(200);

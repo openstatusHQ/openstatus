@@ -57,7 +57,7 @@ const createStatusReportUpdateSchema = z.object({
 });
 const getUpdateRoute = createRoute({
   method: "get",
-  tags: ["status_update"],
+  tags: ["status_report_update"],
   path: "/:id",
   request: {
     params: ParamsSelectSchema,
@@ -114,7 +114,7 @@ statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
 
 const createStatusUpdate = createRoute({
   method: "post",
-  tags: ["status_update"],
+  tags: ["status_report_update"],
   path: "/",
   request: {
     body: {

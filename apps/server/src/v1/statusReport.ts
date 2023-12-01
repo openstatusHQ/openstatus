@@ -51,7 +51,7 @@ const statusSchema = z.object({
 
 const statusReportExtendedSchema = statusSchema.extend({
   id: z.number().openapi({ description: "The id of the status report" }),
-  status_updates: z
+  status_report_updates: z
     .array(z.number())
     .openapi({
       description: "The ids of the status report updates",
@@ -98,7 +98,7 @@ statusReportApi.openapi(getAllRoute, async (c) => {
   const data = z.array(statusReportExtendedSchema).parse(
     _statusReports.map((statusReport) => ({
       ...statusReport,
-      status_updates: statusReport.statusReportUpdates.map(
+      status_report_updates: statusReport.statusReportUpdates.map(
         (statusReportUpdate) => {
           return statusReportUpdate.id;
         },

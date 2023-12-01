@@ -13,6 +13,7 @@ test("GET one status report", async () => {
     id: 1,
     status: "investigating",
     title: "Test Incident",
+    // TODO: discuss if we should return `updates` instead of `status_report_updates`
     status_report_updates: expect.any(Array),
   });
 });
