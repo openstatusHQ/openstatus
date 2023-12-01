@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -39,84 +36,78 @@ func main() {
 		}
 		i, err := strconv.Atoi(r.Header.Get("X-CloudTasks-TaskRetryCount"))
 		if err != nil {
-			http.Error(w, "Wrong", 400)
+			http.Error(w, "Something went whont", 400)
 			return
 		}
+		//  If something went wrong we only try it twice
 		if i > 1 {
-			http.Error(w, "Wrong", 200)
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Ok"))
 			return
 		}
-		region := os.Getenv("FLY_REGION")
+
 		if r.Body == nil {
 			http.Error(w, "Please send a request body", 400)
 			return
 		}
 		var u InputData
+		region := os.Getenv("FLY_REGION")
 
 		err = json.NewDecoder(r.Body).Decode(&u)
 
-		fmt.Printf("Start checker for   %+v \n", u)
+		fmt.Printf("🚀 Start checker for  %+v \n", u)
 
 		if err != nil {
-
 			w.Write([]byte("Ok"))
 			w.WriteHeader(200)
 			return
 		}
-		request, error := http.NewRequest(u.Method, u.Url, bytes.NewReader([]byte(u.Body)))
-
-		// Setting headers
-		for _, header := range u.Headers {
-			fmt.Printf("%+v", header)
-			if header.Key != "" && header.Value != "" {
-				request.Header.Set(header.Key, header.Value)
-			}
-		}
-		if error != nil {
-			fmt.Println(error)
-		}
 
 		client := &http.Client{}
-		start := time.Now()
-		response, error := client.Do(request)
-		latency := time.Since(start).Milliseconds()
+		defer client.CloseIdleConnections()
+
+		response, error := ping(client, u)
+
 		if error != nil {
-			fmt.Println("Error")
-			fmt.Println(error.Error())
-			tiny((PingData{
-				Latency:       (latency),
-				MonitorId:     u.MonitorId,
-				Region:        region,
-				WorkspaceId:   u.WorkspaceId,
-				Timestamp:     time.Now().UTC().UnixMilli(),
-				Url:           u.Url,
-				Message:       error.Error(),
-				CronTimestamp: u.CronTimestamp,
-			}))
+			sendToTinybird(response)
+			if u.Status == "active" {
+				updateStatus(UpdateData{
+					MonitorId: u.MonitorId,
+					Status:    "error",
+					Message:   error.Error(),
+					Region:    region,
+				})
+			}
+			w.Write([]byte("Ok"))
+			w.WriteHeader(200)
+			return
 		}
 
-		defer response.Body.Close()
+		sendToTinybird(response)
 
-		_, err = io.ReadAll(response.Body)
-
-		fmt.Println("🚀 Checked url:", u.Url, " with latency", latency, " in region", region)
-		{
-			tiny((PingData{
-				Latency:       (latency),
-				MonitorId:     u.MonitorId,
-				Region:        region,
-				WorkspaceId:   u.WorkspaceId,
-				StatusCode:    int16(response.StatusCode),
-				Timestamp:     time.Now().UTC().UnixMilli(),
-				Url:           u.Url,
-				CronTimestamp: u.CronTimestamp,
-			}))
+		if response.StatusCode < 200 || response.StatusCode >= 300 {
+			// If the status code is not within the 200 range, we update the status to error
+			updateStatus(UpdateData{
+				MonitorId:  u.MonitorId,
+				Status:     "error",
+				StatusCode: response.StatusCode,
+				Region:     region,
+			})
+		}
+		if u.Status == "error" {
+			// If the status was error, we update it to active
+			updateStatus(UpdateData{
+				MonitorId:  u.MonitorId,
+				Status:     "active",
+				Region:     region,
+				StatusCode: response.StatusCode,
+			})
 		}
 
-		fmt.Printf("End checker for %+v", u)
-
+		fmt.Printf("⏱️ End checker for %+v with latency %+d and statusCode %+d", u, response.Latency, response.StatusCode)
 		w.Write([]byte("Ok"))
 		w.WriteHeader(200)
+		return
 	})
 
 	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -129,8 +120,9 @@ func main() {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(data)
+		return
 	})
 
 	http.ListenAndServe(":8080", r)

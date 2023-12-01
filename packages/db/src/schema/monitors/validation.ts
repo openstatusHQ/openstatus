@@ -2,6 +2,7 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
 import {
+  flyRegions,
   monitorJobTypes,
   monitorMethods,
   monitorPeriodicity,
@@ -15,6 +16,7 @@ export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
+export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 // TODO: shared function
 function stringToArrayProcess<T>(string: T) {}
@@ -79,4 +81,5 @@ export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
 export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
+export type MonitorFlyRegion = z.infer<typeof monitorFlyRegionSchema>;
 export type MonitorJobType = z.infer<typeof monitorJobTypesSchema>;
