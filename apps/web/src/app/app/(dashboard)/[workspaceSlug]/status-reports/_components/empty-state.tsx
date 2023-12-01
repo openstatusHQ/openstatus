@@ -12,7 +12,7 @@ export function EmptyState() {
       description="Create your first incident"
       action={
         <Button asChild>
-          <Link href="./status/edit">Create</Link>
+          <Link href="./status-reports/edit">Create</Link>
         </Button>
       }
     />
