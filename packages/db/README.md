@@ -9,7 +9,7 @@ user/page/monitor settings. The timeseries data is stored in a
 Install the [Turso CLI](https://docs.turso.tech/reference/turso-cli).
 
 For local environment, first
-[install sqld](https://github.com/libsql/sqld/blob/main/docs/BUILD-RUN.md).
+[install sqld](https://github.com/tursodatabase/libsql/blob/main/docs/BUILD-RUN.md).
 
 When installing with Homebrew, follow:
 
