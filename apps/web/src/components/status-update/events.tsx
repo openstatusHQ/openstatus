@@ -14,11 +14,11 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { DeleteIncidentUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
-import { DeleteIncidentUpdateButtonIcon } from "../../app/app/(dashboard)/[workspaceSlug]/status/_components/delete-status-update";
 
 type StatusReportUpdateProps = z.infer<typeof selectStatusReportUpdateSchema>;
 

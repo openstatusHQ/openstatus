@@ -28,15 +28,17 @@ const check = cva("border-border rounded-full border p-2", {
 });
 
 export async function StatusCheck({
-  incidents,
+  statusReports,
   monitors,
 }: {
-  incidents: z.infer<typeof selectStatusReportPageSchema>;
+  statusReports: z.infer<typeof selectStatusReportPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
-  const isIncident = incidents.some(
+  const isIncident = statusReports.some(
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
+
+  console.log({ statusReports, monitors });
 
   const monitorsData = (
     await Promise.all(

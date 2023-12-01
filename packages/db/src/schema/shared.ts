@@ -7,12 +7,14 @@ import {
   selectStatusReportUpdateSchema,
 } from "./status_reports";
 
+// FIXME: delete this file!
+
 export const selectStatusReportPageSchema = z.array(
   selectStatusReportSchema.extend({
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
-    monitorsToStatusReport: z.array(
-      z.object({ monitorId: z.number(), statusReportId: z.number() }),
-    ),
+    statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
+    monitorsToStatusReport: z
+      .array(z.object({ monitorId: z.number(), statusReportId: z.number() }))
+      .default([]),
   }),
 );
 export const selectPageSchemaWithRelation = selectPageSchema.extend({

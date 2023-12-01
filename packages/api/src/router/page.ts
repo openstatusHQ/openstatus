@@ -74,7 +74,6 @@ export const pageRouter = createTRPCRouter({
         ),
         with: {
           monitorsToPages: { with: { monitor: true } },
-          // incidents: true
         },
       });
     }),
@@ -210,7 +209,7 @@ export const pageRouter = createTRPCRouter({
               with: {
                 statusReportUpdates: true,
                 monitorsToStatusReports: true,
-                pagesToStatusReport: true,
+                pagesToStatusReports: true,
               },
             })
           : [];
@@ -225,6 +224,14 @@ export const pageRouter = createTRPCRouter({
               )
               .all()
           : [];
+
+      console.log({
+        result,
+        monitors,
+        statusReports,
+        monitorsToStatusReportResult,
+        statusReportsToPagesResult,
+      });
 
       return selectPublicPageSchemaWithRelation.parse({
         ...result,

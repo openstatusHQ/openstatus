@@ -10,7 +10,7 @@ import {
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
 
-const statusUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
+const statusReportUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
 
 const ParamsSelectSchema = z.object({
   id: z
@@ -41,8 +41,8 @@ export const statusUpdateSchema = z.object({
   }),
 });
 
-const createIncidentUpdateSchema = z.object({
-  incident_id: z.number().openapi({
+const createStatusReportUpdateSchema = z.object({
+  status_report_id: z.number().openapi({
     description: "The id of the incident",
   }),
   status: z.enum(statusReportStatus).openapi({
@@ -69,7 +69,7 @@ const getUpdateRoute = createRoute({
           schema: statusUpdateSchema,
         },
       },
-      description: "Get all incidents",
+      description: "Get all status report updates",
     },
     400: {
       content: {
@@ -82,7 +82,7 @@ const getUpdateRoute = createRoute({
   },
 });
 
-statusUpdateApi.openapi(getUpdateRoute, async (c) => {
+statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
@@ -94,7 +94,7 @@ statusUpdateApi.openapi(getUpdateRoute, async (c) => {
 
   if (!update) return c.jsonT({ code: 404, message: "Not Found" });
 
-  const currentIncident = await db
+  const currentStatusReport = await db
     .select()
     .from(statusReport)
     .where(
@@ -104,7 +104,7 @@ statusUpdateApi.openapi(getUpdateRoute, async (c) => {
       ),
     )
     .get();
-  if (!currentIncident)
+  if (!currentStatusReport)
     return c.jsonT({ code: 401, message: "Not Authorized" });
 
   const data = statusUpdateSchema.parse(update);
@@ -118,10 +118,10 @@ const createStatusUpdate = createRoute({
   path: "/",
   request: {
     body: {
-      description: "the incident update",
+      description: "the status report update",
       content: {
         "application/json": {
-          schema: createIncidentUpdateSchema,
+          schema: createStatusReportUpdateSchema,
         },
       },
     },
@@ -133,7 +133,7 @@ const createStatusUpdate = createRoute({
           schema: statusUpdateSchema,
         },
       },
-      description: "Get all incidents",
+      description: "Get all status report updates",
     },
     400: {
       content: {
@@ -146,21 +146,21 @@ const createStatusUpdate = createRoute({
   },
 });
 
-statusUpdateApi.openapi(createStatusUpdate, async (c) => {
+statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const input = c.req.valid("json");
 
-  const currentIncident = await db
+  const _currentStatusReport = await db
     .select()
     .from(statusReport)
     .where(
       and(
-        eq(statusReport.id, input.incident_id),
+        eq(statusReport.id, input.status_report_id),
         eq(statusReport.workspaceId, workspaceId),
       ),
     )
     .get();
-  if (!currentIncident)
+  if (!_currentStatusReport)
     return c.jsonT({ code: 401, message: "Not Authorized" });
 
   const res = await db
@@ -168,7 +168,7 @@ statusUpdateApi.openapi(createStatusUpdate, async (c) => {
     .values({
       ...input,
       date: new Date(input.date),
-      statusReportId: input.incident_id,
+      statusReportId: input.status_report_id,
     })
     .returning()
     .get();
@@ -177,4 +177,4 @@ statusUpdateApi.openapi(createStatusUpdate, async (c) => {
   return c.jsonT(data);
 });
 
-export { statusUpdateApi };
+export { statusReportUpdateApi };

@@ -19,6 +19,7 @@ export default async function Page() {
         <Example />
         <Cards {...cardConfig.monitors} />
         <Stats />
+        {/* TODO: rename to `reports` */}
         <Cards {...cardConfig.incidents} />
         <Partners />
         <Cards {...cardConfig.pages} />

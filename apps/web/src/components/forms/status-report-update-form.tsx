@@ -42,7 +42,10 @@ interface Props {
   statusReportId: number;
 }
 
-export function StatusUpdateForm({ defaultValues, statusReportId }: Props) {
+export function StatusReportUpdateForm({
+  defaultValues,
+  statusReportId,
+}: Props) {
   const form = useForm<InsertStatusReportUpdate>({
     resolver: zodResolver(insertStatusReportUpdateSchema),
     defaultValues: {

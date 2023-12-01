@@ -54,7 +54,7 @@ export const StatusReportRelations = relations(
   statusReport,
   ({ one, many }) => ({
     monitorsToStatusReports: many(monitorsToStatusReport),
-    pagesToStatusReport: many(pagesToStatusReports),
+    pagesToStatusReports: many(pagesToStatusReports),
     statusReportUpdates: many(statusReportUpdate),
     workspace: one(workspace, {
       fields: [statusReport.workspaceId],

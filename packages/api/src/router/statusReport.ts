@@ -20,14 +20,14 @@ export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { id, monitors, pages, date, message, ...incidentInput } =
+      const { id, monitors, pages, date, message, ...statusReportInput } =
         opts.input;
 
       const newStatusReport = await opts.ctx.db
         .insert(statusReport)
         .values({
           workspaceId: opts.ctx.workspace.id,
-          ...incidentInput,
+          ...statusReportInput,
         })
         .returning()
         .get();
@@ -64,7 +64,7 @@ export const statusReportRouter = createTRPCRouter({
   createStatusReportUpdate: protectedProcedure
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
-      // update parent incident with latest status
+      // update parent status report with latest status
       await opts.ctx.db
         .update(statusReport)
         .set({ status: opts.input.status, updatedAt: new Date() })
@@ -77,10 +77,10 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const { id, ...incidentUpdateInput } = opts.input;
+      const { id, ...statusReportUpdateInput } = opts.input;
       return await opts.ctx.db
         .insert(statusReportUpdate)
-        .values(incidentUpdateInput)
+        .values(statusReportUpdateInput)
         .returning()
         .get();
     }),
@@ -88,25 +88,27 @@ export const statusReportRouter = createTRPCRouter({
   updateStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { monitors, pages, ...incidentInput } = opts.input;
+      const { monitors, pages, ...statusReportInput } = opts.input;
 
-      if (!incidentInput.id) return;
+      if (!statusReportInput.id) return;
 
-      const { title, status } = incidentInput;
+      console.log({ pages });
+
+      const { title, status } = statusReportInput;
 
       const currentStatusReport = await opts.ctx.db
         .update(statusReport)
         .set({ title, status, updatedAt: new Date() })
         .where(
           and(
-            eq(statusReport.id, incidentInput.id),
+            eq(statusReport.id, statusReportInput.id),
             eq(statusReport.workspaceId, opts.ctx.workspace.id),
           ),
         )
         .returning()
         .get();
 
-      const currentMonitorToIncidents = await opts.ctx.db
+      const currentMonitorsToStatusReport = await opts.ctx.db
         .select()
         .from(monitorsToStatusReport)
         .where(
@@ -116,7 +118,7 @@ export const statusReportRouter = createTRPCRouter({
 
       const addedMonitors = monitors.filter(
         (x) =>
-          !currentMonitorToIncidents
+          !currentMonitorsToStatusReport
             .map(({ monitorId }) => monitorId)
             .includes(x),
       );
@@ -130,7 +132,7 @@ export const statusReportRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToStatusReport).values(values).run();
       }
 
-      const removedMonitors = currentMonitorToIncidents
+      const removedMonitors = currentMonitorsToStatusReport
         .map(({ monitorId }) => monitorId)
         .filter((x) => !monitors?.includes(x));
 
@@ -146,7 +148,7 @@ export const statusReportRouter = createTRPCRouter({
           .run();
       }
 
-      const currentPagesToIncidents = await opts.ctx.db
+      const currentPagesToStatusReports = await opts.ctx.db
         .select()
         .from(pagesToStatusReports)
         .where(eq(pagesToStatusReports.statusReportId, currentStatusReport.id))
@@ -154,7 +156,7 @@ export const statusReportRouter = createTRPCRouter({
 
       const addedPages = pages?.filter(
         (x) =>
-          !currentPagesToIncidents.map(({ pageId }) => pageId)?.includes(x),
+          !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
       );
 
       if (Boolean(addedPages.length)) {
@@ -166,9 +168,16 @@ export const statusReportRouter = createTRPCRouter({
         await opts.ctx.db.insert(pagesToStatusReports).values(values).run();
       }
 
-      const removedPages = currentPagesToIncidents
+      const removedPages = currentPagesToStatusReports
         .map(({ pageId }) => pageId)
         .filter((x) => !pages?.includes(x));
+
+      console.log({
+        currentPagesToStatusReports,
+        removedPages,
+        pages,
+        addedPages,
+      });
 
       if (Boolean(removedPages.length)) {
         await opts.ctx.db
@@ -188,24 +197,24 @@ export const statusReportRouter = createTRPCRouter({
   updateStatusReportUpdate: protectedProcedure
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
-      const incidentUpdateInput = opts.input;
+      const statusReportUpdateInput = opts.input;
 
-      if (!incidentUpdateInput.id) return;
+      if (!statusReportUpdateInput.id) return;
 
-      const currentIncident = await opts.ctx.db
+      const currentStatusReportUpdate = await opts.ctx.db
         .update(statusReportUpdate)
-        .set(incidentUpdateInput)
-        .where(eq(statusReportUpdate.id, incidentUpdateInput.id))
+        .set(statusReportUpdateInput)
+        .where(eq(statusReportUpdate.id, statusReportUpdateInput.id))
         .returning()
         .get();
 
-      return currentIncident;
+      return currentStatusReportUpdate;
     }),
 
   deleteStatusReport: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const incidentToDelete = await opts.ctx.db
+      const statusReportToDelete = await opts.ctx.db
         .select()
         .from(statusReport)
         .where(
@@ -215,26 +224,24 @@ export const statusReportRouter = createTRPCRouter({
           ),
         )
         .get();
-      if (!incidentToDelete) return;
+      if (!statusReportToDelete) return;
 
       await opts.ctx.db
         .delete(statusReport)
-        .where(eq(statusReport.id, incidentToDelete.id))
+        .where(eq(statusReport.id, statusReportToDelete.id))
         .run();
     }),
 
   deleteStatusReportUpdate: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
-      const incidentUpdateToDelete = await opts.ctx.db
+      const statusReportUpdateToDelete = await opts.ctx.db
         .select()
         .from(statusReportUpdate)
         .where(and(eq(statusReportUpdate.id, opts.input.id)))
-        // FIXME: check if incident related to workspaceId
-        // .innerJoin(incident, inArray(incident.workspaceId, workspaceIds))
         .get();
 
-      if (!incidentUpdateToDelete) return;
+      if (!statusReportUpdateToDelete) return;
 
       await opts.ctx.db
         .delete(statusReportUpdate)
@@ -256,7 +263,7 @@ export const statusReportRouter = createTRPCRouter({
           pagesToStatusReports: z
             .array(z.object({ statusReportId: z.number(), pageId: z.number() }))
             .default([]),
-          statusUpdates: z.array(selectStatusReportUpdateSchema),
+          statusReportUpdates: z.array(selectStatusReportUpdateSchema),
           date: z.date().default(new Date()),
         });
 
@@ -267,7 +274,7 @@ export const statusReportRouter = createTRPCRouter({
         ),
         with: {
           monitorsToStatusReports: true,
-          pagesToStatusReport: true,
+          pagesToStatusReports: true,
           statusReportUpdates: {
             orderBy: (statusReportUpdate, { desc }) => [
               desc(statusReportUpdate.createdAt),
