@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
   monitor,
   monitorsToPages,
@@ -37,18 +37,17 @@ status.get("/:slug", async (c) => {
 
   const cache = await redis.get(slug);
 
-  // if (cache) {
-  //   setMetric(c, "OpenStatus-Cache", "HIT");
-
-  //   return c.json({ status: cache });
-  // }
+  if (cache) {
+    setMetric(c, "OpenStatus-Cache", "HIT");
+    return c.json({ status: cache });
+  }
 
   startTime(c, "database");
 
   const monitorData = await db
     .select()
     .from(monitorsToPages)
-    .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+    .leftJoin(monitor, and(eq(monitorsToPages.monitorId, monitor.id)))
     .leftJoin(
       monitorsToStatusReport,
       eq(monitor.id, monitorsToStatusReport.monitorId),
@@ -58,7 +57,7 @@ status.get("/:slug", async (c) => {
       eq(monitorsToStatusReport.statusReportId, statusReport.id),
     )
     .leftJoin(page, eq(monitorsToPages.pageId, page.id))
-    .where(eq(page.slug, slug))
+    .where(eq(page.slug, slug)) // TODO: query only active monitors
     .all();
 
   const pageStatusReportData = await db
@@ -88,7 +87,7 @@ status.get("/:slug", async (c) => {
     }),
   );
   endTime(c, "clickhouse");
-  // { ok, count }
+
   const data = lastMonitorPings.reduce(
     (prev, curr) => {
       if (curr.status === "fulfilled") {

@@ -168,11 +168,15 @@ export const pageRouter = createTRPCRouter({
       const monitorsToPagesResult = await opts.ctx.db
         .select()
         .from(monitorsToPages)
-        .where(eq(monitorsToPages.pageId, result.id))
+        .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+        .where(
+          // make sur only active monitors are returned!
+          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true)),
+        )
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitorId }) => monitorId,
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
       const monitorsToStatusReportResult =
@@ -214,6 +218,7 @@ export const pageRouter = createTRPCRouter({
             })
           : [];
 
+      // TODO: monitorsToPagesResult has the result already, no need to query again
       const monitors =
         monitorsId.length > 0
           ? await opts.ctx.db
@@ -224,14 +229,6 @@ export const pageRouter = createTRPCRouter({
               )
               .all()
           : [];
-
-      console.log({
-        result,
-        monitors,
-        statusReports,
-        monitorsToStatusReportResult,
-        statusReportsToPagesResult,
-      });
 
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
