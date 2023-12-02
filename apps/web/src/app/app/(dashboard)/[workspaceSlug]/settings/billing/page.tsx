@@ -6,9 +6,6 @@ import { SettingsPlan } from "./_components/plan";
 
 export default async function BillingPage() {
   const data = await api.workspace.getWorkspace.query();
-
-  if (!data) return <>Workspace not found</>;
-
   return (
     <>
       <h3 className="text-lg font-medium">Plans</h3>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
@@ -10,8 +9,6 @@ import { api } from "@/trpc/server";
 export default async function TeamPage() {
   const workspace = await api.workspace.getWorkspace.query();
   const users = await api.workspace.getWorkspaceUsers.query();
-
-  console.log(users);
 
   return (
     <div className="flex flex-col gap-4">
