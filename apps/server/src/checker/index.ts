@@ -119,7 +119,7 @@ checkerRoute.post("/checkerV2", async (c) => {
   }
 });
 
-checkerRoute.post("/statusChange", async (c) => {
+checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
   if (auth !== `Basic ${env.CRON_SECRET}`) {
     console.error("Unauthorized");
