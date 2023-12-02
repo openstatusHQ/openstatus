@@ -43,6 +43,26 @@ func sendToTinybird(pingData PingData) {
 
 }
 
+func sendToTinybirdNew(pingData PingData) {
+	url := "https://api.tinybird.co/v0/events?name=ping_response__v5"
+	fmt.Printf("📈  Sending data to Tinybird for %+v \n", pingData)
+	bearer := "Bearer " + os.Getenv("TINYBIRD_TOKEN")
+	payloadBuf := new(bytes.Buffer)
+	json.NewEncoder(payloadBuf).Encode(pingData)
+	req, err := http.NewRequest("POST", url, payloadBuf)
+	req.Header.Set("Authorization", bearer)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: time.Second * 10}
+	_, err = client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		panic(err)
+	}
+	// Should we add a retry mechanism here?
+
+}
+
 func ping(client *http.Client, inputData InputData) (PingData, error) {
 
 	region := os.Getenv("FLY_REGION")
