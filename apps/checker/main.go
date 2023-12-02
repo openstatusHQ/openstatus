@@ -132,7 +132,7 @@ func main() {
 			return
 		}
 		var u InputData
-		// region := os.Getenv("FLY_REGION")
+		region := os.Getenv("FLY_REGION")
 
 		err = json.NewDecoder(r.Body).Decode(&u)
 
@@ -152,12 +152,12 @@ func main() {
 		if error != nil {
 			sendToTinybirdNew(response)
 			if u.Status == "active" {
-				// updateStatus(UpdateData{
-				// 	MonitorId: u.MonitorId,
-				// 	Status:    "error",
-				// 	Message:   error.Error(),
-				// 	Region:    region,
-				// })
+				updateStatus(UpdateData{
+					MonitorId: u.MonitorId,
+					Status:    "error",
+					Message:   error.Error(),
+					Region:    region,
+				})
 			}
 			w.Write([]byte("Ok"))
 			w.WriteHeader(200)
@@ -168,21 +168,21 @@ func main() {
 
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
 			// If the status code is not within the 200 range, we update the status to error
-			// updateStatus(UpdateData{
-			// 	MonitorId:  u.MonitorId,
-			// 	Status:     "error",
-			// 	StatusCode: response.StatusCode,
-			// 	Region:     region,
-			// })
+			updateStatus(UpdateData{
+				MonitorId:  u.MonitorId,
+				Status:     "error",
+				StatusCode: response.StatusCode,
+				Region:     region,
+			})
 		}
 		if u.Status == "error" {
 			// If the status was error, we update it to active
-			// updateStatus(UpdateData{
-			// 	MonitorId:  u.MonitorId,
-			// 	Status:     "active",
-			// 	Region:     region,
-			// 	StatusCode: response.StatusCode,
-			// })
+			updateStatus(UpdateData{
+				MonitorId:  u.MonitorId,
+				Status:     "active",
+				Region:     region,
+				StatusCode: response.StatusCode,
+			})
 		}
 
 		fmt.Printf("⏱️ End checker for %+v with latency %+d and statusCode %+d", u, response.Latency, response.StatusCode)

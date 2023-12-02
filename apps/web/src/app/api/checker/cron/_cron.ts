@@ -80,18 +80,18 @@ export const cron = async ({
           "active",
       };
 
-      const task: google.cloud.tasks.v2beta3.ITask = {
-        httpRequest: {
-          headers: {
-            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-            ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
-            Authorization: `Basic ${env.CRON_SECRET}`,
-          },
-          httpMethod: "POST",
-          url: "https://api.openstatus.dev/checkerV2",
-          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
-        },
-      };
+      // const task: google.cloud.tasks.v2beta3.ITask = {
+      //   httpRequest: {
+      //     headers: {
+      //       "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+      //       ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
+      //       Authorization: `Basic ${env.CRON_SECRET}`,
+      //     },
+      //     httpMethod: "POST",
+      //     url: "https://api.openstatus.dev/checkerV2",
+      //     body: Buffer.from(JSON.stringify(payload)).toString("base64"),
+      //   },
+      // };
       const newTask: google.cloud.tasks.v2beta3.ITask = {
         httpRequest: {
           headers: {
@@ -100,16 +100,16 @@ export const cron = async ({
             Authorization: `Basic ${env.CRON_SECRET}`,
           },
           httpMethod: "POST",
-          url: "https://openstatus-checker.fly.dev",
+          url: "https://openstatus-checker.fly.dev/checker",
           body: Buffer.from(JSON.stringify(payload)).toString("base64"),
         },
       };
 
-      const request = { parent: parent, task: task };
+      // const request = { parent: parent, task: task };
+      // const [response] = await client.createTask(request);
+      const request = { parent: parent, task: newTask };
       const [response] = await client.createTask(request);
-      const requestNew = { parent: parent, task: newTask };
-      const [responseNew] = await client.createTask(requestNew);
-      allResult.push(response, responseNew);
+      allResult.push(response);
     }
   }
   await Promise.all(allResult);
