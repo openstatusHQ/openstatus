@@ -20,11 +20,11 @@ type UpdateData struct {
 func updateStatus(updateData UpdateData) {
 	url := "https://openstatus-api.fly.dev/updateStatus"
 	fmt.Println("URL:>", url)
-	bearer := "Bearer " + os.Getenv("CRON_SECRET")
+	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(updateData)
 	req, err := http.NewRequest("POST", url, payloadBuf)
-	req.Header.Set("Authorization", bearer)
+	req.Header.Set("Authorization", basic)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: time.Second * 10}
