@@ -1,12 +1,14 @@
 import { db, eq, schema } from "@openstatus/db";
-import type { MonitorRegion, MonitorStatus } from "@openstatus/db/src/schema";
+import type {
+  MonitorFlyRegion,
+  MonitorStatus,
+} from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { flyRegionsDict } from "@openstatus/utils";
 
-import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
@@ -58,11 +60,12 @@ export const triggerAlerting = async ({
 export const upsertMonitorStatus = async ({
   monitorId,
   status,
+  region,
 }: {
   monitorId: string;
   status: MonitorStatus;
+  region: MonitorFlyRegion;
 }) => {
-  const region = env.FLY_REGION as MonitorRegion;
   await db
     .insert(schema.monitorStatusTable)
     .values({ status, region, monitorId: Number(monitorId) })

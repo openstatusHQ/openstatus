@@ -1,6 +1,11 @@
 import { Hono } from "hono";
+import { z } from "zod";
+
+import { flyRegions } from "@openstatus/db/src/schema/monitors/constants";
 
 import { env } from "../env";
+import { checkerAudit } from "../utils/audit-log";
+import { upsertMonitorStatus } from "./alerting";
 import { checkerRetryPolicy } from "./checker";
 import { payloadSchema } from "./schema";
 import type { Payload } from "./schema";
@@ -112,4 +117,68 @@ checkerRoute.post("/checkerV2", async (c) => {
     );
     return c.text("Internal Server Error", 500);
   }
+});
+
+checkerRoute.post("/statusChange", async (c) => {
+  const auth = c.req.header("Authorization");
+  if (auth !== `Basic ${env.CRON_SECRET}`) {
+    console.error("Unauthorized");
+    return c.text("Unauthorized", 401);
+  }
+
+  const json = await c.req.json();
+  const schema = z.object({
+    monitorId: z.string(),
+    status: z.enum(["active", "error"]), // that's the new status
+    message: z.string().optional(),
+    statusCode: z.number().optional(),
+    region: z.enum(flyRegions),
+  });
+
+  const result = schema.safeParse(json);
+  if (!result.success) {
+    // console.error(result.error);
+    return c.text("Unprocessable Entity", 422);
+  }
+  const { monitorId, status, message, region, statusCode } = result.data;
+
+  console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
+
+  switch (status) {
+    case "active":
+      await upsertMonitorStatus({
+        monitorId: monitorId,
+        status: "active",
+        region: region,
+      });
+      if (!statusCode) {
+        return;
+      }
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.recovered",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: { region: region, statusCode: statusCode },
+      });
+      break;
+    case "error":
+      await upsertMonitorStatus({
+        monitorId: monitorId,
+        status: "error",
+        region: region,
+      });
+      // ALPHA
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.failed",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: {
+          region: region,
+          statusCode: statusCode,
+          message,
+        },
+      });
+      break;
+  }
+  return c.text("Ok", 200);
 });
