@@ -6,7 +6,7 @@ import { Container } from "@/components/dashboard/container";
 import { env } from "@/env";
 import { formatDate } from "@/lib/utils";
 import { CreateForm } from "./create-form";
-import { RevokeButton } from "./revoke-button.tsx";
+import { RevokeButton } from "./revoke-button";
 
 const unkey = new Unkey({ token: env.UNKEY_TOKEN });
 

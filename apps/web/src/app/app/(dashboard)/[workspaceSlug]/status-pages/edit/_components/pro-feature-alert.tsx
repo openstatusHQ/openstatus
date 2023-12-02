@@ -12,7 +12,7 @@ export function ProFeatureAlert() {
         If you want to use your own domain, please upgrade to the Pro plan. Go
         to{" "}
         <Link
-          href="../settings"
+          href="../settings/billing"
           className="text-foreground inline-flex items-center font-medium underline underline-offset-4 hover:no-underline"
         >
           settings

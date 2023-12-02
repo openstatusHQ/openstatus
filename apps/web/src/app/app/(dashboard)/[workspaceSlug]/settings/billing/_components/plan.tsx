@@ -2,7 +2,6 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { z } from "zod";
 
 import type { Workspace } from "@openstatus/db/src/schema";
 
@@ -13,13 +12,7 @@ import { plansConfig } from "@/config/plans";
 import { getStripe } from "@/lib/stripe/client";
 import { api } from "@/trpc/client";
 
-export const SettingsPlan = ({
-  workspaceSlug,
-  workspaceData,
-}: {
-  workspaceSlug: string;
-  workspaceData: Workspace;
-}) => {
+export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isPortalPending, startPortalTransition] = useTransition();
@@ -27,7 +20,7 @@ export const SettingsPlan = ({
   const getCheckoutSession = () => {
     startTransition(async () => {
       const result = await api.stripeRouter.getCheckoutSession.mutate({
-        workspaceSlug,
+        workspaceSlug: workspace.slug,
       });
       if (!result) return;
 
@@ -39,7 +32,7 @@ export const SettingsPlan = ({
   const getUserCustomerPortal = () => {
     startPortalTransition(async () => {
       const url = await api.stripeRouter.getUserCustomerPortal.mutate({
-        workspaceSlug,
+        workspaceSlug: workspace.slug,
       });
       if (!url) return;
       router.push(url);
@@ -52,7 +45,7 @@ export const SettingsPlan = ({
       ...plansConfig.free,
       loading: isPortalPending,
       action: {
-        text: workspaceData?.plan === "free" ? "Current plan" : "Downgrade",
+        text: workspace?.plan === "free" ? "Current plan" : "Downgrade",
         onClick: async () => {
           await getUserCustomerPortal();
         },
@@ -62,7 +55,7 @@ export const SettingsPlan = ({
       ...plansConfig.pro,
       loading: isPending,
       action: {
-        text: workspaceData?.plan === "free" ? "Upgrade" : "Current plan",
+        text: workspace?.plan === "free" ? "Upgrade" : "Current plan",
         onClick: async () => {
           await getCheckoutSession();
         },
