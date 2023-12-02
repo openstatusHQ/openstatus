@@ -38,8 +38,6 @@ export async function StatusCheck({
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
 
-  console.log({ statusReports, monitors });
-
   const monitorsData = (
     await Promise.all(
       monitors.map((monitor) => {

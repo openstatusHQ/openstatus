@@ -43,7 +43,7 @@ export const statusUpdateSchema = z.object({
 
 const createStatusReportUpdateSchema = z.object({
   status_report_id: z.number().openapi({
-    description: "The id of the incident",
+    description: "The id of the status report",
   }),
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",

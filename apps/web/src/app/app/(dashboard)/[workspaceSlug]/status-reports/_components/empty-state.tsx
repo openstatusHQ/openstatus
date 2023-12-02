@@ -8,8 +8,8 @@ export function EmptyState() {
   return (
     <DefaultEmptyState
       icon="siren"
-      title="No incidents"
-      description="Create your first incident"
+      title="No status reports"
+      description="Create your first status report"
       action={
         <Button asChild>
           <Link href="./status-reports/edit">Create</Link>

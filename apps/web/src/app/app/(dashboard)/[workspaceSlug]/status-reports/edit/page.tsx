@@ -40,8 +40,8 @@ export default async function EditPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
-        title="Incident"
-        description="Create a public report for your Incident"
+        title="Status Report"
+        description="Create a public report for your incident"
       />
       <div className="col-span-full">
         <StatusReportForm
@@ -51,7 +51,7 @@ export default async function EditPage({
             statusUpdate
               ? // TODO: we should move the mapping to the trpc layer
                 // so we don't have to do this in the UI
-                // it should be something like defaultValues={incident}
+                // it should be something like defaultValues={statusReport}
                 {
                   ...statusUpdate,
                   monitors: statusUpdate?.monitorsToStatusReports.map(

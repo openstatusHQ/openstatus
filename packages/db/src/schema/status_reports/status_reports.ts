@@ -95,7 +95,7 @@ export const monitorsToStatusReportRelations = relations(
       fields: [monitorsToStatusReport.monitorId],
       references: [monitor.id],
     }),
-    incident: one(statusReport, {
+    statusReport: one(statusReport, {
       fields: [monitorsToStatusReport.statusReportId],
       references: [statusReport.id],
     }),

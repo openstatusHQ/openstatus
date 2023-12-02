@@ -83,7 +83,6 @@ export function StatusReportForm({ defaultValues, monitors, pages }: Props) {
         if (defaultValues) {
           await api.statusReport.updateStatusReport.mutate({ ...props });
         } else {
-          // or use createIncident to create automaticaaly an IncidentUpdate?
           const { message, date, status, ...rest } = props;
           const statusReport = await api.statusReport.createStatusReport.mutate(
             {
@@ -322,7 +321,7 @@ export function StatusReportForm({ defaultValues, monitors, pages }: Props) {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
                     <p className="text-sm font-semibold leading-none">
-                      Incident Update
+                      Status Update
                     </p>
                     <p className="text-muted-foreground text-sm">
                       What is actually going wrong?

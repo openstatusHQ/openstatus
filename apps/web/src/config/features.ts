@@ -85,8 +85,8 @@ export const cardConfig = {
       },
       {
         icon: "message-circle",
-        catchline: "Inform.",
-        description: "Keep your teams and users updated with incident updates.",
+        catchline: "Status Reports.",
+        description: "Keep your teams and users updated with status updates.",
       },
       {
         icon: "zap",

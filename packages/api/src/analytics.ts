@@ -44,4 +44,4 @@ export async function trackNewNotification(
   });
 }
 
-export async function trackNewIncident() {}
+export async function trackNewStatusReport() {}

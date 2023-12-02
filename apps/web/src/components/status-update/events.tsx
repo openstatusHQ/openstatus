@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { DeleteIncidentUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/status-reports/_components/delete-status-update";
+import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
@@ -81,7 +81,7 @@ export function Events({
                   >
                     <Icons.pencil className="h-4 w-4" />
                   </Button>
-                  <DeleteIncidentUpdateButtonIcon id={update.id} />
+                  <DeleteStatusReportUpdateButtonIcon id={update.id} />
                 </div>
               ) : undefined}
               <div className="flex items-center justify-between gap-4">

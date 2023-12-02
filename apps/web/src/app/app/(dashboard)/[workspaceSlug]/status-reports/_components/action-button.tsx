@@ -6,10 +6,7 @@ import { useRouter } from "next/navigation";
 import { MoreVertical } from "lucide-react";
 import type * as z from "zod";
 
-import {
-  insertStatusReportSchema,
-  // insertIncidentUpdateSchema,
-} from "@openstatus/db/src/schema";
+import { insertStatusReportSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,7 +41,7 @@ export function ActionButton(props: Schema) {
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
-  async function deleteIncident() {
+  async function deeteStatusReport() {
     startTransition(async () => {
       try {
         if (!props.id) return;
@@ -86,7 +83,7 @@ export function ActionButton(props: Schema) {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the
-            incident.
+            status report.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -94,7 +91,7 @@ export function ActionButton(props: Schema) {
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              deleteIncident();
+              deeteStatusReport();
             }}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

@@ -37,7 +37,7 @@ export default async function EditPage({
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
       <Header
-        title="Incident Update"
+        title="Status Report Update"
         description="Create a public update for your incident"
       />
       <div className="col-span-full">

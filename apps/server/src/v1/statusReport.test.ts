@@ -12,7 +12,7 @@ test("GET one status report", async () => {
   expect(await res.json()).toMatchObject({
     id: 1,
     status: "investigating",
-    title: "Test Incident",
+    title: "Test Status Report",
     // TODO: discuss if we should return `updates` instead of `status_report_updates`
     status_report_updates: expect.any(Array),
   });
@@ -28,13 +28,13 @@ test("create one status report", async () => {
     body: JSON.stringify({
       status: "investigating",
       date: "2023-11-08T21:03:13.000Z",
-      title: "Test Incident",
+      title: "Test Status Report",
     }),
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: expect.any(Number),
     status: "investigating",
-    title: "Test Incident",
+    title: "Test Status Report",
   });
 });

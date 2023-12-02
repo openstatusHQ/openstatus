@@ -16,7 +16,7 @@ import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
 
-export default async function IncidentPage({
+export default async function StatusReportsPage({
   params,
 }: {
   params: { workspaceSlug: string };

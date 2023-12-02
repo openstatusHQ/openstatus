@@ -126,7 +126,7 @@ async function main() {
     .values({
       id: 1,
       workspaceId: 1,
-      title: "Test Incident",
+      title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
     })

@@ -36,14 +36,15 @@ status.get("/:slug", async (c) => {
   const { slug } = c.req.param();
 
   const cache = await redis.get(slug);
-  if (cache) {
-    setMetric(c, "OpenStatus-Cache", "HIT");
 
-    return c.json({ status: cache });
-  }
+  // if (cache) {
+  //   setMetric(c, "OpenStatus-Cache", "HIT");
+
+  //   return c.json({ status: cache });
+  // }
 
   startTime(c, "database");
-  // { monitors, pages, monitors_to_pages }
+
   const monitorData = await db
     .select()
     .from(monitorsToPages)
@@ -60,17 +61,18 @@ status.get("/:slug", async (c) => {
     .where(eq(page.slug, slug))
     .all();
 
-  const pageIncidentData = await db
+  const pageStatusReportData = await db
     .select()
     .from(pagesToStatusReports)
-    .leftJoin(incident, eq(pagesToStatusReports.statusReportId, incident.id))
+    .leftJoin(
+      statusReport,
+      eq(pagesToStatusReports.statusReportId, statusReport.id),
+    )
     .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
 
-  endTime(c, "database");
-
-  const isIncident = [...pageIncidentData, ...monitorData].some((data) => {
+  const isIncident = [...pageStatusReportData, ...monitorData].some((data) => {
     if (!data.status_report) return false;
     return !["monitoring", "resolved"].includes(data.status_report.status);
   });

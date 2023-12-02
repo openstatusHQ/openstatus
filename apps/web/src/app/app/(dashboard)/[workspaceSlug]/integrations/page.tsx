@@ -6,7 +6,7 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { api } from "@/trpc/server";
 
-export default async function IncidentPage({
+export default async function IntegrationPage({
   params,
 }: {
   params: { workspaceSlug: string };

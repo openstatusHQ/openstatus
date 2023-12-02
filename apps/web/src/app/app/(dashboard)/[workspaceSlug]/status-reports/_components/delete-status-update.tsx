@@ -21,7 +21,7 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
-export function DeleteIncidentUpdateButtonIcon({ id }: { id: number }) {
+export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -56,7 +56,7 @@ export function DeleteIncidentUpdateButtonIcon({ id }: { id: number }) {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the
-            monitor.
+            status report update.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
