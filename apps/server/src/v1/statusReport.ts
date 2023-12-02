@@ -2,16 +2,16 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { and, db, eq } from "@openstatus/db";
 import {
-  incident,
-  incidentStatus,
-  incidentUpdate,
+  statusReport,
+  statusReportStatus,
+  statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
-import { incidentUpdateSchema } from "./incidentUpdate";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { statusUpdateSchema } from "./statusReportUpdate";
 
-const incidentApi = new OpenAPIHono<{ Variables: Variables }>();
+const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
 
 const ParamsSchema = z.object({
   id: z
@@ -22,13 +22,13 @@ const ParamsSchema = z.object({
         name: "id",
         in: "path",
       },
-      description: "The id of the incident",
+      description: "The id of the status report",
       example: "1",
     }),
 });
 
-const createIncidentUpdateSchema = z.object({
-  status: z.enum(incidentStatus).openapi({
+const createStatusReportUpdateSchema = z.object({
+  status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
   date: z.string().openapi({
@@ -39,43 +39,39 @@ const createIncidentUpdateSchema = z.object({
   }),
 });
 
-const incidentSchema = z.object({
+const statusSchema = z.object({
   title: z.string().openapi({
     example: "Documenso",
-    description: "The title of the incident",
+    description: "The title of the status report",
   }),
-  status: z.enum(incidentStatus).openapi({
-    description: "The current status of the incident",
+  status: z.enum(statusReportStatus).openapi({
+    description: "The current status of the report",
   }),
 });
 
-const incidentResultSchema = incidentSchema.extend({
-  id: z.number().openapi({ description: "The id of the incident" }),
-});
-
-const incidentExtendedSchema = incidentSchema.extend({
-  id: z.number().openapi({ description: "The id of the incident" }),
-  incident_updates: z
+const statusReportExtendedSchema = statusSchema.extend({
+  id: z.number().openapi({ description: "The id of the status report" }),
+  status_report_updates: z
     .array(z.number())
     .openapi({
-      description: "The ids of the incident updates",
+      description: "The ids of the status report updates",
     })
     .default([]),
 });
 const getAllRoute = createRoute({
   method: "get",
-  tags: ["incident"],
-  description: "Get all incidents",
+  tags: ["status_report"],
+  description: "Get all status reports",
   path: "/",
   request: {},
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.array(incidentExtendedSchema),
+          schema: z.array(statusReportExtendedSchema),
         },
       },
-      description: "Get all incidents",
+      description: "Get all status reports",
     },
     400: {
       content: {
@@ -88,23 +84,25 @@ const getAllRoute = createRoute({
   },
 });
 
-incidentApi.openapi(getAllRoute, async (c) => {
+statusReportApi.openapi(getAllRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
-  const _incidents = await db.query.incident.findMany({
+  const _statusReports = await db.query.statusReport.findMany({
     with: {
-      incidentUpdates: true,
+      statusReportUpdates: true,
     },
-    where: eq(incident.workspaceId, workspaceId),
+    where: eq(statusReport.workspaceId, workspaceId),
   });
 
-  if (!_incidents) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReports) return c.jsonT({ code: 404, message: "Not Found" });
 
-  const data = z.array(incidentExtendedSchema).parse(
-    _incidents.map((incident) => ({
-      ...incident,
-      incident_updates: incident.incidentUpdates.map((incidentUpdate) => {
-        return incidentUpdate.id;
-      }),
+  const data = z.array(statusReportExtendedSchema).parse(
+    _statusReports.map((statusReport) => ({
+      ...statusReport,
+      status_report_updates: statusReport.statusReportUpdates.map(
+        (statusReportUpdate) => {
+          return statusReportUpdate.id;
+        },
+      ),
     })),
   );
 
@@ -113,8 +111,8 @@ incidentApi.openapi(getAllRoute, async (c) => {
 
 const getRoute = createRoute({
   method: "get",
-  tags: ["incident"],
-  description: "Get an incident",
+  tags: ["status_report"],
+  description: "Get an status report",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -123,10 +121,10 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentExtendedSchema,
+          schema: statusReportExtendedSchema,
         },
       },
-      description: "Get all incidents",
+      description: "Get all status reports",
     },
     400: {
       content: {
@@ -139,26 +137,26 @@ const getRoute = createRoute({
   },
 });
 
-incidentApi.openapi(getRoute, async (c) => {
+statusReportApi.openapi(getRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
-  const incidentId = Number(id);
-  const _incident = await db.query.incident.findFirst({
+  const statusUpdateId = Number(id);
+  const _statusUpdate = await db.query.statusReport.findFirst({
     with: {
-      incidentUpdates: true,
+      statusReportUpdates: true,
     },
     where: and(
-      eq(incident.workspaceId, workspaceId),
-      eq(incident.id, incidentId),
+      eq(statusReport.workspaceId, workspaceId),
+      eq(statusReport.id, statusUpdateId),
     ),
   });
 
-  if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
-  const data = incidentExtendedSchema.parse({
-    ..._incident,
-    incident_updates: _incident.incidentUpdates.map(
-      (incidentUpdate) => incidentUpdate.id,
+  if (!_statusUpdate) return c.jsonT({ code: 404, message: "Not Found" });
+  const data = statusReportExtendedSchema.parse({
+    ..._statusUpdate,
+    status_report_updates: _statusUpdate.statusReportUpdates.map(
+      (update) => update.id,
     ),
   });
 
@@ -167,15 +165,15 @@ incidentApi.openapi(getRoute, async (c) => {
 
 const postRoute = createRoute({
   method: "post",
-  tags: ["incident"],
-  description: "Create an incident",
+  tags: ["status_report"],
+  description: "Create an status report",
   path: "/",
   request: {
     body: {
-      description: "The incident to create",
+      description: "The status report to create",
       content: {
         "application/json": {
-          schema: incidentSchema,
+          schema: statusSchema,
         },
       },
     },
@@ -184,10 +182,10 @@ const postRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentExtendedSchema,
+          schema: statusReportExtendedSchema,
         },
       },
-      description: "Incident created",
+      description: "Status report created",
     },
     400: {
       content: {
@@ -200,12 +198,12 @@ const postRoute = createRoute({
   },
 });
 
-incidentApi.openapi(postRoute, async (c) => {
+statusReportApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
 
-  const _newIncident = await db
-    .insert(incident)
+  const _newStatusReport = await db
+    .insert(statusReport)
     .values({
       ...input,
       workspaceId: workspaceId,
@@ -213,15 +211,15 @@ incidentApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
-  const data = incidentExtendedSchema.parse(_newIncident);
+  const data = statusReportExtendedSchema.parse(_newStatusReport);
 
   return c.jsonT(data);
 });
 
 const deleteRoute = createRoute({
   method: "delete",
-  tags: ["incident"],
-  description: "Delete an incident",
+  tags: ["status_report"],
+  description: "Delete an status report",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -237,7 +235,7 @@ const deleteRoute = createRoute({
           }),
         },
       },
-      description: "Incident deleted",
+      description: "Status report deleted",
     },
     400: {
       content: {
@@ -250,38 +248,41 @@ const deleteRoute = createRoute({
   },
 });
 
-incidentApi.openapi(deleteRoute, async (c) => {
+statusReportApi.openapi(deleteRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
 
-  const incidentId = Number(id);
-  const _incident = await db
+  const statusReportId = Number(id);
+  const _statusReport = await db
     .select()
-    .from(incident)
-    .where(eq(incident.id, incidentId))
+    .from(statusReport)
+    .where(eq(statusReport.id, statusReportId))
     .get();
 
-  if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" });
 
-  if (workspaceId !== _incident.workspaceId)
+  if (workspaceId !== _statusReport.workspaceId)
     return c.jsonT({ code: 401, message: "Unauthorized" });
 
-  await db.delete(incident).where(eq(incident.id, incidentId)).run();
+  await db
+    .delete(statusReport)
+    .where(eq(statusReport.id, statusReportId))
+    .run();
   return c.jsonT({ message: "Deleted" });
 });
 
 const postRouteUpdate = createRoute({
   method: "post",
-  tags: ["incident"],
+  tags: ["status_report"],
   path: "/:id/update",
-  description: "Create an incident update",
+  description: "Create an status report update",
   request: {
     params: ParamsSchema,
     body: {
-      description: "the incident update",
+      description: "the status report update",
       content: {
         "application/json": {
-          schema: createIncidentUpdateSchema,
+          schema: createStatusReportUpdateSchema,
         },
       },
     },
@@ -290,10 +291,10 @@ const postRouteUpdate = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: incidentUpdateSchema,
+          schema: statusUpdateSchema,
         },
       },
-      description: "Incident updated",
+      description: "Status report updated",
     },
     400: {
       content: {
@@ -306,37 +307,40 @@ const postRouteUpdate = createRoute({
   },
 });
 
-incidentApi.openapi(postRouteUpdate, async (c) => {
+statusReportApi.openapi(postRouteUpdate, async (c) => {
   const input = c.req.valid("json");
   const { id } = c.req.valid("param");
   const workspaceId = Number(c.get("workspaceId"));
 
-  const incidentId = Number(id);
-  const _incident = await db
+  const statusReportId = Number(id);
+  const _statusReport = await db
     .select()
-    .from(incident)
+    .from(statusReport)
     .where(
-      and(eq(incident.id, incidentId), eq(incident.workspaceId, workspaceId)),
+      and(
+        eq(statusReport.id, statusReportId),
+        eq(statusReport.workspaceId, workspaceId),
+      ),
     )
     .get();
 
-  if (!_incident) return c.jsonT({ code: 401, message: "Not authorized" });
+  if (!_statusReport) return c.jsonT({ code: 401, message: "Not authorized" });
 
-  const _incidentUpdate = await db
-    .insert(incidentUpdate)
+  const _statusReportUpdate = await db
+    .insert(statusReportUpdate)
     .values({
       ...input,
       date: new Date(input.date),
-      incidentId: Number(id),
+      statusReportId: Number(id),
     })
     .returning()
     .get();
 
-  const data = incidentUpdateSchema.parse(_incidentUpdate);
+  const data = statusUpdateSchema.parse(_statusReportUpdate);
 
   return c.jsonT({
     ...data,
   });
 });
 
-export { incidentApi };
+export { statusReportApi };

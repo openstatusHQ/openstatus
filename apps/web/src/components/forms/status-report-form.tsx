@@ -5,11 +5,15 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { InsertIncident, Monitor, Page } from "@openstatus/db/src/schema";
 import {
-  incidentStatus,
-  incidentStatusSchema,
-  insertIncidentSchema,
+  insertStatusReportSchema,
+  statusReportStatus,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
+import type {
+  InsertStatusReport,
+  Monitor,
+  Page,
 } from "@openstatus/db/src/schema";
 import {
   Accordion,
@@ -45,14 +49,14 @@ import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 interface Props {
-  defaultValues?: InsertIncident;
+  defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
   pages?: Page[];
 }
 
-export function IncidentForm({ defaultValues, monitors, pages }: Props) {
-  const form = useForm<InsertIncident>({
-    resolver: zodResolver(insertIncidentSchema),
+export function StatusReportForm({ defaultValues, monitors, pages }: Props) {
+  const form = useForm<InsertStatusReport>({
+    resolver: zodResolver(insertStatusReportSchema),
     defaultValues: defaultValues
       ? {
           id: defaultValues.id,
@@ -73,26 +77,27 @@ export function IncidentForm({ defaultValues, monitors, pages }: Props) {
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: InsertIncident) => {
+  const onSubmit = ({ ...props }: InsertStatusReport) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.incident.updateIncident.mutate({ ...props });
+          await api.statusReport.updateStatusReport.mutate({ ...props });
         } else {
-          // or use createIncident to create automaticaaly an IncidentUpdate?
           const { message, date, status, ...rest } = props;
-          const incident = await api.incident.createIncident.mutate({
-            status,
-            message,
-            ...rest,
-          });
+          const statusReport = await api.statusReport.createStatusReport.mutate(
+            {
+              status,
+              message,
+              ...rest,
+            },
+          );
           // include update on creation
-          if (incident?.id) {
-            await api.incident.createIncidentUpdate.mutate({
+          if (statusReport?.id) {
+            await api.statusReport.createStatusReportUpdate.mutate({
               message,
               date,
               status,
-              incidentId: incident.id,
+              statusReportId: statusReport.id,
             });
           }
         }
@@ -104,7 +109,6 @@ export function IncidentForm({ defaultValues, monitors, pages }: Props) {
     });
   };
 
-  console.log(form.formState.errors);
   return (
     <Form {...form}>
       <form
@@ -146,12 +150,12 @@ export function IncidentForm({ defaultValues, monitors, pages }: Props) {
                   <FormMessage />
                   <RadioGroup
                     onValueChange={(value) =>
-                      field.onChange(incidentStatusSchema.parse(value))
+                      field.onChange(statusReportStatusSchema.parse(value))
                     } // value is a string
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                   >
-                    {incidentStatus.map((status) => {
+                    {statusReportStatus.map((status) => {
                       const { value, label, icon } = statusDict[status];
                       const Icon = Icons[icon];
                       return (
@@ -317,7 +321,7 @@ export function IncidentForm({ defaultValues, monitors, pages }: Props) {
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
                     <p className="text-sm font-semibold leading-none">
-                      Incident Update
+                      Status Update
                     </p>
                     <p className="text-muted-foreground text-sm">
                       What is actually going wrong?

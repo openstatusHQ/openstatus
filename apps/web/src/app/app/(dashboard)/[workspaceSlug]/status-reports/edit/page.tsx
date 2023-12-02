@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
-import { IncidentForm } from "@/components/forms/incident-form";
+import { StatusReportForm } from "@/components/forms/status-report-form";
 import { api } from "@/trpc/server";
 
 /**
@@ -27,8 +27,8 @@ export default async function EditPage({
 
   const { id } = search.data;
 
-  const incident = id
-    ? await api.incident.getIncidentById.query({
+  const statusUpdate = id
+    ? await api.statusReport.getStatusReportById.query({
         id,
       })
     : undefined;
@@ -39,22 +39,27 @@ export default async function EditPage({
 
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Incident" description="Upsert your incident." />
+      <Header
+        title="Status Report"
+        description="Create a public report for your incident"
+      />
       <div className="col-span-full">
-        <IncidentForm
+        <StatusReportForm
           monitors={monitors}
           pages={pages}
           defaultValues={
-            incident
+            statusUpdate
               ? // TODO: we should move the mapping to the trpc layer
                 // so we don't have to do this in the UI
-                // it should be something like defaultValues={incident}
+                // it should be something like defaultValues={statusReport}
                 {
-                  ...incident,
-                  monitors: incident?.monitorsToIncidents.map(
+                  ...statusUpdate,
+                  monitors: statusUpdate?.monitorsToStatusReports.map(
                     ({ monitorId }) => monitorId,
                   ),
-                  pages: incident?.pagesToIncidents.map(({ pageId }) => pageId),
+                  pages: statusUpdate?.pagesToStatusReports.map(
+                    ({ pageId }) => pageId,
+                  ),
                   message: "",
                 }
               : undefined

@@ -2,8 +2,8 @@ import { cva } from "class-variance-authority";
 import type { z } from "zod";
 
 import type {
-  selectIncidentsPageSchema,
   selectPublicMonitorSchema,
+  selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { getResponseListData } from "@/lib/tb";
@@ -28,13 +28,13 @@ const check = cva("border-border rounded-full border p-2", {
 });
 
 export async function StatusCheck({
-  incidents,
+  statusReports,
   monitors,
 }: {
-  incidents: z.infer<typeof selectIncidentsPageSchema>;
+  statusReports: z.infer<typeof selectStatusReportPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
 }) {
-  const isIncident = incidents.some(
+  const isIncident = statusReports.some(
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
 

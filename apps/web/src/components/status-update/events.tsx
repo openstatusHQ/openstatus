@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { format, formatDistance } from "date-fns";
 import type * as z from "zod";
 
-import type { selectIncidentUpdateSchema } from "@openstatus/db/src/schema";
+import type { selectStatusReportUpdateSchema } from "@openstatus/db/src/schema";
 import {
   Button,
   Tooltip,
@@ -14,26 +14,26 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
-import { DeleteIncidentUpdateButtonIcon } from "../../app/app/(dashboard)/[workspaceSlug]/incidents/_components/delete-incident-update";
 
-type IncidentUpdateProps = z.infer<typeof selectIncidentUpdateSchema>;
+type StatusReportUpdateProps = z.infer<typeof selectStatusReportUpdateSchema>;
 
 export function Events({
-  incidentUpdates,
+  statusReportUpdates,
   editable = false,
 }: {
-  incidentUpdates: IncidentUpdateProps[];
+  statusReportUpdates: StatusReportUpdateProps[];
   editable?: boolean;
 }) {
   const [open, toggle] = React.useReducer((open) => !open, false);
   const router = useRouter();
 
   // TODO: make it simpler..
-  const sortedArray = incidentUpdates.sort((a, b) => {
+  const sortedArray = statusReportUpdates.sort((a, b) => {
     const orderA = statusDict[a.status].order;
     const orderB = statusDict[b.status].order;
     return orderB - orderA;
@@ -75,13 +75,13 @@ export function Events({
                     className="h-7 w-7 p-0"
                     onClick={() => {
                       router.push(
-                        `./incidents/update/edit?incidentId=${update.incidentId}&id=${update.id}`,
+                        `./status-reports/update/edit?id=${update.statusReportId}&statusUpdate=${update.id}`,
                       );
                     }}
                   >
                     <Icons.pencil className="h-4 w-4" />
                   </Button>
-                  <DeleteIncidentUpdateButtonIcon id={update.id} />
+                  <DeleteStatusReportUpdateButtonIcon id={update.id} />
                 </div>
               ) : undefined}
               <div className="flex items-center justify-between gap-4">
@@ -106,7 +106,7 @@ export function Events({
         );
       })}
 
-      {incidentUpdates.length > 1 ? (
+      {statusReportUpdates.length > 1 ? (
         <div className="text-center">
           <Button variant="ghost" onClick={toggle}>
             {open ? "Close" : "More"}

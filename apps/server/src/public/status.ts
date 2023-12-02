@@ -1,14 +1,14 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import {
-  incident,
   monitor,
-  monitorsToIncidents,
   monitorsToPages,
+  monitorsToStatusReport,
   page,
-  pagesToIncidents,
+  pagesToStatusReports,
+  statusReport,
 } from "@openstatus/db/src/schema";
 import { getMonitorList, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
@@ -36,40 +36,44 @@ status.get("/:slug", async (c) => {
   const { slug } = c.req.param();
 
   const cache = await redis.get(slug);
+
   if (cache) {
     setMetric(c, "OpenStatus-Cache", "HIT");
-
     return c.json({ status: cache });
   }
 
   startTime(c, "database");
-  // { monitors, pages, monitors_to_pages }
+
   const monitorData = await db
     .select()
     .from(monitorsToPages)
-    .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+    .leftJoin(monitor, and(eq(monitorsToPages.monitorId, monitor.id)))
     .leftJoin(
-      monitorsToIncidents,
-      eq(monitor.id, monitorsToIncidents.monitorId),
+      monitorsToStatusReport,
+      eq(monitor.id, monitorsToStatusReport.monitorId),
     )
-    .leftJoin(incident, eq(monitorsToIncidents.incidentId, incident.id))
+    .leftJoin(
+      statusReport,
+      eq(monitorsToStatusReport.statusReportId, statusReport.id),
+    )
     .leftJoin(page, eq(monitorsToPages.pageId, page.id))
-    .where(eq(page.slug, slug))
+    .where(eq(page.slug, slug)) // TODO: query only active monitors
     .all();
 
-  const pageIncidentData = await db
+  const pageStatusReportData = await db
     .select()
-    .from(pagesToIncidents)
-    .leftJoin(incident, eq(pagesToIncidents.incidentId, incident.id))
-    .leftJoin(page, eq(pagesToIncidents.pageId, page.id))
+    .from(pagesToStatusReports)
+    .leftJoin(
+      statusReport,
+      eq(pagesToStatusReports.statusReportId, statusReport.id),
+    )
+    .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
     .where(eq(page.slug, slug))
     .all();
 
-  endTime(c, "database");
-
-  const isIncident = [...pageIncidentData, ...monitorData].some((data) => {
-    if (!data.incident) return false;
-    return !["monitoring", "resolved"].includes(data.incident.status);
+  const isIncident = [...pageStatusReportData, ...monitorData].some((data) => {
+    if (!data.status_report) return false;
+    return !["monitoring", "resolved"].includes(data.status_report.status);
   });
 
   startTime(c, "clickhouse");
@@ -83,7 +87,7 @@ status.get("/:slug", async (c) => {
     }),
   );
   endTime(c, "clickhouse");
-  // { ok, count }
+
   const data = lastMonitorPings.reduce(
     (prev, curr) => {
       if (curr.status === "fulfilled") {

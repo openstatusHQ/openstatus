@@ -43,7 +43,8 @@ export const actorSchema = z
 export const targetTypeSchema = z.enum([
   "monitor",
   "page",
-  "incident",
+  // "incident", // has been removed from the schema
+  "status-report",
   "user",
   "notification",
   "organization",

@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 
 import { api } from ".";
 
-test("GET one incident update ", async () => {
-  const res = await api.request("/incident_update/1", {
+test("GET one status report update ", async () => {
+  const res = await api.request("/status_report_update/1", {
     headers: {
       "x-openstatus-key": "1",
     },
@@ -15,8 +15,8 @@ test("GET one incident update ", async () => {
   });
 });
 
-test("create one incident update ", async () => {
-  const res = await api.request("/incident_update", {
+test("create one status report update ", async () => {
+  const res = await api.request("/status_report_update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -26,7 +26,7 @@ test("create one incident update ", async () => {
       status: "investigating",
       date: "2023-11-08T21:03:13.000Z",
       message: "test",
-      incident_id: 1,
+      status_report_id: 1,
     }),
   });
   expect(res.status).toBe(200);

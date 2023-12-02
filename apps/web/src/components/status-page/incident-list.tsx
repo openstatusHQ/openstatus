@@ -1,14 +1,14 @@
 import type { z } from "zod";
 
 import type {
-  selectIncidentsPageSchema,
   selectPublicMonitorSchema,
+  selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { notEmpty } from "@/lib/utils";
-import { AffectedMonitors } from "../incidents/affected-monitors";
-import { Events } from "../incidents/events";
-import { StatusBadge } from "../incidents/status-badge";
+import { AffectedMonitors } from "../status-update/affected-monitors";
+import { Events } from "../status-update/events";
+import { StatusBadge } from "../status-update/status-badge";
 
 // TODO: change layout - it is too packed with data rn
 
@@ -17,7 +17,7 @@ export const IncidentList = ({
   monitors,
   context = "all",
 }: {
-  incidents: z.infer<typeof selectIncidentsPageSchema>;
+  incidents: z.infer<typeof selectStatusReportPageSchema>;
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
   context?: "all" | "latest"; // latest 7 days
 }) => {
@@ -25,7 +25,7 @@ export const IncidentList = ({
 
   function getLastWeeksIncidents() {
     return incidents.filter((incident) => {
-      return incident.incidentUpdates.some(
+      return incident.statusReportUpdates.some(
         (update) => update.date.getTime() > lastWeek,
       );
     });
@@ -45,7 +45,7 @@ export const IncidentList = ({
             {context === "all" ? "All incidents" : "Latest incidents"}
           </h2>
           {_incidents.map((incident) => {
-            const affectedMonitors = incident.monitorsToIncidents
+            const affectedMonitors = incident.monitorsToStatusReport
               .map(({ monitorId }) => {
                 const monitor = monitors.find(({ id }) => monitorId === id);
                 return monitor || undefined;
@@ -63,7 +63,7 @@ export const IncidentList = ({
                       Affected Monitors
                     </p>
                     <AffectedMonitors
-                      monitors={incident.monitorsToIncidents
+                      monitors={incident.monitorsToStatusReport
                         .map(({ monitorId }) => {
                           const monitor = monitors.find(
                             ({ id }) => monitorId === id,
@@ -78,7 +78,7 @@ export const IncidentList = ({
                   <p className="text-muted-foreground mb-2 text-xs">
                     Latest Updates
                   </p>
-                  <Events incidentUpdates={incident.incidentUpdates} />
+                  <Events statusReportUpdates={incident.statusReportUpdates} />
                 </div>
               </div>
             );

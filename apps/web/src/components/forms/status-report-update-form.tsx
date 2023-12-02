@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import type { InsertIncidentUpdate } from "@openstatus/db/src/schema";
+import type { InsertStatusReportUpdate } from "@openstatus/db/src/schema";
 import {
-  incidentStatus,
-  incidentStatusSchema,
-  insertIncidentUpdateSchema,
+  insertStatusReportUpdateSchema,
+  statusReportStatus,
+  statusReportStatusSchema,
 } from "@openstatus/db/src/schema";
 import {
   Button,
@@ -38,32 +38,35 @@ import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
 interface Props {
-  defaultValues?: InsertIncidentUpdate;
-  incidentId: number;
+  defaultValues?: InsertStatusReportUpdate;
+  statusReportId: number;
 }
 
-export function IncidentUpdateForm({ defaultValues, incidentId }: Props) {
-  const form = useForm<InsertIncidentUpdate>({
-    resolver: zodResolver(insertIncidentUpdateSchema),
+export function StatusReportUpdateForm({
+  defaultValues,
+  statusReportId,
+}: Props) {
+  const form = useForm<InsertStatusReportUpdate>({
+    resolver: zodResolver(insertStatusReportUpdateSchema),
     defaultValues: {
       id: defaultValues?.id || 0,
       status: defaultValues?.status || "investigating",
       message: defaultValues?.message,
       date: defaultValues?.date || new Date(),
-      incidentId,
+      statusReportId,
     },
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: InsertIncidentUpdate) => {
+  const onSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.incident.updateIncidentUpdate.mutate({ ...props });
+          await api.statusReport.updateStatusReportUpdate.mutate({ ...props });
         } else {
-          await api.incident.createIncidentUpdate.mutate({ ...props });
+          await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
         toast("saved");
         router.refresh();
@@ -100,12 +103,12 @@ export function IncidentUpdateForm({ defaultValues, incidentId }: Props) {
                   <FormMessage />
                   <RadioGroup
                     onValueChange={(value) =>
-                      field.onChange(incidentStatusSchema.parse(value))
+                      field.onChange(statusReportStatusSchema.parse(value))
                     } // value is a string
                     defaultValue={field.value}
                     className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                   >
-                    {incidentStatus.map((status) => {
+                    {statusReportStatus.map((status) => {
                       const { value, label, icon } = statusDict[status];
                       const Icon = Icons[icon];
                       return (

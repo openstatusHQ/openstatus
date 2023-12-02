@@ -8,63 +8,63 @@ import { Container } from "@/components/dashboard/container";
 import { Header } from "@/components/dashboard/header";
 import { HelpCallout } from "@/components/dashboard/help-callout";
 import { Icons } from "@/components/icons";
-import { AffectedMonitors } from "@/components/incidents/affected-monitors";
-import { Events } from "@/components/incidents/events";
-import { StatusBadge } from "@/components/incidents/status-badge";
+import { AffectedMonitors } from "@/components/status-update/affected-monitors";
+import { Events } from "@/components/status-update/events";
+import { StatusBadge } from "@/components/status-update/status-badge";
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
 import { ActionButton } from "./_components/action-button";
 import { EmptyState } from "./_components/empty-state";
 
-export default async function IncidentPage({
+export default async function StatusReportsPage({
   params,
 }: {
   params: { workspaceSlug: string };
 }) {
-  const incidents = await api.incident.getIncidentByWorkspace.query();
+  const reports = await api.statusReport.getStatusReportByWorkspace.query();
   return (
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-1 md:gap-8">
       <Header
-        title="Incidents"
-        description="Overview of all your incidents."
+        title="Status Reports"
+        description="Overview of all your status reports and updates."
         actions={
           <Button asChild>
-            <Link href="./incidents/edit">Create</Link>
+            <Link href="./status-reports/edit">Create</Link>
           </Button>
         }
       />
-      {Boolean(incidents?.length) ? (
+      {Boolean(reports?.length) ? (
         <div className="col-span-full">
           <ul role="list" className="grid gap-4 sm:col-span-6">
-            {incidents?.map((incident, i) => {
+            {reports?.map((report, i) => {
               const { label, icon } =
-                statusDict[incident.status as keyof typeof statusDict];
-              const monitors = incident.monitorsToIncidents.map(
+                statusDict[report.status as keyof typeof statusDict];
+              const monitors = report.monitorsToStatusReports.map(
                 ({ monitor }) => monitor,
               );
               return (
                 <li key={i} className="grid gap-2">
                   <time className="text-muted-foreground pl-3 text-xs">
-                    {formatDistance(new Date(incident.createdAt!), new Date(), {
+                    {formatDistance(new Date(report.createdAt!), new Date(), {
                       addSuffix: true,
                     })}
                   </time>
                   <Container
                     title={
                       <span className="flex flex-wrap gap-2">
-                        {incident.title}
-                        <StatusBadge status={incident.status} />
+                        {report.title}
+                        <StatusBadge status={report.status} />
                       </span>
                     }
                     actions={[
                       <Button key="status-button" variant="outline" size="sm">
                         <Link
-                          href={`./incidents/update/edit?incidentId=${incident.id}`}
+                          href={`./status-reports/update/edit?id=${report.id}`}
                         >
                           New Update
                         </Link>
                       </Button>,
-                      <ActionButton key="action-button" id={incident.id} />,
+                      <ActionButton key="action-button" id={report.id} />,
                     ]}
                   >
                     <div className="grid gap-4">
@@ -82,7 +82,7 @@ export default async function IncidentPage({
                         </p>
                         {/* Make it ordered by desc and make it toggable if you want the whole history! */}
                         <Events
-                          incidentUpdates={incident.incidentUpdates}
+                          statusReportUpdates={report.statusReportUpdates}
                           editable
                         />
                       </div>

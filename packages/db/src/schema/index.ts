@@ -1,4 +1,4 @@
-export * from "./incidents";
+export * from "./status_reports";
 export * from "./integration";
 export * from "./pages";
 export * from "./monitors";

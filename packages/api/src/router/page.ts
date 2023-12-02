@@ -3,14 +3,14 @@ import { z } from "zod";
 
 import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
-  incident,
   insertPageSchema,
   monitor,
-  monitorsToIncidents,
   monitorsToPages,
+  monitorsToStatusReport,
   page,
-  pagesToIncidents,
+  pagesToStatusReports,
   selectPublicPageSchemaWithRelation,
+  statusReport,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -74,7 +74,6 @@ export const pageRouter = createTRPCRouter({
         ),
         with: {
           monitorsToPages: { with: { monitor: true } },
-          // incidents: true
         },
       });
     }),
@@ -169,52 +168,57 @@ export const pageRouter = createTRPCRouter({
       const monitorsToPagesResult = await opts.ctx.db
         .select()
         .from(monitorsToPages)
-        .where(eq(monitorsToPages.pageId, result.id))
+        .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+        .where(
+          // make sur only active monitors are returned!
+          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true)),
+        )
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitorId }) => monitorId,
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
-      const monitorsToIncidentsResult =
+      const monitorsToStatusReportResult =
         monitorsId.length > 0
           ? await opts.ctx.db
               .select()
-              .from(monitorsToIncidents)
-              .where(inArray(monitorsToIncidents.monitorId, monitorsId))
+              .from(monitorsToStatusReport)
+              .where(inArray(monitorsToStatusReport.monitorId, monitorsId))
               .all()
           : [];
 
-      const incidentsToPagesResult = await opts.ctx.db
+      const statusReportsToPagesResult = await opts.ctx.db
         .select()
-        .from(pagesToIncidents)
-        .where(eq(pagesToIncidents.pageId, result.id))
+        .from(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.pageId, result.id))
         .all();
 
-      const monitorIncidentIds = monitorsToIncidentsResult.map(
-        ({ incidentId }) => incidentId,
+      const monitorStatusReportIds = monitorsToStatusReportResult.map(
+        ({ statusReportId }) => statusReportId,
       );
 
-      const pageIncidentIds = incidentsToPagesResult.map(
-        ({ incidentId }) => incidentId,
+      const pageStatusReportIds = statusReportsToPagesResult.map(
+        ({ statusReportId }) => statusReportId,
       );
 
-      const incidentIds = Array.from(
-        new Set([...monitorIncidentIds, ...pageIncidentIds]),
+      const statusReportIds = Array.from(
+        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
       );
 
-      const incidents =
-        incidentIds.length > 0
-          ? await opts.ctx.db.query.incident.findMany({
-              where: or(inArray(incident.id, incidentIds)),
+      const statusReports =
+        statusReportIds.length > 0
+          ? await opts.ctx.db.query.statusReport.findMany({
+              where: or(inArray(statusReport.id, statusReportIds)),
               with: {
-                incidentUpdates: true,
-                monitorsToIncidents: true,
-                pagesToIncidents: true,
+                statusReportUpdates: true,
+                monitorsToStatusReports: true,
+                pagesToStatusReports: true,
               },
             })
           : [];
 
+      // TODO: monitorsToPagesResult has the result already, no need to query again
       const monitors =
         monitorsId.length > 0
           ? await opts.ctx.db
@@ -229,7 +233,7 @@ export const pageRouter = createTRPCRouter({
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
         monitors,
-        incidents,
+        statusReports,
       });
     }),
 

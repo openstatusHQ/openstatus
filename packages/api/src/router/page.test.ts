@@ -20,7 +20,7 @@ test("Get Test Page", async () => {
     customDomain: "",
     description: "hello",
     icon: "https://www.openstatus.dev/favicon.ico",
-    incidents: [],
+    statusReports: [],
     monitors: [
       {
         active: true,

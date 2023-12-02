@@ -1,20 +1,25 @@
 import { z } from "zod";
 
-import { selectIncidentSchema, selectIncidentUpdateSchema } from "./incidents";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
+import {
+  selectStatusReportSchema,
+  selectStatusReportUpdateSchema,
+} from "./status_reports";
 
-export const selectIncidentsPageSchema = z.array(
-  selectIncidentSchema.extend({
-    incidentUpdates: z.array(selectIncidentUpdateSchema),
-    monitorsToIncidents: z.array(
-      z.object({ monitorId: z.number(), incidentId: z.number() }),
-    ),
+// FIXME: delete this file!
+
+export const selectStatusReportPageSchema = z.array(
+  selectStatusReportSchema.extend({
+    statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
+    monitorsToStatusReport: z
+      .array(z.object({ monitorId: z.number(), statusReportId: z.number() }))
+      .default([]),
   }),
 );
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
-  incidents: selectIncidentsPageSchema,
+  statusReports: selectStatusReportPageSchema,
 });
 
 export const selectPublicMonitorSchema = selectMonitorSchema.omit({
@@ -27,7 +32,7 @@ export const selectPublicMonitorSchema = selectMonitorSchema.omit({
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
-    incidents: selectIncidentsPageSchema,
+    statusReports: selectStatusReportPageSchema,
   })
   .omit({
     workspaceId: true,
