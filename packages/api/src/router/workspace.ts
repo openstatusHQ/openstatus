@@ -5,6 +5,7 @@ import { eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
+  usersToWorkspaces,
   workspace,
 } from "@openstatus/db/src/schema";
 
@@ -30,6 +31,24 @@ export const workspaceRouter = createTRPCRouter({
     });
 
     return selectWorkspaceSchema.parse(result);
+  }),
+
+  getWorkspaceUsers: protectedProcedure.query(async (opts) => {
+    // const result = await opts.ctx.db
+    //   .select()
+    //   .from(usersToWorkspaces)
+    //   .leftJoin(user, eq(user.id, usersToWorkspaces.userId))
+    //   .where(eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id))
+    //   .all();
+    // return result.map(({ user }) => user);
+
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      with: {
+        user: true,
+      },
+      where: eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+    });
+    return result.map(({ user }) => user);
   }),
 
   createWorkspace: protectedProcedure
