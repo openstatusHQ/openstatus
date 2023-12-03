@@ -10,7 +10,9 @@ import { Badge } from "@openstatus/ui";
 import { DataTableStatusBadge } from "../data-table-status-badge";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-export const columns: ColumnDef<Monitor & { lastStatusCode?: number }>[] = [
+export const columns: ColumnDef<
+  Monitor & { lastStatusCode?: number | null }
+>[] = [
   {
     accessorKey: "name",
     header: "Name",
