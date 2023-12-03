@@ -30,7 +30,8 @@ export default async function MonitorPage({
       monitorId,
       limit: 1,
     });
-    const lastStatusCode = ping && ping.length > 0 ? ping[0].statusCode : 0;
+    const lastStatusCode =
+      ping && ping.length > 0 ? ping[0].statusCode : undefined;
     return lastStatusCode;
   }
 
@@ -40,7 +41,7 @@ export default async function MonitorPage({
         getMonitorLastStatusCode(String(monitor.id)),
       ) || [],
     )
-  ).map((code) => (code.status === "fulfilled" && code.value) || 0);
+  ).map((code) => (code.status === "fulfilled" ? code.value : undefined));
 
   return (
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-2 md:gap-8">
