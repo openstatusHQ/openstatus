@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "npx mintlify@latest dev"
+    "dev": "npx mintlify@latest dev",
+    "verify": "npx mintlify@latest  broken-links"
   },
   "keywords": [],
   "author": "OpenStatus"
