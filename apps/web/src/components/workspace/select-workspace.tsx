@@ -1,57 +1,71 @@
-import { useTransition } from "react";
+import * as React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  Skeleton,
 } from "@openstatus/ui";
 
-// TODO: currently, we do prop drill from layout.tsx to here
-// any better way?
-
 export function SelectWorkspace({ workspaces }: { workspaces: Workspace[] }) {
-  const [isPending, startTransition] = useTransition();
+  const [active, setActive] = React.useState<string>();
   const pathname = usePathname();
 
-  function onChange(value: string) {
-    startTransition(async () => {
-      const id = workspaces.find((w) => w.slug === value)?.id;
-      console.log({ id, value });
-      if (!id) return;
-      if (typeof window !== undefined) {
-        // HARD RELOAD
-        window.location.href = `/app/${value}/monitors`;
-      }
-      return;
-    });
-  }
-
-  // get the second part of the pathname as `workspaceSlug`
-  const value = pathname?.split("/")?.[2];
-
-  console.log(value);
+  React.useEffect(() => {
+    if (pathname?.split("/")?.[2]) {
+      setActive(pathname?.split("/")?.[2]);
+    }
+  }, [pathname]);
 
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-full">
-        <SelectValue placeholder="Select a workspace" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          <SelectLabel>Workspace</SelectLabel>
-          {workspaces.map(({ slug, id }) => (
-            <SelectItem key={id} value={slug}>
-              {slug}
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className="flex w-full items-center justify-between"
+        >
+          {active ? <span>{active}</span> : <Skeleton className="h-5 w-full" />}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+        <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {workspaces.map((workspace) => (
+          <DropdownMenuItem
+            key={workspace.id}
+            onClick={() => {
+              if (workspace.slug !== active) {
+                window.location.href = `/app/${workspace.slug}/monitors`;
+              }
+            }}
+            className="justify-between"
+          >
+            {workspace.slug}
+            {active === workspace.slug ? (
+              <Check className="ml-2 h-4 w-4" />
+            ) : null}
+          </DropdownMenuItem>
+        ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link
+            href={`/app/${active}/settings/team`}
+            className="flex items-center justify-between"
+          >
+            Invite Members
+            <Plus className="ml-2 h-4 w-4" />
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
