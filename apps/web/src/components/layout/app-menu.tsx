@@ -4,6 +4,7 @@ import * as React from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
 
+import type { Workspace } from "@openstatus/db/src/schema";
 import {
   Button,
   Sheet,
@@ -15,7 +16,11 @@ import {
 
 import { AppSidebar } from "./app-sidebar";
 
-export function AppMenu() {
+interface Props {
+  workspaces: Workspace[];
+}
+
+export function AppMenu({ workspaces }: Props) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -35,7 +40,7 @@ export function AppMenu() {
         <SheetHeader>
           <SheetTitle className="text-left">Navigation</SheetTitle>
         </SheetHeader>
-        <AppSidebar />
+        <AppSidebar workspaces={workspaces} />
       </SheetContent>
     </Sheet>
   );

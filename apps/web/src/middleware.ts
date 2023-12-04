@@ -126,7 +126,7 @@ export default authMiddleware({
           if (!firstMonitor) {
             console.log(`>>> Redirecting to onboarding`);
             const onboarding = new URL(
-              `/app/onboarding?workspaceSlug=${currentWorkspace.slug}`,
+              `/app/${currentWorkspace.slug}/onboarding`,
               req.url,
             );
             return NextResponse.redirect(onboarding);
@@ -148,6 +148,13 @@ export default authMiddleware({
       console.log("redirecting to onboarding");
       return;
     }
+
+    if (auth.userId && req.nextUrl.pathname.startsWith("/app")) {
+      const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
+      if (workspaceSlug) req.cookies.set("workspace-slug", workspaceSlug);
+    }
+
+    // TODO: remove
     if (
       auth.userId &&
       req.nextUrl.pathname === "/app/integrations/vercel/configure"
