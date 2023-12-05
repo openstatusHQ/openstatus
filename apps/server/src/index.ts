@@ -6,15 +6,9 @@ import { checkerRoute } from "./checker";
 import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
-import { VercelIngest } from "./vercel";
 
 const app = new Hono();
 app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
-
-/**
- * Vercel Integration
- */
-app.post("/integration/vercel", VercelIngest);
 
 /**
  * Public Routes
