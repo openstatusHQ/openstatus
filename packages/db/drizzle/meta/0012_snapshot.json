@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "d75ea8b2-ce5e-49a8-a80e-4468dbd54354",
+  "id": "fd370f88-5a21-4d1c-a033-ef18d804130d",
   "prevId": "21a5d3a2-6aab-4f67-8385-19d905e1a232",
   "tables": {
     "status_report_to_monitors": {
@@ -298,8 +298,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "''"
+          "autoincrement": false
         },
         "incident_kind": {
           "name": "incident_kind",
@@ -308,6 +307,20 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'incident'"
+        },
+        "channel_id": {
+          "name": "channel_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "channel_name": {
+          "name": "channel_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_by": {
           "name": "created_by",
@@ -318,6 +331,27 @@
         },
         "service_id": {
           "name": "service_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "commander_id": {
+          "name": "commander_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "communication_lead_id": {
+          "name": "communication_lead_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ops_lead_id": {
+          "name": "ops_lead_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -1232,10 +1266,6 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {
-      "\"status_report_to_monitors\".\"incident_id\"": "\"status_report_to_monitors\".\"status_report_id\"",
-      "\"status_reports_to_pages\".\"incident_id\"": "\"status_reports_to_pages\".\"status_report_id\"",
-      "\"status_report_update\".\"incident_id\"": "\"status_report_update\".\"status_report_id\""
-    }
+    "columns": {}
   }
 }
