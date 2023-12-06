@@ -135,7 +135,22 @@ const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
 
   const { usersToWorkspaces, ...userProps } = userAndWorkspace || {};
 
+  /**
+   * We need to include the active "workspace-slug" cookie in the request found in the
+   * `/app/[workspaceSlug]/.../`routes. We pass them either via middleware if it's a
+   * server request or via the client cookie, set via `<WorspaceClientCookie />`
+   * if it's a client request.
+   *
+   * REMINDER: We only need the client cookie because of client side mutations.
+   */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
+
+  // if (!workspaceSlug) {
+  //   throw new TRPCError({
+  //     code: "UNAUTHORIZED",
+  //     message: "Workspace Slug Not Found",
+  //   });
+  // }
 
   const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
     // If there is a workspace slug in the cookie, use it to find the workspace

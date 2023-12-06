@@ -83,7 +83,7 @@ export default authMiddleware({
     "/status-page/(.*)",
     "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
   ],
-  ignoredRoutes: ["/api/og", "/discord", "github", "/status-page/(.*)"], // FIXME: we should check the `publicRoutes`
+  ignoredRoutes: ["/api/og", "/discord", "/github", "/status-page/(.*)"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
   debug: false,
   async afterAuth(auth, req) {
@@ -151,6 +151,7 @@ export default authMiddleware({
 
     if (auth.userId && req.nextUrl.pathname.startsWith("/app")) {
       const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
+      // overrides the document.cookie set on the client
       if (workspaceSlug) req.cookies.set("workspace-slug", workspaceSlug);
     }
 

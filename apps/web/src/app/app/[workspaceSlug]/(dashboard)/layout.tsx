@@ -6,6 +6,7 @@ import { AppHeader } from "@/components/layout/app-header";
 import { AppMenu } from "@/components/layout/app-menu";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { api } from "@/trpc/server";
+import { WorkspaceClientCookie } from "../worskpace-client-cookie";
 
 // TODO: make the container min-h-screen and the footer below!
 export default async function AppLayout({
@@ -15,10 +16,11 @@ export default async function AppLayout({
   children: React.ReactNode;
   params: { workspaceSlug: string };
 }) {
+  const { workspaceSlug } = params;
   const workspaces = await api.workspace.getUserWorkspaces.query();
 
   if (workspaces.length === 0) return notFound();
-  if (workspaces.find((w) => w.slug === params.workspaceSlug) === undefined)
+  if (workspaces.find((w) => w.slug === workspaceSlug) === undefined)
     return notFound();
 
   return (
@@ -38,6 +40,7 @@ export default async function AppLayout({
           </Shell>
         </main>
       </div>
+      <WorkspaceClientCookie {...{ workspaceSlug }} />
     </div>
   );
 }
