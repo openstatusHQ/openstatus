@@ -1,7 +1,7 @@
-import type { ReactElement } from "react";
 import { Resend } from "resend";
 
 import { Alert, EmailDataSchema } from "./emails/alert";
+import SubscribeEmail from "./emails/subscribe";
 import { validateEmailNotDisposable } from "./emails/utils/utils";
 import WaitingList from "./emails/waiting-list";
 import WelcomeEmail from "./emails/welcome";
@@ -13,15 +13,16 @@ export {
   validateEmailNotDisposable,
   Alert,
   EmailDataSchema,
+  SubscribeEmail,
 };
 
 export const resend = new Resend(env.RESEND_API_KEY);
 
 export interface Emails {
   react: JSX.Element;
-  subject: "Welcome to OpenStatus.dev 👋";
+  subject: string;
   to: string[];
-  from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>";
+  from: string;
 }
 
 export const sendEmail = async (email: Emails) => {

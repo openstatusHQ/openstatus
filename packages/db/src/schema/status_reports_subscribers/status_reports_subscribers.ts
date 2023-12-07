@@ -9,6 +9,7 @@ export const statusReportSubscriber = sqliteTable("status_report_subscriber", {
 
   statusReportId: integer("status_report_id").references(() => statusReport.id),
 
+  verificationToken: text("verification_token"),
   validatedAt: integer("validated_at", { mode: "timestamp" }),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(

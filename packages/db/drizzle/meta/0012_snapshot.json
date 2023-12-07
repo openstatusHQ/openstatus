@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "4137471d-19ff-4033-af8a-a7434dae3002",
+  "id": "e068c1a7-7418-44b2-9122-b67fd5341868",
   "prevId": "21a5d3a2-6aab-4f67-8385-19d905e1a232",
   "tables": {
     "status_report_to_monitors": {
@@ -798,6 +798,13 @@
         "status_report_id": {
           "name": "status_report_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "verification_token": {
+          "name": "verification_token",
+          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

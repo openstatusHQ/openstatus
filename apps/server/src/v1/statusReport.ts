@@ -4,6 +4,7 @@ import { and, db, eq } from "@openstatus/db";
 import {
   statusReport,
   statusReportStatus,
+  statusReportSubscriber,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
@@ -58,6 +59,13 @@ const statusReportExtendedSchema = statusSchema.extend({
     })
     .default([]),
 });
+
+const statusReportSubscriberSchema = z.object({
+  email: z.string().email().openapi({
+    description: "The email of the subscriber",
+  }),
+});
+
 const getAllRoute = createRoute({
   method: "get",
   tags: ["status_report"],
@@ -337,6 +345,111 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
     .get();
 
   const data = statusUpdateSchema.parse(_statusReportUpdate);
+
+  return c.jsonT({
+    ...data,
+  });
+});
+
+const postRouteSubscriber = createRoute({
+  method: "post",
+  tags: ["status_report"],
+  path: "/:id/update",
+  description: "Add a subscriber to a status report",
+  request: {
+    params: ParamsSchema,
+    body: {
+      description: "the subscriber payload",
+      content: {
+        "application/json": {
+          schema: z.object({
+            email: z
+              .string()
+              .email()
+              .openapi({ description: "The email of the subscriber" }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: statusReportSubscriberSchema,
+        },
+      },
+      description: "The newly created user",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+statusReportApi.openapi(postRouteSubscriber, async (c) => {
+  const input = c.req.valid("json");
+  const { id } = c.req.valid("param");
+  const workspaceId = Number(c.get("workspaceId"));
+
+  const statusReportId = Number(id);
+  const _statusReport = await db
+    .select()
+    .from(statusReport)
+    .where(
+      and(
+        eq(statusReport.id, statusReportId),
+        eq(statusReport.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+
+  if (!_statusReport) return c.jsonT({ code: 401, message: "Not authorized" });
+
+  const alreadySubscribed = await db
+    .select()
+    .from(statusReportSubscriber)
+    .where(
+      and(
+        eq(statusReportSubscriber.email, input.email),
+        eq(statusReportSubscriber.statusReportId, statusReportId),
+      ),
+    )
+    .get();
+  if (alreadySubscribed)
+    return c.jsonT({ code: 401, message: "Already subscribed" });
+
+  // TODO: send email for verification
+  const verificationToken = (Math.random() + 1).toString(36).substring(10);
+
+  // await sendEmail({
+  //   react: SubscribeEmail({
+  //     domain: params.domain,
+  //     token: verificationToken,
+  //     page: pageData.title,
+  //   }),
+  //   from: "OpenStatus <notification@openstatus.dev>",
+  //   to: [input.email],
+  //   subject: "Verify your subscription",
+  // });
+
+  const _statusReportSubscriberUpdate = await db
+    .insert(statusReportSubscriber)
+    .values({
+      email: input.email,
+      verificationToken,
+    })
+    .returning()
+    .get();
+
+  const data = statusReportSubscriberSchema.parse(
+    _statusReportSubscriberUpdate,
+  );
 
   return c.jsonT({
     ...data,

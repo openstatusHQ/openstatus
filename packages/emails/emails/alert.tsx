@@ -11,7 +11,6 @@ import {
   Preview,
   Row,
   Section,
-  Tailwind,
   Text,
 } from "@react-email/components";
 import { z } from "zod";
