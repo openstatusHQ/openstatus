@@ -85,6 +85,13 @@
       "when": 1701100570578,
       "tag": "0011_bright_jazinda",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1701972043226,
+      "tag": "0012_medical_mandroid",
+      "breakpoints": true
     }
   ]
 }

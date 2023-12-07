@@ -3,6 +3,7 @@ export * from "./integration";
 export * from "./pages";
 export * from "./monitors";
 export * from "./users";
+export * from "./status_reports_subscribers";
 export * from "./workspaces";
 export * from "./shared";
 export * from "./notifications";
