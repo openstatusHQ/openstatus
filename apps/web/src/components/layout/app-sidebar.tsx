@@ -10,11 +10,7 @@ import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 import { SelectWorkspace } from "../workspace/select-workspace";
 
-interface Props {
-  workspaces: Workspace[];
-}
-
-export function AppSidebar({ workspaces }: Props) {
+export function AppSidebar() {
   const pathname = usePathname();
   const params = useParams();
 
@@ -44,7 +40,7 @@ export function AppSidebar({ workspaces }: Props) {
       </ul>
       <ul>
         <li className="w-full">
-          <SelectWorkspace workspaces={workspaces} />
+          <SelectWorkspace />
         </li>
       </ul>
     </div>

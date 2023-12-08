@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,15 +17,27 @@ import {
   Skeleton,
 } from "@openstatus/ui";
 
-export function SelectWorkspace({ workspaces }: { workspaces: Workspace[] }) {
+import { api } from "@/trpc/client";
+
+export function SelectWorkspace() {
+  const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const [active, setActive] = React.useState<string>();
   const pathname = usePathname();
 
   React.useEffect(() => {
-    if (pathname?.split("/")?.[2]) {
+    if (pathname?.split("/")?.[2] && workspaces.length > 0) {
       setActive(pathname?.split("/")?.[2]);
     }
-  }, [pathname]);
+  }, [pathname, workspaces]);
+
+  React.useEffect(() => {
+    // REMINDER: avoid prop drilling to get data from the layout.tsx component. instead use client trpc
+    async function fetchWorkspaces() {
+      const _workspaces = await api.workspace.getUserWorkspaces.query();
+      setWorkspaces(_workspaces);
+    }
+    fetchWorkspaces();
+  }, []);
 
   return (
     <DropdownMenu>
