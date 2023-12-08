@@ -7,6 +7,7 @@ import type { Workspace } from "@openstatus/db/src/schema";
 
 import { pagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
+import { ProBanner } from "../billing/pro-banner";
 import { Icons } from "../icons";
 import { SelectWorkspace } from "../workspace/select-workspace";
 
@@ -15,7 +16,7 @@ export function AppSidebar() {
   const params = useParams();
 
   return (
-    <div className="flex h-full flex-col justify-between">
+    <div className="flex h-full flex-col justify-between gap-6">
       <ul className="grid gap-1">
         {pagesConfig.map(({ title, href, icon, disabled }) => {
           const Icon = Icons[icon];
@@ -38,7 +39,10 @@ export function AppSidebar() {
           );
         })}
       </ul>
-      <ul>
+      <ul className="grid gap-2">
+        <li className="w-full">
+          <ProBanner />
+        </li>
         <li className="w-full">
           <SelectWorkspace />
         </li>
