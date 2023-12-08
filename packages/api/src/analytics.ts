@@ -45,3 +45,5 @@ export async function trackNewNotification(
 }
 
 export async function trackNewStatusReport() {}
+
+export async function trackNewInvitation() {}

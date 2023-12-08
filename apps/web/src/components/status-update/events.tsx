@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/(dashboard)/[workspaceSlug]/status-reports/_components/delete-status-update";
+import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/[workspaceSlug]/(dashboard)/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";

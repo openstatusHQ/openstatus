@@ -62,6 +62,7 @@ export const webhookRouter = createTRPCRouter({
         .values({
           userId: userResult.id,
           workspaceId: workspaceResult.id,
+          role: "owner",
         })
         .returning()
         .get();

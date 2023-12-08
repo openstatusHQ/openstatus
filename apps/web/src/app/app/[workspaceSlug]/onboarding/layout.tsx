@@ -2,13 +2,17 @@ import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/app-header";
+import { WorkspaceClientCookie } from "../worskpace-client-cookie";
 
 // TODO: make the container min-h-screen and the footer below!
 export default async function AppLayout({
+  params,
   children,
 }: {
+  params: { workspaceSlug: string };
   children: React.ReactNode;
 }) {
+  const { workspaceSlug } = params;
   return (
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4 lg:p-8">
       <AppHeader />
@@ -17,6 +21,7 @@ export default async function AppLayout({
           <Shell className="relative flex-1">{children}</Shell>
         </main>
       </div>
+      <WorkspaceClientCookie {...{ workspaceSlug }} />
     </div>
   );
 }
