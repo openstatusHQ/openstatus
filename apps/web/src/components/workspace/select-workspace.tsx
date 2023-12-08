@@ -57,7 +57,7 @@ export function SelectWorkspace() {
           <DropdownMenuItem
             key={workspace.id}
             onClick={() => {
-              if (workspace.slug !== active) {
+              if (workspace.slug !== active && typeof window !== "undefined") {
                 window.location.href = `/app/${workspace.slug}/monitors`;
               }
             }}
