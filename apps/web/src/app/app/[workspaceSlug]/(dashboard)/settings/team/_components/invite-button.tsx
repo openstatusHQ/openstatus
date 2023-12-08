@@ -67,7 +67,9 @@ export function InviteButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button onClick={() => setOpen((v) => !v)} disabled={disabled}>Invite Member</Button>
+        <Button onClick={() => setOpen((v) => !v)} disabled={disabled}>
+          Invite Member
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>

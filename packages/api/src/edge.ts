@@ -19,5 +19,5 @@ export const edgeRouter = createTRPCRouter({
   integration: integrationRouter,
   user: userRouter,
   notification: notificationRouter,
-  invitation: invitationRouter
+  invitation: invitationRouter,
 });
