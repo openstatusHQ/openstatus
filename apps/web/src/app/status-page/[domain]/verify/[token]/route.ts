@@ -1,26 +1,26 @@
 import { and, db, eq } from "@openstatus/db";
-import { page, statusReportSubscriber } from "@openstatus/db/src/schema";
+import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 export async function GET(
   request: Request,
   { params }: { params: { domain: string; token: string } },
 ) {
-  const statusReportId = await db
+  const pageId = await db
     .select()
     .from(page)
     .where(eq(page.slug, params.domain))
     .get();
-  if (!statusReportId) {
+  if (!pageId) {
     return new Response("Not found", { status: 401 });
   }
 
   const subscriber = await db
     .select()
-    .from(statusReportSubscriber)
+    .from(pageSubscriber)
     .where(
       and(
-        eq(statusReportSubscriber.verificationToken, params.token),
-        eq(statusReportSubscriber.statusReportId, statusReportId?.id),
+        eq(pageSubscriber.token, params.token),
+        eq(pageSubscriber.pageId, pageId?.id),
       ),
     )
     .get();
@@ -30,9 +30,9 @@ export async function GET(
   }
 
   await db
-    .update(statusReportSubscriber)
-    .set({ validatedAt: new Date() })
-    .where(eq(statusReportSubscriber.id, subscriber.id))
+    .update(pageSubscriber)
+    .set({ acceptedAt: new Date() })
+    .where(eq(pageSubscriber.id, subscriber.id))
     .execute();
 
   return Response.redirect(`https://${params.domain}.openstatus.dev`);

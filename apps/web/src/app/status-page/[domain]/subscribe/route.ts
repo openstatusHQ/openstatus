@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { page, statusReportSubscriber } from "@openstatus/db/src/schema";
+import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { sendEmail, SubscribeEmail } from "@openstatus/emails";
 
 export async function POST(
@@ -24,11 +24,11 @@ export async function POST(
 
   const alreadySubscribed = await db
     .select()
-    .from(statusReportSubscriber)
+    .from(pageSubscriber)
     .where(
       and(
-        eq(statusReportSubscriber.email, data.email),
-        eq(statusReportSubscriber.statusReportId, pageData?.id),
+        eq(pageSubscriber.email, data.email),
+        eq(pageSubscriber.pageId, pageData?.id),
       ),
     )
     .get();
@@ -37,12 +37,12 @@ export async function POST(
     return new Response("Not found", { status: 401 });
   }
 
-  const verificationToken = (Math.random() + 1).toString(36).substring(10);
+  const token = (Math.random() + 1).toString(36).substring(10);
 
   await sendEmail({
     react: SubscribeEmail({
       domain: params.domain,
-      token: verificationToken,
+      token: token,
       page: pageData.title,
     }),
     from: "OpenStatus <notification@openstatus.dev>",
@@ -50,10 +50,11 @@ export async function POST(
     subject: "Verify your subscription",
   });
   await db
-    .insert(statusReportSubscriber)
+    .insert(pageSubscriber)
     .values({
       email: result.email,
-      verificationToken,
+      token,
+      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .execute();
   return Response.json({ message: "Hello world" });
