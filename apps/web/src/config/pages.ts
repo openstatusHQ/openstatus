@@ -34,6 +34,12 @@ export const pagesConfig: Page[] = [
     href: "/notifications",
     icon: "bell",
   },
+  {
+    title: "Settings",
+    description: "Your workspace settings",
+    href: "/settings",
+    icon: "cog",
+  },
   // {
   //   title: "Integrations",
   //   description: "Where you can see all the integrations.",

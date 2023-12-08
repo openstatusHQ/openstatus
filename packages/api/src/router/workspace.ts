@@ -33,6 +33,19 @@ export const workspaceRouter = createTRPCRouter({
     return selectWorkspaceSchema.parse(result);
   }),
 
+  getUserWorkspaces: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
+      with: {
+        workspace: true,
+      },
+    });
+
+    return selectWorkspaceSchema
+      .array()
+      .parse(result.map(({ workspace }) => workspace));
+  }),
+
   getWorkspaceUsers: protectedProcedure.query(async (opts) => {
     // const result = await opts.ctx.db
     //   .select()
@@ -48,7 +61,7 @@ export const workspaceRouter = createTRPCRouter({
       },
       where: eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
     });
-    return result.map(({ user }) => user);
+    return result;
   }),
 
   createWorkspace: protectedProcedure

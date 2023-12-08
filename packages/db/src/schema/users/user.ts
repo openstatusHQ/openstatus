@@ -6,7 +6,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
-import { workspace } from "../workspaces";
+import { workspace, workspaceRole } from "../workspaces";
 
 export const user = sqliteTable("user", {
   id: integer("id").primaryKey(),
@@ -38,6 +38,7 @@ export const usersToWorkspaces = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id),
+    role: text("role", { enum: workspaceRole }).notNull().default("member"),
   },
   (t) => ({
     pk: primaryKey(t.userId, t.workspaceId),

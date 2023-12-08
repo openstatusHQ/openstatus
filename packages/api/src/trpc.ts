@@ -118,33 +118,63 @@ const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
+  // /**
+  //  * Attach `user` and `workspace` | `activeWorkspace` infos to context by
+  //  * comparing the `user.tenantId` to clerk's `auth.userId`
+  //  */
+  const userAndWorkspace = await db.query.user.findFirst({
+    where: eq(schema.user.tenantId, ctx.auth.userId),
+    with: {
+      usersToWorkspaces: {
+        with: {
+          workspace: true,
+        },
+      },
+    },
+  });
+
+  const { usersToWorkspaces, ...userProps } = userAndWorkspace || {};
+
   /**
-   * Attach `user` and `workspace` infos to context by
-   * comparing the `user.tenantId` to clerk's `auth.userId`
+   * We need to include the active "workspace-slug" cookie in the request found in the
+   * `/app/[workspaceSlug]/.../`routes. We pass them either via middleware if it's a
+   * server request or via the client cookie, set via `<WorspaceClientCookie />`
+   * if it's a client request.
+   *
+   * REMINDER: We only need the client cookie because of client side mutations.
    */
-  const query = await db
-    .select()
-    .from(schema.user)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(schema.usersToWorkspaces.userId, schema.user.id),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.workspace.id, schema.usersToWorkspaces.workspaceId),
-    )
-    .where(eq(schema.user.tenantId, ctx.auth.userId))
-    .get();
+  const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  const workspace = schema.selectWorkspaceSchema.parse(query?.workspace);
-  const user = schema.selectUserSchema.parse(query?.user);
+  // if (!workspaceSlug) {
+  //   throw new TRPCError({
+  //     code: "UNAUTHORIZED",
+  //     message: "Workspace Slug Not Found",
+  //   });
+  // }
 
-  if (!workspace && !user) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
+  const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
+    // If there is a workspace slug in the cookie, use it to find the workspace
+    if (workspaceSlug) return workspace.slug === workspaceSlug;
+    return true;
+  })?.workspace;
+
+  if (!activeWorkspace) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Workspace Not Found",
+    });
   }
+
+  if (!userProps) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
+  }
+
+  const user = schema.selectUserSchema.parse(userProps);
+  const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
 
   return next({
     ctx: {
+      ...ctx,
       auth: {
         ...ctx.auth,
         userId: ctx.auth.userId,

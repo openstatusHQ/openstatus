@@ -7,3 +7,4 @@ export * from "./workspaces";
 export * from "./shared";
 export * from "./notifications";
 export * from "./monitor_status";
+export * from "./invitations";

@@ -15,35 +15,24 @@ import { Description } from "./_components/description";
  */
 const searchParamsSchema = z.object({
   id: z.coerce.number().optional(), // monitorId
-  workspaceSlug: z.string().optional(),
 });
 
 export default async function Onboarding({
+  params,
   searchParams,
 }: {
+  params: { workspaceSlug: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
+  const { workspaceSlug } = params;
 
   if (!search.success) {
     return notFound();
   }
 
   // Instead of having the workspaceSlug in the search params, we can get it from the auth user
-  const { workspaceSlug, id: monitorId } = search.data;
-
-  if (!workspaceSlug) {
-    return (
-      <div className="flex flex-col gap-3">
-        <p className="text-lg">Waiting for Slug </p>
-        <div>
-          <Button variant="outline" asChild>
-            <Link href="/app">Retry</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const { id: monitorId } = search.data;
 
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
 

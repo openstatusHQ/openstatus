@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
+import type { Workspace } from "@openstatus/db/src/schema";
+
 import { pagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
 import { ProBanner } from "../billing/pro-banner";
 import { Icons } from "../icons";
+import { SelectWorkspace } from "../workspace/select-workspace";
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -41,17 +44,7 @@ export function AppSidebar() {
           <ProBanner />
         </li>
         <li className="w-full">
-          <Link
-            href={`/app/${params?.workspaceSlug}/settings`}
-            className={cn(
-              "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-              pathname?.startsWith(`/app/${params?.workspaceSlug}/settings`) &&
-                "bg-muted/50 border-border text-foreground",
-            )}
-          >
-            <Icons.cog className={cn("mr-2 h-4 w-4")} />
-            Settings
-          </Link>
+          <SelectWorkspace />
         </li>
       </ul>
     </div>
