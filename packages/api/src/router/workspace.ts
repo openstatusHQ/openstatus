@@ -1,7 +1,7 @@
 import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
   user,
@@ -63,6 +63,36 @@ export const workspaceRouter = createTRPCRouter({
     });
     return result;
   }),
+
+  removeWorkspaceUser: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const _userToWorkspace =
+        await opts.ctx.db.query.usersToWorkspaces.findFirst({
+          where: and(
+            eq(usersToWorkspaces.userId, opts.ctx.user.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+
+      if (!_userToWorkspace) throw new Error("No user to workspace found");
+
+      if (!["owner"].includes(_userToWorkspace.role))
+        throw new Error("Not authorized to remove user from workspace");
+
+      if (opts.input.id === opts.ctx.user.id)
+        throw new Error("Cannot remove yourself from workspace");
+
+      await opts.ctx.db
+        .delete(usersToWorkspaces)
+        .where(
+          and(
+            eq(usersToWorkspaces.userId, opts.input.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .run();
+    }),
 
   createWorkspace: protectedProcedure
     .input(z.object({ name: z.string() }))

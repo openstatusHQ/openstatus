@@ -1,14 +1,11 @@
-// TODO: once TeamM=ember is released, use that
-
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { selectPageSchema } from "@openstatus/db/src/schema";
+import { selectUserSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +34,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const page = selectPageSchema.parse(row.original);
+  const user = selectUserSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -46,9 +43,9 @@ export function DataTableRowActions<TData>({
   async function onDelete() {
     startTransition(async () => {
       try {
-        if (!page.id) return;
-        await api.page.delete.mutate({ id: page.id });
-        toast("deleted");
+        if (!user.id) return;
+        await api.workspace.removeWorkspaceUser.mutate({ id: user.id });
+        toast("removed");
         router.refresh();
         setAlertOpen(false);
       } catch {
@@ -70,22 +67,9 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./status-pages/edit?id=${page.id}`}>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-          </Link>
-          <Link
-            href={
-              process.env.NODE_ENV === "production"
-                ? `https://${page.slug}.openstatus.dev`
-                : `/status-page/${page.slug}`
-            }
-            target="_blank"
-          >
-            <DropdownMenuItem>Visit</DropdownMenuItem>
-          </Link>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
-              Delete
+              Remove
             </DropdownMenuItem>
           </AlertDialogTrigger>
         </DropdownMenuContent>
@@ -94,8 +78,8 @@ export function DataTableRowActions<TData>({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the
-            monitor.
+            This action cannot be undone. This will remove the user from your
+            team.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -108,7 +92,7 @@ export function DataTableRowActions<TData>({
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {!isPending ? "Delete" : <LoadingAnimation />}
+            {!isPending ? "Remove" : <LoadingAnimation />}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
