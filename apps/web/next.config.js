@@ -7,7 +7,12 @@ const nextConfig = {
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
     serverActions: true,
-    serverComponentsExternalPackages: ["libsql"],
+    serverComponentsExternalPackages: [
+      "libsql",
+      "@react-email/components",
+      "@react-email/render",
+      "@react-email/tailwind",
+    ],
     logging: {
       level: "verbose",
       fullUrl: true,
