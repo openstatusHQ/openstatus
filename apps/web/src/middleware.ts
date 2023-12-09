@@ -92,96 +92,57 @@ export default authMiddleware({
       return redirectToSignIn({ returnBackUrl: req.url });
     }
 
-    // redirect them to organization selection page
-    if (
-      auth.userId &&
-      (req.nextUrl.pathname === "/app" || req.nextUrl.pathname === "/app/")
-    ) {
-      console.log('>>> Redirecting to "/app/workspace"');
-      // improve on sign-up if the webhook has not been triggered yet
-      const userQuery = db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, auth.userId))
-        .as("userQuery");
-      const result = await db
-        .select()
-        .from(usersToWorkspaces)
-        .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
-        .all();
-      if (result.length > 0) {
-        console.log(">>> User has workspace");
-        const currentWorkspace = await db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
-          .get();
-        if (currentWorkspace) {
-          const firstMonitor = await db
-            .select()
-            .from(monitor)
-            .where(eq(monitor.workspaceId, currentWorkspace.id))
-            .get();
+    if (auth.userId) {
+      const pathname = req.nextUrl.pathname;
+      if (pathname.startsWith("/app") && !pathname.startsWith("/app/invite")) {
+        const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
+        const hasWorkspaceSlug = !!workspaceSlug && workspaceSlug.trim() !== "";
 
-          if (!firstMonitor) {
-            console.log(`>>> Redirecting to onboarding`);
-            const onboarding = new URL(
-              `/app/${currentWorkspace.slug}/onboarding`,
-              req.url,
-            );
-            return NextResponse.redirect(onboarding);
+        const allowedWorkspaces = await db
+          .select()
+          .from(usersToWorkspaces)
+          .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+          .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+          .where(eq(user.tenantId, auth.userId))
+          .all();
+
+        // means, we are "not only on `/app` or `/app/`"
+        if (hasWorkspaceSlug) {
+          console.log(">>> Workspace slug", workspaceSlug);
+          const hasAccessToWorkspace = allowedWorkspaces.find(
+            ({ workspace }) => workspace.slug === workspaceSlug,
+          );
+          if (hasAccessToWorkspace) {
+            console.log(">>> Allowed! Attaching to cookie", workspaceSlug);
+            req.cookies.set("workspace-slug", workspaceSlug);
+          } else {
+            console.log(">>> Not allowed, redirecting to /app", workspaceSlug);
+            const appURL = new URL("/app", req.url);
+            return NextResponse.redirect(appURL);
           }
+        } else {
+          console.log(">>> No workspace slug available");
+          if (allowedWorkspaces.length > 0) {
+            const firstWorkspace = allowedWorkspaces[0].workspace;
+            const { id, slug } = firstWorkspace;
+            console.log(">>> Redirecting to first related workspace", slug);
+            const firstMonitor = await db
+              .select()
+              .from(monitor)
+              .where(eq(monitor.workspaceId, firstWorkspace.id))
+              .get();
 
-          const orgSelection = new URL(
-            `/app/${currentWorkspace.slug}/monitors`,
-            req.url,
-          );
-          console.log(`>>> Redirecting to ${orgSelection}`);
-          return NextResponse.redirect(orgSelection);
-        }
-      } else {
-        console.log("redirecting to onboarding");
-        // return NextResponse.redirect(new URL("/app/onboarding", req.url));
-        // probably redirect to onboarding
-        // or find a way to wait for the webhook
-      }
-      console.log("redirecting to onboarding");
-      return;
-    }
+            if (!firstMonitor) {
+              console.log(`>>> Redirecting to onboarding`, slug);
+              const onboardingURL = new URL(`/app/${slug}/onboarding`, req.url);
+              return NextResponse.redirect(onboardingURL);
+            }
 
-    if (auth.userId && req.nextUrl.pathname.startsWith("/app")) {
-      const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
-      // overrides the document.cookie set on the client
-      if (workspaceSlug) req.cookies.set("workspace-slug", workspaceSlug);
-    }
-
-    // TODO: remove
-    if (
-      auth.userId &&
-      req.nextUrl.pathname === "/app/integrations/vercel/configure"
-    ) {
-      const userQuery = db
-        .select()
-        .from(user)
-        .where(eq(user.tenantId, auth.userId))
-        .as("userQuery");
-      const result = await db
-        .select()
-        .from(usersToWorkspaces)
-        .innerJoin(userQuery, eq(userQuery.id, usersToWorkspaces.userId))
-        .all();
-      if (result.length > 0) {
-        const currentWorkspace = await db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.id, result[0].users_to_workspaces.workspaceId))
-          .get();
-        if (currentWorkspace) {
-          const configure = new URL(
-            `/app/${currentWorkspace.slug}/integrations/vercel/configure`,
-            req.url,
-          );
-          return NextResponse.redirect(configure);
+            console.log(">>> Redirecting to workspace", slug);
+            const monitorURL = new URL(`/app/${slug}/monitors`, req.url);
+            return NextResponse.redirect(monitorURL);
+          }
+          console.log(">>> No action taken");
         }
       }
     }
@@ -192,7 +153,6 @@ export const config = {
   matcher: [
     "/((?!api|assets|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
     "/",
-    "/app/integrations/vercel/configure",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
     "/api/analytics", // used for tracking vercel beta integration click events
