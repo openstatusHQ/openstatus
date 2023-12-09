@@ -13,6 +13,11 @@ const nextConfig = {
       "@react-email/render",
       "@react-email/tailwind",
     ],
+    transpilePackages: [
+      "@react-email/components",
+      "@react-email/render",
+      "@react-email/html",
+    ],
     logging: {
       level: "verbose",
       fullUrl: true,
