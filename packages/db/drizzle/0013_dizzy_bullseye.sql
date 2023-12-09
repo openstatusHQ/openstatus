@@ -1,0 +1,1 @@
+ALTER TABLE `page_subscriber` RENAME COLUMN `expired_at` TO `expires_at`;

@@ -3,6 +3,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import { sendEmail, SubscribeEmail } from "@openstatus/emails";
 
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
@@ -76,13 +77,13 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
 
   const pageId = Number(id);
-  const _statusReport = await db
+  const _page = await db
     .select()
     .from(page)
     .where(and(eq(page.id, pageId), eq(page.workspaceId, workspaceId)))
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 401, message: "Not authorized" });
+  if (!_page) return c.jsonT({ code: 401, message: "Not authorized" });
 
   const alreadySubscribed = await db
     .select()
@@ -100,23 +101,22 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
   // TODO: send email for verification
   const token = (Math.random() + 1).toString(36).substring(10);
 
-  // await sendEmail({
-  //   react: SubscribeEmail({
-  //     domain: params.domain,
-  //     token: verificationToken,
-  //     page: pageData.title,
-  //   }),
-  //   from: "OpenStatus <notification@openstatus.dev>",
-  //   to: [input.email],
-  //   subject: "Verify your subscription",
-  // });
-
+  await sendEmail({
+    react: SubscribeEmail({
+      domain: _page.slug,
+      token: token,
+      page: page.title,
+    }),
+    from: "OpenStatus <notification@openstatus.dev>",
+    to: [input.email],
+    subject: "Verify your subscription",
+  });
   const _statusReportSubscriberUpdate = await db
     .insert(pageSubscriber)
     .values({
       email: input.email,
       token,
-      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .returning()
     .get();

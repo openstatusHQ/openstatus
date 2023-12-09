@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "80e996fa-48e7-4ef1-961a-8520c783845c",
-  "prevId": "b5c53ce9-981d-4a7c-a0da-c82e517fc0a3",
+  "id": "9f9f2ab7-4800-4915-9d86-b4d10ec77672",
+  "prevId": "80e996fa-48e7-4ef1-961a-8520c783845c",
   "tables": {
     "status_report_to_monitors": {
       "name": "status_report_to_monitors",
@@ -824,8 +824,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "expired_at": {
-          "name": "expired_at",
+        "expires_at": {
+          "name": "expires_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -1245,6 +1245,8 @@
   "_meta": {
     "schemas": {},
     "tables": {},
-    "columns": {}
+    "columns": {
+      "\"page_subscriber\".\"expired_at\"": "\"page_subscriber\".\"expires_at\""
+    }
   }
 }

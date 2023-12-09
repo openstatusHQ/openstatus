@@ -54,7 +54,7 @@ export async function POST(
     .values({
       email: result.email,
       token,
-      expiredAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .execute();
   return Response.json({ message: "Hello world" });
