@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
   page,
   pagesToStatusReports,
@@ -190,7 +190,12 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
       const subscribers = await db
         .select()
         .from(pageSubscriber)
-        .where(eq(pageSubscriber.pageId, currentPage.pageId))
+        .where(
+          and(
+            eq(pageSubscriber.pageId, currentPage.pageId),
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
+        )
         .all();
       const pageInfo = await db
         .select()

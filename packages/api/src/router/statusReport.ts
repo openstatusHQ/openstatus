@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray } from "@openstatus/db";
+import { and, eq, inArray, isNotNull } from "@openstatus/db";
 import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
@@ -112,7 +112,12 @@ export const statusReportRouter = createTRPCRouter({
           const subscribers = await opts.ctx.db
             .select()
             .from(pageSubscriber)
-            .where(eq(pageSubscriber.pageId, currentPage.pageId))
+            .where(
+              and(
+                eq(pageSubscriber.pageId, currentPage.pageId),
+                isNotNull(pageSubscriber.acceptedAt),
+              ),
+            )
             .all();
           const pageInfo = await opts.ctx.db
             .select()
