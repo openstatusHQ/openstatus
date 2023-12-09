@@ -10,7 +10,7 @@ import {
   statusReportUpdate,
   workspacePlans,
 } from "@openstatus/db/src/schema";
-import { sendEmail, sendEmailHtml } from "@openstatus/emails";
+import { sendEmail, sendEmailHtml } from "@openstatus/emails/emails/send";
 import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";

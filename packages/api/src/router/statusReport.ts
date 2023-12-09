@@ -16,8 +16,7 @@ import {
   statusReportUpdate,
   workspace,
 } from "@openstatus/db/src/schema";
-import { sendEmailHtml } from "@openstatus/emails";
-import { allPlans } from "@openstatus/plans";
+import { sendEmailHtml } from "@openstatus/emails/emails/send";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 

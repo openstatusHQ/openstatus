@@ -3,7 +3,8 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { sendEmail, SubscribeEmail } from "@openstatus/emails";
+import { SubscribeEmail } from "@openstatus/emails";
+import { sendEmail } from "@openstatus/emails/emails/send";
 
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";

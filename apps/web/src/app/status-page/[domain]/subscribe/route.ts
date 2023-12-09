@@ -3,7 +3,8 @@ import { z } from "zod";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { sendEmail, SubscribeEmail } from "@openstatus/emails";
+import { sendEmail } from "@openstatus/emails/emails/send";
+import SubscribeEmail from "@openstatus/emails/emails/subscribe";
 
 export async function POST(
   req: Request,

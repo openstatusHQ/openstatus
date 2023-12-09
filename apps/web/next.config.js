@@ -18,9 +18,7 @@ const nextConfig = {
       "libsql",
       "@react-email/components",
       "@react-email/render",
-      "@react-email/tailwind",
     ],
-
     logging: {
       level: "verbose",
       fullUrl: true,
