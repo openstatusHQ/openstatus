@@ -5,14 +5,19 @@ import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
+  page,
   pagesToStatusReports,
+  pageSubscriber,
   selectMonitorSchema,
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
   statusReport,
   statusReportStatusSchema,
   statusReportUpdate,
+  workspace,
 } from "@openstatus/db/src/schema";
+import { sendEmailHtml } from "@openstatus/emails";
+import { allPlans } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -78,11 +83,56 @@ export const statusReportRouter = createTRPCRouter({
         .get();
 
       const { id, ...statusReportUpdateInput } = opts.input;
-      return await opts.ctx.db
+
+      // Send email
+
+      const updatedValue = await opts.ctx.db
         .insert(statusReportUpdate)
         .values(statusReportUpdateInput)
         .returning()
         .get();
+
+      const currentWorkspace = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, opts.ctx.workspace.id))
+        .get();
+      if (currentWorkspace?.plan !== "pro") {
+        const allPages = await opts.ctx.db
+          .select()
+          .from(pagesToStatusReports)
+          .where(
+            eq(
+              pagesToStatusReports.statusReportId,
+              updatedValue.statusReportId,
+            ),
+          )
+          .all();
+        for (const currentPage of allPages) {
+          const subscribers = await opts.ctx.db
+            .select()
+            .from(pageSubscriber)
+            .where(eq(pageSubscriber.pageId, currentPage.pageId))
+            .all();
+          const pageInfo = await opts.ctx.db
+            .select()
+            .from(page)
+            .where(eq(page.id, currentPage.pageId))
+            .get();
+          if (!pageInfo) continue;
+          const subscribersEmails = subscribers.map(
+            (subscriber) => subscriber.email,
+          );
+          await sendEmailHtml({
+            to: subscribersEmails,
+            subject: `New status update for ${pageInfo.title}`,
+            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+        `,
+            from: "Notification OpenStatus <notification@openstatus.dev>",
+          });
+        }
+      }
+      return updatedValue;
     }),
 
   updateStatusReport: protectedProcedure

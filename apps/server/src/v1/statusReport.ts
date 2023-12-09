@@ -2,10 +2,16 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { and, db, eq } from "@openstatus/db";
 import {
+  page,
+  pagesToStatusReports,
+  pageSubscriber,
   statusReport,
   statusReportStatus,
   statusReportUpdate,
+  workspacePlans,
 } from "@openstatus/db/src/schema";
+import { sendEmail, sendEmailHtml } from "@openstatus/emails";
+import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
@@ -336,7 +342,38 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
     })
     .returning()
     .get();
-
+  // send email
+  const workspacePlan = c.get("workspacePlan");
+  if (workspacePlan !== allPlans.free) {
+    const allPages = await db
+      .select()
+      .from(pagesToStatusReports)
+      .where(eq(pagesToStatusReports.statusReportId, statusReportId))
+      .all();
+    for (const currentPage of allPages) {
+      const subscribers = await db
+        .select()
+        .from(pageSubscriber)
+        .where(eq(pageSubscriber.pageId, currentPage.pageId))
+        .all();
+      const pageInfo = await db
+        .select()
+        .from(page)
+        .where(eq(page.id, currentPage.pageId))
+        .get();
+      if (!pageInfo) continue;
+      const subscribersEmails = subscribers.map(
+        (subscriber) => subscriber.email,
+      );
+      await sendEmailHtml({
+        to: subscribersEmails,
+        subject: `New status update for ${pageInfo.title}`,
+        html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+        `,
+        from: "Notification OpenStatus <notification@openstatus.dev>",
+      });
+    }
+  }
   const data = statusUpdateSchema.parse(_statusReportUpdate);
 
   return c.jsonT({
