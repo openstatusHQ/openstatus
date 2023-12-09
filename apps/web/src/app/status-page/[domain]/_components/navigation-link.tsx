@@ -34,6 +34,7 @@ export default function NavigationLink({
       asChild
       variant={isActive ? "secondary" : "ghost"}
       className={isActive ? "font-bold" : ""}
+      size="sm"
     >
       <Link href={href}>{children}</Link>
     </Button>

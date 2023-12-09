@@ -11,6 +11,7 @@ import {
   pagesToStatusReports,
   selectPublicPageSchemaWithRelation,
   statusReport,
+  workspace,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -164,6 +165,12 @@ export const pageRouter = createTRPCRouter({
         return;
       }
 
+      const workspaceResult = await opts.ctx.db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.id, result.workspaceId))
+        .get();
+
       // FIXME: There is probably a better way to do this
       const monitorsToPagesResult = await opts.ctx.db
         .select()
@@ -234,6 +241,7 @@ export const pageRouter = createTRPCRouter({
         ...result,
         monitors,
         statusReports,
+        workspacePlan: workspaceResult?.plan,
       });
     }),
 
