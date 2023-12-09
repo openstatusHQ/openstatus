@@ -29,6 +29,11 @@ export default function SettingsLayout({
       href: `/app/${params.workspaceSlug}/settings/billing`,
       segment: "billing",
     },
+    {
+      label: "Appearance",
+      href: `/app/${params.workspaceSlug}/settings/appearance`,
+      segment: "appearance",
+    },
   ];
 
   return (
