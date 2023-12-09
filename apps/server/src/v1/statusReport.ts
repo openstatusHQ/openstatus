@@ -58,6 +58,7 @@ const statusReportExtendedSchema = statusSchema.extend({
     })
     .default([]),
 });
+
 const getAllRoute = createRoute({
   method: "get",
   tags: ["status_report"],

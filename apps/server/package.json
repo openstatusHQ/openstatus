@@ -14,6 +14,7 @@
     "@hono/sentry": "1.0.0",
     "@hono/zod-openapi": "0.8.3",
     "@openstatus/db": "workspace:*",
+    "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",

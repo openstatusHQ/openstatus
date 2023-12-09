@@ -92,6 +92,13 @@
       "when": 1701713135829,
       "tag": "0012_tan_magma",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1702144660818,
+      "tag": "0013_tired_paladin",
+      "breakpoints": true
     }
   ]
 }
