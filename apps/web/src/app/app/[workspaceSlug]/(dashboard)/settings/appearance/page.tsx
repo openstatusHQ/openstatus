@@ -5,6 +5,8 @@ import { useTheme } from "next-themes";
 
 import { cn } from "@/lib/utils";
 
+// TODO: improve keyboard navigation
+
 export default function AppearancePage() {
   const { setTheme, theme } = useTheme();
 
