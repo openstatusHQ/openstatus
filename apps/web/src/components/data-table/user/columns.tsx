@@ -44,14 +44,16 @@ export const columns: ColumnDef<User & { role: WorkspaceRole }>[] = [
       return <span>{formatDate(row.getValue("createdAt"))}</span>;
     },
   },
-  // {
-  //   id: "actions",
-  //   cell: ({ row }) => {
-  //     return (
-  //       <div className="text-right">
-  //         <DataTableRowActions row={row} />
-  //       </div>
-  //     );
-  //   },
-  // },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      const role = row.original.role;
+      if (role === "owner") return null;
+      return (
+        <div className="text-right">
+          <DataTableRowActions row={row} />
+        </div>
+      );
+    },
+  },
 ];

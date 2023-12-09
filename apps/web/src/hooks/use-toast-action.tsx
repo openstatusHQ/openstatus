@@ -21,6 +21,7 @@ const config = {
   },
   success: { title: "Success" },
   deleted: { title: "Deleted successfully" }, // TODO: we are not informing the user besides the visual changes when an entry has been deleted
+  removed: { title: "Removed successfully" },
   saved: { title: "Saved successfully" },
   "test-error": {
     title: "Connection Failed",
