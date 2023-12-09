@@ -4,7 +4,14 @@ const { withContentlayer } = require("next-contentlayer");
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: ["@openstatus/ui", "@openstatus/api"],
+  transpilePackages: [
+    "@openstatus/ui",
+    "@openstatus/api",
+    "@react-email/components",
+    "@react-email/render",
+    "@react-email/html",
+  ],
+
   experimental: {
     serverActions: true,
     serverComponentsExternalPackages: [
@@ -13,11 +20,7 @@ const nextConfig = {
       "@react-email/render",
       "@react-email/tailwind",
     ],
-    transpilePackages: [
-      "@react-email/components",
-      "@react-email/render",
-      "@react-email/html",
-    ],
+
     logging: {
       level: "verbose",
       fullUrl: true,
