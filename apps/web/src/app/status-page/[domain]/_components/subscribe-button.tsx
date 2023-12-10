@@ -44,21 +44,19 @@ export function SubscribeButton({ slug }: Props) {
           <form
             className="grid gap-2"
             action={async (formData) => {
-              try {
-                await handleSubscribe(formData);
+              const res = await handleSubscribe(formData);
+              if (res?.error) {
                 toast({
-                  title: "Success",
-                  description: "Please confirm your email.",
+                  title: "Something went wrong",
+                  description: res.error,
+                  variant: "destructive",
                 });
-              } catch (e) {
-                if (e instanceof Error) {
-                  toast({
-                    title: "Something went wrong",
-                    description: e.message,
-                    variant: "destructive",
-                  });
-                }
+                return;
               }
+              toast({
+                title: "Success",
+                description: "Please confirm your email.",
+              });
             }}
           >
             <Label htmlFor="email">Email</Label>

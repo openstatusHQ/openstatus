@@ -25,7 +25,9 @@ export async function handleSubscribe(formData: FormData) {
 
   if (!validatedFields.success) {
     const fieldErrors = validatedFields.error.flatten().fieldErrors;
-    throw new Error(fieldErrors?.email?.[0] || "Invalid form data");
+    return {
+      error: fieldErrors?.email?.[0] || "Invalid form data",
+    };
   }
 
   const { slug } = validatedFields.data;
@@ -40,7 +42,9 @@ export async function handleSubscribe(formData: FormData) {
     .get();
 
   if (!pageData) {
-    throw new Error("Page not found");
+    return {
+      error: "Page not found",
+    };
   }
 
   const alreadySubscribed = await db
@@ -55,7 +59,9 @@ export async function handleSubscribe(formData: FormData) {
     .get();
 
   if (alreadySubscribed) {
-    throw new Error("Already subscribed");
+    return {
+      error: "Already subscribed",
+    };
   }
 
   const token = crypto.randomUUID();
