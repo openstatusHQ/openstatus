@@ -3,12 +3,10 @@
 import { z } from "zod";
 
 import { trackAnalytics } from "@openstatus/analytics";
-import { and, eq } from "@openstatus/db";
+import { and, eq, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { sendEmail, SubscribeEmail } from "@openstatus/emails";
-
-import { wait } from "@/lib/utils";
 
 const schema = z.object({
   email: z
@@ -30,12 +28,15 @@ export async function handleSubscribe(formData: FormData) {
     throw new Error(fieldErrors?.email?.[0] || "Invalid form data");
   }
 
-  console.log(validatedFields.data);
+  const { slug } = validatedFields.data;
 
   const pageData = await db
     .select()
     .from(page)
-    .where(eq(page.slug, validatedFields.data.slug))
+    .where(
+      // REMINDER: customDomain for pro users
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
+    )
     .get();
 
   if (!pageData) {
@@ -61,7 +62,7 @@ export async function handleSubscribe(formData: FormData) {
 
   await sendEmail({
     react: SubscribeEmail({
-      domain: validatedFields.data.slug,
+      domain: pageData.slug,
       token: token,
       page: pageData.title,
     }),
