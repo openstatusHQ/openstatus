@@ -12,20 +12,21 @@ export function Hero() {
   return (
     <Shell className="text-center">
       <Link
-        href="https://twitter.com/mxkaske/status/1685666982786404352?s=20"
+        href="https://github.com/openstatusHQ/openstatus/stargazers"
         target="_blank"
         rel="noreferrer"
       >
         <Badge variant="outline">
-          Announcement Post <ChevronRight className="ml-1 h-3 w-3" />
+          Proudly Open Source - Support us on GitHub
+          <ChevronRight className="ml-1 h-3 w-3" />
         </Badge>
       </Link>
       <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
-        Open-source monitoring service
+        A better way to monitor your services.
       </h1>
       <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-        OpenStatus is an open-source monitoring service with incident
-        management.
+        Reduce alert fatigue by triggering only relevant alerts when your
+        services experience downtime.
       </p>
       {/* much better than using flex without text alignment, text stays center even thought not same length */}
       <div className="my-4 grid gap-2 sm:grid-cols-2">
