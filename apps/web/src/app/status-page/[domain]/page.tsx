@@ -26,6 +26,8 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
