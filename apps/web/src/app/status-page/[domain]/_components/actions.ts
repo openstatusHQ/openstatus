@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { trackAnalytics } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
@@ -64,7 +65,7 @@ export async function handleSubscribe(formData: FormData) {
     }),
     from: "OpenStatus <notification@openstatus.dev>",
     to: [validatedFields.data.email],
-    subject: "Verify your subscription",
+    subject: "Verify your subscription to " + pageData.title,
   });
 
   await db
@@ -76,4 +77,9 @@ export async function handleSubscribe(formData: FormData) {
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .execute();
+
+  await trackAnalytics({
+    event: "Subscribe to Status Page",
+    slug: pageData.slug,
+  });
 }

@@ -15,7 +15,7 @@ const SubscribeEmail = ({
         <title>Confirm your subscription to {page} Status Page</title>
         <Preview>Confirm your subscription to {page} Status Page</Preview>
         <Body>
-          <h1>Confirm your subscription to {page} Status Page</h1>
+          <p>Confirm your subscription to {page} Status Page</p>
           <p>
             You are receiving this email because you subscribed to receive
             updates from {page} Status Page.
@@ -30,8 +30,7 @@ const SubscribeEmail = ({
             </a>
           </p>
           <br />
-          <br />
-          🚀 Powered by
+          🚀 Powered by{" "}
           <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
       </Head>
