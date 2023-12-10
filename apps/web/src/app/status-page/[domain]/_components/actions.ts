@@ -30,6 +30,8 @@ export async function handleSubscribe(formData: FormData) {
     throw new Error(fieldErrors?.email?.[0] || "Invalid form data");
   }
 
+  console.log(validatedFields.data);
+
   const pageData = await db
     .select()
     .from(page)
