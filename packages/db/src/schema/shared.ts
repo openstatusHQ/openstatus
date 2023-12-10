@@ -34,7 +34,10 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
     statusReports: selectStatusReportPageSchema,
-    workspacePlan: workspacePlanSchema.default("free"),
+    workspacePlan: workspacePlanSchema
+      .nullable()
+      .default("free")
+      .transform((val) => val ?? "free"),
   })
   .omit({
     workspaceId: true,
