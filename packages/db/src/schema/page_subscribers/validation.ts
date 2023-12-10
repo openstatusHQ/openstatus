@@ -1,7 +1,7 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { pageSubscriber } from "./status_reports_subscribers";
+import { pageSubscriber } from "./page_subscribers";
 
 export const insertPageSubscriberSchema = createInsertSchema(pageSubscriber, {
   email: z.string().email(),
