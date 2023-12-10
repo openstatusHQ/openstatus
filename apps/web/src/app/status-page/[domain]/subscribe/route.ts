@@ -52,6 +52,7 @@ export async function POST(
   await db
     .insert(pageSubscriber)
     .values({
+      pageId: pageData.id,
       email: result.email,
       token,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
