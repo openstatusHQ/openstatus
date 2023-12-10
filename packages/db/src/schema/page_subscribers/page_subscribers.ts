@@ -7,7 +7,9 @@ export const pageSubscriber = sqliteTable("page_subscriber", {
   id: integer("id").primaryKey(),
   email: text("email").notNull(),
 
-  pageId: integer("page_id").references(() => page.id),
+  pageId: integer("page_id")
+    .notNull()
+    .references(() => page.id),
 
   token: text("token"),
   acceptedAt: integer("accepted_at", { mode: "timestamp" }),
