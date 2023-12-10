@@ -1,3 +1,9 @@
+Install the [npm](https://www.npmjs.com/package/@openstatus/react) package:
+
+```bash
+npm install @openstatus/react
+```
+
 ## React Server Component
 
 ```tsx
@@ -55,10 +61,8 @@ async function CustomStatusWidget() {
   // ^StatusResponse = { status: Status }
 
   const { status } = res;
-  // ^Status = "unknown" | "operational" | "degraded_performance" | "partial_outage" | "major_outage" | "under_maintenance"
+  // ^Status = "unknown" | "operational" | "degraded_performance" | "partial_outage" | "major_outage" | "under_maintenance" | "incident"
 
   return <div>{/* customize */}</div>;
 }
 ```
-
-[Link to npm](https://www.npmjs.com/package/@openstatus/react)
