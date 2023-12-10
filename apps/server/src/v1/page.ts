@@ -115,6 +115,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
   const _statusReportSubscriberUpdate = await db
     .insert(pageSubscriber)
     .values({
+      pageId: _page.id,
       email: input.email,
       token,
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),

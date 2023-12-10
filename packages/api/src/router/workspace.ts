@@ -47,14 +47,6 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   getWorkspaceUsers: protectedProcedure.query(async (opts) => {
-    // const result = await opts.ctx.db
-    //   .select()
-    //   .from(usersToWorkspaces)
-    //   .leftJoin(user, eq(user.id, usersToWorkspaces.userId))
-    //   .where(eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id))
-    //   .all();
-    // return result.map(({ user }) => user);
-
     const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
       with: {
         user: true,
@@ -63,6 +55,15 @@ export const workspaceRouter = createTRPCRouter({
     });
     return result;
   }),
+
+  updateWorkspace: protectedProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async (opts) => {
+      return await opts.ctx.db
+        .update(workspace)
+        .set({ name: opts.input.name })
+        .where(eq(workspace.id, opts.ctx.workspace.id));
+    }),
 
   removeWorkspaceUser: protectedProcedure
     .input(z.object({ id: z.number() }))
