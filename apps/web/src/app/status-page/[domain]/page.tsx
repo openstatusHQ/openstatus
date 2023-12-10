@@ -27,14 +27,8 @@ type Props = {
 };
 
 export default async function Page({ params }: Props) {
-  // We should fetch the monitors and incident here
-  // also the page information
-  if (!params.domain) return notFound();
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  if (!page) {
-    return notFound();
-  }
-
+  if (!page) return notFound();
   const isEmptyState = !(
     Boolean(page.monitors.length) || Boolean(page.statusReports.length)
   );

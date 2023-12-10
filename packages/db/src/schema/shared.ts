@@ -6,6 +6,7 @@ import {
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
 } from "./status_reports";
+import { workspacePlanSchema } from "./workspaces";
 
 // FIXME: delete this file!
 
@@ -33,6 +34,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
     statusReports: selectStatusReportPageSchema,
+    workspacePlan: workspacePlanSchema.default("free"),
   })
   .omit({
     workspaceId: true,
