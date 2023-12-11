@@ -36,8 +36,8 @@ export function getMonitorList(tb: Tinybird) {
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      // cache: "no-store",
-      revalidate: 30, // 30 seconds cache
+      cache: "no-store",
+      // revalidate: 30, // 30 seconds cache
     },
   });
 }
