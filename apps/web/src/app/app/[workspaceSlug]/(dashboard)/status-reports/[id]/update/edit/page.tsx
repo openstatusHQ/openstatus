@@ -9,15 +9,14 @@ import { api } from "@/trpc/server";
  * allowed URL search params
  */
 const searchParamsSchema = z.object({
-  id: z.coerce.number(),
-  statusUpdate: z.coerce.number().optional(),
+  statusUpdate: z.coerce.number().optional(), // TODO: call it id as we do it everywhere else
 });
 
 export default async function EditPage({
   params,
   searchParams,
 }: {
-  params: { workspaceSlug: string };
+  params: { workspaceSlug: string; id: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
@@ -26,7 +25,7 @@ export default async function EditPage({
     return notFound();
   }
 
-  const { id, statusUpdate } = search.data;
+  const { statusUpdate } = search.data;
 
   const data = statusUpdate
     ? await api.statusReport.getStatusReportUpdateById.query({
@@ -42,7 +41,7 @@ export default async function EditPage({
       />
       <div className="col-span-full">
         <StatusReportUpdateForm
-          statusReportId={id}
+          statusReportId={parseInt(params.id)}
           defaultValues={data || undefined}
         />
       </div>

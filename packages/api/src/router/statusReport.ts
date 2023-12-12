@@ -311,7 +311,11 @@ export const statusReportRouter = createTRPCRouter({
           status: statusReportStatusSchema.default("investigating"), // TODO: remove!
           monitorsToStatusReports: z
             .array(
-              z.object({ statusReportId: z.number(), monitorId: z.number() }),
+              z.object({
+                statusReportId: z.number(),
+                monitorId: z.number(),
+                monitor: selectMonitorSchema,
+              }),
             )
             .default([]),
           pagesToStatusReports: z
@@ -327,7 +331,7 @@ export const statusReportRouter = createTRPCRouter({
           eq(statusReport.workspaceId, opts.ctx.workspace.id),
         ),
         with: {
-          monitorsToStatusReports: true,
+          monitorsToStatusReports: { with: { monitor: true } },
           pagesToStatusReports: true,
           statusReportUpdates: {
             orderBy: (statusReportUpdate, { desc }) => [

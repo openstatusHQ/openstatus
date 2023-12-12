@@ -3,10 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MoreVertical } from "lucide-react";
-import type * as z from "zod";
+import type { Row } from "@tanstack/react-table";
+import { MoreHorizontal } from "lucide-react";
 
-import { insertStatusReportSchema } from "@openstatus/db/src/schema";
+import { selectStatusReportSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,24 +28,26 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
-const temporary = insertStatusReportSchema.pick({
-  id: true,
-  workspaceSlug: true,
-});
+interface DataTableRowActionsProps<TData> {
+  row: Row<TData>;
+}
 
-type Schema = z.infer<typeof temporary>;
-
-export function ActionButton(props: Schema) {
+export function DataTableRowActions<TData>({
+  row,
+}: DataTableRowActionsProps<TData>) {
+  const statusReport = selectStatusReportSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
-  async function deeteStatusReport() {
+  async function onDelete() {
     startTransition(async () => {
       try {
-        if (!props.id) return;
-        await api.statusReport.deleteStatusReport.mutate({ id: props.id });
+        if (!statusReport.id) return;
+        await api.statusReport.deleteStatusReport.mutate({
+          id: statusReport.id,
+        });
         toast("deleted");
         router.refresh();
         setAlertOpen(false);
@@ -64,12 +66,15 @@ export function ActionButton(props: Schema) {
             className="data-[state=open]:bg-accent h-8 w-8 p-0"
           >
             <span className="sr-only">Open menu</span>
-            <MoreVertical className="h-4 w-4" />
+            <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./status-reports/edit?id=${props.id}`}>
+          <Link href={`./status-reports/edit?id=${statusReport.id}`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
+          </Link>
+          <Link href={`./status-reports/${statusReport.id}`}>
+            <DropdownMenuItem>View</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
@@ -83,7 +88,7 @@ export function ActionButton(props: Schema) {
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the
-            status report.
+            monitor.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -91,7 +96,7 @@ export function ActionButton(props: Schema) {
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              deeteStatusReport();
+              onDelete();
             }}
             disabled={isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

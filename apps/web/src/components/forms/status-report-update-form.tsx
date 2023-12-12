@@ -70,6 +70,8 @@ export function StatusReportUpdateForm({
         }
         toast("saved");
         router.refresh();
+        // TODO: temporary solution, we might wanna use a server-action with redirect
+        router.push("../");
       } catch {
         toast("error");
       }

@@ -13,7 +13,7 @@ import { workspacePlanSchema } from "./workspaces";
 export const selectStatusReportPageSchema = z.array(
   selectStatusReportSchema.extend({
     statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
-    monitorsToStatusReport: z
+    monitorsToStatusReports: z
       .array(z.object({ monitorId: z.number(), statusReportId: z.number() }))
       .default([]),
   }),

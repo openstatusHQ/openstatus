@@ -1,6 +1,7 @@
 import { Skeleton } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
+import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 
 export default function Loading() {
   return (
@@ -10,9 +11,9 @@ export default function Loading() {
           <Skeleton className="h-9 w-20" />
         </Header.Skeleton>
       </div>
-      <Skeleton className="h-4 w-24" />
-      <Skeleton className="h-48 w-full" />
-      <Skeleton className="h-48 w-full" />
+      <div className="col-span-full w-full">
+        <DataTableSkeleton />
+      </div>
     </div>
   );
 }
