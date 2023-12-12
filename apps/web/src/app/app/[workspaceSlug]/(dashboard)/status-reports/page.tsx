@@ -16,7 +16,6 @@ export default async function StatusReportsPage({
   params: { workspaceSlug: string };
 }) {
   const reports = await api.statusReport.getStatusReportByWorkspace.query();
-  console.log({ reports });
   return (
     <div className="grid min-h-full grid-cols-1 grid-rows-[auto,1fr,auto] gap-6 md:grid-cols-1 md:gap-8">
       <Header

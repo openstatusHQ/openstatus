@@ -47,7 +47,6 @@ export const IncidentList = ({
             {context === "all" ? "All incidents" : "Latest incidents"}
           </h2>
           {_incidents.map((incident) => {
-            console.log(incident);
             const affectedMonitors = incident.monitorsToStatusReports
               .map(({ monitorId }) => {
                 const monitor = monitors.find(({ id }) => monitorId === id);
