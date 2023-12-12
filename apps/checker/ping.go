@@ -83,7 +83,6 @@ func ping(client *http.Client, inputData InputData) (PingData, error) {
 	start := time.Now()
 	response, err := client.Do(request)
 	latency := time.Since(start).Milliseconds()
-	defer response.Body.Close()
 
 	if err != nil {
 		if urlErr, ok := err.(*url.Error); ok {
@@ -102,6 +101,7 @@ func ping(client *http.Client, inputData InputData) (PingData, error) {
 
 		return PingData{}, fmt.Errorf("Error with monitor %s: %w", inputData.Url, err)
 	}
+	defer response.Body.Close()
 
 	_, err = io.ReadAll(response.Body)
 

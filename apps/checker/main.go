@@ -74,7 +74,15 @@ func main() {
 			// Add one more retry
 			response, error = ping(client, u)
 			if error != nil {
-				sendToTinybirdNew(response)
+				sendToTinybirdNew(PingData{
+					Url:           u.Url,
+					Region:        region,
+					Message:       error.Error(),
+					CronTimestamp: u.CronTimestamp,
+					Timestamp:     u.CronTimestamp,
+					MonitorId:     u.MonitorId,
+					WorkspaceId:   u.WorkspaceId,
+				})
 				if u.Status == "active" {
 					updateStatus(UpdateData{
 						MonitorId: u.MonitorId,
