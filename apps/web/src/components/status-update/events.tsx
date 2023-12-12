@@ -2,17 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { format, formatDistance } from "date-fns";
-import type * as z from "zod";
+import { format } from "date-fns";
 
-import type { selectStatusReportUpdateSchema } from "@openstatus/db/src/schema";
-import {
-  Button,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui";
+import type { StatusReportUpdate } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui";
 
 import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/[workspaceSlug]/(dashboard)/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
@@ -20,14 +13,14 @@ import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
 
-type StatusReportUpdateProps = z.infer<typeof selectStatusReportUpdateSchema>;
-
 export function Events({
   statusReportUpdates,
   editable = false,
+  collabsible = false,
 }: {
-  statusReportUpdates: StatusReportUpdateProps[];
+  statusReportUpdates: StatusReportUpdate[];
   editable?: boolean;
+  collabsible?: boolean;
 }) {
   const [open, toggle] = React.useReducer((open) => !open, false);
   const router = useRouter();
@@ -38,11 +31,12 @@ export function Events({
     const orderB = statusDict[b.status].order;
     return orderB - orderA;
   });
-  const slicedArray = open
-    ? sortedArray
-    : sortedArray.length > 0
-    ? [sortedArray[0]]
-    : [];
+  const slicedArray =
+    open || !collabsible
+      ? sortedArray
+      : sortedArray.length > 0
+      ? [sortedArray[0]]
+      : [];
   //
 
   return (
@@ -66,16 +60,16 @@ export function Events({
                 <div className="bg-muted absolute inset-x-0 mx-auto h-full w-[2px]" />
               ) : null}
             </div>
-            <div className="mt-1 grid flex-1 gap-3">
+            <div className="mt-1 grid flex-1">
               {editable ? (
-                <div className="absolute bottom-2 right-2 hidden gap-2 group-hover:flex group-active:flex">
+                <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex group-active:flex">
                   <Button
                     size="icon"
                     variant="outline"
                     className="h-7 w-7 p-0"
                     onClick={() => {
                       router.push(
-                        `./status-reports/update/edit?id=${update.statusReportId}&statusUpdate=${update.id}`,
+                        `./${update.statusReportId}/update/edit?statusUpdate=${update.id}`,
                       );
                     }}
                   >
@@ -84,20 +78,13 @@ export function Events({
                   <DeleteStatusReportUpdateButtonIcon id={update.id} />
                 </div>
               ) : undefined}
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-semibold">{label}</p>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger className="text-muted-foreground text-xs font-light">
-                      {formatDistance(new Date(update.date), new Date(), {
-                        addSuffix: true,
-                      })}
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{format(new Date(update.date), "LLL dd, y HH:mm")}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium">{label}</p>
+                <p className="text-muted-foreground mt-px text-xs">
+                  <code>
+                    {format(new Date(update.date), "LLL dd, y HH:mm")}
+                  </code>
+                </p>
               </div>
               {/* <p className="max-w-3xl text-sm">{update.message}</p> */}
               <EventMessage message={update.message} />
@@ -105,8 +92,7 @@ export function Events({
           </div>
         );
       })}
-
-      {statusReportUpdates.length > 1 ? (
+      {collabsible && statusReportUpdates.length > 1 ? (
         <div className="text-center">
           <Button variant="ghost" onClick={toggle}>
             {open ? "Close" : "More"}

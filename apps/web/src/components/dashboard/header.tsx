@@ -32,12 +32,18 @@ function Header({ title, description, className, actions }: HeaderProps) {
   );
 }
 
-function HeaderSkeleton({ children }: { children?: React.ReactNode }) {
+function HeaderSkeleton({
+  children,
+  withDescription = true,
+}: {
+  children?: React.ReactNode;
+  withDescription?: boolean;
+}) {
   return (
     <div className="col-span-full mr-12 flex w-full justify-between lg:mr-0">
       <div className="grid w-full gap-3">
         <Skeleton className="h-8 w-full max-w-[200px]" />
-        <Skeleton className="h-4 w-full max-w-[300px]" />
+        {withDescription && <Skeleton className="h-4 w-full max-w-[300px]" />}
       </div>
       {children}
     </div>

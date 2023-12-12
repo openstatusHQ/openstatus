@@ -1,14 +1,16 @@
+"use client";
+
 import type { z } from "zod";
 
 import type {
   selectPublicMonitorSchema,
   selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
+import { Separator } from "@openstatus/ui";
 
 import { notEmpty } from "@/lib/utils";
-import { AffectedMonitors } from "../status-update/affected-monitors";
 import { Events } from "../status-update/events";
-import { StatusBadge } from "../status-update/status-badge";
+import { Summary } from "../status-update/summary";
 
 // TODO: change layout - it is too packed with data rn
 
@@ -45,7 +47,7 @@ export const IncidentList = ({
             {context === "all" ? "All incidents" : "Latest incidents"}
           </h2>
           {_incidents.map((incident) => {
-            const affectedMonitors = incident.monitorsToStatusReport
+            const affectedMonitors = incident.monitorsToStatusReports
               .map(({ monitorId }) => {
                 const monitor = monitors.find(({ id }) => monitorId === id);
                 return monitor || undefined;
@@ -53,33 +55,13 @@ export const IncidentList = ({
               .filter(notEmpty);
             return (
               <div key={incident.id} className="grid gap-4 text-left">
-                <div className="max-w-3xl font-semibold">
-                  {incident.title}
-                  <StatusBadge status={incident.status} className="ml-2" />
-                </div>
-                {Boolean(affectedMonitors.length) ? (
-                  <div className="overflow-hidden text-ellipsis">
-                    <p className="text-muted-foreground mb-2 text-xs">
-                      Affected Monitors
-                    </p>
-                    <AffectedMonitors
-                      monitors={incident.monitorsToStatusReport
-                        .map(({ monitorId }) => {
-                          const monitor = monitors.find(
-                            ({ id }) => monitorId === id,
-                          );
-                          return monitor || undefined;
-                        })
-                        .filter(notEmpty)}
-                    />
-                  </div>
-                ) : null}
-                <div>
-                  <p className="text-muted-foreground mb-2 text-xs">
-                    Latest Updates
-                  </p>
-                  <Events statusReportUpdates={incident.statusReportUpdates} />
-                </div>
+                <div className="max-w-3xl font-semibold">{incident.title}</div>
+                <Summary report={incident} monitors={affectedMonitors} />
+                <Separator />
+                <Events
+                  statusReportUpdates={incident.statusReportUpdates}
+                  collabsible
+                />
               </div>
             );
           })}
