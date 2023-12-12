@@ -7,12 +7,14 @@ import { Icons } from "../icons";
 export function Cards(props: Feature) {
   const Icon = Icons[props.icon];
   return (
-    <Shell className="grid gap-6">
+    <Shell className="grid gap-6 bg-gradient-to-br from-[hsl(var(--muted))] from-0% to-transparent to-20%">
       <div className="flex flex-col items-center justify-center gap-3">
         <div className="border-border rounded-full border p-2">
           <Icon className="h-5 w-5" />
         </div>
-        <h3 className="font-cal text-center text-3xl">{props.title}</h3>
+        <h3 className="font-cal bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-50% bg-clip-text text-center text-3xl text-transparent">
+          {props.title}
+        </h3>
       </div>
       <ul className="grid gap-4 md:grid-cols-3 md:gap-6">
         {props.features?.map((feature, i) => {
