@@ -2,8 +2,6 @@ import { Separator, Skeleton } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 
-// TODO: update loading skeleton (especially for the summary)
-
 export default function Loading() {
   return (
     <div className="grid gap-6 md:grid-cols-1 md:gap-8">
