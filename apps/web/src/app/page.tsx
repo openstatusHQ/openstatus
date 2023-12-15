@@ -4,9 +4,11 @@ import { Cards, SpecialCard } from "@/components/marketing/cards";
 import { Example } from "@/components/marketing/example";
 import { FAQs } from "@/components/marketing/faqs";
 import { Hero } from "@/components/marketing/hero";
+import { MonitoringCard } from "@/components/marketing/monitoring";
 import { Partners } from "@/components/marketing/partners";
 import { Plans } from "@/components/marketing/plans";
 import { Stats } from "@/components/marketing/stats";
+import { StatusMarketing } from "@/components/marketing/status";
 import { cardConfig, specialCardConfig } from "@/config/features";
 
 export const revalidate = 600;
@@ -16,14 +18,14 @@ export default async function Page() {
     <MarketingLayout>
       <div className="grid gap-8">
         <Hero />
-        <Example />
-        <Cards {...cardConfig.monitors} />
+        <Partners />
+        <MonitoringCard {...cardConfig.monitors} />
         <Stats />
         {/* TODO: rename to `reports` */}
-        <Cards {...cardConfig.incidents} />
-        <Partners />
-        <Cards {...cardConfig.pages} />
-        <SpecialCard {...specialCardConfig} />
+        <Cards {...cardConfig.alerts} />
+        <StatusMarketing {...cardConfig.pages} />
+        {/* <Example /> */}
+        {/* <SpecialCard {...specialCardConfig} /> */}
         <Plans />
         <Shell>
           <FAQs />

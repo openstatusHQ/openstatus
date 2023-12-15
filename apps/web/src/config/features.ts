@@ -29,24 +29,26 @@ export const specialCardConfig = {
 export const cardConfig = {
   monitors: {
     icon: "activity",
-    title: "Monitors",
+    title: "Monitoring",
     features: [
       {
-        icon: "cog",
-        catchline: "Custom Headers.",
+        icon: "globe",
+        catchline: "Global Monitoring.",
         description:
-          "Add your own headers to the request and access secured endpoints.",
+          "Monitor your endpoints from all over the world. We currently support all the continents.",
       },
       {
         icon: "play",
-        catchline: "Run on demand.",
-        description: "Check if your endpoint is up and running with one click.",
+        catchline: "Monitor anything.",
+        description:
+          "API, DNS, domain, SLL, SMTP, ping, webpage,... , we can monitor it all.",
       },
       {
         icon: "bot",
-        catchline: "Automatic checks.",
+        catchline: "Cron Monitoring.",
+        badge: "Coming soon",
         description:
-          "Define the region where to call the request and the frequency how often to call it.",
+          "Never let a cron job fail you. Get notified when a jobs did not run successfully.",
       },
     ],
   },
@@ -56,42 +58,44 @@ export const cardConfig = {
     features: [
       {
         icon: "puzzle",
-        catchline: "Custom slug.",
+        catchline: "Build trust",
         description:
-          "Create your own sudomain and inform your users about the uptime of your endpoints.",
+          "Showcase your reliability to your users, and reduce the numbers of customers service tickets.",
       },
       {
         icon: "globe",
         catchline: "Custom domain.",
         description:
-          "Give the status page a personal touch. Including the favicon.",
+          "Bring your own domain, give the status page a personal touch.",
       },
       {
         icon: "image",
-        catchline: "OG images.",
+        catchline: "Subscription",
         description:
-          "Get a custom image with the current uptime of your first monitor.",
+          "Let your users subscribe to your status page, to automatically receive updates about the status of your services.",
       },
     ],
   },
-  incidents: {
+  alerts: {
     icon: "siren",
-    title: "Incidents",
+    title: "Alerting",
     features: [
       {
-        icon: "bell",
-        catchline: "Alerts.",
-        description: "Be informed if your endpoint fails.",
+        icon: "sparkles",
+        catchline: "Connect.",
+        description:
+          "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionnable.",
       },
       {
-        icon: "message-circle",
-        catchline: "Status Reports.",
-        description: "Keep your teams and users updated with status updates.",
+        icon: "bell",
+        catchline: "Get alerted.",
+        description:
+          "Get notified via email, SMS, Slack, Discord,... before your users do.",
       },
       {
         icon: "zap",
-        catchline: "Blazingly Fast.",
-        description: "Respond to incident faster than ever.",
+        catchline: "Escalatation.",
+        description: "Notify and escalate an alert to the right team member.",
       },
     ],
   },

@@ -25,6 +25,7 @@ import {
   Search,
   SearchCheck,
   Siren,
+  Sparkles,
   SunMedium,
   Table,
   Tag,
@@ -72,6 +73,7 @@ export const Icons = {
   sun: SunMedium,
   moon: Moon,
   laptop: Laptop,
+  sparkles: Sparkles,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

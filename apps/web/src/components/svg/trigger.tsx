@@ -62,8 +62,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint1_linear_228_1439"
@@ -73,8 +73,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint2_linear_228_1439"
@@ -84,8 +84,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint3_linear_228_1439"
@@ -95,8 +95,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint4_linear_228_1439"
@@ -106,8 +106,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint5_linear_228_1439"
@@ -117,8 +117,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint6_linear_228_1439"
@@ -128,8 +128,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="13.9297"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
         <linearGradient
           id="paint7_linear_228_1439"
@@ -139,8 +139,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="25.9719"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#2563EB"></stop>
-          <stop offset="1" stop-color="#A855F7"></stop>
+          <stop stopColor="#2563EB"></stop>
+          <stop offset="1" stopColor="#A855F7"></stop>
         </linearGradient>
         <linearGradient
           id="paint8_linear_228_1439"
@@ -150,8 +150,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="25.9719"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#2563EB"></stop>
-          <stop offset="1" stop-color="#A855F7"></stop>
+          <stop stopColor="#2563EB"></stop>
+          <stop offset="1" stopColor="#A855F7"></stop>
         </linearGradient>
         <linearGradient
           id="paint9_linear_228_1439"
@@ -161,8 +161,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="25.9719"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#2563EB"></stop>
-          <stop offset="1" stop-color="#A855F7"></stop>
+          <stop stopColor="#2563EB"></stop>
+          <stop offset="1" stopColor="#A855F7"></stop>
         </linearGradient>
         <linearGradient
           id="paint10_linear_228_1439"
@@ -172,8 +172,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="25.9719"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#2563EB"></stop>
-          <stop offset="1" stop-color="#A855F7"></stop>
+          <stop stopColor="#2563EB"></stop>
+          <stop offset="1" stopColor="#A855F7"></stop>
         </linearGradient>
         <linearGradient
           id="paint11_linear_228_1439"
@@ -183,8 +183,8 @@ export function Trigger(props: SVGAttributes<SVGSVGElement>) {
           y2="31.2381"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#41FF54"></stop>
-          <stop offset="1" stop-color="#E7FF52"></stop>
+          <stop stopColor="#41FF54"></stop>
+          <stop offset="1" stopColor="#E7FF52"></stop>
         </linearGradient>
       </defs>
     </svg>
