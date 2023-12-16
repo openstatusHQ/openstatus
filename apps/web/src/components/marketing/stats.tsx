@@ -6,7 +6,7 @@ import { api } from "@/trpc/server";
 export async function Stats() {
   const tbTotalStats = await getHomeStatsData({});
   const tbLastHourStats = await getHomeStatsData({ period: "1h" });
-  const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
+  // const totalActiveMonitors = await api.monitor.getTotalActiveMonitors.query();
 
   return (
     <Shell>
@@ -27,8 +27,8 @@ export async function Stats() {
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
-            {numberFormatter(totalActiveMonitors)}
-            {/* 1500+ */}
+            {/* {numberFormatter(totalActiveMonitors)} */}
+            1500+
           </h3>
           <p className="text-muted-foreground font-light">Active monitors</p>
         </div>
