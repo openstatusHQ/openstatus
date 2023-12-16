@@ -9,7 +9,7 @@ import { numberFormatter } from "@/lib/utils";
 
 export function Hero() {
   return (
-    <div className="my-24  flex  w-full flex-col justify-center px-3 py-4 text-center md:p-6">
+    <div className="my-12 flex  w-full  flex-col justify-center px-3 py-4 text-center md:my-24 md:p-6">
       <div>
         <Button
           variant="outline"
