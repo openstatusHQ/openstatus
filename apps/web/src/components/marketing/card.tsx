@@ -71,9 +71,12 @@ export function CardFeatureContainer({
 }) {
   return (
     <ul
-      className={cn("grid gap-4 md:gap-6", {
-        "md:grid-cols-3": dir === "cols",
-        "md:grid-rows-3": dir === "rows",
+      // grid
+      className={cn("gap-4 md:gap-6", {
+        // "md:grid-cols-3": dir === "cols",
+        // "md:grid-rows-3": dir === "rows",
+        "flex flex-col md:flex-row": dir === "cols",
+        "flex flex-col": dir === "rows",
       })}
     >
       {children}
