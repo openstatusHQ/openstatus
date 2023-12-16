@@ -53,8 +53,8 @@ export function CardContent({
   return (
     <div
       className={cn("grid gap-10", {
-        "grid-cols-1 md:grid-cols-2": dir === "cols",
-        "grid-rows-2": dir === "rows",
+        "grid-cols-none md:grid-cols-2": dir === "cols",
+        "grid-rows-none md:grid-rows-2": dir === "rows",
       })}
     >
       {children}

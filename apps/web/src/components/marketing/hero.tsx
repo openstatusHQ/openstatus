@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import { Badge, Button } from "@openstatus/ui";
 
 import { getGitHubStars } from "@/lib/github";
-import { numberFormatter } from "@/lib/utils";
+import { cn, numberFormatter } from "@/lib/utils";
 
 export function Hero() {
   return (
@@ -24,8 +24,12 @@ export function Hero() {
         </Badge>
       </div>
       <div className="flex flex-col gap-6">
-        {/* bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-50% bg-clip-text text-transparent */}
-        <h1 className="text-foreground font-cal text-4xl md:text-6xl">
+        <h1
+          className={cn(
+            "text-foreground font-cal text-4xl md:text-6xl",
+            "bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-50% bg-clip-text text-transparent",
+          )}
+        >
           A better way to monitor your services.
         </h1>
         <p className="text-muted-foreground mx-auto max-w-md text-lg md:max-w-lg md:text-xl">

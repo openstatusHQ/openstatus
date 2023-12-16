@@ -11,13 +11,13 @@ const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export async function TrackerExample() {
   return (
-    <div className="flex w-full flex-col items-center justify-center">
+    <div className="flex w-full flex-col items-center justify-center gap-8">
       <div className="mx-auto w-full max-w-md">
         <Suspense fallback={<ExampleTrackerFallback />}>
           <ExampleTracker />
         </Suspense>
       </div>
-      <Button asChild variant="outline" className="my-8 rounded-full">
+      <Button asChild variant="outline" className="rounded-full">
         <Link href="/play">Playground</Link>
       </Button>
     </div>

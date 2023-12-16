@@ -90,16 +90,16 @@ export const cardConfig = {
         badge: "Coming soon",
       },
       {
-        icon: "bell",
-        catchline: "Get alerted.",
-        description:
-          "Get notified via email, SMS, Slack, Discord,... before your users do.",
-      },
-      {
         icon: "zap",
         catchline: "Escalatation.",
         description: "Notify and escalate an alert to the right team member.",
         badge: "Coming soon",
+      },
+      {
+        icon: "bell",
+        catchline: "Get alerted.",
+        description:
+          "Get notified via email, SMS, Slack, Discord,... before your users do.",
       },
     ],
   },

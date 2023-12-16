@@ -5,7 +5,12 @@ import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";
 
 export function TimelineContainer({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col justify-center gap-3">{children}</div>;
+  return (
+    // first:md:order-2 does not work
+    <div className="mx-auto flex max-w-md flex-col justify-center gap-3 md:order-2">
+      {children}
+    </div>
+  );
 }
 
 export function TimelineEvent({
@@ -31,8 +36,8 @@ export function TimelineEvent({
       <div className="mt-1 flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm font-semibold">{label}</p>
-          <p className="text-muted-foreground mt-px text-[10px]">
-            <code>{format(new Date(date), "LLL dd, y HH:mm")}</code>
+          <p className="text-muted-foreground mt-px text-right text-[10px]">
+            <code>{format(new Date(date), "LLL dd, y HH:mm:ss")}</code>
           </p>
         </div>
         <p className="text-muted-foreground text-sm">{message}</p>
