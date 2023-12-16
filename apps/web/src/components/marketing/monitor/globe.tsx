@@ -26,9 +26,6 @@ export function Globe() {
       markerColor: [1, 1, 1],
       glowColor: [1, 1, 1],
       markers: [
-        // longitude latitude
-        // { location: [37.7595, -122.4367], size: 0.05 },
-        // { location: [40.7128, -74.006], size: 0.05 },
         // AMS
         { location: [52.3676, 4.9041], size: 0.05 },
         // IAD
@@ -50,6 +47,12 @@ export function Globe() {
       },
     });
 
+    setTimeout(() => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.style.opacity = "1";
+    });
+
     return () => {
       globe.destroy();
     };
@@ -59,7 +62,14 @@ export function Globe() {
     <div className="flex justify-center">
       <canvas
         ref={canvasRef}
-        style={{ width: SIZE, height: SIZE, maxWidth: "100%", aspectRatio: 1 }}
+        style={{
+          width: SIZE,
+          height: SIZE,
+          maxWidth: "100%",
+          aspectRatio: 1,
+          opacity: 0,
+          transition: "opacity 1s ease",
+        }}
       />
     </div>
   );
