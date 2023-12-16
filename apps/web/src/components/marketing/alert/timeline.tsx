@@ -3,6 +3,7 @@ import { format } from "date-fns";
 
 import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 export function TimelineContainer({ children }: { children: React.ReactNode }) {
   return (
@@ -22,12 +23,17 @@ export function TimelineEvent({
 }: Event & {
   isLast?: boolean;
 }) {
-  const Icon = Icons[icon];
+  const Icon = Icons[icon.name];
   return (
     <div className="group relative -m-2 flex gap-4 border border-transparent p-2">
       <div className="relative">
-        <div className="bg-background border-border rounded-full border p-2">
-          <Icon className="h-4 w-4" />
+        <div
+          className={cn(
+            "bg-background rounded-full border p-2",
+            icon.borderColor,
+          )}
+        >
+          <Icon className={cn("h-4 w-4", icon.textColor)} />
         </div>
         {!isLast ? (
           <div className="bg-muted absolute inset-x-0 mx-auto h-full w-[2px]" />
@@ -60,7 +66,11 @@ type Event = {
   label: string;
   date: Date;
   message: string;
-  icon: ValidIcon;
+  icon: {
+    name: ValidIcon;
+    textColor: string;
+    borderColor: string;
+  };
 };
 
 const timeline = [
@@ -68,24 +78,40 @@ const timeline = [
     label: "Monitor down",
     date: new Date("03.12.2023, 19:14:45"),
     message: "We couldn't reach your endpoint in Amsterdam.",
-    icon: "alert-triangle",
+    icon: {
+      name: "alert-triangle",
+      textColor: "text-orange-500",
+      borderColor: "border-orange-500/40",
+    },
   },
   {
     label: "Grafana alert",
     date: new Date("03.12.2023, 19:14:55"),
     message: "3 incoming notifications from Grafana.",
-    icon: "webhook",
+    icon: {
+      name: "webhook",
+      textColor: "text-yellow-500",
+      borderColor: "border-yellow-500/40",
+    },
   },
   {
     label: "Notification sent",
     date: new Date("03.12.2023, 19:15:01"),
     message: "Smart notification with summary sent to your Slack channel.",
-    icon: "sparkles",
+    icon: {
+      name: "sparkles",
+      textColor: "text-blue-500",
+      borderColor: "border-blue-500/40",
+    },
   },
   {
     label: "Monitor recovered",
     date: new Date("03.12.2023, 19:21:30"),
     message: "The enpoint response is back.",
-    icon: "check",
+    icon: {
+      name: "check",
+      textColor: "text-green-500",
+      borderColor: "border-green-500/40",
+    },
   },
 ] satisfies Event[];
