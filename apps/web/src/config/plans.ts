@@ -28,6 +28,7 @@ export const plansConfig: Record<Plans, PlanProps> = {
       "1 status page",
       "subdomain",
       "10m, 30m, 1h checks",
+      "email, slack, discord notifications",
     ],
     action: {
       text: "Start Now",
@@ -40,9 +41,11 @@ export const plansConfig: Record<Plans, PlanProps> = {
     cost: 29,
     features: [
       "20 monitors",
-      "5 status page",
+      "5 status pages",
       "custom domain",
       "1m, 5m, 10m, 30m, 1h checks",
+      "email, slack, discord, sms notifications",
+      "status page subscription",
       "5 team members",
     ],
     action: {

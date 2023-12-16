@@ -99,7 +99,7 @@ export const cardConfig = {
         icon: "bell",
         catchline: "Get alerted.",
         description:
-          "Get notified via email, SMS, Slack, Discord,... before your users do.",
+          "Get notified via Email, SMS, Slack, Discord,... before your users do.",
       },
     ],
   },
