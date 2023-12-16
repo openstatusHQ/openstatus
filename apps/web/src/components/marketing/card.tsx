@@ -71,11 +71,8 @@ export function CardFeatureContainer({
 }) {
   return (
     <ul
-      // grid
       className={cn("gap-4 md:gap-6", {
-        // "md:grid-cols-3": dir === "cols",
-        // "md:grid-rows-3": dir === "rows",
-        "flex flex-col md:flex-row": dir === "cols",
+        "grid md:grid-cols-3": dir === "cols",
         "flex flex-col": dir === "rows",
       })}
     >
