@@ -9,10 +9,10 @@ import { getHomeMonitorListData } from "@/lib/tb";
 
 const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-export async function Example() {
+export async function TrackerExample() {
   return (
-    <div className="w-full text-center">
-      <div className="mx-auto max-w-md">
+    <div className="flex w-full flex-col items-center justify-center">
+      <div className="mx-auto w-full max-w-md">
         <Suspense fallback={<ExampleTrackerFallback />}>
           <ExampleTracker />
         </Suspense>

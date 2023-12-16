@@ -3,26 +3,24 @@ import { Check } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 
+import { Shell } from "@/components/dashboard/shell";
+import { LoadingAnimation } from "@/components/loading-animation";
 import type { PlanProps } from "@/config/plans";
 import { plansConfig } from "@/config/plans";
 import { cn } from "@/lib/utils";
-import { Shell } from "../dashboard/shell";
-import { LoadingAnimation } from "../loading-animation";
 
 export function Plans() {
   return (
-    <Shell>
-      <div className="grid gap-4 md:grid-cols-2 md:gap-0">
-        <Plan
-          {...plansConfig.free}
-          className="md:border-border/50 md:border-r md:pr-4"
-        />
-        <Plan {...plansConfig.pro} className="md:pl-4" />
-        <Plan
-          {...plansConfig.enterprise}
-          className="md:border-border/50 col-span-full md:mt-4 md:border-t md:pt-4"
-        />
-      </div>
+    <Shell className="grid gap-4 md:grid-cols-2 md:gap-0">
+      <Plan
+        {...plansConfig.free}
+        className="md:border-border/50 md:border-r md:pr-4"
+      />
+      <Plan {...plansConfig.pro} className="md:pl-4" />
+      <Plan
+        {...plansConfig.enterprise}
+        className="md:border-border/50 col-span-full md:mt-4 md:border-t md:pt-4"
+      />
     </Shell>
   );
 }

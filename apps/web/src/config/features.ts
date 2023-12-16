@@ -4,12 +4,14 @@ export type Feature = {
   icon: ValidIcon;
   title: string;
   // description?: string;
-  features?: {
-    icon: ValidIcon;
-    catchline: string;
-    description: string;
-    badge?: "Coming soon" | "New";
-  }[];
+  features?: FeatureDescription[];
+};
+
+export type FeatureDescription = {
+  icon: ValidIcon;
+  catchline: string;
+  description: string;
+  badge?: "Coming soon" | "New";
 };
 
 export type SpecialFeature = {
@@ -85,6 +87,7 @@ export const cardConfig = {
         catchline: "Connect.",
         description:
           "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionnable.",
+        badge: "Coming soon",
       },
       {
         icon: "bell",
@@ -96,6 +99,7 @@ export const cardConfig = {
         icon: "zap",
         catchline: "Escalatation.",
         description: "Notify and escalate an alert to the right team member.",
+        badge: "Coming soon",
       },
     ],
   },

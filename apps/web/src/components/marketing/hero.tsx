@@ -9,54 +9,49 @@ import { numberFormatter } from "@/lib/utils";
 
 export function Hero() {
   return (
-    <div className="my-12 flex  w-full  flex-col justify-center px-3 py-4 text-center md:my-24 md:p-6">
+    <div className="my-10 flex w-full flex-col justify-center gap-1 px-3 py-4 text-center md:my-20 md:p-6">
       <div>
-        <Button
-          variant="outline"
-          className="w-48 rounded-full sm:w-auto"
-          asChild
-        >
+        <Badge variant="outline" className="backdrop-blur-[2px]">
           <Link
             href="https://github.com/openstatusHQ/openstatus/stargazers"
             target="_blank"
             rel="noreferrer"
+            className="flex items-center"
           >
-            Proudly Open Source - Star us on GitHub
+            Proudly Open Source
             <ChevronRight className="ml-1 h-3 w-3" />
           </Link>
-        </Button>{" "}
+        </Badge>
       </div>
-      <div>
-        <h1 className="text-foreground font-cal mb-6 mt-2 text-6xl">
+      <div className="flex flex-col gap-6">
+        {/* bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-50% bg-clip-text text-transparent */}
+        <h1 className="text-foreground font-cal text-4xl md:text-6xl">
           A better way to monitor your services.
         </h1>
-        <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-xl">
+        <p className="text-muted-foreground mx-auto max-w-md text-lg md:max-w-lg md:text-xl">
           Reduce alert fatigue by triggering only relevant alerts when your
           services experience downtime.
         </p>
-        {/* much better than using flex without text alignment, text stays center even thought not same length */}
       </div>
-      <div className="my-4 grid gap-2 sm:grid-cols-2 md:flex md:items-center md:justify-center">
+      <div className="my-4 grid gap-2 sm:grid-cols-2">
         <div className="text-center sm:block sm:text-right">
           <Button className="w-48 rounded-full sm:w-auto" asChild>
             <Link href="/app/sign-up">Get Started</Link>
           </Button>
         </div>
         <div className="text-center sm:block sm:text-left">
-          <div>
-            <Button
-              variant="outline"
-              className="w-48 rounded-full sm:w-auto"
-              asChild
-            >
-              <Link href="/github" target="_blank">
-                Star on GitHub{" "}
-                <Suspense fallback={<StarsBadgeFallback />}>
-                  <StarsBadge />
-                </Suspense>
-              </Link>
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            className="w-48 rounded-full sm:w-auto"
+            asChild
+          >
+            <Link href="/github" target="_blank">
+              Star on GitHub{" "}
+              <Suspense fallback={<StarsBadgeFallback />}>
+                <StarsBadge />
+              </Suspense>
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

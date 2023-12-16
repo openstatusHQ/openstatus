@@ -1,15 +1,12 @@
-import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
-import { Cards, SpecialCard } from "@/components/marketing/cards";
-import { Example } from "@/components/marketing/example";
+import { AlertCard } from "@/components/marketing/alert/card";
 import { FAQs } from "@/components/marketing/faqs";
 import { Hero } from "@/components/marketing/hero";
-import { MonitoringCard } from "@/components/marketing/monitoring";
+import { MonitoringCard } from "@/components/marketing/monitor/card";
 import { Partners } from "@/components/marketing/partners";
 import { Plans } from "@/components/marketing/plans";
 import { Stats } from "@/components/marketing/stats";
-import { StatusMarketing } from "@/components/marketing/status";
-import { cardConfig, specialCardConfig } from "@/config/features";
+import { StatusPageCard } from "@/components/marketing/status-page/card";
 
 export const revalidate = 600;
 
@@ -19,17 +16,12 @@ export default async function Page() {
       <div className="grid gap-8">
         <Hero />
         <Partners />
-        <MonitoringCard {...cardConfig.monitors} />
+        <MonitoringCard />
         <Stats />
-        {/* TODO: rename to `reports` */}
-        <Cards {...cardConfig.alerts} />
-        <StatusMarketing {...cardConfig.pages} />
-        {/* <Example /> */}
-        {/* <SpecialCard {...specialCardConfig} /> */}
+        <StatusPageCard />
+        <AlertCard />
         <Plans />
-        <Shell>
-          <FAQs />
-        </Shell>
+        <FAQs />
       </div>
     </MarketingLayout>
   );

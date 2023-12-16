@@ -32,6 +32,7 @@ import {
   ToyBrick,
   Trash,
   TwitterIcon,
+  Webhook,
   Zap,
 } from "lucide-react";
 import type { LucideIcon, LucideProps } from "lucide-react";
@@ -69,6 +70,7 @@ export const Icons = {
   zap: Zap,
   "alert-triangle": AlertTriangle,
   megaphone: Megaphone,
+  webhook: Webhook,
   minus: Minus,
   sun: SunMedium,
   moon: Moon,

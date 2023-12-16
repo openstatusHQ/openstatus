@@ -5,6 +5,8 @@ import {
   AccordionTrigger,
 } from "@openstatus/ui";
 
+import { Shell } from "@/components/dashboard/shell";
+
 // REMINDER: we can create a contentlayer document and the faq into it
 const faqsConfig: Record<"q" | "a", string>[] = [
   {
@@ -31,7 +33,7 @@ const faqsConfig: Record<"q" | "a", string>[] = [
 
 export function FAQs() {
   return (
-    <div className="grid gap-1">
+    <Shell className="grid gap-1">
       <h2 className="text-foreground font-cal text-center text-2xl">FAQ</h2>
       <Accordion type="single" collapsible className="w-full">
         {faqsConfig.map(({ q, a }, i) => (
@@ -46,6 +48,6 @@ export function FAQs() {
           </AccordionItem>
         ))}
       </Accordion>
-    </div>
+    </Shell>
   );
 }
