@@ -11,8 +11,8 @@ RUN rm -rf /app/apps/web
 RUN rm -rf /packages/api
 RUN rm -rf /packages/integrations/vercel
 
-
-RUN bun install
+#  Temp solution for bun
+RUN bun install --ignore-scripts
 
 EXPOSE 3000
 
