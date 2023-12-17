@@ -43,7 +43,7 @@ export const cardConfig = {
         icon: "play",
         catchline: "Monitor anything.",
         description:
-          "API, DNS, domain, SLL, SMTP, ping, webpage,... , we can monitor it all.",
+          "API, DNS, domain, SSL, SMTP, ping, webpage... We can monitor it all.",
       },
       {
         icon: "bot",
