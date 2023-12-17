@@ -4,25 +4,23 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
-import { Shell } from "@/components/dashboard/shell";
 import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
 
 const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-export async function Example() {
+export async function TrackerExample() {
   return (
-    <Shell className="text-center">
-      <h2 className="font-cal mb-3 text-2xl">Status</h2>
-      <Button asChild variant="outline" className="rounded-full">
-        <Link href="/play">Playground</Link>
-      </Button>
-      <div className="mx-auto max-w-md">
+    <div className="flex w-full flex-col items-center justify-center gap-8">
+      <div className="mx-auto w-full max-w-md">
         <Suspense fallback={<ExampleTrackerFallback />}>
           <ExampleTracker />
         </Suspense>
       </div>
-    </Shell>
+      <Button asChild variant="outline" className="rounded-full">
+        <Link href="/play">Playground</Link>
+      </Button>
+    </div>
   );
 }
 

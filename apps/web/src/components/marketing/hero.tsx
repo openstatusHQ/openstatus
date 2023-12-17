@@ -4,31 +4,39 @@ import { ChevronRight } from "lucide-react";
 
 import { Badge, Button } from "@openstatus/ui";
 
-import { Shell } from "@/components/dashboard/shell";
 import { getGitHubStars } from "@/lib/github";
-import { numberFormatter } from "@/lib/utils";
+import { cn, numberFormatter } from "@/lib/utils";
 
 export function Hero() {
   return (
-    <Shell className="text-center">
-      <Link
-        href="https://github.com/openstatusHQ/openstatus/stargazers"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <Badge variant="outline">
-          Proudly Open Source - Support us on GitHub
-          <ChevronRight className="ml-1 h-3 w-3" />
+    <div className="my-10 flex w-full flex-col justify-center gap-1 px-3 py-4 text-center md:my-20 md:p-6">
+      <div>
+        <Badge variant="outline" className="backdrop-blur-[2px]">
+          <Link
+            href="https://github.com/openstatusHQ/openstatus/stargazers"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center"
+          >
+            Proudly Open Source
+            <ChevronRight className="ml-1 h-3 w-3" />
+          </Link>
         </Badge>
-      </Link>
-      <h1 className="text-foreground font-cal mb-6 mt-2 text-3xl">
-        A better way to monitor your services.
-      </h1>
-      <p className="text-muted-foreground mx-auto mb-6 max-w-lg text-lg">
-        Reduce alert fatigue by triggering only relevant alerts when your
-        services experience downtime.
-      </p>
-      {/* much better than using flex without text alignment, text stays center even thought not same length */}
+      </div>
+      <div className="flex flex-col gap-6">
+        <h1
+          className={cn(
+            "text-foreground font-cal text-4xl md:text-6xl",
+            "bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-40% bg-clip-text text-transparent",
+          )}
+        >
+          A better way to monitor your services.
+        </h1>
+        <p className="text-muted-foreground mx-auto max-w-md text-lg md:max-w-lg md:text-xl">
+          Reduce alert fatigue by triggering only relevant alerts when your
+          services experience downtime.
+        </p>
+      </div>
       <div className="my-4 grid gap-2 sm:grid-cols-2">
         <div className="text-center sm:block sm:text-right">
           <Button className="w-48 rounded-full sm:w-auto" asChild>
@@ -50,7 +58,7 @@ export function Hero() {
           </Button>
         </div>
       </div>
-    </Shell>
+    </div>
   );
 }
 
