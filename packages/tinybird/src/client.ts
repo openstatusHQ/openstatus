@@ -25,7 +25,7 @@ export function getResponseList(tb: Tinybird) {
     data: tbBuildResponseList,
     opts: {
       // cache: "no-store",
-      revalidate: 30, // 30 seconds cache
+      revalidate: 600, // 10 min cache
     },
   });
 }
@@ -37,7 +37,7 @@ export function getMonitorList(tb: Tinybird) {
     data: tbBuildMonitorList,
     opts: {
       // cache: "no-store",
-      revalidate: 300, // 5 min cache
+      revalidate: 600, // 10 min cache
     },
   });
 }
