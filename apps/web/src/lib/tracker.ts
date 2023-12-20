@@ -55,7 +55,7 @@ function areDatesEqualByDayMonthYear(date1: Date, date2: Date) {
 export function addBlackListInfo(data: Monitor[]) {
   return data.map((monitor) => {
     const blacklist = isInBlacklist(new Date(monitor.day).getTime());
-    return blacklist ? { ...monitor, blacklist } : monitor;
+    return { ...monitor, blacklist };
   });
 }
 
