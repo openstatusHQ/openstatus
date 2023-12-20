@@ -23,8 +23,11 @@ import {
 } from "@openstatus/ui";
 
 import useWindowSize from "@/hooks/use-window-size";
-import type { CleanMonitor } from "@/lib/tracker";
-import { cleanData, getStatus } from "@/lib/tracker";
+import {
+  addBlackListInfo,
+  getStatus,
+  getTotalUptimeString,
+} from "@/lib/tracker";
 
 // What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
@@ -65,13 +68,15 @@ export function Tracker({
   name,
   context = "status-page",
   description,
-  timezone,
   reports,
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
   // TODO: it is better than how it was currently, but creates a small content shift on first render
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
-  const { bars, uptime } = cleanData(data, maxSize, timezone);
+  const uptime = getTotalUptimeString(data);
+
+  const _data = addBlackListInfo(data);
+  const _placeholder = Array.from({ length: maxSize - _data.length });
 
   return (
     <div className="flex flex-col">
@@ -86,7 +91,7 @@ export function Tracker({
       </div>
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-0.5">
-          {bars.map((props) => {
+          {_data.map((props, i) => {
             const dateReports = reports?.filter((report) => {
               const firstStatusReportUpdate = report.statusReportUpdates.sort(
                 (a, b) => a.date.getTime() - b.date.getTime(),
@@ -95,16 +100,14 @@ export function Tracker({
               if (!firstStatusReportUpdate) return false;
               const d = firstStatusReportUpdate.date;
               d.setHours(0, 0, 0); // set date to midnight as cronTimestamp is midnight
-              return d.getTime() === props.cronTimestamp;
+              return d.getTime() === new Date(props.day).getTime();
             });
             return (
-              <Bar
-                key={props.cronTimestamp}
-                reports={dateReports}
-                context={context}
-                {...props}
-              />
+              <Bar key={i} context={context} reports={dateReports} {...props} />
             );
+          })}
+          {_placeholder.map((_, i) => {
+            return <div key={i} className={tracker({ variant: "empty" })} />;
           })}
         </div>
       </div>
@@ -148,17 +151,23 @@ const MoreInfo = ({
   );
 };
 
+type BarProps = Monitor & { blacklist?: string } & Pick<
+    TrackerProps,
+    "context" | "reports"
+  >;
+
 const Bar = ({
   count,
   ok,
   avgLatency,
-  cronTimestamp,
+  day,
   blacklist,
   context,
   reports,
-}: CleanMonitor & Pick<TrackerProps, "context" | "reports">) => {
+}: BarProps) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
+  const cronTimestamp = new Date(day).getTime();
   const date = new Date(cronTimestamp);
   const toDate = date.setDate(date.getDate() + 1);
   const dateFormat = "dd/MM/yy";

@@ -41,7 +41,7 @@ SQL >
         round(avg(avgLatency)) as avgLatency
     FROM group_by_cronTimestamp
     GROUP BY start_of_day
-    ORDER BY start_of_day DESC
+    ORDER BY start_of_day DESC WITH FILL STEP INTERVAL -1 DAY
     LIMIT {{ Int32(limit, 100) }}
 
 
