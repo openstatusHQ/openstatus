@@ -4,8 +4,12 @@ import * as React from "react";
 import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { format } from "date-fns";
-import { Eye, Info } from "lucide-react";
+import { ChevronRight, Eye, Info } from "lucide-react";
 
+import type {
+  StatusReport,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
 import type { Monitor } from "@openstatus/tinybird";
 import {
   HoverCard,
@@ -32,9 +36,14 @@ const tracker = cva("h-10 rounded-full flex-1", {
       empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
       blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
     },
+    report: {
+      0: "",
+      30: "bg-gradient-to-t from-blue-500/90 hover:from-blue-500 from-30% to-transparent to-30%",
+    },
   },
   defaultVariants: {
     variant: "empty",
+    report: 0,
   },
 });
 
@@ -46,6 +55,7 @@ interface TrackerProps {
   description?: string;
   context?: "play" | "status-page"; // TODO: we might need to extract those two different use cases - for now it's ok I'd say.
   timezone?: string;
+  reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
 }
 
 export function Tracker({
@@ -56,6 +66,7 @@ export function Tracker({
   context = "status-page",
   description,
   timezone,
+  reports,
 }: TrackerProps) {
   const { isMobile } = useWindowSize();
   // TODO: it is better than how it was currently, but creates a small content shift on first render
@@ -76,8 +87,23 @@ export function Tracker({
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-0.5">
           {bars.map((props) => {
+            const dateReports = reports?.filter((report) => {
+              const firstStatusReportUpdate = report.statusReportUpdates.sort(
+                (a, b) => a.date.getTime() - b.date.getTime(),
+              )?.[0];
+
+              if (!firstStatusReportUpdate) return false;
+              const d = firstStatusReportUpdate.date;
+              d.setHours(0, 0, 0); // set date to midnight as cronTimestamp is midnight
+              return d.getTime() === props.cronTimestamp;
+            });
             return (
-              <Bar key={props.cronTimestamp} context={context} {...props} />
+              <Bar
+                key={props.cronTimestamp}
+                reports={dateReports}
+                context={context}
+                {...props}
+              />
             );
           })}
         </div>
@@ -129,7 +155,8 @@ const Bar = ({
   cronTimestamp,
   blacklist,
   context,
-}: CleanMonitor & Pick<TrackerProps, "context">) => {
+  reports,
+}: CleanMonitor & Pick<TrackerProps, "context" | "reports">) => {
   const [open, setOpen] = React.useState(false);
   const ratio = ok / count;
   const date = new Date(cronTimestamp);
@@ -137,9 +164,9 @@ const Bar = ({
   const dateFormat = "dd/MM/yy";
 
   const className = tracker({
+    report: reports && reports.length > 0 ? 30 : undefined,
     variant: blacklist ? "blacklist" : getStatus(ratio).variant,
   });
-  // console.log({ className, blacklist });
 
   return (
     <HoverCard
@@ -149,10 +176,7 @@ const Bar = ({
       onOpenChange={setOpen}
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
-        <div
-          // suppressHydrationWarning
-          className={className}
-        />
+        <div className={className} />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-64">
         {blacklist ? (
@@ -170,6 +194,19 @@ const Bar = ({
                 </Link>
               ) : null}
             </div>
+            <ul className="my-1.5">
+              {reports?.map((report) => (
+                <li key={report.id} className="text-muted-foreground text-sm">
+                  <Link
+                    href={`./incidents/${report.id}`}
+                    className="hover:text-foreground group flex items-center justify-between gap-2"
+                  >
+                    <span className="truncate">{report.title}</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
             <div className="flex justify-between">
               <p className="text-xs font-light">
                 {format(new Date(cronTimestamp), dateFormat)}

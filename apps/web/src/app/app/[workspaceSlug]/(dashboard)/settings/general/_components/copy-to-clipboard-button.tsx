@@ -6,7 +6,7 @@ import { Button } from "@openstatus/ui";
 import type { ButtonProps } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { copyToClipboard } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 
 export function CopyToClipboardButton({
   children,
@@ -26,7 +26,7 @@ export function CopyToClipboardButton({
   return (
     <Button
       onClick={(e) => {
-        copyToClipboard(children?.toString() ?? "");
+        copyToClipboard(children?.toString() || "");
         setHasCopied(true);
         onClick?.(e);
       }}
@@ -34,9 +34,9 @@ export function CopyToClipboardButton({
     >
       {children}
       {!hasCopied ? (
-        <Icons.copy className="ml-2 h-4 w-4" />
+        <Icons.copy className={cn("h-4 w-4", children && "ml-2")} />
       ) : (
-        <Icons.check className="ml-2 h-4 w-4" />
+        <Icons.check className={cn("h-4 w-4", children && "ml-2")} />
       )}
     </Button>
   );

@@ -12,7 +12,7 @@ import { getStatus } from "@/lib/tracker";
 import { cn, notEmpty } from "@/lib/utils";
 import { Icons } from "../icons";
 
-const check = cva("border-border rounded-full border p-2", {
+const check = cva("border-border rounded-full border p-1.5", {
   variants: {
     variant: {
       up: "bg-green-500/80 border-green-500",
@@ -58,8 +58,9 @@ export async function StatusCheck({
       },
       { count: 0, ok: 0 },
     );
-    const status = getStatus(ok / count);
-    return status;
+    const ratio = ok / count;
+    if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
+    return getStatus(ratio);
   }
 
   const status = calcStatus();

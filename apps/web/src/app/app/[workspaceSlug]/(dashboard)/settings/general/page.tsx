@@ -2,7 +2,7 @@ import { Separator } from "@openstatus/ui";
 
 import { WorkspaceForm } from "@/components/forms/workspace-form";
 import { api } from "@/trpc/server";
-import { CopyToClipboardButton } from "./_components/CopyToClipboardButton";
+import { CopyToClipboardButton } from "./_components/copy-to-clipboard-button";
 
 export default async function GeneralPage() {
   const data = await api.workspace.getWorkspace.query();

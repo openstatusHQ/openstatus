@@ -8,26 +8,32 @@ import {
 } from "./status_reports";
 import { workspacePlanSchema } from "./workspaces";
 
-// FIXME: delete this file!
-
-export const selectStatusReportPageSchema = z.array(
-  selectStatusReportSchema.extend({
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
-    monitorsToStatusReports: z
-      .array(z.object({ monitorId: z.number(), statusReportId: z.number() }))
-      .default([]),
-  }),
-);
-export const selectPageSchemaWithRelation = selectPageSchema.extend({
-  monitors: z.array(selectMonitorSchema),
-  statusReports: selectStatusReportPageSchema,
-});
+// TODO: create a 'public-status' schema with all the different types and validations
 
 export const selectPublicMonitorSchema = selectMonitorSchema.omit({
   body: true,
   headers: true,
   regions: true,
   method: true,
+});
+
+export const selectStatusReportPageSchema = z.array(
+  selectStatusReportSchema.extend({
+    statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
+    monitorsToStatusReports: z
+      .array(
+        z.object({
+          monitorId: z.number(),
+          statusReportId: z.number(),
+          monitor: selectPublicMonitorSchema,
+        }),
+      )
+      .default([]),
+  }),
+);
+export const selectPageSchemaWithRelation = selectPageSchema.extend({
+  monitors: z.array(selectMonitorSchema),
+  statusReports: selectStatusReportPageSchema,
 });
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema
@@ -42,4 +48,12 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   .omit({
     workspaceId: true,
     id: true,
+  });
+
+export const selectPublicStatusReportSchemaWithRelation =
+  selectStatusReportSchema.extend({
+    monitorsToStatusReports: z
+      .array(z.object({ monitor: selectPublicMonitorSchema }))
+      .default([]),
+    statusReportUpdates: z.array(selectStatusReportUpdateSchema),
   });
