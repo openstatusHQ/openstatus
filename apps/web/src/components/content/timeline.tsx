@@ -41,9 +41,13 @@ function Article({
 }: ArticleProps) {
   return (
     <article className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
-      <time className="text-muted-foreground order-2 font-mono text-sm md:order-1 md:col-span-1">
-        {formatDate(new Date(publishedAt))}
-      </time>
+      <div className="relative row-span-2">
+        <div className="sticky top-2">
+          <time className="text-muted-foreground order-2 font-mono text-sm md:order-1 md:col-span-1">
+            {formatDate(new Date(publishedAt))}
+          </time>
+        </div>
+      </div>
       <div className="relative order-1 h-64 w-full md:order-2 md:col-span-4">
         <Link href={href}>
           <Image
