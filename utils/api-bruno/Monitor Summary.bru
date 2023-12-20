@@ -1,0 +1,15 @@
+meta {
+  name: Monitor Summary
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/v1/monitor/1/summary
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: 1
+}

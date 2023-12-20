@@ -80,7 +80,9 @@ function fillEmptyData(data: Monitor[], dateSequence: Date[]) {
   for (const date of dateSequence) {
     const timestamp = date.getTime();
     const cronTimestamp =
-      dataIndex < data.length ? data[dataIndex].day.getTime() : undefined;
+      dataIndex < data.length
+        ? new Date(data[dataIndex].day).getTime()
+        : undefined;
 
     if (
       cronTimestamp &&

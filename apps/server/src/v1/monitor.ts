@@ -7,9 +7,15 @@ import {
   monitorMethods,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema";
+import { getMonitorList, Tinybird } from "@openstatus/tinybird";
+import { Redis } from "@openstatus/upstash";
 
+import { env } from "../env";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+
+const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
+const redis = Redis.fromEnv();
 
 const ParamsSchema = z.object({
   id: z
@@ -462,6 +468,99 @@ monitorApi.openapi(deleteRoute, async (c) => {
 
   await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
   return c.jsonT({ message: "Deleted" });
+});
+
+const dailyStatsSchema = z.object({
+  ok: z.number().int().openapi({
+    description: "The number of ok responses",
+  }),
+  count: z
+    .number()
+    .int()
+    .openapi({ description: "The total number of request" }),
+  avgLatency: z.number().int().openapi({ description: "The average latency" }),
+  day: z.string().openapi({ description: "the date of the event" }),
+});
+
+const dailyStatsSchemaArray = z
+  .array(dailyStatsSchema)
+  .openapi({ description: "The daily stats" });
+
+const getMonitorStats = createRoute({
+  method: "get",
+  tags: ["monitor"],
+  description: "Get monitor daily summary",
+  path: "/:id/summary",
+  request: {
+    params: ParamsSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            data: dailyStatsSchemaArray,
+          }),
+        },
+      },
+      description: "All the historical metrics",
+    },
+    404: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Not found",
+    },
+    401: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+monitorApi.openapi(getMonitorStats, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+
+  const monitorId = Number(id);
+  const _monitor = await db
+    .select()
+    .from(monitor)
+    .where(eq(monitor.id, monitorId))
+    .get();
+
+  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+
+  if (workspaceId !== _monitor.workspaceId)
+    return c.jsonT({ code: 401, message: "Unauthorized" });
+
+  const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
+    `${monitorId}-daily-stats`,
+  );
+
+  if (cache) {
+    console.log("fetching from cache");
+    return c.jsonT({
+      data: cache,
+    });
+  }
+
+  console.log("fetching from tinybird");
+  const res = await getMonitorList(tb)({
+    monitorId: String(monitorId),
+    limit: 30,
+    //  return data in utc
+    timezone: "Etc/UTC",
+  });
+
+  await redis.set(`${monitorId}-daily-stats`, res.data, { ex: 600 });
+
+  return c.jsonT({ data: res.data });
 });
 
 export { monitorApi };

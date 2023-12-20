@@ -7,7 +7,7 @@ import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
 
-const app = new Hono();
+const app = new Hono({ strict: false });
 app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
 
 /**
