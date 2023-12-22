@@ -70,8 +70,8 @@ export function Tracker({
   description,
   reports,
 }: TrackerProps) {
+  // TODO: remove the isMobile, maxSize, and _placeholder as status_timezone__v0 already returns the last 45 days
   const { isMobile } = useWindowSize();
-  // TODO: it is better than how it was currently, but creates a small content shift on first render
   const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
   const uptime = getTotalUptimeString(data);
 
@@ -90,7 +90,7 @@ export function Tracker({
         <p className="text-muted-foreground shrink-0 font-light">{uptime}</p>
       </div>
       <div className="relative h-full w-full">
-        <div className="flex flex-row-reverse gap-0.5">
+        <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {_data.map((props, i) => {
             const dateReports = reports?.filter((report) => {
               const firstStatusReportUpdate = report.statusReportUpdates.sort(
