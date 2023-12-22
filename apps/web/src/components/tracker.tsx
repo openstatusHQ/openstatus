@@ -22,9 +22,9 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import useWindowSize from "@/hooks/use-window-size";
 import {
   addBlackListInfo,
+  areDatesEqualByDayMonthYear,
   getStatus,
   getTotalUptimeString,
 } from "@/lib/tracker";
@@ -70,13 +70,8 @@ export function Tracker({
   description,
   reports,
 }: TrackerProps) {
-  // TODO: remove the isMobile, maxSize, and _placeholder as status_timezone__v0 already returns the last 45 days
-  const { isMobile } = useWindowSize();
-  const maxSize = React.useMemo(() => (isMobile ? 35 : 45), [isMobile]);
   const uptime = getTotalUptimeString(data);
-
   const _data = addBlackListInfo(data);
-  const _placeholder = Array.from({ length: maxSize - _data.length });
 
   return (
     <div className="flex flex-col">
@@ -98,16 +93,16 @@ export function Tracker({
               )?.[0];
 
               if (!firstStatusReportUpdate) return false;
-              const d = firstStatusReportUpdate.date;
-              d.setHours(0, 0, 0); // set date to midnight as cronTimestamp is midnight
-              return d.getTime() === new Date(props.day).getTime();
+
+              return areDatesEqualByDayMonthYear(
+                firstStatusReportUpdate.date,
+                new Date(props.day),
+              );
             });
+
             return (
               <Bar key={i} context={context} reports={dateReports} {...props} />
             );
-          })}
-          {_placeholder.map((_, i) => {
-            return <div key={i} className={tracker({ variant: "empty" })} />;
           })}
         </div>
       </div>
