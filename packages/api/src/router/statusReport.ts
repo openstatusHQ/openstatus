@@ -398,7 +398,7 @@ export const statusReportRouter = createTRPCRouter({
       const _statusReport = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
           eq(statusReport.id, opts.input.id),
-          eq(statusReport.workspaceId, result.id),
+          eq(statusReport.workspaceId, result.workspaceId),
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },

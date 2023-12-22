@@ -50,8 +50,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
                   width={28}
                   src={page.icon}
                   alt={page.title}
-                  objectFit="cover"
-                  className="rounded-full"
+                  className="object-cover"
                 />
               </div>
             ) : null}
