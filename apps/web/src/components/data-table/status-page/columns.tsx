@@ -61,7 +61,7 @@ export const columns: ColumnDef<
     header: "Favicon",
     cell: ({ row }) => {
       if (!row.getValue("icon")) {
-        return <span className="text-muted-foreground">Missing</span>;
+        return <span className="text-muted-foreground">-</span>;
       }
       return (
         <Image

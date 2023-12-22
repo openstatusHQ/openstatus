@@ -32,35 +32,3 @@ export default async function Page({ params }: Props) {
     </div>
   );
 }
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const firstMonitor = page?.monitors?.[0]; // temporary solution
-
-  return {
-    ...defaultMetadata,
-    title: page?.title,
-    description: page?.description,
-    icons: page?.icon,
-    twitter: {
-      ...twitterMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-    openGraph: {
-      ...ogMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-  };
-}

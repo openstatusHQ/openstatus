@@ -68,6 +68,8 @@ export function ActionButton({ page }: ActionButtonProps) {
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <Link
+            // TODO: it would be create to extract this logic and include custom domains if they are set
+            // similar to `setPrefixUrl`
             href={
               process.env.NODE_ENV === "production"
                 ? `https://${page.slug}.openstatus.dev`

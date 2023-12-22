@@ -1,22 +1,35 @@
 import type { z } from "zod";
 
-import type { selectPublicMonitorSchema } from "@openstatus/db/src/schema";
+import type {
+  selectPublicMonitorSchema,
+  selectPublicStatusReportSchemaWithRelation,
+} from "@openstatus/db/src/schema";
 
 import { Monitor } from "./monitor";
 
 export const MonitorList = ({
   monitors,
+  statusReports,
 }: {
   monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
 }) => {
   return (
     <div className="grid gap-4">
-      {monitors.map((monitor, index) => (
-        <div key={index}>
-          {/* Fetch tracker and data */}
-          <Monitor monitor={monitor} />
-        </div>
-      ))}
+      {monitors.map((monitor, index) => {
+        const monitorStatusReport = statusReports.filter((statusReport) =>
+          statusReport.monitorsToStatusReports.some(
+            (i) => i.monitor.id === monitor.id,
+          ),
+        );
+        return (
+          <Monitor
+            key={index}
+            monitor={monitor}
+            statusReports={monitorStatusReport}
+          />
+        );
+      })}
     </div>
   );
 };

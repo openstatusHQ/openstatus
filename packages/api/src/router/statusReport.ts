@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray, isNotNull } from "@openstatus/db";
+import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
 import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
@@ -9,6 +9,7 @@ import {
   pagesToStatusReports,
   pageSubscriber,
   selectMonitorSchema,
+  selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
   statusReport,
@@ -18,7 +19,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { sendEmailHtml } from "@openstatus/emails/emails/send";
 
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
@@ -306,7 +307,7 @@ export const statusReportRouter = createTRPCRouter({
   getStatusReportById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      const selectStatusReportSchemaWithRelation =
+      const selectPublicStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
           status: statusReportStatusSchema.default("investigating"), // TODO: remove!
           monitorsToStatusReports: z
@@ -341,7 +342,7 @@ export const statusReportRouter = createTRPCRouter({
         },
       });
 
-      return selectStatusReportSchemaWithRelation.parse(data);
+      return selectPublicStatusReportSchemaWithRelation.parse(data);
     }),
 
   getStatusReportUpdateById: protectedProcedure
@@ -384,4 +385,29 @@ export const statusReportRouter = createTRPCRouter({
     console.log(result);
     return z.array(selectStatusSchemaWithRelation).parse(result);
   }),
+
+  getPublicStatusReportById: publicProcedure
+    .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
+    .query(async (opts) => {
+      const result = await opts.ctx.db.query.page.findFirst({
+        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+      });
+
+      if (!result) return;
+
+      const _statusReport = await opts.ctx.db.query.statusReport.findFirst({
+        where: and(
+          eq(statusReport.id, opts.input.id),
+          eq(statusReport.workspaceId, result.id),
+        ),
+        with: {
+          monitorsToStatusReports: { with: { monitor: true } },
+          statusReportUpdates: true,
+        },
+      });
+
+      if (!_statusReport) return;
+
+      return selectPublicStatusReportSchemaWithRelation.parse(_statusReport);
+    }),
 });

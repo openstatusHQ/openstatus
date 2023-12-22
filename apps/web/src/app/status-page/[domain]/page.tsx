@@ -1,14 +1,8 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { Button } from "@openstatus/ui";
 
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
@@ -26,7 +20,7 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export const revalidate = "600";
+export const revalidate = 600;
 
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
@@ -59,7 +53,10 @@ export default async function Page({ params }: Props) {
             statusReports={page.statusReports}
             monitors={page.monitors}
           />
-          <MonitorList monitors={page.monitors} />
+          <MonitorList
+            monitors={page.monitors}
+            statusReports={page.statusReports}
+          />
           {/* TODO: rename to StatusReportList */}
           <IncidentList
             incidents={page.statusReports}
@@ -70,36 +67,4 @@ export default async function Page({ params }: Props) {
       )}
     </div>
   );
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const firstMonitor = page?.monitors?.[0]; // temporary solution
-
-  return {
-    ...defaultMetadata,
-    title: page?.title,
-    description: page?.description,
-    icons: page?.icon,
-    twitter: {
-      ...twitterMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-    openGraph: {
-      ...ogMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
-      title: page?.title,
-      description: page?.description,
-    },
-  };
 }

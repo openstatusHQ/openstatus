@@ -219,7 +219,7 @@ export const pageRouter = createTRPCRouter({
               where: or(inArray(statusReport.id, statusReportIds)),
               with: {
                 statusReportUpdates: true,
-                monitorsToStatusReports: true,
+                monitorsToStatusReports: { with: { monitor: true } },
                 pagesToStatusReports: true,
               },
             })

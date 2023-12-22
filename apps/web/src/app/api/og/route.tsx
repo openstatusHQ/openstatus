@@ -3,7 +3,11 @@ import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { getMonitorListData } from "@/lib/tb";
-import { cleanData, getStatus } from "@/lib/tracker";
+import {
+  addBlackListInfo,
+  getStatus,
+  getTotalUptimeString,
+} from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
 
 export const runtime = "edge";
@@ -56,7 +60,8 @@ export async function GET(req: Request) {
       }))) ||
     [];
 
-  const { bars, uptime } = cleanData(data, LIMIT);
+  const _data = addBlackListInfo(data);
+  const uptime = getTotalUptimeString(data);
 
   return new ImageResponse(
     (
@@ -82,7 +87,7 @@ export async function GET(req: Request) {
             {title}
           </h1>
           <p tw="text-slate-600 text-3xl">{description}</p>
-          {Boolean(data.length) && Boolean(bars.length) ? (
+          {Boolean(data.length) && Boolean(_data.length) ? (
             <div tw="flex flex-col w-full mt-6">
               <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
                 <p tw="">{formatDate(new Date())}</p>
@@ -99,7 +104,7 @@ export async function GET(req: Request) {
                   );
                 })}
                 <div tw="flex flex-row-reverse absolute right-0">
-                  {bars.map((item, i) => {
+                  {_data.map((item, i) => {
                     const { variant } = getStatus(item.ok / item.count);
                     const isBlackListed = Boolean(item.blacklist);
                     if (isBlackListed) {
