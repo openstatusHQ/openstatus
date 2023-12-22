@@ -41,7 +41,14 @@ SQL >
         round(avg(avgLatency)) as avgLatency
     FROM group_by_cronTimestamp
     GROUP BY start_of_day
-    ORDER BY start_of_day DESC WITH FILL STEP INTERVAL -1 DAY
+    -- ORDER BY start_of_day DESC WITH FILL STEP INTERVAL -1 DAY
+    ORDER BY start_of_day
+    WITH FILL
+    FROM
+        toStartOfDay(toTimezone(now(), {{ String(timezone, 'Europe/Berlin') }}))
+        TO toStartOfDay(
+            toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/Berlin') }})
+        ) STEP INTERVAL -1 DAY
     LIMIT {{ Int32(limit, 100) }}
 
 

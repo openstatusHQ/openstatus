@@ -28,8 +28,8 @@ export default async function StatusPageLayout({ children, params }: Props) {
   const navigation = [
     {
       label: "Status",
-      segment: "status",
-      href: setPrefixUrl("/status", params),
+      segment: null,
+      href: setPrefixUrl("/", params),
     },
     {
       label: "Incidents",
