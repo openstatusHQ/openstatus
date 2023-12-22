@@ -202,6 +202,7 @@ const Bar = ({
               {reports?.map((report) => (
                 <li key={report.id} className="text-muted-foreground text-sm">
                   <Link
+                    // TODO: include setPrefixUrl for local development
                     href={`./incidents/${report.id}`}
                     className="hover:text-foreground group flex items-center justify-between gap-2"
                   >
