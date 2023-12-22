@@ -42,7 +42,7 @@ export const getStatus = (ratio: number): GetStatusReturnType => {
  * @param date2
  * @returns
  */
-function areDatesEqualByDayMonthYear(date1: Date, date2: Date) {
+export function areDatesEqualByDayMonthYear(date1: Date, date2: Date) {
   date1.setDate(date1.getDate());
   date1.setHours(0, 0, 0, 0);
 

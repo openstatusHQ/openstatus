@@ -68,7 +68,7 @@ export const IncidentList = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="hidden h-7 w-7 group-hover:inline-flex"
+                      className="invisible h-7 w-7 group-hover:visible"
                       asChild
                     >
                       <Link
