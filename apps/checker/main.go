@@ -1,149 +1,145 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/gin-gonic/gin"
+	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
-type InputData struct {
-	WorkspaceId   string `json:"workspaceId"`
-	Url           string `json:"url"`
-	MonitorId     string `json:"monitorId"`
-	Method        string `json:"method"`
-	CronTimestamp int64  `json:"cronTimestamp"`
-	Body          string `json:"body"`
-	Headers       []struct {
-		Key   string `json:"key"`
-		Value string `json:"value"`
-	} `json:"headers,omitempty"`
-	PagesIds []string `json:"pagesIds"`
-	Status   string   `json:"status"`
-}
-
 func main() {
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// That's the new checker sending to the correct  ingest endpoint
-	r.Post("/checker", func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "Basic "+os.Getenv("CRON_SECRET") {
-			http.Error(w, "Unauthorized", 401)
-			return
-		}
-		i, err := strconv.Atoi(r.Header.Get("X-CloudTasks-TaskRetryCount"))
-		if err != nil {
-			http.Error(w, "Something went whont", 400)
-			return
-		}
-		//  If something went wrong we only try it twice
-		if i > 1 {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("Ok"))
-			return
-		}
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-		if r.Body == nil {
-			http.Error(w, "Please send a request body", 400)
-			return
-		}
-		var u InputData
-		region := os.Getenv("FLY_REGION")
+	// environment variables.
+	flyRegion := env("FLY_REGION", "local")
+	cronSecret := env("CRON_SECRET", "")
 
-		err = json.NewDecoder(r.Body).Decode(&u)
+	httpClient := &http.Client{}
+	defer httpClient.CloseIdleConnections()
 
-		fmt.Printf("🚀 Start checker for  %+v \n", u)
+	router := gin.New()
+	router.POST("/checker", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		_ = ctx // TODO: use ctx.
 
-		if err != nil {
-			w.Write([]byte("Ok"))
-			w.WriteHeader(200)
+		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		client := &http.Client{}
-		defer client.CloseIdleConnections()
+		switch i, err := strconv.Atoi(c.GetHeader("X-CloudTasks-TaskRetryCount")); {
+		case err != nil:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid retry count"})
+			return
+		case i > 1:
+			// Why would that be OK?
+			c.JSON(http.StatusOK, gin.H{"message": "ok"})
+			return
+		}
 
-		response, error := ping(client, u)
+		var req request.CheckerRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
 
+		response, error := ping(httpClient, req)
 		if error != nil {
 			// Add one more retry
-			response, error = ping(client, u)
+			response, error = ping(httpClient, req)
 			if error != nil {
 				sendToTinybirdNew(PingData{
-					Url:           u.Url,
-					Region:        region,
+					URL:           req.URL,
+					Region:        flyRegion,
 					Message:       error.Error(),
-					CronTimestamp: u.CronTimestamp,
-					Timestamp:     u.CronTimestamp,
-					MonitorId:     u.MonitorId,
-					WorkspaceId:   u.WorkspaceId,
+					CronTimestamp: req.CronTimestamp,
+					Timestamp:     req.CronTimestamp,
+					MonitorID:     req.MonitorID,
+					WorkspaceID:   req.WorkspaceID,
 				})
-				if u.Status == "active" {
+				if req.Status == "active" {
 					updateStatus(UpdateData{
-						MonitorId: u.MonitorId,
+						MonitorId: req.MonitorID,
 						Status:    "error",
 						Message:   error.Error(),
-						Region:    region,
+						Region:    flyRegion,
 					})
 				}
-				w.Write([]byte("Ok"))
-				w.WriteHeader(200)
+
+				c.JSON(http.StatusOK, gin.H{"message": "ok"})
 				return
 			}
 		}
 
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
 			// Add one more retry
-			response, error = ping(client, u)
-			if response.StatusCode < 200 || response.StatusCode >= 300 && u.Status == "active" {
+			response, error = ping(httpClient, req)
+			if response.StatusCode < 200 || response.StatusCode >= 300 && req.Status == "active" {
 				// If the status code is not within the 200 range, we update the status to error
 				updateStatus(UpdateData{
-					MonitorId:  u.MonitorId,
+					MonitorId:  req.MonitorID,
 					Status:     "error",
 					StatusCode: response.StatusCode,
-					Region:     region,
+					Region:     flyRegion,
 				})
 			}
 		}
 
 		// If the status was error and the status code is within the 200 range, we update the status to active
-		if u.Status == "error" && response.StatusCode >= 200 && response.StatusCode < 300 {
+		if req.Status == "error" && response.StatusCode >= 200 && response.StatusCode < 300 {
 			// If the status was error, we update it to active
 			updateStatus(UpdateData{
-				MonitorId:  u.MonitorId,
+				MonitorId:  req.MonitorID,
 				Status:     "active",
-				Region:     region,
+				Region:     flyRegion,
 				StatusCode: response.StatusCode,
 			})
 		}
 		// We send the data to Tinybird
 		sendToTinybirdNew(response)
 
-		fmt.Printf("⏱️ End checker for %v with latency %d and statusCode %d", u, response.Latency, response.StatusCode)
-		w.Write([]byte("Ok"))
-		w.WriteHeader(200)
+		c.JSON(http.StatusOK, gin.H{"message": "ok"})
 		return
 	})
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		data := struct {
-			Ping      string `json:"ping"`
-			FlyRegion string `json:"fly_region"`
-		}{
-			Ping:      "pong",
-			FlyRegion: os.Getenv("FLY_REGION"),
+	router.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
+		return
+	})
+
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),
+		Handler: router,
+	}
+
+	go func() {
+		if err := httpServer.ListenAndServe(); err != nil {
+			// Add structured logs.
+			cancel()
 		}
+	}()
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(data)
+	<-ctx.Done()
+	if err := httpServer.Shutdown(ctx); err != nil {
+		// Add structured logs.
 		return
-	})
+	}
+}
 
-	http.ListenAndServe(":8080", r)
+func env(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return fallback
 }

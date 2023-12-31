@@ -9,16 +9,18 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
 type PingData struct {
-	WorkspaceId   string `json:"workspaceId"`
-	MonitorId     string `json:"monitorId"`
+	WorkspaceID   string `json:"workspaceId"`
+	MonitorID     string `json:"monitorId"`
 	Timestamp     int64  `json:"timestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
 	Latency       int64  `json:"latency"`
 	CronTimestamp int64  `json:"cronTimestamp"`
-	Url           string `json:"url"`
+	URL           string `json:"url"`
 	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
 }
@@ -63,14 +65,14 @@ func sendToTinybirdNew(pingData PingData) {
 
 }
 
-func ping(client *http.Client, inputData InputData) (PingData, error) {
+func ping(client *http.Client, inputData request.CheckerRequest) (PingData, error) {
 
 	region := os.Getenv("FLY_REGION")
-	request, err := http.NewRequest(inputData.Method, inputData.Url, bytes.NewReader([]byte(inputData.Body)))
-
+	request, err := http.NewRequest(inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
 	if err != nil {
 		return PingData{}, fmt.Errorf("Unable to create request: %w", err)
 	}
+
 	request.Header.Set("User-Agent", "OpenStatus/1.0")
 
 	// Setting headers
@@ -89,33 +91,33 @@ func ping(client *http.Client, inputData InputData) (PingData, error) {
 			if urlErr.Timeout() {
 				return PingData{
 					Latency:     latency,
-					MonitorId:   inputData.MonitorId,
+					MonitorID:   inputData.MonitorID,
 					Region:      region,
-					WorkspaceId: inputData.WorkspaceId,
+					WorkspaceID: inputData.WorkspaceID,
 					Timestamp:   time.Now().UTC().UnixMilli(),
-					Url:         inputData.Url,
+					URL:         inputData.URL,
 					Message:     fmt.Sprintf("Timeout after %d ms", latency),
 				}, nil
 			}
 		}
 
-		return PingData{}, fmt.Errorf("Error with monitor %s: %w", inputData.Url, err)
+		return PingData{}, fmt.Errorf("Error with monitor %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
 
 	_, err = io.ReadAll(response.Body)
 
 	if err != nil {
-		return PingData{}, fmt.Errorf("Error while reading body from %s: %w", inputData.Url, err)
+		return PingData{}, fmt.Errorf("Error while reading body from %s: %w", inputData.URL, err)
 	}
 	return PingData{
 		Latency:       latency,
 		StatusCode:    response.StatusCode,
-		MonitorId:     inputData.MonitorId,
+		MonitorID:     inputData.MonitorID,
 		Region:        region,
-		WorkspaceId:   inputData.WorkspaceId,
+		WorkspaceID:   inputData.WorkspaceID,
 		Timestamp:     time.Now().UTC().UnixMilli(),
 		CronTimestamp: inputData.CronTimestamp,
-		Url:           inputData.Url,
+		URL:           inputData.URL,
 	}, nil
 }
