@@ -1,4 +1,4 @@
-package main
+package checker
 
 import (
 	"net/http"
@@ -26,14 +26,14 @@ func Test_ping(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ping(tt.args.client, tt.args.inputData)
+			got, err := Ping(tt.args.client, tt.args.inputData)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ping() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Ping() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got.StatusCode != tt.want.StatusCode {
-				t.Errorf("ping() = %v, want %v", got, tt.want)
+				t.Errorf("Ping() = %v, want %v", got, tt.want)
 			}
 		})
 	}

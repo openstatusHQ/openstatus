@@ -1,4 +1,4 @@
-package main
+package checker
 
 import (
 	"bytes"
@@ -17,7 +17,7 @@ type UpdateData struct {
 	Region     string `json:"region"`
 }
 
-func updateStatus(updateData UpdateData) {
+func UpdateStatus(updateData UpdateData) {
 	url := "https://openstatus-api.fly.dev/updateStatus"
 	fmt.Println("URL:>", url)
 	basic := "Basic " + os.Getenv("CRON_SECRET")
