@@ -26,7 +26,7 @@ export function convertTimezoneToGMT(timezone?: string) {
 
   if (isNaN(msOffset)) return "Etc/UTC";
 
-  const hrOffset = msOffset / (1000 * 60 * 60);
+  const hrOffset = Math.round(msOffset / (1000 * 60 * 60)); // avoid weird 30min timezones
   const offset = hrOffset >= 0 ? `-${hrOffset}` : `+${Math.abs(hrOffset)}`;
 
   return `Etc/GMT${offset}` as const;
