@@ -31,11 +31,13 @@ export function AppMenu() {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent side="top" className="flex flex-col">
         <SheetHeader>
-          <SheetTitle className="text-left">Navigation</SheetTitle>
+          <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
         </SheetHeader>
-        <AppSidebar />
+        <div className="flex-1">
+          <AppSidebar />
+        </div>
       </SheetContent>
     </Sheet>
   );

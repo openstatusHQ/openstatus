@@ -1,12 +1,14 @@
 import type {
   HomeStatsParams,
   MonitorListParams,
+  ResponseGraphParams,
   ResponseListParams,
 } from "@openstatus/tinybird";
 import {
   getHomeMonitorList,
   getHomeStats,
   getMonitorList,
+  getResponseGraph,
   getResponseList,
   Tinybird,
 } from "@openstatus/tinybird";
@@ -52,6 +54,18 @@ export async function getHomeMonitorListData(
 export async function getHomeStatsData(props: Partial<HomeStatsParams>) {
   try {
     const res = await getHomeStats(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
+}
+
+export async function getResponseGraphData(
+  props: Partial<ResponseGraphParams>,
+) {
+  try {
+    const res = await getResponseGraph(tb)(props);
     return res.data;
   } catch (e) {
     console.error(e);

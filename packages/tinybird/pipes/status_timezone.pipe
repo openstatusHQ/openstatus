@@ -13,21 +13,14 @@ SQL >
         -- only for debugging purposes
         toTimezone(day, {{ String(timezone, 'Europe/Berlin') }}) as with_timezone,
         toStartOfDay(with_timezone) as start_of_day,
-        avg(latency) AS avgLatency,
-        count() AS count,
-        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
-    FROM ping_response__v5
-    WHERE
-        (day IS NOT NULL)
-        AND (day != 0)
-        AND monitorId = {{ String(monitorId, '1') }}
-        -- By default, we only only query the last 45 days
+        statusCode,
+        latency
+    FROM mv_ping_response_ttl_45d_mv
+    WHERE monitorId = {{ String(monitorId, '1') }}
+        -- by default, we only query the last 45 days
         AND cronTimestamp >= toUnixTimestamp64Milli(
             toDateTime64(toStartOfDay(date_sub(DAY, 45, now())), 3)
         )
-    GROUP BY cronTimestamp, monitorId
-    ORDER BY day DESC
-
 
 
 NODE group_by_day
@@ -36,12 +29,15 @@ SQL >
     %
     SELECT
         start_of_day as day,
-        sum(count) as count,
-        sum(ok) as ok,
-        round(avg(avgLatency)) as avgLatency
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        round(avg(latency)) as avgLatency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.9)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency
     FROM group_by_cronTimestamp
     GROUP BY start_of_day
-    -- ORDER BY start_of_day DESC WITH FILL STEP INTERVAL -1 DAY
     ORDER BY start_of_day
     WITH FILL
     FROM
@@ -49,6 +45,5 @@ SQL >
         TO toStartOfDay(
             toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/Berlin') }})
         ) STEP INTERVAL -1 DAY
-    LIMIT {{ Int32(limit, 100) }}
 
 

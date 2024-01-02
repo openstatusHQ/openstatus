@@ -45,6 +45,29 @@ export const tbParameterResponseList = z.object({
 });
 
 /**
+ * Values from pipe response_graph
+ */
+export const tbBuildResponseGraph = z.object({
+  region: z.enum(availableRegions),
+  timestamp: z.number().int(),
+  avgLatency: z.number().int(),
+  p75Latency: z.number().int(),
+  p90Latency: z.number().int(),
+  p95Latency: z.number().int(),
+  p99Latency: z.number().int(),
+});
+
+/**
+ * Params for pipe response_graph
+ */
+export const tbParameterResponseGraph = z.object({
+  monitorId: z.string().default(""),
+  interval: z.number().int().default(10),
+  fromDate: z.number().int().default(0),
+  toDate: z.number().int().optional(),
+});
+
+/**
  * Params for pipe status_timezone
  */
 export const tbParameterMonitorList = z.object({
@@ -60,6 +83,10 @@ export const tbBuildMonitorList = z.object({
   count: z.number().int(),
   ok: z.number().int(),
   avgLatency: z.number().int(),
+  p75Latency: z.number().int(),
+  p90Latency: z.number().int(),
+  p95Latency: z.number().int(),
+  p99Latency: z.number().int(),
   day: z.string().transform((val) => {
     // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
     return new Date(`${val} GMT`).toISOString();
@@ -85,6 +112,8 @@ export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type HomeStats = z.infer<typeof tbBuildHomeStats>;
+export type ResponseGraph = z.infer<typeof tbBuildResponseGraph>; // TODO: rename to ResponseQuantileChart
 export type ResponseListParams = z.infer<typeof tbParameterResponseList>;
+export type ResponseGraphParams = z.infer<typeof tbParameterResponseGraph>;
 export type MonitorListParams = z.infer<typeof tbParameterMonitorList>;
 export type HomeStatsParams = z.infer<typeof tbParameterHomeStats>;

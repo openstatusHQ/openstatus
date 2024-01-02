@@ -2,42 +2,28 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
-import * as z from "zod";
 
 import type { Monitor } from "@openstatus/db/src/schema";
 import { Badge } from "@openstatus/ui";
 
-import { DataTableStatusBadge } from "../data-table-status-badge";
+import { StatusDot } from "@/components/monitor/status-dot";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-export const columns: ColumnDef<
-  Monitor & { lastStatusCode?: number | null }
->[] = [
+export const columns: ColumnDef<Monitor>[] = [
   {
     accessorKey: "name",
     header: "Name",
     cell: ({ row }) => {
-      const active = row.getValue("active");
+      const { active, status } = row.original;
       return (
-        // TODO: add Link on click when we have a better details page
         <Link
-          href={`./monitors/${row.original.id}/data`}
+          href={`./monitors/${row.original.id}/overview`}
           className="group flex items-center gap-2"
         >
-          {active ? (
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500/80 opacity-75 duration-1000" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500" />
-            </span>
-          ) : (
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-2 w-2 rounded-full bg-red-500" />
-            </span>
-          )}
+          <StatusDot active={active} status={status} />
           <span className="max-w-[125px] truncate group-hover:underline">
             {row.getValue("name")}
           </span>
-          {!active ? <Badge variant="outline">paused</Badge> : null}
         </Link>
       );
     },
@@ -56,29 +42,27 @@ export const columns: ColumnDef<
     },
   },
   {
-    // hidden by `columnVisibility` in `data-table.tsx` but used via row.getValue("active")
-    accessorKey: "active",
-    header: "Active",
+    accessorKey: "description",
+    header: "Description",
     cell: ({ row }) => {
-      const active = row.getValue("active");
-      if (!active) {
-        return <span className="text-muted-foreground">paused</span>;
-      }
-      return <span>running</span>;
+      return (
+        <div className="flex">
+          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {row.getValue("description") || "-"}
+          </span>
+        </div>
+      );
     },
   },
   {
-    accessorKey: "lastStatusCode",
-    header: "Last Status",
+    accessorKey: "status",
+    header: "Status",
     cell: ({ row }) => {
-      const lastStatusCode = row.getValue("lastStatusCode");
-      const statusCode = z.number().nullable().optional().parse(lastStatusCode);
+      const { active, status } = row.original;
 
-      if (statusCode === undefined) {
-        return <span className="text-muted-foreground">Missing</span>;
-      }
-
-      return <DataTableStatusBadge {...{ statusCode }} />;
+      if (!active) return <Badge variant="secondary">pause</Badge>;
+      if (status === "error") return <Badge variant="destructive">down</Badge>;
+      return <Badge variant="outline">up</Badge>;
     },
   },
   {
