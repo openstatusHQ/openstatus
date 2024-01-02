@@ -1,4 +1,4 @@
-import { Monitor } from "@openstatus/db/src/schema";
+import type { Monitor } from "@openstatus/db/src/schema";
 
 export function StatusDot({
   active,
