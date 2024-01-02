@@ -49,6 +49,7 @@
     "cobe": "0.6.3",
     "contentlayer": "0.3.4",
     "date-fns": "2.30.0",
+    "date-fns-tz": "2.0.0",
     "lucide-react": "0.279.0",
     "luxon": "3.3.0",
     "micro": "10.0.1",

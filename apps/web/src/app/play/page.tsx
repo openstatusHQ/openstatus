@@ -1,14 +1,14 @@
-import { headers } from "next/headers";
+import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Label } from "@openstatus/ui";
 
 import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
+import { convertTimezoneToGMT, getRequestHeaderTimezone } from "@/lib/timezone";
 import { TimezoneCombobox } from "./_components/timezone-combobox";
 
 const supportedTimezones = Intl.supportedValuesOf("timeZone");
-const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 /**
  * allowed URL search params
@@ -22,25 +22,23 @@ export default async function PlayPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const headersList = headers();
-  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
-
   const search = searchParamsSchema.safeParse(searchParams);
+  const requestTimezone = getRequestHeaderTimezone();
 
-  function getDefaultValue() {
-    if (
-      search.success &&
-      search.data.timezone &&
-      supportedTimezones.includes(search.data.timezone)
-    ) {
-      return search.data.timezone;
-    }
-    return timezone;
+  if (!search.success) {
+    return notFound();
   }
 
-  const defaultValue = getDefaultValue();
+  if (
+    search.data.timezone &&
+    !supportedTimezones.includes(search.data.timezone)
+  ) {
+    return notFound();
+  }
 
-  const data = await getHomeMonitorListData({ timezone: defaultValue });
+  const gmt = convertTimezoneToGMT(search.data.timezone);
+
+  const data = await getHomeMonitorListData({ timezone: gmt });
 
   return (
     <div className="relative grid gap-4">
@@ -58,14 +56,15 @@ export default async function PlayPage({
             name="Ping"
             url="https://www.openstatus.dev/api/ping"
             context="play"
-            timezone={defaultValue}
           />
         )}
       </div>
       <div className="mt-6 flex justify-start">
         <div className="grid items-center gap-1">
           <Label className="text-muted-foreground text-xs">Timezone</Label>
-          <TimezoneCombobox defaultValue={defaultValue} />
+          <TimezoneCombobox
+            defaultValue={search.data.timezone || requestTimezone || undefined}
+          />
         </div>
       </div>
     </div>

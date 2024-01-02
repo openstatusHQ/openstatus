@@ -1,13 +1,11 @@
 import { Suspense } from "react";
-import { headers } from "next/headers";
 import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
 import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
-
-const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+import { convertTimezoneToGMT } from "@/lib/timezone";
 
 export async function TrackerExample() {
   return (
@@ -36,9 +34,8 @@ function ExampleTrackerFallback() {
 }
 
 async function ExampleTracker() {
-  const headersList = headers();
-  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
-  const data = await getHomeMonitorListData({ timezone });
+  const gmt = convertTimezoneToGMT();
+  const data = await getHomeMonitorListData({ timezone: gmt });
   if (!data) return null;
   return (
     <Tracker
@@ -47,7 +44,6 @@ async function ExampleTracker() {
       name="Ping"
       context="play"
       url="https://www.openstatus.dev/api/ping"
-      timezone={timezone}
     />
   );
 }
