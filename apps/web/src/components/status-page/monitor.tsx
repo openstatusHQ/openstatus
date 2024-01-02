@@ -1,4 +1,3 @@
-import { headers } from "next/headers";
 import type { z } from "zod";
 
 import type {
@@ -7,9 +6,8 @@ import type {
 } from "@openstatus/db/src/schema";
 
 import { getMonitorListData } from "@/lib/tb";
+import { convertTimezoneToGMT } from "@/lib/timezone";
 import { Tracker } from "../tracker";
-
-const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export const Monitor = async ({
   monitor,
@@ -18,12 +16,10 @@ export const Monitor = async ({
   monitor: z.infer<typeof selectPublicMonitorSchema>;
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
 }) => {
-  const headersList = headers();
-  const timezone = headersList.get("x-vercel-ip-timezone") || currentTimezone;
-
+  const gmt = convertTimezoneToGMT();
   const data = await getMonitorListData({
     monitorId: String(monitor.id),
-    timezone,
+    timezone: gmt,
   });
 
   // TODO: we could handle the `statusReports` here instead of passing it down to the tracker

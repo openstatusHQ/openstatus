@@ -57,7 +57,6 @@ interface TrackerProps {
   name: string;
   description?: string;
   context?: "play" | "status-page"; // TODO: we might need to extract those two different use cases - for now it's ok I'd say.
-  timezone?: string;
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
 }
 
