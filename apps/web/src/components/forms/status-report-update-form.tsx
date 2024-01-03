@@ -34,7 +34,7 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toast } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface Props {
@@ -58,7 +58,6 @@ export function StatusReportUpdateForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
