@@ -26,7 +26,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -47,17 +47,16 @@ export function InviteButton({
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToastAction();
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
         wait(2000);
         api.invitation.create.mutate(data);
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         setOpen(false);
       }

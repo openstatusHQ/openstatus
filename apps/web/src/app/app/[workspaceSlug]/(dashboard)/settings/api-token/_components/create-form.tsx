@@ -14,7 +14,7 @@ import {
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { copyToClipboard } from "@/lib/utils";
 import { create } from "./actions";
 import { SubmitButton } from "./submit-button";
@@ -23,7 +23,6 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
   const [rawKey, setRawKey] = React.useState<string | undefined>();
   const router = useRouter();
   const [hasCopied, setHasCopied] = React.useState(false);
-  const { toast } = useToastAction();
 
   React.useEffect(() => {
     if (hasCopied) {
@@ -40,7 +39,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
         setRawKey(res.result.key);
       }
     } catch {
-      toast("error");
+      toastAction("error");
     }
   }
 

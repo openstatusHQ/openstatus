@@ -25,14 +25,13 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 type Schema = z.infer<typeof insertMonitorSchema>;
 
 export function ActionButton(props: Schema & { workspaceSlug: string }) {
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -41,11 +40,11 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
       try {
         if (!props.id) return;
         await api.monitor.delete.mutate({ id: props.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -61,9 +60,9 @@ export function ActionButton(props: Schema & { workspaceSlug: string }) {
         body: JSON.stringify({ url, body, method, headers }),
       });
       if (res.ok) {
-        toast("test-success");
+        toastAction("test-success");
       } else {
-        toast("test-error");
+        toastAction("test-error");
       }
     });
   }

@@ -10,10 +10,10 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-  useToast,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { toast } from "@/lib/toast";
 import { handleSubscribe } from "./actions";
 
 interface Props {
@@ -21,8 +21,6 @@ interface Props {
 }
 
 export function SubscribeButton({ slug }: Props) {
-  const { toast } = useToast();
-
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -46,15 +44,12 @@ export function SubscribeButton({ slug }: Props) {
             action={async (formData) => {
               const res = await handleSubscribe(formData);
               if (res?.error) {
-                toast({
-                  title: "Something went wrong",
+                toast.error("Something went wrong", {
                   description: res.error,
-                  variant: "destructive",
                 });
                 return;
               }
-              toast({
-                title: "Success",
+              toast.message("Success", {
                 description: "Please confirm your email.",
               });
             }}
