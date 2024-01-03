@@ -26,7 +26,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -46,11 +46,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -64,10 +64,10 @@ export function DataTableRowActions<TData>({
           ...rest,
           active: !monitor.active,
         });
-        toast("success");
+        toastAction("success");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -83,9 +83,9 @@ export function DataTableRowActions<TData>({
         body: JSON.stringify({ url, body, method, headers }),
       });
       if (res.ok) {
-        toast("test-success");
+        toastAction("test-success");
       } else {
-        toast("test-error");
+        toastAction("test-error");
       }
     });
   }

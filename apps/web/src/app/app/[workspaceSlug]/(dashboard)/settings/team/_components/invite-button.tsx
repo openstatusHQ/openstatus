@@ -26,7 +26,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -53,10 +53,10 @@ export function InviteButton({
       try {
         wait(2000);
         api.invitation.create.mutate(data);
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         setOpen(false);
       }

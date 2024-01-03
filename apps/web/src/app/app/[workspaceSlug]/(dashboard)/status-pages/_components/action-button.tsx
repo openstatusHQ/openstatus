@@ -24,7 +24,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface ActionButtonProps {
@@ -41,11 +41,11 @@ export function ActionButton({ page }: ActionButtonProps) {
       try {
         if (!page.id) return;
         await api.page.delete.mutate({ id: page.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

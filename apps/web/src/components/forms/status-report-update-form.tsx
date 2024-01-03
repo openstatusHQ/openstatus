@@ -34,7 +34,7 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface Props {
@@ -67,12 +67,12 @@ export function StatusReportUpdateForm({
         } else {
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
-        toast("saved");
+        toastAction("saved");
         router.refresh();
         // TODO: temporary solution, we might wanna use a server-action with redirect
         router.push("../");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

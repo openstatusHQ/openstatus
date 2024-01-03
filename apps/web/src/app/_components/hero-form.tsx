@@ -1,7 +1,8 @@
 "use client";
 
-import { Input, toast } from "@openstatus/ui";
+import { Input } from "@openstatus/ui";
 
+import { toast } from "@/lib/toast";
 import { addToWaitlist, sendWaitingListEmail } from "../action";
 import { SubmitButton } from "./submit-button";
 
@@ -12,17 +13,15 @@ export const HeroForm = () => {
         try {
           const number = await addToWaitlist(data);
           const formattedNumber = Intl.NumberFormat().format(Number(number));
-          toast({
-            description: `Thank you, you're number ${formattedNumber} on the list.`,
+          toast.message("Thank you", {
+            description: `You're number ${formattedNumber} on the list.`,
           });
           const email = data.get("email");
           if (email) {
             sendWaitingListEmail(String(email));
           }
         } catch (e) {
-          toast({
-            description: "Something went wrong",
-          });
+          toast.error("Something went wrong");
         }
       }}
       className="flex gap-1.5"

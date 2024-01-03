@@ -14,7 +14,7 @@ import {
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { copyToClipboard } from "@/lib/utils";
 import { create } from "./actions";
 import { SubmitButton } from "./submit-button";
@@ -39,7 +39,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
         setRawKey(res.result.key);
       }
     } catch {
-      toast("error");
+      toastAction("error");
     }
   }
 

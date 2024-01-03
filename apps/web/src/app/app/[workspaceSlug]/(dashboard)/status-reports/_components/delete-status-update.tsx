@@ -18,7 +18,7 @@ import {
 
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
@@ -30,11 +30,11 @@ export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
     startTransition(async () => {
       try {
         await api.statusReport.deleteStatusReportUpdate.mutate({ id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
