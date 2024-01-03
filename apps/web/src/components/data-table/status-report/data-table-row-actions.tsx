@@ -25,7 +25,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -47,11 +47,11 @@ export function DataTableRowActions<TData>({
         await api.statusReport.deleteStatusReport.mutate({
           id: statusReport.id,
         });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

@@ -1,5 +1,5 @@
 import type { ExternalToast } from "sonner";
-import { toast as sonner } from "sonner";
+import { toast } from "sonner";
 
 type ToastType =
   | "default"
@@ -55,13 +55,15 @@ const _config: Record<
 
 type ToastAction = keyof typeof config;
 
-export function toast(action: ToastAction) {
+export function toastAction(action: ToastAction) {
   const { title, type, ...props } = _config[action];
 
-  if (type === "default") return sonner(title, props);
-  if (type === "success") return sonner.success(title, props);
-  if (type === "error") return sonner.error(title, props);
-  if (type === "warning") return sonner.warning(title, props);
-  if (type === "description") return sonner.message(title, props);
-  if (type === "info") return sonner.info(title, props);
+  if (type === "default") return toast(title, props);
+  if (type === "success") return toast.success(title, props);
+  if (type === "error") return toast.error(title, props);
+  if (type === "warning") return toast.warning(title, props);
+  if (type === "description") return toast.message(title, props);
+  if (type === "info") return toast.info(title, props);
 }
+
+export { toast };

@@ -20,7 +20,7 @@ import {
 } from "@openstatus/ui";
 
 import { useDomainStatus } from "@/hooks/use-domain-status";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
@@ -75,10 +75,10 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
             domain: defaultValues.customDomain,
           });
         }
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

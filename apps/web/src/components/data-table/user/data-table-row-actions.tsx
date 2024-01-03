@@ -24,7 +24,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -44,11 +44,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!user.id) return;
         await api.workspace.removeWorkspaceUser.mutate({ id: user.id });
-        toast("removed");
+        toastAction("removed");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

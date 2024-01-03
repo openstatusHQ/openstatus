@@ -35,7 +35,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -152,9 +152,9 @@ export function NotificationForm({
           router.push(nextUrl);
         }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         onExternalSubmit?.();
       }
@@ -167,9 +167,9 @@ export function NotificationForm({
     startTestTransition(async () => {
       const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
       if (isSuccessfull) {
-        toast("test-success");
+        toastAction("test-success");
       } else {
-        toast("test-error");
+        toastAction("test-error");
       }
     });
   }

@@ -44,7 +44,7 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -110,9 +110,9 @@ export function StatusReportForm({
           router.push(nextUrl);
         }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

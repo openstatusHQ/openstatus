@@ -17,7 +17,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
+import { toastAction } from "@/lib/toast";
 import { revoke } from "./actions";
 
 export function RevokeButton({ keyId }: { keyId: string }) {
@@ -31,9 +31,9 @@ export function RevokeButton({ keyId }: { keyId: string }) {
         await revoke(keyId);
         router.refresh();
         setOpen(false);
-        toast("deleted");
+        toastAction("deleted");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
