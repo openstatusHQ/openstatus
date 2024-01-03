@@ -65,7 +65,8 @@ import { flyRegionsDict } from "@openstatus/utils";
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
@@ -117,7 +118,6 @@ export function MonitorForm({
   const [isTestPending, startTestTransition] = React.useTransition();
   const [pingFailed, setPingFailed] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
-  const { toast } = useToastAction();
   const watchMethod = form.watch("method");
 
   const { fields, append, remove } = useFieldArray({

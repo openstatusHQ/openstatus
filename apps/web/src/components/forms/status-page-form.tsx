@@ -30,8 +30,8 @@ import {
 } from "@openstatus/ui";
 
 import { useDebounce } from "@/hooks/use-debounce";
-import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toast } from "@/lib/toast";
 import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
@@ -77,7 +77,6 @@ export function StatusPageForm({
   const watchSlug = form.watch("slug");
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
-  const { toast } = useToastAction();
   const { toast: defaultToast } = useToast();
   const updateSearchParams = useUpdateSearchParams();
 

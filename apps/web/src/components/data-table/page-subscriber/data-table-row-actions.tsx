@@ -24,7 +24,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toast } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -36,7 +36,6 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const subscriber = selectPageSubscriberSchema.parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 

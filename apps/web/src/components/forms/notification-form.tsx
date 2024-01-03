@@ -35,7 +35,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toast } from "@/lib/toast";
 import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -112,7 +112,6 @@ export function NotificationForm({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
-  const { toast } = useToastAction();
   const router = useRouter();
   const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),

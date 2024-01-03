@@ -17,14 +17,13 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toast } from "@/lib/toast";
 import { revoke } from "./actions";
 
 export function RevokeButton({ keyId }: { keyId: string }) {
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const router = useRouter();
-  const { toast } = useToastAction();
 
   async function onRevoke() {
     startTransition(async () => {
