@@ -3,10 +3,12 @@ import { Tinybird } from "@chronark/zod-bird";
 import {
   tbBuildHomeStats,
   tbBuildMonitorList,
+  tbBuildPublicStatus,
   tbBuildResponseList,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
+  tbParameterPublicStatus,
   tbParameterResponseList,
 } from "./validation";
 
@@ -69,5 +71,13 @@ export function getHomeStats(tb: Tinybird) {
     opts: {
       revalidate: 86400, // 60 * 60 * 24 = 86400s = 1d
     },
+  });
+}
+
+export function getPublicStatus(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "public_status__v0",
+    parameters: tbParameterPublicStatus,
+    data: tbBuildPublicStatus,
   });
 }
