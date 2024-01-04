@@ -275,4 +275,15 @@ export const pageRouter = createTRPCRouter({
         .returning()
         .get();
     }),
+
+  isPageLimitReached: protectedProcedure.query(async (opts) => {
+    const pageLimit = allPlans[opts.ctx.workspace.plan].limits["status-pages"];
+    const pageNumbers = (
+      await opts.ctx.db.query.page.findMany({
+        where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+      })
+    ).length;
+
+    return pageNumbers >= pageLimit;
+  }),
 });
