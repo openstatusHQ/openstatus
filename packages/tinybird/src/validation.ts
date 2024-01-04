@@ -108,6 +108,23 @@ export const tbBuildHomeStats = z.object({
   count: z.number().int(),
 });
 
+/**
+ * Params for pipe public_status (used for our API /public/status/[slug])
+ */
+export const tbParameterPublicStatus = z.object({
+  monitorId: z.string(),
+  limit: z.number().int().default(5).optional(), // 5 last cronTimestamps
+});
+
+/**
+ * Values from the pipe public_status (used for our API /public/status/[slug])
+ */
+export const tbBuildPublicStatus = z.object({
+  ok: z.number().int(),
+  count: z.number().int(),
+  cronTimestamp: z.number().int(),
+});
+
 export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, inArray } from "@openstatus/db";
 import {
   monitor,
   monitorsToPages,
@@ -10,10 +10,11 @@ import {
   pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
-import { getMonitorList, Tinybird } from "@openstatus/tinybird";
+import { getPublicStatus, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
+import { notEmpty } from "../utils/not-empty";
 
 // TODO: include ratelimiting
 
@@ -43,46 +44,22 @@ status.get("/:slug", async (c) => {
   }
 
   startTime(c, "database");
+  const { monitorData, pageStatusReportData, monitorStatusReportData } =
+    await getStatusPageData(slug);
+  endTime(c, "database");
 
-  const monitorData = await db
-    .select()
-    .from(monitorsToPages)
-    .leftJoin(monitor, and(eq(monitorsToPages.monitorId, monitor.id)))
-    .leftJoin(
-      monitorsToStatusReport,
-      eq(monitor.id, monitorsToStatusReport.monitorId),
-    )
-    .leftJoin(
-      statusReport,
-      eq(monitorsToStatusReport.statusReportId, statusReport.id),
-    )
-    .leftJoin(page, eq(monitorsToPages.pageId, page.id))
-    .where(eq(page.slug, slug)) // TODO: query only active monitors
-    .all();
-
-  const pageStatusReportData = await db
-    .select()
-    .from(pagesToStatusReports)
-    .leftJoin(
-      statusReport,
-      eq(pagesToStatusReports.statusReportId, statusReport.id),
-    )
-    .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
-    .where(eq(page.slug, slug))
-    .all();
-
-  const isIncident = [...pageStatusReportData, ...monitorData].some((data) => {
-    if (!data.status_report) return false;
-    return !["monitoring", "resolved"].includes(data.status_report.status);
-  });
+  const isIncident = [...pageStatusReportData, ...monitorStatusReportData].some(
+    (data) => {
+      if (!data.status_report) return false;
+      return !["monitoring", "resolved"].includes(data.status_report.status);
+    },
+  );
 
   startTime(c, "clickhouse");
-  // { data: [{ ok, count }] }
   const lastMonitorPings = await Promise.allSettled(
     monitorData.map(async ({ monitors_to_pages }) => {
-      return await getMonitorList(tb)({
+      return await getPublicStatus(tb)({
         monitorId: String(monitors_to_pages.monitorId),
-        limit: 5, // limits the grouped cronTimestamps
       });
     }),
   );
@@ -111,7 +88,7 @@ status.get("/:slug", async (c) => {
 
   const status: Status = isIncident ? Status.Incident : getStatus(ratio);
 
-  await redis.set(slug, status, { ex: 30 });
+  await redis.set(slug, status, { ex: 60 }); // 1m cache
 
   return c.json({ status });
 });
@@ -123,4 +100,48 @@ function getStatus(ratio: number) {
   if (ratio >= 0.3) return Status.PartialOutage;
   if (ratio >= 0) return Status.MajorOutage;
   return Status.Unknown;
+}
+
+async function getStatusPageData(slug: string) {
+  const monitorData = await db
+    .select()
+    .from(monitorsToPages)
+    .leftJoin(
+      monitor,
+      // REMINDER: query only active monitors as they are the ones that are displayed on the status page
+      and(eq(monitorsToPages.monitorId, monitor.id), eq(monitor.active, true)),
+    )
+    .leftJoin(page, eq(monitorsToPages.pageId, page.id))
+    .where(eq(page.slug, slug))
+    .all();
+
+  const monitorIds = monitorData.map((i) => i.monitor?.id).filter(notEmpty);
+
+  const monitorStatusReportData = await db
+    .select()
+    .from(monitorsToStatusReport)
+    .leftJoin(
+      statusReport,
+      eq(monitorsToStatusReport.statusReportId, statusReport.id),
+    )
+    .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
+    .all();
+
+  // REMINDER: the query can overlap with the previous one
+  const pageStatusReportData = await db
+    .select()
+    .from(pagesToStatusReports)
+    .leftJoin(
+      statusReport,
+      eq(pagesToStatusReports.statusReportId, statusReport.id),
+    )
+    .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
+    .where(eq(page.slug, slug))
+    .all();
+
+  return {
+    monitorData,
+    pageStatusReportData,
+    monitorStatusReportData,
+  };
 }
