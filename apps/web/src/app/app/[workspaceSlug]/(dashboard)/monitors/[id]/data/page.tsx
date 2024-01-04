@@ -1,31 +1,19 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
-import { endOfDay, startOfDay } from "date-fns";
 import * as z from "zod";
 
-import { Header } from "@/components/dashboard/header";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
-import { ChartWrapper } from "./_components/chart-wrapper";
-import { DatePickerPreset } from "./_components/date-picker-preset";
-import { getPeriodDate, periods } from "./utils";
-
-export const revalidate = 0;
+import { DatePickerPreset } from "../_components/date-picker-preset";
+import { getDateByPeriod, periods } from "../utils";
 
 /**
  * allowed URL search params
  */
 const searchParamsSchema = z.object({
-  statusCode: z.coerce.number().optional(),
-  cronTimestamp: z.coerce.number().optional(),
-  fromDate: z.coerce
-    .number()
-    .optional()
-    .default(startOfDay(new Date()).getTime()),
-  toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
-  period: z.enum(periods).optional().default("hour"),
+  period: z.enum(periods).optional().default("1h"),
 });
 
 export default async function Page({
@@ -46,33 +34,22 @@ export default async function Page({
     return notFound();
   }
 
-  const date = getPeriodDate(search.data.period);
+  const date = getDateByPeriod(search.data.period);
 
   const data = await getResponseListData({
     monitorId: id,
-    ...search.data,
-    /**
-     * We are overwriting the `fromDate` and `toDate`
-     * to only support presets from the `period`
-     */
     fromDate: date.from.getTime(),
     toDate: date.to.getTime(),
   });
 
+  if (!data) return null;
+
   return (
-    // overflow-x-scroll needed for the chart.
-    <div className="grid grid-cols-1 gap-6 md:gap-8">
-      <Header
-        title={monitor.name}
-        description={monitor.url}
-        actions={<DatePickerPreset period={search.data.period} />}
-      />
-      {data ? (
-        <>
-          <ChartWrapper period={search.data.period} data={data} />
-          <DataTable columns={columns} data={data} />
-        </>
-      ) : null}
+    <div className="grid gap-4">
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <DatePickerPreset period={search.data.period} />
+      </div>
+      <DataTable columns={columns} data={data} />
     </div>
   );
 }

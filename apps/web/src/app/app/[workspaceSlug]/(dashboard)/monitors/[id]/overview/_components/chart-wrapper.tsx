@@ -1,19 +1,21 @@
 "use client";
 
-import type { Ping, Region } from "@openstatus/tinybird";
+import type { Region, ResponseGraph } from "@openstatus/tinybird";
 import { regionsDict } from "@openstatus/utils";
 
-import type { Period } from "../utils";
+import type { Period, Quantile } from "../../utils";
 import { Chart } from "./chart";
 
 export function ChartWrapper({
   data,
   period,
+  quantile,
 }: {
-  data: Ping[];
+  data: ResponseGraph[];
   period: Period;
+  quantile: Quantile;
 }) {
-  const group = groupDataByTimestamp(data, period);
+  const group = groupDataByTimestamp(data, period, quantile);
   return <Chart data={group.data} regions={group.regions} />;
 }
 /**
@@ -22,16 +24,21 @@ export function ChartWrapper({
  * @param period
  * @returns
  */
-function groupDataByTimestamp(data: Ping[], period: Period) {
+function groupDataByTimestamp(
+  data: ResponseGraph[],
+  period: Period,
+  quantile: Quantile,
+) {
   let currentTimestamp = 0;
   const regions: Record<string, null> = {};
   const _data = data.reduce(
     (acc, curr) => {
-      const { cronTimestamp, latency, region } = curr;
+      const { timestamp, region } = curr;
+      const latency = curr[`${quantile}Latency`];
       const { flag, code } = regionsDict[region];
       const fullNameRegion = `${flag} ${code}`;
       regions[fullNameRegion] = null; // to get the region keys
-      if (cronTimestamp === currentTimestamp) {
+      if (timestamp === currentTimestamp) {
         // overwrite last object in acc
         const last = acc.pop();
         if (last) {
@@ -40,11 +47,11 @@ function groupDataByTimestamp(data: Ping[], period: Period) {
             [fullNameRegion]: latency,
           });
         }
-      } else if (cronTimestamp) {
-        currentTimestamp = cronTimestamp;
+      } else if (timestamp) {
+        currentTimestamp = timestamp;
         // create new object in acc
         acc.push({
-          timestamp: renderTimestamp(cronTimestamp, period),
+          timestamp: renderTimestamp(timestamp, period),
           [fullNameRegion]: latency,
         });
       }

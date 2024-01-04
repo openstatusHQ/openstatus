@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import * as z from "zod";
 
 import { Label } from "@openstatus/ui";
@@ -7,8 +6,6 @@ import { Tracker } from "@/components/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
 import { convertTimezoneToGMT, getRequestHeaderTimezone } from "@/lib/timezone";
 import { TimezoneCombobox } from "./_components/timezone-combobox";
-
-const supportedTimezones = Intl.supportedValuesOf("timeZone");
 
 /**
  * allowed URL search params
@@ -25,18 +22,9 @@ export default async function PlayPage({
   const search = searchParamsSchema.safeParse(searchParams);
   const requestTimezone = getRequestHeaderTimezone();
 
-  if (!search.success) {
-    return notFound();
-  }
+  const timezone = search.success ? search.data.timezone : undefined;
 
-  if (
-    search.data.timezone &&
-    !supportedTimezones.includes(search.data.timezone)
-  ) {
-    return notFound();
-  }
-
-  const gmt = convertTimezoneToGMT(search.data.timezone);
+  const gmt = convertTimezoneToGMT(timezone);
 
   const data = await getHomeMonitorListData({ timezone: gmt });
 
@@ -63,7 +51,7 @@ export default async function PlayPage({
         <div className="grid items-center gap-1">
           <Label className="text-muted-foreground text-xs">Timezone</Label>
           <TimezoneCombobox
-            defaultValue={search.data.timezone || requestTimezone || undefined}
+            defaultValue={timezone || requestTimezone || undefined}
           />
         </div>
       </div>

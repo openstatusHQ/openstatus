@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ArrowUpRight, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 import {
   Button,
@@ -14,12 +13,12 @@ import {
   SheetTrigger,
 } from "@openstatus/ui";
 
-import { cn } from "@/lib/utils";
+import { AppLink } from "./app-link";
 
 const pages = [
-  { href: "/changelog", title: "Changelog" },
-  { href: "/blog", title: "Blog" },
-  { href: "https://docs.openstatus.dev", title: "Docs" },
+  { href: "/changelog", label: "Changelog", segment: "changelog" },
+  { href: "/blog", label: "Blog", segment: "blog" },
+  { href: "https://docs.openstatus.dev", label: "Documentation" },
 ];
 
 export function MarketingMenu() {
@@ -43,39 +42,36 @@ export function MarketingMenu() {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent side="top" className="flex flex-col">
         <SheetHeader>
           <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
         </SheetHeader>
-        <ul className="mt-4 grid gap-1">
-          {pages.map(({ href, title }) => {
-            const isActive = pathname?.startsWith(href);
-            const isExternal = href.startsWith("http");
-            const externalProps = isExternal
-              ? {
-                  target: "_blank",
-                  rel: "noreferrer",
-                }
-              : {};
-            return (
-              <li key={href} className="-ml-1 w-full">
-                <Link
-                  href={href}
-                  className={cn(
-                    "hover:bg-muted/50 hover:text-foreground text-muted-foreground group inline-flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-                    isActive && "bg-muted/50 border-border text-foreground",
-                  )}
-                  {...externalProps}
-                >
-                  {title}
-                  {isExternal ? (
-                    <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
-                  ) : null}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex flex-1 flex-col justify-between gap-4">
+          <ul className="grid gap-1">
+            {pages.map(({ href, label, segment }) => {
+              const isExternal = href.startsWith("http");
+              const externalProps = isExternal ? { target: "_blank" } : {};
+              return (
+                <li key={href} className="w-full">
+                  <AppLink
+                    href={href}
+                    label={label}
+                    segment={segment}
+                    {...externalProps}
+                  />
+                </li>
+              );
+            })}
+          </ul>
+          <ul className="grid gap-1">
+            <li className="w-full">
+              <AppLink href="/github" label="GitHub" icon="github" />
+            </li>
+            <li className="w-full">
+              <AppLink href="/discord" label="Discord" icon="discord" />
+            </li>
+          </ul>
+        </div>
       </SheetContent>
     </Sheet>
   );

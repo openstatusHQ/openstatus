@@ -154,6 +154,7 @@ const Bar = ({
   count,
   ok,
   avgLatency,
+  p95Latency,
   day,
   blacklist,
   context,
@@ -212,11 +213,12 @@ const Bar = ({
               ))}
             </ul>
             <div className="flex justify-between">
-              <p className="text-xs font-light">
+              <p className="text-xs">
                 {format(new Date(cronTimestamp), dateFormat)}
               </p>
-              <p className="text-muted-foreground text-xs">
-                avg. <span className="font-mono">{avgLatency}ms</span>
+              <p className="text-muted-foreground text-xs font-light">
+                p95{" "}
+                <span className="font-mono font-medium">{p95Latency}ms</span>
               </p>
             </div>
             <Separator className="my-1.5" />

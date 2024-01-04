@@ -309,4 +309,15 @@ export const monitorRouter = createTRPCRouter({
         .all();
       return data.map((d) => selectNotificationSchema.parse(d.notification));
     }),
+
+  isMonitorLimitReached: protectedProcedure.query(async (opts) => {
+    const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
+    const monitorNumbers = (
+      await opts.ctx.db.query.monitor.findMany({
+        where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+      })
+    ).length;
+
+    return monitorNumbers >= monitorLimit;
+  }),
 });

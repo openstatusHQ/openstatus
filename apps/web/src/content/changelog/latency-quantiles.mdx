@@ -1,0 +1,16 @@
+---
+title: Latency quantiles
+description: Refine response time analysis with precision using quantiles.
+image: /assets/changelog/latency-quantiles.png
+publishedAt: 2024-01-04
+---
+
+You can now refine your latency data more effectively with quantiles: `p99`,
+`p95`, `p90`, and `p75`. The average (`avg`) has been retained.
+
+The `<Tracker />` data on your status pages now displays the `p95` quantile
+instead of the average.
+
+Furthermore, the `/monitors` layout has been updated. The data table has its
+dedicated tab to prevent loading excessive data at once, along with the edit
+form. The pause button is also now more quickly accessible.

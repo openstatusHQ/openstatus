@@ -9,6 +9,7 @@ import { Separator } from "@openstatus/ui";
 import { cn } from "@/lib/utils";
 
 type Props = {
+  // TODO: add disabled state for pro/hobby plan users
   navigation: { label: string; href: string; segment: string | null }[];
   className?: string;
 };

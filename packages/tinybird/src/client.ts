@@ -4,11 +4,13 @@ import {
   tbBuildHomeStats,
   tbBuildMonitorList,
   tbBuildPublicStatus,
+  tbBuildResponseGraph,
   tbBuildResponseList,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
   tbParameterPublicStatus,
+  tbParameterResponseGraph,
   tbParameterResponseList,
 } from "./validation";
 
@@ -26,15 +28,26 @@ export function getResponseList(tb: Tinybird) {
     parameters: tbParameterResponseList,
     data: tbBuildResponseList,
     opts: {
-      // cache: "no-store",
+      // cache: "default",
       revalidate: 600, // 10 min cache
+    },
+  });
+}
+
+export function getResponseGraph(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "response_graph__v0",
+    parameters: tbParameterResponseGraph,
+    data: tbBuildResponseGraph,
+    opts: {
+      revalidate: 60, // 1 min cache
     },
   });
 }
 
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "status_timezone__v0",
+    pipe: "status_timezone__v1",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
@@ -51,7 +64,7 @@ export function getMonitorList(tb: Tinybird) {
  */
 export function getHomeMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "status_timezone__v0",
+    pipe: "status_timezone__v1",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {

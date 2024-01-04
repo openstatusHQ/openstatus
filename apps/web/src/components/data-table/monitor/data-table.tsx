@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { ColumnDef, VisibilityState } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   flexRender,
   getCoreRowModel,
@@ -29,19 +29,10 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({ active: false });
   const table = useReactTable({
     data,
     columns,
-    state: { columnVisibility },
-    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
-    // defaultColumn: {
-    //   minSize: 0,
-    //   size: Number.MAX_SAFE_INTEGER,
-    //   maxSize: Number.MAX_SAFE_INTEGER,
-    // },
   });
 
   return (
@@ -52,16 +43,7 @@ export function DataTable<TData, TValue>({
             <TableRow key={headerGroup.id} className="hover:bg-transparent">
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead
-                    key={header.id}
-                    // className="max-w-0 truncate sm:max-w-full"
-                    // style={{
-                    //   width:
-                    //     header.getSize() === Number.MAX_SAFE_INTEGER
-                    //       ? "auto"
-                    //       : header.getSize(),
-                    // }}
-                  >
+                  <TableHead key={header.id}>
                     {header.isPlaceholder
                       ? null
                       : flexRender(
@@ -82,16 +64,7 @@ export function DataTable<TData, TValue>({
                 data-state={row.getIsSelected() && "selected"}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    // className="max-w-0 truncate md:max-w-full"
-                    // style={{
-                    //   width:
-                    //     cell.column.getSize() === Number.MAX_SAFE_INTEGER
-                    //       ? "auto"
-                    //       : cell.column.getSize(),
-                    // }}
-                  >
+                  <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
