@@ -15,18 +15,20 @@ function Header({ title, description, className, actions }: HeaderProps) {
   return (
     <div
       className={cn(
-        "col-span-full mr-12 flex items-start justify-between lg:mr-0",
+        "col-span-full mr-12 flex items-start justify-between gap-1 lg:mr-0",
         className,
       )}
     >
-      <div className="flex w-full flex-col gap-1">
+      <div className="flex flex-col gap-1">
         <h1 className="font-cal text-3xl">{title}</h1>
         {description ? (
           <p className="text-muted-foreground">{description}</p>
         ) : null}
       </div>
       {actions ? (
-        <div className="flex flex-1 items-center gap-2">{actions}</div>
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {actions}
+        </div>
       ) : null}
     </div>
   );

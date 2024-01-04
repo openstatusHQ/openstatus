@@ -40,11 +40,13 @@ import { api } from "@/trpc/client";
 interface Props {
   defaultValues?: InsertStatusReportUpdate;
   statusReportId: number;
+  nextUrl?: string;
 }
 
 export function StatusReportUpdateForm({
   defaultValues,
   statusReportId,
+  nextUrl,
 }: Props) {
   const form = useForm<InsertStatusReportUpdate>({
     resolver: zodResolver(insertStatusReportUpdateSchema),
@@ -69,9 +71,10 @@ export function StatusReportUpdateForm({
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
         toast("saved");
+        if (nextUrl) {
+          return router.push(nextUrl);
+        }
         router.refresh();
-        // TODO: temporary solution, we might wanna use a server-action with redirect
-        router.push("../");
       } catch {
         toast("error");
       }

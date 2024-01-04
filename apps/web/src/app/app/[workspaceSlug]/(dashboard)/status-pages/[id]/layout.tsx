@@ -49,7 +49,9 @@ export default async function Layout({
         description={page.description}
         actions={
           <Button variant="outline" asChild>
-            <Link href={`https://${page.slug}.openstatus.dev`}>Visit</Link>
+            <Link target="_blank" href={`https://${page.slug}.openstatus.dev`}>
+              Visit
+            </Link>
           </Button>
         }
       />

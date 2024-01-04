@@ -68,9 +68,7 @@ export function Events({
                     variant="outline"
                     className="h-7 w-7 p-0"
                     onClick={() => {
-                      router.push(
-                        `./${update.statusReportId}/update/edit?statusUpdate=${update.id}`,
-                      );
+                      router.push(`./update/edit?statusUpdate=${update.id}`);
                     }}
                   >
                     <Icons.pencil className="h-4 w-4" />
