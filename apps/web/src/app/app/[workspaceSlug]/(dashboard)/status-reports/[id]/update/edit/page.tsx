@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import { Header } from "@/components/dashboard/header";
 import { StatusReportUpdateForm } from "@/components/forms/status-report-update-form";
 import { api } from "@/trpc/server";
 
@@ -34,17 +33,10 @@ export default async function EditPage({
     : undefined;
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header
-        title="Status Report Update"
-        description="Create a public update for your incident"
-      />
-      <div className="col-span-full">
-        <StatusReportUpdateForm
-          statusReportId={parseInt(params.id)}
-          defaultValues={data || undefined}
-        />
-      </div>
-    </div>
+    <StatusReportUpdateForm
+      statusReportId={parseInt(params.id)}
+      defaultValues={data || undefined}
+      nextUrl={"../overview"}
+    />
   );
 }

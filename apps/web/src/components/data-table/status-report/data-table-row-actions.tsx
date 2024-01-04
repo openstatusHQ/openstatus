@@ -70,10 +70,10 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./status-reports/edit?id=${statusReport.id}`}>
+          <Link href={`./status-reports/${statusReport.id}/edit`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
-          <Link href={`./status-reports/${statusReport.id}`}>
+          <Link href={`./status-reports/${statusReport.id}/overview`}>
             <DropdownMenuItem>View</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>

@@ -52,9 +52,15 @@ interface Props {
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
   pages?: Page[];
+  nextUrl?: string;
 }
 
-export function StatusReportForm({ defaultValues, monitors, pages }: Props) {
+export function StatusReportForm({
+  defaultValues,
+  monitors,
+  pages,
+  nextUrl,
+}: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
     defaultValues: defaultValues
@@ -101,8 +107,11 @@ export function StatusReportForm({ defaultValues, monitors, pages }: Props) {
             });
           }
         }
-        toast("saved");
+        if (nextUrl) {
+          router.push(nextUrl);
+        }
         router.refresh();
+        toast("saved");
       } catch {
         toast("error");
       }
