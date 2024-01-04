@@ -68,7 +68,7 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./status-pages/edit?id=${page.id}`}>
+          <Link href={`./status-pages/${page.id}/edit`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <Link

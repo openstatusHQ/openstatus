@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
@@ -18,7 +19,16 @@ export const columns: ColumnDef<
     accessorKey: "title",
     header: "Title",
     cell: ({ row }) => {
-      return <span className="truncate">{row.getValue("title")}</span>;
+      return (
+        <Link
+          href={`./status-pages/${row.original.id}/edit`}
+          className="group flex items-center gap-2"
+        >
+          <span className="max-w-[125px] truncate group-hover:underline">
+            {row.getValue("title")}
+          </span>
+        </Link>
+      );
     },
   },
   {
