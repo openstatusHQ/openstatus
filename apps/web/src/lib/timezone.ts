@@ -12,7 +12,7 @@ export function getRequestHeaderTimezone() {
   return requestTimezone;
 }
 
-export function convertTimezoneToGMT(timezone?: string) {
+export function convertTimezoneToGMT(defaultTimezone?: string) {
   const requestTimezone = getRequestHeaderTimezone();
 
   /**
@@ -20,9 +20,11 @@ export function convertTimezoneToGMT(timezone?: string) {
    */
   const clientTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const msOffset = getTimezoneOffset(
-    timezone || requestTimezone || clientTimezone,
-  );
+  const timezone = defaultTimezone || requestTimezone || clientTimezone;
+
+  if (!supportedTimezones.includes(timezone)) return "Etc/UTC";
+
+  const msOffset = getTimezoneOffset(timezone);
 
   if (isNaN(msOffset)) return "Etc/UTC";
 

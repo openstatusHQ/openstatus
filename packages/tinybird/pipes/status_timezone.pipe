@@ -1,4 +1,4 @@
-VERSION 0
+VERSION 1
 
 DESCRIPTION >
 	TODO: descripe what it is for!
@@ -10,12 +10,11 @@ SQL >
     %
     SELECT
         toDateTime(cronTimestamp / 1000, 'UTC') AS day,
-        -- only for debugging purposes
-        toTimezone(day, {{ String(timezone, 'Europe/Berlin') }}) as with_timezone,
+        toTimezone(day, {{ String(timezone, 'Europe/London') }}) as with_timezone,
         toStartOfDay(with_timezone) as start_of_day,
         statusCode,
         latency
-    FROM mv_ping_response_ttl_45d_mv
+    FROM ping_response__v5
     WHERE monitorId = {{ String(monitorId, '1') }}
         -- by default, we only query the last 45 days
         AND cronTimestamp >= toUnixTimestamp64Milli(
@@ -41,9 +40,9 @@ SQL >
     ORDER BY start_of_day
     WITH FILL
     FROM
-        toStartOfDay(toTimezone(now(), {{ String(timezone, 'Europe/Berlin') }}))
+        toStartOfDay(toTimezone(now(), {{ String(timezone, 'Europe/London') }}))
         TO toStartOfDay(
-            toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/Berlin') }})
+            toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/London') }})
         ) STEP INTERVAL -1 DAY
 
 
