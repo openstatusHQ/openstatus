@@ -20,6 +20,11 @@ func main() {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
+	go func() {
+		<-done
+		cancel()
+	}()
+
 	// environment variables.
 	flyRegion := env("FLY_REGION", "local")
 	cronSecret := env("CRON_SECRET", "")
