@@ -7,7 +7,7 @@ export default async function Layout({
 }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 md:gap-8">
-      <Header title="Monitor" description="Create your monitor" />
+      <Header title="Pages" description="Create your page." />
       <div className="col-span-full">{children}</div>
     </div>
   );
