@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/gin-gonic/gin"
+	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
@@ -58,12 +59,12 @@ func main() {
 			return
 		}
 
-		response, error := ping(httpClient, req)
+		response, error := checker.Ping(httpClient, req)
 		if error != nil {
 			// Add one more retry
-			response, error = ping(httpClient, req)
+			response, error = checker.Ping(httpClient, req)
 			if error != nil {
-				sendToTinybirdNew(PingData{
+				checker.SendToTinyBird(checker.PingData{
 					URL:           req.URL,
 					Region:        flyRegion,
 					Message:       error.Error(),
@@ -73,7 +74,7 @@ func main() {
 					WorkspaceID:   req.WorkspaceID,
 				})
 				if req.Status == "active" {
-					updateStatus(UpdateData{
+					checker.UpdateStatus(checker.UpdateData{
 						MonitorId: req.MonitorID,
 						Status:    "error",
 						Message:   error.Error(),
@@ -88,10 +89,10 @@ func main() {
 
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
 			// Add one more retry
-			response, error = ping(httpClient, req)
+			response, error = checker.Ping(httpClient, req)
 			if response.StatusCode < 200 || response.StatusCode >= 300 && req.Status == "active" {
 				// If the status code is not within the 200 range, we update the status to error
-				updateStatus(UpdateData{
+				checker.UpdateStatus(checker.UpdateData{
 					MonitorId:  req.MonitorID,
 					Status:     "error",
 					StatusCode: response.StatusCode,
@@ -103,7 +104,7 @@ func main() {
 		// If the status was error and the status code is within the 200 range, we update the status to active
 		if req.Status == "error" && response.StatusCode >= 200 && response.StatusCode < 300 {
 			// If the status was error, we update it to active
-			updateStatus(UpdateData{
+			checker.UpdateStatus(checker.UpdateData{
 				MonitorId:  req.MonitorID,
 				Status:     "active",
 				Region:     flyRegion,
@@ -111,7 +112,7 @@ func main() {
 			})
 		}
 		// We send the data to Tinybird
-		sendToTinybirdNew(response)
+		checker.SendToTinyBird(response)
 
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
 		return

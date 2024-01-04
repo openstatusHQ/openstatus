@@ -11,7 +11,7 @@ COPY . .
 
 ARG VERSION
 
-RUN go build -o openstatus-checker .
+RUN go build -o openstatus-checker ./cmd
 
 FROM golang:1.21
 
