@@ -21,7 +21,7 @@ export default async function MonitorPage() {
         description="Create your first page"
         action={
           <Button asChild>
-            <Link href="./page/new">Create</Link>
+            <Link href="./status-pages/new">Create</Link>
           </Button>
         }
       />
