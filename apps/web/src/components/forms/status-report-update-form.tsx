@@ -72,7 +72,7 @@ export function StatusReportUpdateForm({
         }
         toast("saved");
         if (nextUrl) {
-          return router.push(nextUrl);
+          router.push(nextUrl);
         }
         router.refresh();
       } catch {
