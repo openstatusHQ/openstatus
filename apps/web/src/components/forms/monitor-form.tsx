@@ -65,7 +65,6 @@ import { flyRegionsDict } from "@openstatus/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import { useToastAction } from "@/hooks/use-toast-action";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
@@ -83,12 +82,14 @@ interface Props {
   defaultValues?: InsertMonitor;
   plan?: WorkspacePlan;
   notifications?: Notification[];
+  nextUrl?: string;
 }
 
 export function MonitorForm({
   defaultValues,
   plan = "free",
   notifications,
+  nextUrl,
 }: Props) {
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
@@ -116,7 +117,6 @@ export function MonitorForm({
   const [openDialog, setOpenDialog] = React.useState(false);
   const { toast } = useToastAction();
   const watchMethod = form.watch("method");
-  const updateSearchParams = useUpdateSearchParams();
 
   const { fields, append, remove } = useFieldArray({
     name: "headers",
@@ -128,9 +128,10 @@ export function MonitorForm({
       if (defaultValues) {
         await api.monitor.update.mutate(props);
       } else {
-        const monitor = await api.monitor.create.mutate(props);
-        const id = monitor?.id || null;
-        router.replace(`?${updateSearchParams({ id })}`);
+        await api.monitor.create.mutate(props);
+      }
+      if (nextUrl) {
+        router.push(nextUrl);
       }
       router.refresh();
       toast("saved");

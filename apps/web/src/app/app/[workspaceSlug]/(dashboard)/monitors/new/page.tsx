@@ -6,5 +6,11 @@ export default async function Page() {
   const notifications =
     await api.notification.getNotificationsByWorkspace.query();
 
-  return <MonitorForm plan={workspace?.plan} notifications={notifications} />;
+  return (
+    <MonitorForm
+      plan={workspace?.plan}
+      notifications={notifications}
+      nextUrl="./" // back to the overview page
+    />
+  );
 }
