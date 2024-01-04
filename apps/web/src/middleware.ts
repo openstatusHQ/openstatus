@@ -79,6 +79,7 @@ export default authMiddleware({
     "/legal/(.*)",
     "/discord",
     "/github",
+    "/pricing",
     "/oss-friends",
     "/status-page/(.*)",
     "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
