@@ -42,7 +42,7 @@ export function MarketingMenu() {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="flex flex-col">
+      <SheetContent side="top" className="flex flex-col">
         <SheetHeader>
           <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
         </SheetHeader>
