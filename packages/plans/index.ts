@@ -50,7 +50,7 @@ export const allPlans: Record<PlanName, Plan> = {
     price: 9,
     limits: {
       monitors: 10,
-      periodicity: ["10m", "30m", "1h"],
+      periodicity: ["1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "status-pages": 1,
       "status-subscribers": true,

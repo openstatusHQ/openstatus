@@ -127,7 +127,7 @@ export const stripeRouter = createTRPCRouter({
 
         line_items: [
           {
-            price: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+            price: process.env.STRIPE_PRO_MONTHLY_PRICE_ID, // TODO: more possibilities
             quantity: 1,
           },
         ],
