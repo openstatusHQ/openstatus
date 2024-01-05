@@ -31,7 +31,7 @@ export function PricingPlanRadio() {
             )}
           >
             <span className="capitalize">{key}</span>
-            <span className="text-muted-foreground mt-1 font-light">
+            <span className="text-muted-foreground mt-1 text-xs font-light">
               {allPlans[key].price}€/month
             </span>
           </Label>

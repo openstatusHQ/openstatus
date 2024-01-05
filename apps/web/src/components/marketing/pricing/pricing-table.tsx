@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import { Check } from "lucide-react";
 
 import type { PlanName } from "@openstatus/plans";
@@ -18,7 +19,6 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-// import { pricingTableConfig } from "@/config/pricing";
 import { cn } from "@/lib/utils";
 
 export function PricingTable({
@@ -64,8 +64,9 @@ export function PricingTable({
                   className="w-full"
                   size="sm"
                   variant={key === "team" ? "default" : "outline"}
+                  asChild
                 >
-                  Choose
+                  <Link href={`/app/sign-up?plan=${key}`}>Choose</Link>
                 </Button>
               </TableHead>
             );
