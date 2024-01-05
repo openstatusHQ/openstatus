@@ -8,6 +8,7 @@ import { user, workspace } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
+import { getPlanFromPriceId } from "./utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -51,10 +52,12 @@ export const webhookRouter = createTRPCRouter({
         message: "Workspace not found",
       });
     }
+    const plan = getPlanFromPriceId(subscription.items.data[0].price.id);
+
     await opts.ctx.db
       .update(workspace)
       .set({
-        plan: "pro",
+        plan: plan.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),

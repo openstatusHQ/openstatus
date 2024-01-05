@@ -6,6 +6,8 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string(),
     STRIPE_PRO_PRODUCT_ID: z.string(),
     STRIPE_PRO_MONTHLY_PRICE_ID: z.string(),
+    STRIPE_TEAM_MONTHLY_PRICE_ID: z.string(),
+    STRIPE_STARTER_MONTHLY_PRICE_ID: z.string(),
     PROJECT_ID_VERCEL: z.string(),
     TEAM_ID_VERCEL: z.string(),
     VERCEL_AUTH_BEARER_TOKEN: z.string(),
