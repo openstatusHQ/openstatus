@@ -1,5 +1,7 @@
+"use client";
+
 import { Fragment } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 
 import type { PlanName } from "@openstatus/plans";
@@ -21,14 +23,20 @@ import {
 
 import { cn } from "@/lib/utils";
 
+// TODO: add children and click events to all Buttons
 export function PricingTable({
   plans = defaultPlans,
+  currentPlan,
+  events,
 }: {
   plans?: readonly PlanName[];
+  currentPlan?: PlanName;
+  events?: Partial<Record<PlanName, () => void>>;
 }) {
+  const router = useRouter();
   const selectedPlans = Object.entries(allPlans)
     .filter(([key, _]) => plans.includes(key as keyof typeof allPlans))
-    .map(([key, value]) => ({ key, ...value }));
+    .map(([key, value]) => ({ key: key as keyof typeof allPlans, ...value }));
   return (
     <Table className="relative">
       <TableCaption>
@@ -40,6 +48,7 @@ export function PricingTable({
             Features comparison
           </TableHead>
           {selectedPlans.map(({ key, ...plan }) => {
+            const isCurrentPlan = key === currentPlan;
             return (
               <TableHead
                 key={key}
@@ -64,9 +73,15 @@ export function PricingTable({
                   className="w-full"
                   size="sm"
                   variant={key === "team" ? "default" : "outline"}
-                  asChild
+                  onClick={() => {
+                    if (events?.[key]) {
+                      return events[key]?.();
+                    }
+                    return router.push(`/app/sign-up?plan=${key}`);
+                  }}
+                  disabled={isCurrentPlan}
                 >
-                  <Link href={`/app/sign-up?plan=${key}`}>Choose</Link>
+                  {isCurrentPlan ? "Current" : "Choose"}
                 </Button>
               </TableHead>
             );

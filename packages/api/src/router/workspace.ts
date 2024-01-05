@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
@@ -7,6 +8,7 @@ import {
   user,
   usersToWorkspaces,
   workspace,
+  workspacePlanSchema,
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -93,6 +95,52 @@ export const workspaceRouter = createTRPCRouter({
           ),
         )
         .run();
+    }),
+
+  changePlan: protectedProcedure
+    .input(z.object({ plan: workspacePlanSchema }))
+    .mutation(async (opts) => {
+      const _userToWorkspace =
+        await opts.ctx.db.query.usersToWorkspaces.findFirst({
+          where: and(
+            eq(usersToWorkspaces.userId, opts.ctx.user.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
+        });
+
+      if (!_userToWorkspace) throw new Error("No user to workspace found");
+
+      if (!["owner"].includes(_userToWorkspace.role))
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Not authorized to change plan",
+        });
+
+      if (!opts.ctx.workspace.stripeId) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "No Stripe ID found for workspace",
+        });
+      }
+
+      // TODO: Create subscription
+      switch (opts.input.plan) {
+        case "free": {
+        }
+        case "starter": {
+        }
+        case "team": {
+        }
+        case "pro": {
+        }
+        default: {
+        }
+      }
+
+      await opts.ctx.db
+        .update(workspace)
+        .set({ plan: opts.input.plan })
+        .where(eq(workspace.id, opts.ctx.workspace.id));
     }),
 
   createWorkspace: protectedProcedure

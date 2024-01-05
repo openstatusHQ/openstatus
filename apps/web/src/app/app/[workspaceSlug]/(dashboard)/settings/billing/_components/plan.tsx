@@ -1,16 +1,16 @@
 "use client";
 
 import { useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import type { Workspace } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui";
 
-import { Shell } from "@/components/dashboard/shell";
-import { Plan } from "@/components/marketing/plans";
-import type { PlanProps } from "@/config/plans";
-import { plansConfig } from "@/config/plans";
+import { PricingTable } from "@/components/marketing/pricing/pricing-table";
 import { getStripe } from "@/lib/stripe/client";
 import { api } from "@/trpc/client";
+import { ChangePlanButton } from "./change-plan-button";
 
 export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   const router = useRouter();
@@ -40,38 +40,26 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
     });
   };
 
-  const plans: Record<"free" | "pro", PlanProps> = {
-    free: {
-      ...plansConfig.free,
-      loading: isPortalPending,
-      action: {
-        text: workspace?.plan === "free" ? "Current plan" : "Downgrade",
-        onClick: async () => {
-          await getUserCustomerPortal();
-        },
-      },
-    },
-    pro: {
-      ...plansConfig.pro,
-      loading: isPending,
-      action: {
-        text: workspace?.plan === "free" ? "Upgrade" : "Current plan",
-        onClick: async () => {
-          await getCheckoutSession();
-        },
-      },
-    },
-  };
-
   return (
-    <Shell className="mt-4 w-full">
-      <div className="grid  gap-4 md:grid-cols-2 md:gap-0">
-        <Plan
-          {...plans.free}
-          className="md:border-border/50 md:border-r md:pr-4"
+    <div className="grid gap-4">
+      <div className="grid gap-6">
+        <div>
+          <Button onClick={getUserCustomerPortal} variant="outline">
+            Customer Portal
+          </Button>
+          {/* <Button onClick={getCheckoutSession}>Checkout Session</Button> */}
+          {/* <ChangePlanButton workspace={workspace} /> */}
+        </div>
+        <PricingTable
+          currentPlan={workspace.plan}
+          events={{
+            free: () => {},
+            starter: () => {},
+            pro: () => {},
+            team: () => {},
+          }}
         />
-        <Plan {...plans.pro} className="md:pl-4" />
       </div>
-    </Shell>
+    </div>
   );
 };

@@ -70,7 +70,12 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
-    .input(z.object({ workspaceSlug: z.string() }))
+    .input(
+      z.object({
+        workspaceSlug: z.string(),
+        // TODO: plan: workspacePlanSchema
+      }),
+    )
     .mutation(async (opts) => {
       console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
@@ -121,6 +126,8 @@ export const stripeRouter = createTRPCRouter({
           .run();
       }
 
+      // TODO: plan env
+
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,
@@ -132,8 +139,8 @@ export const stripeRouter = createTRPCRouter({
           },
         ],
         mode: "subscription",
-        success_url: `${url}/app/${result.slug}/settings?success=true`,
-        cancel_url: `${url}/app/${result.slug}/settings`,
+        success_url: `${url}/app/${result.slug}/settings/billing?success=true`,
+        cancel_url: `${url}/app/${result.slug}/settings/billing`,
       });
 
       return session;
