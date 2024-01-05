@@ -1,7 +1,9 @@
+import Link from "next/link";
+
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { Plan } from "@/components/marketing/plans";
-import { Pricing } from "@/components/marketing/pricing";
+import { PricingWrapper } from "@/components/marketing/pricing/pricing-wrapper";
 import { plansConfig } from "@/config/plans";
 
 export default function PricingPage() {
@@ -15,7 +17,17 @@ export default function PricingPage() {
               All plans. Start free today, upgrade later.
             </p>
           </div>
-          <Pricing />
+          <PricingWrapper />
+          <p className="text-muted-foreground text-sm">
+            Learn more about the{" "}
+            <Link
+              href="/blog"
+              className="text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              decision behind the plans
+            </Link>
+            .
+          </p>
         </Shell>
         <Shell>
           <Plan {...plansConfig.enterprise} />
