@@ -1,10 +1,16 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  user,
+  usersToWorkspaces,
+  workspace,
+  workspacePlans,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
+import { getPriceIdForPlan, PLANS } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -73,6 +79,7 @@ export const stripeRouter = createTRPCRouter({
     .input(
       z.object({
         workspaceSlug: z.string(),
+        plan: z.enum(workspacePlans),
         // TODO: plan: workspacePlanSchema
       }),
     )
@@ -126,15 +133,14 @@ export const stripeRouter = createTRPCRouter({
           .run();
       }
 
-      // TODO: plan env
-
+      const priceId = getPriceIdForPlan(opts.input.plan);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,
 
         line_items: [
           {
-            price: process.env.STRIPE_PRO_MONTHLY_PRICE_ID, // TODO: more possibilities
+            price: priceId,
             quantity: 1,
           },
         ],
