@@ -6,6 +6,7 @@ import type { z } from "zod";
 
 import { createTRPCContext } from "@openstatus/api";
 import { edgeRouter } from "@openstatus/api/src/edge";
+import type { MonitorStatus } from "@openstatus/db/src/schema";
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
@@ -55,10 +56,6 @@ export const cron = async ({
   const allResult = [];
 
   for (const row of monitors) {
-    // TODO: remove - this is not used anymore | remember to update the `type Payload`
-    const allPages = await caller.monitor.getAllPagesForMonitor({
-      monitorId: row.id,
-    });
     const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
 
     const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
@@ -66,52 +63,80 @@ export const cron = async ({
     });
 
     for (const region of selectedRegions) {
-      const payload: z.infer<typeof payloadSchema> = {
-        workspaceId: String(row.workspaceId),
-        monitorId: String(row.id),
-        url: row.url,
-        method: row.method || "GET",
-        cronTimestamp: timestamp,
-        body: row.body,
-        headers: row.headers,
-        pageIds: allPages.map((p) => String(p.pageId)),
-        status:
-          monitorStatus.find(({ region }) => region === region)?.status ||
-          "active",
-      };
-
-      // const task: google.cloud.tasks.v2beta3.ITask = {
-      //   httpRequest: {
-      //     headers: {
-      //       "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-      //       ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
-      //       Authorization: `Basic ${env.CRON_SECRET}`,
-      //     },
-      //     httpMethod: "POST",
-      //     url: "https://api.openstatus.dev/checkerV2",
-      //     body: Buffer.from(JSON.stringify(payload)).toString("base64"),
-      //   },
-      // };
-      const newTask: google.cloud.tasks.v2beta3.ITask = {
-        httpRequest: {
-          headers: {
-            "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-            ...(region !== "auto" && { "fly-prefer-region": region }), // Specify the region you want the request to be sent to
-            Authorization: `Basic ${env.CRON_SECRET}`,
-          },
-          httpMethod: "POST",
-          url: "https://openstatus-checker.fly.dev/checker",
-          body: Buffer.from(JSON.stringify(payload)).toString("base64"),
-        },
-      };
-
-      // const request = { parent: parent, task: task };
-      // const [response] = await client.createTask(request);
-      const request = { parent: parent, task: newTask };
-      const [response] = await client.createTask(request);
+      const status =
+        monitorStatus.find(({ region }) => region === region)?.status ||
+        "active";
+      const response = await createCronTask({
+        row,
+        timestamp,
+        client,
+        parent,
+        status,
+        region,
+      });
       allResult.push(response);
+      if (periodicity === "30s") {
+        // we schedule another task in 30s
+        const scheduledAt = timestamp / 1000 + 30;
+        const response = await createCronTask({
+          row,
+          timestamp: scheduledAt,
+          client,
+          parent,
+          status,
+          region,
+        });
+        allResult.push(response);
+      }
     }
   }
   await Promise.all(allResult);
   console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
+};
+
+const createCronTask = async ({
+  row,
+  timestamp,
+  client,
+  parent,
+  status,
+  region,
+}: {
+  row: z.infer<typeof selectMonitorSchema>;
+  timestamp: number;
+  client: CloudTasksClient;
+  parent: string;
+  status: MonitorStatus;
+  region: string;
+}) => {
+  const payload: z.infer<typeof payloadSchema> = {
+    workspaceId: String(row.workspaceId),
+    monitorId: String(row.id),
+    url: row.url,
+    method: row.method || "GET",
+    cronTimestamp: timestamp,
+    body: row.body,
+    headers: row.headers,
+    status: status,
+  };
+
+  const newTask: google.cloud.tasks.v2beta3.ITask = {
+    httpRequest: {
+      headers: {
+        "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
+        "fly-prefer-region": region, // Specify the region you want the request to be sent to
+        Authorization: `Basic ${env.CRON_SECRET}`,
+      },
+      httpMethod: "POST",
+      url: "https://openstatus-checker.fly.dev/checker",
+      body: Buffer.from(JSON.stringify(payload)).toString("base64"),
+    },
+    scheduleTime: {
+      seconds: timestamp,
+    },
+  };
+
+  const request = { parent: parent, task: newTask };
+  const [response] = await client.createTask(request);
+  return response;
 };

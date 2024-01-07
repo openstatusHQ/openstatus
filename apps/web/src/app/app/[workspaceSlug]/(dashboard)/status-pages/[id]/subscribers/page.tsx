@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 
+import { allPlans } from "@openstatus/plans";
+
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { api } from "@/trpc/server";
 
@@ -12,12 +14,11 @@ export default async function CustomDomainPage({
   const page = await api.page.getPageById.query({ id });
   const workspace = await api.workspace.getWorkspace.query();
 
-  const isProPlan = workspace?.plan === "pro";
+  const isValid = allPlans[workspace.plan].limits["status-subscribers"];
 
   if (!page) return notFound();
 
-  if (!isProPlan)
-    return <ProFeatureAlert feature={"Status page subscribers"} />;
+  if (!isValid) return <ProFeatureAlert feature={"Status page subscribers"} />;
 
   // TODO: add page-subscribers trpc endpoint first
   return (

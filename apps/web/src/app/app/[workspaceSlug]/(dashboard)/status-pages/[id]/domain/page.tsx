@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 
+import { allPlans } from "@openstatus/plans";
+
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { CustomDomainForm } from "@/components/forms/custom-domain-form";
 import { api } from "@/trpc/server";
@@ -13,11 +15,11 @@ export default async function CustomDomainPage({
   const page = await api.page.getPageById.query({ id });
   const workspace = await api.workspace.getWorkspace.query();
 
-  const isProPlan = workspace?.plan === "pro";
+  const isValid = allPlans[workspace.plan].limits["custom-domain"];
 
   if (!page) return notFound();
 
-  if (!isProPlan) return <ProFeatureAlert feature="Custom domains" />;
+  if (!isValid) return <ProFeatureAlert feature="Custom domains" />;
 
   return (
     <CustomDomainForm

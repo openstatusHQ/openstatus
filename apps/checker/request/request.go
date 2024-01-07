@@ -11,6 +11,5 @@ type CheckerRequest struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
-	PagesIDs []string `json:"pagesIds"`
 	Status   string   `json:"status"`
 }

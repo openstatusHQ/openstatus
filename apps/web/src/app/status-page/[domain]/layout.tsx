@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@openstatus/ui";
+import { allPlans } from "@openstatus/plans";
 
 import {
   defaultMetadata,
@@ -38,6 +38,9 @@ export default async function StatusPageLayout({ children, params }: Props) {
     },
   ];
 
+  const isSubscribersValid =
+    allPlans[page.workspacePlan].limits["status-subscribers"];
+
   return (
     <div className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
       <header className="mx-auto w-full max-w-xl">
@@ -57,7 +60,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
           </div>
           <Navbar navigation={navigation} />
           <div className="text-end sm:w-[100px]">
-            {page.workspacePlan !== "free" ? (
+            {isSubscribersValid ? (
               <SubscribeButton slug={params.domain} />
             ) : null}
           </div>
