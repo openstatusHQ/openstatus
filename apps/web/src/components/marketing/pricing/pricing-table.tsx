@@ -11,6 +11,7 @@ import {
   pricingTableConfig,
 } from "@openstatus/plans";
 import {
+  Badge,
   Button,
   Table,
   TableBody,
@@ -21,17 +22,19 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { LoadingAnimation } from "@/components/loading-animation";
 import { cn } from "@/lib/utils";
 
-// TODO: add children and click events to all Buttons
 export function PricingTable({
   plans = defaultPlans,
   currentPlan,
   events,
+  isLoading,
 }: {
   plans?: readonly PlanName[];
   currentPlan?: PlanName;
   events?: Partial<Record<PlanName, () => void>>;
+  isLoading?: boolean;
 }) {
   const router = useRouter();
   const selectedPlans = Object.entries(allPlans)
@@ -79,9 +82,17 @@ export function PricingTable({
                     }
                     return router.push(`/app/sign-up?plan=${key}`);
                   }}
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || isLoading}
                 >
-                  {isCurrentPlan ? "Current" : "Choose"}
+                  {isLoading ? (
+                    <LoadingAnimation
+                      variant={key === "team" ? "default" : "inverse"}
+                    />
+                  ) : isCurrentPlan ? (
+                    "Current plan"
+                  ) : (
+                    "Choose"
+                  )}
                 </Button>
               </TableHead>
             );
@@ -101,24 +112,30 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value }, i) => {
+                {features.map(({ label, value, badge }, i) => {
                   return (
                     <TableRow key={i}>
-                      <TableCell>{label}</TableCell>
+                      <TableCell className="gap-1">
+                        {label}{" "}
+                        {badge ? (
+                          <Badge variant="secondary">{badge}</Badge>
+                        ) : null}
+                      </TableCell>
                       {selectedPlans.map((plan, i) => {
                         const limitValue = plan.limits[value];
                         function renderContent() {
                           if (typeof limitValue === "boolean") {
-                            return (
-                              <Check
-                                className={cn(
-                                  "h-4 w-4",
-                                  limitValue
-                                    ? "text-foreground"
-                                    : "text-muted-foreground opacity-50",
-                                )}
-                              />
-                            );
+                            if (limitValue) {
+                              return (
+                                <Check className="text-foreground h-4 w-4" />
+                              );
+                            } else {
+                              return (
+                                <span className="text-muted-foreground/50">
+                                  &#8208;
+                                </span>
+                              );
+                            }
                           } else if (typeof limitValue === "number") {
                             return (
                               <span className="font-mono">{limitValue}</span>

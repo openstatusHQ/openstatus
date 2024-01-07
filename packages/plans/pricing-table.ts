@@ -1,4 +1,14 @@
-export const pricingTableConfig = {
+import type { FeatureKey } from "./index";
+
+type TableConfig = Record<
+  string,
+  {
+    label: string;
+    features: { value: FeatureKey; label: string; badge?: string }[];
+  }
+>;
+
+export const pricingTableConfig: TableConfig = {
   monitors: {
     label: "Monitors",
     features: [
@@ -57,6 +67,11 @@ export const pricingTableConfig = {
         value: "members",
         label: "Team members",
       },
+      {
+        value: "audit-log",
+        label: "Audit log",
+        badge: "Planned",
+      },
     ],
   },
-} as const;
+};

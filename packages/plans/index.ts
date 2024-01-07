@@ -3,26 +3,31 @@ import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 export const plans = ["free", "starter", "team", "pro"] as const;
 export type PlanName = (typeof plans)[number];
 
+export type Limits = {
+  // monitors
+  monitors: number;
+  periodicity: Partial<MonitorPeriodicity>[];
+  "multi-region": boolean;
+  // status pages
+  "status-pages": number;
+  "status-subscribers": boolean;
+  "custom-domain": boolean;
+  // alerts
+  notifications: boolean;
+  sms: boolean;
+  "notification-channels": number;
+  // collaboration
+  members: number;
+  "audit-log": boolean;
+};
+
+export type FeatureKey = keyof Limits;
+
 export type Plan = {
   title: string;
   description: string;
   price: number;
-  limits: {
-    // monitors
-    monitors: number;
-    periodicity: Partial<MonitorPeriodicity>[];
-    "multi-region": boolean;
-    // status pages
-    "status-pages": number;
-    "status-subscribers": boolean;
-    "custom-domain": boolean;
-    // alerts
-    notifications: boolean;
-    sms: boolean;
-    "notification-channels": number;
-    // collaboration
-    members: number;
-  };
+  limits: Limits;
 };
 
 // TODO: rename to `planConfig`
@@ -42,6 +47,7 @@ export const allPlans: Record<PlanName, Plan> = {
       sms: false,
       "notification-channels": 1,
       members: 1,
+      "audit-log": false,
     },
   },
   starter: {
@@ -59,6 +65,7 @@ export const allPlans: Record<PlanName, Plan> = {
       sms: false,
       "notification-channels": 3,
       members: 1,
+      "audit-log": false,
     },
   },
   team: {
@@ -76,6 +83,7 @@ export const allPlans: Record<PlanName, Plan> = {
       sms: true,
       "notification-channels": 10,
       members: 5,
+      "audit-log": true,
     },
   },
   pro: {
@@ -93,6 +101,7 @@ export const allPlans: Record<PlanName, Plan> = {
       sms: true,
       "notification-channels": 20,
       members: 20,
+      "audit-log": true,
     },
   },
 };

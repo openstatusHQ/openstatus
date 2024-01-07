@@ -2,9 +2,8 @@ import Link from "next/link";
 
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
-import { Plan } from "@/components/marketing/plans";
+import { EnterpricePlan } from "@/components/marketing/pricing/enterprice-plan";
 import { PricingWrapper } from "@/components/marketing/pricing/pricing-wrapper";
-import { plansConfig } from "@/config/plans";
 
 export default function PricingPage() {
   return (
@@ -30,7 +29,7 @@ export default function PricingPage() {
           </p>
         </Shell>
         <Shell>
-          <Plan {...plansConfig.enterprise} />
+          <EnterpricePlan />
         </Shell>
       </div>
     </MarketingLayout>
