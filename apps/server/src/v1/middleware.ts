@@ -5,6 +5,7 @@ import type { Variables } from "./index";
 import { getLimitByWorkspaceId } from "./utils";
 
 export async function middleware(
+  // biome-ignore lint/complexity/noBannedTypes:
   c: Context<{ Variables: Variables }, "/*", {}>,
   next: Next,
 ) {

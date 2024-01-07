@@ -92,7 +92,9 @@ interface StatusIconProps {
 
 function StatusIcon({ variant, className }: StatusIconProps) {
   const rootClassName = cn("h-5 w-5 text-background", className);
+  // biome-ignore lint/complexity/useLiteralKeys:
   const MinusIcon = Icons["minus"];
+  // biome-ignore lint/complexity/useLiteralKeys:
   const CheckIcon = Icons["check"];
   const AlertTriangleIcon = Icons["alert-triangle"];
   if (variant === "incident") {

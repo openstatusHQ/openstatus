@@ -140,6 +140,7 @@ const monitorInput = z
     }),
     headers: z
       .preprocess((val) => {
+        // biome-ignore lint/complexity/noExtraBooleanCast:
         if (!!val) {
           return val;
         } else {

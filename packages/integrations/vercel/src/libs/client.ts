@@ -13,6 +13,7 @@ async function fetchOk(
     let body: string | object | null;
 
     try {
+      // biome-ignore lint/complexity/useOptionalChain:
       const isJson = contentType && contentType.includes("json");
       body = await (isJson ? res.json() : res.text());
     } catch (err) {

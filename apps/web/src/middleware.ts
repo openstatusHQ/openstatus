@@ -40,6 +40,7 @@ export const getValidSubdomain = (host?: string | null) => {
     host = window.location.host;
   }
   // we should improve here for custom vercel deploy page
+  // biome-ignore lint/complexity/useOptionalChain:
   if (host && host.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
@@ -47,6 +48,7 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
+  // biome-ignore lint/complexity/useOptionalChain:
   if (host && host.includes("ngrok-free.app")) {
     return null;
   }

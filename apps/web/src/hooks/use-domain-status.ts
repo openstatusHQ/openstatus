@@ -47,6 +47,7 @@ export async function verifyDomain(domain: string) {
     const verificationJson = await api.domain.verifyDomain.query({ domain });
 
     // domain was just verified
+    // biome-ignore lint/complexity/useOptionalChain:
     if (verificationJson && verificationJson.verified) {
       status = "Valid Configuration";
     }

@@ -37,6 +37,7 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(monitors.length)) {
         await opts.ctx.db
           .insert(monitorsToStatusReport)
@@ -50,6 +51,7 @@ export const statusReportRouter = createTRPCRouter({
           .get();
       }
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(pages.length)) {
         await opts.ctx.db
           .insert(pagesToStatusReports)
@@ -178,6 +180,7 @@ export const statusReportRouter = createTRPCRouter({
             .includes(x),
       );
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(addedMonitors.length)) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
@@ -191,6 +194,7 @@ export const statusReportRouter = createTRPCRouter({
         .map(({ monitorId }) => monitorId)
         .filter((x) => !monitors?.includes(x));
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(removedMonitors.length)) {
         await opts.ctx.db
           .delete(monitorsToStatusReport)
@@ -214,6 +218,7 @@ export const statusReportRouter = createTRPCRouter({
           !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
       );
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(addedPages.length)) {
         const values = addedPages.map((pageId) => ({
           pageId,
@@ -234,6 +239,7 @@ export const statusReportRouter = createTRPCRouter({
         addedPages,
       });
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(removedPages.length)) {
         await opts.ctx.db
           .delete(pagesToStatusReports)

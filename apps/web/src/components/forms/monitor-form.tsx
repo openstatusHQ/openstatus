@@ -102,6 +102,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       headers: Boolean(defaultValues?.headers?.length)
         ? defaultValues?.headers
         : [{ key: "", value: "" }],

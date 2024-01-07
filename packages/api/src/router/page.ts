@@ -44,6 +44,7 @@ export const pageRouter = createTRPCRouter({
       .returning()
       .get();
 
+    // biome-ignore lint/complexity/noExtraBooleanCast:
     if (Boolean(monitors.length)) {
       // We should make sure the user has access to the monitors
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
@@ -105,6 +106,7 @@ export const pageRouter = createTRPCRouter({
       .map(({ monitorId }) => monitorId)
       .filter((x) => !monitors?.includes(x));
 
+    // biome-ignore lint/complexity/noExtraBooleanCast:
     if (Boolean(removedMonitors.length)) {
       await opts.ctx.db
         .delete(monitorsToPages)
@@ -121,6 +123,7 @@ export const pageRouter = createTRPCRouter({
         !currentMonitorsToPages.map(({ monitorId }) => monitorId)?.includes(x),
     );
 
+    // biome-ignore lint/complexity/noExtraBooleanCast:
     if (Boolean(addedMonitors.length)) {
       const values = addedMonitors.map((monitorId) => ({
         pageId: currentPage.id,
