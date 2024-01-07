@@ -1,12 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 
-import { allPlans } from "@openstatus/plans";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  ButtonWithDisableTooltip,
-} from "@openstatus/ui";
+import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 import { columns as invitationColumns } from "@/components/data-table/invitation/columns";
 import { DataTable as InvitationDataTable } from "@/components/data-table/invitation/data-table";
@@ -19,10 +13,6 @@ export default async function TeamPage() {
   const workspace = await api.workspace.getWorkspace.query();
   const invitations = await api.invitation.getWorkspaceOpenInvitations.query();
   const users = await api.workspace.getWorkspaceUsers.query();
-
-  const isLimit =
-    invitations.length + users.length >=
-    allPlans[workspace.plan || "free"].limits.members;
 
   const isFreePlan = workspace.plan === "free";
 
@@ -39,7 +29,7 @@ export default async function TeamPage() {
       ) : null}
       {/* TODO: only show if isAdmin */}
       <div className="flex justify-end">
-        <InviteButton disabled={isLimit} />
+        <InviteButton disabled={isFreePlan} />
       </div>
       <UserDataTable
         data={users.map(({ role, user }) => ({ role, ...user }))}

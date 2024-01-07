@@ -19,7 +19,10 @@ export const invitationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { email } = opts.input;
 
-      const membersLimit = allPlans[opts.ctx.workspace.plan].limits.members;
+      const membersLimit =
+        allPlans[opts.ctx.workspace.plan].limits.members === "unlimited"
+          ? 420
+          : 1;
 
       const usersToWorkspacesNumbers = (
         await opts.ctx.db.query.usersToWorkspaces.findMany({

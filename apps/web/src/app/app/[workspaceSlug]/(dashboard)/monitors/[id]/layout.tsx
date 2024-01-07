@@ -29,7 +29,7 @@ export default async function Layout({
       segment: "overview",
     },
     {
-      label: "Data Table",
+      label: "Requests Log",
       href: `/app/${params.workspaceSlug}/monitors/${id}/data`,
       segment: "data",
     },

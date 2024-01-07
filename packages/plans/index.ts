@@ -17,7 +17,7 @@ export type Limits = {
   sms: boolean;
   "notification-channels": number;
   // collaboration
-  members: number;
+  members: string;
   "audit-log": boolean;
 };
 
@@ -46,7 +46,7 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: false,
       "notification-channels": 1,
-      members: 1,
+      members: "1",
       "audit-log": false,
     },
   },
@@ -64,7 +64,7 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: false,
       "notification-channels": 3,
-      members: 1,
+      members: "Unlimited",
       "audit-log": false,
     },
   },
@@ -82,13 +82,13 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: true,
       "notification-channels": 10,
-      members: 5,
+      members: "Unlimited",
       "audit-log": true,
     },
   },
   pro: {
     title: "Pro",
-    description: "For medium teams",
+    description: "For bigger teams",
     price: 99,
     limits: {
       monitors: 100,
@@ -100,7 +100,7 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: true,
       "notification-channels": 20,
-      members: 20,
+      members: "Unlimited",
       "audit-log": true,
     },
   },

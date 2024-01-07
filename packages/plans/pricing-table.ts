@@ -35,7 +35,7 @@ export const pricingTableConfig: TableConfig = {
       },
       {
         value: "status-subscribers",
-        label: "Status report subscribers",
+        label: "Subscribers",
       },
       {
         value: "custom-domain",
