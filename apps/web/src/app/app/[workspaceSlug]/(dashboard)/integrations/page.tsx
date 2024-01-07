@@ -34,7 +34,7 @@ export default async function IntegrationPage({
             <Button>{workspace?.id === 1 ? "Configure" : "Coming soon"}</Button>
           </a>,
         ]}
-      ></Container>
+      />
     </div>
   );
 }

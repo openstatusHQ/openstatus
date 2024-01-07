@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ code: "ok" }, { status: 200 });
+    // biome-ignore lint/style/noUselessElse:
   } else {
     console.error("Error parsing logDrains", logDrains.error);
   }

@@ -70,7 +70,7 @@ export async function GET(req: Request) {
           backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
           backgroundSize: "24px 24px",
         }}
-      ></div>
+      />
       <div
         tw="flex w-full h-full absolute inset-0 opacity-70"
         style={{
@@ -78,7 +78,7 @@ export async function GET(req: Request) {
           backgroundImage:
             "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
         }}
-      ></div>
+      />
       <div tw="max-w-4xl relative flex flex-col">
         <h1 style={{ fontFamily: "Cal" }} tw="text-6xl">
           {title}
@@ -98,7 +98,7 @@ export async function GET(req: Request) {
                     // biome-ignore lint/suspicious/noArrayIndexKey:
                     key={i}
                     tw="h-16 w-3 rounded-full mr-1 bg-black/20"
-                  ></div>
+                  />
                 );
               })}
               <div tw="flex flex-row-reverse absolute right-0">
@@ -123,7 +123,7 @@ export async function GET(req: Request) {
                         "bg-red-500": variant === "down",
                         "bg-yellow-500": variant === "degraded",
                       })}
-                    ></div>
+                    />
                   );
                 })}
               </div>

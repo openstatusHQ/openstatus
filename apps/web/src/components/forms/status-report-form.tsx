@@ -243,7 +243,7 @@ export function StatusReportForm({
                                         ? "bg-green-500"
                                         : "bg-red-500",
                                     )}
-                                  ></span>
+                                  />
                                 </div>
                                 <p className="text-muted-foreground truncate text-sm">
                                   {item.description}

@@ -24,6 +24,7 @@ function stringToArrayProcess<T>(string: T) {}
 const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {
     return String(val).split(",");
+    // biome-ignore lint/style/noUselessElse:
   } else {
     return [];
   }
@@ -40,6 +41,7 @@ const headersToArraySchema = z.preprocess((val) => {
   }
   if (String(val).length > 0) {
     return JSON.parse(String(val));
+    // biome-ignore lint/style/noUselessElse:
   } else {
     return [];
   }

@@ -53,6 +53,7 @@ const MonitorSchema = z
       .preprocess((val) => {
         if (String(val).length > 0) {
           return String(val).split(",");
+          // biome-ignore lint/style/noUselessElse:
         } else {
           return [];
         }
@@ -90,6 +91,7 @@ const MonitorSchema = z
       .preprocess((val) => {
         if (String(val).length > 0) {
           return JSON.parse(String(val));
+          // biome-ignore lint/style/noUselessElse:
         } else {
           return [];
         }
@@ -143,6 +145,7 @@ const monitorInput = z
         // biome-ignore lint/complexity/noExtraBooleanCast:
         if (!!val) {
           return val;
+          // biome-ignore lint/style/noUselessElse:
         } else {
           return [];
         }

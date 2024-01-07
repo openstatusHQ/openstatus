@@ -141,6 +141,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   <div>
                     <p className="text-sm font-bold">Value</p>
                     <p className="mt-2 font-mono text-sm">
+                      {/* biome-ignore lint/style/noUnusedTemplateLiteral: */}
                       {`cname.vercel-dns.com`}
                     </p>
                   </div>

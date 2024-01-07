@@ -16,6 +16,7 @@ export function TableInputContainer({ events }: { events: Ping[] }) {
     .filter((event) => {
       if (search?.status && event.statusCode !== Number(search.status)) {
         return false;
+        // biome-ignore lint/style/noUselessElse:
       } else if (search?.region && event.region !== search.region) {
         return false;
       }

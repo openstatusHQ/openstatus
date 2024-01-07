@@ -34,7 +34,7 @@ export function DataTableSkeleton({ rows = 3 }: DataTableSkeletonProps) {
             <TableHead>
               <Skeleton className="my-1.5 h-4 w-20" />
             </TableHead>
-            <TableHead className="flex items-center justify-end"></TableHead>
+            <TableHead className="flex items-center justify-end" />
           </TableRow>
         </TableHeader>
         <TableBody>

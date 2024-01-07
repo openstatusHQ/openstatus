@@ -47,6 +47,7 @@ export async function POST(
     }),
     from: "OpenStatus <notification@openstatus.dev>",
     to: [result.email],
+    // biome-ignore lint/style/useTemplate:
     subject: "Verify your subscription to " + pageData.title,
   });
   await db

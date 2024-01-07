@@ -15,6 +15,7 @@ import {
 } from "./validation";
 
 // REMINDER:
+// biome-ignore lint/style/noNonNullAssertion:
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
