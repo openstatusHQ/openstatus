@@ -26,6 +26,7 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 
   const msOffset = getTimezoneOffset(timezone);
 
+  // biome-ignore lint/suspicious/noGlobalIsNan:
   if (isNaN(msOffset)) return "Etc/UTC";
 
   const hrOffset = Math.round(msOffset / (1000 * 60 * 60)); // avoid weird 30min timezones

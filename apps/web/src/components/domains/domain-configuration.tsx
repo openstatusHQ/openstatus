@@ -38,6 +38,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
 
   const txtVerification =
     (status === "Pending Verification" &&
+      // biome-ignore lint/suspicious/noExplicitAny:
       domainJson?.verification?.find((x: any) => x.type === "TXT")) ||
     null;
 

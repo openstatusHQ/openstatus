@@ -76,6 +76,7 @@ export const cron = async ({
         headers: row.headers,
         pageIds: allPages.map((p) => String(p.pageId)),
         status:
+          // biome-ignore lint/suspicious/noSelfCompare:
           monitorStatus.find(({ region }) => region === region)?.status ||
           "active",
       };

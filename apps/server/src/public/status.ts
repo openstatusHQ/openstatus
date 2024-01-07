@@ -94,6 +94,7 @@ status.get("/:slug", async (c) => {
 });
 
 function getStatus(ratio: number) {
+  // biome-ignore lint/suspicious/noGlobalIsNan:
   if (isNaN(ratio)) return Status.Unknown;
   if (ratio >= 0.98) return Status.Operational;
   if (ratio >= 0.6) return Status.DegradedPerformance;

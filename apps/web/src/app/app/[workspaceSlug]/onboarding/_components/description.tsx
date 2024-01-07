@@ -48,6 +48,7 @@ export function Description({
           const StepIcon = Icons[icon];
           const active = step === item;
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey:
             <div key={i} className="flex items-center gap-2">
               <div
                 className={cn(
@@ -73,6 +74,7 @@ export function Description({
       </div>
       {config?.description.map(({ title, text }, i) => {
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey:
           <dl key={i} className="grid gap-2">
             <dt>{title}</dt>
             <dd className="text-muted-foreground text-sm">{text}</dd>

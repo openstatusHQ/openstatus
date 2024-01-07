@@ -59,6 +59,7 @@ export async function StatusCheck({
       { count: 0, ok: 0 },
     );
     const ratio = ok / count;
+    // biome-ignore lint/suspicious/noGlobalIsNan:
     if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
     return getStatus(ratio);
   }

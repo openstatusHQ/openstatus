@@ -13,6 +13,7 @@ type GetStatusReturnType = {
  * @returns
  */
 export const getStatus = (ratio: number): GetStatusReturnType => {
+  // biome-ignore lint/suspicious/noGlobalIsNan:
   if (isNaN(ratio))
     return {
       label: "Missing",
@@ -78,6 +79,7 @@ export function getTotalUptimeString(data: { ok: number; count: number }[]) {
   const reducedData = getTotalUptime(data);
   const uptime = (reducedData.ok / reducedData.count) * 100;
 
+  // biome-ignore lint/suspicious/noGlobalIsNan:
   if (isNaN(uptime)) return "";
 
   return `${uptime.toFixed(2)}% uptime`;

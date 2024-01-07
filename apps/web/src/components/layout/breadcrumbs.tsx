@@ -14,6 +14,7 @@ export function Breadcrumbs() {
     <ul className="flex items-center">
       {result.map((path, i) => {
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey:
           <Fragment key={i}>
             <li>{path}</li>
             {i !== result.length - 1 ? (

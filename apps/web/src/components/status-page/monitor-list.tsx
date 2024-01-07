@@ -24,6 +24,7 @@ export const MonitorList = ({
         );
         return (
           <Monitor
+            // biome-ignore lint/suspicious/noArrayIndexKey:
             key={index}
             monitor={monitor}
             statusReports={monitorStatusReport}

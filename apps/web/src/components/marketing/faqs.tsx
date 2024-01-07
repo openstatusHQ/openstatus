@@ -37,6 +37,7 @@ export function FAQs() {
       <h2 className="text-foreground font-cal text-center text-2xl">FAQ</h2>
       <Accordion type="single" collapsible className="w-full">
         {faqsConfig.map(({ q, a }, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey:
           <AccordionItem key={i} value={`item-${i}`}>
             <AccordionTrigger>{q}</AccordionTrigger>
             <AccordionContent>

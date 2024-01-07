@@ -22,6 +22,7 @@ export function AlertCard() {
         <Timeline />
         <CardFeatureContainer>
           {features?.map((feature, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey:
             <CardFeature key={i} {...feature} />
           ))}
         </CardFeatureContainer>

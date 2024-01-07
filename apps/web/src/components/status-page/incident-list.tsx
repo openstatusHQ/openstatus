@@ -41,7 +41,9 @@ export const IncidentList = ({
   const _incidents = context === "all" ? incidents : getLastWeeksIncidents();
 
   _incidents.sort((a, b) => {
+    // biome-ignore lint/suspicious/noDoubleEquals:
     if (a.updatedAt == undefined) return 1;
+    // biome-ignore lint/suspicious/noDoubleEquals:
     if (b.updatedAt == undefined) return -1;
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });

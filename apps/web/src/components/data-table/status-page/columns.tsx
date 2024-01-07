@@ -52,6 +52,7 @@ export const columns: ColumnDef<
         <div className="flex items-center gap-2">
           <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
             {monitors.slice(0, amount).map(({ monitor: { name } }, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey:
               <Badge key={i} variant="outline">
                 {name}
               </Badge>

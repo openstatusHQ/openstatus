@@ -4,6 +4,7 @@ import type { Changelog } from "contentlayer/generated";
 import { Mdx } from "@/components/content/mdx";
 import { formatDate } from "@/lib/utils";
 
+// biome-ignore lint/suspicious/noRedeclare:
 export function Changelog({ post }: { post: Changelog }) {
   return (
     <article className="relative mx-auto flex max-w-prose flex-col gap-8">

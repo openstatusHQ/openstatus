@@ -1,5 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+// biome-ignore lint/suspicious/noExplicitAny:
 const postToWebhook = async (body: any, webhookUrl: string) => {
   try {
     await fetch(webhookUrl, {

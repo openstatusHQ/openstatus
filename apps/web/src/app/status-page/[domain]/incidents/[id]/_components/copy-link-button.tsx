@@ -35,6 +35,7 @@ export function CopyLinkButton() {
             className="h-7 w-7"
             onClick={() => {
               const text =
+                // biome-ignore lint/suspicious/useValidTypeof:
                 typeof window !== undefined ? window.location.href : "";
               copyToClipboard(text);
               setHasCopied(true);

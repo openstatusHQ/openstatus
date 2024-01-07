@@ -95,6 +95,7 @@ export async function GET(req: Request) {
               {new Array(LIMIT).fill(null).map((_, i) => {
                 return (
                   <div
+                    // biome-ignore lint/suspicious/noArrayIndexKey:
                     key={i}
                     tw="h-16 w-3 rounded-full mr-1 bg-black/20"
                   ></div>
@@ -107,6 +108,7 @@ export async function GET(req: Request) {
                   if (isBlackListed) {
                     return (
                       <div
+                        // biome-ignore lint/suspicious/noArrayIndexKey:
                         key={i}
                         tw="h-16 w-3 rounded-full mr-1 bg-green-400"
                       />
@@ -114,6 +116,7 @@ export async function GET(req: Request) {
                   }
                   return (
                     <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey:
                       key={i}
                       tw={cn("h-16 w-3 rounded-full mr-1", {
                         "bg-green-500": variant === "up",
