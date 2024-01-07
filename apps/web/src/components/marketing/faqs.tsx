@@ -42,6 +42,7 @@ export function FAQs() {
             <AccordionContent>
               <div
                 className="prose dark:prose-invert prose-sm"
+                // biome-ignore lint/security/noDangerouslySetInnerHtml:
                 dangerouslySetInnerHTML={{ __html: a }}
               />
             </AccordionContent>
