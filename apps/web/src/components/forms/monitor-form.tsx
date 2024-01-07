@@ -18,7 +18,7 @@ import {
   monitorMethodsSchema,
   monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { getLimit } from "@openstatus/plans";
 import {
   Accordion,
   AccordionContent,
@@ -207,7 +207,11 @@ export function MonitorForm({
     });
   };
 
-  const limit = allPlans[plan].limits.periodicity;
+  const periodicityLimit = getLimit(plan, "periodicity");
+  const notificationLimit = getLimit(plan, "notification-channels");
+  const notificationLimitReached = notifications
+    ? notifications.length >= notificationLimit
+    : false;
 
   return (
     <Dialog open={openDialog} onOpenChange={(val) => setOpenDialog(val)}>
@@ -446,7 +450,7 @@ export function MonitorForm({
                                 <SelectItem
                                   key={value}
                                   value={value}
-                                  disabled={!limit.includes(value)}
+                                  disabled={!periodicityLimit.includes(value)}
                                 >
                                   {label}
                                 </SelectItem>
@@ -662,7 +666,10 @@ export function MonitorForm({
                           <FormMessage />
                           <div className="sm:col-span-2 sm:col-start-1">
                             <DialogTrigger asChild>
-                              <Button variant="outline">
+                              <Button
+                                variant="outline"
+                                disabled={notificationLimitReached}
+                              >
                                 Add Notifications
                               </Button>
                             </DialogTrigger>
