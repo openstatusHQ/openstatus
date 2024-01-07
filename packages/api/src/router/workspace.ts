@@ -125,12 +125,16 @@ export const workspaceRouter = createTRPCRouter({
 
       // TODO: Create subscription
       switch (opts.input.plan) {
+        // biome-ignore lint lint/suspicious/noFallthroughSwitchClause:
         case "free": {
         }
+        // biome-ignore lint lint/suspicious/noFallthroughSwitchClause:
         case "starter": {
         }
+        // biome-ignore lint lint/suspicious/noFallthroughSwitchClause:
         case "team": {
         }
+        // biome-ignore lint lint/suspicious/noFallthroughSwitchClause:
         case "pro": {
         }
         default: {

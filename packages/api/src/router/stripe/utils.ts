@@ -5,12 +5,14 @@ import { WorkspacePlan } from "@openstatus/db/src/schema";
 export const getPlanFromPriceId = (priceId: string) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  // biome-ignore lint lint/style/noNonNullAssertion:
   return PLANS.find((plan) => plan.price.monthly.priceIds[env] === priceId)!;
 };
 
 export const getPriceIdForPlan = (plan: WorkspacePlan) => {
   const env =
     process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "production" : "test";
+  // biome-ignore lint lint/style/noNonNullAssertion:
   return PLANS.find((p) => p.plan === plan)!.price.monthly.priceIds[env];
 };
 export const PLANS = [

@@ -103,6 +103,7 @@ export function PricingTable({
         {Object.entries(pricingTableConfig).map(
           ([key, { label, features }], i) => {
             return (
+              // biome-ignore lint lint/suspicious/noArrayIndexKey:
               <Fragment key={i}>
                 <TableRow className="bg-muted/50">
                   <TableCell
@@ -114,6 +115,7 @@ export function PricingTable({
                 </TableRow>
                 {features.map(({ label, value, badge }, i) => {
                   return (
+                    // biome-ignore lint lint/suspicious/noArrayIndexKey:
                     <TableRow key={i}>
                       <TableCell className="gap-1">
                         {label}{" "}
@@ -129,6 +131,7 @@ export function PricingTable({
                               return (
                                 <Check className="text-foreground h-4 w-4" />
                               );
+                              // biome-ignore lint lint/style/noUselessElse:
                             } else {
                               return (
                                 <span className="text-muted-foreground/50">
@@ -136,15 +139,18 @@ export function PricingTable({
                                 </span>
                               );
                             }
+                            // biome-ignore lint lint/style/noUselessElse:
                           } else if (typeof limitValue === "number") {
                             return (
                               <span className="font-mono">{limitValue}</span>
                             );
+                            // biome-ignore lint lint/style/noUselessElse:
                           } else if (
                             Array.isArray(limitValue) &&
                             limitValue.length > 0
                           ) {
                             return limitValue[0];
+                            // biome-ignore lint lint/style/noUselessElse:
                           } else {
                             return limitValue;
                           }
@@ -152,6 +158,7 @@ export function PricingTable({
 
                         return (
                           <TableCell
+                            // biome-ignore lint lint/suspicious/noArrayIndexKey:
                             key={i}
                             className={cn(
                               "p-3",

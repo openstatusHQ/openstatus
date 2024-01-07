@@ -18,6 +18,7 @@ export function EnterpricePlan() {
       </div>
       <div>
         <Button asChild>
+          {/* biome-ignore lint lint/a11y/noBlankTarget: */}
           <a href="https://cal.com/team/openstatus/30min" target="_blank">
             Schedule call
           </a>
