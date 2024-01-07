@@ -32,6 +32,9 @@ export function MarketingHeader({ className }: Props) {
           <Link href="/changelog">Changelog</Link>
         </Button>
         <Button variant="link" asChild>
+          <Link href="/pricing">Pricing</Link>
+        </Button>
+        <Button variant="link" asChild>
           <Link href="https://docs.openstatus.dev" target="_blank">
             Docs
             <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />

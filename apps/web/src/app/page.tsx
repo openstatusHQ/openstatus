@@ -4,7 +4,6 @@ import { FAQs } from "@/components/marketing/faqs";
 import { Hero } from "@/components/marketing/hero";
 import { MonitoringCard } from "@/components/marketing/monitor/card";
 import { Partners } from "@/components/marketing/partners";
-import { Plans } from "@/components/marketing/plans";
 import { Stats } from "@/components/marketing/stats";
 import { StatusPageCard } from "@/components/marketing/status-page/card";
 
@@ -20,7 +19,6 @@ export default async function Page() {
         <Stats />
         <StatusPageCard />
         <AlertCard />
-        <Plans />
         <FAQs />
       </div>
     </MarketingLayout>

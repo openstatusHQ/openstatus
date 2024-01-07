@@ -25,6 +25,7 @@ export const vercelRegions = [
 export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
 export const monitorPeriodicity = [
+  "30s",
   "1m",
   "5m",
   "10m",

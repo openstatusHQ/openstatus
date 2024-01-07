@@ -18,6 +18,7 @@ import { AppLink } from "./app-link";
 const pages = [
   { href: "/changelog", label: "Changelog", segment: "changelog" },
   { href: "/blog", label: "Blog", segment: "blog" },
+  { href: "/pricing", label: "Pricing", segment: "pricing" },
   { href: "https://docs.openstatus.dev", label: "Documentation" },
 ];
 

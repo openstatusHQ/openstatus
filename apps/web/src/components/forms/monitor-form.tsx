@@ -71,6 +71,7 @@ import type { Writeable } from "@/types/utils";
 import { NotificationForm } from "./notification-form";
 
 const cronJobs = [
+  { value: "30s", label: "30 seconds" },
   { value: "1m", label: "1 minute" },
   { value: "5m", label: "5 minutes" },
   { value: "10m", label: "10 minutes" },

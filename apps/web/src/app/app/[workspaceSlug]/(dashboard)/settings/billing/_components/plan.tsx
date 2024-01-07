@@ -3,12 +3,11 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import type { Workspace } from "@openstatus/db/src/schema";
+import type { Workspace, WorkspacePlan } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui";
 
-import { Shell } from "@/components/dashboard/shell";
-import { Plan } from "@/components/marketing/plans";
-import type { PlanProps } from "@/config/plans";
-import { plansConfig } from "@/config/plans";
+import { LoadingAnimation } from "@/components/loading-animation";
+import { PricingTable } from "@/components/marketing/pricing/pricing-table";
 import { getStripe } from "@/lib/stripe/client";
 import { api } from "@/trpc/client";
 
@@ -17,15 +16,18 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   const [isPending, startTransition] = useTransition();
   const [isPortalPending, startPortalTransition] = useTransition();
 
-  const getCheckoutSession = () => {
+  const getCheckoutSession = (plan: WorkspacePlan) => {
     startTransition(async () => {
       const result = await api.stripeRouter.getCheckoutSession.mutate({
         workspaceSlug: workspace.slug,
+        plan,
       });
       if (!result) return;
 
       const stripe = await getStripe();
-      stripe?.redirectToCheckout({ sessionId: result.id });
+      stripe?.redirectToCheckout({
+        sessionId: result.id,
+      });
     });
   };
 
@@ -40,38 +42,29 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
     });
   };
 
-  const plans: Record<"free" | "pro", PlanProps> = {
-    free: {
-      ...plansConfig.free,
-      loading: isPortalPending,
-      action: {
-        text: workspace?.plan === "free" ? "Current plan" : "Downgrade",
-        onClick: async () => {
-          await getUserCustomerPortal();
-        },
-      },
-    },
-    pro: {
-      ...plansConfig.pro,
-      loading: isPending,
-      action: {
-        text: workspace?.plan === "free" ? "Upgrade" : "Current plan",
-        onClick: async () => {
-          await getCheckoutSession();
-        },
-      },
-    },
-  };
-
   return (
-    <Shell className="mt-4 w-full">
-      <div className="grid  gap-4 md:grid-cols-2 md:gap-0">
-        <Plan
-          {...plans.free}
-          className="md:border-border/50 md:border-r md:pr-4"
+    <div className="grid gap-4">
+      <div className="grid gap-6">
+        <div>
+          <Button onClick={getUserCustomerPortal} variant="outline">
+            {isPortalPending ? (
+              <LoadingAnimation variant="inverse" />
+            ) : (
+              "Customer Portal"
+            )}
+          </Button>
+        </div>
+        <PricingTable
+          currentPlan={workspace.plan}
+          isLoading={isPending}
+          events={{
+            free: () => getCheckoutSession("free"),
+            starter: () => getCheckoutSession("starter"),
+            pro: () => getCheckoutSession("pro"),
+            team: () => getCheckoutSession("team"),
+          }}
         />
-        <Plan {...plans.pro} className="md:pl-4" />
       </div>
-    </Shell>
+    </div>
   );
 };
