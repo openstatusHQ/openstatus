@@ -33,6 +33,7 @@ export function getDateByPeriod(period: Period) {
         to: endOfDay(new Date()),
       };
     default:
+      // biome-ignore lint/correctness/noSwitchDeclarations:
       const _exhaustiveCheck: never = period;
       throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
   }
@@ -49,6 +50,7 @@ export function getMinutesByInterval(interval: Interval) {
     case "1h":
       return 60;
     default:
+      // biome-ignore lint/correctness/noSwitchDeclarations:
       const _exhaustiveCheck: never = interval;
       throw new Error(`Unhandled interval: ${_exhaustiveCheck}`);
   }

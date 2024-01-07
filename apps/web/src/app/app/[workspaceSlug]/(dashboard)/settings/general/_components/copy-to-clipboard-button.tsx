@@ -15,6 +15,7 @@ export function CopyToClipboardButton({
 }: ButtonProps) {
   const [hasCopied, setHasCopied] = React.useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     if (hasCopied) {
       setTimeout(() => {

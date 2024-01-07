@@ -92,6 +92,7 @@ export function StatusPageForm({
     );
   }, [debouncedSlug, defaultValues?.slug]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   useEffect(() => {
     async function watchSlugChanges() {
       const isUnique = await checkUniqueSlug();

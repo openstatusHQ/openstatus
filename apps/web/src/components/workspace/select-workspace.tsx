@@ -24,12 +24,14 @@ export function SelectWorkspace() {
   const [active, setActive] = React.useState<string>();
   const pathname = usePathname();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     if (pathname?.split("/")?.[2] && workspaces.length > 0) {
       setActive(pathname?.split("/")?.[2]);
     }
   }, [pathname, workspaces]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     // REMINDER: avoid prop drilling to get data from the layout.tsx component. instead use client trpc
     async function fetchWorkspaces() {

@@ -16,6 +16,7 @@ import { copyToClipboard } from "@/lib/utils";
 export function CopyLinkButton() {
   const [hasCopied, setHasCopied] = React.useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     if (hasCopied) {
       setTimeout(() => {
