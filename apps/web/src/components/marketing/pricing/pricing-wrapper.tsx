@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 
-import type { PlanName } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/plans";
 
 import { PricingPlanRadio } from "./pricing-plan-radio";
 import { PricingTable } from "./pricing-table";
@@ -14,7 +14,7 @@ export function PricingWrapper() {
       <div className="flex flex-col gap-4 sm:hidden">
         <PricingPlanRadio />
         <PricingTable
-          plans={[(searchParams.get("plan") as PlanName) || "team"]}
+          plans={[(searchParams.get("plan") as WorkspacePlan) || "team"]}
         />
       </div>
       <div className="hidden sm:block">
