@@ -42,6 +42,7 @@ export function Summary({
         ) : null}
       </div>
       <p className="text-muted-foreground col-start-1">Affected</p>
+      {/* biome-ignore lint/a11y/noRedundantRoles: */}
       <ul role="list" className="col-span-4 flex gap-2">
         {monitors.length > 0 ? (
           monitors.map(({ name }, i) => (

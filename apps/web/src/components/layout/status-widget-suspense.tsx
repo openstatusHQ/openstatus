@@ -33,6 +33,7 @@ export function StatusWidgetContainer(props: StatusWidgetProps) {
           <TooltipContent asChild>
             <Button variant="link" size="sm" asChild>
               <a
+                // biome-ignore lint/a11y/noBlankTarget:
                 target="_blank"
                 href="https://docs.openstatus.dev/packages/react"
               >

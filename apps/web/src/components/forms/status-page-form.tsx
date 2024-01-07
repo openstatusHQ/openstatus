@@ -130,6 +130,7 @@ export function StatusPageForm({
           description: "Your status page is ready to go.",
           action: (
             <Button variant="outline">
+              {/* biome-ignore lint/a11y/noBlankTarget: */}
               <a href={`https://${props.slug}.openstatus.dev`} target="_blank">
                 Visit
               </a>

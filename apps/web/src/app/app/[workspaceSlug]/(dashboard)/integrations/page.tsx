@@ -27,6 +27,7 @@ export default async function IntegrationPage({
                 ? "https://vercel.com/integrations/openstatus/new"
                 : "#"
             }
+            // biome-ignore lint/a11y/noBlankTarget:
             target="_blank"
             key={"vercel"}
           >

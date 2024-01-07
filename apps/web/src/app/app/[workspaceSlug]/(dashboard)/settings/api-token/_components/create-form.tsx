@@ -63,6 +63,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div>
+            {/* biome-ignore lint/a11y/useButtonType: */}
             <button
               className="group inline-flex items-center p-2"
               onClick={() => {

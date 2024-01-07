@@ -33,6 +33,7 @@ export const ButtonWithDisableTooltip = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
+            {/* biome-ignore lint/a11y/noNoninteractiveTabindex: */}
             <span tabIndex={0}>{ButtonComponent}</span>
           </TooltipTrigger>
           <TooltipContent>{tooltip}</TooltipContent>

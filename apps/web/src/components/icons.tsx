@@ -77,6 +77,7 @@ export const Icons = {
   laptop: Laptop,
   sparkles: Sparkles,
   discord: ({ ...props }: LucideProps) => (
+    // biome-ignore lint/a11y/noSvgWithoutTitle:
     <svg viewBox="0 0 640 512" {...props}>
       <path
         fill="currentColor"
@@ -85,6 +86,7 @@ export const Icons = {
     </svg>
   ),
   github: (props: LucideProps) => (
+    // biome-ignore lint/a11y/noSvgWithoutTitle:
     <svg viewBox="0 0 438.549 438.549" {...props}>
       <path
         fill="currentColor"

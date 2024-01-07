@@ -12,18 +12,21 @@ export default function AppearancePage() {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+      {/* biome-ignore lint/a11y/useButtonType: */}
       <button onClick={() => setTheme("light")}>
         <LightModeCard active={theme === "light"} />
         <span className="text-muted-foreground mt-2 text-sm font-light">
           Light
         </span>
       </button>
+      {/* biome-ignore lint/a11y/useButtonType: */}
       <button onClick={() => setTheme("dark")}>
         <DarkModeCard active={theme === "dark"} />
         <span className="text-muted-foreground mt-2 text-sm font-light">
           Dark
         </span>
       </button>
+      {/* biome-ignore lint/a11y/useButtonType: */}
       <button onClick={() => setTheme("system")}>
         <div className="relative">
           <LightModeCard active={theme === "system"} />

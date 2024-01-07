@@ -2,6 +2,7 @@ import type { SVGAttributes } from "react";
 
 export function Trigger(props: SVGAttributes<SVGSVGElement>) {
   return (
+    // biome-ignore lint/a11y/noSvgWithoutTitle:
     <svg viewBox="0 0 751 130" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
         d="M195.022 16.2676H135.445H137.799V32.5096H157.858V102.4H174.84V32.5096H195.022V16.2676Z"
