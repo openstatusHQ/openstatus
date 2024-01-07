@@ -25,6 +25,10 @@ export default async function StatusPageLayout({ children, params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 
+  const plan = page.workspacePlan;
+  const isSubscribers = allPlans[plan].limits["status-subscribers"];
+  const isWhiteLabel = allPlans[plan].limits["white-label"];
+
   const navigation = [
     {
       label: "Status",
@@ -37,9 +41,6 @@ export default async function StatusPageLayout({ children, params }: Props) {
       href: setPrefixUrl("/incidents", params),
     },
   ];
-
-  const isSubscribersValid =
-    allPlans[page.workspacePlan].limits["status-subscribers"];
 
   return (
     <div className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
@@ -60,9 +61,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
           </div>
           <Navbar navigation={navigation} />
           <div className="text-end sm:w-[100px]">
-            {isSubscribersValid ? (
-              <SubscribeButton slug={params.domain} />
-            ) : null}
+            {isSubscribers ? <SubscribeButton slug={params.domain} /> : null}
           </div>
         </Shell>
       </header>
@@ -73,17 +72,19 @@ export default async function StatusPageLayout({ children, params }: Props) {
       </main>
       <footer className="z-10 mx-auto flex w-full max-w-xl items-center justify-between">
         <div />
-        <p className="text-muted-foreground text-center text-sm">
-          powered by{" "}
-          <a
-            href="https://www.openstatus.dev"
-            target="_blank"
-            rel="noreferrer"
-            className="text-foreground underline underline-offset-4 hover:no-underline"
-          >
-            openstatus.dev
-          </a>
-        </p>
+        {!isWhiteLabel ? (
+          <p className="text-muted-foreground text-center text-sm">
+            powered by{" "}
+            <a
+              href="https://www.openstatus.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              openstatus.dev
+            </a>
+          </p>
+        ) : null}
         <ThemeToggle />
       </footer>
     </div>

@@ -19,7 +19,7 @@ export type Limits = {
   sms: boolean;
   "notification-channels": number;
   // collaboration
-  members: string;
+  members: "Unlimited" | number;
   "audit-log": boolean;
 };
 
@@ -50,7 +50,7 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: false,
       "notification-channels": 1,
-      members: "1",
+      members: 1,
       "audit-log": false,
     },
   },
