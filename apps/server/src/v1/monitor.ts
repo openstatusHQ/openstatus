@@ -50,16 +50,13 @@ const MonitorSchema = z
       description: "The url to monitor",
     }),
     regions: z
-      .preprocess(
-        (val) => {
-          if (String(val).length > 0) {
-            return String(val).split(",");
-          } else {
-            return [];
-          }
-        },
-        z.array(z.enum(flyRegions)),
-      )
+      .preprocess((val) => {
+        if (String(val).length > 0) {
+          return String(val).split(",");
+        } else {
+          return [];
+        }
+      }, z.array(z.enum(flyRegions)))
       .default([])
       .openapi({
         example: ["ams"],
@@ -90,16 +87,13 @@ const MonitorSchema = z
         description: "The body",
       }),
     headers: z
-      .preprocess(
-        (val) => {
-          if (String(val).length > 0) {
-            return JSON.parse(String(val));
-          } else {
-            return [];
-          }
-        },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-      )
+      .preprocess((val) => {
+        if (String(val).length > 0) {
+          return JSON.parse(String(val));
+        } else {
+          return [];
+        }
+      }, z.array(z.object({ key: z.string(), value: z.string() })).default([]))
       .openapi({
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],
@@ -145,16 +139,13 @@ const monitorInput = z
       description: "If the monitor is active",
     }),
     headers: z
-      .preprocess(
-        (val) => {
-          if (!!val) {
-            return val;
-          } else {
-            return [];
-          }
-        },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-      )
+      .preprocess((val) => {
+        if (!!val) {
+          return val;
+        } else {
+          return [];
+        }
+      }, z.array(z.object({ key: z.string(), value: z.string() })).default([]))
       .openapi({
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],

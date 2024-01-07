@@ -33,20 +33,17 @@ const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
 
-const headersToArraySchema = z.preprocess(
-  (val) => {
-    // early return in case the header is already an array
-    if (Array.isArray(val)) {
-      return val;
-    }
-    if (String(val).length > 0) {
-      return JSON.parse(String(val));
-    } else {
-      return [];
-    }
-  },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-);
+const headersToArraySchema = z.preprocess((val) => {
+  // early return in case the header is already an array
+  if (Array.isArray(val)) {
+    return val;
+  }
+  if (String(val).length > 0) {
+    return JSON.parse(String(val));
+  } else {
+    return [];
+  }
+}, z.array(z.object({ key: z.string(), value: z.string() })).default([]));
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),

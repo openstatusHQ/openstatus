@@ -62,79 +62,77 @@ export async function GET(req: Request) {
   const uptime = getTotalUptimeString(data);
 
   return new ImageResponse(
-    (
-      <div tw="relative flex flex-col bg-white items-center justify-center w-full h-full">
-        <div
-          tw="flex w-full h-full absolute inset-0"
-          // not every css variable is supported
-          style={{
-            backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
-            backgroundSize: "24px 24px",
-          }}
-        ></div>
-        <div
-          tw="flex w-full h-full absolute inset-0 opacity-70"
-          style={{
-            backgroundColor: "white",
-            backgroundImage:
-              "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
-          }}
-        ></div>
-        <div tw="max-w-4xl relative flex flex-col">
-          <h1 style={{ fontFamily: "Cal" }} tw="text-6xl">
-            {title}
-          </h1>
-          <p tw="text-slate-600 text-3xl">{description}</p>
-          {Boolean(data.length) && Boolean(_data.length) ? (
-            <div tw="flex flex-col w-full mt-6">
-              <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
-                <p tw="">{formatDate(new Date())}</p>
-                <p tw="mr-1">{uptime}</p>
-              </div>
-              <div tw="flex flex-row relative">
-                {/* Empty State */}
-                {new Array(LIMIT).fill(null).map((_, i) => {
-                  return (
-                    <div
-                      key={i}
-                      tw="h-16 w-3 rounded-full mr-1 bg-black/20"
-                    ></div>
-                  );
-                })}
-                <div tw="flex flex-row-reverse absolute right-0">
-                  {_data.map((item, i) => {
-                    const { variant } = getStatus(item.ok / item.count);
-                    const isBlackListed = Boolean(item.blacklist);
-                    if (isBlackListed) {
-                      return (
-                        <div
-                          key={i}
-                          tw="h-16 w-3 rounded-full mr-1 bg-green-400"
-                        />
-                      );
-                    }
+    <div tw="relative flex flex-col bg-white items-center justify-center w-full h-full">
+      <div
+        tw="flex w-full h-full absolute inset-0"
+        // not every css variable is supported
+        style={{
+          backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
+          backgroundSize: "24px 24px",
+        }}
+      ></div>
+      <div
+        tw="flex w-full h-full absolute inset-0 opacity-70"
+        style={{
+          backgroundColor: "white",
+          backgroundImage:
+            "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
+        }}
+      ></div>
+      <div tw="max-w-4xl relative flex flex-col">
+        <h1 style={{ fontFamily: "Cal" }} tw="text-6xl">
+          {title}
+        </h1>
+        <p tw="text-slate-600 text-3xl">{description}</p>
+        {Boolean(data.length) && Boolean(_data.length) ? (
+          <div tw="flex flex-col w-full mt-6">
+            <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
+              <p tw="">{formatDate(new Date())}</p>
+              <p tw="mr-1">{uptime}</p>
+            </div>
+            <div tw="flex flex-row relative">
+              {/* Empty State */}
+              {new Array(LIMIT).fill(null).map((_, i) => {
+                return (
+                  <div
+                    key={i}
+                    tw="h-16 w-3 rounded-full mr-1 bg-black/20"
+                  ></div>
+                );
+              })}
+              <div tw="flex flex-row-reverse absolute right-0">
+                {_data.map((item, i) => {
+                  const { variant } = getStatus(item.ok / item.count);
+                  const isBlackListed = Boolean(item.blacklist);
+                  if (isBlackListed) {
                     return (
                       <div
                         key={i}
-                        tw={cn("h-16 w-3 rounded-full mr-1", {
-                          "bg-green-500": variant === "up",
-                          "bg-red-500": variant === "down",
-                          "bg-yellow-500": variant === "degraded",
-                        })}
-                      ></div>
+                        tw="h-16 w-3 rounded-full mr-1 bg-green-400"
+                      />
                     );
-                  })}
-                </div>
-              </div>
-              <div tw="flex flex-row items-center justify-between -mt-3 text-slate-500 text-sm">
-                <p tw="">{LIMIT} days ago</p>
-                <p tw="mr-1">today</p>
+                  }
+                  return (
+                    <div
+                      key={i}
+                      tw={cn("h-16 w-3 rounded-full mr-1", {
+                        "bg-green-500": variant === "up",
+                        "bg-red-500": variant === "down",
+                        "bg-yellow-500": variant === "degraded",
+                      })}
+                    ></div>
+                  );
+                })}
               </div>
             </div>
-          ) : null}
-        </div>
+            <div tw="flex flex-row items-center justify-between -mt-3 text-slate-500 text-sm">
+              <p tw="">{LIMIT} days ago</p>
+              <p tw="mr-1">today</p>
+            </div>
+          </div>
+        ) : null}
       </div>
-    ),
+    </div>,
     {
       ...size,
       fonts: [

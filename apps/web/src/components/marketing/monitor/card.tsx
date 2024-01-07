@@ -21,7 +21,9 @@ export function MonitoringCard() {
       <CardContent>
         <Globe />
         <CardFeatureContainer>
-          {features?.map((feature, i) => <CardFeature key={i} {...feature} />)}
+          {features?.map((feature, i) => (
+            <CardFeature key={i} {...feature} />
+          ))}
         </CardFeatureContainer>
       </CardContent>
     </CardContainer>

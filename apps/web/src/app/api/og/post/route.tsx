@@ -45,49 +45,47 @@ export async function GET(req: Request) {
     : undefined;
 
   return new ImageResponse(
-    (
-      <div tw="relative flex flex-col bg-white items-center justify-center w-full h-full">
-        <div
-          tw="flex w-full h-full absolute inset-0"
-          // not every css variable is supported
-          style={{
-            backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
-            backgroundSize: "24px 24px",
-          }}
-        ></div>
-        <div
-          tw="flex w-full h-full absolute inset-0 opacity-70"
-          style={{
-            backgroundColor: "white",
-            backgroundImage:
-              "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
-          }}
-        ></div>
-        <div tw="flex flex-col h-full justify-between px-24">
-          <div tw="flex flex-col flex-1 justify-end">
-            <div tw="flex flex-col px-12">
-              {/* lineClamp not working... */}
-              <h1 style={{ fontFamily: "Cal", lineClamp: "2" }} tw="text-6xl">
-                {title}
-              </h1>
-              <p style={{ lineClamp: "2" }} tw="text-slate-600 text-3xl">
-                {description}
-              </p>
-            </div>
+    <div tw="relative flex flex-col bg-white items-center justify-center w-full h-full">
+      <div
+        tw="flex w-full h-full absolute inset-0"
+        // not every css variable is supported
+        style={{
+          backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
+          backgroundSize: "24px 24px",
+        }}
+      ></div>
+      <div
+        tw="flex w-full h-full absolute inset-0 opacity-70"
+        style={{
+          backgroundColor: "white",
+          backgroundImage:
+            "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
+        }}
+      ></div>
+      <div tw="flex flex-col h-full justify-between px-24">
+        <div tw="flex flex-col flex-1 justify-end">
+          <div tw="flex flex-col px-12">
+            {/* lineClamp not working... */}
+            <h1 style={{ fontFamily: "Cal", lineClamp: "2" }} tw="text-6xl">
+              {title}
+            </h1>
+            <p style={{ lineClamp: "2" }} tw="text-slate-600 text-3xl">
+              {description}
+            </p>
           </div>
-          {image ? (
-            <div tw="flex justify-center shadow-2xl mt-1">
-              <img
-                alt=""
-                style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
-                tw="flex w-full border-2 rounded-xl"
-                src={new URL(image, DEFAULT_URL).toString()}
-              />
-            </div>
-          ) : null}
         </div>
+        {image ? (
+          <div tw="flex justify-center shadow-2xl mt-1">
+            <img
+              alt=""
+              style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
+              tw="flex w-full border-2 rounded-xl"
+              src={new URL(image, DEFAULT_URL).toString()}
+            />
+          </div>
+        ) : null}
       </div>
-    ),
+    </div>,
     {
       ...size,
       fonts: [
