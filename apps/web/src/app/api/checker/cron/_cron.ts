@@ -78,7 +78,7 @@ export const cron = async ({
       allResult.push(response);
       if (periodicity === "30s") {
         // we schedule another task in 30s
-        const scheduledAt = timestamp / 1000 + 30;
+        const scheduledAt = timestamp + 30 * 1000;
         const response = await createCronTask({
           row,
           timestamp: scheduledAt,
@@ -94,7 +94,7 @@ export const cron = async ({
   await Promise.all(allResult);
   console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
 };
-
+// timestamp needs to be in ms
 const createCronTask = async ({
   row,
   timestamp,
@@ -133,7 +133,7 @@ const createCronTask = async ({
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
-      seconds: timestamp,
+      seconds: timestamp / 1000,
     },
   };
 

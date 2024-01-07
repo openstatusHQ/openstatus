@@ -11,7 +11,7 @@ import { Shell } from "@/components/dashboard/shell";
 const faqsConfig: Record<"q" | "a", string>[] = [
   {
     q: "What are the limits?",
-    a: "You will start with a free plan by default which includes a total of <strong>5 monitors</strong> and <strong>1 status</strong> page as well as cron jobs of either <code>10m</code>, <code>30m</code> or <code>1h</code>.",
+    a: "You will start with a free plan by default which includes a total of <strong>3 monitors</strong> and <strong>1 status</strong> page as well as cron jobs of either <code>10m</code>, <code>30m</code> or <code>1h</code>.<br />Learn more about our <a href='/pricing'>pricing</a>.",
   },
   {
     q: "Who are we?",

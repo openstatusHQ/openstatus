@@ -56,6 +56,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "dev@documenso.com",
         setupDocLink: null,
         sendTest: null,
+        plans: ["free", "starter", "pro", "team"],
       };
 
     case "slack":
@@ -65,6 +66,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         setupDocLink:
           "https://api.slack.com/messaging/webhooks#getting_started",
         sendTest: sendTestSlackMessage,
+        plans: ["free", "starter", "pro", "team"],
       };
 
     case "discord":
@@ -73,6 +75,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "https://discord.com/api/webhooks/{channelId}/xxx...",
         setupDocLink: "https://support.discord.com/hc/en-us/articles/228383668",
         sendTest: sendTestDiscordMessage,
+        plans: ["free", "starter", "pro", "team"],
       };
     case "sms":
       return {
@@ -80,7 +83,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "+123456789",
         setupDocLink: null,
         sendTest: null,
-        isPro: true,
+        plans: ["pro", "team"],
       };
 
     default:
@@ -89,6 +92,7 @@ function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "xxxx",
         setupDocLink: `https://docs.openstatus.dev/integrations/${provider}`,
         send: null,
+        plans: ["free", "starter", "pro", "team"],
       };
   }
 }
@@ -194,15 +198,22 @@ export function NotificationForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {notificationProvider.map((provider) => (
-                        <SelectItem
-                          key={provider}
-                          value={provider}
-                          className="capitalize"
-                        >
-                          {provider}
-                        </SelectItem>
-                      ))}
+                      {notificationProvider.map((provider) => {
+                        const isIncluded =
+                          getProviderMetaData(provider).plans?.includes(
+                            workspacePlan,
+                          );
+                        return (
+                          <SelectItem
+                            key={provider}
+                            value={provider}
+                            className="capitalize"
+                            disabled={!isIncluded}
+                          >
+                            {provider}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <FormDescription>
@@ -244,7 +255,7 @@ export function NotificationForm({
                         placeholder={providerMetaData.placeholder}
                         {...field}
                         disabled={
-                          providerMetaData.isPro && workspacePlan !== "pro"
+                          !providerMetaData.plans?.includes(workspacePlan)
                         }
                       />
                     </FormControl>

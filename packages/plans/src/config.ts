@@ -1,39 +1,17 @@
-import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
-export const plans = ["free", "starter", "team", "pro"] as const;
-export type PlanName = (typeof plans)[number];
-
-export type Limits = {
-  // monitors
-  monitors: number;
-  periodicity: Partial<MonitorPeriodicity>[];
-  "multi-region": boolean;
-  "data-retention": string;
-  // status pages
-  "status-pages": number;
-  "status-subscribers": boolean;
-  "custom-domain": boolean;
-  "white-label": boolean;
-  // alerts
-  notifications: boolean;
-  sms: boolean;
-  "notification-channels": number;
-  // collaboration
-  members: string;
-  "audit-log": boolean;
-};
-
-export type FeatureKey = keyof Limits;
-
-export type Plan = {
-  title: string;
-  description: string;
-  price: number;
-  limits: Limits;
-};
+import type { Limits } from "./types";
 
 // TODO: rename to `planConfig`
-export const allPlans: Record<PlanName, Plan> = {
+export const allPlans: Record<
+  WorkspacePlan,
+  {
+    title: string;
+    description: string;
+    price: number;
+    limits: Limits;
+  }
+> = {
   free: {
     title: "Hobby",
     description: "For personal projects",
@@ -50,7 +28,7 @@ export const allPlans: Record<PlanName, Plan> = {
       notifications: true,
       sms: false,
       "notification-channels": 1,
-      members: "1",
+      members: 1,
       "audit-log": false,
     },
   },
@@ -115,5 +93,3 @@ export const allPlans: Record<PlanName, Plan> = {
     },
   },
 };
-
-export { pricingTableConfig } from "./pricing-table";

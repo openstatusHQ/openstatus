@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 
-import type { PlanName } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/plans";
 import {
   allPlans,
   plans as defaultPlans,
@@ -31,9 +31,9 @@ export function PricingTable({
   events,
   isLoading,
 }: {
-  plans?: readonly PlanName[];
-  currentPlan?: PlanName;
-  events?: Partial<Record<PlanName, () => void>>;
+  plans?: readonly WorkspacePlan[];
+  currentPlan?: WorkspacePlan;
+  events?: Partial<Record<WorkspacePlan, () => void>>;
   isLoading?: boolean;
 }) {
   const router = useRouter();

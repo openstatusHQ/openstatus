@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { and, eq } from "@openstatus/db";
@@ -6,6 +7,7 @@ import {
   notification,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
+import { getLimit } from "@openstatus/plans";
 
 import { trackNewNotification } from "../analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -15,6 +17,25 @@ export const notificationRouter = createTRPCRouter({
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
       const { ...data } = opts.input;
+
+      const notificationLimit = getLimit(
+        opts.ctx.workspace.plan,
+        "notification-channels",
+      );
+
+      const notificationNumber = (
+        await opts.ctx.db.query.notification.findMany({
+          where: eq(notification.workspaceId, opts.ctx.workspace.id),
+        })
+      ).length;
+
+      // the user has reached the limits
+      if (notificationNumber >= notificationLimit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your notification limits.",
+        });
+      }
 
       const _notification = await opts.ctx.db
         .insert(notification)
@@ -87,5 +108,19 @@ export const notificationRouter = createTRPCRouter({
       .all();
 
     return z.array(selectNotificationSchema).parse(notifications);
+  }),
+
+  isNotificationLimitReached: protectedProcedure.query(async (opts) => {
+    const notificationLimit = getLimit(
+      opts.ctx.workspace.plan,
+      "notification-channels",
+    );
+    const notificationNumbers = (
+      await opts.ctx.db.query.notification.findMany({
+        where: eq(notification.workspaceId, opts.ctx.workspace.id),
+      })
+    ).length;
+
+    return notificationNumbers >= notificationLimit;
   }),
 });

@@ -1,7 +1,4 @@
-import { AlertTriangle } from "lucide-react";
-
-import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
-
+import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { columns as invitationColumns } from "@/components/data-table/invitation/columns";
 import { DataTable as InvitationDataTable } from "@/components/data-table/invitation/data-table";
 import { columns as userColumns } from "@/components/data-table/user/columns";
@@ -18,15 +15,7 @@ export default async function TeamPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      {isFreePlan ? (
-        <Alert>
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Team</AlertTitle>
-          <AlertDescription>
-            Please upgrade to invite more team members.
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      {isFreePlan ? <ProFeatureAlert feature="Team members" /> : null}
       {/* TODO: only show if isAdmin */}
       <div className="flex justify-end">
         <InviteButton disabled={isFreePlan} />
