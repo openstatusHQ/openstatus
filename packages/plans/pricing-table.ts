@@ -24,6 +24,7 @@ export const pricingTableConfig: TableConfig = {
         value: "multi-region",
         label: "Multi-region monitoring",
       },
+      { value: "data-retention", label: "Data retention" },
     ],
   },
   "status-pages": {
@@ -40,6 +41,10 @@ export const pricingTableConfig: TableConfig = {
       {
         value: "custom-domain",
         label: "Custom domain",
+      },
+      {
+        value: "white-label",
+        label: "White Label",
       },
     ],
   },
