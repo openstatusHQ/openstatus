@@ -34,8 +34,8 @@ jobs:
       - name: 🔬 Lint
         run: pnpm lint
 
-  prettier:
-    name: 💅 Prettier
+  biome:
+    name: 💅 Biome
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -61,5 +61,5 @@ jobs:
       - name: 📥 Download deps
         run: pnpm install
 
-      - name: 💅 Prettier check
+      - name: 💅 Biome check
         run: pnpm format:check

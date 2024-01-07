@@ -3,7 +3,6 @@ const config = {
   extends: [
     "next",
     "turbo",
-    "prettier",
     "plugin:@typescript-eslint/recommended",
   ],
   parser: "@typescript-eslint/parser",
