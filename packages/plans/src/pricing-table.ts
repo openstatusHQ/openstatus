@@ -1,14 +1,12 @@
-import type { FeatureKey } from "./index";
+import type { Limits } from "./types";
 
-type TableConfig = Record<
+export const pricingTableConfig: Record<
   string,
   {
     label: string;
-    features: { value: FeatureKey; label: string; badge?: string }[];
+    features: { value: keyof Limits; label: string; badge?: string }[];
   }
->;
-
-export const pricingTableConfig: TableConfig = {
+> = {
   monitors: {
     label: "Monitors",
     features: [

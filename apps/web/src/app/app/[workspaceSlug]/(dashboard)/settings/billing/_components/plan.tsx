@@ -14,7 +14,6 @@ import { api } from "@/trpc/client";
 export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [isPortalPending, startPortalTransition] = useTransition();
 
   const getCheckoutSession = (plan: WorkspacePlan) => {
     startTransition(async () => {
@@ -32,7 +31,7 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   };
 
   const getUserCustomerPortal = () => {
-    startPortalTransition(async () => {
+    startTransition(async () => {
       const url = await api.stripeRouter.getUserCustomerPortal.mutate({
         workspaceSlug: workspace.slug,
       });
@@ -46,8 +45,12 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
     <div className="grid gap-4">
       <div className="grid gap-6">
         <div>
-          <Button onClick={getUserCustomerPortal} variant="outline">
-            {isPortalPending ? (
+          <Button
+            onClick={getUserCustomerPortal}
+            variant="outline"
+            disabled={isPending}
+          >
+            {isPending ? (
               <LoadingAnimation variant="inverse" />
             ) : (
               "Customer Portal"
@@ -58,7 +61,8 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
           currentPlan={workspace.plan}
           isLoading={isPending}
           events={{
-            free: () => getCheckoutSession("free"),
+            // REMINDER: redirecting to customer portal as a fallback because the free plan has no price
+            free: getUserCustomerPortal,
             starter: () => getCheckoutSession("starter"),
             pro: () => getCheckoutSession("pro"),
             team: () => getCheckoutSession("team"),
