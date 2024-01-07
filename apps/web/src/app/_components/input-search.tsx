@@ -52,6 +52,7 @@ export function InputSearch({
       events.reduce(
         (prev, curr) => {
           return {
+            // biome-ignore lint/performance/noAccumulatingSpread:
             ...prev,
             status: [...new Set([curr.statusCode, ...(prev.status || [])])],
             region: [...new Set([curr.region, ...(prev.region || [])])],

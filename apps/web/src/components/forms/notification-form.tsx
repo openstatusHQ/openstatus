@@ -264,6 +264,7 @@ export function NotificationForm({
                       {providerMetaData.setupDocLink && (
                         <a
                           href={providerMetaData.setupDocLink}
+                          // biome-ignore lint/a11y/noBlankTarget:
                           target="_blank"
                           className="underline hover:no-underline"
                         >

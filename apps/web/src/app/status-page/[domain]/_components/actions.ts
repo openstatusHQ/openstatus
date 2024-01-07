@@ -74,6 +74,7 @@ export async function handleSubscribe(formData: FormData) {
     }),
     from: "OpenStatus <notification@openstatus.dev>",
     to: [validatedFields.data.email],
+    // biome-ignore lint/style/useTemplate:
     subject: "Verify your subscription to " + pageData.title,
   });
 

@@ -4,7 +4,7 @@ import type { Config } from "drizzle-kit";
 
 import { env } from "./env.mjs";
 
-export default {
+export default ({
   schema: "./src/schema/index.ts",
   out: "./drizzle",
   dbCredentials: {
@@ -13,4 +13,4 @@ export default {
   },
   driver: "turso",
   strict: true,
-} satisfies Config;
+} satisfies Config);

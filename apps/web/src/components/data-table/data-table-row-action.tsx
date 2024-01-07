@@ -60,6 +60,7 @@ export function DataTableRowActions<TData>({
           </DialogDescription>
         </DialogHeader>
         <div className="border-border rounded-lg border border-dashed p-4">
+          {/* biome-ignore lint/complexity/noExtraBooleanCast: */}
           {!Boolean(Object.keys(ping.metadata || {}).length) ? (
             <ul className="grid gap-1">
               {Object.keys(ping.metadata || {}).map((key) => {

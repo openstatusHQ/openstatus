@@ -30,6 +30,7 @@ export default function Page() {
                   If you are stuck for longer, please contact us via{" "}
                   <a
                     href="https://openstatus.dev/discord"
+                    // biome-ignore lint/a11y/noBlankTarget:
                     target="_blank"
                     className="font-normal"
                   >

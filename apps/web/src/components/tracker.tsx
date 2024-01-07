@@ -100,6 +100,7 @@ export function Tracker({
             });
 
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey:
               <Bar key={i} context={context} reports={dateReports} {...props} />
             );
           })}

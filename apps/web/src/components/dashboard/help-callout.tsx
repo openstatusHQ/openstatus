@@ -18,6 +18,7 @@ export function HelpCallout() {
         or join our{" "}
         <a
           href="/discord"
+          // biome-ignore lint/a11y/noBlankTarget:
           target="_blank"
           className="text-foreground font-medium underline hover:no-underline"
         >

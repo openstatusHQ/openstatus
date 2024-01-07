@@ -92,6 +92,7 @@ export function StatusPageForm({
     );
   }, [debouncedSlug, defaultValues?.slug]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   useEffect(() => {
     async function watchSlugChanges() {
       const isUnique = await checkUniqueSlug();
@@ -130,6 +131,7 @@ export function StatusPageForm({
           description: "Your status page is ready to go.",
           action: (
             <Button variant="outline">
+              {/* biome-ignore lint/a11y/noBlankTarget: */}
               <a href={`https://${props.slug}.openstatus.dev`} target="_blank">
                 Visit
               </a>

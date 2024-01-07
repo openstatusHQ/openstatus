@@ -37,9 +37,11 @@ export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
     // On client side, get the host from window
+    // biome-ignore lint/style/noParameterAssign:
     host = window.location.host;
   }
   // we should improve here for custom vercel deploy page
+  // biome-ignore lint/complexity/useOptionalChain:
   if (host && host.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
@@ -47,6 +49,7 @@ export const getValidSubdomain = (host?: string | null) => {
       subdomain = candidate;
     }
   }
+  // biome-ignore lint/complexity/useOptionalChain:
   if (host && host.includes("ngrok-free.app")) {
     return null;
   }
@@ -136,6 +139,7 @@ export default authMiddleware({
               .get();
 
             if (!firstMonitor) {
+              // biome-ignore lint/style/noUnusedTemplateLiteral:
               console.log(`>>> Redirecting to onboarding`, slug);
               const onboardingURL = new URL(`/app/${slug}/onboarding`, req.url);
               return NextResponse.redirect(onboardingURL);

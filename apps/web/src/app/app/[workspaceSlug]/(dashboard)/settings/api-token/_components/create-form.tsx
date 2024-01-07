@@ -25,6 +25,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
   const [hasCopied, setHasCopied] = React.useState(false);
   const { toast } = useToastAction();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     if (hasCopied) {
       setTimeout(() => {
@@ -63,6 +64,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div>
+            {/* biome-ignore lint/a11y/useButtonType: */}
             <button
               className="group inline-flex items-center p-2"
               onClick={() => {

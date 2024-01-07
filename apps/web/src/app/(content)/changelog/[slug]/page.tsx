@@ -23,6 +23,7 @@ export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
+  // biome-ignore lint/suspicious/noConfusingVoidType:
 }): Promise<Metadata | void> {
   const post = allChangelogs.find((post) => post.slug === params.slug);
   if (!post) {

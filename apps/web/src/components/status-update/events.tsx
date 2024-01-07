@@ -35,8 +35,8 @@ export function Events({
     open || !collabsible
       ? sortedArray
       : sortedArray.length > 0
-      ? [sortedArray[0]]
-      : [];
+        ? [sortedArray[0]]
+        : [];
   //
 
   return (

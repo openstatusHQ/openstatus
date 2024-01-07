@@ -103,6 +103,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       headers: Boolean(defaultValues?.headers?.length)
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -177,6 +178,7 @@ export function MonitorForm({
 
   const pingEndpoint = async () => {
     const { url, body, method, headers } = form.getValues();
+    // biome-ignore lint/style/noUnusedTemplateLiteral:
     const res = await fetch(`/api/checker/test`, {
       method: "POST",
       headers: new Headers({

@@ -113,6 +113,7 @@ export const ping = async (
   const headers =
     data?.headers?.reduce((o, v) => {
       if (v.key.trim() === "") return o; // removes empty keys from the header
+      // biome-ignore lint/performance/noAccumulatingSpread:
       return { ...o, [v.key]: v.value };
     }, {}) || {};
 

@@ -76,6 +76,7 @@ export function DataTableRowActions<TData>({
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
+      // biome-ignore lint/style/noUnusedTemplateLiteral:
       const res = await fetch(`/api/checker/test`, {
         method: "POST",
         headers: new Headers({

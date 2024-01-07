@@ -42,9 +42,11 @@ export function Summary({
         ) : null}
       </div>
       <p className="text-muted-foreground col-start-1">Affected</p>
+      {/* biome-ignore lint/a11y/noRedundantRoles: */}
       <ul role="list" className="col-span-4 flex gap-2">
         {monitors.length > 0 ? (
           monitors.map(({ name }, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey:
             <li key={i} className="text-xs">
               <Badge variant="outline">{name}</Badge>
             </li>

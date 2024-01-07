@@ -28,6 +28,7 @@ export function DataTableDateRangePicker({
   const updateSearchParams = useUpdateSearchParams();
   const [date, setDate] = React.useState<DateRange | undefined>();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     if (searchParams) {
       const from =

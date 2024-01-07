@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
 
   // redirect to vercel's integration page after installation
   const res = NextResponse.redirect(
+    // biome-ignore lint/style/noUnusedTemplateLiteral:
     `https://wwww.openstatus.dev/app/integrations/vercel/configure`,
   );
 
@@ -45,6 +46,7 @@ export async function GET(req: NextRequest) {
  * to send the secret link to a team mate e.g.
  */
 function getSecretUrl(iv: Buffer, encryptedToken: Buffer) {
+  // biome-ignore lint/style/noNonNullAssertion:
   const baseUrl = new URL(process.env.VRCL_REDIRECT_URI!);
   baseUrl.pathname = "/configure";
   baseUrl.searchParams.set("token", encryptedToken.toString("base64url"));

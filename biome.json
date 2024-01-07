@@ -1,0 +1,26 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.4.1/schema.json",
+  "files": {
+    "ignore": [
+      "packages/ui/src/components/*.tsx",
+      "packages/ui/src/components/*.ts"
+    ]
+  },
+  "organizeImports": {
+    "enabled": false
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "formatter": {
+    "indentStyle": "space"
+  },
+  "json": {
+    "formatter": {
+      "enabled": false
+    }
+  }
+}

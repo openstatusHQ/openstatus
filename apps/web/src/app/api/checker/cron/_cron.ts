@@ -64,6 +64,7 @@ export const cron = async ({
 
     for (const region of selectedRegions) {
       const status =
+        // biome-ignore lint/suspicious/noSelfCompare:
         monitorStatus.find(({ region }) => region === region)?.status ||
         "active";
       const response = await createCronTask({

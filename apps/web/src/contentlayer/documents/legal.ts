@@ -2,6 +2,7 @@ import { defineDocumentType } from "contentlayer/source-files";
 
 export const LegalPost = defineDocumentType(() => ({
   name: "LegalPost",
+  // biome-ignore lint/style/noUnusedTemplateLiteral:
   filePathPattern: `legal/*.mdx`,
   contentType: "mdx",
   fields: {

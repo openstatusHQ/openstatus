@@ -20,6 +20,7 @@ export function AppMenu() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies:
   React.useEffect(() => {
     setOpen(false);
   }, [pathname, searchParams]); // remove searchParams if not needed

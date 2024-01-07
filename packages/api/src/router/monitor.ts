@@ -75,6 +75,7 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(notifications.length)) {
         // We should make sure the user has access to the notifications
         const allNotifications = await opts.ctx.db.query.notification.findMany({
@@ -165,6 +166,7 @@ export const monitorRouter = createTRPCRouter({
             ?.includes(x),
       );
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(addedNotifications.length)) {
         const values = addedNotifications.map((notificationId) => ({
           monitorId: currentMonitor.id,
@@ -178,6 +180,7 @@ export const monitorRouter = createTRPCRouter({
         .map(({ notificationId }) => notificationId)
         .filter((x) => !notifications?.includes(x));
 
+      // biome-ignore lint/complexity/noExtraBooleanCast:
       if (Boolean(removedNotifications.length)) {
         await opts.ctx.db
           .delete(notificationsToMonitors)

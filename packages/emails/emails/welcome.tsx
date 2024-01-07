@@ -25,7 +25,8 @@ const WelcomeEmail = () => {
           <br />
           Thibault Le Ouay Ducasse
           <br />
-          <br />⭐ Star us on{" "}
+          <br />
+          ⭐ Star us on{" "}
           <Link href="https://github.com/openstatushq/openstatus">GitHub</Link>
           <br />
           🚀 Visit our website{" "}

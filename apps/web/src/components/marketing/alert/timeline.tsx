@@ -56,6 +56,7 @@ export function Timeline() {
   return (
     <TimelineContainer>
       {timeline.map((event, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey:
         <TimelineEvent key={i} isLast={i === timeline.length - 1} {...event} />
       ))}
     </TimelineContainer>

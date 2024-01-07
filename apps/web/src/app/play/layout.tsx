@@ -14,10 +14,12 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   twitter: {
     ...twitterMetadata,
+    // biome-ignore lint/style/noUnusedTemplateLiteral:
     images: [`/api/og?monitorId=1`],
   },
   openGraph: {
     ...ogMetadata,
+    // biome-ignore lint/style/noUnusedTemplateLiteral:
     images: [`/api/og?monitorId=1`],
   },
 };
