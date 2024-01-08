@@ -2,6 +2,7 @@ package checker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
+	"github.com/rs/zerolog/log"
 )
 
 type PingData struct {
@@ -25,7 +27,7 @@ type PingData struct {
 	Message       string `json:"message,omitempty"`
 }
 
-func SendToTinyBird(pingData PingData) {
+func SendToTinyBird(ctx context.Context, pingData PingData) {
 	url := "https://api.tinybird.co/v0/events?name=ping_response__v5"
 	fmt.Printf("📈  Sending data to Tinybird for %+v \n", pingData)
 	bearer := "Bearer " + os.Getenv("TINYBIRD_TOKEN")
@@ -38,32 +40,33 @@ func SendToTinyBird(pingData PingData) {
 	client := &http.Client{Timeout: time.Second * 10}
 	_, err = client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		panic(err)
+		log.Ctx(ctx).Error().Err(err).Msg("Error while sending data to Tinybird")
 	}
 	// Should we add a retry mechanism here?
 
 }
 
-func Ping(client *http.Client, inputData request.CheckerRequest) (PingData, error) {
+func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
+	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 
 	region := os.Getenv("FLY_REGION")
-	request, err := http.NewRequest(inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
 	if err != nil {
-		return PingData{}, fmt.Errorf("Unable to create request: %w", err)
+		logger.Error().Err(err).Msg("error while creating req")
+		return PingData{}, fmt.Errorf("unable to create req: %w", err)
 	}
 
-	request.Header.Set("User-Agent", "OpenStatus/1.0")
+	req.Header.Set("User-Agent", "OpenStatus/1.0")
 
 	// Setting headers
 	for _, header := range inputData.Headers {
 		if header.Key != "" && header.Value != "" {
-			request.Header.Set(header.Key, header.Value)
+			req.Header.Set(header.Key, header.Value)
 		}
 	}
 
 	start := time.Now()
-	response, err := client.Do(request)
+	response, err := client.Do(req)
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
@@ -81,15 +84,16 @@ func Ping(client *http.Client, inputData request.CheckerRequest) (PingData, erro
 			}
 		}
 
-		return PingData{}, fmt.Errorf("Error with monitor %s: %w", inputData.URL, err)
+		logger.Error().Err(err).Msg("error while pinging")
+		return PingData{}, fmt.Errorf("error with monitor %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
 
-	_, err = io.ReadAll(response.Body)
-
-	if err != nil {
-		return PingData{}, fmt.Errorf("Error while reading body from %s: %w", inputData.URL, err)
+	if _, err := io.ReadAll(response.Body); err != nil {
+		logger.Error().Err(err).Str("monitor", inputData.URL).Msg("error while reading body")
+		return PingData{}, fmt.Errorf("error while reading body from %s: %w", inputData.URL, err)
 	}
+
 	return PingData{
 		Latency:       latency,
 		StatusCode:    response.StatusCode,

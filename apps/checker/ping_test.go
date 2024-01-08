@@ -1,6 +1,7 @@
 package checker
 
 import (
+	"context"
 	"net/http"
 	"testing"
 
@@ -26,7 +27,7 @@ func Test_ping(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Ping(tt.args.client, tt.args.inputData)
+			got, err := Ping(context.Background(), tt.args.client, tt.args.inputData)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Ping() error = %v, wantErr %v", err, tt.wantErr)
