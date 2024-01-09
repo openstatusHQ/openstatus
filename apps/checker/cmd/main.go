@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,7 +12,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
 	"github.com/openstatushq/openstatus/apps/checker/request"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
@@ -29,6 +32,9 @@ func main() {
 	// environment variables.
 	flyRegion := env("FLY_REGION", "local")
 	cronSecret := env("CRON_SECRET", "")
+	logLevel := env("LOG_LEVEL", "warn")
+
+	logger.Configure(logLevel)
 
 	httpClient := &http.Client{}
 	defer httpClient.CloseIdleConnections()
@@ -36,7 +42,6 @@ func main() {
 	router := gin.New()
 	router.POST("/checker", func(c *gin.Context) {
 		ctx := c.Request.Context()
-		_ = ctx // TODO: use ctx.
 
 		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -55,29 +60,30 @@ func main() {
 
 		var req request.CheckerRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
 
-		response, error := checker.Ping(httpClient, req)
-		if error != nil {
+		response, err := checker.Ping(ctx, httpClient, req)
+		if err != nil {
 			// Add one more retry
-			response, error = checker.Ping(httpClient, req)
-			if error != nil {
-				checker.SendToTinyBird(checker.PingData{
+			response, err = checker.Ping(ctx, httpClient, req)
+			if err != nil {
+				checker.SendToTinyBird(ctx, checker.PingData{
 					URL:           req.URL,
 					Region:        flyRegion,
-					Message:       error.Error(),
+					Message:       err.Error(),
 					CronTimestamp: req.CronTimestamp,
 					Timestamp:     req.CronTimestamp,
 					MonitorID:     req.MonitorID,
 					WorkspaceID:   req.WorkspaceID,
 				})
 				if req.Status == "active" {
-					checker.UpdateStatus(checker.UpdateData{
+					checker.UpdateStatus(ctx, checker.UpdateData{
 						MonitorId: req.MonitorID,
 						Status:    "error",
-						Message:   error.Error(),
+						Message:   err.Error(),
 						Region:    flyRegion,
 					})
 				}
@@ -89,10 +95,10 @@ func main() {
 
 		if response.StatusCode < 200 || response.StatusCode >= 300 {
 			// Add one more retry
-			response, error = checker.Ping(httpClient, req)
+			response, err = checker.Ping(ctx, httpClient, req)
 			if response.StatusCode < 200 || response.StatusCode >= 300 && req.Status == "active" {
-				// If the status code is not within the 200 range, we update the status to error
-				checker.UpdateStatus(checker.UpdateData{
+				// If the status code is not within the 200 range, we update the status to err
+				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:  req.MonitorID,
 					Status:     "error",
 					StatusCode: response.StatusCode,
@@ -104,7 +110,7 @@ func main() {
 		// If the status was error and the status code is within the 200 range, we update the status to active
 		if req.Status == "error" && response.StatusCode >= 200 && response.StatusCode < 300 {
 			// If the status was error, we update it to active
-			checker.UpdateStatus(checker.UpdateData{
+			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:  req.MonitorID,
 				Status:     "active",
 				Region:     flyRegion,
@@ -112,7 +118,7 @@ func main() {
 			})
 		}
 		// We send the data to Tinybird
-		checker.SendToTinyBird(response)
+		checker.SendToTinyBird(ctx, response)
 
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
 		return
@@ -129,15 +135,15 @@ func main() {
 	}
 
 	go func() {
-		if err := httpServer.ListenAndServe(); err != nil {
-			// Add structured logs.
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to start http server")
 			cancel()
 		}
 	}()
 
 	<-ctx.Done()
 	if err := httpServer.Shutdown(ctx); err != nil {
-		// Add structured logs.
+		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
 		return
 	}
 }

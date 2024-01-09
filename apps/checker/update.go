@@ -2,11 +2,13 @@ package checker
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type UpdateData struct {
@@ -17,20 +19,18 @@ type UpdateData struct {
 	Region     string `json:"region"`
 }
 
-func UpdateStatus(updateData UpdateData) {
+func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	url := "https://openstatus-api.fly.dev/updateStatus"
-	fmt.Println("URL:>", url)
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(updateData)
-	req, err := http.NewRequest("POST", url, payloadBuf)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
 	req.Header.Set("Authorization", basic)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: time.Second * 10}
-	_, err = client.Do(req)
-	if err != nil {
-		panic(err)
+	if _, err = client.Do(req); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
 	// Should we add a retry mechanism here?
 }
