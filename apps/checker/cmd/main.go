@@ -64,12 +64,16 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
+		fmt.Printf("🚀 Start processing for %+v \n", req)
 
 		response, err := checker.Ping(ctx, httpClient, req)
 		if err != nil {
+			fmt.Printf("1️⃣  first retry for  %+v \n", req)
 			// Add one more retry
 			response, err = checker.Ping(ctx, httpClient, req)
 			if err != nil {
+				fmt.Printf("2️⃣ second retry for %+v \n", req)
+
 				checker.SendToTinyBird(ctx, checker.PingData{
 					URL:           req.URL,
 					Region:        flyRegion,

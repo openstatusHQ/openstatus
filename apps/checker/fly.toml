@@ -35,3 +35,8 @@ primary_region = "ams"
   method = "GET"
   timeout = "5s"
   path = "/ping"
+
+[http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500

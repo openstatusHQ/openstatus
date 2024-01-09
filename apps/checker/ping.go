@@ -85,12 +85,12 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
-		return PingData{}, fmt.Errorf("error with monitor %s: %w", inputData.URL, err)
+		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
 
 	if _, err := io.ReadAll(response.Body); err != nil {
-		logger.Error().Err(err).Str("monitor", inputData.URL).Msg("error while reading body")
+		logger.Error().Err(err).Str("monitorURL", inputData.URL).Msg("error while reading body")
 		return PingData{}, fmt.Errorf("error while reading body from %s: %w", inputData.URL, err)
 	}
 
