@@ -23,7 +23,7 @@ primary_region = "ams"
   min_machines_running = 1
 
   processes = ["app"]
-  [http_service.concurrency]
+[http_service.concurrency]
     type = "requests"
     hard_limit = 1000
     soft_limit = 500
