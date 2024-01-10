@@ -44,7 +44,7 @@ export function Globe() {
       onRender: (state) => {
         // Called on every animation frame.
         // `state` will be an empty object, return updated params.
-        if (prefersReducedMotion) {
+        if (!prefersReducedMotion) {
         state.phi = phi;
         phi += 0.003;
       }
