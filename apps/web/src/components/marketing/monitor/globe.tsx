@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import createGlobe from "cobe";
-import { useMediaQuery } from 'usehooks-ts';
+import { useMediaQuery } from '@/hooks/use-media-query';
 
 const SIZE = 350;
 
@@ -44,7 +44,7 @@ export function Globe() {
       onRender: (state) => {
         // Called on every animation frame.
         // `state` will be an empty object, return updated params.
-        if (!prefersReducedMotion) {
+        if (prefersReducedMotion) {
         state.phi = phi;
         phi += 0.003;
       }
