@@ -2,15 +2,13 @@
 
 import { useEffect, useRef } from "react";
 import createGlobe from "cobe";
-import { useMediaQuery } from 'react-responsive';
+import { useMediaQuery } from 'usehooks-ts';
 
 const SIZE = 350;
 
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const prefersReducedMotion = useMediaQuery({
-    query: '(prefers-reduced-motion: reduce)',
-  });
+  const prefersReducedMotion = useMediaQuery('((prefers-reduced-motion: reduce))');
 
   useEffect(() => {
     let phi = 0;
