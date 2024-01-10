@@ -19,6 +19,7 @@ export * from "./components/input-with-addons";
 export * from "./components/input";
 export * from "./components/label";
 export * from "./components/popover";
+export * from "./components/progress";
 export * from "./components/radio-group";
 export * from "./components/select";
 export * from "./components/separator";

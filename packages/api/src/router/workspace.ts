@@ -2,14 +2,18 @@ import { TRPCError } from "@trpc/server";
 import { generateSlug } from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq } from "@openstatus/db";
+import { and, eq, sql } from "@openstatus/db";
 import {
+  monitor,
+  notification,
+  page,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
   workspace,
   workspacePlanSchema,
 } from "@openstatus/db/src/schema";
+import { Limits } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -154,4 +158,28 @@ export const workspaceRouter = createTRPCRouter({
         .returning()
         .get();
     }),
+
+  getCurrentWorkspaceNumbers: protectedProcedure.query(async (opts) => {
+    const currentNumbers = await opts.ctx.db.transaction(async (tx) => {
+      const notifications = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(notification)
+        .where(eq(notification.workspaceId, opts.ctx.workspace.id));
+      const monitors = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(monitor)
+        .where(eq(monitor.workspaceId, opts.ctx.workspace.id));
+      const pages = await tx
+        .select({ count: sql<number>`count(*)` })
+        .from(page)
+        .where(eq(page.workspaceId, opts.ctx.workspace.id));
+      return {
+        "notification-channels": notifications?.[0].count || 0,
+        monitors: monitors?.[0].count || 0,
+        "status-pages": pages?.[0].count || 0,
+      } satisfies Partial<Limits>;
+    });
+
+    return currentNumbers;
+  }),
 });
