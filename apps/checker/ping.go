@@ -3,8 +3,8 @@ package checker
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -37,42 +37,31 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	}
 
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
-
-	// Setting headers
 	for _, header := range inputData.Headers {
-		if header.Key != "" && header.Value != "" {
-			req.Header.Set(header.Key, header.Value)
-		}
+		req.Header.Set(header.Key, header.Value)
 	}
 
 	start := time.Now()
 	response, err := client.Do(req)
 	latency := time.Since(start).Milliseconds()
-
 	if err != nil {
-		if urlErr, ok := err.(*url.Error); ok {
-			if urlErr.Timeout() {
-				return PingData{
-					Latency:     latency,
-					MonitorID:   inputData.MonitorID,
-					Region:      region,
-					WorkspaceID: inputData.WorkspaceID,
-					Timestamp:   time.Now().UTC().UnixMilli(),
-					URL:         inputData.URL,
-					Message:     fmt.Sprintf("Timeout after %d ms", latency),
-				}, nil
-			}
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) && urlErr.Timeout() {
+			return PingData{
+				Latency:     latency,
+				MonitorID:   inputData.MonitorID,
+				Region:      region,
+				WorkspaceID: inputData.WorkspaceID,
+				Timestamp:   time.Now().UTC().UnixMilli(),
+				URL:         inputData.URL,
+				Message:     fmt.Sprintf("Timeout after %d ms", latency),
+			}, nil
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
 		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
-
-	if _, err := io.ReadAll(response.Body); err != nil {
-		logger.Error().Err(err).Str("monitorURL", inputData.URL).Msg("error while reading body")
-		return PingData{}, fmt.Errorf("error while reading body from %s: %w", inputData.URL, err)
-	}
 
 	return PingData{
 		Latency:       latency,
