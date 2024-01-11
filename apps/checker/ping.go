@@ -3,7 +3,6 @@ package checker
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -25,25 +24,6 @@ type PingData struct {
 	URL           string `json:"url"`
 	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
-}
-
-func SendToTinyBird(ctx context.Context, pingData PingData) {
-	url := "https://api.tinybird.co/v0/events?name=ping_response__v5"
-	fmt.Printf("📈  Sending data to Tinybird for %+v \n", pingData)
-	bearer := "Bearer " + os.Getenv("TINYBIRD_TOKEN")
-	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(pingData)
-	req, err := http.NewRequest("POST", url, payloadBuf)
-	req.Header.Set("Authorization", bearer)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: time.Second * 10}
-	_, err = client.Do(req)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Error while sending data to Tinybird")
-	}
-	// Should we add a retry mechanism here?
-
 }
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {

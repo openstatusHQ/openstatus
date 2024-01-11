@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 )
@@ -32,12 +33,16 @@ func main() {
 	// environment variables.
 	flyRegion := env("FLY_REGION", "local")
 	cronSecret := env("CRON_SECRET", "")
+	tinyBirdToken := env("TINYBIRD_TOKEN", "")
 	logLevel := env("LOG_LEVEL", "warn")
 
 	logger.Configure(logLevel)
 
+	// packages.
 	httpClient := &http.Client{}
 	defer httpClient.CloseIdleConnections()
+
+	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
 
 	router := gin.New()
 	router.POST("/checker", func(c *gin.Context) {
@@ -64,17 +69,12 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		fmt.Printf("🚀 Start processing for %+v \n", req)
 
 		response, err := checker.Ping(ctx, httpClient, req)
 		if err != nil {
-			fmt.Printf("1️⃣  first retry for  %+v \n", req)
-			// Add one more retry
 			response, err = checker.Ping(ctx, httpClient, req)
 			if err != nil {
-				fmt.Printf("2️⃣ second retry for %+v \n", req)
-
-				checker.SendToTinyBird(ctx, checker.PingData{
+				if err := tinybirdClient.SendEvent(ctx, checker.PingData{
 					URL:           req.URL,
 					Region:        flyRegion,
 					Message:       err.Error(),
@@ -82,7 +82,10 @@ func main() {
 					Timestamp:     req.CronTimestamp,
 					MonitorID:     req.MonitorID,
 					WorkspaceID:   req.WorkspaceID,
-				})
+				}); err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+				}
+
 				if req.Status == "active" {
 					checker.UpdateStatus(ctx, checker.UpdateData{
 						MonitorId: req.MonitorID,
@@ -121,8 +124,10 @@ func main() {
 				StatusCode: response.StatusCode,
 			})
 		}
-		// We send the data to Tinybird
-		checker.SendToTinyBird(ctx, response)
+
+		if err := tinybirdClient.SendEvent(ctx, response); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
 		return
