@@ -38,7 +38,9 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
 	for _, header := range inputData.Headers {
-		req.Header.Set(header.Key, header.Value)
+		if header.Key != "" && header.Value != "" {
+			req.Header.Set(header.Key, header.Value)
+		}
 	}
 
 	start := time.Now()
