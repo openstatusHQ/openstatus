@@ -3,6 +3,7 @@ module github.com/openstatushq/openstatus/apps/checker
 go 1.21.4
 
 require (
+	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.8.3

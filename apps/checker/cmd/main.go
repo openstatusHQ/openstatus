@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +15,15 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
+
+	backoff "github.com/cenkalti/backoff/v4"
 )
+
+type statusCode int
+
+func (s statusCode) IsSuccessful() bool {
+	return s >= 200 && s < 300
+}
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -53,16 +60,6 @@ func main() {
 			return
 		}
 
-		switch i, err := strconv.Atoi(c.GetHeader("X-CloudTasks-TaskRetryCount")); {
-		case err != nil:
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid retry count"})
-			return
-		case i > 1:
-			// Why would that be OK?
-			c.JSON(http.StatusOK, gin.H{"message": "ok"})
-			return
-		}
-
 		var req request.CheckerRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
@@ -70,67 +67,64 @@ func main() {
 			return
 		}
 
-		response, err := checker.Ping(ctx, httpClient, req)
-		if err != nil {
-			response, err = checker.Ping(ctx, httpClient, req)
+		op := func() error {
+			res, err := checker.Ping(ctx, httpClient, req)
 			if err != nil {
-				if err := tinybirdClient.SendEvent(ctx, checker.PingData{
-					URL:           req.URL,
-					Region:        flyRegion,
-					Message:       err.Error(),
-					CronTimestamp: req.CronTimestamp,
-					Timestamp:     req.CronTimestamp,
-					MonitorID:     req.MonitorID,
-					WorkspaceID:   req.WorkspaceID,
-				}); err != nil {
-					log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
-				}
-
-				if req.Status == "active" {
-					checker.UpdateStatus(ctx, checker.UpdateData{
-						MonitorId: req.MonitorID,
-						Status:    "error",
-						Message:   err.Error(),
-						Region:    flyRegion,
-					})
-				}
-
-				c.JSON(http.StatusOK, gin.H{"message": "ok"})
-				return
+				return fmt.Errorf("unable to ping: %w", err)
 			}
-		}
 
-		if response.StatusCode < 200 || response.StatusCode >= 300 {
-			// Add one more retry
-			response, err = checker.Ping(ctx, httpClient, req)
-			if response.StatusCode < 200 || response.StatusCode >= 300 && req.Status == "active" {
-				// If the status code is not within the 200 range, we update the status to err
+			statusCode := statusCode(res.StatusCode)
+			if !statusCode.IsSuccessful() {
+				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:  req.MonitorID,
 					Status:     "error",
-					StatusCode: response.StatusCode,
+					StatusCode: res.StatusCode,
 					Region:     flyRegion,
+				})
+			} else if req.Status == "error" && statusCode.IsSuccessful() {
+				// Q: Why here we check the data before updating the status in this scenario?
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:  req.MonitorID,
+					Status:     "active",
+					Region:     flyRegion,
+					StatusCode: res.StatusCode,
+				})
+			}
+
+			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			}
+
+			return nil
+		}
+
+		if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
+			if err := tinybirdClient.SendEvent(ctx, checker.PingData{
+				URL:           req.URL,
+				Region:        flyRegion,
+				Message:       err.Error(),
+				CronTimestamp: req.CronTimestamp,
+				Timestamp:     req.CronTimestamp,
+				MonitorID:     req.MonitorID,
+				WorkspaceID:   req.WorkspaceID,
+			}); err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			}
+
+			// If the status was previously active, we update it to error.
+			// Q: Why not always updating the status? My idea is that the checker should be dumb and only check the status and return it.
+			if req.Status == "active" {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId: req.MonitorID,
+					Status:    "error",
+					Message:   err.Error(),
+					Region:    flyRegion,
 				})
 			}
 		}
 
-		// If the status was error and the status code is within the 200 range, we update the status to active
-		if req.Status == "error" && response.StatusCode >= 200 && response.StatusCode < 300 {
-			// If the status was error, we update it to active
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:  req.MonitorID,
-				Status:     "active",
-				Region:     flyRegion,
-				StatusCode: response.StatusCode,
-			})
-		}
-
-		if err := tinybirdClient.SendEvent(ctx, response); err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
-		}
-
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
-		return
 	})
 
 	router.GET("/ping", func(c *gin.Context) {
