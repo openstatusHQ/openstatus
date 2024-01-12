@@ -3,9 +3,8 @@ package checker
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -27,25 +26,6 @@ type PingData struct {
 	Message       string `json:"message,omitempty"`
 }
 
-func SendToTinyBird(ctx context.Context, pingData PingData) {
-	url := "https://api.tinybird.co/v0/events?name=ping_response__v5"
-	fmt.Printf("📈  Sending data to Tinybird for %+v \n", pingData)
-	bearer := "Bearer " + os.Getenv("TINYBIRD_TOKEN")
-	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(pingData)
-	req, err := http.NewRequest("POST", url, payloadBuf)
-	req.Header.Set("Authorization", bearer)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: time.Second * 10}
-	_, err = client.Do(req)
-	if err != nil {
-		log.Ctx(ctx).Error().Err(err).Msg("Error while sending data to Tinybird")
-	}
-	// Should we add a retry mechanism here?
-
-}
-
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 
@@ -57,8 +37,6 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	}
 
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
-
-	// Setting headers
 	for _, header := range inputData.Headers {
 		if header.Key != "" && header.Value != "" {
 			req.Header.Set(header.Key, header.Value)
@@ -68,31 +46,24 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	start := time.Now()
 	response, err := client.Do(req)
 	latency := time.Since(start).Milliseconds()
-
 	if err != nil {
-		if urlErr, ok := err.(*url.Error); ok {
-			if urlErr.Timeout() {
-				return PingData{
-					Latency:     latency,
-					MonitorID:   inputData.MonitorID,
-					Region:      region,
-					WorkspaceID: inputData.WorkspaceID,
-					Timestamp:   time.Now().UTC().UnixMilli(),
-					URL:         inputData.URL,
-					Message:     fmt.Sprintf("Timeout after %d ms", latency),
-				}, nil
-			}
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) && urlErr.Timeout() {
+			return PingData{
+				Latency:     latency,
+				MonitorID:   inputData.MonitorID,
+				Region:      region,
+				WorkspaceID: inputData.WorkspaceID,
+				Timestamp:   time.Now().UTC().UnixMilli(),
+				URL:         inputData.URL,
+				Message:     fmt.Sprintf("Timeout after %d ms", latency),
+			}, nil
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
 		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
-
-	if _, err := io.ReadAll(response.Body); err != nil {
-		logger.Error().Err(err).Str("monitorURL", inputData.URL).Msg("error while reading body")
-		return PingData{}, fmt.Errorf("error while reading body from %s: %w", inputData.URL, err)
-	}
 
 	return PingData{
 		Latency:       latency,
