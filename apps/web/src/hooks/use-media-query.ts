@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 type MediaQuery = string | number;
 
@@ -16,11 +16,11 @@ export function useMediaQuery(query: MediaQuery): boolean {
     setMatches(mediaQueryList.matches);
 
     // Add listener for changes
-    mediaQueryList.addEventListener('change', handleChange);
+    mediaQueryList.addEventListener("change", handleChange);
 
     // Clean up listener on unmount
     return () => {
-      mediaQueryList.removeEventListener('change', handleChange);
+      mediaQueryList.removeEventListener("change", handleChange);
     };
   }, [query]);
 
