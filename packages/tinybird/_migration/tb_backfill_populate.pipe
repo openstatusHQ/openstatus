@@ -10,8 +10,9 @@ SQL >
         url,
         workspaceId,
         cronTimestamp,
-    FROM ping_response__v4
-    WHERE fromUnixTimestamp64Milli(cronTimestamp) <= '2023-11-13 18:16:00.000'
+        message
+    FROM ping_response__v5
+    WHERE fromUnixTimestamp64Milli(cronTimestamp) <= '2024-01-15 18:16:00.000'
 
 TYPE materialized
-DATASOURCE ping_response__v5
+DATASOURCE ping_response__v6
