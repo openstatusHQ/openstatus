@@ -20,7 +20,7 @@ export default function PricingPage() {
           <p className="text-muted-foreground text-sm">
             Learn more about the{" "}
             <Link
-              href="/blog"
+              href="/blog/our-new-pricing-explained"
               className="text-foreground underline underline-offset-4 hover:no-underline"
             >
               decision behind the plans

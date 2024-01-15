@@ -18,7 +18,11 @@ export function EnterpricePlan() {
       </div>
       <div>
         <Button asChild>
-          <a href="https://cal.com/team/openstatus/30min" target="_blank">
+          <a
+            href="https://cal.com/team/openstatus/30min"
+            target="_blank"
+            rel="noreferrer"
+          >
             Schedule call
           </a>
         </Button>

@@ -53,7 +53,7 @@ export const allPlans: Record<
     },
   },
   team: {
-    title: "Team",
+    title: "Growth",
     description: "For small teams",
     price: 79,
     limits: {
