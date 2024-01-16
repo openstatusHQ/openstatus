@@ -11,5 +11,12 @@ type CheckerRequest struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
-	Status   string   `json:"status"`
+	Status string `json:"status"`
+}
+
+type PingRequest struct {
+	URL     string            `json:"url"`
+	Method  string            `json:"method"`
+	Body    string            `json:"body"`
+	Headers map[string]string `json:"headers"`
 }
