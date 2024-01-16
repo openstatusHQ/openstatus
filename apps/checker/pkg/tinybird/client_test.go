@@ -64,7 +64,7 @@ func TestSendEvent(t *testing.T) {
 			f: func(req *http.Request) (*http.Response, error) {
 				url = req.URL.String()
 				return &http.Response{
-					StatusCode: http.StatusOK,
+					StatusCode: http.StatusAccepted,
 				}, nil
 			},
 		}
@@ -73,6 +73,6 @@ func TestSendEvent(t *testing.T) {
 
 		err := client.SendEvent(ctx, "event")
 		require.NoError(t, err)
-		require.Equal(t, "https://api.tinybird.co/v0/events?name=ping_response__v5", url)
+		require.Equal(t, "https://api.tinybird.co/v0/events?name=ping_response__v6", url)
 	})
 }
