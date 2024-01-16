@@ -90,6 +90,7 @@ func main() {
 					Status:     "error",
 					StatusCode: res.StatusCode,
 					Region:     flyRegion,
+					Message:    res.Message,
 				})
 			} else if req.Status == "error" && statusCode.IsSuccessful() {
 				// Q: Why here we check the data before updating the status in this scenario?
@@ -147,7 +148,7 @@ func main() {
 			c.String(http.StatusBadRequest, "region is required")
 			return
 		}
-		apiKey := c.GetHeader("x-openstatus-apikey")
+		apiKey := c.GetHeader("x-openstatus-key")
 		if apiKey == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 
