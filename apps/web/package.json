@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.25.1",
+    "@clerk/nextjs": "4.29.3",
     "@google-cloud/tasks": "4.0.1",
     "@headlessui/react": "1.7.17",
     "@hookform/resolvers": "3.3.1",

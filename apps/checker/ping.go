@@ -45,6 +45,17 @@ type Timing struct {
 	TransferDone      int64 `json:"transferDone"`
 }
 
+type Response struct {
+	Status  int               `json:"status,omitempty"`
+	Latency int64             `json:"latency"`
+	Body    string            `json:"body,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Time    int64             `json:"time"`
+	Timing  Timing            `json:"timing"`
+	Error   string            `json:"error,omitempty"`
+	Tags    []string          `json:"tags,omitempty"`
+}
+
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 
@@ -153,5 +164,73 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 		URL:           inputData.URL,
 		Timing:        string(timingAsString),
 		Headers:       string(headersAsString),
+	}, nil
+}
+
+func SinglePing(ctx context.Context, client *http.Client, inputData request.PingRequest) (Response, error) {
+	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
+
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
+	if err != nil {
+		logger.Error().Err(err).Msg("error while creating req")
+		return Response{}, fmt.Errorf("unable to create req: %w", err)
+	}
+
+	req.Header.Set("User-Agent", "OpenStatus/1.0")
+	for key, value := range inputData.Headers {
+		req.Header.Set(key, value)
+	}
+	timing := Timing{}
+
+	trace := &httptrace.ClientTrace{
+		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UTC().UnixMilli() },
+		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UTC().UnixMilli() },
+		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UTC().UnixMilli() },
+		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UTC().UnixMilli() },
+		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UTC().UnixMilli() },
+		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UTC().UnixMilli() },
+		GotConn: func(_ httptrace.GotConnInfo) {
+			timing.FirstByteStart = time.Now().UTC().UnixMilli()
+		},
+		GotFirstResponseByte: func() {
+			timing.FirstByteDone = time.Now().UTC().UnixMilli()
+			timing.TransferStart = time.Now().UTC().UnixMilli()
+		},
+	}
+
+	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+
+	start := time.Now()
+	res, err := client.Do(req)
+	timing.TransferDone = time.Now().UTC().UnixMilli()
+	latency := time.Since(start).Milliseconds()
+
+	if err != nil {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) && urlErr.Timeout() {
+			return Response{
+				Latency: latency,
+				Timing:  timing,
+				Time:    start.UTC().UnixMilli(),
+				Error:   fmt.Sprintf("Timeout after %d ms", latency),
+			}, nil
+		}
+
+		logger.Error().Err(err).Msg("error while pinging")
+		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+	}
+	defer res.Body.Close()
+
+	headers := make(map[string]string)
+	for key := range res.Header {
+		headers[key] = res.Header.Get(key)
+	}
+
+	return Response{
+		Time:    start.UTC().UnixMilli(),
+		Status:  res.StatusCode,
+		Headers: headers,
+		Timing:  timing,
+		Latency: latency,
 	}, nil
 }

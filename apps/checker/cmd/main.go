@@ -16,6 +16,7 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 
+	unkey "github.com/WilfredAlmeida/unkey-go/features"
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
@@ -59,6 +60,14 @@ func main() {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
+
+		// if the request has been routed to a wrong region, we forward it to the correct one.
+		 region := c.GetHeader("fly-prefer-region")
+		 if region != "" && region != flyRegion {
+			 c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			 c.String(http.StatusAccepted, "Forwarding request to %s", region)
+			 return
+		 }
 
 		var req request.CheckerRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -128,11 +137,55 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
 	})
 
-	router.GET("/ping", func(c *gin.Context) {
+	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
 		return
 	})
 
+	router.POST("/ping/:region", func(c *gin.Context) {
+		region := c.Param("region")
+		if region == "" {
+			c.String(http.StatusBadRequest, "region is required")
+			return
+		}
+		apiKey := c.GetHeader("x-openstatus-apikey")
+		if apiKey == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
+			return
+		}
+
+		response, err := unkey.KeyVerify(apiKey)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		if !response.Valid {
+			fmt.Println("Key is valid")
+		}
+
+		if region != flyRegion {
+			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+			return
+		}
+
+		var req request.PingRequest
+		if err := c.ShouldBindJSON(&req); err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+
+		res, err := checker.SinglePing(c.Request.Context(), httpClient, req)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+		c.JSON(http.StatusOK, res)
+		return
+	})
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),
 		Handler: router,
