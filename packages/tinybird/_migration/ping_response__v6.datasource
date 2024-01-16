@@ -1,4 +1,4 @@
-VERSION 5
+VERSION 6
 
 SCHEMA >
     `latency` Int64 `json:$.latency`,
