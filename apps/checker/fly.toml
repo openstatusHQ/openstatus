@@ -34,7 +34,7 @@ primary_region = "ams"
   interval = "15s"
   method = "GET"
   timeout = "5s"
-  path = "/ping"
+  path = "/health"
 
 [http_service.concurrency]
     type = "requests"
