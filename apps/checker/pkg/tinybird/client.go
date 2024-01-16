@@ -60,7 +60,7 @@ func (c client) SendEvent(ctx context.Context, event any) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusOK || resp.StatusCode != http.StatusAccepted {
 		log.Ctx(ctx).Error().Str("status", resp.Status).Msg("unexpected status code")
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
