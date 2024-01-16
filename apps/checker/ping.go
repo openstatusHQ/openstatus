@@ -96,6 +96,7 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	start := time.Now()
 
 	response, err := client.Do(req)
+	timing.TransferDone = time.Now().UTC().UnixMilli()
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {

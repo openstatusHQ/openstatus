@@ -148,7 +148,7 @@ func main() {
 			c.String(http.StatusBadRequest, "region is required")
 			return
 		}
-		apiKey := c.GetHeader("x-openstatus-apikey")
+		apiKey := c.GetHeader("x-openstatus-key")
 		if apiKey == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 
