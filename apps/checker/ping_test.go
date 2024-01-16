@@ -19,14 +19,14 @@ func Test_ping(t *testing.T) {
 		want    PingData
 		wantErr bool
 	}{
-		{name: "200", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://openstat.us", CronTimestamp: 1,Headers:[]struct {
+		{name: "200", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://openstat.us", CronTimestamp: 1, Headers: []struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
-		} {{Key:"", Value:""}}}}, want: PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
-		{name: "200", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://openstat.us", CronTimestamp: 1,Headers:[]struct {
+		}{{Key: "", Value: ""}}}}, want: PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
+		{name: "200", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://openstat.us", CronTimestamp: 1, Headers: []struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
-		} {{Key:"", Value:""}}}}, want: PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
+		}{{Key: "", Value: ""}}}}, want: PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
 		{name: "500", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://openstat.us/500", CronTimestamp: 1}}, want: PingData{URL: "https://openstat.us/500", StatusCode: 500}, wantErr: false},
 		{name: "500", args: args{client: &http.Client{}, inputData: request.CheckerRequest{URL: "https://somethingthatwillfail.ed", CronTimestamp: 1}}, want: PingData{URL: "https://openstat.us/500", StatusCode: 0}, wantErr: true},
 
