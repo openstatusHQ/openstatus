@@ -81,6 +81,7 @@ func main() {
 					Status:     "error",
 					StatusCode: res.StatusCode,
 					Region:     flyRegion,
+					Message:    res.Message,
 				})
 			} else if req.Status == "error" && statusCode.IsSuccessful() {
 				// Q: Why here we check the data before updating the status in this scenario?

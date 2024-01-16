@@ -37,7 +37,7 @@ func (c client) SendEvent(ctx context.Context, event any) error {
 	}
 
 	q := requestURL.Query()
-	q.Add("name", "ping_response__v5")
+	q.Add("name", "ping_response__v6")
 	requestURL.RawQuery = q.Encode()
 
 	var payload bytes.Buffer

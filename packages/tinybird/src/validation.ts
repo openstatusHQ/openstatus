@@ -15,6 +15,21 @@ export const tbIngestPingResponse = z.object({
   url: z.string().url(),
   region: z.string().min(3).max(4), // REMINDER: won't work on fy
   message: z.string().nullable().optional(),
+  headers: z.record(z.string(), z.string()).nullable().optional(),
+  timing: z
+    .object({
+      dnsStart: z.number().int(),
+      dnsDone: z.number().int(),
+      connectStart: z.number().int(),
+      connectDone: z.number().int(),
+      tlsHandshakeStart: z.number().int(),
+      tlsHandshakeDone: z.number().int(),
+      firstByteStart: z.number().int(),
+      firstByteDone: z.number().int(),
+      transferStart: z.number().int(),
+      transferDone: z.number().int(),
+    })
+    .nullable(),
 });
 
 /**

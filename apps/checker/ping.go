@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,17 +19,17 @@ import (
 )
 
 type PingData struct {
-	WorkspaceID   string            `json:"workspaceId"`
-	MonitorID     string            `json:"monitorId"`
-	Timestamp     int64             `json:"timestamp"`
-	StatusCode    int               `json:"statusCode,omitempty"`
-	Latency       int64             `json:"latency"`
-	CronTimestamp int64             `json:"cronTimestamp"`
-	URL           string            `json:"url"`
-	Region        string            `json:"region"`
-	Message       string            `json:"message,omitempty"`
-	Timing        Timing            `json:"timing,omitempty"`
-	Headers       map[string]string `json:"headers,omitempty"`
+	WorkspaceID   string `json:"workspaceId"`
+	MonitorID     string `json:"monitorId"`
+	Timestamp     int64  `json:"timestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
+	Latency       int64  `json:"latency"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	URL           string `json:"url"`
+	Region        string `json:"region"`
+	Message       string `json:"message,omitempty"`
+	Timing        string `json:"timing,omitempty"`
+	Headers       string `json:"headers,omitempty"`
 }
 
 type Timing struct {
@@ -64,39 +65,45 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	timing := Timing{}
 
 	trace := &httptrace.ClientTrace{
-		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UnixMilli() },
-		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UnixMilli() },
-		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UnixMilli() },
-		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UnixMilli() },
-		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UnixMilli() },
-		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UnixMilli() },
+		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UTC().UnixMilli() },
+		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UTC().UnixMilli() },
+		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UTC().UnixMilli() },
+		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UTC().UnixMilli() },
+		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UTC().UnixMilli() },
+		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UTC().UnixMilli() },
 		GotConn: func(_ httptrace.GotConnInfo) {
-			timing.FirstByteStart = time.Now().UnixMilli()
+			timing.FirstByteStart = time.Now().UTC().UnixMilli()
 		},
 		GotFirstResponseByte: func() {
-			timing.FirstByteDone = time.Now().UnixMilli()
-			timing.TransferStart = time.Now().UnixMilli()
+			timing.FirstByteDone = time.Now().UTC().UnixMilli()
+			timing.TransferStart = time.Now().UTC().UnixMilli()
 		},
 	}
 
-	start := time.Now()
-
 	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+
+	start := time.Now()
 
 	response, err := client.Do(req)
 	latency := time.Since(start).Milliseconds()
+
 	if err != nil {
+		timingAsString, err := json.Marshal(timing)
+		if err != nil {
+			logger.Error().Err(err).Msg("error while parsing timing data")
+		}
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
 			return PingData{
-				Latency:     latency,
-				MonitorID:   inputData.MonitorID,
-				Region:      region,
-				WorkspaceID: inputData.WorkspaceID,
-				Timestamp:   time.Now().UTC().UnixMilli(),
-				URL:         inputData.URL,
-				Message:     fmt.Sprintf("Timeout after %d ms", latency),
-				Timing:      timing,
+				Latency:       latency,
+				MonitorID:     inputData.MonitorID,
+				Region:        region,
+				WorkspaceID:   inputData.WorkspaceID,
+				Timestamp:     start.UTC().UnixMilli(),
+				CronTimestamp: inputData.CronTimestamp,
+				URL:           inputData.URL,
+				Message:       fmt.Sprintf("Timeout after %d ms", latency),
+				Timing:        string(timingAsString),
 			}, nil
 		}
 
@@ -107,12 +114,32 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 
 	_, err = io.ReadAll(response.Body)
 	if err != nil {
-		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+		return PingData{
+			Latency:       latency,
+			MonitorID:     inputData.MonitorID,
+			Region:        region,
+			WorkspaceID:   inputData.WorkspaceID,
+			Timestamp:     start.UTC().UnixMilli(),
+			CronTimestamp: inputData.CronTimestamp,
+			URL:           inputData.URL,
+			Message:       fmt.Sprintf("Cannot read response body: %s", err.Error()),
+		}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 
 	headers := make(map[string]string)
 	for key := range response.Header {
 		headers[key] = response.Header.Get(key)
+	}
+
+	// In TB we need to store them as string
+	timingAsString, err := json.Marshal(timing)
+	if err != nil {
+		return PingData{}, fmt.Errorf("error while parsing timing data %s: %w", inputData.URL, err)
+	}
+
+	headersAsString, err := json.Marshal(headers)
+	if err != nil {
+		return PingData{}, fmt.Errorf("error while parsing headers %s: %w", inputData.URL, err)
 	}
 
 	return PingData{
@@ -121,10 +148,10 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 		MonitorID:     inputData.MonitorID,
 		Region:        region,
 		WorkspaceID:   inputData.WorkspaceID,
-		Timestamp:     time.Now().UTC().UnixMilli(),
+		Timestamp:     start.UTC().UnixMilli(),
 		CronTimestamp: inputData.CronTimestamp,
 		URL:           inputData.URL,
-		Timing:        timing,
-		Headers:       headers,
+		Timing:        string(timingAsString),
+		Headers:       string(headersAsString),
 	}, nil
 }
