@@ -37,7 +37,7 @@ func (c client) SendEvent(ctx context.Context, event any) error {
 	}
 
 	q := requestURL.Query()
-	q.Add("name", "ping_response__v5")
+	q.Add("name", "ping_response__v7")
 	requestURL.RawQuery = q.Encode()
 
 	var payload bytes.Buffer
@@ -60,7 +60,7 @@ func (c client) SendEvent(ctx context.Context, event any) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK || resp.StatusCode != http.StatusAccepted {
+	if resp.StatusCode != http.StatusAccepted {
 		log.Ctx(ctx).Error().Str("status", resp.Status).Msg("unexpected status code")
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}

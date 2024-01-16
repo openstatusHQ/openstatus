@@ -18,7 +18,7 @@ import {
 const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
-  datasource: "ping_response__v5",
+  datasource: "ping_response__v6",
   event: tbIngestPingResponse,
 });
 
