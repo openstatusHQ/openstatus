@@ -29,7 +29,8 @@ export const tbIngestPingResponse = z.object({
       transferStart: z.number().int(),
       transferDone: z.number().int(),
     })
-    .nullable(),
+    .nullable()
+    .optional(),
 });
 
 /**
