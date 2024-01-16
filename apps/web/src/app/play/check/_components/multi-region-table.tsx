@@ -8,12 +8,17 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import type { RegionCheck } from "../types";
-import { getTotalLatency, valueFormatter } from "../utils";
+import type { RegionChecker } from "../utils";
+import {
+  getTimingPhases,
+  getTotalLatency,
+  regionFormatter,
+  valueFormatter,
+} from "../utils";
 
 // TBD: add the popover infos about timing details
 
-export function MultiRegionTable({ regions }: { regions: RegionCheck[] }) {
+export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
   return (
     <Table>
       <TableCaption>Multi Regions</TableCaption>
@@ -29,12 +34,15 @@ export function MultiRegionTable({ regions }: { regions: RegionCheck[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {regions.map(({ name, status, ...timing }) => {
-          const { dns, connection, tls, ttfb, transfer } = timing;
+        {regions.map(({ region, status, timing }) => {
+          const { dns, connection, tls, ttfb, transfer } =
+            getTimingPhases(timing);
           const total = getTotalLatency(timing);
           return (
-            <TableRow key={name}>
-              <TableCell className="font-medium">{name}</TableCell>
+            <TableRow key={region}>
+              <TableCell className="font-medium">
+                {regionFormatter(region)}
+              </TableCell>
               <TableCell>{status}</TableCell>
               <TableCell className="text-muted-foreground">
                 <code>{valueFormatter(dns)}</code>

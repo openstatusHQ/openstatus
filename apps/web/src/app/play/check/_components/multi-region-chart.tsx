@@ -2,18 +2,33 @@
 
 import { BarChart } from "@tremor/react";
 
-import type { RegionCheck } from "../types";
-import { valueFormatter } from "../utils";
+import type { RegionChecker } from "../utils";
+import { getTimingPhases, regionFormatter, valueFormatter } from "../utils";
 
-export function MultiRegionChart({ regions }: { regions: RegionCheck[] }) {
+export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
+  const data = regions.map((item) => {
+    const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
+      item.timing,
+    );
+    return {
+      region: regionFormatter(item.region),
+      dns,
+      connection,
+      tls,
+      ttfb,
+      transfer,
+    };
+  });
   return (
     <BarChart
-      data={regions}
-      index="name"
+      data={data}
+      index="region"
       categories={["dns", "connection", "tls", "ttfb", "transfer"]}
       colors={["blue", "teal", "amber", "rose", "indigo", "emerald"]}
       valueFormatter={valueFormatter}
       stack
+      layout="vertical"
+      yAxisWidth={65}
     />
   );
 }

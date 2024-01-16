@@ -12,8 +12,12 @@ export function InputForm() {
           name="url"
           id="url"
           className="w-full"
+          value="https://google.com"
+          disabled
         />
-        <Button type="submit">Check</Button>
+        <Button type="submit" disabled>
+          Check
+        </Button>
       </div>
       <p className="text-muted-foreground text-xs">
         Enter a URL to check the connection.

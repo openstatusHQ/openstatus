@@ -14,11 +14,12 @@ import {
 } from "@openstatus/ui";
 
 import { timingDict } from "../config";
-import type { Timing } from "../types";
-import { getTotalLatency } from "../utils";
+import type { Timing } from "../utils";
+import { getTimingPhases, getTotalLatency } from "../utils";
 
 export function ResponseTimingTable({ timing }: { timing: Timing }) {
   const total = getTotalLatency(timing);
+  const timingPhases = getTimingPhases(timing);
   return (
     <Table>
       <TableCaption>Response Timing</TableCaption>
@@ -30,9 +31,9 @@ export function ResponseTimingTable({ timing }: { timing: Timing }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {Object.entries(timing).map(([key, value]) => {
+        {Object.entries(timingPhases).map(([key, value]) => {
           const { short, long, description } =
-            timingDict[key as keyof typeof timing];
+            timingDict[key as keyof typeof timingPhases];
           return (
             <TableRow key={key}>
               <TableCell>

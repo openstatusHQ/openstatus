@@ -1,7 +1,8 @@
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
 import { Separator } from "@openstatus/ui";
 
-import type { RegionCheck } from "../types";
-import { getTotalLatency } from "../utils";
+import type { RegionChecker } from "../utils";
+import { valueFormatter } from "../utils";
 import { HighlightCard } from "./highlight-card";
 import { MultiRegionChart } from "./multi-region-chart";
 import { MultiRegionTable } from "./multi-region-table";
@@ -10,22 +11,20 @@ import { ResponseTimingTable } from "./response-timing-table";
 import { SelectRegion } from "./select-region";
 
 interface Props {
-  regions: RegionCheck[];
-  region?: string;
+  regions: RegionChecker[];
+  searchRegion?: MonitorFlyRegion;
 }
 
-export function RequestDetails({ regions, region }: Props) {
+export function RequestDetails({ regions, searchRegion }: Props) {
   const selectedRegion =
-    regions.find(({ name }) => name === region) || regions[0];
+    regions.find((i) => i.region === searchRegion) || regions[0];
 
-  const { status, name, headers, ...timing } = selectedRegion;
-
-  const total = getTotalLatency(timing);
+  const { status, region, headers, latency, time, timing } = selectedRegion;
 
   return (
     <div className="grid gap-8">
       <p className="text-muted-foreground text-sm">
-        {new Date().toLocaleString()}
+        {new Date(time).toLocaleString()}
       </p>
       <div>
         <MultiRegionChart regions={regions} />
@@ -34,13 +33,13 @@ export function RequestDetails({ regions, region }: Props) {
         <MultiRegionTable regions={regions} />
       </div>
       <Separator />
-      <SelectRegion defaultValue={region} />
+      <SelectRegion defaultValue={searchRegion} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <HighlightCard title="Region" value={name} icon="globe" />
-        <HighlightCard title="Status" value={200} icon="activity" />
+        <HighlightCard title="Region" value={region} icon="globe" />
+        <HighlightCard title="Status" value={status} icon="activity" />
         <HighlightCard
           title="Latency"
-          value={`${total.toLocaleString()}ms`}
+          value={valueFormatter(latency)}
           icon="timer"
         />
       </div>
