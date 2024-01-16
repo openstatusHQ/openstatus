@@ -10,8 +10,7 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-// FIXME:
-import type { Headers } from "./request-details";
+import type { Headers } from "../types";
 
 export function ResponseHeaderTable({ headers }: { headers: Headers }) {
   return (

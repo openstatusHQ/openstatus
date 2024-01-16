@@ -13,13 +13,9 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import { timingDict } from "./request-details";
-import type { Timing } from "./request-details";
-
-function getTotalLatency(timing: Timing) {
-  const { dns, connection, tls, ttfb, transfer } = timing;
-  return dns + connection + tls + ttfb + transfer;
-}
+import { timingDict } from "../config";
+import type { Timing } from "../types";
+import { getTotalLatency } from "../utils";
 
 export function ResponseTimingTable({ timing }: { timing: Timing }) {
   const total = getTotalLatency(timing);

@@ -4,6 +4,8 @@ import { Separator } from "@openstatus/ui";
 
 import { InputForm } from "./_components/input-form";
 import { RequestDetails } from "./_components/request-details";
+import { example } from "./config";
+import type { RegionCheck } from "./types";
 
 /**
  * allowed URL search params
@@ -19,6 +21,9 @@ export default async function PlayPage({
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
 
+  // TODO: get data from API
+  const data: RegionCheck[] = example;
+
   return (
     <div className="grid gap-8">
       <div className="mx-auto grid gap-4 text-center">
@@ -29,7 +34,7 @@ export default async function PlayPage({
       </div>
       <InputForm />
       <Separator />
-      <RequestDetails />
+      <RequestDetails regions={data} />
     </div>
   );
 }
