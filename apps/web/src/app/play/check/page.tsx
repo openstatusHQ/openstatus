@@ -12,6 +12,7 @@ import type { RegionCheck } from "./types";
  */
 const searchParamsSchema = z.object({
   id: z.string().optional(),
+  region: z.string().optional(),
 });
 
 export default async function PlayPage({
@@ -20,6 +21,8 @@ export default async function PlayPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
+
+  const region = search.success ? search.data.region : undefined;
 
   // TODO: get data from API
   const data: RegionCheck[] = example;
@@ -34,7 +37,7 @@ export default async function PlayPage({
       </div>
       <InputForm />
       <Separator />
-      <RequestDetails regions={data} />
+      <RequestDetails regions={data} region={region} />
     </div>
   );
 }
