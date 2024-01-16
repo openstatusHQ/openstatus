@@ -1,6 +1,6 @@
 NODE union_all
 SQL >
 
-    SELECT count() FROM ping_response__v5
+    SELECT count() FROM ping_response__v6
     UNION ALL
-    SELECT count() FROM ping_response__v4
+    SELECT count() FROM ping_response__v5

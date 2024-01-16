@@ -1,4 +1,4 @@
-VERSION 5
+VERSION 6
 
 SCHEMA >
     `latency` Int64 `json:$.latency`,
@@ -9,7 +9,9 @@ SCHEMA >
     `url` String `json:$.url`,
     `workspaceId` String `json:$.workspaceId`,
     `cronTimestamp` Int64 `json:$.cronTimestamp`,
-    `message` Nullable(String) `json:$.message`
+    `message` Nullable(String) `json:$.message`,
+    `timing` Nullable(String) `json:$.message`,
+    `headers` Nullable(String) `json:$.message`
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "monitorId, cronTimestamp"
