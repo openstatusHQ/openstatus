@@ -24,7 +24,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
       data={data}
       index="region"
       categories={["dns", "connection", "tls", "ttfb", "transfer"]}
-      colors={["blue", "teal", "amber", "rose", "indigo", "emerald"]}
+      colors={["blue", "teal", "amber", "slate", "indigo"]}
       valueFormatter={valueFormatter}
       stack
       layout="vertical"

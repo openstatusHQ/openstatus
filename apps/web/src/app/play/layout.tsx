@@ -31,11 +31,8 @@ export default function PlayLayout({
 }) {
   return (
     <MarketingLayout>
-      <BackButton href="/" />
-      <Shell>
-        {children}
-        {modal}
-      </Shell>
+      {children}
+      {modal}
     </MarketingLayout>
   );
 }

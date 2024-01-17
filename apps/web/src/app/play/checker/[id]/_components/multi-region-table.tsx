@@ -15,6 +15,7 @@ import {
   regionFormatter,
   valueFormatter,
 } from "../utils";
+import { StatusBadge } from "./status-badge";
 
 // TBD: add the popover infos about timing details
 
@@ -43,7 +44,9 @@ export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
               <TableCell className="font-medium">
                 {regionFormatter(region)}
               </TableCell>
-              <TableCell>{status}</TableCell>
+              <TableCell>
+                <StatusBadge statusCode={status} />
+              </TableCell>
               <TableCell className="text-muted-foreground">
                 <code>{valueFormatter(dns)}</code>
               </TableCell>

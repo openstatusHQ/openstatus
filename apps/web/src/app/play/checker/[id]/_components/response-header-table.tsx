@@ -10,15 +10,19 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import type { Headers } from "../types";
+import { CopyToClipboardButton } from "./copy-to-clipboard-button";
 
-export function ResponseHeaderTable({ headers }: { headers: Headers }) {
+export function ResponseHeaderTable({
+  headers,
+}: {
+  headers: Record<string, string>;
+}) {
   return (
     <Table>
       <TableCaption>Response Headers</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead>Key</TableHead>
+          <TableHead className="md:min-w-[200px]">Key</TableHead>
           <TableHead>Value</TableHead>
         </TableRow>
       </TableHeader>
@@ -28,17 +32,19 @@ export function ResponseHeaderTable({ headers }: { headers: Headers }) {
             <TableCell className="group">
               <div className="flex items-center justify-between gap-4">
                 <code className="font-medium">{key}</code>
-                <button className="text-muted-foreground hover:text-foreground invisible group-hover:visible">
-                  <Copy className="h-3 w-3" />
-                </button>
+                <CopyToClipboardButton
+                  copyValue={key}
+                  className="invisible group-hover:visible"
+                />
               </div>
             </TableCell>
             <TableCell className="group">
               <div className="flex items-center justify-between gap-4">
                 <code>{value}</code>
-                <button className="text-muted-foreground hover:text-foreground invisible group-hover:visible">
-                  <Copy className="h-3 w-3" />
-                </button>
+                <CopyToClipboardButton
+                  copyValue={value}
+                  className="invisible group-hover:visible"
+                />
               </div>
             </TableCell>
           </TableRow>

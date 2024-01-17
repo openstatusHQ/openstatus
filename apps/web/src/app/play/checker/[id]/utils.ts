@@ -1,6 +1,7 @@
+import { Redis } from "@upstash/redis";
 import { z } from "zod";
 
-import { flyRegions } from "@openstatus/db/src/schema";
+import { flyRegions, monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
 import { flyRegionsDict } from "@openstatus/utils";
 
@@ -8,9 +9,13 @@ export function valueFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
 }
 
-export function regionFormatter(region: MonitorFlyRegion) {
-  const { code, flag } = flyRegionsDict[region];
-  return `${code} ${flag}`;
+export function regionFormatter(
+  region: MonitorFlyRegion,
+  type: "short" | "long" = "short",
+) {
+  const { code, flag, location } = flyRegionsDict[region];
+  if (type === "short") return `${code} ${flag}`;
+  return `${location}`;
 }
 
 export function getTotalLatency(timing: Timing) {
@@ -55,14 +60,17 @@ export const checkerSchema = z.object({
   timing: timingSchema,
 });
 
+export const cachedCheckerSchema = z.object({
+  url: z.string(),
+  time: z.number(),
+  checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
+});
+
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
 
-export async function checkPlaygroundURL(
-  url: string,
-  region: MonitorFlyRegion,
-) {
+export async function checkRegion(url: string, region: MonitorFlyRegion) {
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
       "Content-Type": "application/json",
@@ -91,7 +99,47 @@ export async function checkPlaygroundURL(
 
 export async function checkAllRegions(url: string) {
   // TODO: settleAll
-  return Promise.all(
-    flyRegions.map((region) => checkPlaygroundURL(url, region)),
+  return await Promise.all(
+    flyRegions.map(async (region) => {
+      const check = await checkRegion(url, region);
+      return check;
+    }),
   );
+}
+
+export async function setCheckerData(url: string) {
+  const redis = Redis.fromEnv();
+  const time = new Date().getTime();
+  const checks = await checkAllRegions(url);
+
+  const cache = { time, url, checks };
+
+  const uuid = crypto.randomUUID().replace(/-/g, "");
+
+  const parsed = cachedCheckerSchema.safeParse(cache);
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.message);
+  }
+
+  await redis.set(uuid, JSON.stringify(parsed.data), { ex: 3600 });
+
+  return uuid;
+}
+
+export async function getCheckerDataById(id: string) {
+  const redis = Redis.fromEnv();
+  const cache = await redis.get(id);
+
+  if (!cache) {
+    return null;
+  }
+
+  const parsed = cachedCheckerSchema.safeParse(cache);
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.message);
+  }
+
+  return parsed.data;
 }
