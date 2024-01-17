@@ -93,6 +93,9 @@ access the link, you can use tunneling tools like [Tunnelmole](https://github.co
 http://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
 https://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
 ```
+
+Append `/api/webhook/clerk` to the HTTPs URL.
+
 ### Using ngrok
 After login, append `/api/webhook/clerk` to
 the link you get after entering:
