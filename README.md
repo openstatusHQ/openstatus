@@ -68,7 +68,7 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 
 3. Set up your .env file
 
-   from `apps/web` and `packages/db` you will find .env.example create your own.
+   From `apps/web` and `packages/db`, you will find .env.example. Create your own copy.
 
 4. Follow the steps to run your sqlite database locally inside of
    [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
@@ -83,7 +83,18 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
    the result.
 
 For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
-access the link via ngrok (free), after login, append `/api/webhook/clerk` to
+access the link, you can use tunneling tools like [Tunnelmole](https://github.com/robbie-cahill/tunnelmole-client), an open source tunnelling tool or ngrok, a popular closed source tunnelling tool.
+
+### Using Tunnelmole
+1. Install Tunnelmole with `curl -O https://install.tunnelmole.com/384HK/install && sudo bash install`. (On Windows, download [tmole.exe](https://tunnelmole.com/downloads/tmole.exe))
+2. Run `tmole 3000`. In the output, you'll see two URLs, one HTTP, and an HTTPS URL. It's best to use the HTTPS URL for privacy and security.
+```
+➜  ~ tmole 3000
+http://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
+https://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
+```
+### Using ngrok
+After login, append `/api/webhook/clerk` to
 the link you get after entering:
 
 ```
@@ -91,6 +102,7 @@ $ ngrok http 3000
 ```
 
 ### Videos
+
 
 Videos to better understand the OpenStatus codebase:
 
