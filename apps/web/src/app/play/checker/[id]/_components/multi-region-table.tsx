@@ -12,8 +12,8 @@ import type { RegionChecker } from "../utils";
 import {
   getTimingPhases,
   getTotalLatency,
+  latencyFormatter,
   regionFormatter,
-  valueFormatter,
 } from "../utils";
 import { StatusBadge } from "./status-badge";
 
@@ -48,19 +48,19 @@ export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
                 <StatusBadge statusCode={status} />
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <code>{valueFormatter(dns)}</code>
+                <code>{latencyFormatter(dns)}</code>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <code>{valueFormatter(connection)}</code>
+                <code>{latencyFormatter(connection)}</code>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <code>{valueFormatter(tls)}</code>
+                <code>{latencyFormatter(tls)}</code>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <code>{valueFormatter(ttfb)}</code>
+                <code>{latencyFormatter(ttfb)}</code>
               </TableCell>
               <TableCell>
-                <code>{valueFormatter(total)}</code>
+                <code>{latencyFormatter(total)}</code>
               </TableCell>
             </TableRow>
           );

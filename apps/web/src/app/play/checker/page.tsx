@@ -13,12 +13,12 @@ export default async function PlayPage() {
             Check your connection to the internet.
           </p>
         </div>
-        <div className="mx-auto w-full max-w-xl">
+        <div className="mx-auto grid w-full max-w-xl gap-6">
           <InputForm />
+          <p className="text-center text-sm">
+            Test your API or website from multiple regions around the world.
+          </p>
         </div>
-        <p className="text-muted-foreground mx-auto max-w-xl text-sm">
-          Test your API or website from multiple regions around the world.
-        </p>
       </Shell>
     </>
   );

@@ -5,6 +5,8 @@ import * as React from "react";
 import { Icons } from "@/components/icons";
 import { cn, copyToClipboard } from "@/lib/utils";
 
+// TODO: make a generic copy to clipboard button
+
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   copyValue: string;
 }

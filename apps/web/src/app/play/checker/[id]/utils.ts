@@ -5,8 +5,12 @@ import { flyRegions, monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
 import { flyRegionsDict } from "@openstatus/utils";
 
-export function valueFormatter(value: number) {
+export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
+}
+
+export function timestampFormatter(timestamp: number) {
+  return new Date(timestamp).toLocaleString(); // TODO: properly format the date
 }
 
 export function regionFormatter(
@@ -69,6 +73,7 @@ export const cachedCheckerSchema = z.object({
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
+export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 export async function checkRegion(url: string, region: MonitorFlyRegion) {
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
@@ -80,7 +85,7 @@ export async function checkRegion(url: string, region: MonitorFlyRegion) {
     method: "POST",
     body: JSON.stringify({ url, method: "GET" }),
     // cache: "force-cache",
-    next: { revalidate: 3600 },
+    next: { revalidate: 86_400 }, // 60 * 60 * 24 = 1d
   });
 
   const json = await res.json();
@@ -107,6 +112,7 @@ export async function checkAllRegions(url: string) {
   );
 }
 
+// TODO: add opts: { method: Method }
 export async function setCheckerData(url: string) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();

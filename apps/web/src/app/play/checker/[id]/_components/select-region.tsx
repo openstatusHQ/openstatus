@@ -51,6 +51,9 @@ export function SelectRegion({
           ))}
         </SelectContent>
       </Select>
+      <p className="text-muted-foreground text-sm">
+        Select a region to inspect closer
+      </p>
     </div>
   );
 }
