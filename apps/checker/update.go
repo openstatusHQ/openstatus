@@ -13,7 +13,6 @@ import (
 
 type UpdateData struct {
 	MonitorId  string `json:"monitorId"`
-	Status     string `json:"status"`
 	Message    string `json:"message,omitempty"`
 	StatusCode int    `json:"statusCode,omitempty"`
 	Region     string `json:"region"`
@@ -32,5 +31,6 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	if _, err = client.Do(req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
+	// push to queue to avoid exhausting the API server
 	// Should we add a retry mechanism here?
 }

@@ -1,8 +1,4 @@
 import { db, eq, schema } from "@openstatus/db";
-import type {
-  MonitorFlyRegion,
-  MonitorStatus,
-} from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
@@ -55,25 +51,4 @@ export const triggerAlerting = async ({
     });
     //
   }
-};
-
-export const upsertMonitorStatus = async ({
-  monitorId,
-  status,
-  region,
-}: {
-  monitorId: string;
-  status: MonitorStatus;
-  region: MonitorFlyRegion;
-}) => {
-  await db
-    .insert(schema.monitorStatusTable)
-    .values({ status, region, monitorId: Number(monitorId) })
-    .onConflictDoUpdate({
-      target: [
-        schema.monitorStatusTable.monitorId,
-        schema.monitorStatusTable.region,
-      ],
-      set: { status, updatedAt: new Date() },
-    });
 };

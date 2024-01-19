@@ -62,12 +62,12 @@ func main() {
 		}
 
 		// if the request has been routed to a wrong region, we forward it to the correct one.
-		 region := c.GetHeader("fly-prefer-region")
-		 if region != "" && region != flyRegion {
-			 c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			 c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			 return
-		 }
+		region := c.GetHeader("fly-prefer-region")
+		if region != "" && region != flyRegion {
+			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+			return
+		}
 
 		var req request.CheckerRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -81,26 +81,13 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
-
-			statusCode := statusCode(res.StatusCode)
-			if !statusCode.IsSuccessful() {
-				// Q: Why here we do not check if the status was previously active?
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:  req.MonitorID,
-					Status:     "error",
-					StatusCode: res.StatusCode,
-					Region:     flyRegion,
-					Message:    res.Message,
-				})
-			} else if req.Status == "error" && statusCode.IsSuccessful() {
-				// Q: Why here we check the data before updating the status in this scenario?
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:  req.MonitorID,
-					Status:     "active",
-					Region:     flyRegion,
-					StatusCode: res.StatusCode,
-				})
-			}
+			// let's send the data to our server
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:  req.MonitorID,
+				StatusCode: res.StatusCode,
+				Region:     flyRegion,
+				Message:    res.Message,
+			})
 
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
@@ -122,16 +109,12 @@ func main() {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
-			// If the status was previously active, we update it to error.
-			// Q: Why not always updating the status? My idea is that the checker should be dumb and only check the status and return it.
-			if req.Status == "active" {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId: req.MonitorID,
-					Status:    "error",
-					Message:   err.Error(),
-					Region:    flyRegion,
-				})
-			}
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId: req.MonitorID,
+				Region:    flyRegion,
+				Message:   err.Error(),
+			})
+
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})
