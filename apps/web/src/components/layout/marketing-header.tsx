@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { ArrowUpRight } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 
@@ -24,9 +23,12 @@ export function MarketingHeader({ className }: Props) {
       <div className="flex items-center sm:col-span-1">
         <BrandName />
       </div>
-      <div className="hidden items-center justify-center sm:col-span-3 sm:flex sm:gap-3">
+      <div className="hidden items-center justify-center sm:col-span-3 sm:flex sm:gap-1">
         <Button variant="link" asChild>
           <Link href="/blog">Blog</Link>
+        </Button>
+        <Button variant="link" asChild>
+          <Link href="/play">Playground</Link>
         </Button>
         <Button variant="link" asChild>
           <Link href="/changelog">Changelog</Link>
@@ -37,7 +39,6 @@ export function MarketingHeader({ className }: Props) {
         <Button variant="link" asChild>
           <Link href="https://docs.openstatus.dev" target="_blank">
             Docs
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
           </Link>
         </Button>
       </div>

@@ -16,6 +16,11 @@ supported regions:
 Send a `POST` request to `https://checker.openstatus.dev/ping/[region]` with the
 `url` and `method` as `body` props.
 
+<Note>
+  You might want to define the `prefer-fly-region: [region]` header
+  additionally.
+</Note>
+
 ### Example
 
 ```bash
@@ -23,6 +28,7 @@ curl --request POST \
   --url https://checker.openstatus.dev/ping/ams \
   --header 'Content-Type: application/json' \
   --header 'x-openstatus-key: <YOUR_API_KEY>' \
+  --header 'prefer-fly-region: ams' \
   --data '{
   "url": "https://api.openstatus.dev/ping",
   "method": "GET"
