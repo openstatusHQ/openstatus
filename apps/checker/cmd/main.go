@@ -79,16 +79,10 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		//  We need a new client for each request to avoid connection reuse.
-		requestClient := &http.Client{
-			Timeout: 45 * time.Second,
-		}
-		defer requestClient.CloseIdleConnections()
-
 		var called int
 		op := func() error {
 			called++
-			res, err := checker.Ping(ctx, requestClient, req)
+			res, err := checker.Ping(ctx, httpClient, req)
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
@@ -99,7 +93,7 @@ func main() {
 				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
 			}
 
-			if !statusCode.IsSuccessful() {
+			if !statusCode.IsSuccessful()  && req.Status == "active"{
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:  req.MonitorID,
@@ -159,17 +153,15 @@ func main() {
 	})
 
 	router.POST("/ping/:region", func(c *gin.Context) {
-
 		region := c.Param("region")
 		if region == "" {
 			c.String(http.StatusBadRequest, "region is required")
 			return
 		}
-		fmt.Printf("Start of /ping/%s\n", region)
-
 		apiKey := c.GetHeader("x-openstatus-key")
 		if apiKey == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
 			return
 		}
 
@@ -188,11 +180,6 @@ func main() {
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
 			return
 		}
-		//  We need a new client for each request to avoid connection reuse.
-		requestClient := &http.Client{
-			Timeout: 45 * time.Second,
-		}
-		defer requestClient.CloseIdleConnections()
 
 		var req request.PingRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -201,7 +188,7 @@ func main() {
 			return
 		}
 
-		res, err := checker.SinglePing(c.Request.Context(), requestClient, req)
+		res, err := checker.SinglePing(c.Request.Context(), httpClient, req)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
