@@ -48,7 +48,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
         <Shell className="mx-auto flex items-center justify-between gap-4 p-2 px-2 md:p-3">
           <div className="relative sm:w-[100px]">
             {page?.icon ? (
-              <div className="bg-muted border-border h-7 w-7 overflow-hidden rounded-full border">
+              <div className="bg-muted border-border flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border">
                 <Image
                   height={28}
                   width={28}

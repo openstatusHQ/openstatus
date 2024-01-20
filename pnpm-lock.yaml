@@ -77,8 +77,8 @@ importers:
         specifier: 0.7.1
         version: 0.7.1(typescript@5.2.2)(zod@3.22.2)
       '@unkey/api':
-        specifier: 0.11.0
-        version: 0.11.0
+        specifier: 0.16.0
+        version: 0.16.0
       hono:
         specifier: 3.9.2
         version: 3.9.2
@@ -192,8 +192,8 @@ importers:
         specifier: 10.38.5
         version: 10.38.5
       '@unkey/api':
-        specifier: 0.10.0
-        version: 0.10.0
+        specifier: 0.16.0
+        version: 0.16.0
       '@upstash/qstash':
         specifier: 2.1.8
         version: 2.1.8
@@ -5435,12 +5435,8 @@ packages:
       eslint-visitor-keys: 3.4.3
     dev: false
 
-  /@unkey/api@0.10.0:
-    resolution: {integrity: sha512-ix1XQqZPuBlNkimQniqNjwpqduGb/hBm5LAFRgPfotY97IGUcsKGV3YGl7GAnqFB9wa31OeOT/yeSbEgXiQJWw==}
-    dev: false
-
-  /@unkey/api@0.11.0:
-    resolution: {integrity: sha512-pJRuvRWFAnp6qGryvtI5+J95rtIHUCnTOw0bQTewr2+qFNLv/UimEIlR8Ef6kln/5evc3C94yPjFy59nuCMoWQ==}
+  /@unkey/api@0.16.0:
+    resolution: {integrity: sha512-y7loET+ULNQIxfujwMv39Cu1h5I9eNPh9VBwxarhWWBSsRo6Id7nmb4cUYF6ltbarZ5BMqrVGeBjOyKtPpJPrg==}
     dev: false
 
   /@upstash/core-analytics@0.0.6:
