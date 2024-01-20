@@ -165,7 +165,7 @@ func main() {
 			c.String(http.StatusBadRequest, "region is required")
 			return
 		}
-		fmt.Println("Start of /ping/%v\n",region)
+		fmt.Printf("Start of /ping/%s\n", region)
 
 		apiKey := c.GetHeader("x-openstatus-key")
 		if apiKey == "" {
