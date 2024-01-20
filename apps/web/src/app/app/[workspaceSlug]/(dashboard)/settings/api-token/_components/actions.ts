@@ -16,6 +16,6 @@ export async function create(ownerId: number) {
 }
 
 export async function revoke(keyId: string) {
-  const res = await unkey.keys.revoke({ keyId });
+  const res = await unkey.keys.delete({ keyId });
   return res;
 }
