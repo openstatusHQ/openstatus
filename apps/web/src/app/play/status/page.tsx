@@ -1,8 +1,7 @@
 import * as z from "zod";
 
 import { BackButton } from "@/components/layout/back-button";
-import CheckerPlay from "./checker/_components/checker-play";
-import StatusPlay from "./status/_components/status-play";
+import StatusPlay from "./_components/status-play";
 
 /**
  * allowed URL search params
@@ -22,10 +21,7 @@ export default async function PlayPage({
   return (
     <>
       <BackButton href="/" />
-      <div className="grid w-full gap-4">
-        <StatusPlay timezone={timezone} />
-        <CheckerPlay />
-      </div>
+      <StatusPlay timezone={timezone} />
     </>
   );
 }

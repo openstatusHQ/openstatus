@@ -5,6 +5,7 @@ import {
   Bot,
   Calendar,
   Check,
+  Clock,
   Cog,
   Copy,
   Fingerprint,
@@ -29,6 +30,7 @@ import {
   SunMedium,
   Table,
   Tag,
+  Timer,
   ToyBrick,
   Trash,
   TwitterIcon,
@@ -76,6 +78,8 @@ export const Icons = {
   moon: Moon,
   laptop: Laptop,
   sparkles: Sparkles,
+  timer: Timer,
+  clock: Clock,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
