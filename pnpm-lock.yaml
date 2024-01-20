@@ -192,8 +192,8 @@ importers:
         specifier: 10.38.5
         version: 10.38.5
       '@unkey/api':
-        specifier: 0.10.0
-        version: 0.10.0
+        specifier: 0.16.0
+        version: 0.16.0
       '@upstash/qstash':
         specifier: 2.1.8
         version: 2.1.8
@@ -5433,10 +5433,6 @@ packages:
     dependencies:
       '@typescript-eslint/types': 6.7.3
       eslint-visitor-keys: 3.4.3
-    dev: false
-
-  /@unkey/api@0.10.0:
-    resolution: {integrity: sha512-ix1XQqZPuBlNkimQniqNjwpqduGb/hBm5LAFRgPfotY97IGUcsKGV3YGl7GAnqFB9wa31OeOT/yeSbEgXiQJWw==}
     dev: false
 
   /@unkey/api@0.16.0:
