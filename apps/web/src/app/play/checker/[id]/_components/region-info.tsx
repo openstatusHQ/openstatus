@@ -10,10 +10,10 @@ export function RegionInfo({ check }: { check: RegionChecker }) {
   return (
     <div className="grid grid-cols-4 gap-2 text-sm sm:grid-cols-6">
       <div className="col-span-1">
-        <p className="text-muted-foreground">Date:</p>
+        <p className="text-muted-foreground">Time:</p>
       </div>
       <div className="col-span-3 sm:col-span-5">
-        <p className="font-light">{timestampFormatter(check.time)}</p>
+        <p>{timestampFormatter(check.time)}</p>
       </div>
       <div className="col-span-1">
         <p className="text-muted-foreground">Region:</p>

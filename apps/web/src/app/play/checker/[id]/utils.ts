@@ -67,6 +67,7 @@ export const checkerSchema = z.object({
 export const cachedCheckerSchema = z.object({
   url: z.string(),
   time: z.number(),
+  method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
   checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
 });
 
@@ -75,7 +76,11 @@ export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
 export type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-export async function checkRegion(url: string, region: MonitorFlyRegion) {
+export async function checkRegion(
+  url: string,
+  region: MonitorFlyRegion,
+  opts?: { method: Method },
+) {
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
       "Content-Type": "application/json",
@@ -83,7 +88,7 @@ export async function checkRegion(url: string, region: MonitorFlyRegion) {
       "x-openstatus-key": process.env.PLAYGROUND_UNKEY_API_KEY!,
     },
     method: "POST",
-    body: JSON.stringify({ url, method: "GET" }),
+    body: JSON.stringify({ url, method: opts?.method || "GET" }),
     // cache: "force-cache",
     next: { revalidate: 86_400 }, // 60 * 60 * 24 = 1d
   });
@@ -102,23 +107,24 @@ export async function checkRegion(url: string, region: MonitorFlyRegion) {
   };
 }
 
-export async function checkAllRegions(url: string) {
+export async function checkAllRegions(url: string, opts?: { method: Method }) {
   // TODO: settleAll
   return await Promise.all(
     flyRegions.map(async (region) => {
-      const check = await checkRegion(url, region);
+      const check = await checkRegion(url, region, opts);
       return check;
     }),
   );
 }
 
 // TODO: add opts: { method: Method }
-export async function setCheckerData(url: string) {
+export async function setCheckerData(url: string, opts?: { method: Method }) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();
-  const checks = await checkAllRegions(url);
+  const checks = await checkAllRegions(url, opts);
+  const { method } = opts || {};
 
-  const cache = { time, url, checks };
+  const cache = { time, url, checks, method };
 
   const uuid = crypto.randomUUID().replace(/-/g, "");
 

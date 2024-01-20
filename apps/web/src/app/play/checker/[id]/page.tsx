@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Link2 } from "lucide-react";
 import * as z from "zod";
 
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
-import { Button, Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
+import { CopyLinkButton } from "./_components/copy-link-button";
 import { MultiRegionTabs } from "./_components/multi-region-tabs";
 import { RegionInfo } from "./_components/region-info";
 import { ResponseHeaderTable } from "./_components/response-header-table";
@@ -56,10 +56,7 @@ export default async function CheckPage({
             </p>
           </div>
           <div>
-            {/* TODO: add tooltip */}
-            <Button size="icon" variant="ghost">
-              <Link2 className="h-4 w-4" />
-            </Button>
+            <CopyLinkButton />
           </div>
         </div>
         <MultiRegionTabs regions={data.checks} />
