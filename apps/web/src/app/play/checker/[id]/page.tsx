@@ -44,7 +44,7 @@ export default async function CheckPage({
 
   return (
     <>
-      <BackButton href="/play" />
+      <BackButton href="/play/checker" />
       <Shell className="grid gap-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
