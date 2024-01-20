@@ -90,7 +90,7 @@ export async function checkRegion(
     method: "POST",
     body: JSON.stringify({ url, method: opts?.method || "GET" }),
     // cache: "force-cache",
-    next: { revalidate: 86_400 }, // 60 * 60 * 24 = 1d
+    next: { revalidate: 0 },
   });
 
   const json = await res.json();
@@ -134,7 +134,7 @@ export async function setCheckerData(url: string, opts?: { method: Method }) {
     throw new Error(parsed.error.message);
   }
 
-  await redis.set(uuid, JSON.stringify(parsed.data), { ex: 3600 });
+  await redis.set(uuid, JSON.stringify(parsed.data), { ex: 86_400 }); // 60 * 60 * 24 = 1d
 
   return uuid;
 }
