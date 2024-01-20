@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
@@ -47,7 +48,10 @@ func main() {
 	logger.Configure(logLevel)
 
 	// packages.
-	httpClient := &http.Client{}
+	httpClient := &http.Client{
+		Timeout: 45 * time.Second,
+	}
+
 	defer httpClient.CloseIdleConnections()
 
 	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
