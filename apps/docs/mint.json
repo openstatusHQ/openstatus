@@ -140,7 +140,8 @@
             "api-reference/status_report_update/get-status_report_update:id",
             "api-reference/status_report_update/post-status_report_update"
           ]
-        }
+        },
+        "api-reference/checker"
       ]
     }
   ],
