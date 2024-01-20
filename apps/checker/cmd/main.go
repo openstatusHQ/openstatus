@@ -66,12 +66,12 @@ func main() {
 		}
 
 		// if the request has been routed to a wrong region, we forward it to the correct one.
-		 region := c.GetHeader("fly-prefer-region")
-		 if region != "" && region != flyRegion {
-			 c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			 c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			 return
-		 }
+		region := c.GetHeader("fly-prefer-region")
+		if region != "" && region != flyRegion {
+			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+			return
+		}
 
 		var req request.CheckerRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -79,14 +79,20 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-
+		var called int
 		op := func() error {
+			called++
 			res, err := checker.Ping(ctx, httpClient, req)
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
 
 			statusCode := statusCode(res.StatusCode)
+			// let's retry at least once if the status code is not successful.
+			if !statusCode.IsSuccessful() && called < 2 {
+				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
+			}
+
 			if !statusCode.IsSuccessful() {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
