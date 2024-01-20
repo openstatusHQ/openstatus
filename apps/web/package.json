@@ -39,7 +39,7 @@
     "@trpc/next": "10.38.5",
     "@trpc/react-query": "10.38.5",
     "@trpc/server": "10.38.5",
-    "@unkey/api": "0.10.0",
+    "@unkey/api": "0.16.0",
     "@upstash/qstash": "2.1.8",
     "@upstash/redis": "1.22.1",
     "@vercel/blob": "0.13.0",
