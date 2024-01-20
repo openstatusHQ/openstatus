@@ -47,7 +47,7 @@ export function Partners() {
         <div className="flex items-center justify-center">
           <p>
             <a
-              href="https://status.trigger.dev"
+              href="https://status.cal.com"
               target="_blank"
               rel="noreferrer"
               className="group inline-flex items-center justify-center"
