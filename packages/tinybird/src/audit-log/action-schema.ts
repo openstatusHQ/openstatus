@@ -6,7 +6,11 @@ import { z } from "zod";
  */
 export const monitorRecoveredSchema = z.object({
   action: z.literal("monitor.recovered"),
-  metadata: z.object({ region: z.string(), statusCode: z.number() }),
+  metadata: z.object({
+    region: z.string(),
+    statusCode: z.number(),
+    cronTimestamp: z.number().optional(),
+  }),
 });
 
 /**

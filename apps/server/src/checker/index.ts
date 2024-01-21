@@ -56,10 +56,14 @@ checkerRoute.post("/updateStatus", async (c) => {
         id: `monitor:${monitorId}`,
         action: "monitor.recovered",
         targets: [{ id: monitorId, type: "monitor" }],
-        metadata: { region: region, statusCode: statusCode },
+        metadata: {
+          region: region,
+          statusCode: statusCode,
+          cronTimestamp: cronTimestamp,
+        },
       });
       break;
-    case "error":
+    case "error": {
       await upsertMonitorStatus({
         monitorId: monitorId,
         status: "error",
@@ -113,6 +117,7 @@ checkerRoute.post("/updateStatus", async (c) => {
         message,
       });
       break;
+    }
   }
   return c.text("Ok", 200);
 });
