@@ -24,9 +24,8 @@ function stringToArrayProcess<T>(string: T) {}
 const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {
     return String(val).split(",");
-  } else {
-    return [];
   }
+  return [];
 }, z.array(monitorRegionSchema));
 
 const bodyToStringSchema = z.preprocess((val) => {
@@ -41,9 +40,8 @@ const headersToArraySchema = z.preprocess(
     }
     if (String(val).length > 0) {
       return JSON.parse(String(val));
-    } else {
-      return [];
     }
+    return [];
   },
   z.array(z.object({ key: z.string(), value: z.string() })).default([]),
 );

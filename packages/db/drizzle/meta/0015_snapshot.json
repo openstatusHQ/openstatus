@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "25686701-7400-4390-817b-9de188ee8244",
+  "id": "f5a77857-319d-4575-b570-f0aacb9eab35",
   "prevId": "4cc8ce9b-ed70-47c1-8218-2cbc02743563",
   "tables": {
     "status_report_to_monitors": {
@@ -1281,6 +1281,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "started_at": {
           "name": "started_at",
           "type": "integer",
@@ -1341,6 +1348,19 @@
           "tableTo": "monitor",
           "columnsFrom": [
             "monitor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "incident_workspace_id_workspace_id_fk": {
+          "name": "incident_workspace_id_workspace_id_fk",
+          "tableFrom": "incident",
+          "tableTo": "workspace",
+          "columnsFrom": [
+            "workspace_id"
           ],
           "columnsTo": [
             "id"

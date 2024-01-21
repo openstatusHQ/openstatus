@@ -3,6 +3,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
 import { user } from "../users/user";
+import { workspace } from "../workspaces";
 
 export const statusIncident = [
   "triage",
@@ -22,6 +23,8 @@ export const incidentTable = sqliteTable("incident", {
   // Service affected by incident
   monitorId: integer("monitor_id").references(() => monitor.id),
 
+  // Workspace where the incident happened
+  workspaceId: integer("workspace_id").references(() => workspace.id),
   // Data related to incident timeline
   startedAt: integer("started_at", { mode: "timestamp" }),
   // Who has acknoledge the incident
