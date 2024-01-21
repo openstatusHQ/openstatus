@@ -17,8 +17,6 @@ const size = {
   height: 630,
 };
 
-const LIMIT = 40;
-
 const interRegular = fetch(
   new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url),
 ).then((res) => res.arrayBuffer());
@@ -53,7 +51,6 @@ export async function GET(req: Request) {
     (monitorId &&
       (await getMonitorListData({
         monitorId,
-        limit: LIMIT,
         timezone,
       }))) ||
     [];
@@ -93,7 +90,7 @@ export async function GET(req: Request) {
               </div>
               <div tw="flex flex-row relative">
                 {/* Empty State */}
-                {new Array(LIMIT).fill(null).map((_, i) => {
+                {new Array(data.length).fill(null).map((_, i) => {
                   return (
                     <div
                       key={i}
@@ -127,7 +124,7 @@ export async function GET(req: Request) {
                 </div>
               </div>
               <div tw="flex flex-row items-center justify-between -mt-3 text-slate-500 text-sm">
-                <p tw="">{LIMIT} days ago</p>
+                <p tw="">{data.length} days ago</p>
                 <p tw="mr-1">today</p>
               </div>
             </div>
