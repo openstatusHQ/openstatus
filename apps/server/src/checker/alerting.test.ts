@@ -11,6 +11,10 @@ test.todo("should send email notification", async () => {
       },
     };
   });
-  await triggerAlerting({ monitorId: "1", region: "ams", statusCode: 400 });
+  await triggerAlerting({
+    monitorId: "1",
+    region: "ams",
+    statusCode: 400,
+  });
   expect(fn).toHaveBeenCalled();
 });
