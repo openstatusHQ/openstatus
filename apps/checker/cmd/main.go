@@ -107,6 +107,7 @@ func main() {
 					StatusCode: res.StatusCode,
 					Region:     flyRegion,
 					Message:    res.Message,
+					CronTimestamp: req.CronTimestamp,
 				})
 			} else if req.Status == "error" && statusCode.IsSuccessful() {
 				// Q: Why here we check the data before updating the status in this scenario?
@@ -115,6 +116,8 @@ func main() {
 					Status:     "active",
 					Region:     flyRegion,
 					StatusCode: res.StatusCode,
+					CronTimestamp: req.CronTimestamp,
+
 				})
 			}
 

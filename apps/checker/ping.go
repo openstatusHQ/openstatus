@@ -100,9 +100,9 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	latency := time.Since(start).Milliseconds()
 
 	if err != nil {
-		timingAsString, err := json.Marshal(timing)
-		if err != nil {
-			logger.Error().Err(err).Msg("error while parsing timing data")
+		timingAsString, err2 := json.Marshal(timing)
+		if err2 != nil {
+			logger.Error().Err(err2).Msg("error while parsing timing data")
 		}
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
