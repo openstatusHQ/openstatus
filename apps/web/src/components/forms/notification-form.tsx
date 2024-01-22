@@ -130,6 +130,10 @@ export function NotificationForm({
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
+        if (data === "") {
+          form.setError("data", { message: "This field is required" });
+          return;
+        }
         if (defaultValues) {
           await api.notification.update.mutate({
             provider,
