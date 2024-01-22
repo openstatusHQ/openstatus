@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { and, db, eq, isNotNull, schema } from "@openstatus/db";
+import { and, db, eq, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import { flyRegions } from "@openstatus/db/src/schema/monitors/constants";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
@@ -52,11 +52,12 @@ checkerRoute.post("/updateStatus", async (c) => {
     .where(
       and(
         eq(incidentTable.monitorId, Number(monitorId)),
-        isNotNull(incidentTable.resolvedAt),
-        isNotNull(incidentTable.acknowledgedAt),
+        isNull(incidentTable.resolvedAt),
+        isNull(incidentTable.acknowledgedAt),
       ),
     )
     .get();
+
   // if we are in error
   if (!statusCode || (statusCode < 200 && statusCode > 300)) {
     // create incident
