@@ -99,12 +99,15 @@ func main() {
 			}
 
 			// let's send the data to our server
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			_, clTaskErr := checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:  req.MonitorID,
 				StatusCode: res.StatusCode,
 				Region:     flyRegion,
 				Message:    res.Message,
 			})
+			if clTaskErr != nil {
+				fmt.Println(err)
+			 }
 
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
@@ -126,11 +129,14 @@ func main() {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			_, clTaskErr :=  checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId: req.MonitorID,
 				Region:    flyRegion,
 				Message:   err.Error(),
 			})
+			if clTaskErr != nil {
+				fmt.Println(err)
+			 }
 
 		}
 
