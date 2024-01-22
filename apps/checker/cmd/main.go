@@ -147,6 +147,7 @@ func main() {
 					Status:    "error",
 					Message:   err.Error(),
 					Region:    flyRegion,
+					CronTimestamp: req.CronTimestamp,
 				})
 			}
 
