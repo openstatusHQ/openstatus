@@ -98,17 +98,29 @@ func main() {
 				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
 			}
 
-			// let's send the data to our server
-			_, clTaskErr := checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:  req.MonitorID,
-				StatusCode: res.StatusCode,
-				Region:     flyRegion,
-				Message:    res.Message,
-			})
-			if clTaskErr != nil {
-				fmt.Println(err)
-			 }
+			if !statusCode.IsSuccessful() && req.Status == "active" {
+				// Q: Why here we do not check if the status was previously active?
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:  req.MonitorID,
+					Status:     "error",
+					StatusCode: res.StatusCode,
+					Region:     flyRegion,
+					Message:    res.Message,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
 
+			if req.Status == "error" && statusCode.IsSuccessful() {
+				// Q: Why here we check the data before updating the status in this scenario?
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:  req.MonitorID,
+					Status:     "active",
+					Region:     flyRegion,
+					StatusCode: res.StatusCode,
+					CronTimestamp: req.CronTimestamp,
+
+				})
+			}
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -129,14 +141,14 @@ func main() {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
-			_, clTaskErr :=  checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId: req.MonitorID,
-				Region:    flyRegion,
-				Message:   err.Error(),
-			})
-			if clTaskErr != nil {
-				fmt.Println(err)
-			 }
+			if req.Status == "active" {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId: req.MonitorID,
+					Status:    "error",
+					Message:   err.Error(),
+					Region:    flyRegion,
+				})
+			}
 
 		}
 

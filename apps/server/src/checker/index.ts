@@ -9,7 +9,7 @@ import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
-import { triggerAlerting } from "./alerting";
+import { triggerAlerting, upsertMonitorStatus } from "./alerting";
 
 export const checkerRoute = new Hono();
 const redis = Redis.fromEnv();
@@ -69,6 +69,13 @@ checkerRoute.post("/updateStatus", async (c) => {
         message,
       },
     });
+    // We upsert the status of the  monitor
+    await upsertMonitorStatus({
+      monitorId: monitorId,
+      status: "error",
+      region: region,
+    });
+
     if (!incident) {
       const redisKey = `${monitorId}-${cronTimestamp}`;
       // We add the new region to the set
@@ -115,6 +122,11 @@ checkerRoute.post("/updateStatus", async (c) => {
       }
     }
   } else {
+    await upsertMonitorStatus({
+      monitorId: monitorId,
+      status: "active",
+      region: region,
+    });
     if (incident) {
       const redisKey = `${monitorId}-${cronTimestamp}`;
       // We add the new region to the set

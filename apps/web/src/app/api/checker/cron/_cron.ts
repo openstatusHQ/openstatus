@@ -64,8 +64,7 @@ export const cron = async ({
 
     for (const region of selectedRegions) {
       const status =
-        monitorStatus.find(({ region }) => region === region)?.status ||
-        "active";
+        monitorStatus.find((m) => region === m.region)?.status || "active";
       const response = await createCronTask({
         row,
         timestamp,
