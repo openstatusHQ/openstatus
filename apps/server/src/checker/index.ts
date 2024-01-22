@@ -58,7 +58,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     );
 
   // if we are in error
-  if (statusCode && statusCode < 200 && statusCode > 300) {
+  if (!statusCode || (statusCode < 200 && statusCode > 300)) {
     // create incident
     // trigger alerting
     await checkerAudit.publishAuditLog({
@@ -114,7 +114,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       }
     }
   }
-
+  // When the status is ok
   if (statusCode && statusCode >= 200 && statusCode < 300) {
     await upsertMonitorStatus({
       monitorId: monitorId,
