@@ -75,7 +75,7 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (Boolean(notifications.length)) {
+      if (notifications.length > 0) {
         // We should make sure the user has access to the notifications
         const allNotifications = await opts.ctx.db.query.notification.findMany({
           where: inArray(notification.id, notifications),
@@ -165,7 +165,7 @@ export const monitorRouter = createTRPCRouter({
             ?.includes(x),
       );
 
-      if (Boolean(addedNotifications.length)) {
+      if (addedNotifications.length > 0) {
         const values = addedNotifications.map((notificationId) => ({
           monitorId: currentMonitor.id,
           notificationId,
@@ -178,7 +178,7 @@ export const monitorRouter = createTRPCRouter({
         .map(({ notificationId }) => notificationId)
         .filter((x) => !notifications?.includes(x));
 
-      if (Boolean(removedNotifications.length)) {
+      if (removedNotifications.length > 0) {
         await opts.ctx.db
           .delete(notificationsToMonitors)
           .where(
