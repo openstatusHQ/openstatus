@@ -55,8 +55,8 @@ checkerRoute.post("/updateStatus", async (c) => {
         isNotNull(incidentTable.resolvedAt),
         isNotNull(incidentTable.acknowledgedAt),
       ),
-    );
-
+    )
+    .get();
   // if we are in error
   if (!statusCode || (statusCode < 200 && statusCode > 300)) {
     // create incident
@@ -78,7 +78,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       region: region,
     });
 
-    if (!incident) {
+    if (incident === undefined) {
       const redisKey = `${monitorId}-${cronTimestamp}-error`;
       // We add the new region to the set
       await redis.sadd(redisKey, region);
