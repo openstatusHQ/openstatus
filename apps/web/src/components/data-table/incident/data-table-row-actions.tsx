@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
-import { selectMonitorSchema } from "@openstatus/db/src/schema";
+import { selectIncidentSchema } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,35 +36,35 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorSchema.parse(row.original);
+  const incident = selectIncidentSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
-  const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
-  async function onDelete() {
+  async function resolved() {
     startTransition(async () => {
       try {
-        if (!monitor.id) return;
-        await api.monitor.delete.mutate({ id: monitor.id });
-        toast("deleted");
+        if (!incident.id) return;
+        await api.incident.resolvedIncident.mutate({ id: incident.id });
+        toast("success");
         router.refresh();
-        setAlertOpen(false);
       } catch {
         toast("error");
       }
     });
   }
 
-  async function onToggleActive() {
+  async function acknowledge() {
     startTransition(async () => {
       try {
-        const { jobType, ...rest } = monitor;
-        if (!monitor.id) return;
-        await api.monitor.update.mutate({
-          ...rest,
-          active: !monitor.active,
-        });
+        // const { jobType, ...rest } = monitor;
+        // if (!monitor.id) return;
+        // await api.monitor.update.mutate({
+        //   ...rest,
+        //   active: !monitor.active,
+        // });
+        if (!incident.id) return;
+        await api.incident.acknowledgeIncident.mutate({ id: incident.id });
         toast("success");
         router.refresh();
       } catch {
@@ -74,58 +74,34 @@ export function DataTableRowActions<TData>({
   }
 
   return (
-    <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <Link href={`./monitors/${monitor.id}/edit`}>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-          </Link>
-          <Link href={`./monitors/${monitor.id}/overview`}>
-            <DropdownMenuItem>Details</DropdownMenuItem>
-          </Link>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onToggleActive}>
-            {monitor.active ? "Pause" : "Resume"} monitor
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <AlertDialogTrigger asChild>
-            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
-              Delete
-            </DropdownMenuItem>
-          </AlertDialogTrigger>
-        </DropdownMenuContent>
-      </DropdownMenu>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the
-            monitor.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              onDelete();
-            }}
-            disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {!isPending ? "Delete" : <LoadingAnimation />}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          className="data-[state=open]:bg-accent h-8 w-8 p-0"
+        >
+          <span className="sr-only">Open menu</span>
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          disabled={incident.acknowledgedAt !== null}
+          onClick={acknowledge}
+        >
+          Acknowledge
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          disabled={
+            incident.resolvedAt !== null || incident.acknowledgedAt === null
+          }
+          onClick={resolved}
+        >
+          Resolved
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

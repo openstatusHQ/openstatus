@@ -4,14 +4,13 @@ import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Incident } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Incident>[] = [
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "monitorId",
+    header: "Monitor",
     cell: ({ row }) => {
       return (
         <Link
@@ -19,44 +18,57 @@ export const columns: ColumnDef<Incident>[] = [
           className="group flex items-center gap-2"
         >
           <span className="max-w-[125px] truncate group-hover:underline">
-            {row.getValue("name")}
+            {row.original.monitorName}
           </span>
         </Link>
       );
     },
   },
   {
-    accessorKey: "monitorId",
-    header: "URL",
+    accessorKey: "startedAt",
+    header: "Started At",
     cell: ({ row }) => {
-      return (
-        <div className="flex">
-          <span className="max-w-[150px] truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {row.getValue("monitorId")}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => {
+      const { startedAt } = row.original;
+      const date = startedAt ? new Date(startedAt).toLocaleString() : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {row.getValue("description") || "-"}
+            {date}
           </span>
         </div>
       );
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "acknowledgetAt",
+    header: "Acknowledged At",
     cell: ({ row }) => {
-      const { status } = row.original;
-      return <Badge variant="outline">{status}</Badge>;
+      const { acknowledgedAt } = row.original;
+      const date = acknowledgedAt
+        ? new Date(acknowledgedAt).toLocaleString()
+        : "-";
+      return (
+        <div className="flex">
+          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {date}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "resolvedAt",
+    header: "Resolved At",
+    cell: ({ row }) => {
+      const { resolvedAt } = row.original;
+      const date = resolvedAt ? new Date(resolvedAt).toLocaleString() : "-";
+      return (
+        <div className="flex">
+          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {date}
+          </span>
+        </div>
+      );
     },
   },
 

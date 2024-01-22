@@ -37,7 +37,7 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (Boolean(monitors.length)) {
+      if (monitors.length > 0) {
         await opts.ctx.db
           .insert(monitorsToStatusReport)
           .values(
@@ -50,7 +50,7 @@ export const statusReportRouter = createTRPCRouter({
           .get();
       }
 
-      if (Boolean(pages.length)) {
+      if (pages.length > 0) {
         await opts.ctx.db
           .insert(pagesToStatusReports)
           .values(
