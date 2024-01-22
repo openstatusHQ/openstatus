@@ -17,6 +17,12 @@ export const pagesConfig: Page[] = [
     icon: "activity",
   },
   {
+    title: "Incidents",
+    description: "All your incidents.",
+    href: "/incidents",
+    icon: "siren",
+  },
+  {
     title: "Status Pages",
     description: "Where you can see all the pages.",
     href: "/status-pages",

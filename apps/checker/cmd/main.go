@@ -92,7 +92,6 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
-
 			statusCode := statusCode(res.StatusCode)
 			// let's retry at least once if the status code is not successful.
 			if !statusCode.IsSuccessful() && called < 2 {
@@ -109,7 +108,9 @@ func main() {
 					Message:    res.Message,
 					CronTimestamp: req.CronTimestamp,
 				})
-			} else if req.Status == "error" && statusCode.IsSuccessful() {
+			}
+
+			if req.Status == "error" && statusCode.IsSuccessful() {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:  req.MonitorID,
@@ -120,7 +121,6 @@ func main() {
 
 				})
 			}
-
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -141,8 +141,6 @@ func main() {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
-			// If the status was previously active, we update it to error.
-			// Q: Why not always updating the status? My idea is that the checker should be dumb and only check the status and return it.
 			if req.Status == "active" {
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId: req.MonitorID,
@@ -151,6 +149,7 @@ func main() {
 					Region:    flyRegion,
 				})
 			}
+
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "ok"})

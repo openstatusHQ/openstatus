@@ -1,4 +1,5 @@
 import { domainRouter } from "./router/domain";
+import { incidentRouter } from "./router/incident";
 import { integrationRouter } from "./router/integration";
 import { invitationRouter } from "./router/invitation";
 import { monitorRouter } from "./router/monitor";
@@ -20,4 +21,5 @@ export const edgeRouter = createTRPCRouter({
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
+  incident: incidentRouter,
 });

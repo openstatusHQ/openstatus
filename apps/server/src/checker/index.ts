@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { eq, schema } from "@openstatus/db";
-import { db } from "@openstatus/db/src/db";
+import { and, db, eq, isNotNull, schema } from "@openstatus/db";
+import { incidentTable } from "@openstatus/db/src/schema";
 import { flyRegions } from "@openstatus/db/src/schema/monitors/constants";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
 import { Redis } from "@openstatus/upstash";
@@ -24,63 +24,68 @@ checkerRoute.post("/updateStatus", async (c) => {
   const json = await c.req.json();
   const payloadSchema = z.object({
     monitorId: z.string(),
-    status: z.enum(["active", "error"]), // that's the new status
     message: z.string().optional(),
     statusCode: z.number().optional(),
     region: z.enum(flyRegions),
     cronTimestamp: z.number().optional(),
+    // status: z.enum(["active", "error"]),
   });
 
   const result = payloadSchema.safeParse(json);
   if (!result.success) {
-    // console.error(result.error);
     return c.text("Unprocessable Entity", 422);
   }
-  const { monitorId, status, message, region, statusCode, cronTimestamp } =
-    result.data;
+  const { monitorId, message, region, statusCode, cronTimestamp } = result.data;
 
   console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
-  switch (status) {
-    case "active":
-      if (!statusCode) {
-        return;
-      }
-      await upsertMonitorStatus({
-        monitorId: monitorId,
-        status: "active",
-        region: region,
-      });
+  // we check if it's an error
+  // If status  not in 200>  and <300
+  // if there's no  incident create one and notify
+  // publish event to TB
 
-      await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
-        action: "monitor.recovered",
-        targets: [{ id: monitorId, type: "monitor" }],
-        metadata: {
-          region: region,
-          statusCode: statusCode,
-          cronTimestamp: cronTimestamp,
-        },
-      });
-      break;
-    case "error": {
-      await upsertMonitorStatus({
-        monitorId: monitorId,
-        status: "error",
+  // if status is ok  checked if there's an open incident
+  // if open incident publish incident recovered
+  const incident = await db
+    .select()
+    .from(incidentTable)
+    .where(
+      and(
+        eq(incidentTable.monitorId, Number(monitorId)),
+        isNotNull(incidentTable.resolvedAt),
+        isNotNull(incidentTable.acknowledgedAt),
+      ),
+    );
+
+  // if we are in error
+  if (statusCode && statusCode < 200 && statusCode > 300) {
+    // create incident
+    // trigger alerting
+    await checkerAudit.publishAuditLog({
+      id: `monitor:${monitorId}`,
+      action: "monitor.failed",
+      targets: [{ id: monitorId, type: "monitor" }],
+      metadata: {
         region: region,
-      });
-      // ALPHA
-      await checkerAudit.publishAuditLog({
-        id: `monitor:${monitorId}`,
-        action: "monitor.failed",
-        targets: [{ id: monitorId, type: "monitor" }],
-        metadata: {
-          region: region,
-          statusCode: statusCode,
-          message,
-          cronTimestamp,
-        },
-      });
+        statusCode: statusCode,
+        message,
+      },
+    });
+    // We upsert the status of the  monitor
+    await upsertMonitorStatus({
+      monitorId: monitorId,
+      status: "error",
+      region: region,
+    });
+
+    if (!incident) {
+      const redisKey = `${monitorId}-${cronTimestamp}-error`;
+      // We add the new region to the set
+      await redis.sadd(redisKey, region);
+      // let's add an expire to the set
+      await redis.expire(redisKey, 60 * 60 * 24);
+      // We get the number of regions affected
+      const nbAffectedRegion = await redis.scard(redisKey);
 
       const currentMonitor = await db
         .select()
@@ -94,30 +99,71 @@ checkerRoute.post("/updateStatus", async (c) => {
         console.log("cronTimestamp is undefined");
       }
 
-      const redisKey = `${monitorId}-${cronTimestamp}`;
-      // We add the new region to the set
-      await redis.sadd(redisKey, region);
-      // let's add an expire to the set
-      await redis.expire(redisKey, 60 * 60 * 24);
-      // We get the number of regions affected
-      const nbAffectedRegion = await redis.scard(redisKey);
+      const numberOfRegions = monitor.regions.length;
 
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
-      if (nbAffectedRegion < monitor.regions.length / 2) {
-        console.log(
-          `Not enough affected regions (${nbAffectedRegion}/${flyRegions.length})`,
-        );
-        break;
+      // 4 of 6 monitor need to fail to trigger an alerting
+      if (nbAffectedRegion > numberOfRegions / 2) {
+        await triggerAlerting({ monitorId, statusCode, message, region });
+        // create the incident and trigger the alerting
+        await db.insert(incidentTable).values({
+          monitorId: Number(monitorId),
+          workspaceId: monitor.workspaceId,
+          startedAt: new Date(),
+        });
       }
-      // Add  a
-      await triggerAlerting({
-        monitorId: monitorId,
-        region: env.FLY_REGION,
-        statusCode,
-        message,
-      });
-      break;
     }
   }
+
+  if (statusCode && statusCode >= 200 && statusCode < 300) {
+    await upsertMonitorStatus({
+      monitorId: monitorId,
+      status: "active",
+      region: region,
+    });
+
+    await checkerAudit.publishAuditLog({
+      id: `monitor:${monitorId}`,
+      action: "monitor.recovered",
+      targets: [{ id: monitorId, type: "monitor" }],
+      metadata: { region: region, statusCode: Number(statusCode) },
+    });
+
+    // FIX: TO BE IMPROVED
+    // if (incident) {
+    //   const redisKey = `${monitorId}-${cronTimestamp}-resolved`;
+    //   // We add the new region to the set
+    //   await redis.sadd(redisKey, region);
+    //   // let's add an expire to the set
+    //   await redis.expire(redisKey, 60 * 60 * 24);
+    //   // We get the number of regions affected
+    //   const nbAffectedRegion = await redis.scard(redisKey);
+
+    //   const currentMonitor = await db
+    //     .select()
+    //     .from(schema.monitor)
+    //     .where(eq(schema.monitor.id, Number(monitorId)))
+    //     .get();
+
+    //   const monitor = selectMonitorSchema.parse(currentMonitor);
+
+    //   if (!cronTimestamp) {
+    //     console.log("cronTimestamp is undefined");
+    //   }
+
+    //   const numberOfRegions = monitor.regions.length;
+
+    //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
+    //   // 4 of 6 monitor need to fail to trigger an alerting
+    //   if (nbAffectedRegion > numberOfRegions / 2) {
+    //     //  Trigger recovery notification
+    //     // await triggerRecovery({ monitorId, statusCode, message, region });
+    //     await db.update(incidentTable).set({
+    //       resolvedAt: new Date(),
+    //     });
+    //   }
+    // }
+  }
+
   return c.text("Ok", 200);
 });
