@@ -1,22 +1,12 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 
 import { selectIncidentSchema } from "@openstatus/db/src/schema";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
-import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
@@ -39,7 +28,7 @@ export function DataTableRowActions<TData>({
   const incident = selectIncidentSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
-  const [isPending, startTransition] = React.useTransition();
+  const [_isPending, startTransition] = React.useTransition();
 
   async function resolved() {
     startTransition(async () => {

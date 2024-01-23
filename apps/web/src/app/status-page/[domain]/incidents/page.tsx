@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
 import { Header } from "@/components/dashboard/header";
 import { IncidentList } from "@/components/status-page/incident-list";
 import { api } from "@/trpc/server";

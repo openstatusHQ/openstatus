@@ -1,7 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { logger } from "hono/logger";
 
-import type { Plan } from "@openstatus/plans";
+import type { Limits } from "@openstatus/plans/src/types";
 
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
@@ -10,7 +10,12 @@ import { statusReportUpdateApi } from "./statusReportUpdate";
 
 export type Variables = {
   workspaceId: string;
-  workspacePlan: Plan;
+  workspacePlan: {
+    title: string;
+    description: string;
+    price: number;
+    limits: Limits;
+  };
 };
 
 export const api = new OpenAPIHono<{ Variables: Variables }>();

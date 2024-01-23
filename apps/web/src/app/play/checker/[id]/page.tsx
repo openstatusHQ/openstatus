@@ -40,7 +40,7 @@ export default async function CheckPage({
   const check =
     data.checks.find((i) => i.region === selectedRegion) || data.checks?.[0];
 
-  const { status, region, headers, latency, timing } = check;
+  const { region, headers, timing } = check;
 
   return (
     <>

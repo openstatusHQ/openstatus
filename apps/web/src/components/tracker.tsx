@@ -153,7 +153,6 @@ type BarProps = Monitor & { blacklist?: string } & Pick<
 const Bar = ({
   count,
   ok,
-  avgLatency,
   p95Latency,
   day,
   blacklist,

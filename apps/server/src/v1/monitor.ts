@@ -54,9 +54,8 @@ const MonitorSchema = z
         (val) => {
           if (String(val).length > 0) {
             return String(val).split(",");
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.enum(flyRegions)),
       )
@@ -94,9 +93,8 @@ const MonitorSchema = z
         (val) => {
           if (String(val).length > 0) {
             return JSON.parse(String(val));
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
@@ -147,11 +145,10 @@ const monitorInput = z
     headers: z
       .preprocess(
         (val) => {
-          if (!!val) {
+          if (val) {
             return val;
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )

@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 
+  // TODO: let's use our own go checker to check the endpoint
   const check = await ping(_valid.data);
 
   console.log(check.status);

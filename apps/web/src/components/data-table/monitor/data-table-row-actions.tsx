@@ -76,7 +76,8 @@ export function DataTableRowActions<TData>({
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
-      const res = await fetch(`/api/checker/test`, {
+
+      const res = await fetch("/api/checker/test", {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",

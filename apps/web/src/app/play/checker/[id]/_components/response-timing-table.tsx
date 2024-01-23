@@ -27,7 +27,7 @@ export function ResponseTimingTable({ timing }: { timing: Timing }) {
         <TableRow>
           <TableHead className="w-[120px] md:w-[150px]">Timing</TableHead>
           <TableHead className="w-[120px] md:w-[150px]">Duration</TableHead>
-          <TableHead></TableHead>
+          <TableHead />
         </TableRow>
       </TableHeader>
       <TableBody>

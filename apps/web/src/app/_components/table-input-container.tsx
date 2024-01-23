@@ -16,7 +16,8 @@ export function TableInputContainer({ events }: { events: Ping[] }) {
     .filter((event) => {
       if (search?.status && event.statusCode !== Number(search.status)) {
         return false;
-      } else if (search?.region && event.region !== search.region) {
+      }
+      if (search?.region && event.region !== search.region) {
         return false;
       }
       return true;
