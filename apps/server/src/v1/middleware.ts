@@ -1,11 +1,11 @@
 import { verifyKey } from "@unkey/api";
-import type { Context, Env, Next } from "hono";
+import type { Context, Next } from "hono";
 
 import type { Variables } from "./index";
 import { getLimitByWorkspaceId } from "./utils";
 
 export async function middleware(
-  c: Context<{ Variables: Variables }, "/*", {}>,
+  c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
   const key = c.req.header("x-openstatus-key");

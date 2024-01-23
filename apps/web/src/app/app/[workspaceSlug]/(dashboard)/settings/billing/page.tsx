@@ -1,5 +1,4 @@
 import { api } from "@/trpc/server";
-import { CustomerPortalButton } from "./_components/customer-portal-button";
 import { SettingsPlan } from "./_components/plan";
 
 export default async function BillingPage() {

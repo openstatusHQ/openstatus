@@ -1,16 +1,10 @@
 import { Receiver } from "@upstash/qstash";
-import { nanoid } from "nanoid";
 
 import { db, eq, schema } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
-  selectMonitorSchema,
-  selectNotificationSchema,
-} from "@openstatus/db/src/schema";
-import {
   publishPingResponse,
   tbIngestPingResponse,
-  Tinybird,
 } from "@openstatus/tinybird";
 
 import { env } from "@/env";
@@ -21,8 +15,6 @@ export const monitorSchema = tbIngestPingResponse.pick({
   url: true,
   cronTimestamp: true,
 });
-
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
 const monitor = async (
   payload: Payload,

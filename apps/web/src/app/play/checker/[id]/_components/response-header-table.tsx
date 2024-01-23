@@ -1,5 +1,3 @@
-import { Copy } from "lucide-react";
-
 import {
   Table,
   TableBody,

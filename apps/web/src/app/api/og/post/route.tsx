@@ -54,7 +54,7 @@ export async function GET(req: Request) {
             backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
             backgroundSize: "24px 24px",
           }}
-        ></div>
+        />
         <div
           tw="flex w-full h-full absolute inset-0 opacity-70"
           style={{
@@ -62,7 +62,7 @@ export async function GET(req: Request) {
             backgroundImage:
               "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
           }}
-        ></div>
+        />
         <div tw="flex flex-col h-full justify-between px-24">
           <div tw="flex flex-col flex-1 justify-end">
             <div tw="flex flex-col px-12">

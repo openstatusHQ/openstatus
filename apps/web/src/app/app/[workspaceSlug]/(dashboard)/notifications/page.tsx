@@ -10,11 +10,7 @@ import { DataTable } from "@/components/data-table/notification/data-table";
 import { api } from "@/trpc/server";
 import { EmptyState } from "./_components/empty-state";
 
-export default async function NotificationPage({
-  params,
-}: {
-  params: { workspaceSlug: string };
-}) {
+export default async function NotificationPage() {
   const notifications =
     await api.notification.getNotificationsByWorkspace.query();
   const isLimitReached =

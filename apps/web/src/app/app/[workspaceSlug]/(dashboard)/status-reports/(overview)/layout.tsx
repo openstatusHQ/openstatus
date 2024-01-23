@@ -5,7 +5,6 @@ import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { HelpCallout } from "@/components/dashboard/help-callout";
-import { api } from "@/trpc/server";
 
 export default async function Layout({
   children,

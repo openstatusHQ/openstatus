@@ -27,7 +27,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     message: z.string().optional(),
     statusCode: z.number().optional(),
     region: z.enum(flyRegions),
-    cronTimestamp: z.number().optional(),
+    cronTimestamp: z.number(),
     // status: z.enum(["active", "error"]),
   });
 
@@ -96,22 +96,33 @@ checkerRoute.post("/updateStatus", async (c) => {
 
       const monitor = selectMonitorSchema.parse(currentMonitor);
 
-      if (!cronTimestamp) {
-        console.log("cronTimestamp is undefined");
-      }
-
       const numberOfRegions = monitor.regions.length;
 
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       // 4 of 6 monitor need to fail to trigger an alerting
       if (nbAffectedRegion > numberOfRegions / 2) {
-        await triggerAlerting({ monitorId, statusCode, message, region });
-        // create the incident and trigger the alerting
-        await db.insert(incidentTable).values({
-          monitorId: Number(monitorId),
-          workspaceId: monitor.workspaceId,
-          startedAt: new Date(),
-        });
+        // let's refetch the incident to avoid race condition
+        const incident = await db
+          .select()
+          .from(incidentTable)
+          .where(
+            and(
+              eq(incidentTable.monitorId, Number(monitorId)),
+              isNull(incidentTable.resolvedAt),
+              isNull(incidentTable.acknowledgedAt),
+              eq(incidentTable.startedAt, new Date(cronTimestamp)),
+            ),
+          )
+          .get();
+        if (incident === undefined) {
+          await db.insert(incidentTable).values({
+            monitorId: Number(monitorId),
+            workspaceId: monitor.workspaceId,
+            startedAt: new Date(cronTimestamp),
+          });
+
+          await triggerAlerting({ monitorId, statusCode, message, region });
+        }
       }
     }
   }
