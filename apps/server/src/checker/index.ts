@@ -115,11 +115,14 @@ checkerRoute.post("/updateStatus", async (c) => {
           )
           .get();
         if (incident === undefined) {
-          await db.insert(incidentTable).values({
-            monitorId: Number(monitorId),
-            workspaceId: monitor.workspaceId,
-            startedAt: new Date(cronTimestamp),
-          });
+          await db
+            .insert(incidentTable)
+            .values({
+              monitorId: Number(monitorId),
+              workspaceId: monitor.workspaceId,
+              startedAt: new Date(cronTimestamp),
+            })
+            .onConflictDoNothing();
 
           await triggerAlerting({ monitorId, statusCode, message, region });
         }
