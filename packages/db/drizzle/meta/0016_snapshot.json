@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "17cd1e81-0c8e-4b2a-8840-82ff6699797d",
-  "prevId": "3db5a12d-3c28-4967-b70c-98ea0eeb9e64",
+  "id": "d3626cd5-956f-4a64-9c70-02e5ee44cde0",
+  "prevId": "f5a77857-319d-4575-b570-f0aacb9eab35",
   "tables": {
     "status_report_to_monitors": {
       "name": "status_report_to_monitors",
@@ -1177,9 +1177,8 @@
           "name": "monitor_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
+          "notNull": false,
+          "autoincrement": false
         },
         "workspace_id": {
           "name": "workspace_id",
@@ -1241,7 +1240,13 @@
           "default": "(strftime('%s', 'now'))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "incident_monitor_id_started_at_unique": {
+          "name": "incident_monitor_id_started_at_unique",
+          "columns": ["monitor_id", "started_at"],
+          "isUnique": true
+        }
+      },
       "foreignKeys": {
         "incident_monitor_id_monitor_id_fk": {
           "name": "incident_monitor_id_monitor_id_fk",
@@ -1280,11 +1285,7 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "incident_monitor_id_started_at_pk": {
-          "columns": ["monitor_id", "started_at"]
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     }
   },
