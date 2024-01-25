@@ -53,7 +53,11 @@ export default async function Page({
   }
 
   const date = getDateByPeriod(search.data.period);
-  const minutes = getMinutesByInterval(search.data.interval);
+  const intervalMinutes = getMinutesByInterval(search.data.interval);
+  const periodicityMinutes = getMinutesByInterval(monitor.periodicity);
+
+  const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
+  const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const data = await getResponseGraphData({
     monitorId: id,
@@ -89,7 +93,7 @@ export default async function Page({
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         {/* IDEA: add tooltip for description */}
         <DatePickerPreset period={period} />
-        <QuantilePreset quantile={quantile} />
+        <QuantilePreset quantile={quantile} disabled={isQuantileDisabled} />
         <IntervalPreset interval={interval} />
       </div>
       <ChartWrapper period={period} quantile={quantile} data={data} />

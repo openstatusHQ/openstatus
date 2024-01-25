@@ -7,6 +7,8 @@ import {
   subHours,
 } from "date-fns";
 
+import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
+
 export const periods = ["1h", "1d", "3d"] as const; // If neeeded (e.g. Pro plans), "7d", "30d"
 export const quantiles = ["p99", "p95", "p90", "p75", "avg"] as const;
 export const intervals = ["1m", "10m", "30m", "1h"] as const;
@@ -38,16 +40,23 @@ export function getDateByPeriod(period: Period) {
   }
 }
 
-export function getMinutesByInterval(interval: Interval) {
+export function getMinutesByInterval(interval: MonitorPeriodicity) {
   switch (interval) {
+    case "30s":
+      // return 0.5;
+      return 1; // FIX TINYBIRD
     case "1m":
       return 1;
+    case "5m":
+      return 5;
     case "10m":
       return 10;
     case "30m":
       return 30;
     case "1h":
       return 60;
+    case "other":
+      return 60; // TODO: remove "other" from here
     default:
       const _exhaustiveCheck: never = interval;
       throw new Error(`Unhandled interval: ${_exhaustiveCheck}`);
