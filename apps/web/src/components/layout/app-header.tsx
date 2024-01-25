@@ -34,7 +34,7 @@ export function AppHeader() {
           <ul className="flex gap-2">
             <li className="w-full">
               <Button variant="link" asChild>
-                <Link href="https://docs.openstatus.dev" target="_blank">
+                <Link href="/docs" target="_blank">
                   Docs
                   <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
                 </Link>
