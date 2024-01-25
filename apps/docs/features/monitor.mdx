@@ -1,0 +1,72 @@
+---
+title: Monitor
+description: "How to create your first monitor with OpenStatus.dev"
+---
+
+## What is a monitor? 🧑‍🏫
+
+A monitor is a job that runs periodically and checks the status of a service. It
+can be a website, an API, or anything else that can be checked automatically.
+
+## Configure your monitor 🛠
+
+Your endpoint check requires:
+
+- a **name** to identify your monitor
+- the **URL** to checked
+
+We will store the **response time**, the **status code**, the **headers**
+returned, and the **timing metrics** of your endpoint.
+
+<Frame caption="Monitor your endpoint">
+  <img
+    src="/images/monitor/monitor-detail.png"
+    alt="Charts with status code and response time"
+  />
+</Frame>
+
+### HTTP Request 📤
+
+Customize the request sent to your endpoint.
+
+Choose between one of the request **HTTP Method**: `GET` (default), `POST` or
+`HEAD`.
+
+Add custom key-value **HTTP Headers** to your request.
+
+> OpenStatus automatically set the `"User-Agent": "OpenStatus/1.0"` header to
+> your request. This header is used to identify the request as a ping request
+> and can be exluded from your analytics.
+
+If you select the `POST` method, you can add a custom **HTTP Body** to your
+request.
+
+### Advanced Configuration ⚙️
+
+You can pause your monitor with the **active** switch button.
+
+#### Frequency ⏱
+
+Define the **frequency** of your checks. You can choose between: `30s`, `1m`,
+`5m`, `10m` (default), `30min` or `1h`.
+
+#### Regions 🌍
+
+By default, **all regions** are enabled. You can disable some regions if you
+want to. Our regions are:
+
+- `ams` - Amsterdam, Netherlands - 🇳🇱
+- `iad` - Ashburn, Virginia, USA - 🇺🇸
+- `jnb` - Johannesburg, South Africa - 🇿🇦
+- `hkg` - Hong Kong, Honkg Kong - 🇭🇰
+- `gru` - Sao Paulo, Brazil - 🇧🇷
+- `syd` - Sydney, Australia - 🇦🇺
+
+#### Description 📝
+
+The **description** is optional. If defined, an `Info` tooltip will be added to
+your monitor name.
+
+#### Timeout ⏳
+
+You can define a **timeout** for your request. The default value is `30s`.
