@@ -2,9 +2,13 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, HelpCircle } from "lucide-react";
 
 import {
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
@@ -34,20 +38,33 @@ export function DatePickerPreset({ period }: { period: Period }) {
   }
 
   return (
-    <Select defaultValue={period} onValueChange={onSelect}>
-      <SelectTrigger className="w-[150px] text-left">
-        <span className="flex items-center gap-2">
-          <CalendarIcon className="h-4 w-4" />
-          <SelectValue placeholder="Pick a range" />
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {periods.map((period) => (
-          <SelectItem key={period} value={period}>
-            {renderLabel(period)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="grid gap-1">
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor="period">Period</Label>
+        <Popover>
+          <PopoverTrigger>
+            <HelpCircle className="text-muted-foreground h-4 w-4" />
+          </PopoverTrigger>
+          <PopoverContent side="top" className="text-sm">
+            <p>Specifies a time range for analysis.</p>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <Select defaultValue={period} onValueChange={onSelect}>
+        <SelectTrigger className="w-[150px] text-left" id="period">
+          <span className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            <SelectValue placeholder="Pick a range" />
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          {periods.map((period) => (
+            <SelectItem key={period} value={period}>
+              {renderLabel(period)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

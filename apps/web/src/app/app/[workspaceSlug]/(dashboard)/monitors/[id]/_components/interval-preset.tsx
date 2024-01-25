@@ -2,14 +2,19 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Hourglass } from "lucide-react";
+import { HelpCircle, Hourglass } from "lucide-react";
 
 import {
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Separator,
 } from "@openstatus/ui";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
@@ -27,20 +32,38 @@ export function IntervalPreset({ interval }: { interval: Interval }) {
   }
 
   return (
-    <Select onValueChange={onSelect} defaultValue={interval}>
-      <SelectTrigger className="w-[100px]">
-        <span className="flex items-center gap-2">
-          <Hourglass className="h-4 w-4" />
-          <SelectValue />
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {intervals.map((interval) => (
-          <SelectItem key={interval} value={interval}>
-            {interval}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="grid gap-1">
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor="interval">Interval</Label>
+        <Popover>
+          <PopoverTrigger>
+            <HelpCircle className="text-muted-foreground h-4 w-4" />
+          </PopoverTrigger>
+          <PopoverContent side="top" className="text-sm">
+            <p>Aggregate and process data at regular time intervals.</p>
+            <Separator className="my-1" />
+            <p className="text-muted-foreground">
+              30m should be aligned to the beginning of 30-minute intervals for
+              data analysis and aggregation purposes
+            </p>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <Select onValueChange={onSelect} defaultValue={interval}>
+        <SelectTrigger className="w-[150px]" id="interval">
+          <span className="flex items-center gap-2">
+            <Hourglass className="h-4 w-4" />
+            <SelectValue />
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          {intervals.map((interval) => (
+            <SelectItem key={interval} value={interval}>
+              {interval}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
