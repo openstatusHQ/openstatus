@@ -7,6 +7,15 @@ import { MoreHorizontal } from "lucide-react";
 
 import { selectIncidentSchema } from "@openstatus/db/src/schema";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
+import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 
@@ -28,7 +38,7 @@ export function DataTableRowActions<TData>({
   const incident = selectIncidentSchema.parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
-  const [_isPending, startTransition] = React.useTransition();
+  const [isPending, startTransition] = React.useTransition();
 
   async function resolved() {
     startTransition(async () => {
@@ -46,12 +56,6 @@ export function DataTableRowActions<TData>({
   async function acknowledge() {
     startTransition(async () => {
       try {
-        // const { jobType, ...rest } = monitor;
-        // if (!monitor.id) return;
-        // await api.monitor.update.mutate({
-        //   ...rest,
-        //   active: !monitor.active,
-        // });
         if (!incident.id) return;
         await api.incident.acknowledgeIncident.mutate({ id: incident.id });
         toast("success");
@@ -62,35 +66,76 @@ export function DataTableRowActions<TData>({
     });
   }
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="data-[state=open]:bg-accent h-8 w-8 p-0"
-        >
-          <span className="sr-only">Open menu</span>
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem
-          disabled={incident.acknowledgedAt !== null}
-          onClick={acknowledge}
-        >
-          Acknowledge
-        </DropdownMenuItem>
+  async function onDelete() {
+    startTransition(async () => {
+      try {
+        if (!incident.id) return;
+        await api.incident.delete.mutate({ id: incident.id });
+        toast("success");
+        router.refresh();
+      } catch {
+        toast("error");
+      }
+    });
+  }
 
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          disabled={
-            incident.resolvedAt !== null || incident.acknowledgedAt === null
-          }
-          onClick={resolved}
-        >
-          Resolved
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  return (
+    <AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+          >
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            disabled={incident.acknowledgedAt !== null}
+            onClick={acknowledge}
+          >
+            Acknowledge
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={
+              incident.resolvedAt !== null || incident.acknowledgedAt === null
+            }
+            onClick={resolved}
+          >
+            Resolved
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
+              Delete
+            </DropdownMenuItem>
+          </AlertDialogTrigger>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the
+            monitor.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete();
+            }}
+            disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {!isPending ? "Delete" : <LoadingAnimation />}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
