@@ -54,6 +54,14 @@ export async function GET(req: Request) {
             src={new URL(image, DEFAULT_URL).toString()}
           />
         </div>
+        {/* adds a border to the mask element */}
+        <div
+          style={{
+            clipPath: "polygon(90% 0%, 170% 0%, -30% 200%, -29% 200%)",
+            zIndex: -1,
+          }}
+          tw="flex absolute h-full w-full bg-slate-100"
+        />
         <div tw="flex flex-col justify-between h-full flex-1 py-24 px-24">
           <div tw="flex flex-col h-full flex-1 justify-center">
             <h1
@@ -67,7 +75,9 @@ export async function GET(req: Request) {
             </p>
           </div>
           <div tw="flex w-full">
-            <p tw="font-medium text-xl">{FOOTER}</p>
+            <p style={{ width: 450 }} tw="font-medium text-xl">
+              {FOOTER}
+            </p>
           </div>
         </div>
       </Background>
