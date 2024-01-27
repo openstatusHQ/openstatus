@@ -2,7 +2,7 @@
 import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { Layout } from "../_components/layout";
+import { BasicLayout } from "../_components/basic-layout";
 import {
   calSemiBold,
   DEFAULT_URL,
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
 
   return new ImageResponse(
     (
-      <Layout title={title} description={description}>
+      <BasicLayout title={title} description={description}>
         {image ? (
           <img
             alt=""
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
             src={new URL(image, DEFAULT_URL).toString()}
           />
         ) : null}
-      </Layout>
+      </BasicLayout>
     ),
     {
       ...SIZE,

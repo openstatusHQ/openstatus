@@ -3,7 +3,7 @@ import { ImageResponse } from "next/server";
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { getMonitorListData } from "@/lib/tb";
 import { convertTimezoneToGMT } from "@/lib/timezone";
-import { Layout } from "../_components/layout";
+import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
 
@@ -38,13 +38,13 @@ export async function GET(req: Request) {
 
   return new ImageResponse(
     (
-      <Layout
+      <BasicLayout
         title={title}
         description={description}
         tw={data.length === 0 ? "mt-32" : undefined}
       >
         {Boolean(data.length) ? <Tracker data={data} /> : null}
-      </Layout>
+      </BasicLayout>
     ),
     {
       ...SIZE,

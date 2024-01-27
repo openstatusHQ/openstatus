@@ -5,7 +5,7 @@ import { getResponseListData } from "@/lib/tb";
 import { calcStatus } from "@/lib/tracker";
 import { notEmpty } from "@/lib/utils";
 import { api } from "@/trpc/server";
-import { Layout } from "../_components/layout";
+import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
 import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
 
@@ -44,9 +44,9 @@ export async function GET(req: Request) {
 
   return new ImageResponse(
     (
-      <Layout title={title} description={description} tw="py-24 px-24">
+      <BasicLayout title={title} description={description} tw="py-24 px-24">
         <StatusCheck variant={isIncident ? "incident" : status.variant} />
-      </Layout>
+      </BasicLayout>
     ),
     {
       ...SIZE,

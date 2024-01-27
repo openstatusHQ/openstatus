@@ -6,7 +6,7 @@ import {
   timestampFormatter,
 } from "@/app/play/checker/[id]/utils";
 import { cn } from "@/lib/utils";
-import { Layout } from "../_components/layout";
+import { BasicLayout } from "../_components/basic-layout";
 import {
   calSemiBold,
   interLight,
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
 
   return new ImageResponse(
     (
-      <Layout
+      <BasicLayout
         title="Speed Checker"
         description="Experience the performance of your application from around the different continents."
         tw="pt-4 pb-8"
@@ -138,7 +138,7 @@ export async function GET(req: Request) {
             </div>
           </div>
         </div>
-      </Layout>
+      </BasicLayout>
     ),
     {
       ...SIZE,
