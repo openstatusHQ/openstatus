@@ -8,7 +8,7 @@ import type {
 
 import { getResponseListData } from "@/lib/tb";
 import type { StatusVariant } from "@/lib/tracker";
-import { getStatus } from "@/lib/tracker";
+import { calcStatus } from "@/lib/tracker";
 import { cn, notEmpty } from "@/lib/utils";
 import { Icons } from "../icons";
 
@@ -49,21 +49,8 @@ export async function StatusCheck({
     )
   ).filter(notEmpty);
 
-  function calcStatus() {
-    const { count, ok } = monitorsData.flat(1).reduce(
-      (prev, curr) => {
-        if (!curr.statusCode) return prev; // TODO: handle this better
-        const isOk = curr.statusCode <= 299 && curr.statusCode >= 200;
-        return { count: prev.count + 1, ok: prev.ok + (isOk ? 1 : 0) };
-      },
-      { count: 0, ok: 0 },
-    );
-    const ratio = ok / count;
-    if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
-    return getStatus(ratio);
-  }
+  const status = calcStatus(monitorsData);
 
-  const status = calcStatus();
   const incident = {
     label: "Incident",
     variant: "incident",

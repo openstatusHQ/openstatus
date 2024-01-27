@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import * as z from "zod";
@@ -5,6 +6,11 @@ import * as z from "zod";
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 import { Separator } from "@openstatus/ui";
 
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
 import { CopyLinkButton } from "./_components/copy-link-button";
@@ -22,13 +28,12 @@ const searchParamsSchema = z.object({
   region: monitorFlyRegionSchema.optional(),
 });
 
-export default async function CheckPage({
-  params,
-  searchParams,
-}: {
+interface Props {
   params: { id: string };
   searchParams: { [key: string]: string | string[] | undefined };
-}) {
+}
+
+export default async function CheckPage({ params, searchParams }: Props) {
   const search = searchParamsSchema.safeParse(searchParams);
 
   const selectedRegion = search.success ? search.data.region : undefined;
@@ -89,4 +94,27 @@ export default async function CheckPage({
       </Shell>
     </>
   );
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const title = "Speed Checker";
+  const description =
+    "Get speed insights for your api, website from multiple regions.";
+  return {
+    ...defaultMetadata,
+    title,
+    description,
+    twitter: {
+      ...twitterMetadata,
+      title,
+      description,
+      images: [`/api/og/checker?id=${params?.id}`],
+    },
+    openGraph: {
+      ...ogMetadata,
+      title,
+      description,
+      images: [`/api/og/checker?id=${params?.id}`],
+    },
+  };
 }
