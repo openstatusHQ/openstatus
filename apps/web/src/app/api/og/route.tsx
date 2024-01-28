@@ -59,8 +59,11 @@ export async function GET(req: Request) {
           style={{
             clipPath: "polygon(90% 0%, 170% 0%, -30% 200%, -29% 200%)",
             zIndex: -1,
+            // from-slate-100 to-slate-300
+            backgroundImage:
+              "linear-gradient(to bottom left, #f1f5f9, #cbd5e1)",
           }}
-          tw="flex absolute h-full w-full bg-slate-100"
+          tw="flex absolute h-full w-full" // bg-slate-200
         />
         <div tw="flex flex-col justify-between h-full flex-1 py-24 px-24">
           <div tw="flex flex-col h-full flex-1 justify-center">
