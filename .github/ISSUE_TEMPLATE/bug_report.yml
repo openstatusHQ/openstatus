@@ -10,20 +10,6 @@ body:
         ## Welcome 👋🏻
 
         Thank you for taking the time to report an issue with OpenStatus. Please fill out the information below to help us resolve your issue faster. If you have a question or need general help, please join our [Discord community](https://www.openstatus.dev/discord).
-  - type: checkboxes
-    attributes:
-      label: Preliminary Checks
-      description: Please make sure that you verify each checkbox and follow the instructions for them.
-      options:
-        - label: |
-            I have reviewed the documentation: https://docs.openstatus.dev/
-          required: true
-        - label: |
-            I have searched for existing issues: https://github.com/openstatusHQ/openstatus/issues
-          required: true
-        - label: |
-            This issue is not a question, general help request, or anything other than a bug report directly related to OpenStatus. Please ask questions in our Discord community: https://www.openstatus.dev/discord
-          required: true
   - type: input
     id: reproduction-link
     attributes:
@@ -63,7 +49,9 @@ body:
     attributes:
       label: Environment
       render: Shell
-      description: Run "npx envinfo --system --browsers --binaries --npmPackages" in your project directory and paste the output here.
+      description:
+        Run "npx envinfo --system --browsers --binaries --npmPackages" in your
+        project directory and paste the output here.
       placeholder: |
         You'll get an output similar to this:
 
