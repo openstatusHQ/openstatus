@@ -93,7 +93,6 @@ export default async function StatusPageLayout({ children, params }: Props) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const firstMonitor = page?.monitors?.[0]; // temporary solution
 
   return {
     ...defaultMetadata,
@@ -102,21 +101,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     icons: page?.icon,
     twitter: {
       ...twitterMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
+      images: [`/api/og/page?slug=${page?.slug}`],
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
       ...ogMetadata,
-      images: [
-        `/api/og?monitorId=${firstMonitor?.id}&title=${page?.title}&description=${
-          page?.description || `The ${page?.title} status page`
-        }`,
-      ],
+      images: [`/api/og/page?slug=${page?.slug}`],
       title: page?.title,
       description: page?.description,
     },

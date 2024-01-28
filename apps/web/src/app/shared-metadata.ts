@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const TITLE = "OpenStatus";
 export const DESCRIPTION =
-  "A better way to monitor your services. Don't let your down time ruin your day.";
+  "A better way to monitor your services. Don't let your downtime ruin your day.";
 
 export const defaultMetadata: Metadata = {
   title: {

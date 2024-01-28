@@ -50,7 +50,9 @@ export function SelectWorkspace() {
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+      <DropdownMenuContent
+        style={{ width: "var(--radix-dropdown-menu-trigger-width)" }}
+      >
         <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {workspaces.map((workspace) => (

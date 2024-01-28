@@ -1,4 +1,4 @@
-import type { Monitor } from "@openstatus/tinybird";
+import type { Monitor, Ping } from "@openstatus/tinybird";
 
 export type StatusVariant = "up" | "degraded" | "down" | "empty";
 
@@ -88,6 +88,23 @@ export function isInBlacklist(timestamp: number) {
     areDatesEqualByDayMonthYear(new Date(date), new Date(timestamp)),
   );
   return el ? blacklistDates[el] : undefined;
+}
+
+/**
+ * Calculate the overall status of a page based on all the monitor data
+ */
+export function calcStatus(data: Ping[][]) {
+  const { count, ok } = data.flat(1).reduce(
+    (prev, curr) => {
+      if (!curr.statusCode) return prev; // TODO: handle this better
+      const isOk = curr.statusCode <= 299 && curr.statusCode >= 200;
+      return { count: prev.count + 1, ok: prev.ok + (isOk ? 1 : 0) };
+    },
+    { count: 0, ok: 0 },
+  );
+  const ratio = ok / count;
+  if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
+  return getStatus(ratio);
 }
 
 /**

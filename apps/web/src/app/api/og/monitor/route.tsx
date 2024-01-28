@@ -1,15 +1,11 @@
-/* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from "next/server";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+import { getMonitorListData } from "@/lib/tb";
+import { convertTimezoneToGMT } from "@/lib/timezone";
 import { BasicLayout } from "../_components/basic-layout";
-import {
-  calSemiBold,
-  DEFAULT_URL,
-  interLight,
-  interRegular,
-  SIZE,
-} from "../utils";
+import { Tracker } from "../_components/tracker";
+import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
 
 export const runtime = "edge";
 
@@ -22,24 +18,32 @@ export async function GET(req: Request) {
 
   const title =
     (searchParams.has("title") && searchParams.get("title")) || TITLE;
+
   const description =
     (searchParams.has("description") && searchParams.get("description")) ||
     DESCRIPTION;
-  const image = searchParams.has("image")
-    ? searchParams.get("image")
-    : undefined;
+
+  const monitorId =
+    (searchParams.has("id") && searchParams.get("id")) || undefined;
+
+  const timezone = convertTimezoneToGMT();
+
+  const data =
+    (monitorId &&
+      (await getMonitorListData({
+        monitorId,
+        timezone,
+      }))) ||
+    [];
 
   return new ImageResponse(
     (
-      <BasicLayout title={title} description={description}>
-        {image ? (
-          <img
-            alt=""
-            style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
-            tw="flex w-full"
-            src={new URL(image, DEFAULT_URL).toString()}
-          />
-        ) : null}
+      <BasicLayout
+        title={title}
+        description={description}
+        tw={data.length === 0 ? "mt-32" : undefined}
+      >
+        {Boolean(data.length) ? <Tracker data={data} /> : null}
       </BasicLayout>
     ),
     {
