@@ -44,16 +44,13 @@ export async function GET(req: Request) {
     (
       <Background tw="justify-start items-start">
         <div
-          style={{
-            clipPath: "polygon(90% 0%, 200% 0%, 200% 200%, -30% 200%)",
-            zIndex: -1,
-          }}
+          style={{ clipPath: "polygon(90% 0%, 200% 0%, 200% 200%, -30% 200%)" }}
           tw="flex absolute h-full w-full bg-slate-200"
         >
           <img
             alt=""
             style={{ objectFit: "cover" }}
-            tw="flex w-full"
+            tw="flex w-full h-full"
             src={new URL(image, DEFAULT_URL).toString()}
           />
         </div>
@@ -61,7 +58,6 @@ export async function GET(req: Request) {
         <div
           style={{
             clipPath: "polygon(90% 0%, 170% 0%, -30% 200%, -29% 200%)",
-            zIndex: -1,
             // from-slate-100 to-slate-300
             backgroundImage:
               "linear-gradient(to bottom left, #f1f5f9, #cbd5e1)",

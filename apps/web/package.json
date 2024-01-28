@@ -34,7 +34,7 @@
     "@t3-oss/env-nextjs": "0.7.0",
     "@tailwindcss/typography": "0.5.10",
     "@tanstack/react-table": "8.10.3",
-    "@tremor/react": "3.8.2",
+    "@tremor/react": "3.13.3",
     "@trpc/client": "10.38.5",
     "@trpc/next": "10.38.5",
     "@trpc/react-query": "10.38.5",
