@@ -40,7 +40,7 @@ export function Chart({ data, regions }: ChartProps) {
         ]}
         onValueChange={(v) => void 0} // that prop makes the chart interactive
         valueFormatter={dataFormatter}
-        curveType="natural"
+        curveType="monotone"
       />
     </Card>
   );
