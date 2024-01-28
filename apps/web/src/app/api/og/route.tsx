@@ -37,6 +37,9 @@ export async function GET(req: Request) {
   const image =
     (searchParams.has("image") && searchParams.get("image")) || IMAGE;
 
+  const footer =
+    (searchParams.has("footer") && searchParams.get("footer")) || FOOTER;
+
   return new ImageResponse(
     (
       <Background tw="justify-start items-start">
@@ -79,7 +82,7 @@ export async function GET(req: Request) {
           </div>
           <div tw="flex w-full">
             <p style={{ width: 450 }} tw="font-medium text-xl">
-              {FOOTER}
+              {footer}
             </p>
           </div>
         </div>
