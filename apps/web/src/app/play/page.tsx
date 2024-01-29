@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Clock, FileCode, Gauge, Palette, PanelTop } from "lucide-react";
@@ -7,6 +8,25 @@ import { Button } from "@openstatus/ui";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
 import { cn } from "@/lib/utils";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "../shared-metadata";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Free Tools ",
+  openGraph: {
+    ...ogMetadata,
+    title: "Free Tools | OpenStatus",
+    url: "https://www.openstatus.dev/play",
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: "Free Tools | OpenStatus",
+  },
+};
 
 export default async function PlayPage() {
   return (
