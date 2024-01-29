@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import * as z from "zod";
 
 import { BackButton } from "@/components/layout/back-button";
@@ -9,6 +10,16 @@ import StatusPlay from "./_components/status-play";
 const searchParamsSchema = z.object({
   timezone: z.string().optional(),
 });
+
+export const metadata: Metadata = {
+  title: "Status Page Preview",
+  description: "Display your status page with real time data.",
+  openGraph: {
+    title: "Status Page Preview",
+    description: "Display your status page with real time data.",
+    url: "https://www.openstatus.dev/play/status",
+  },
+};
 
 export default async function PlayPage({
   searchParams,
