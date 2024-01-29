@@ -3,11 +3,11 @@ import { logger } from "hono/logger";
 
 import type { Limits } from "@openstatus/plans/src/types";
 
+import { incidentsApi } from "./incidents";
 import { middleware } from "./middleware";
 import { monitorApi } from "./monitor";
 import { statusReportApi } from "./statusReport";
 import { statusReportUpdateApi } from "./statusReportUpdate";
-import { incidentsApi } from "./incidents"
 
 export type Variables = {
   workspaceId: string;
@@ -36,5 +36,5 @@ api.use("/*", middleware);
 api.use("/*", logger());
 api.route("/monitor", monitorApi);
 api.route("/status_report_update", statusReportUpdateApi);
-api.route("/incidents", incidentsApi);
+api.route("/incident", incidentsApi);
 api.route("/status_report", statusReportApi);
