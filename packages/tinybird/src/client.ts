@@ -4,12 +4,14 @@ import {
   tbBuildHomeStats,
   tbBuildMonitorList,
   tbBuildPublicStatus,
+  tbBuildResponseDetails,
   tbBuildResponseGraph,
   tbBuildResponseList,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
   tbParameterPublicStatus,
+  tbParameterResponseDetails,
   tbParameterResponseGraph,
   tbParameterResponseList,
 } from "./validation";
@@ -31,6 +33,14 @@ export function getResponseList(tb: Tinybird) {
       // cache: "default",
       revalidate: 600, // 10 min cache
     },
+  });
+}
+
+export function getResponseDetails(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "response_details__v0",
+    parameters: tbParameterResponseDetails,
+    data: tbBuildResponseDetails,
   });
 }
 

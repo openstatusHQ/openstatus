@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-import { availableRegions } from "@openstatus/utils";
+import { flyRegions } from "@openstatus/utils";
 
 /**
  * Values for the datasource ping_response
@@ -44,7 +44,7 @@ export const tbBuildResponseList = z.object({
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
-  region: z.enum(availableRegions),
+  region: z.enum(flyRegions),
   message: z.string().nullable().optional(),
 });
 
@@ -56,15 +56,65 @@ export const tbParameterResponseList = z.object({
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
-  region: z.enum(availableRegions).optional(),
+  region: z.enum(flyRegions).optional(),
   cronTimestamp: z.number().int().optional(),
+});
+
+/**
+ * Params for pipe response_details
+ */
+export const tbParameterResponseDetails = tbParameterResponseList.pick({
+  monitorId: true,
+  cronTimestamp: true,
+  region: true,
+});
+
+export const responseHeadersSchema = z.record(z.string(), z.string());
+export const responseTimingSchema = z.object({
+  dnsStart: z.number(),
+  dnsDone: z.number(),
+  connectStart: z.number(),
+  connectDone: z.number(),
+  tlsHandshakeStart: z.number(),
+  tlsHandshakeDone: z.number(),
+  firstByteStart: z.number(),
+  firstByteDone: z.number(),
+  transferStart: z.number(),
+  transferDone: z.number(),
+});
+
+/**
+ * Values from the pipe response_details
+ */
+export const tbBuildResponseDetails = tbBuildResponseList.extend({
+  message: z.string().nullable().optional(),
+  headers: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => {
+      if (!val) return null;
+      const value = responseHeadersSchema.safeParse(JSON.parse(val));
+      if (value.success) return value.data;
+      return null;
+    }),
+  timing: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => {
+      if (!val) return null;
+      const value = responseTimingSchema.safeParse(JSON.parse(val));
+      if (value.success) return value.data;
+      return null;
+    }),
 });
 
 /**
  * Values from pipe response_graph
  */
 export const tbBuildResponseGraph = z.object({
-  region: z.enum(availableRegions),
+  region: z.enum(flyRegions),
   timestamp: z.number().int(),
   avgLatency: z.number().int(),
   p75Latency: z.number().int(),
@@ -142,7 +192,7 @@ export const tbBuildPublicStatus = z.object({
 });
 
 export type Ping = z.infer<typeof tbBuildResponseList>;
-export type Region = (typeof availableRegions)[number]; // TODO: rename type AvailabeRegion
+export type Region = (typeof flyRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
 export type HomeStats = z.infer<typeof tbBuildHomeStats>;
 export type ResponseGraph = z.infer<typeof tbBuildResponseGraph>; // TODO: rename to ResponseQuantileChart
@@ -150,3 +200,5 @@ export type ResponseListParams = z.infer<typeof tbParameterResponseList>;
 export type ResponseGraphParams = z.infer<typeof tbParameterResponseGraph>;
 export type MonitorListParams = z.infer<typeof tbParameterMonitorList>;
 export type HomeStatsParams = z.infer<typeof tbParameterHomeStats>;
+export type ResponseDetails = z.infer<typeof tbBuildResponseDetails>;
+export type ResponseDetailsParams = z.infer<typeof tbParameterResponseDetails>;
