@@ -27,14 +27,10 @@ app.get("/ping", (c) => c.json({ ping: "pong", region: env.FLY_REGION }, 200));
 app.route("/v1", api);
 
 app.route("/", checkerRoute);
+if (process.env.NODE_ENV === "development") {
+  app.showRoutes();
+}
 
-const isDev = process.env.NODE_ENV === "development";
-const port = isDev ? 3001 : 3000;
+console.log("Starting server on port 3000");
 
-if (isDev) app.showRoutes();
-
-console.log(`Starting server on port ${port}`);
-
-const server = { port, fetch: app.fetch };
-
-export default server;
+export default app;
