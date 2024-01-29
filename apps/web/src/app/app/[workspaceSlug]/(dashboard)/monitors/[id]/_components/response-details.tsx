@@ -8,14 +8,12 @@ import { getResponseDetailsData } from "@/lib/tb";
 export async function ResponseDetails(props: ResponseDetailsParams) {
   const details = await getResponseDetailsData(props);
 
-  console.log(details);
-
   if (!details || details?.length === 0) return null;
 
   const response = details[0];
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <RegionInfo
         check={{
           latency: response.latency || 0,
@@ -29,6 +27,16 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
       ) : null}
       {response?.headers ? (
         <ResponseHeaderTable headers={response.headers} />
+      ) : null}
+      {response.message ? (
+        <div>
+          <pre className="bg-muted rounded-md p-4 text-sm">
+            {response.message}
+          </pre>
+          <p className="text-muted-foreground mt-4 text-center text-sm">
+            Response Message
+          </p>
+        </div>
       ) : null}
     </div>
   );

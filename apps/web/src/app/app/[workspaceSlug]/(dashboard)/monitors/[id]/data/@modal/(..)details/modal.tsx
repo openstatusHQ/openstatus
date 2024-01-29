@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Separator,
 } from "@openstatus/ui";
 
 export function Modal({ children }: { children: React.ReactNode }) {
@@ -30,7 +29,6 @@ export function Modal({ children }: { children: React.ReactNode }) {
             Response details of the request.
           </DialogDescription>
         </DialogHeader>
-        <Separator className="my-3" />
         {children}
       </DialogContent>
     </Dialog>

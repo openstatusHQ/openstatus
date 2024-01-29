@@ -1,8 +1,10 @@
 import * as z from "zod";
 
+import { Separator } from "@openstatus/ui";
 import { flyRegions } from "@openstatus/utils";
 
-import { ResponseDetails } from "../../_components/response-details";
+import { EmptyState } from "@/components/dashboard/empty-state";
+import { ResponseDetails } from "../../../_components/response-details";
 import { Modal } from "./modal";
 
 //
@@ -25,10 +27,18 @@ export default async function DetailsModal({
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
 
-  if (!search.success) return <div>Something went wrong</div>;
+  if (!search.success)
+    return (
+      <EmptyState
+        title="No log found"
+        description="Seems like we couldn't find what you are looking for."
+        icon="alert-triangle"
+      />
+    );
 
   return (
     <Modal>
+      <Separator className="my-4" />
       <ResponseDetails {...search.data} />
     </Modal>
   );

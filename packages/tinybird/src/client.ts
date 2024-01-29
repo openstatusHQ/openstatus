@@ -41,6 +41,9 @@ export function getResponseDetails(tb: Tinybird) {
     pipe: "response_details__v0",
     parameters: tbParameterResponseDetails,
     data: tbBuildResponseDetails,
+    opts: {
+      cache: "force-cache",
+    },
   });
 }
 

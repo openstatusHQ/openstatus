@@ -7,7 +7,7 @@ interface Props extends React.ComponentProps<"div"> {
   icon: ValidIcon;
   title: string;
   description: string;
-  action: React.ReactNode;
+  action?: React.ReactNode;
 }
 
 export function EmptyState({ icon, title, description, action }: Props) {
@@ -20,7 +20,7 @@ export function EmptyState({ icon, title, description, action }: Props) {
           <p className="text-foreground text-base">{title}</p>
           <p className="text-muted-foreground text-center">{description}</p>
         </div>
-        <div>{action}</div>
+        {action ? <div>{action}</div> : null}
       </div>
     </div>
   );

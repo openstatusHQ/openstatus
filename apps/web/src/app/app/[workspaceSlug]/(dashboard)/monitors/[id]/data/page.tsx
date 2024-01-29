@@ -2,15 +2,12 @@ import * as React from "react";
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import { Separator } from "@openstatus/ui";
-
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { DatePickerPreset } from "../_components/date-picker-preset";
 import { getDateByPeriod, periods } from "../utils";
-import { ResponseDetails } from "./_components/response-details";
 
 /**
  * allowed URL search params
@@ -53,12 +50,6 @@ export default async function Page({
         <DatePickerPreset period={search.data.period} />
       </div>
       <DataTable columns={columns} data={data} />
-      <Separator className="my-8" />
-      {/* <ResponseDetails
-        monitorId={id}
-        cronTimestamp={data[0].cronTimestamp!}
-        region={"ams"}
-      /> */}
     </div>
   );
 }
