@@ -74,14 +74,24 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 4. Follow the steps to run your sqlite database locally inside of
    [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
 
-5. Start the development server
+5. Start the development with the below command
 
    ```sh
     pnpm dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) with your browser to see
-   the result.
+   It will:
+
+   - run the web app on port `3000`
+   - run the api server on port `3001`
+   - run the docs on port `3002`
+
+6. See the results:
+
+- open [http://localhost:3000](http://localhost:3000) for the web app
+- open [http://localhost:3001/ping](http://localhost:3001/ping) for the api
+  server health check
+- open [http://localhost:3002](http://localhost:3002) for the docs
 
 For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
 access the link, you can use tunneling tools like
