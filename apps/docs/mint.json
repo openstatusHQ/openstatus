@@ -1,13 +1,13 @@
 {
   "$schema": "https://mintlify.com/schema.json",
   "name": "OpenStatus Docs",
-  "openapi": "https://api.openstatus.dev/v1/openapi",
+  "openapi": "https://localhost:3000/apps/server/src/v1/openapi",
   "logo": {
     "dark": "/logo/OpenStatus-dark.svg",
     "light": "/logo/OpenStatus-light.svg"
   },
   "api": {
-    "baseUrl": "https://api.openstatus.dev/v1",
+    "baseUrl": "https://localhost:3000/apps/server/src/v1",
     "auth": {
       "method": "key",
       "name": "x-openstatus-key"
@@ -70,16 +70,16 @@
   "navigation": [
     {
       "group": "Introduction",
-      "pages": ["introduction"]
+      "pages": [
+        "introduction"
+      ]
     },
     {
       "group": "Features",
-
       "pages": [
         "features/incident",
         "features/heartbeat",
         "features/monitor",
-
         {
           "group": "Notifications",
           "pages": [
@@ -103,9 +103,11 @@
     },
     {
       "group": "Developer Tools",
-      "pages": ["packages/react", "packages/status-widget"]
+      "pages": [
+        "packages/react",
+        "packages/status-widget"
+      ]
     },
-
     {
       "group": "Contributor Guides",
       "pages": [
