@@ -46,7 +46,8 @@ const IncidentSchema = z.object({
     .openapi({
       description: "The date the incident was acknowledged",
     })
-    .optional(),
+    .optional()
+    .nullable(),
 
   acknowledgedBy: z
     .number()
@@ -211,7 +212,12 @@ incidentsApi.openapi(putRoute, async (c) => {
   const _incident = await db
     .select()
     .from(incidentTable)
-    .where(eq(incidentTable.id, Number(id)))
+    .where(
+      and(
+        eq(incidentTable.id, Number(id)),
+        eq(incidentTable.workspaceId, workspaceId),
+      ),
+    )
     .get();
 
   if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
@@ -225,6 +231,7 @@ incidentsApi.openapi(putRoute, async (c) => {
     .set({
       ...input,
     })
+    .where(eq(incidentTable.id, Number(id)))
     .returning()
     .get();
 

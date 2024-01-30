@@ -5,13 +5,13 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
 import {
+  incidentTable,
   monitor,
   monitorsToPages,
   notification,
   notificationsToMonitors,
   page,
   statusReport,
-  incidentTable,
   statusReportUpdate,
   user,
   usersToWorkspaces,
@@ -139,9 +139,19 @@ async function main() {
       id: 1,
       workspaceId: 1,
       monitorId: 1,
+      createdAt: new Date(),
     })
     .run();
 
+  await db
+    .insert(incidentTable)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      monitorId: 1,
+      createdAt: new Date(),
+    })
+    .run();
   await db
     .insert(statusReportUpdate)
     .values({
