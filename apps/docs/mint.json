@@ -70,9 +70,7 @@
   "navigation": [
     {
       "group": "Introduction",
-      "pages": [
-        "introduction"
-      ]
+      "pages": ["introduction"]
     },
     {
       "group": "Features",
@@ -103,10 +101,7 @@
     },
     {
       "group": "Developer Tools",
-      "pages": [
-        "packages/react",
-        "packages/status-widget"
-      ]
+      "pages": ["packages/react", "packages/status-widget"]
     },
     {
       "group": "Contributor Guides",
@@ -122,6 +117,13 @@
       "icon": "code",
       "pages": [
         "api-reference/auth",
+        {
+          "group": "Incident",
+          "pages": [
+            "api-reference/incident/get-incident:id",
+            "api-reference/incident/get-incident"
+          ]
+        },
         {
           "group": "Monitor",
           "pages": [
