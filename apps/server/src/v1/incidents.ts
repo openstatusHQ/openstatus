@@ -28,7 +28,7 @@ const IncidentSchema = z.object({
     example: 1,
   }),
   startedAt: z
-    .preprocess((val) => String(val), z.string())
+    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
     .openapi({
       description: "The date the incident started",
     }),
@@ -42,7 +42,7 @@ const IncidentSchema = z.object({
     .nullable(),
 
   acknowledgedAt: z
-    .preprocess((val) => String(val), z.string())
+    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
     .openapi({
       description: "The date the incident was acknowledged",
     })
@@ -60,7 +60,8 @@ const IncidentSchema = z.object({
     .openapi({
       description: "The date the incident was resolved",
     })
-    .optional(),
+    .optional()
+    .nullable(),
   resolvedBy: z
     .number()
     .openapi({
@@ -155,6 +156,79 @@ incidentsApi.openapi(getRoute, async (c) => {
 
   if (!result) return c.jsonT({ code: 404, message: "Not Found" });
   const data = IncidentSchema.parse(result);
+
+  return c.jsonT(data);
+});
+
+const incidentInputSchema = z
+  .object({
+    acknowledgedAt: z.coerce.date().optional(),
+    resolvedAt: z.coerce.date().optional(),
+  })
+  .openapi({ description: "The incident to create" });
+const putRoute = createRoute({
+  method: "put",
+  tags: ["incident"],
+  description: "Update an incident",
+  path: "/:id",
+  request: {
+    params: ParamsSchema,
+    body: {
+      description: "The incident to update",
+      content: {
+        "application/json": {
+          schema: incidentInputSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: IncidentSchema,
+        },
+      },
+      description: "Update a monitor",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+incidentsApi.openapi(putRoute, async (c) => {
+  const input = c.req.valid("json");
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+  if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
+
+  const _incident = await db
+    .select()
+    .from(incidentTable)
+    .where(eq(incidentTable.id, Number(id)))
+    .get();
+
+  if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
+
+  if (workspaceId !== _incident.workspaceId)
+    return c.jsonT({ code: 401, message: "Unauthorized" });
+
+  console.log(input);
+  const _newIncident = await db
+    .update(incidentTable)
+    .set({
+      ...input,
+    })
+    .returning()
+    .get();
+
+  const data = IncidentSchema.parse(_newIncident);
 
   return c.jsonT(data);
 });

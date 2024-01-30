@@ -15,3 +15,27 @@ test("GET one Incident", async () => {
     monitorId: 1,
   });
 });
+
+test("Update an incident ", async () => {
+  const res = await api.request("/incident/1", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    }),
+  });
+  expect(res.status).toBe(200);
+
+  expect(await res.json()).toMatchObject({
+    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    monitorId: 1,
+    id: 1,
+    startedAt: expect.any(String),
+    resolvedAt: null,
+    resolvedBy: null,
+    acknowledgedBy: null,
+  });
+});
