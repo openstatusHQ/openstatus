@@ -27,9 +27,11 @@ const IncidentSchema = z.object({
     description: "The id of the incident",
     example: 1,
   }),
-  startedAt: z.string().openapi({
-    description: "The date the incident started",
-  }),
+  startedAt: z
+    .preprocess((val) => String(val), z.string())
+    .openapi({
+      description: "The date the incident started",
+    }),
 
   monitorId: z
     .number()
@@ -37,10 +39,10 @@ const IncidentSchema = z.object({
       description: "The id of the monitor associated with the incident",
       example: 1,
     })
-    .optional(),
+    .nullable(),
 
   acknowledgedAt: z
-    .string()
+    .preprocess((val) => String(val), z.string())
     .openapi({
       description: "The date the incident was acknowledged",
     })
@@ -51,10 +53,10 @@ const IncidentSchema = z.object({
     .openapi({
       description: "The user who acknowledged the incident",
     })
-    .optional(),
+    .nullable(),
 
   resolvedAt: z
-    .string()
+    .preprocess((val) => String(val), z.string())
     .openapi({
       description: "The date the incident was resolved",
     })
@@ -64,7 +66,7 @@ const IncidentSchema = z.object({
     .openapi({
       description: "The user who resolved the incident",
     })
-    .optional(),
+    .nullable(),
 });
 
 const getAllRoute = createRoute({
@@ -110,7 +112,7 @@ incidentsApi.openapi(getAllRoute, async (c) => {
 const getRoute = createRoute({
   method: "get",
   tags: ["incident"],
-  description: "Get an incident report",
+  description: "Get an incident",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -122,7 +124,7 @@ const getRoute = createRoute({
           schema: IncidentSchema,
         },
       },
-      description: "Get an single incident reports",
+      description: "Get an incident",
     },
     400: {
       content: {
@@ -143,14 +145,18 @@ incidentsApi.openapi(getRoute, async (c) => {
   const result = await db
     .select()
     .from(incidentTable)
-    .where(eq(incidentTable.workspaceId, workspaceId), eq(incidentTable.id, incidentId));
-    .get()
+    .where(
+      and(
+        eq(incidentTable.workspaceId, workspaceId),
+        eq(incidentTable.id, incidentId),
+      ),
+    )
+    .get();
 
   if (!result) return c.jsonT({ code: 404, message: "Not Found" });
   const data = IncidentSchema.parse(result);
 
   return c.jsonT(data);
 });
-
 
 export { incidentsApi };

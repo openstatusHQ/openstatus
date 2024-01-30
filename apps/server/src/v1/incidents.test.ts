@@ -11,10 +11,7 @@ test("GET one Incident", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: 1,
-    status: "investigating",
-    title: "Test Incident",
-    // TODO: discuss if we should return `updates` instead of `incident_updates`
-    incident_updates: expect.any(Array),
+    startedAt: expect.any(String),
+    monitorId: 1,
   });
 });
-
