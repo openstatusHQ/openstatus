@@ -107,4 +107,54 @@ incidentsApi.openapi(getAllRoute, async (c) => {
   return c.jsonT(data);
 });
 
+const getRoute = createRoute({
+  method: "get",
+  tags: ["incident"],
+  description: "Get an incident report",
+  path: "/:id",
+  request: {
+    params: ParamsSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(IncidentSchema),
+        },
+      },
+      description: "Get all incident reports",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+incidentsApi.openapi(getRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+
+  const incidentId = Number(id);
+  const result = await db.query.incidentTable.findFirst({
+    with: {
+      incidentUpdates: true,
+    },
+    where: and(
+      eq(incidentTable.workspaceId, workspaceId),
+      eq(incidentTable.id, incidentId),
+    ),
+  });
+
+  if (!result) return c.jsonT({ code: 404, message: "Not Found" });
+  const data = z.array(IncidentSchema).parse(result);
+
+  return c.jsonT(data);
+});
+
+
 export { incidentsApi };
