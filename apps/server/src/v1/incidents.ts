@@ -122,7 +122,7 @@ const getRoute = createRoute({
           schema: z.array(IncidentSchema),
         },
       },
-      description: "Get all incident reports",
+      description: "Get an single incident reports",
     },
     400: {
       content: {
@@ -140,18 +140,14 @@ incidentsApi.openapi(getRoute, async (c) => {
   const { id } = c.req.valid("param");
 
   const incidentId = Number(id);
-  const result = await db.query.incidentTable.findFirst({
-    with: {
-      incidentUpdates: true,
-    },
-    where: and(
-      eq(incidentTable.workspaceId, workspaceId),
-      eq(incidentTable.id, incidentId),
-    ),
-  });
+  const result = await db
+    .select()
+    .from(incidentTable)
+    .where(eq(incidentTable.workspaceId, workspaceId), eq(incidentTable.id, incidentId));
+    .first()
 
   if (!result) return c.jsonT({ code: 404, message: "Not Found" });
-  const data = z.array(IncidentSchema).parse(result);
+  const data = IncidentSchema.parse(result);
 
   return c.jsonT(data);
 });
