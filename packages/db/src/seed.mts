@@ -11,6 +11,7 @@ import {
   notificationsToMonitors,
   page,
   statusReport,
+  incidentTable,
   statusReportUpdate,
   user,
   usersToWorkspaces,
@@ -129,6 +130,15 @@ async function main() {
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(incidentTable)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      monitorId: 1,
     })
     .run();
 

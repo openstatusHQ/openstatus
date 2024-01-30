@@ -74,12 +74,10 @@
     },
     {
       "group": "Features",
-
       "pages": [
         "features/incident",
         "features/heartbeat",
         "features/monitor",
-
         {
           "group": "Notifications",
           "pages": [
@@ -105,7 +103,6 @@
       "group": "Developer Tools",
       "pages": ["packages/react", "packages/status-widget"]
     },
-
     {
       "group": "Contributor Guides",
       "pages": [
@@ -120,6 +117,13 @@
       "icon": "code",
       "pages": [
         "api-reference/auth",
+        {
+          "group": "Incident",
+          "pages": [
+            "api-reference/incident/get-incident:id",
+            "api-reference/incident/get-incident"
+          ]
+        },
         {
           "group": "Monitor",
           "pages": [
