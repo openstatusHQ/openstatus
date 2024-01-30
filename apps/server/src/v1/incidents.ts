@@ -119,7 +119,7 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(IncidentSchema),
+          schema: IncidentSchema,
         },
       },
       description: "Get an single incident reports",
@@ -144,7 +144,7 @@ incidentsApi.openapi(getRoute, async (c) => {
     .select()
     .from(incidentTable)
     .where(eq(incidentTable.workspaceId, workspaceId), eq(incidentTable.id, incidentId));
-    .first()
+    .get()
 
   if (!result) return c.jsonT({ code: 404, message: "Not Found" });
   const data = IncidentSchema.parse(result);
