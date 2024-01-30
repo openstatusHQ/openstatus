@@ -17,7 +17,7 @@ test("GET one Incident", async () => {
 });
 
 test("Update an incident ", async () => {
-  const res = await api.request("/incident/1", {
+  const res = await api.request("/incident/2", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -32,7 +32,7 @@ test("Update an incident ", async () => {
   expect(await res.json()).toMatchObject({
     acknowledgedAt: "2023-11-08T21:03:13.000Z",
     monitorId: 1,
-    id: 1,
+    id: 2,
     startedAt: expect.any(String),
     resolvedAt: null,
     resolvedBy: null,
