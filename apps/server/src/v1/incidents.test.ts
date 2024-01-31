@@ -39,3 +39,14 @@ test("Update an incident ", async () => {
     acknowledgedBy: null,
   });
 });
+
+test("Get all Incidents", async () => {
+  const res = await api.request("/incident", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  expect(res.status).toBe(200);
+});
+
+
