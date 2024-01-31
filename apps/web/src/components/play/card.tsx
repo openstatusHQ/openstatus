@@ -6,7 +6,7 @@ import { Button } from "@openstatus/ui";
 import { Shell } from "@/components/dashboard/shell";
 import { cn } from "@/lib/utils";
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   href: string;
   title: string;
   description: string;
@@ -14,9 +14,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "primary";
 }
 
-// TODO: unify the cards of playground, oss-friends and external monitors
-
-function Card({
+export function Card({
   title,
   description,
   href,
@@ -34,10 +32,12 @@ function Card({
     ? { target: "_blank", rel: "noreferrer" }
     : {};
 
+  const Icon = icon;
+
   return (
     <Shell
       className={cn(
-        "group flex flex-col gap-3 hover:shadow",
+        "hover:dark:border-card-foreground/30 group flex flex-col gap-3 hover:shadow",
         shellClassName,
         className,
       )}
@@ -54,7 +54,7 @@ function Card({
           </Link>
         </Button>
         <div className="border-border bg-background rounded-full border p-2 transition-transform duration-200 group-hover:-rotate-12">
-          {icon ? icon({ className: "text-muted-foreground h-5 w-5" }) : null}
+          {Icon && <Icon className="text-muted-foreground h-5 w-5" />}
         </div>
       </div>
     </Shell>
