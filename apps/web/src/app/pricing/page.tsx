@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
+import { FAQs } from "@/components/marketing/faqs";
 import { EnterpricePlan } from "@/components/marketing/pricing/enterprice-plan";
 import { PricingWrapper } from "@/components/marketing/pricing/pricing-wrapper";
 
@@ -31,6 +32,7 @@ export default function PricingPage() {
         <Shell>
           <EnterpricePlan />
         </Shell>
+        <FAQs />
       </div>
     </MarketingLayout>
   );
