@@ -77,6 +77,8 @@ export default authMiddleware({
     "/changelog",
     "/changelog/(.*)",
     "/legal/(.*)",
+    "/about",
+    "/cal",
     "/discord",
     "/github",
     "/pricing",
