@@ -34,10 +34,10 @@ export default function AboutPage() {
         </div>
         <Separator />
         <div className="grid w-full gap-3">
-          <p className="text-muted-foreground text-center text-xl font-medium">
+          <p className="text-muted-foreground text-center text-lg font-medium">
             Our Story
           </p>
-          <Shell className="mx-auto w-auto px-6 py-6 shadow-md sm:px-8 sm:py-8 md:px-12 md:py-12">
+          <Shell className="dark:border-foreground/40 mx-auto w-auto px-6 py-6 shadow-md sm:px-8 sm:py-8 md:px-12 md:py-12">
             {story ? (
               <Mdx code={story.body.code} className="prose-li:my-0 mx-auto" />
             ) : null}
