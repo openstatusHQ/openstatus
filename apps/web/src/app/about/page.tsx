@@ -39,7 +39,10 @@ export default function AboutPage() {
           </p>
           <Shell className="dark:border-foreground/40 mx-auto w-auto px-6 py-6 shadow-md sm:px-8 sm:py-8 md:px-12 md:py-12">
             {story ? (
-              <Mdx code={story.body.code} className="prose-li:my-0 mx-auto" />
+              <Mdx
+                code={story.body.code}
+                className="prose-lg prose-li:my-0 mx-auto"
+              />
             ) : null}
           </Shell>
         </div>
