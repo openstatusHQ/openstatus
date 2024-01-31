@@ -47,6 +47,12 @@ test("Get all Incidents", async () => {
     },
   });
   expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: 1,
+    startedAt: expect.any(String),
+    monitorId: 1,
+  });
+
 });
 
 
