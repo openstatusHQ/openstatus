@@ -14,6 +14,7 @@ import {
 import { regionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
+import { DataTableRowActions } from "./data-table-row-action";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
@@ -87,6 +88,16 @@ export const columns: ColumnDef<Ping>[] = [
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => {
+      return (
+        <div className="text-right">
+          <DataTableRowActions row={row} />
+        </div>
+      );
     },
   },
 ];

@@ -14,7 +14,7 @@ SQL >
         toStartOfDay(with_timezone) as start_of_day,
         statusCode,
         latency
-    FROM ping_response__v5
+    FROM ping_response__v7
     WHERE monitorId = {{ String(monitorId, '1') }}
         -- by default, we only query the last 45 days
         AND cronTimestamp >= toUnixTimestamp64Milli(
