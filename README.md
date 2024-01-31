@@ -3,7 +3,7 @@
   <h3 align="center">OpenStatus</h3>
 
   <p align="center">
-    The Open-Source monitoring platform with incident management.
+    The Open-Source website & API monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -49,7 +49,7 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 18.0.0
+- [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 8.6.2
 
 ### Setup

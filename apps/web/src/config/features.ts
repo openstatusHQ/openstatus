@@ -35,9 +35,9 @@ export const cardConfig = {
     features: [
       {
         icon: "globe",
-        catchline: "Global Monitoring.",
+        catchline: "Latency Monitoring.",
         description:
-          "Monitor your endpoints from all over the world. We currently support all the continents.",
+          "Monitor the latency of your endpoints from all over the world. We currently support all the continents.",
       },
       {
         icon: "play",
@@ -91,7 +91,7 @@ export const cardConfig = {
       },
       {
         icon: "zap",
-        catchline: "Escalatation.",
+        catchline: "Escalation.",
         description: "Notify and escalate an alert to the right team member.",
         badge: "Coming soon",
       },

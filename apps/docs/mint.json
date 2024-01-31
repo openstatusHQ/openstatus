@@ -121,7 +121,8 @@
           "group": "Incident",
           "pages": [
             "api-reference/incident/get-incident:id",
-            "api-reference/incident/get-incident"
+            "api-reference/incident/get-incident",
+            "api-reference/incident/put-incident:id"
           ]
         },
         {
