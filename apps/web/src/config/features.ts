@@ -91,7 +91,7 @@ export const cardConfig = {
       },
       {
         icon: "zap",
-        catchline: "Escalatation.",
+        catchline: "Escalation.",
         description: "Notify and escalate an alert to the right team member.",
         badge: "Coming soon",
       },
