@@ -16,7 +16,7 @@ SQL >
         round(quantile(0.9)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM materialized_view_ping_response_3d
+    FROM ping_response__v7
     WHERE
         monitorId = {{ String(monitorId, '1') }}
         {% if defined(fromDate) %} AND timestamp >= {{ Int64(fromDate) }} {% end %}
