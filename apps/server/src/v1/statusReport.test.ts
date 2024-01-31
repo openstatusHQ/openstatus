@@ -38,3 +38,53 @@ test("create one status report", async () => {
     title: "Test Status Report",
   });
 });
+
+test("Get all status report", async () => {
+  const res = await api.request("/status_report", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: expect.any(Number),
+    status: "investigating",
+    title: "Test Status Report",
+    status_report_updates: expect.any(Array)
+  });
+});
+
+test("Get all status report", async () => {
+  const res = await api.request("/status_report/1", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    message: "Deleted"
+  });
+});
+
+test("create a status report update", async () => {
+  const res = await api.request("/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      date: "2023-11-08T21:03:13.000Z",
+      message: "Test Status Report",
+    }),
+  });
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: expect.any(Number),
+    status: "investigating",
+    message: "Test Status Report",
+    date: "2023-11-08T21:03:13.000Z"
+  });
+});
+
