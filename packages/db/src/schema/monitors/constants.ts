@@ -33,7 +33,7 @@ export const monitorPeriodicity = [
   "1h",
   "other",
 ] as const;
-export const monitorMethods = ["GET", "POST", "HEAD"] as const;
+export const monitorMethods = ["GET", "POST", "HEAD", "PUT"] as const;
 export const monitorStatus = ["active", "error"] as const;
 export const monitorRegions = [
   ...flyRegions,

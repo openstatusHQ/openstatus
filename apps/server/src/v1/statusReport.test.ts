@@ -50,6 +50,7 @@ test("Get all status report", async () => {
 
 test("Delete a status report", async () => {
   const res = await api.request("/status_report/1", {
+    method: "DELETE",
     headers: {
       "x-openstatus-key": "1",
     },
