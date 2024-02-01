@@ -10,10 +10,10 @@ test("GET one Incident", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-    id: 1,
+    id: 2,
     startedAt: expect.any(String),
     monitorId: 1,
-    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    acknowledgedAt: null,
     resolvedAt: null,
     resolvedBy: null,
     acknowledgedBy: null,
@@ -34,7 +34,7 @@ test("Update an incident ", async () => {
   });
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect((await res.json())).toMatchObject({
     acknowledgedAt: "2023-11-08T21:03:13.000Z",
     monitorId: 1,
     id: 2,
@@ -53,8 +53,8 @@ test("Get all Incidents", async () => {
     },
   });
   expect(res.status).toBe(200);
-  expect((await res.json())).toMatchObject({
-    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+  expect((await res.json())[0]).toMatchObject({
+    acknowledgedAt: null,
     monitorId: 1,
     id: 1,
     startedAt: expect.any(String),

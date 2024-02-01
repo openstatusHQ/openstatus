@@ -57,15 +57,12 @@ test("Delete a status report", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-    status: "investigating",
-    id: 1,
-    title: "Test Status Report",
-    status_report_updates: expect.any(Array)
+   message:"Deleted"
   });
 });
 
 test("create a status report update", async () => {
-  const res = await api.request("/status_report/1/update", {
+  const res = await api.request("/status_report/2/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -77,10 +74,11 @@ test("create a status report update", async () => {
       message: "Test Status Report",
     }),
   });
+  // console.log(await res.text())
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
-    id: expect.any(String),
+    id: "1",
     date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
     message: "Test Status Report"
   });

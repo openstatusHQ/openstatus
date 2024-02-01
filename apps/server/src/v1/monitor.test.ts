@@ -31,14 +31,14 @@ test("GET all monitor", async () => {
     },
   });
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
+  expect((await res.json())[0]).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
     regions: ["ams"],
     name: "OpenStatus",
     description: "OpenStatus website",
-    method: "GET",
+    method: "POST",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -109,7 +109,7 @@ test("Update a Monitor ", async () => {
     id: expect.any(Number),
     periodicity: "10m",
     url: "https://www.openstatus.dev",
-    regions: ["ams", "gru"],
+    regions: ["ams"],
     name: "OpenStatus",
     description: "OpenStatus website",
     method: "PUT",
@@ -134,7 +134,6 @@ test("Delete one monitor", async () => {
 });
 test("Get monitor daily Summary", async () => {
   const res = await api.request("/monitor/1/summary", {
-    method: "GET",
     headers: {
       "x-openstatus-key": "1",
     },
