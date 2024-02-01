@@ -20,6 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/play/checker",
     "/oss-friends",
     "/pricing",
+    "/about",
     "/blog",
     "/changelog",
     "/app/sign-in",
