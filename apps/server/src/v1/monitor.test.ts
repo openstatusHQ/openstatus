@@ -17,7 +17,7 @@ test("GET one monitor", async () => {
     regions: ["ams"],
     name: "OpenStatus",
     description: "OpenStatus website",
-    method: "GET",
+    method: "POST",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -31,6 +31,18 @@ test("GET all monitor", async () => {
     },
   });
   expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: 1,
+    periodicity: "1m",
+    url: "https://www.openstatus.dev",
+    regions: ["ams"],
+    name: "OpenStatus",
+    description: "OpenStatus website",
+    method: "GET",
+    body: '{"hello":"world"}',
+    headers: [{ key: "key", value: "value" }],
+    active: true,
+  });
 });
 
 test("Create a monitor", async () => {
@@ -76,7 +88,7 @@ test("Update a Monitor ", async () => {
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
-    regions: ["ams", "gru"],
+    regions: ["ams"],
     method: "PUT",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
@@ -89,7 +101,7 @@ test("Update a Monitor ", async () => {
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({ data }),
+    body: JSON.stringify(data),
   });
   expect(res.status).toBe(200);
 
@@ -120,10 +132,9 @@ test("Delete one monitor", async () => {
     message: "Deleted"
   });
 });
-
-
 test("Get monitor daily Summary", async () => {
   const res = await api.request("/monitor/1/summary", {
+    method: "GET",
     headers: {
       "x-openstatus-key": "1",
     },

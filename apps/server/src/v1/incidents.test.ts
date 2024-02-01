@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { api } from ".";
 
 test("GET one Incident", async () => {
-  const res = await api.request("/incident/1", {
+  const res = await api.request("/incident/2", {
     headers: {
       "x-openstatus-key": "1",
     },
@@ -13,6 +13,11 @@ test("GET one Incident", async () => {
     id: 1,
     startedAt: expect.any(String),
     monitorId: 1,
+    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    resolvedAt: null,
+    resolvedBy: null,
+    acknowledgedBy: null,
+
   });
 });
 
@@ -42,17 +47,20 @@ test("Update an incident ", async () => {
 
 test("Get all Incidents", async () => {
   const res = await api.request("/incident", {
+    method:"GET",
     headers: {
       "x-openstatus-key": "1",
     },
   });
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
+  expect((await res.json())).toMatchObject({
+    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    monitorId: 1,
     id: 1,
     startedAt: expect.any(String),
-    monitorId: 1,
+    resolvedAt: null,
+    resolvedBy: null,
+    acknowledgedBy: null,
   });
 
 });
-
-
