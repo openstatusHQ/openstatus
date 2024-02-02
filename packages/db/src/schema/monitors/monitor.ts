@@ -73,6 +73,17 @@ export const monitorsToPages = sqliteTable(
   }),
 );
 
+export const monitorSummary = sqliteTable(
+  "monitor_summary",
+  {
+    id: integer("id").primaryKey(),
+    count: integer("count").notNull(),
+    ok: integer("ok").notNull(),
+    avgLatency: integer("avg_latency").notNull(),
+    day: text("day").notNull(),
+  },
+);
+
 export const monitorsToPagesRelation = relations(
   monitorsToPages,
   ({ one }) => ({

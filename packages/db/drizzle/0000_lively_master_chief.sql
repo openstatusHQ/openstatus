@@ -52,6 +52,16 @@ CREATE TABLE `monitors_to_pages` (
 	FOREIGN KEY (`page_id`) REFERENCES `page`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
+CREATE TABLE `monitor_summary` (
+	`id` integer PRIMARY KEY NOT NULL,
+	`count` integer NOT NULL,
+	`ok` integer NOT NULL,
+	`avg_latency` integer NOT NULL,
+	`day` text NOT NULL
+);
+
+
+--> statement-breakpoint
 CREATE TABLE `user` (
 	`id` integer PRIMARY KEY NOT NULL,
 	`tenant_id` text(256),

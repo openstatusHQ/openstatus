@@ -141,6 +141,7 @@ test("Get monitor daily Summary", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
+      id: 1,
       ok: 4,
       count: 13,
       avgLatency: 1,

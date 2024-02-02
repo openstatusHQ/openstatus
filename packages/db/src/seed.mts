@@ -8,6 +8,7 @@ import {
   incidentTable,
   monitor,
   monitorsToPages,
+  monitorSummary,
   notification,
   notificationsToMonitors,
   page,
@@ -75,7 +76,16 @@ async function main() {
       },
     ])
     .run();
-
+    await db
+    .insert(monitorSummary)
+    .values({
+        id: 1,
+        ok: 4,
+        count: 13,
+        avgLatency: 1,
+        day: "31-01-2024"
+      })
+    .run();
   await db
     .insert(page)
     .values({
