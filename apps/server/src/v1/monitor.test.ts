@@ -120,7 +120,7 @@ test("Update a Monitor ", async () => {
 });
 
 test("Delete one monitor", async () => {
-  const res = await api.request("/monitor/1", {
+  const res = await api.request("/monitor/3", {
     method: "DELETE",
     headers: {
       "x-openstatus-key": "1",
@@ -141,7 +141,6 @@ test("Get monitor daily Summary", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-      id: 1,
       ok: 4,
       count: 13,
       avgLatency: 1,

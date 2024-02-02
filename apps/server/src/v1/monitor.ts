@@ -525,6 +525,7 @@ monitorApi.openapi(getMonitorStats, async (c) => {
   const { id } = c.req.valid("param");
 
   const monitorId = Number(id);
+  console.log("Attempting to fetch monitor with ID:", monitorId);
   const _monitor = await db
     .select()
     .from(monitor)
@@ -533,13 +534,16 @@ monitorApi.openapi(getMonitorStats, async (c) => {
 
   if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
 
+  console.log("Monitor found with ID:", monitorId);
+
   if (workspaceId !== _monitor.workspaceId)
     return c.jsonT({ code: 401, message: "Unauthorized" });
+  console.log("here")
 
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
     `${monitorId}-daily-stats`,
   );
-
+    console.log("now")
   if (cache) {
     console.log("fetching from cache");
     return c.jsonT({

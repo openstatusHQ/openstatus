@@ -8,7 +8,6 @@ import {
   incidentTable,
   monitor,
   monitorsToPages,
-  monitorSummary,
   notification,
   notificationsToMonitors,
   page,
@@ -74,18 +73,22 @@ async function main() {
         method: "GET",
         regions: "gru",
       },
+      {
+        id: 3,
+        workspaceId: 1,
+        active: true,
+        url: "https://www.openstatus.dev",
+        name: "OpenStatus",
+        description: "OpenStatus website",
+        method: "GET",
+        periodicity: "1m",
+        regions: "ams",
+        headers: '[{"key":"key", "value":"value"}]',
+        body: '{"hello":"world"}',
+      },
     ])
     .run();
-    await db
-    .insert(monitorSummary)
-    .values({
-        id: 1,
-        ok: 4,
-        count: 13,
-        avgLatency: 1,
-        day: "31-01-2024"
-      })
-    .run();
+    
   await db
     .insert(page)
     .values({
