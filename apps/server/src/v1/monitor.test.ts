@@ -132,6 +132,7 @@ test("Delete one monitor", async () => {
     message: "Deleted"
   });
 });
+
 test("Get monitor daily Summary", async () => {
   const res = await api.request("/monitor/1/summary", {
     headers: {
@@ -139,14 +140,11 @@ test("Get monitor daily Summary", async () => {
     },
   });
   expect(res.status).toBe(200);
-
   expect(await res.json()).toMatchObject({
-    data: {
       ok: 4,
       count: 13,
       avgLatency: 1,
       day: "31-01-2024"
-    }
   });
 });
 
