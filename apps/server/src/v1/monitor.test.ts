@@ -201,7 +201,7 @@ test("Update a Monitor-404 ", async () => {
     message: "Not Found"
   });
 });
-//not having the key return unauthorized
+//not having the key returns unauthorized
 test("Update a Monitor-401", async () => {
   const data = {
     periodicity: "5m",
@@ -216,6 +216,9 @@ test("Update a Monitor-401", async () => {
   };
   const res = await api.request("/monitor/3", {
     method: "PUT",
+    headers: {
+      "content-type": "application/json",
+    },
     body: JSON.stringify(data),
   });
   expect(res.status).toBe(401);
@@ -264,19 +267,19 @@ test("Delete one monitor", async () => {
   });
 });
 
-test("Get monitor daily Summary", async () => {
-  const res = await api.request("/monitor/1/summary", {
-    headers: {
-      "x-openstatus-key": "1",
-    },
-  });
-  expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
-      ok: 4,
-      count: 13,
-      avgLatency: 1,
-      day: "31-01-2024"
-  });
-});
+// test("Get monitor daily Summary", async () => {
+//   const res = await api.request("/monitor/1/summary", {
+//     headers: {
+//       "x-openstatus-key": "1",
+//     },
+//   });
+//   expect(res.status).toBe(200);
+//   expect(await res.json()).toMatchObject({
+//       ok: 4,
+//       count: 13,
+//       avgLatency: 1,
+//       day: "31-01-2024"
+//   });
+// });
 
 

@@ -35,6 +35,41 @@ test("create one status report", async () => {
   });
 });
 
+test("create one status report- 401", async () => {
+  const res = await api.request("/status_report", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "Test Status Report",
+    }),
+  });
+  expect(res.status).toBe(401);//unauthenticated
+});
+
+test("create one status report-403", async () => {
+  const res = await api.request("/status_report", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({//passing incompelete body
+      title: "Test Status Report",
+    }),
+  });
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    error:{
+      issues: expect.any(Array),
+      name: "ZodError"
+    },
+    success: false,
+  });
+});
+
 test("Get all status report", async () => {
   const res = await api.request("/status_report", {
     headers: {
@@ -84,3 +119,62 @@ test("create a status report update", async () => {
   });
 });
 
+test("create a status report update -404", async () => {
+  const res = await api.request("/status_report/404/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      date: "2023-11-08T21:03:13.000Z",
+      message: "Test Status Report",
+    }),
+  });
+  // console.log(await res.text())
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+   code: 404,
+   message: "Not Found"
+  });
+});
+
+test("create a status report update- 401", async () => {
+  const res = await api.request("/status_report/2/update", {
+    method: "POST",
+    headers: {//not having the key returns unauthorized
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      date: "2023-11-08T21:03:13.000Z",
+      message: "Test Status Report",
+    }),
+  });
+  // console.log(await res.text())
+  expect(res.status).toBe(401);
+});
+
+test("create a status report update- 403", async () => {
+  const res = await api.request("/status_report/2/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({//passing in incompelete body
+      date: "2023-11-08T21:03:13.000Z",
+      message: "Test Status Report",
+    }),
+  });
+  // console.log(await res.text())
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    error:{
+      issues: expect.any(Array),
+      name: "ZodError"
+    },
+    success: false,
+  });
+});
