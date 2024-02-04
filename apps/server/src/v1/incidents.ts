@@ -28,7 +28,12 @@ const IncidentSchema = z.object({
     example: 1,
   }),
   startedAt: z
-    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
+    .preprocess((val) => {
+      if (val) {
+        return new Date(String(val)).toISOString();
+      }
+      return new Date().toISOString();
+    }, z.string())
     .openapi({
       description: "The date the incident started",
     }),
@@ -42,7 +47,12 @@ const IncidentSchema = z.object({
     .nullable(),
 
   acknowledgedAt: z
-    .preprocess((val) => new Date(String(val)).toISOString(), z.string())
+    .preprocess((val) => {
+      if (val) {
+        return new Date(String(val)).toISOString();
+      }
+      return new Date().toISOString();
+    }, z.string())
     .openapi({
       description: "The date the incident was acknowledged",
     })
@@ -57,7 +67,12 @@ const IncidentSchema = z.object({
     .nullable(),
 
   resolvedAt: z
-    .preprocess((val) => String(val), z.string())
+    .preprocess((val) => {
+      if (val) {
+        return new Date(String(val)).toISOString();
+      }
+      return new Date().toISOString();
+    }, z.string())
     .openapi({
       description: "The date the incident was resolved",
     })
