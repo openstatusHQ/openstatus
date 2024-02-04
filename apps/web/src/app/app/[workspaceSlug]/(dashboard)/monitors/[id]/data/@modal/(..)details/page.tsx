@@ -38,7 +38,7 @@ export default async function DetailsModal({
 
   return (
     <Modal>
-      <Separator className="my-4" />
+      <Separator className="mb-4" />
       <ResponseDetails {...search.data} />
     </Modal>
   );

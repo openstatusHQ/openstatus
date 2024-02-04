@@ -16,6 +16,7 @@ import { BackButton } from "@/components/layout/back-button";
 import { CopyLinkButton } from "./_components/copy-link-button";
 import { MultiRegionTabs } from "./_components/multi-region-tabs";
 import { RegionInfo } from "./_components/region-info";
+import { ResponseDetailTabs } from "./_components/response-detail-tabs";
 import { ResponseHeaderTable } from "./_components/response-header-table";
 import { ResponseTimingTable } from "./_components/response-timing-table";
 import { SelectRegion } from "./_components/select-region";
@@ -75,8 +76,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
               <RegionInfo check={check} />
             </div>
           </div>
-          <ResponseTimingTable timing={timing} />
-          <ResponseHeaderTable headers={headers} />
+          <ResponseDetailTabs timing={timing} headers={headers} />
         </div>
         <Separator />
         <p className="text-muted-foreground text-sm">

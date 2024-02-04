@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/dashboard/header";
 import { Navbar } from "@/components/dashboard/navbar";
 import { api } from "@/trpc/server";
-import { PauseButton } from "./_components/pause-button";
 
 export default async function Layout({
   children,
@@ -42,11 +41,7 @@ export default async function Layout({
 
   return (
     <div className="grid grid-cols-1 gap-6 md:gap-8">
-      <Header
-        title={monitor.name}
-        description={monitor.url}
-        actions={<PauseButton monitor={monitor} />}
-      />
+      <Header title={monitor.name} description={monitor.url} />
       <Navbar className="col-span-full" navigation={navigation} />
       {children}
     </div>
