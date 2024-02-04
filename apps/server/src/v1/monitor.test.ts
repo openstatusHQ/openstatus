@@ -81,8 +81,7 @@ test("Create a monitor", async () => {
   });
 });
 
-//Unauthorized
-test("Create a monitor -401", async () => {
+test("Create a monitor without auth key should return 401", async () => {
   const data = {
     periodicity: "10m",
     url: "https://www.openstatus.dev",
@@ -105,7 +104,7 @@ test("Create a monitor -401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("Create a monitor- 403", async () => {
+test("Create a monitor with invalid data should return 403", async () => {
   const data = {
     periodicity: 32, //not valid value
     url: "https://www.openstatus.dev",
@@ -143,7 +142,7 @@ test("Update a Monitor ", async () => {
     name: "OpenStatus",
     description: "OpenStatus website",
     regions: ["ams"],
-    method: "PUT",
+    method: "GET",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -160,27 +159,27 @@ test("Update a Monitor ", async () => {
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
-    id: expect.any(Number),
+    id: 1,
     periodicity: "10m",
     url: "https://www.openstatus.dev",
     regions: ["ams"],
     name: "OpenStatus",
     description: "OpenStatus website",
-    method: "PUT",
+    method: "GET",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
   });
 });
 
-test("Update a Monitor-404 ", async () => {
+test("Update a monitor not in db should return 404", async () => {
   const data = {
     periodicity: "10m",
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
     regions: ["ams"],
-    method: "PUT",
+    method: "GET",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -201,15 +200,15 @@ test("Update a Monitor-404 ", async () => {
     message: "Not Found"
   });
 });
-//not having the key returns unauthorized
-test("Update a Monitor-401", async () => {
+
+test("Update a monitor without auth key should return 401", async () => {
   const data = {
     periodicity: "5m",
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
     regions: ["ams"],
-    method: "PUT",
+    method: "GET",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -223,14 +222,14 @@ test("Update a Monitor-401", async () => {
   });
   expect(res.status).toBe(401);
 })
-test("Update a Monitor-403", async () => {
+test("Update a monitor with invalid data should return 403", async () => {
   const data = {
     periodicity: 9,//not passing correct value returns 403
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
     regions: ["ams"],
-    method: "PUT",
+    method: "GET",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
@@ -267,6 +266,7 @@ test("Delete one monitor", async () => {
   });
 });
 
+test.todo("Get monitor daily Summary")
 // test("Get monitor daily Summary", async () => {
 //   const res = await api.request("/monitor/1/summary", {
 //     headers: {

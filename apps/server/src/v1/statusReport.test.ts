@@ -35,7 +35,7 @@ test("create one status report", async () => {
   });
 });
 
-test("create one status report- 401", async () => {
+test("Create one status report without auth key should return 401", async () => {
   const res = await api.request("/status_report", {
     method: "POST",
     headers: {
@@ -49,7 +49,7 @@ test("create one status report- 401", async () => {
   expect(res.status).toBe(401);//unauthenticated
 });
 
-test("create one status report-403", async () => {
+test("Create one status report with invalid data should return 403", async () => {
   const res = await api.request("/status_report", {
     method: "POST",
     headers: {
@@ -119,7 +119,7 @@ test("create a status report update", async () => {
   });
 });
 
-test("create a status report update -404", async () => {
+test("Create a status report update not in db should return 404", async () => {
   const res = await api.request("/status_report/404/update", {
     method: "POST",
     headers: {
@@ -140,7 +140,7 @@ test("create a status report update -404", async () => {
   });
 });
 
-test("create a status report update- 401", async () => {
+test("Create a status report update without auth key should return 401", async () => {
   const res = await api.request("/status_report/2/update", {
     method: "POST",
     headers: {//not having the key returns unauthorized
@@ -156,7 +156,7 @@ test("create a status report update- 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("create a status report update- 403", async () => {
+test("Create a status report update with invalid data should return 403", async () => {
   const res = await api.request("/status_report/2/update", {
     method: "POST",
     headers: {

@@ -45,7 +45,7 @@ test("Update an incident ", async () => {
   });
 });
 
-test("Update an incident-404", async () => {
+test("Update an incident not in db should return 404", async () => {
   const res = await api.request("/incident/404", {//accessing invalid monitor
     method: "PUT",
     headers: {
@@ -63,7 +63,7 @@ test("Update an incident-404", async () => {
   });
 })
 
-test("Update an incident-401", async () => {
+test("Update an incident without auth key should return 401", async () => {
   const res = await api.request("/incident/2", {
     method: "PUT",
     headers: {//not passing correct key
@@ -76,7 +76,7 @@ test("Update an incident-401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("Update an incident-403", async () => {
+test("Update an incident with invalid data should return 403", async () => {
   const res = await api.request("/incident/2", {
     method: "PUT",
     headers: {

@@ -36,7 +36,7 @@ test("create one status report update ", async () => {
   });
 });
 
-test("create one status report update -401", async () => {
+test("create one status report update without auth key should return 401", async () => {
   const res = await api.request("/status_report_update", {
     method: "POST",
     headers: {//not passing in the key
@@ -53,7 +53,7 @@ test("create one status report update -401", async () => {
   
 });
 
-test("create one status report update-403", async () => {
+test("create one status report update with invalid data should return 403", async () => {
   const res = await api.request("/status_report_update", {
     method: "POST",
     headers: {

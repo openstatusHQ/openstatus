@@ -543,7 +543,6 @@ monitorApi.openapi(getMonitorStats, async (c) => {
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
     `${monitorId}-daily-stats`,
   );
-    console.log("now")
   if (cache) {
     console.log("fetching from cache");
     return c.jsonT({
