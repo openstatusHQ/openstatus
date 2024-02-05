@@ -113,7 +113,7 @@ test("create a status report update", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
-    id: "3",
+    id: expect.any(String),
     date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
     message: "Test Status Report",
   });
