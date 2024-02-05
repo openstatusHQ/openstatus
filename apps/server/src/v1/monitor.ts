@@ -77,12 +77,13 @@ const MonitorSchema = z
         example: "Documenso website",
         description: "The description of your monitor",
       })
-      .nullable(),
+      .nullish(),
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
         return String(val);
       }, z.string())
+      .nullish()
       .default("")
       .openapi({
         example: "Hello World",
@@ -98,6 +99,7 @@ const MonitorSchema = z
         },
         z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
+      .nullish()
       .openapi({
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],
@@ -318,13 +320,17 @@ monitorApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
 
   const count = (
-    await db.select({ count: sql<number>`count(*)` }).from(monitor)
+    await db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(eq(monitor.workspaceId, Number(workspaceId)))
+      .all()
   )[0].count;
 
   if (count >= workspacePlan.limits.monitors)
-    return c.jsonT({ code: 403, message: "Forbidden" });
+    return c.jsonT({ code: 403, message: "Forbidden" }, 403);
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
-    return c.jsonT({ code: 403, message: "Forbidden" });
+    return c.jsonT({ code: 403, message: "Forbidden" }, 403);
 
   const { headers, ...rest } = input;
   const _newMonitor = await db
