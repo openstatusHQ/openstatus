@@ -212,7 +212,7 @@ test("Update a monitor without auth key should return 401", async () => {
     headers: [{ key: "key", value: "value" }],
     active: true,
   };
-  const res = await api.request("/monitor/3", {
+  const res = await api.request("/monitor/2", {
     method: "PUT",
     headers: {
       "content-type": "application/json",
@@ -233,7 +233,7 @@ test("Update a monitor with invalid data should return 403", async () => {
     headers: [{ key: "key", value: "value" }],
     active: true,
   };
-  const res = await api.request("/monitor/3", {
+  const res = await api.request("/monitor/2", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
