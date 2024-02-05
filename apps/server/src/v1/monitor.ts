@@ -31,6 +31,14 @@ const ParamsSchema = z.object({
     }),
 });
 
+const isoDate = z
+  .preprocess((val) => {
+    if (val) {
+      return new Date(String(val)).toISOString();
+    }
+    return new Date().toISOString();
+  }, z.string());
+
 export const periodicityEnum = z.enum(monitorPeriodicity);
 
 const regionInput = z.array(z.enum(flyRegions)).transform((val) => String(val));
@@ -482,7 +490,7 @@ const dailyStatsSchema = z.object({
     .int()
     .openapi({ description: "The total number of request" }),
   avgLatency: z.number().int().openapi({ description: "The average latency" }),
-  day: z.string().openapi({ description: "the date of the event" }),
+  day: isoDate,
 });
 
 const dailyStatsSchemaArray = z
