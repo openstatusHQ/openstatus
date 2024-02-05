@@ -37,10 +37,15 @@ export const statusUpdateSchema = z.object({
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
   date: z
-    .preprocess((val) => String(val), z.string())
-    .openapi({
-      description: "The date of the update in ISO 8601 format",
-    }),
+  .preprocess((val) => {
+    if (val) {
+      return new Date(String(val)).toISOString();
+    }
+    return new Date().toISOString();
+  }, z.string())
+  .openapi({
+    description: "The date of the update in ISO8601 format",
+  }),
   message: z.string().openapi({
     description: "The message of the update",
   }),
@@ -53,8 +58,15 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z.string().datetime().openapi({
-    description: "The date of the update in ISO 8601 format",
+  date: z
+  .preprocess((val) => {
+    if (val) {
+      return new Date(String(val)).toISOString();
+    }
+    return new Date().toISOString();
+  }, z.string())
+  .openapi({
+    description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({
     description: "The message of the update",

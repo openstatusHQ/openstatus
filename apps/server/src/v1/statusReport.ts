@@ -37,9 +37,16 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z.string().openapi({
-    description: "The date of the update in ISO 8601 format",
-  }),
+  date: z
+    .preprocess((val) => {
+      if (val) {
+        return new Date(String(val)).toISOString();
+      }
+      return new Date().toISOString();
+    }, z.string())
+    .openapi({
+      description: "The date of the update in ISO8601 format",
+    }),
   message: z.string().openapi({
     description: "The message of the update",
   }),
