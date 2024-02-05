@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { api } from ".";
+import { string } from "zod";
 
 test("GET one status report", async () => {
   const res = await api.request("/status_report/1", {
@@ -98,7 +99,7 @@ test("Delete a status report", async () => {
 });
 
 test("create a status report update", async () => {
-  const res = await api.request("/status_report/3/update", {
+  const res = await api.request("/status_report/1/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -113,7 +114,7 @@ test("create a status report update", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
-    id: "3",
+    id: expect.any(String),
     date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
     message: "Test Status Report",
   });

@@ -158,17 +158,6 @@ async function main() {
     .run();
 
   await db
-    .insert(statusReport)
-    .values({
-      id: 3,
-      workspaceId: 1,
-      title: "Test Status Report",
-      status: "investigating",
-      updatedAt: new Date(),
-    })
-    .run();
-
-  await db
     .insert(incidentTable)
     .values({
       id: 1,
