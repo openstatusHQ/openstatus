@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
-
 import { api } from ".";
+
+const iso8601Regex: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 
 test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {
@@ -277,6 +278,6 @@ test.todo("Get monitor daily Summary");
 //       ok: 4,
 //       count: 13,
 //       avgLatency: 1,
-//       day: "31-01-2024"
+//       day: expect.stringMatching(iso8601Regex)
 //   });
 // });

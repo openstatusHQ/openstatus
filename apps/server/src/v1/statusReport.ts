@@ -19,6 +19,14 @@ import { statusUpdateSchema } from "./statusReportUpdate";
 
 const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
 
+const isoDate = z
+  .preprocess((val) => {
+    if (val) {
+      return new Date(String(val)).toISOString();
+    }
+    return new Date().toISOString();
+  }, z.string())
+
 const ParamsSchema = z.object({
   id: z
     .string()
@@ -37,13 +45,7 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z
-    .preprocess((val) => {
-      if (val) {
-        return new Date(String(val)).toISOString();
-      }
-      return new Date().toISOString();
-    }, z.string())
+  date: isoDate
     .openapi({
       description: "The date of the update in ISO8601 format",
     }),
