@@ -1,6 +1,8 @@
 import { expect, test } from "bun:test";
 import { api } from ".";
 
+const iso8601Regex: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
 test("GET one status report", async () => {
   const res = await api.request("/status_report/1", {
     headers: {
@@ -113,7 +115,7 @@ test("create a status report update", async () => {
   expect(await res.json()).toMatchObject({
     status: "investigating",
     id: expect.any(String),
-    date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
+    date: expect.stringMatching(iso8601Regex),
     message: "Test Status Report",
   });
 });
@@ -161,8 +163,7 @@ test("Create a status report update with invalid data should return 403", async 
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      //passing in incompelete body
+    body: JSON.stringify({//passing in incompelete body
       date: "2023-11-08T21:03:13.000Z",
       message: "Test Status Report",
     }),
