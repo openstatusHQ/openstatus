@@ -1,7 +1,5 @@
 import { expect, test } from "bun:test";
-
 import { api } from ".";
-import { string } from "zod";
 
 test("GET one status report", async () => {
   const res = await api.request("/status_report/1", {
