@@ -73,9 +73,22 @@ async function main() {
         method: "GET",
         regions: "gru",
       },
+      {
+        id: 3,
+        workspaceId: 1,
+        active: true,
+        url: "https://www.openstatus.dev",
+        name: "OpenStatus",
+        description: "OpenStatus website",
+        method: "GET",
+        periodicity: "1m",
+        regions: "ams",
+        headers: '[{"key":"key", "value":"value"}]',
+        body: '{"hello":"world"}',
+      },
     ])
     .run();
-
+    
   await db
     .insert(page)
     .values({

@@ -331,7 +331,7 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
     )
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 401, message: "Not authorized" });
+  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" });
 
   const _statusReportUpdate = await db
     .insert(statusReportUpdate)
