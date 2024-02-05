@@ -64,7 +64,6 @@ test("Create a monitor", async () => {
     },
     body: JSON.stringify(data),
   });
-  // console.log(await res.text());
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
@@ -100,7 +99,6 @@ test("Create a monitor without auth key should return 401", async () => {
     },
     body: JSON.stringify(data),
   });
-  console.log(await res.text());
   expect(res.status).toBe(401);
 });
 
@@ -124,7 +122,6 @@ test("Create a monitor with invalid data should return 403", async () => {
     },
     body: JSON.stringify(data),
   });
-  // console.log(await res.text());
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
     error:{

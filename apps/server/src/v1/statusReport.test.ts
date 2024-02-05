@@ -109,7 +109,6 @@ test("create a status report update", async () => {
       message: "Test Status Report",
     }),
   });
-  // console.log(await res.text())
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
@@ -132,7 +131,6 @@ test("Create a status report update not in db should return 404", async () => {
       message: "Test Status Report",
     }),
   });
-  // console.log(await res.text())
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
    code: 404,
@@ -152,7 +150,6 @@ test("Create a status report update without auth key should return 401", async (
       message: "Test Status Report",
     }),
   });
-  // console.log(await res.text())
   expect(res.status).toBe(401);
 });
 
@@ -168,7 +165,6 @@ test("Create a status report update with invalid data should return 403", async 
       message: "Test Status Report",
     }),
   });
-  // console.log(await res.text())
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
     error:{
