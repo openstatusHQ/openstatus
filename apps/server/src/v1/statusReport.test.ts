@@ -85,7 +85,7 @@ test("Get all status report", async () => {
 });
 
 test("Delete a status report", async () => {
-  const res = await api.request("/status_report/1", {
+  const res = await api.request("/status_report/2", {
     method: "DELETE",
     headers: {
       "x-openstatus-key": "1",
@@ -98,7 +98,7 @@ test("Delete a status report", async () => {
 });
 
 test("create a status report update", async () => {
-  const res = await api.request("/status_report/2/update", {
+  const res = await api.request("/status_report/3/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -113,7 +113,7 @@ test("create a status report update", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
-    id: "1",
+    id: "3",
     date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
     message: "Test Status Report",
   });
@@ -140,7 +140,7 @@ test("Create a status report update not in db should return 404", async () => {
 });
 
 test("Create a status report update without auth key should return 401", async () => {
-  const res = await api.request("/status_report/2/update", {
+  const res = await api.request("/status_report/1/update", {
     method: "POST",
     headers: {
       //not having the key returns unauthorized
@@ -156,7 +156,7 @@ test("Create a status report update without auth key should return 401", async (
 });
 
 test("Create a status report update with invalid data should return 403", async () => {
-  const res = await api.request("/status_report/2/update", {
+  const res = await api.request("/status_report/1/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
