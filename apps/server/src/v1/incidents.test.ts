@@ -17,7 +17,6 @@ test("GET one Incident", async () => {
     resolvedAt: null,
     resolvedBy: null,
     acknowledgedBy: null,
-
   });
 });
 
@@ -34,7 +33,7 @@ test("Update an incident ", async () => {
   });
   expect(res.status).toBe(200);
 
-  expect((await res.json())).toMatchObject({
+  expect(await res.json()).toMatchObject({
     acknowledgedAt: "2023-11-08T21:03:13.000Z",
     monitorId: 1,
     id: 2,
@@ -46,7 +45,8 @@ test("Update an incident ", async () => {
 });
 
 test("Update an incident not in db should return 404", async () => {
-  const res = await api.request("/incident/404", {//accessing invalid monitor
+  const res = await api.request("/incident/404", {
+    //accessing invalid monitor
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -57,16 +57,17 @@ test("Update an incident not in db should return 404", async () => {
     }),
   });
   expect(res.status).toBe(200);
-  expect((await res.json())).toMatchObject({
-   code: 404,
-   message:"Not Found" 
+  expect(await res.json()).toMatchObject({
+    code: 404,
+    message: "Not Found",
   });
-})
+});
 
 test("Update an incident without auth key should return 401", async () => {
   const res = await api.request("/incident/2", {
     method: "PUT",
-    headers: {//not passing correct key
+    headers: {
+      //not passing correct key
       "content-type": "application/json",
     },
     body: JSON.stringify({
@@ -83,15 +84,16 @@ test("Update an incident with invalid data should return 403", async () => {
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({//passing incorrect body
+    body: JSON.stringify({
+      //passing incorrect body
       acknowledgedAt: "2023-11-0",
     }),
   });
   expect(res.status).toBe(400);
-  expect((await res.json())).toMatchObject({
-    error:{
+  expect(await res.json()).toMatchObject({
+    error: {
       issues: expect.any(Array),
-      name: "ZodError"
+      name: "ZodError",
     },
     success: false,
   });
@@ -99,7 +101,7 @@ test("Update an incident with invalid data should return 403", async () => {
 
 test("Get all Incidents", async () => {
   const res = await api.request("/incident", {
-    method:"GET",
+    method: "GET",
     headers: {
       "x-openstatus-key": "1",
     },
@@ -114,5 +116,4 @@ test("Get all Incidents", async () => {
     resolvedBy: null,
     acknowledgedBy: null,
   });
-
 });

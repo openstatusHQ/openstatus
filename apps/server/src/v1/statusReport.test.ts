@@ -31,7 +31,7 @@ test("create one status report", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: expect.any(Number),
-    status_report_updates: expect.any(Array)
+    status_report_updates: expect.any(Array),
   });
 });
 
@@ -46,7 +46,7 @@ test("Create one status report without auth key should return 401", async () => 
       title: "Test Status Report",
     }),
   });
-  expect(res.status).toBe(401);//unauthenticated
+  expect(res.status).toBe(401); //unauthenticated
 });
 
 test("Create one status report with invalid data should return 403", async () => {
@@ -56,15 +56,16 @@ test("Create one status report with invalid data should return 403", async () =>
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({//passing incompelete body
+    body: JSON.stringify({
+      //passing incompelete body
       title: "Test Status Report",
     }),
   });
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
-    error:{
+    error: {
       issues: expect.any(Array),
-      name: "ZodError"
+      name: "ZodError",
     },
     success: false,
   });
@@ -92,7 +93,7 @@ test("Delete a status report", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-   message:"Deleted"
+    message: "Deleted",
   });
 });
 
@@ -114,7 +115,7 @@ test("create a status report update", async () => {
     status: "investigating",
     id: "1",
     date: "Wed Nov 08 2023 21:03:13 GMT+0000 (Coordinated Universal Time)",
-    message: "Test Status Report"
+    message: "Test Status Report",
   });
 });
 
@@ -133,15 +134,16 @@ test("Create a status report update not in db should return 404", async () => {
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-   code: 404,
-   message: "Not Found"
+    code: 404,
+    message: "Not Found",
   });
 });
 
 test("Create a status report update without auth key should return 401", async () => {
   const res = await api.request("/status_report/2/update", {
     method: "POST",
-    headers: {//not having the key returns unauthorized
+    headers: {
+      //not having the key returns unauthorized
       "content-type": "application/json",
     },
     body: JSON.stringify({
@@ -160,16 +162,17 @@ test("Create a status report update with invalid data should return 403", async 
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({//passing in incompelete body
+    body: JSON.stringify({
+      //passing in incompelete body
       date: "2023-11-08T21:03:13.000Z",
       message: "Test Status Report",
     }),
   });
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
-    error:{
+    error: {
       issues: expect.any(Array),
-      name: "ZodError"
+      name: "ZodError",
     },
     success: false,
   });

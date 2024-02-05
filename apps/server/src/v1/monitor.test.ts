@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+
 import { api } from ".";
 
 test("GET one monitor", async () => {
@@ -124,9 +125,9 @@ test("Create a monitor with invalid data should return 403", async () => {
   });
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
-    error:{
+    error: {
       issues: expect.any(Array),
-      name: "ZodError"
+      name: "ZodError",
     },
     success: false,
   });
@@ -182,7 +183,8 @@ test("Update a monitor not in db should return 404", async () => {
     active: true,
   };
 
-  const res = await api.request("/monitor/404", {//accessing wrong monitor, just returns 404
+  const res = await api.request("/monitor/404", {
+    //accessing wrong monitor, just returns 404
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -194,7 +196,7 @@ test("Update a monitor not in db should return 404", async () => {
 
   expect(await res.json()).toMatchObject({
     code: 404,
-    message: "Not Found"
+    message: "Not Found",
   });
 });
 
@@ -218,10 +220,10 @@ test("Update a monitor without auth key should return 401", async () => {
     body: JSON.stringify(data),
   });
   expect(res.status).toBe(401);
-})
+});
 test("Update a monitor with invalid data should return 403", async () => {
   const data = {
-    periodicity: 9,//not passing correct value returns 403
+    periodicity: 9, //not passing correct value returns 403
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
@@ -241,13 +243,13 @@ test("Update a monitor with invalid data should return 403", async () => {
   });
   expect(res.status).toBe(400);
   expect(await res.json()).toMatchObject({
-    error:{
+    error: {
       issues: expect.any(Array),
-      name: "ZodError"
+      name: "ZodError",
     },
     success: false,
   });
-})
+});
 
 test("Delete one monitor", async () => {
   const res = await api.request("/monitor/3", {
@@ -259,11 +261,11 @@ test("Delete one monitor", async () => {
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
-    message: "Deleted"
+    message: "Deleted",
   });
 });
 
-test.todo("Get monitor daily Summary")
+test.todo("Get monitor daily Summary");
 // test("Get monitor daily Summary", async () => {
 //   const res = await api.request("/monitor/1/summary", {
 //     headers: {
@@ -278,5 +280,3 @@ test.todo("Get monitor daily Summary")
 //       day: "31-01-2024"
 //   });
 // });
-
-
