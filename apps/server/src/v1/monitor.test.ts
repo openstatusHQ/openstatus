@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 import { api } from ".";
-
-const iso8601Regex: RegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+import { iso8601Regex } from "./test-utils";
 
 test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {

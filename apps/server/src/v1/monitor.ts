@@ -13,6 +13,7 @@ import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
@@ -30,14 +31,6 @@ const ParamsSchema = z.object({
       example: "1",
     }),
 });
-
-const isoDate = z
-  .preprocess((val) => {
-    if (val) {
-      return new Date(String(val)).toISOString();
-    }
-    return new Date().toISOString();
-  }, z.string());
 
 export const periodicityEnum = z.enum(monitorPeriodicity);
 
