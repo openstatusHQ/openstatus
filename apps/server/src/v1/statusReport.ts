@@ -15,17 +15,10 @@ import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 import { statusUpdateSchema } from "./statusReportUpdate";
 
 const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
-
-const isoDate = z
-  .preprocess((val) => {
-    if (val) {
-      return new Date(String(val)).toISOString();
-    }
-    return new Date().toISOString();
-  }, z.string())
 
 const ParamsSchema = z.object({
   id: z
