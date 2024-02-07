@@ -240,7 +240,6 @@ incidentsApi.openapi(putRoute, async (c) => {
   if (workspaceId !== _incident.workspaceId)
     return c.jsonT({ code: 401, message: "Unauthorized" });
 
-  console.log(input);
   const _newIncident = await db
     .update(incidentTable)
     .set({

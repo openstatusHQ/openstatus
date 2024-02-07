@@ -101,7 +101,11 @@
     },
     {
       "group": "Developer Tools",
-      "pages": ["packages/react", "packages/status-widget"]
+      "pages": [
+        "packages/react",
+        "packages/status-widget",
+        "packages/terraform"
+      ]
     },
     {
       "group": "Contributor Guides",
