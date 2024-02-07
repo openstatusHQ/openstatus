@@ -13,6 +13,7 @@ import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
@@ -482,7 +483,7 @@ const dailyStatsSchema = z.object({
     .int()
     .openapi({ description: "The total number of request" }),
   avgLatency: z.number().int().openapi({ description: "The average latency" }),
-  day: z.string().openapi({ description: "the date of the event" }),
+  day: isoDate,
 });
 
 const dailyStatsSchemaArray = z

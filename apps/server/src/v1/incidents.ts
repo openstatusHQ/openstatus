@@ -5,6 +5,7 @@ import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 
 const incidentsApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -27,13 +28,7 @@ const IncidentSchema = z.object({
     description: "The id of the incident",
     example: 1,
   }),
-  startedAt: z
-    .preprocess((val) => {
-      if (val) {
-        return new Date(String(val)).toISOString();
-      }
-      return new Date().toISOString();
-    }, z.string())
+  startedAt: isoDate
     .openapi({
       description: "The date the incident started",
     }),
@@ -46,13 +41,7 @@ const IncidentSchema = z.object({
     })
     .nullable(),
 
-  acknowledgedAt: z
-    .preprocess((val) => {
-      if (val) {
-        return new Date(String(val)).toISOString();
-      }
-      return new Date().toISOString();
-    }, z.string())
+  acknowledgedAt:isoDate
     .openapi({
       description: "The date the incident was acknowledged",
     })
@@ -66,13 +55,7 @@ const IncidentSchema = z.object({
     })
     .nullable(),
 
-  resolvedAt: z
-    .preprocess((val) => {
-      if (val) {
-        return new Date(String(val)).toISOString();
-      }
-      return new Date().toISOString();
-    }, z.string())
+  resolvedAt: isoDate
     .openapi({
       description: "The date the incident was resolved",
     })

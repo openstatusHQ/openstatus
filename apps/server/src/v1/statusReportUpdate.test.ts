@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-
 import { api } from ".";
+import { iso8601Regex } from "./test-utils";
 
 test("GET one status report update ", async () => {
   const res = await api.request("/status_report_update/1", {
@@ -45,7 +45,7 @@ test("create one status report update without auth key should return 401", async
     },
     body: JSON.stringify({
       status: "investigating",
-      date: "2023-11-08T21:03:13.000Z",
+      date: expect.stringMatching(iso8601Regex),
       message: "test",
       status_report_id: 1,
     }),

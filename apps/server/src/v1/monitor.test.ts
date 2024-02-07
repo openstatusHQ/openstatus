@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-
 import { api } from ".";
+import { iso8601Regex } from "./test-utils";
 
 test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {
@@ -277,6 +277,6 @@ test.todo("Get monitor daily Summary");
 //       ok: 4,
 //       count: 13,
 //       avgLatency: 1,
-//       day: "31-01-2024"
+//       day: expect.stringMatching(iso8601Regex)
 //   });
 // });

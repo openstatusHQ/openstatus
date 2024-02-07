@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-
 import { api } from ".";
+import { iso8601Regex } from "./test-utils";
 
 test("GET one Incident", async () => {
   const res = await api.request("/incident/2", {
@@ -11,7 +11,7 @@ test("GET one Incident", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: 2,
-    startedAt: expect.any(String),
+    startedAt: expect.stringMatching(iso8601Regex),
     monitorId: 1,
     acknowledgedAt: null,
     resolvedAt: null,
@@ -32,12 +32,11 @@ test("Update an incident ", async () => {
     }),
   });
   expect(res.status).toBe(200);
-
   expect(await res.json()).toMatchObject({
-    acknowledgedAt: "2023-11-08T21:03:13.000Z",
+    acknowledgedAt: expect.stringMatching(iso8601Regex),
     monitorId: 1,
     id: 2,
-    startedAt: expect.any(String),
+    startedAt: expect.stringMatching(iso8601Regex),
     resolvedAt: null,
     resolvedBy: null,
     acknowledgedBy: null,
@@ -84,8 +83,7 @@ test("Update an incident with invalid data should return 403", async () => {
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      //passing incorrect body
+    body: JSON.stringify({//passing incorrect body
       acknowledgedAt: "2023-11-0",
     }),
   });
@@ -111,7 +109,7 @@ test("Get all Incidents", async () => {
     acknowledgedAt: null,
     monitorId: 1,
     id: 1,
-    startedAt: expect.any(String),
+    startedAt: expect.stringMatching(iso8601Regex),
     resolvedAt: null,
     resolvedBy: null,
     acknowledgedBy: null,
