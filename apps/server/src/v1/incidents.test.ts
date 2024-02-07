@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+
 import { api } from ".";
 import { iso8601Regex } from "./test-utils";
 
@@ -83,7 +84,8 @@ test("Update an incident with invalid data should return 403", async () => {
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({//passing incorrect body
+    body: JSON.stringify({
+      //passing incorrect body
       acknowledgedAt: "2023-11-0",
     }),
   });

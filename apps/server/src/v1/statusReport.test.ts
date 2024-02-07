@@ -1,4 +1,5 @@
 import { expect, test } from "bun:test";
+
 import { api } from ".";
 import { iso8601Regex } from "./test-utils";
 
@@ -162,7 +163,8 @@ test("Create a status report update with invalid data should return 403", async 
       "x-openstatus-key": "1",
       "content-type": "application/json",
     },
-    body: JSON.stringify({//passing in incompelete body
+    body: JSON.stringify({
+      //passing in incompelete body
       date: "2023-11-08T21:03:13.000Z",
       message: "Test Status Report",
     }),

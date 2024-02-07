@@ -15,8 +15,8 @@ import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
-import { isoDate } from "./utils";
 import { statusUpdateSchema } from "./statusReportUpdate";
+import { isoDate } from "./utils";
 
 const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -38,10 +38,9 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: isoDate
-    .openapi({
-      description: "The date of the update in ISO8601 format",
-    }),
+  date: isoDate.openapi({
+    description: "The date of the update in ISO8601 format",
+  }),
   message: z.string().openapi({
     description: "The message of the update",
   }),

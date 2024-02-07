@@ -28,10 +28,9 @@ const IncidentSchema = z.object({
     description: "The id of the incident",
     example: 1,
   }),
-  startedAt: isoDate
-    .openapi({
-      description: "The date the incident started",
-    }),
+  startedAt: isoDate.openapi({
+    description: "The date the incident started",
+  }),
 
   monitorId: z
     .number()
@@ -41,7 +40,7 @@ const IncidentSchema = z.object({
     })
     .nullable(),
 
-  acknowledgedAt:isoDate
+  acknowledgedAt: isoDate
     .openapi({
       description: "The date the incident was acknowledged",
     })

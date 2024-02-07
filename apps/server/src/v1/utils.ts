@@ -1,7 +1,8 @@
+import { z } from "@hono/zod-openapi";
+
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
-import { z } from "@hono/zod-openapi";
 
 /**
  * TODO: move the plan limit into the Unkey `{ meta }` to avoid an additional db call.
@@ -12,13 +13,12 @@ import { z } from "@hono/zod-openapi";
  * That remindes me we need to downgrade the frequency/periodicity of monitors to 10m if the user downgrades their plan.
  */
 
-export const isoDate = z
-.preprocess((val) => {
+export const isoDate = z.preprocess((val) => {
   if (val) {
     return new Date(String(val)).toISOString();
   }
   return new Date().toISOString();
-}, z.string())
+}, z.string());
 
 export async function getWorkspace(id: number) {
   const _workspace = await db

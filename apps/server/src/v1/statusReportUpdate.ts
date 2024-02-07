@@ -37,8 +37,7 @@ export const statusUpdateSchema = z.object({
     description: "The status of the update",
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
-  date: isoDate
-  .openapi({
+  date: isoDate.openapi({
     description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({
@@ -53,8 +52,7 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: isoDate
-  .openapi({
+  date: isoDate.openapi({
     description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({
