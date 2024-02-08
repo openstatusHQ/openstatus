@@ -4,7 +4,7 @@ import { Unkey } from "@unkey/api";
 
 import { env } from "@/env";
 
-const unkey = new Unkey({ token: env.UNKEY_TOKEN });
+const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
 export async function create(ownerId: number) {
   const key = await unkey.keys.create({
