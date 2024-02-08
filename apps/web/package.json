@@ -27,7 +27,6 @@
     "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@openstatus/vercel": "workspace:*",
     "@sentry/integrations": "7.73.0",
     "@sentry/nextjs": "7.73.0",
     "@stripe/stripe-js": "2.1.6",
