@@ -41,7 +41,7 @@ func main() {
 
 	// environment variables.
 	flyRegion := env("FLY_REGION", "local")
-	cronSecret := env("CRON_SECRET", "")
+	cronSecret := env("CRON_SECRET", "test")
 	tinyBirdToken := env("TINYBIRD_TOKEN", "")
 	logLevel := env("LOG_LEVEL", "warn")
 
@@ -101,11 +101,11 @@ func main() {
 			if !statusCode.IsSuccessful() && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:  req.MonitorID,
-					Status:     "error",
-					StatusCode: res.StatusCode,
-					Region:     flyRegion,
-					Message:    res.Message,
+					MonitorId:     req.MonitorID,
+					Status:        "error",
+					StatusCode:    res.StatusCode,
+					Region:        flyRegion,
+					Message:       res.Message,
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
@@ -113,12 +113,11 @@ func main() {
 			if req.Status == "error" && statusCode.IsSuccessful() {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:  req.MonitorID,
-					Status:     "active",
-					Region:     flyRegion,
-					StatusCode: res.StatusCode,
+					MonitorId:     req.MonitorID,
+					Status:        "active",
+					Region:        flyRegion,
+					StatusCode:    res.StatusCode,
 					CronTimestamp: req.CronTimestamp,
-
 				})
 			}
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
@@ -143,10 +142,10 @@ func main() {
 
 			if req.Status == "active" {
 				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId: req.MonitorID,
-					Status:    "error",
-					Message:   err.Error(),
-					Region:    flyRegion,
+					MonitorId:     req.MonitorID,
+					Status:        "error",
+					Message:       err.Error(),
+					Region:        flyRegion,
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
@@ -170,19 +169,23 @@ func main() {
 		fmt.Printf("Start of /ping/%s\n", region)
 
 		apiKey := c.GetHeader("x-openstatus-key")
-		if apiKey == "" {
+
+		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) && apiKey == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
+		if apiKey != "" {
+			response, err := unkey.KeyVerify(apiKey)
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+				return
+			}
 
-		response, err := unkey.KeyVerify(apiKey)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
+			if !response.Valid {
+				fmt.Println("Key is not valid valid")
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 
-		if !response.Valid {
-			fmt.Println("Key is valid")
+			}
 		}
 
 		if region != flyRegion {
