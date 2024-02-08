@@ -41,7 +41,7 @@ func main() {
 
 	// environment variables.
 	flyRegion := env("FLY_REGION", "local")
-	cronSecret := env("CRON_SECRET", "test")
+	cronSecret := env("CRON_SECRET", "")
 	tinyBirdToken := env("TINYBIRD_TOKEN", "")
 	logLevel := env("LOG_LEVEL", "warn")
 
