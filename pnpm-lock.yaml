@@ -155,9 +155,6 @@ importers:
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      '@openstatus/vercel':
-        specifier: workspace:*
-        version: link:../../packages/integrations/vercel
       '@sentry/integrations':
         specifier: 7.73.0
         version: 7.73.0
@@ -539,43 +536,6 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      typescript:
-        specifier: 5.2.2
-        version: 5.2.2
-
-  packages/integrations/vercel:
-    dependencies:
-      '@openstatus/tinybird':
-        specifier: workspace:*
-        version: link:../../tinybird
-      '@t3-oss/env-core':
-        specifier: 0.7.0
-        version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
-      react:
-        specifier: 18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: 18.2.0
-        version: 18.2.0(react@18.2.0)
-      zod:
-        specifier: ^3.22.2
-        version: 3.22.2
-    devDependencies:
-      '@openstatus/tsconfig':
-        specifier: workspace:*
-        version: link:../../tsconfig
-      '@types/node':
-        specifier: 20.8.0
-        version: 20.8.0
-      '@types/react':
-        specifier: 18.2.24
-        version: 18.2.24
-      '@types/react-dom':
-        specifier: 18.2.8
-        version: 18.2.8
-      next:
-        specifier: 13.5.3
-        version: 13.5.3(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0)(react@18.2.0)
       typescript:
         specifier: 5.2.2
         version: 5.2.2

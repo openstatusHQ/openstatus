@@ -38,6 +38,9 @@ export const triggerAlerting = async ({
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
+    console.log(
+      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider}`,
+    );
     const monitor = selectMonitorSchema.parse(notif.monitor);
     await providerToFunction[notif.notification.provider]({
       monitor,
