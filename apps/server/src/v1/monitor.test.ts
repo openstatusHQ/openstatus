@@ -193,7 +193,7 @@ test("Update a monitor not in db should return 404", async () => {
     },
     body: JSON.stringify(data),
   });
-  expect(res.status).toBe(200);
+  expect(res.status).toBe(404);
 
   expect(await res.json()).toMatchObject({
     code: 404,

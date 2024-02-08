@@ -101,7 +101,7 @@ statusReportApi.openapi(getAllRoute, async (c) => {
     where: eq(statusReport.workspaceId, workspaceId),
   });
 
-  if (!_statusReports) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReports) return c.jsonT({ code: 404, message: "Not Found" }, 404);
 
   const data = z.array(statusReportExtendedSchema).parse(
     _statusReports.map((statusReport) => ({
@@ -160,7 +160,7 @@ statusReportApi.openapi(getRoute, async (c) => {
     ),
   });
 
-  if (!_statusUpdate) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusUpdate) return c.jsonT({ code: 404, message: "Not Found" }, 404);
   const data = statusReportExtendedSchema.parse({
     ..._statusUpdate,
     status_report_updates: _statusUpdate.statusReportUpdates.map(
@@ -267,10 +267,10 @@ statusReportApi.openapi(deleteRoute, async (c) => {
     .where(eq(statusReport.id, statusReportId))
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _statusReport.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
 
   await db
     .delete(statusReport)
@@ -332,7 +332,7 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
     )
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" }, 404);
 
   const _statusReportUpdate = await db
     .insert(statusReportUpdate)

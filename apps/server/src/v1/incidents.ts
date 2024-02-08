@@ -102,7 +102,7 @@ incidentsApi.openapi(getAllRoute, async (c) => {
     .where(eq(incidentTable.workspaceId, workspaceId))
     .all();
 
-  if (!result) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!result) return c.jsonT({ code: 404, message: "Not Found" }, 404);
 
   const data = z.array(IncidentSchema).parse(result);
   return c.jsonT(data);
@@ -152,7 +152,7 @@ incidentsApi.openapi(getRoute, async (c) => {
     )
     .get();
 
-  if (!result) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!result) return c.jsonT({ code: 404, message: "Not Found" }, 404);
   const data = IncidentSchema.parse(result);
 
   return c.jsonT(data);
@@ -204,7 +204,7 @@ incidentsApi.openapi(putRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
   const { id } = c.req.valid("param");
-  if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
+  if (!id) return c.jsonT({ code: 400, message: "Bad Request" }, 400);
 
   const _incident = await db
     .select()
@@ -217,10 +217,10 @@ incidentsApi.openapi(putRoute, async (c) => {
     )
     .get();
 
-  if (!_incident) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_incident) return c.jsonT({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _incident.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
 
   const _newIncident = await db
     .update(incidentTable)

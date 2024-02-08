@@ -133,7 +133,7 @@ test("Create a status report update not in db should return 404", async () => {
       message: "Test Status Report",
     }),
   });
-  expect(res.status).toBe(200);
+  expect(res.status).toBe(404);
   expect(await res.json()).toMatchObject({
     code: 404,
     message: "Not Found",

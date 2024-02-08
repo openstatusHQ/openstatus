@@ -56,7 +56,7 @@ test("Update an incident not in db should return 404", async () => {
       acknowledgedAt: "2023-11-08T21:03:13.000Z",
     }),
   });
-  expect(res.status).toBe(200);
+  expect(res.status).toBe(404);
   expect(await res.json()).toMatchObject({
     code: 404,
     message: "Not Found",
