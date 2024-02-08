@@ -9,7 +9,11 @@ import {
   monitorMethods,
   monitorMethodsSchema,
 } from "@openstatus/db/src/schema";
-import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
+import type {
+  InsertMonitor,
+  MonitorFlyRegion,
+  WorkspacePlan,
+} from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
@@ -31,13 +35,14 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { RequestTestButton } from "./request-test-button";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   plan: WorkspacePlan;
-  pingEndpoint(): Promise<boolean>;
+  pingEndpoint(region?: MonitorFlyRegion): Promise<RegionChecker>;
 }
 
 // TODO: add Dialog with response informations when pingEndpoint!
@@ -48,8 +53,6 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
     control: form.control,
   });
   const watchMethod = form.watch("method");
-  const { toast } = useToastAction();
-  const [isPending, startTransition] = React.useTransition();
 
   const validateJSON = (value?: string) => {
     if (!value) return;
@@ -72,25 +75,6 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
       const pretty = JSON.stringify(obj, undefined, 4);
       form.setValue("body", pretty);
     }
-  };
-
-  const sendTestPing = () => {
-    if (isPending) return;
-
-    const { url } = form.getValues();
-    if (!url) {
-      toast("test-warning-empty-url");
-      return;
-    }
-
-    startTransition(async () => {
-      const isSuccessful = await pingEndpoint();
-      if (isSuccessful) {
-        toast("test-success");
-      } else {
-        toast("test-error");
-      }
-    });
   };
 
   return (
@@ -155,7 +139,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
             </FormItem>
           )}
         />
-        <RequestTestButton isPending={isPending} onClick={sendTestPing} />
+        <RequestTestButton {...{ form, pingEndpoint }} />
       </div>
       <div className="space-y-2 sm:col-span-full">
         <FormLabel>Request Header</FormLabel>

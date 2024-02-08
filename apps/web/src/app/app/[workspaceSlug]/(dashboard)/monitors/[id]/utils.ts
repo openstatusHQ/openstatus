@@ -40,6 +40,34 @@ export function getDateByPeriod(period: Period) {
   }
 }
 
+export function getHoursByPeriod(period: Period) {
+  switch (period) {
+    case "1h":
+      return 1;
+    case "1d":
+      return 24;
+    case "3d":
+      return 72;
+    default:
+      const _exhaustiveCheck: never = period;
+      throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
+  }
+}
+
+export function periodFormatter(period: Period) {
+  switch (period) {
+    case "1h":
+      return "Last hour";
+    case "1d":
+      return "Last day";
+    case "3d":
+      return "Last 3 days";
+    default:
+      const _exhaustiveCheck: never = period;
+      return _exhaustiveCheck;
+  }
+}
+
 export function getMinutesByInterval(interval: MonitorPeriodicity) {
   switch (interval) {
     case "30s":

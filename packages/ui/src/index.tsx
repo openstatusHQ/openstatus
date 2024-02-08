@@ -36,3 +36,4 @@ export * from "./components/date-time-picker";
 export * from "./components/sheet";
 export * from "./components/use-toast";
 export * from "./components/multi-select";
+export * from "./components/toggle";

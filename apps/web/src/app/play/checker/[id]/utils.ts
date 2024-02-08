@@ -80,13 +80,12 @@ export async function checkRegion(
   url: string,
   region: MonitorFlyRegion,
   opts?: { method: Method },
-) {
+): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
+      Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
-      // TODO: move to @/env
-      "x-openstatus-key": process.env.PLAYGROUND_UNKEY_API_KEY!,
       "fly-prefer-region": region,
     },
     method: "POST",

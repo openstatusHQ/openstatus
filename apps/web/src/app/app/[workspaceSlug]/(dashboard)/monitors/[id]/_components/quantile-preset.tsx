@@ -19,15 +19,18 @@ import {
 } from "@openstatus/ui";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { cn } from "@/lib/utils";
 import { quantiles } from "../utils";
 import type { Quantile } from "../utils";
 
 export function QuantilePreset({
   quantile,
   disabled,
+  className,
 }: {
   quantile: Quantile;
   disabled?: boolean;
+  className?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -50,7 +53,7 @@ export function QuantilePreset({
             <p>
               Defines a statistical measure representing a specific percentile.
             </p>
-            <Separator className="my-1" />
+            <Separator className="my-2" />
             <p className="text-muted-foreground">
               The p95 quantile represents the value below which 95% of the data
               points in a dataset fall, indicating a high percentile level
@@ -64,7 +67,10 @@ export function QuantilePreset({
         defaultValue={quantile}
         disabled={disabled}
       >
-        <SelectTrigger className="w-[150px] uppercase" id="quantile">
+        <SelectTrigger
+          className={cn("w-[150px] uppercase", className)}
+          id="quantile"
+        >
           <span className="flex items-center gap-2">
             <CandlestickChart className="h-4 w-4" />
             <SelectValue />

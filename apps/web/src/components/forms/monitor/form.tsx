@@ -7,13 +7,15 @@ import { useForm } from "react-hook-form";
 
 import type {
   InsertMonitor,
+  MonitorFlyRegion,
   Notification,
   Page,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { flyRegions, insertMonitorSchema } from "@openstatus/db/src/schema";
-import { Badge, Button, Form, Separator } from "@openstatus/ui";
+import { Badge, Button, Form } from "@openstatus/ui";
 
+import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import {
   Tabs,
   TabsContent,
@@ -115,7 +117,8 @@ export function MonitorForm({
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       const pingResult = await pingEndpoint();
-      if (!pingResult) {
+      const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
+      if (!isOk) {
         setPingFailed(true);
         return;
       }
@@ -123,16 +126,17 @@ export function MonitorForm({
     });
   };
 
-  const pingEndpoint = async () => {
+  const pingEndpoint = async (region?: MonitorFlyRegion) => {
     const { url, body, method, headers } = form.getValues();
     const res = await fetch(`/api/checker/test`, {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
       }),
-      body: JSON.stringify({ url, body, method, headers }),
+      body: JSON.stringify({ url, body, method, headers, region }),
     });
-    return res.ok;
+    const data = (await res.json()) as RegionChecker;
+    return data;
   };
 
   function onValueChange(value: string) {
@@ -180,7 +184,6 @@ export function MonitorForm({
                 <TabsTrigger value="danger">Danger</TabsTrigger>
               ) : null}
             </TabsList>
-            <Separator className="mb-6" />
             <TabsContent value="request">
               <SectionRequests {...{ form, plan, pingEndpoint }} />
             </TabsContent>

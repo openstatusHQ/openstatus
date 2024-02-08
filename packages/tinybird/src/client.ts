@@ -7,6 +7,7 @@ import {
   tbBuildResponseDetails,
   tbBuildResponseGraph,
   tbBuildResponseList,
+  tbBuildResponseTimeMetrics,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
@@ -14,6 +15,7 @@ import {
   tbParameterResponseDetails,
   tbParameterResponseGraph,
   tbParameterResponseList,
+  tbParameterResponseTimeMetrics,
 } from "./validation";
 
 // REMINDER:
@@ -105,5 +107,16 @@ export function getPublicStatus(tb: Tinybird) {
     pipe: "public_status__v0",
     parameters: tbParameterPublicStatus,
     data: tbBuildPublicStatus,
+  });
+}
+
+export function getResponseTimeMetrics(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "response_time_metrics__v0",
+    parameters: tbParameterResponseTimeMetrics,
+    data: tbBuildResponseTimeMetrics,
+    opts: {
+      revalidate: 60, // 1 min cache
+    },
   });
 }
