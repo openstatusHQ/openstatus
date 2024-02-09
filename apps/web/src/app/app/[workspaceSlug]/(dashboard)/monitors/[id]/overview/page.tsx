@@ -1,22 +1,29 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
-import { endOfDay, startOfDay } from "date-fns";
 import * as z from "zod";
 
-import { StatusDot } from "@/components/monitor/status-dot";
-import { getResponseGraphData } from "@/lib/tb";
+import { flyRegions } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/tinybird";
+import { Separator } from "@openstatus/ui";
+
+import { getResponseGraphData, getResponseTimeMetricsData } from "@/lib/tb";
 import { api } from "@/trpc/server";
+import { ButtonReset } from "../_components/button-reset";
 import { DatePickerPreset } from "../_components/date-picker-preset";
-import { IntervalPreset } from "../_components/interval-preset";
-import { QuantilePreset } from "../_components/quantile-preset";
+import { Metrics } from "../_components/metrics";
 import {
   getDateByPeriod,
+  getHoursByPeriod,
   getMinutesByInterval,
   intervals,
   periods,
   quantiles,
 } from "../utils";
-import { ChartWrapper } from "./_components/chart-wrapper";
+import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
+
+const DEFAULT_QUANTILE = "p95";
+const DEFAULT_INTERVAL = "30m";
+const DEFAULT_PERIOD = "1d";
 
 /**
  * allowed URL search params
@@ -24,14 +31,24 @@ import { ChartWrapper } from "./_components/chart-wrapper";
 const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
   cronTimestamp: z.coerce.number().optional(),
-  quantile: z.enum(quantiles).optional().default("p95"),
-  interval: z.enum(intervals).optional().default("30m"),
-  period: z.enum(periods).optional().default("1d"),
-  fromDate: z.coerce
-    .number()
+  quantile: z.enum(quantiles).optional().default(DEFAULT_QUANTILE),
+  interval: z.enum(intervals).optional().default(DEFAULT_INTERVAL),
+  period: z.enum(periods).optional().default(DEFAULT_PERIOD),
+  regions: z
+    .string()
     .optional()
-    .default(startOfDay(new Date()).getTime()),
-  toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
+    .transform(
+      (value) =>
+        value
+          ?.trim()
+          ?.split(",")
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+    ),
+  // fromDate: z.coerce
+  //   .number()
+  //   .optional()
+  //   .default(startOfDay(new Date()).getTime()),
+  // toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
 });
 
 export default async function Page({
@@ -55,6 +72,7 @@ export default async function Page({
   const date = getDateByPeriod(search.data.period);
   const intervalMinutes = getMinutesByInterval(search.data.interval);
   const periodicityMinutes = getMinutesByInterval(monitor.periodicity);
+  const periodicityHours = getHoursByPeriod(search.data.period);
 
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
@@ -70,37 +88,38 @@ export default async function Page({
     interval: minutes,
   });
 
-  if (!data) return null;
+  const metrics = await getResponseTimeMetricsData({
+    monitorId: id,
+    interval: periodicityHours,
+  });
 
-  const { period, quantile, interval } = search.data;
+  if (!data || !metrics) return null;
+
+  const { period, quantile, interval, regions } = search.data;
+
+  const isDirty =
+    period !== DEFAULT_PERIOD ||
+    quantile !== DEFAULT_QUANTILE ||
+    interval !== DEFAULT_INTERVAL ||
+    flyRegions.length !== regions.length;
 
   return (
     <div className="grid gap-4">
-      <div>
-        <p className="text-muted-foreground inline-flex items-center gap-2 text-sm">
-          <StatusDot status={monitor.status} active={monitor.active} />
-          <span>
-            {monitor.active
-              ? monitor.status === "active"
-                ? "up"
-                : "down"
-              : "pause"}{" "}
-            · checked every{" "}
-            <code className="text-foreground">{monitor.periodicity}</code>
-          </span>
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        {/* IDEA: add tooltip for description */}
+      <div className="flex justify-between gap-2">
         <DatePickerPreset period={period} />
-        <QuantilePreset quantile={quantile} disabled={isQuantileDisabled} />
-        <IntervalPreset interval={interval} />
+        {isDirty ? <ButtonReset /> : null}
       </div>
-      <ChartWrapper period={period} quantile={quantile} data={data} />
-      <p className="text-muted-foreground text-center text-xs">
-        Select your preferred time range, percentile for insights, and time
-        interval for granular analysis.
-      </p>
+      <Metrics metrics={metrics} period={period} />
+      <Separator className="my-8" />
+      <CombinedChartWrapper
+        data={data}
+        period={period}
+        quantile={quantile}
+        interval={interval}
+        regions={regions as Region[]}
+        monitor={monitor}
+        isQuantileDisabled={isQuantileDisabled}
+      />
     </div>
   );
 }

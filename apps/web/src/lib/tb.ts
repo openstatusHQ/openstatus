@@ -4,6 +4,7 @@ import type {
   ResponseDetailsParams,
   ResponseGraphParams,
   ResponseListParams,
+  ResponseTimeMetricsParams,
 } from "@openstatus/tinybird";
 import {
   getHomeMonitorList,
@@ -12,6 +13,7 @@ import {
   getResponseDetails,
   getResponseGraph,
   getResponseList,
+  getResponseTimeMetrics,
   Tinybird,
 } from "@openstatus/tinybird";
 
@@ -80,6 +82,18 @@ export async function getResponseGraphData(
 ) {
   try {
     const res = await getResponseGraph(tb)(props);
+    return res.data;
+  } catch (e) {
+    console.error(e);
+  }
+  return;
+}
+
+export async function getResponseTimeMetricsData(
+  props: ResponseTimeMetricsParams,
+) {
+  try {
+    const res = await getResponseTimeMetrics(tb)(props);
     return res.data;
   } catch (e) {
     console.error(e);

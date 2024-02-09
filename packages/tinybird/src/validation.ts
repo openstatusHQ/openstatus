@@ -110,18 +110,23 @@ export const tbBuildResponseDetails = tbBuildResponseList.extend({
     }),
 });
 
+export const latencyMetrics = z.object({
+  avgLatency: z.number().int().nullable(),
+  p75Latency: z.number().int().nullable(),
+  p90Latency: z.number().int().nullable(),
+  p95Latency: z.number().int().nullable(),
+  p99Latency: z.number().int().nullable(),
+});
+
 /**
  * Values from pipe response_graph
  */
-export const tbBuildResponseGraph = z.object({
-  region: z.enum(flyRegions),
-  timestamp: z.number().int(),
-  avgLatency: z.number().int(),
-  p75Latency: z.number().int(),
-  p90Latency: z.number().int(),
-  p95Latency: z.number().int(),
-  p99Latency: z.number().int(),
-});
+export const tbBuildResponseGraph = z
+  .object({
+    region: z.enum(flyRegions),
+    timestamp: z.number().int(),
+  })
+  .merge(latencyMetrics);
 
 /**
  * Params for pipe response_graph
@@ -145,19 +150,16 @@ export const tbParameterMonitorList = z.object({
 /**
  * Values from the pipe status_timezone
  */
-export const tbBuildMonitorList = z.object({
-  count: z.number().int(),
-  ok: z.number().int(),
-  avgLatency: z.number().int(),
-  p75Latency: z.number().int(),
-  p90Latency: z.number().int(),
-  p95Latency: z.number().int(),
-  p99Latency: z.number().int(),
-  day: z.string().transform((val) => {
-    // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
-    return new Date(`${val} GMT`).toISOString();
-  }),
-});
+export const tbBuildMonitorList = z
+  .object({
+    count: z.number().int(),
+    ok: z.number().int(),
+    day: z.string().transform((val) => {
+      // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+      return new Date(`${val} GMT`).toISOString();
+    }),
+  })
+  .merge(latencyMetrics);
 
 /**
  * Params for pipe home_stats
@@ -191,6 +193,26 @@ export const tbBuildPublicStatus = z.object({
   cronTimestamp: z.number().int(),
 });
 
+/**
+ * Params for pipe response_time_metrics
+ */
+export const tbParameterResponseTimeMetrics = z.object({
+  monitorId: z.string(),
+  interval: z.number().int().default(24), // 24 hours
+});
+
+/**
+ * Values from the pipe response_time_metrics
+ */
+export const tbBuildResponseTimeMetrics = z
+  .object({
+    count: z.number().int(),
+    ok: z.number().int(),
+    lastTimestamp: z.number().int().nullable().optional(),
+    time: z.number().int(), // only to sort the data - cannot be done on server because of UNION ALL
+  })
+  .merge(latencyMetrics);
+
 export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof flyRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
@@ -202,3 +224,8 @@ export type MonitorListParams = z.infer<typeof tbParameterMonitorList>;
 export type HomeStatsParams = z.infer<typeof tbParameterHomeStats>;
 export type ResponseDetails = z.infer<typeof tbBuildResponseDetails>;
 export type ResponseDetailsParams = z.infer<typeof tbParameterResponseDetails>;
+export type LatencyMetric = keyof z.infer<typeof latencyMetrics>;
+export type ResponseTimeMetrics = z.infer<typeof tbBuildResponseTimeMetrics>;
+export type ResponseTimeMetricsParams = z.infer<
+  typeof tbParameterResponseTimeMetrics
+>;

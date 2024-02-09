@@ -9,10 +9,11 @@ import {
   Cog,
   Copy,
   Fingerprint,
-  Globe,
+  Globe2,
   Image,
   Laptop,
   LayoutDashboard,
+  LineChart,
   Link,
   Megaphone,
   MessageCircle,
@@ -60,7 +61,7 @@ export const Icons = {
   tag: Tag,
   trash: Trash,
   twitter: TwitterIcon,
-  globe: Globe,
+  globe: Globe2,
   plug: Plug,
   copy: Copy,
   check: Check,
@@ -80,6 +81,7 @@ export const Icons = {
   sparkles: Sparkles,
   timer: Timer,
   clock: Clock,
+  "line-chart": LineChart,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

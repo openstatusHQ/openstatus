@@ -70,6 +70,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
 }).extend({
   method: monitorMethodsSchema.default("GET"),
   notifications: z.array(z.number()).optional().default([]),
+  pages: z.array(z.number()).optional().default([]),
   body: z.string().default("").optional(),
 });
 
