@@ -7,9 +7,6 @@ const nextConfig = {
   transpilePackages: [
     "@openstatus/ui",
     "@openstatus/api",
-    "@react-email/components",
-    "@react-email/render",
-    "@react-email/html",
   ],
 
   experimental: {
