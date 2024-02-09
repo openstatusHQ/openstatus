@@ -53,7 +53,7 @@
     "luxon": "3.3.0",
     "micro": "10.0.1",
     "nanoid": "5.0.1",
-    "next": "13.5.3",
+    "next": "14.1.0",
     "next-contentlayer": "0.3.4",
     "next-plausible": "3.11.1",
     "next-themes": "^0.2.1",
