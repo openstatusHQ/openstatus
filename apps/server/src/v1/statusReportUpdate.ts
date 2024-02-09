@@ -96,7 +96,7 @@ statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
     .where(eq(statusReportUpdate.id, Number(id)))
     .get();
 
-  if (!update) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!update) return c.json({ code: 404, message: "Not Found" }, 404);
 
   const currentStatusReport = await db
     .select()
@@ -109,11 +109,11 @@ statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
     )
     .get();
   if (!currentStatusReport)
-    return c.jsonT({ code: 401, message: "Not Authorized" }, 401);
+    return c.json({ code: 401, message: "Not Authorized" }, 401);
 
   const data = statusUpdateSchema.parse(update);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const createStatusUpdate = createRoute({
@@ -165,7 +165,7 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
     )
     .get();
   if (!_currentStatusReport)
-    return c.jsonT({ code: 401, message: "Not Authorized" }, 401);
+    return c.json({ code: 401, message: "Not Authorized" }, 401);
 
   const res = await db
     .insert(statusReportUpdate)
@@ -215,7 +215,7 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
     }
   }
   const data = statusUpdateSchema.parse(res);
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 export { statusReportUpdateApi };

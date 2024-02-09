@@ -39,10 +39,10 @@ importers:
     dependencies:
       '@hono/sentry':
         specifier: 1.0.0
-        version: 1.0.0(hono@3.9.2)
+        version: 1.0.0(hono@4.0.0)
       '@hono/zod-openapi':
         specifier: 0.8.3
-        version: 0.8.3(hono@3.9.2)(zod@3.22.2)
+        version: 0.8.3(hono@4.0.0)(zod@3.22.2)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -80,8 +80,8 @@ importers:
         specifier: 0.16.0
         version: 0.16.0
       hono:
-        specifier: 3.9.2
-        version: 3.9.2
+        specifier: 4.0.0
+        version: 4.0.0
       nanoid:
         specifier: 5.0.2
         version: 5.0.2
@@ -2220,16 +2220,16 @@ packages:
       tailwindcss: 3.3.2
     dev: false
 
-  /@hono/sentry@1.0.0(hono@3.9.2):
+  /@hono/sentry@1.0.0(hono@4.0.0):
     resolution: {integrity: sha512-GbPxgpGuasM2zRCSaA77MPWu4KDcuk/EMf7JJykjCvnOTbjmtr7FovNxsvg7xlXCIjZDgLmqBaoJMi3AxbeIAA==}
     peerDependencies:
       hono: 3.*
     dependencies:
-      hono: 3.9.2
+      hono: 4.0.0
       toucan-js: 3.3.0
     dev: false
 
-  /@hono/zod-openapi@0.8.3(hono@3.9.2)(zod@3.22.2):
+  /@hono/zod-openapi@0.8.3(hono@4.0.0)(zod@3.22.2):
     resolution: {integrity: sha512-TwjSf63miIF3VBqNy4V6EOqZYdTQPeIQQ9Q2HjRWFYH9f2QtBFXziuqIg2Y76gNZ3WDal67NQXmbSErHiFR44g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
@@ -2237,18 +2237,18 @@ packages:
       zod: 3.*
     dependencies:
       '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.2)
-      '@hono/zod-validator': 0.1.9(hono@3.9.2)(zod@3.22.2)
-      hono: 3.9.2
+      '@hono/zod-validator': 0.1.9(hono@4.0.0)(zod@3.22.2)
+      hono: 4.0.0
       zod: 3.22.2
     dev: false
 
-  /@hono/zod-validator@0.1.9(hono@3.9.2)(zod@3.22.2):
+  /@hono/zod-validator@0.1.9(hono@4.0.0)(zod@3.22.2):
     resolution: {integrity: sha512-qEG5xagKzyif283ldCKzp+aF9Aebclg0sfrgyRQQNAizmXpicZ3UGduST/Jp+a9bjt3mI+VyEXMftb4rogLxQA==}
     peerDependencies:
       hono: 3.*
       zod: ^3.19.1
     dependencies:
-      hono: 3.9.2
+      hono: 4.0.0
       zod: 3.22.2
     dev: false
 
@@ -8400,8 +8400,8 @@ packages:
       react-is: 16.13.1
     dev: false
 
-  /hono@3.9.2:
-    resolution: {integrity: sha512-180NOiMadqU3lGmN6ajPDZvZPWus3a9mtVaAUR9uG0SImngBwRLA8vbnV0oUfUAgFT4nX55sGV9dVA06OuikHA==}
+  /hono@4.0.0:
+    resolution: {integrity: sha512-8dKhuBBpRZEodUttQhrSFJ6PQqHRjXHyeeegfxOf132pvgbf0tOb9qqb7q7eYwAWpOcYrsUOsWdJ0sQIIovhZg==}
     engines: {node: '>=16.0.0'}
     dev: false
 
