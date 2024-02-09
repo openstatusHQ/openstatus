@@ -96,10 +96,10 @@ export async function checkRegion(
     body: JSON.stringify({
       url,
       method: opts?.method || "GET",
-      headers: opts?.headers,
-      body: opts?.body,
+      // FIXME: does not work with headers and body
+      // headers: opts?.headers,
+      // body: opts?.body,
     }),
-    // cache: "force-cache",
     next: { revalidate: 0 },
   });
 
