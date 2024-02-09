@@ -208,11 +208,11 @@ monitorApi.openapi(getAllRoute, async (c) => {
     .where(eq(monitor.workspaceId, workspaceId))
     .all();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   const data = z.array(MonitorSchema).parse(_monitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const getRoute = createRoute({
@@ -262,14 +262,14 @@ monitorApi.openapi(getRoute, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const data = MonitorSchema.parse(_monitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const postRoute = createRoute({
@@ -329,9 +329,9 @@ monitorApi.openapi(postRoute, async (c) => {
   )[0].count;
 
   if (count >= workspacePlan.limits.monitors)
-    return c.jsonT({ code: 403, message: "Forbidden" }, 403);
+    return c.json({ code: 403, message: "Forbidden" }, 403);
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
-    return c.jsonT({ code: 403, message: "Forbidden" }, 403);
+    return c.json({ code: 403, message: "Forbidden" }, 403);
 
   const { headers, ...rest } = input;
   const _newMonitor = await db
@@ -346,7 +346,7 @@ monitorApi.openapi(postRoute, async (c) => {
 
   const data = MonitorSchema.parse(_newMonitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const putRoute = createRoute({
@@ -391,10 +391,10 @@ monitorApi.openapi(putRoute, async (c) => {
   const workspacePlan = c.get("workspacePlan");
   const { id } = c.req.valid("param");
 
-  if (!id) return c.jsonT({ code: 400, message: "Bad Request" }, 400);
+  if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
 
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
-    return c.jsonT({ code: 403, message: "Forbidden" }, 403);
+    return c.json({ code: 403, message: "Forbidden" }, 403);
 
   const _monitor = await db
     .select()
@@ -402,10 +402,10 @@ monitorApi.openapi(putRoute, async (c) => {
     .where(eq(monitor.id, Number(id)))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const { headers, ...rest } = input;
   const _newMonitor = await db
@@ -419,7 +419,7 @@ monitorApi.openapi(putRoute, async (c) => {
 
   const data = MonitorSchema.parse(_newMonitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const deleteRoute = createRoute({
@@ -465,13 +465,13 @@ monitorApi.openapi(deleteRoute, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
-  return c.jsonT({ message: "Deleted" });
+  return c.json({ message: "Deleted" });
 });
 
 const dailyStatsSchema = z.object({
@@ -538,17 +538,17 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" }, 404);
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" }, 401);
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
     `${monitorId}-daily-stats`,
   );
   if (cache) {
     console.log("fetching from cache");
-    return c.jsonT({
+    return c.json({
       data: cache,
     });
   }
@@ -563,7 +563,7 @@ monitorApi.openapi(getMonitorStats, async (c) => {
 
   await redis.set(`${monitorId}-daily-stats`, res.data, { ex: 600 });
 
-  return c.jsonT({ data: res.data });
+  return c.json({ data: res.data });
 });
 
 export { monitorApi };

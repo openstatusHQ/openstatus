@@ -84,7 +84,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
     .where(and(eq(page.id, pageId), eq(page.workspaceId, workspaceId)))
     .get();
 
-  if (!_page) return c.jsonT({ code: 401, message: "Not authorized" }, 401);
+  if (!_page) return c.json({ code: 401, message: "Not authorized" }, 401);
 
   const alreadySubscribed = await db
     .select()
@@ -97,7 +97,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
     )
     .get();
   if (alreadySubscribed)
-    return c.jsonT({ code: 401, message: "Already subscribed" }, 401);
+    return c.json({ code: 401, message: "Already subscribed" }, 401);
 
   // TODO: send email for verification
   const token = (Math.random() + 1).toString(36).substring(10);
@@ -125,7 +125,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
 
   const data = pageSubscriberSchema.parse(_statusReportSubscriberUpdate);
 
-  return c.jsonT({
+  return c.json({
     ...data,
   });
 });
