@@ -1,7 +1,7 @@
 "use client";
 
 import { Mail } from "lucide-react";
-import { experimental_useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 
 import {
   Button,
@@ -76,7 +76,7 @@ export function SubscribeButton({ slug }: Props) {
 }
 
 function SubmitButton() {
-  const { pending } = experimental_useFormStatus();
+  const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
       {pending ? <LoadingAnimation /> : "Subscribe"}
