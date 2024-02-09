@@ -73,12 +73,15 @@ export function CombinedChartWrapper({
               // FIXME: fix the type
               .filter((region) => regions.includes(region as Region))
               .map((region) => {
-                const { code, flag } =
+                const { code, flag, location } =
                   flyRegionsDict[region as keyof typeof flyRegionsDict];
                 return (
-                  <div key={region} className="flex items-center gap-2">
-                    <div className="w-24">
-                      <p className="font-mono">
+                  <div key={region} className="flex items-end gap-2">
+                    <div className="grid w-24 gap-1">
+                      <p className="text-muted-foreground text-xs">
+                        {location}
+                      </p>
+                      <p className="font-mono text-xs">
                         {flag} {code}
                       </p>
                     </div>
@@ -90,7 +93,7 @@ export function CombinedChartWrapper({
         )}
         {regions.length > 0 ? null : (
           <EmptyState
-            icon="activity"
+            icon="globe"
             title="No regions selected"
             description="Select at least one region to display the data."
           />

@@ -53,7 +53,7 @@ export function MetricsCard({
       <div className="flex flex-1 items-center gap-2">
         <p className="flex">
           <code className="mr-1 font-mono text-xl font-semibold empty:mr-0">
-            {value}
+            {value ? new Intl.NumberFormat().format(value) : null}
           </code>
           <span className="text-muted-foreground self-center text-xs">
             {suffix}

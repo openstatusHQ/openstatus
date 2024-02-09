@@ -25,10 +25,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 
-  const { url, region } = _valid.data;
+  const { url, region, method, headers, body } = _valid.data;
 
-  // FIXME: we are missing headers and body in the checker endpoint
-  const res = await checkRegion(url, region, { method: "GET" });
+  const res = await checkRegion(url, region, { method, headers, body });
 
   return NextResponse.json(res);
 }

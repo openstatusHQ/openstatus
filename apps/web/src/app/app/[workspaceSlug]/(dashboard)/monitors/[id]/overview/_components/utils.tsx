@@ -60,7 +60,7 @@ export function groupDataByTimestamp(
  * @returns
  */
 export function renderTimestamp(timestamp: number, period: Period) {
-  const isInDay = ["hour", "day"].includes(period);
+  const isInDay = ["1h", "1d"].includes(period);
   return new Date(timestamp).toLocaleString("en-US", {
     year: !isInDay ? "numeric" : undefined,
     month: !isInDay ? "numeric" : undefined,

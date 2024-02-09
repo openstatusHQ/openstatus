@@ -9,7 +9,7 @@ import {
 
 import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 
-export const periods = ["1h", "1d", "3d"] as const; // If neeeded (e.g. Pro plans), "7d", "30d"
+export const periods = ["1h", "1d", "3d", "7d", "14d"] as const; // If neeeded (e.g. Pro plans), "7d", "30d"
 export const quantiles = ["p99", "p95", "p90", "p75", "avg"] as const;
 export const intervals = ["1m", "10m", "30m", "1h"] as const;
 
@@ -34,6 +34,16 @@ export function getDateByPeriod(period: Period) {
         from: subDays(startOfDay(new Date()), 3),
         to: endOfDay(new Date()),
       };
+    case "7d":
+      return {
+        from: subDays(startOfDay(new Date()), 14),
+        to: endOfDay(new Date()),
+      };
+    case "14d":
+      return {
+        from: subDays(startOfDay(new Date()), 14),
+        to: endOfDay(new Date()),
+      };
     default:
       const _exhaustiveCheck: never = period;
       throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
@@ -48,6 +58,10 @@ export function getHoursByPeriod(period: Period) {
       return 24;
     case "3d":
       return 72;
+    case "7d":
+      return 168;
+    case "14d":
+      return 336;
     default:
       const _exhaustiveCheck: never = period;
       throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
@@ -62,6 +76,10 @@ export function periodFormatter(period: Period) {
       return "Last day";
     case "3d":
       return "Last 3 days";
+    case "7d":
+      return "Last 7 days";
+    case "14d":
+      return "Last 14 days";
     default:
       const _exhaustiveCheck: never = period;
       return _exhaustiveCheck;

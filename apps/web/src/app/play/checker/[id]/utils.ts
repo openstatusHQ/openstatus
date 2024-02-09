@@ -74,12 +74,16 @@ export const cachedCheckerSchema = z.object({
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
-export type Method = "GET" | "POST" | "PUT" | "DELETE";
+export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
 
 export async function checkRegion(
   url: string,
   region: MonitorFlyRegion,
-  opts?: { method: Method },
+  opts?: {
+    method?: Method;
+    headers?: { value: string; key: string }[];
+    body?: string;
+  },
 ): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
@@ -89,7 +93,12 @@ export async function checkRegion(
       "fly-prefer-region": region,
     },
     method: "POST",
-    body: JSON.stringify({ url, method: opts?.method || "GET" }),
+    body: JSON.stringify({
+      url,
+      method: opts?.method || "GET",
+      headers: opts?.headers,
+      body: opts?.body,
+    }),
     // cache: "force-cache",
     next: { revalidate: 0 },
   });

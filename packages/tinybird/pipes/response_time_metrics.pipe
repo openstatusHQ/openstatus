@@ -40,7 +40,7 @@ SQL >
         NULL as lastTimestamp, -- no need to query the `lastTimestamp` as not relevant
         -- for sorting
         toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}}*2 HOUR, 3)) as time
-    FROM materialized_view_ping_response_3d_ttl__v7
+    FROM materialized_view_ping_response_45d_ttl__v7
     WHERE
         monitorId = {{ String(monitorId, '1') }}
         AND timestamp

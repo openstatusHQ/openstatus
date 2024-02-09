@@ -116,7 +116,7 @@ export function getResponseTimeMetrics(tb: Tinybird) {
     parameters: tbParameterResponseTimeMetrics,
     data: tbBuildResponseTimeMetrics,
     opts: {
-      revalidate: 60, // 1 min cache
+      revalidate: 30, // 30 sec cache - mostly for timestamp metric
     },
   });
 }
