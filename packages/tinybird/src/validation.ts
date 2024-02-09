@@ -111,11 +111,11 @@ export const tbBuildResponseDetails = tbBuildResponseList.extend({
 });
 
 export const latencyMetrics = z.object({
-  avgLatency: z.number().int(),
-  p75Latency: z.number().int(),
-  p90Latency: z.number().int(),
-  p95Latency: z.number().int(),
-  p99Latency: z.number().int(),
+  avgLatency: z.number().int().nullable(),
+  p75Latency: z.number().int().nullable(),
+  p90Latency: z.number().int().nullable(),
+  p95Latency: z.number().int().nullable(),
+  p99Latency: z.number().int().nullable(),
 });
 
 /**

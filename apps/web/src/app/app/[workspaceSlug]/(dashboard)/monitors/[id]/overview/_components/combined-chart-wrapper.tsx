@@ -40,6 +40,9 @@ export function CombinedChartWrapper({
   );
   const [combinedRegions, setCombinedRegions] = useState(false);
 
+  const hasData = chartData.data.length > 0;
+  const hasRegions = regions.length > 0;
+
   return (
     <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -48,6 +51,7 @@ export function CombinedChartWrapper({
             pressed={combinedRegions}
             onPressedChange={setCombinedRegions}
             variant="outline"
+            disabled={!hasData}
           >
             <LineChart className="mr-2 h-4 w-4" />
             Combine Regions
@@ -69,12 +73,9 @@ export function CombinedChartWrapper({
         ) : (
           <div className="grid gap-1">
             {chartData.regions
-              // TODO: use flyRegions instead of hardcoded regions
-              // FIXME: fix the type
-              .filter((region) => regions.includes(region as Region))
+              .filter((region) => regions.includes(region))
               .map((region) => {
-                const { code, flag, location } =
-                  flyRegionsDict[region as keyof typeof flyRegionsDict];
+                const { code, flag, location } = flyRegionsDict[region];
                 return (
                   <div key={region} className="flex items-end gap-2">
                     <div className="grid w-24 gap-1">
@@ -91,14 +92,36 @@ export function CombinedChartWrapper({
               })}
           </div>
         )}
-        {regions.length > 0 ? null : (
-          <EmptyState
-            icon="globe"
-            title="No regions selected"
-            description="Select at least one region to display the data."
-          />
-        )}
+        <ChartEmptyState hasData={hasData} hasRegions={hasRegions} />
       </div>
     </>
   );
+}
+
+export function ChartEmptyState({
+  hasData,
+  hasRegions,
+}: {
+  hasData: boolean;
+  hasRegions: boolean;
+}) {
+  if (!hasData) {
+    return (
+      <EmptyState
+        icon="line-chart"
+        title="No data available"
+        description="There is no data available for the selected period."
+      />
+    );
+  }
+  if (!hasRegions) {
+    return (
+      <EmptyState
+        icon="globe"
+        title="No regions selected"
+        description="Select at least one region to display the data."
+      />
+    );
+  }
+  return null;
 }

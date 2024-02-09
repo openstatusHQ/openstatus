@@ -13,6 +13,7 @@ import {
   Image,
   Laptop,
   LayoutDashboard,
+  LineChart,
   Link,
   Megaphone,
   MessageCircle,
@@ -80,6 +81,7 @@ export const Icons = {
   sparkles: Sparkles,
   timer: Timer,
   clock: Clock,
+  "line-chart": LineChart,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

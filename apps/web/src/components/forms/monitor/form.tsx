@@ -116,13 +116,17 @@ export function MonitorForm({
 
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
-      const pingResult = await pingEndpoint();
-      const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
-      if (!isOk) {
-        setPingFailed(true);
-        return;
+      try {
+        const pingResult = await pingEndpoint();
+        const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
+        if (!isOk) {
+          setPingFailed(true);
+          return;
+        }
+        await handleDataUpdateOrInsertion(props);
+      } catch {
+        toast("error");
       }
-      await handleDataUpdateOrInsertion(props);
     });
   };
 

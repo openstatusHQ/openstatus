@@ -27,10 +27,12 @@ export function Metrics({
     a.time - b.time < 0 ? 1 : -1,
   );
 
-  const uptime = current.ok / current.count;
+  const isEmpty = current.count === 0;
+
+  const uptime = isEmpty ? 1 : current.ok / current.count;
   const lastUptime = last.ok / last.count;
 
-  const failures = current.count - current.ok;
+  const failures = current.ok === 0 ? 0 : current.count - current.ok;
   const lastFailures = last.count - last.ok;
 
   console.log(metrics);
@@ -46,14 +48,20 @@ export function Metrics({
           title="uptime"
           value={uptime * 100}
           suffix="%"
-          delta={lastUptime / uptime}
+          delta={!isEmpty ? lastUptime / uptime : undefined}
           variant="positive"
         />
         <MetricsCard
           title="fails"
           value={failures}
           suffix="#"
-          delta={failures === 0 ? 1 : lastFailures / failures}
+          delta={
+            !isEmpty
+              ? failures === 0
+                ? 1
+                : lastFailures / failures
+              : undefined
+          }
           variant="negative"
         />
         {distance ? (
@@ -71,12 +79,12 @@ export function Metrics({
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];
-            const delta = lastValue / value;
+            const delta = value && lastValue ? lastValue / value : undefined;
             return (
               <MetricsCard
                 key={key}
                 title={key.replace("Latency", "")}
-                value={value}
+                value={value || 0}
                 suffix="ms"
                 delta={delta}
               />

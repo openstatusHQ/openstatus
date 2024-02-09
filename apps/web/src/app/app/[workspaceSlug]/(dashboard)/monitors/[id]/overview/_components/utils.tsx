@@ -49,7 +49,10 @@ export function groupDataByTimestamp(
   );
 
   // regions are sorted by the flag utf-8 code
-  return { regions: Object.keys(regions).sort(), data: _data.reverse() };
+  return {
+    regions: Object.keys(regions).sort() as Region[],
+    data: _data.reverse(),
+  };
 }
 
 /**
