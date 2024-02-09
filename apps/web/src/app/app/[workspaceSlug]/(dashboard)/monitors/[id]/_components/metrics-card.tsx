@@ -19,6 +19,9 @@ const metricsCardVariants = cva("flex flex-col px-3 py-2 border rounded-lg", {
         "border-yellow-500/20 bg-yellow-500/10 [&>p]:text-yellow-600 dark:[&>p]:text-yellow-400",
       info: "border-blue-500/20 bg-blue-500/10 [&>p]:text-blue-600 dark:[&>p]:text-blue-400",
     },
+    fading: {
+      true: "opacity-70",
+    },
   },
   defaultVariants: {
     variant: "default",
@@ -34,6 +37,11 @@ interface MetricsCardProps extends VariantProps<typeof metricsCardVariants> {
    * e.g. 1 means no change, 2 means a 100% increase, 0.5 means a 50% decrease.
    */
   delta?: number;
+  /**
+   * If true, the card will have a fading effect. Useful for cards that are
+   * not yet ready to be displayed or data is empty.
+   */
+  fading?: boolean;
   className?: string;
 }
 
@@ -44,9 +52,10 @@ export function MetricsCard({
   delta,
   className,
   variant,
+  fading,
 }: MetricsCardProps) {
   return (
-    <div className={cn(metricsCardVariants({ variant, className }))}>
+    <div className={cn(metricsCardVariants({ variant, fading, className }))}>
       <p className="text-muted-foreground text-sm font-light uppercase">
         {title}
       </p>

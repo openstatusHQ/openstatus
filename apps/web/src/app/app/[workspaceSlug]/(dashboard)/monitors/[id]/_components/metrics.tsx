@@ -87,6 +87,7 @@ export function Metrics({
                 value={value || 0}
                 suffix="ms"
                 delta={delta}
+                fading={isEmpty}
               />
             );
           })}
