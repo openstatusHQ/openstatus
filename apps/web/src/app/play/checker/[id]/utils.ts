@@ -96,9 +96,15 @@ export async function checkRegion(
     body: JSON.stringify({
       url,
       method: opts?.method || "GET",
-      // FIXME: does not work with headers and body
-      // headers: opts?.headers,
-      // body: opts?.body,
+      headers: opts?.headers?.reduce((acc, { key, value }) => {
+        if (!key) return acc; // key === "" is an invalid header
+
+        return {
+          ...acc,
+          [key]: value,
+        };
+      }, {}),
+      body: opts?.body,
     }),
     next: { revalidate: 0 },
   });

@@ -186,7 +186,7 @@ export function MonitorForm({
       body: JSON.stringify({ url, body, method, headers }),
     });
     const data = (await res.json()) as RegionChecker;
-    return data.status >= 200 && data.status < 300;
+    return data;
   };
 
   const sendTestPing = () => {
@@ -200,11 +200,15 @@ export function MonitorForm({
     }
 
     startTestTransition(async () => {
-      const isSuccessful = await pingEndpoint();
-      if (isSuccessful) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+      try {
+        const data = await pingEndpoint();
+        if (data.status >= 200 && data.status < 300) {
+          toast("test-success");
+        } else {
+          toast("test-error");
+        }
+      } catch {
+        toast("error");
       }
     });
   };
