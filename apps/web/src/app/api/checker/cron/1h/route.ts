@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { cron, isAuthorizedDomain } from "../_cron";
 
-// export const runtime = "edge";
+export const runtime = "nodejs";
 // export const preferredRegion = ["auto"];
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;

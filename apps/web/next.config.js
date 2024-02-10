@@ -15,6 +15,9 @@ const nextConfig = {
       "libsql",
       "@react-email/components",
       "@react-email/render",
+      '@google-cloud/tasks',
+      // "@libsql/client",
+      // "better-sqlite3"
     ],
     logging: {
       level: "verbose",
