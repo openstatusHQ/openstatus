@@ -43,6 +43,7 @@ export function Chart({ data, regions }: ChartProps) {
       curveType="monotone"
       intervalType="equidistantPreserveStart"
       customTooltip={customTooltip}
+      showAnimation={true}
     />
   );
 }

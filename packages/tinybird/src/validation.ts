@@ -213,6 +213,23 @@ export const tbBuildResponseTimeMetrics = z
   })
   .merge(latencyMetrics);
 
+/**
+ * Params for pipe response_time_metrics_by_region
+ */
+export const tbParameterResponseTimeMetricsByRegion = z.object({
+  monitorId: z.string(),
+  interval: z.number().int().default(24), // 24 hours
+});
+
+/**
+ * Values from the pipe response_time_metrics_by_region
+ */
+export const tbBuildResponseTimeMetricsByRegion = z
+  .object({
+    region: z.enum(flyRegions),
+  })
+  .merge(latencyMetrics);
+
 export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof flyRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
@@ -228,4 +245,10 @@ export type LatencyMetric = keyof z.infer<typeof latencyMetrics>;
 export type ResponseTimeMetrics = z.infer<typeof tbBuildResponseTimeMetrics>;
 export type ResponseTimeMetricsParams = z.infer<
   typeof tbParameterResponseTimeMetrics
+>;
+export type ResponseTimeMetricsByRegion = z.infer<
+  typeof tbBuildResponseTimeMetricsByRegion
+>;
+export type ResponseTimeMetricsByRegionParams = z.infer<
+  typeof tbParameterResponseTimeMetricsByRegion
 >;

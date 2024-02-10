@@ -8,6 +8,7 @@ import {
   tbBuildResponseGraph,
   tbBuildResponseList,
   tbBuildResponseTimeMetrics,
+  tbBuildResponseTimeMetricsByRegion,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
@@ -16,6 +17,7 @@ import {
   tbParameterResponseGraph,
   tbParameterResponseList,
   tbParameterResponseTimeMetrics,
+  tbParameterResponseTimeMetricsByRegion,
 } from "./validation";
 
 // REMINDER:
@@ -115,6 +117,17 @@ export function getResponseTimeMetrics(tb: Tinybird) {
     pipe: "response_time_metrics__v0",
     parameters: tbParameterResponseTimeMetrics,
     data: tbBuildResponseTimeMetrics,
+    opts: {
+      revalidate: 30, // 30 sec cache - mostly for timestamp metric
+    },
+  });
+}
+
+export function getResponseTimeMetricsByRegion(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "response_time_metrics_by_region__v0",
+    parameters: tbParameterResponseTimeMetricsByRegion,
+    data: tbBuildResponseTimeMetricsByRegion,
     opts: {
       revalidate: 30, // 30 sec cache - mostly for timestamp metric
     },

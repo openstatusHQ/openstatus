@@ -4,17 +4,19 @@ import { useMemo, useState } from "react";
 import { LineChart } from "lucide-react";
 
 import type { Monitor } from "@openstatus/db/src/schema";
-import type { Region, ResponseGraph } from "@openstatus/tinybird";
+import type {
+  Region,
+  ResponseGraph,
+  ResponseTimeMetricsByRegion,
+} from "@openstatus/tinybird";
 import { Toggle } from "@openstatus/ui";
-import { flyRegionsDict } from "@openstatus/utils";
 
-import { EmptyState } from "@/components/dashboard/empty-state";
 import { IntervalPreset } from "../../_components/interval-preset";
 import { QuantilePreset } from "../../_components/quantile-preset";
 import { RegionsPreset } from "../../_components/region-preset";
 import type { Interval, Period, Quantile } from "../../utils";
 import { Chart } from "./chart";
-import { SimpleChart } from "./simple-chart";
+import { RegionTable } from "./region-table";
 import { groupDataByTimestamp } from "./utils";
 
 export function CombinedChartWrapper({
@@ -25,6 +27,7 @@ export function CombinedChartWrapper({
   regions,
   monitor,
   isQuantileDisabled,
+  metricsByRegion,
 }: {
   data: ResponseGraph[];
   period: Period;
@@ -33,15 +36,13 @@ export function CombinedChartWrapper({
   regions: Region[];
   monitor: Monitor;
   isQuantileDisabled: boolean;
+  metricsByRegion: ResponseTimeMetricsByRegion[];
 }) {
   const chartData = useMemo(
     () => groupDataByTimestamp(data, period, quantile),
     [data, period, quantile],
   );
   const [combinedRegions, setCombinedRegions] = useState(false);
-
-  const hasData = chartData.data.length > 0;
-  const hasRegions = regions.length > 0;
 
   return (
     <>
@@ -51,14 +52,13 @@ export function CombinedChartWrapper({
             pressed={combinedRegions}
             onPressedChange={setCombinedRegions}
             variant="outline"
-            disabled={!hasData}
           >
             <LineChart className="mr-2 h-4 w-4" />
-            Combine Regions
+            {!combinedRegions ? "Combine regions" : "Split regions"}
           </Toggle>
           <RegionsPreset
             regions={monitor.regions as Region[]}
-            selectedRegions={regions as Region[]}
+            selectedRegions={regions}
           />
         </div>
         <div className="flex gap-2">
@@ -71,57 +71,13 @@ export function CombinedChartWrapper({
         {combinedRegions ? (
           <Chart data={chartData.data} regions={regions} />
         ) : (
-          <div className="grid gap-1">
-            {chartData.regions
-              .filter((region) => regions.includes(region))
-              .map((region) => {
-                const { code, flag, location } = flyRegionsDict[region];
-                return (
-                  <div key={region} className="flex items-end gap-2">
-                    <div className="grid w-24 gap-1">
-                      <p className="text-muted-foreground text-xs">
-                        {location}
-                      </p>
-                      <p className="font-mono text-xs">
-                        {flag} {code}
-                      </p>
-                    </div>
-                    <SimpleChart data={chartData.data} region={region} />
-                  </div>
-                );
-              })}
-          </div>
+          <RegionTable
+            metricsByRegion={metricsByRegion}
+            regions={regions}
+            data={chartData}
+          />
         )}
-        <ChartEmptyState hasData={hasData} hasRegions={hasRegions} />
       </div>
     </>
   );
-}
-
-export function ChartEmptyState({
-  hasData,
-  hasRegions,
-}: {
-  hasData: boolean;
-  hasRegions: boolean;
-}) {
-  if (!hasData) {
-    return (
-      <EmptyState
-        icon="line-chart"
-        title="No data available"
-        description="There is no data available for the selected period."
-      />
-    );
-  }
-  if (!hasRegions) {
-    return (
-      <EmptyState
-        icon="globe"
-        title="No regions selected"
-        description="Select at least one region to display the data."
-      />
-    );
-  }
-  return null;
 }

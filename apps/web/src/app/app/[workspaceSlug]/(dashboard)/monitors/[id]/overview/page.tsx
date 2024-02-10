@@ -6,7 +6,11 @@ import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
-import { getResponseGraphData, getResponseTimeMetricsData } from "@/lib/tb";
+import {
+  getResponseGraphData,
+  getResponseTimeMetricsByRegionData,
+  getResponseTimeMetricsData,
+} from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { ButtonReset } from "../_components/button-reset";
 import { DatePickerPreset } from "../_components/date-picker-preset";
@@ -93,7 +97,12 @@ export default async function Page({
     interval: periodicityHours,
   });
 
-  if (!data || !metrics) return null;
+  const metricsByRegion = await getResponseTimeMetricsByRegionData({
+    monitorId: id,
+    interval: periodicityHours,
+  });
+
+  if (!data || !metrics || !metricsByRegion) return null;
 
   const { period, quantile, interval, regions } = search.data;
 
@@ -119,6 +128,7 @@ export default async function Page({
         regions={regions as Region[]}
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
+        metricsByRegion={metricsByRegion}
       />
     </div>
   );
