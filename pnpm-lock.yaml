@@ -108,8 +108,8 @@ importers:
         specifier: 4.29.3
         version: 4.29.3(next@14.1.0)(react-dom@18.2.0)(react@18.2.0)
       '@google-cloud/tasks':
-        specifier: 4.0.1
-        version: 4.0.1
+        specifier: 5.0.0
+        version: 5.0.0
       '@headlessui/react':
         specifier: 1.7.17
         version: 1.7.17(react-dom@18.2.0)(react@18.2.0)
@@ -2160,9 +2160,9 @@ packages:
     resolution: {integrity: sha512-OfX7E2oUDYxtBvsuS4e/jSn4Q9Qb6DzgeYtsAdkPZ47znpoNsMgZw0+tVijiv3uGNR6dgNlty6r9rzIzHjtd/A==}
     dev: false
 
-  /@google-cloud/tasks@4.0.1:
-    resolution: {integrity: sha512-cluHSN52WgaNoDPVguxCeXZq4rTBHqJntXFB9aI9zG8n8MJukf6V0H7yoAXpKXQxyeXv4LRy108kAgLPgXP3yA==}
-    engines: {node: '>=14.0.0'}
+  /@google-cloud/tasks@5.0.0:
+    resolution: {integrity: sha512-vwj0jzkHNgY/WvqrNt763QfO3mRHIO1GSFW22scOneI5pcu5sMb/JPN+P+cDPTEXRNPdZCaZ/HicLHZNxbseyA==}
+    engines: {node: '>=v14'}
     dependencies:
       google-gax: 4.0.5
     transitivePeerDependencies:
