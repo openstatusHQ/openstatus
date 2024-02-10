@@ -1,6 +1,9 @@
 import * as React from "react";
 import Link from "next/link";
 
+// Hottake: you don't need a features page if you have a changelog page
+// Except for SEO
+
 import {
   ContextMenu,
   ContextMenuContent,

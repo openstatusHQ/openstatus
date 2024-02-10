@@ -6,9 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { Button, Skeleton } from "@openstatus/ui";
 
-import { socialsConfig } from "@/config/socials";
 import { Shell } from "../dashboard/shell";
-import { Icons } from "../icons";
 
 /**
  * TODO: work on a better breadcrumb navigation like Vercel
@@ -40,18 +38,6 @@ export function AppHeader() {
                 </Link>
               </Button>
             </li>
-            {socialsConfig.map(({ title, href, icon }) => {
-              const Icon = Icons[icon];
-              return (
-                <li key={title} className="w-full">
-                  <Button size="icon" variant="ghost" asChild>
-                    <a href={href} target="_blank" rel="noreferrer">
-                      <Icon className="h-5 w-5" />
-                    </a>
-                  </Button>
-                </li>
-              );
-            })}
           </ul>
           <div className="relative">
             <Skeleton className="h-8 w-8 rounded-full" />
