@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
+import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
@@ -77,17 +78,23 @@ export function DataTableRowActions<TData>({
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
 
-      const res = await fetch("/api/checker/test", {
-        method: "POST",
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({ url, body, method, headers }),
-      });
-      if (res.ok) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+      try {
+        const res = await fetch(`/api/checker/test`, {
+          method: "POST",
+          headers: new Headers({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ url, body, method, headers }),
+        });
+        const data = (await res.json()) as RegionChecker;
+
+        if (data.status >= 200 && data.status < 300) {
+          toast("test-success");
+        } else {
+          toast("test-error");
+        }
+      } catch {
+        toast("error");
       }
     });
   }

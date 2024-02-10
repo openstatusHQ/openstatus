@@ -7,6 +7,9 @@ import { ProBanner } from "../billing/pro-banner";
 import { SelectWorkspace } from "../workspace/select-workspace";
 import { AppLink } from "./app-link";
 
+// import { socialsConfig } from "@/config/socials";
+// import { SocialIconButton } from "./social-icon-button";
+
 export function AppSidebar() {
   const params = useParams();
 
@@ -32,6 +35,12 @@ export function AppSidebar() {
         <li className="w-full">
           <ProBanner />
         </li>
+        {/* <li className="flex w-full gap-1">
+          {socialsConfig.map((props, i) => (
+            <SocialIconButton key={i} {...props} />
+          ))}
+        </li> */}
+        {/* maybe add the icons of the socials in here... */}
         <li className="w-full">
           <SelectWorkspace />
         </li>

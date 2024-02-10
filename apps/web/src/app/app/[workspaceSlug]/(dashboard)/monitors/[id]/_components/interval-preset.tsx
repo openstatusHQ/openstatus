@@ -18,10 +18,17 @@ import {
 } from "@openstatus/ui";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { cn } from "@/lib/utils";
 import { intervals } from "../utils";
 import type { Interval } from "../utils";
 
-export function IntervalPreset({ interval }: { interval: Interval }) {
+export function IntervalPreset({
+  interval,
+  className,
+}: {
+  interval: Interval;
+  className?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const updateSearchParams = useUpdateSearchParams();
@@ -41,7 +48,7 @@ export function IntervalPreset({ interval }: { interval: Interval }) {
           </PopoverTrigger>
           <PopoverContent side="top" className="text-sm">
             <p>Aggregate and process data at regular time intervals.</p>
-            <Separator className="my-1" />
+            <Separator className="my-2" />
             <p className="text-muted-foreground">
               30m should be aligned to the beginning of 30-minute intervals for
               data analysis and aggregation purposes
@@ -50,7 +57,7 @@ export function IntervalPreset({ interval }: { interval: Interval }) {
         </Popover>
       </div>
       <Select onValueChange={onSelect} defaultValue={interval}>
-        <SelectTrigger className="w-[150px]" id="interval">
+        <SelectTrigger className={cn("w-[150px]", className)} id="interval">
           <span className="flex items-center gap-2">
             <Hourglass className="h-4 w-4" />
             <SelectValue />

@@ -9,11 +9,13 @@ import {
   Cog,
   Copy,
   Fingerprint,
-  Globe,
+  Globe2,
   Image,
   Laptop,
   LayoutDashboard,
+  LineChart,
   Link,
+  Linkedin,
   Megaphone,
   MessageCircle,
   Minus,
@@ -35,6 +37,7 @@ import {
   Trash,
   TwitterIcon,
   Webhook,
+  Youtube,
   Zap,
 } from "lucide-react";
 import type { LucideIcon, LucideProps } from "lucide-react";
@@ -60,7 +63,7 @@ export const Icons = {
   tag: Tag,
   trash: Trash,
   twitter: TwitterIcon,
-  globe: Globe,
+  globe: Globe2,
   plug: Plug,
   copy: Copy,
   check: Check,
@@ -80,6 +83,9 @@ export const Icons = {
   sparkles: Sparkles,
   timer: Timer,
   clock: Clock,
+  "line-chart": LineChart,
+  linkedin: Linkedin,
+  youtube: Youtube,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

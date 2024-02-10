@@ -62,6 +62,7 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
+import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import { useToastAction } from "@/hooks/use-toast-action";
@@ -184,7 +185,8 @@ export function MonitorForm({
       }),
       body: JSON.stringify({ url, body, method, headers }),
     });
-    return res.ok;
+    const data = (await res.json()) as RegionChecker;
+    return data;
   };
 
   const sendTestPing = () => {
@@ -198,11 +200,15 @@ export function MonitorForm({
     }
 
     startTestTransition(async () => {
-      const isSuccessful = await pingEndpoint();
-      if (isSuccessful) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+      try {
+        const data = await pingEndpoint();
+        if (data.status >= 200 && data.status < 300) {
+          toast("test-success");
+        } else {
+          toast("test-error");
+        }
+      } catch {
+        toast("error");
       }
     });
   };

@@ -73,9 +73,9 @@ export function Description({
       </div>
       {config?.description.map(({ title, text }, i) => {
         return (
-          <dl key={i} className="grid gap-2">
-            <dt>{title}</dt>
-            <dd className="text-muted-foreground text-sm">{text}</dd>
+          <dl key={i} className="grid gap-1">
+            <dt className="font-medium">{title}</dt>
+            <dd className="text-muted-foreground">{text}</dd>
           </dl>
         );
       })}
