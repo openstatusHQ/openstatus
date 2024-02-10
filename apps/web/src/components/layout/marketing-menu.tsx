@@ -13,7 +13,9 @@ import {
   SheetTrigger,
 } from "@openstatus/ui";
 
+import { socialsConfig } from "@/config/socials";
 import { AppLink } from "./app-link";
+import { SocialIconButton } from "./social-icon-button";
 
 const pages = [
   { href: "/blog", label: "Blog", segment: "blog" },
@@ -65,13 +67,12 @@ export function MarketingMenu() {
               );
             })}
           </ul>
-          <ul className="grid gap-1">
-            <li className="w-full">
-              <AppLink href="/github" label="GitHub" icon="github" />
-            </li>
-            <li className="w-full">
-              <AppLink href="/discord" label="Discord" icon="discord" />
-            </li>
+          <ul className="flex gap-1">
+            {socialsConfig.map((props, i) => (
+              <li key={i}>
+                <SocialIconButton {...props} />
+              </li>
+            ))}
           </ul>
         </div>
       </SheetContent>

@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   LineChart,
   Link,
+  Linkedin,
   Megaphone,
   MessageCircle,
   Minus,
@@ -36,6 +37,7 @@ import {
   Trash,
   TwitterIcon,
   Webhook,
+  Youtube,
   Zap,
 } from "lucide-react";
 import type { LucideIcon, LucideProps } from "lucide-react";
@@ -82,6 +84,8 @@ export const Icons = {
   timer: Timer,
   clock: Clock,
   "line-chart": LineChart,
+  linkedin: Linkedin,
+  youtube: Youtube,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
