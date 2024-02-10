@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 import type { Region, ResponseGraph } from "@openstatus/tinybird";
 import { regionsDict } from "@openstatus/utils";
 
@@ -64,14 +66,8 @@ export function groupDataByTimestamp(
  */
 export function renderTimestamp(timestamp: number, period: Period) {
   const isInDay = ["1h", "1d"].includes(period);
-  return new Date(timestamp).toLocaleString("en-US", {
-    year: !isInDay ? "numeric" : undefined,
-    month: !isInDay ? "numeric" : undefined,
-    day: !isInDay ? "numeric" : undefined,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+  const date = new Date(timestamp);
+  return format(date, "MMM d, HH:mm");
 }
 
 export function dataFormatter(number: number) {

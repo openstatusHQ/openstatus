@@ -27,6 +27,7 @@ export function SimpleChart({ data, region }: ChartProps) {
       showGridLines={false}
       showLegend={false}
       customTooltip={customTooltip}
+      showAnimation={true}
     />
   );
 }

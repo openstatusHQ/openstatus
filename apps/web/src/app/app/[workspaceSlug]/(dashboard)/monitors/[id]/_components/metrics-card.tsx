@@ -30,7 +30,7 @@ const metricsCardVariants = cva("flex flex-col px-3 py-2 border rounded-lg", {
 
 interface MetricsCardProps extends VariantProps<typeof metricsCardVariants> {
   title: string;
-  value?: number;
+  value?: number | null;
   suffix: string;
   /**
    * Value indicating the change in the metric compared to the previous period.
@@ -62,9 +62,7 @@ export function MetricsCard({
       <div className="flex flex-1 items-center gap-2">
         <p className="flex">
           <code className="mr-1 font-mono text-xl font-semibold empty:mr-0">
-            {typeof value === "number"
-              ? new Intl.NumberFormat().format(value)
-              : null}
+            {formatNumber(value)}
           </code>
           <span className="text-muted-foreground self-center text-xs">
             {suffix}
@@ -74,6 +72,12 @@ export function MetricsCard({
       </div>
     </div>
   );
+}
+
+export function formatNumber(value?: number | null) {
+  return typeof value === "number"
+    ? new Intl.NumberFormat().format(value)
+    : null;
 }
 
 // --- DeltaBadge.tsx ---
