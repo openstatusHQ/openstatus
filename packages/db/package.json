@@ -22,6 +22,7 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
     "bufferutil": "4.0.7",
+    "better-sqlite3":"9.4.1",
     "drizzle-kit": "0.19.13",
     "encoding": "0.1.13",
     "typescript": "5.2.2",

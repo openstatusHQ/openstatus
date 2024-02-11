@@ -98,6 +98,7 @@ export default authMiddleware({
     }
 
     if (auth.userId) {
+      console.log(">>> Authenticated", auth.userId);
       const pathname = req.nextUrl.pathname;
       if (pathname.startsWith("/app") && !pathname.startsWith("/app/invite")) {
         const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
