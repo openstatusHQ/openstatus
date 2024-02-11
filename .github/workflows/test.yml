@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 15
     services:
       sqld:
-        image: ghcr.io/tursodatabase/libsql-server:0.22.17
+        image: ghcr.io/tursodatabase/libsql-server:v0.22.17
         ports:
           - 8080:8080
 
