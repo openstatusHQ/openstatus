@@ -18,7 +18,7 @@ export const statusReportStatus = [
 ] as const;
 
 export const statusReport = sqliteTable("status_report", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   status: text("status", { enum: statusReportStatus }).notNull(),
   title: text("title", { length: 256 }).notNull(),
 
@@ -33,7 +33,7 @@ export const statusReport = sqliteTable("status_report", {
 });
 
 export const statusReportUpdate = sqliteTable("status_report_update", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
 
   status: text("status", statusReportStatus).notNull(),
   date: integer("date", { mode: "timestamp" }).notNull(),

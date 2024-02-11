@@ -4,7 +4,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { page } from "../pages";
 
 export const pageSubscriber = sqliteTable("page_subscriber", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull(),
 
   pageId: integer("page_id")

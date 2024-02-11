@@ -11,7 +11,7 @@ import { workspace } from "../workspaces";
 import { notificationProvider } from "./constants";
 
 export const notification = sqliteTable("notification", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   provider: text("provider", { enum: notificationProvider }).notNull(),
   data: text("data").default("{}"),

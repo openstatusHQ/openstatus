@@ -5,7 +5,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { workspace } from "./workspaces";
 
 export const integration = sqliteTable("integration", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 256 }).notNull(), // Should be vercel or other
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
