@@ -61,7 +61,11 @@ export async function getHomeMonitorListData(
   props: Pick<MonitorListParams, "timezone">,
 ) {
   try {
-    const res = await getHomeMonitorList(tb)({ monitorId: "1", ...props });
+    const res = await getHomeMonitorList(tb)({
+      monitorId: "1",
+      ...props,
+      url: "https://www.openstatus.dev",
+    });
     return res.data;
   } catch (e) {
     console.error(e);

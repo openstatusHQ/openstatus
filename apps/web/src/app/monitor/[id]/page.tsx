@@ -5,6 +5,7 @@ import { flyRegions } from "@openstatus/utils";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { getResponseListData } from "@/lib/tb";
+import { api } from "@/trpc/server";
 
 //
 
@@ -27,10 +28,17 @@ export default async function Monitor({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
+  const monitor = await api.monitor.getMonitorById.query({
+    id: Number(params.id),
+  });
   const data = search.success
     ? // TODO: lets hard-code our `monitorId` here
-      await getResponseListData({ monitorId: params.id, ...search.data })
-    : await getResponseListData({ monitorId: params.id });
+      await getResponseListData({
+        monitorId: params.id,
+        url: monitor.url,
+        ...search.data,
+      })
+    : await getResponseListData({ monitorId: params.id, url: monitor.url });
   if (!data || !search.success) return <div>Something went wrong</div>;
   return <DataTable columns={columns} data={data} />;
 }

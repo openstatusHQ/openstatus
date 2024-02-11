@@ -53,6 +53,7 @@ export const tbBuildResponseList = z.object({
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
+  url: z.string().url(),
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
@@ -143,6 +144,7 @@ export const tbParameterResponseGraph = z.object({
  */
 export const tbParameterMonitorList = z.object({
   monitorId: z.string(),
+  url: z.string().url(),
   timezone: z.string().optional(),
   limit: z.number().int().default(46).optional(), // 46 days
 });
