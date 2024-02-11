@@ -35,7 +35,7 @@ export function IntervalPreset({
 
   function onSelect(value: Interval) {
     const searchParams = updateSearchParams({ interval: value });
-    router.replace(`${pathname}?${searchParams}`);
+    router.replace(`${pathname}?${searchParams}`, { scroll: false });
   }
 
   return (

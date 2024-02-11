@@ -53,6 +53,7 @@ export const tbBuildResponseList = z.object({
  */
 export const tbParameterResponseList = z.object({
   monitorId: z.string().default(""), // REMINDER: remove default once alpha
+  url: z.string().url().optional(),
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
@@ -65,6 +66,7 @@ export const tbParameterResponseList = z.object({
  */
 export const tbParameterResponseDetails = tbParameterResponseList.pick({
   monitorId: true,
+  url: true,
   cronTimestamp: true,
   region: true,
 });
@@ -133,6 +135,7 @@ export const tbBuildResponseGraph = z
  */
 export const tbParameterResponseGraph = z.object({
   monitorId: z.string().default(""),
+  url: z.string().url().optional(),
   interval: z.number().int().default(10),
   fromDate: z.number().int().default(0),
   toDate: z.number().int().optional(),
@@ -143,6 +146,7 @@ export const tbParameterResponseGraph = z.object({
  */
 export const tbParameterMonitorList = z.object({
   monitorId: z.string(),
+  url: z.string().url().optional(),
   timezone: z.string().optional(),
   limit: z.number().int().default(46).optional(), // 46 days
 });
@@ -181,6 +185,7 @@ export const tbBuildHomeStats = z.object({
  */
 export const tbParameterPublicStatus = z.object({
   monitorId: z.string(),
+  url: z.string().url().optional(),
   limit: z.number().int().default(5).optional(), // 5 last cronTimestamps
 });
 
@@ -198,6 +203,7 @@ export const tbBuildPublicStatus = z.object({
  */
 export const tbParameterResponseTimeMetrics = z.object({
   monitorId: z.string(),
+  url: z.string().url().optional(),
   interval: z.number().int().default(24), // 24 hours
 });
 
@@ -218,6 +224,7 @@ export const tbBuildResponseTimeMetrics = z
  */
 export const tbParameterResponseTimeMetricsByRegion = z.object({
   monitorId: z.string(),
+  url: z.string().url().optional(),
   interval: z.number().int().default(24), // 24 hours
 });
 

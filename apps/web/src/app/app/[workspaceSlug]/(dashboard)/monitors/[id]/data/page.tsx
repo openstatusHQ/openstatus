@@ -38,6 +38,7 @@ export default async function Page({
 
   const data = await getResponseListData({
     monitorId: id,
+    url: monitor.url,
     fromDate: date.from.getTime(),
     toDate: date.to.getTime(),
   });

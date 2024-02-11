@@ -20,6 +20,7 @@ export const Monitor = async ({
   const data = await getMonitorListData({
     monitorId: String(monitor.id),
     timezone: gmt,
+    url: monitor.url,
   });
 
   // TODO: we could handle the `statusReports` here instead of passing it down to the tracker
