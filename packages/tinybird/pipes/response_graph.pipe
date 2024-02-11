@@ -19,6 +19,7 @@ SQL >
     FROM ping_response__v7
     WHERE
         monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         {% if defined(fromDate) %} AND timestamp >= {{ Int64(fromDate) }} {% end %}
         {% if defined(toDate) %} AND timestamp <= {{ Int64(toDate) }} {% end %}
     GROUP BY h, region

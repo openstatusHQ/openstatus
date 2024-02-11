@@ -35,7 +35,7 @@ export function RegionsPreset({
   function onOpenChange(open: boolean) {
     if (!open) {
       const searchParams = updateSearchParams({ regions: selected.join(",") });
-      router.replace(`${pathname}?${searchParams}`);
+      router.replace(`${pathname}?${searchParams}`, { scroll: false });
     }
   }
 

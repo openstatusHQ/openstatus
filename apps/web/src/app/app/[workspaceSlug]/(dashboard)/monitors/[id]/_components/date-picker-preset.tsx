@@ -23,7 +23,7 @@ export function DatePickerPreset({ period }: { period: Period }) {
 
   function onSelect(value: Period) {
     const searchParams = updateSearchParams({ period: value });
-    router.replace(`${pathname}?${searchParams}`);
+    router.replace(`${pathname}?${searchParams}`, { scroll: false });
   }
 
   return (

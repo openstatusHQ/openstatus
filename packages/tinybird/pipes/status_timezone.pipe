@@ -15,6 +15,7 @@ SQL >
         statusCode,
         latency
     FROM ping_response__v7
+    {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     WHERE monitorId = {{ String(monitorId, '1') }}
         -- by default, we only query the last 45 days
         AND cronTimestamp >= toUnixTimestamp64Milli(

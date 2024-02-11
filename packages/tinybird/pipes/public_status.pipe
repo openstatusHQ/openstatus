@@ -14,6 +14,7 @@ SQL >
     FROM ping_response_v5
     WHERE
         monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND cronTimestamp
         >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL 3 HOUR, 3))
     GROUP BY cronTimestamp, monitorId

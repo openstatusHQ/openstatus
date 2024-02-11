@@ -38,7 +38,7 @@ export function QuantilePreset({
 
   function onSelect(value: Quantile) {
     const searchParams = updateSearchParams({ quantile: value });
-    router.replace(`${pathname}?${searchParams}`);
+    router.replace(`${pathname}?${searchParams}`, { scroll: false });
   }
 
   return (
