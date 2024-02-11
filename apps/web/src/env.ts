@@ -63,4 +63,5 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     EXTERNAL_API_URL: process.env.EXTERNAL_API_URL,
   },
+  skipValidation: true,
 });

@@ -14,5 +14,5 @@ export const env = createEnv({
         : process.env.DATABASE_URL,
     DATABASE_AUTH_TOKEN: process.env.DATABASE_AUTH_TOKEN,
   },
-  skipValidation: process.env.NODE_ENV === "test",
+  skipValidation: true,
 });

@@ -160,6 +160,5 @@ export const config = {
     "/",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
-    "/api/analytics", // used for tracking vercel beta integration click events
   ],
 };

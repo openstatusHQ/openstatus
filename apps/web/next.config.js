@@ -7,9 +7,6 @@ const nextConfig = {
   transpilePackages: [
     "@openstatus/ui",
     "@openstatus/api",
-    "@react-email/components",
-    "@react-email/render",
-    "@react-email/html",
   ],
 
   experimental: {
@@ -18,6 +15,9 @@ const nextConfig = {
       "libsql",
       "@react-email/components",
       "@react-email/render",
+      '@google-cloud/tasks',
+      // "@libsql/client",
+      // "better-sqlite3"
     ],
     logging: {
       level: "verbose",

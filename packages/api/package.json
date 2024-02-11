@@ -7,7 +7,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.29.3",
+    "@clerk/nextjs": "4.29.7",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
@@ -19,7 +19,7 @@
     "stripe": "13.8.0",
     "superjson": "1.13.3",
     "zod": "3.22.2",
-    "next": "13.5.3"
+    "next": "14.1.0"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

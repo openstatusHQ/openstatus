@@ -13,7 +13,7 @@
     "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",
     "@types/react": "18.2.24",
-    "@types/react-dom": "18.2.8",
+    "@types/react-dom": "18.2.19",
     "eslint": "8.50.0",
     "typescript": "5.2.2"
   },
