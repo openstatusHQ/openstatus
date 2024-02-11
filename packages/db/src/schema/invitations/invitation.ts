@@ -4,7 +4,7 @@ import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { workspace, workspaceRole } from "../workspaces";
 
 export const invitation = sqliteTable("invitation", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   email: text("email").notNull(),
   role: text("role", { enum: workspaceRole }).notNull().default("member"),
   workspaceId: integer("workspace_id").notNull(),
