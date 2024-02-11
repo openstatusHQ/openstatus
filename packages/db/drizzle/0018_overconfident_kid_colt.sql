@@ -4,9 +4,11 @@
                   https://www.sqlite.org/lang_altertable.html
                   https://stackoverflow.com/questions/2083543/modify-a-columns-type-in-sqlite3
 
+ALTER TABLE monitor ALTER COLUMN id TO id INTEGER PRIMARY KEY AUTOINCREMENT;
+
+
  Due to that we don't generate migration automatically and it has to be done manually
 */
-
 
 CREATE TABLE `monitorNEW` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -25,12 +27,11 @@ CREATE TABLE `monitorNEW` (
 	`created_at` integer DEFAULT (strftime('%s', 'now')),
 	`updated_at` integer DEFAULT (strftime('%s', 'now')),
 	FOREIGN KEY (`workspace_id`) REFERENCES `workspace`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
+); --> statement-breakpoint
 
 
 INSERT INTO monitorNEW (id, job_type, periodicity, status, active, regions, url, name, description, headers, body, method, workspace_id, created_at, updated_at) SELECT * FROM monitor; --> statement-breakpoint
 
-DROP TABLE monitor;
---> statement-breakpoint
+DROP TABLE monitor; --> statement-breakpoint
 ALTER TABLE monitorNEW RENAME TO monitor;
+
