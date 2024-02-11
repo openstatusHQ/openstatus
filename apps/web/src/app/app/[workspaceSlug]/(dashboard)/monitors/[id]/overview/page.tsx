@@ -83,6 +83,7 @@ export default async function Page({
 
   const data = await getResponseGraphData({
     monitorId: id,
+    url: monitor.url,
     ...search.data,
     /**
      *
@@ -94,11 +95,13 @@ export default async function Page({
 
   const metrics = await getResponseTimeMetricsData({
     monitorId: id,
+    url: monitor.url,
     interval: periodicityHours,
   });
 
   const metricsByRegion = await getResponseTimeMetricsByRegionData({
     monitorId: id,
+    url: monitor.url,
     interval: periodicityHours,
   });
 

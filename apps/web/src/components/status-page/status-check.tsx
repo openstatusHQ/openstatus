@@ -43,6 +43,7 @@ export async function StatusCheck({
       monitors.map((monitor) => {
         return getResponseListData({
           monitorId: String(monitor.id),
+          url: monitor.url,
           limit: 10,
         });
       }),

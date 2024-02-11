@@ -18,6 +18,7 @@ SQL >
             FROM materialized_view_ping_response_45d_ttl__v7
             WHERE
                 monitorId = {{ String(monitorId, '1') }}
+                {% if defined(url) %} AND url = {{ String(url) }} {% end %}
                 AND timestamp
                 >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3))
         ) as lastTimestamp,
@@ -26,6 +27,7 @@ SQL >
     FROM materialized_view_ping_response_45d_ttl__v7
     WHERE
         monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND timestamp
         >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3))
     UNION ALL
@@ -43,6 +45,7 @@ SQL >
     FROM materialized_view_ping_response_45d_ttl__v7
     WHERE
         monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND timestamp
         >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}}*2 HOUR, 3))
         AND timestamp
