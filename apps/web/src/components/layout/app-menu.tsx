@@ -36,12 +36,12 @@ export function AppMenu({ page }: { page?: Page }) {
   return (
     <Collapsible open={open} onOpenChange={(value) => setOpen(value)}>
       <CollapsibleTrigger className="flex w-full items-center justify-between">
-          <span className="text-foreground font-medium">
-            {activeChild?.title}
-          </span>
-          <span className="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
-            <ChevronsUpDown className="h-4 w-4" />
-          </span>
+        <span className="text-foreground font-medium">
+          {activeChild?.title}
+        </span>
+        <span className="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+          <ChevronsUpDown className="h-4 w-4" />
+        </span>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2">
         <AppSidebar page={page} />

@@ -14,7 +14,9 @@ export function AppSidebar({ page }: { page?: Page }) {
   return (
     <div className="flex h-full flex-col justify-between">
       <div className="grid gap-2">
-        <p className="text-foreground px-3 text-lg font-medium hidden lg:block">{page?.title}</p>
+        <p className="text-foreground hidden px-3 text-lg font-medium lg:block">
+          {page?.title}
+        </p>
         <ul className="grid gap-1">
           {page?.children?.map(({ title, segment, icon, disabled }) => {
             return (
