@@ -17,7 +17,7 @@ export function AppSidebar({ page }: { page?: Page }) {
         <p className="text-foreground hidden px-3 text-lg font-medium lg:block">
           {page?.title}
         </p>
-        <ul className="grid gap-1">
+        <ul className="grid gap-2">
           {page?.children?.map(({ title, segment, icon, disabled }) => {
             return (
               <li key={title} className="w-full">

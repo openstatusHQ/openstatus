@@ -21,7 +21,7 @@ export default function AppPageWithSidebarLayout({
       <Shell className="block py-3 md:py-3 lg:hidden">
         <AppMenu page={page} />
       </Shell>
-      <Shell className="hidden max-h-[calc(100vh-9rem)] max-w-min shrink-0 lg:sticky lg:top-28 lg:block">
+      <Shell className="hidden max-h-[calc(100vh-8rem)] max-w-min shrink-0 lg:sticky lg:top-28 lg:block">
         <AppSidebar page={page} />
       </Shell>
       <Shell className="relative flex-1 overflow-x-hidden">
