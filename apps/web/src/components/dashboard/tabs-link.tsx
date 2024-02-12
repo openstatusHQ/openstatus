@@ -23,7 +23,7 @@ export function TabsContainer({
       <div className="flex w-full items-center overflow-x-auto">
         <ul className="flex flex-row">{children}</ul>
       </div>
-      {/* TODO: move into border-b instead? */}
+      {/* TODO: move into border-b instead to allow overwrite via className `border-b-0`? */}
       {hideSeparator ? null : <Separator />}
     </nav>
   );

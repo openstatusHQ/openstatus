@@ -42,9 +42,7 @@ export function AppHeader() {
             </div>
           </div>
         </div>
-        <div className="-mb-3">
-          <AppTabs />
-        </div>
+        <AppTabs />
       </Shell>
     </header>
   );

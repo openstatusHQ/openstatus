@@ -16,6 +16,7 @@ import { notEmpty } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 export function Breadcrumbs() {
+  const params = useParams();
   // const selectedSegment = useSelectedLayoutSegment();
   // const selectedSegments = useSelectedLayoutSegments();
   // const label = useIdLabel();
@@ -33,6 +34,8 @@ export function Breadcrumbs() {
     // label,
   ].filter(notEmpty);
 
+  const isWorkspaceSlug = params.workspaceSlug;
+
   return (
     <div className="flex items-center">
       <Link href="/app" className="shrink-0">
@@ -45,9 +48,11 @@ export function Breadcrumbs() {
         />
       </Link>
       <Slash className="text-muted-foreground ml-2.5 mr-0.5 h-4 w-4 -rotate-12" />
-      <div className="w-40">
-        <SelectWorkspace />
-      </div>
+      {params.workspaceSlug ? (
+        <div className="w-40">
+          <SelectWorkspace />
+        </div>
+      ) : null}
       {breadcrumbs.map((breadcrumb) => (
         <Fragment key={breadcrumb}>
           <Slash className="text-muted-foreground ml-0.5 mr-2.5 h-4 w-4 -rotate-12" />
