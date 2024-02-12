@@ -9,13 +9,13 @@ export function AppTabs() {
 
   return (
     <TabsContainer hideSeparator>
-      {pagesConfig.map(({ title, segment }) => {
+      {pagesConfig.map(({ title, segment, href }) => {
         const active = segment === selectedSegment;
         return (
           <TabsLink
             key={title}
             active={active}
-            href={`/app/${params?.workspaceSlug}/${segment}`}
+            href={`/app/${params?.workspaceSlug}${href}`}
           >
             {title}
           </TabsLink>

@@ -168,7 +168,7 @@ export const pagesConfig = [
   {
     title: "Settings",
     description: "Your workspace settings",
-    href: "/settings",
+    href: "/settings/general",
     icon: "cog",
     segment: "settings",
     children: settingsPagesConfig,
