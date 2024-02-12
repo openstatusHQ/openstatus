@@ -35,8 +35,6 @@ export function Metrics({
   const failures = current.ok === 0 ? 0 : current.count - current.ok;
   const lastFailures = last.count - last.ok;
 
-  console.log(metrics);
-
   const distance = current.lastTimestamp
     ? formatDistanceToNowStrict(new Date(current.lastTimestamp))
     : undefined;

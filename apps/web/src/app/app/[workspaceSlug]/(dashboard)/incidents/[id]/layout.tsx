@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { api } from "@/trpc/server";
 
 export default async function Layout({
@@ -19,5 +20,9 @@ export default async function Layout({
     return notFound();
   }
 
-  return <div className="grid grid-cols-1 gap-6 md:gap-8">{children}</div>;
+  return (
+    <AppPageWithSidebarLayout id="incidents">
+      {children}
+    </AppPageWithSidebarLayout>
+  );
 }

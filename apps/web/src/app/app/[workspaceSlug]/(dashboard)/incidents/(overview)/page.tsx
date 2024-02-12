@@ -12,7 +12,7 @@ export default async function IncidentPage() {
     return (
       <EmptyState
         icon="activity"
-        title="No Incidents "
+        title="No Incidents"
         description="Hopefully you will see this screen for a long time."
         action={undefined}
       />

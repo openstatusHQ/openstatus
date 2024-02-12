@@ -43,10 +43,14 @@ export function SelectWorkspace() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           className="flex w-full items-center justify-between"
         >
-          {active ? <span>{active}</span> : <Skeleton className="h-5 w-full" />}
+          {active ? (
+            <span className="truncate">{active}</span>
+          ) : (
+            <Skeleton className="h-5 w-full" />
+          )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
@@ -65,7 +69,7 @@ export function SelectWorkspace() {
             }}
             className="justify-between"
           >
-            {workspace.slug}
+            <span className="truncate">{workspace.slug}</span>
             {active === workspace.slug ? (
               <Check className="ml-2 h-4 w-4" />
             ) : null}

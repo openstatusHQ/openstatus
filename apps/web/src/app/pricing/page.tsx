@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Shell } from "@/components/dashboard/shell";
@@ -5,6 +6,25 @@ import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { FAQs } from "@/components/marketing/faqs";
 import { EnterpricePlan } from "@/components/marketing/pricing/enterprice-plan";
 import { PricingWrapper } from "@/components/marketing/pricing/pricing-wrapper";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "../shared-metadata";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Pricing",
+  openGraph: {
+    ...ogMetadata,
+    title: "Pricing",
+    url: "https://www.openstatus.dev/pricing",
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: "Pricing",
+  },
+};
 
 export default function PricingPage() {
   return (

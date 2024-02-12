@@ -55,7 +55,6 @@ export function StatusPageForm({
   checkAllMonitors,
   nextUrl,
 }: Props) {
-  console.log({ defaultValues });
   const form = useForm<InsertPage>({
     resolver: zodResolver(insertPageSchema),
     defaultValues: {

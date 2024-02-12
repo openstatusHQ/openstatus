@@ -17,7 +17,7 @@ export function BrandName() {
       <ContextMenuTrigger>
         <Link
           href="/"
-          className="font-cal text-muted-foreground hover:text-foreground"
+          className="font-cal text-muted-foreground hover:text-foreground text-lg"
         >
           OpenStatus
         </Link>

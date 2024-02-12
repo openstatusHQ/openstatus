@@ -1,44 +1,51 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Menu } from "lucide-react";
+import {
+  usePathname,
+  useSearchParams,
+  useSelectedLayoutSegment,
+} from "next/navigation";
+import { ChevronsUpDown } from "lucide-react";
 
 import {
-  Button,
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@openstatus/ui";
 
+import type { Page } from "@/config/pages";
 import { AppSidebar } from "./app-sidebar";
 
-export function AppMenu() {
+export function AppMenu({ page }: { page?: Page }) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const selectedSegment = useSelectedLayoutSegment();
 
   React.useEffect(() => {
     setOpen(false);
   }, [pathname, searchParams]); // remove searchParams if not needed
 
+  if (!page) return null;
+
+  const activeChild = page?.children?.find(
+    ({ segment }) => segment === selectedSegment,
+  );
+
   return (
-    <Sheet open={open} onOpenChange={(value) => setOpen(value)}>
-      <SheetTrigger asChild>
-        <Button size="icon" variant="outline">
-          <Menu className="h-6 w-6" />
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="top" className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
-        </SheetHeader>
-        <div className="flex-1">
-          <AppSidebar />
-        </div>
-      </SheetContent>
-    </Sheet>
+    <Collapsible open={open} onOpenChange={(value) => setOpen(value)}>
+      <CollapsibleTrigger className="flex w-full items-center justify-between">
+          <span className="text-foreground font-medium">
+            {activeChild?.title}
+          </span>
+          <span className="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+            <ChevronsUpDown className="h-4 w-4" />
+          </span>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2">
+        <AppSidebar page={page} />
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
