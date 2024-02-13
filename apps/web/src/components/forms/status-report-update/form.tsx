@@ -16,7 +16,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { General } from "./general";
 import { SectionDate } from "./section-date";
@@ -45,7 +45,6 @@ export function StatusReportUpdateForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
   const handleSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
@@ -55,11 +54,11 @@ export function StatusReportUpdateForm({
         } else {
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
-        toast("saved");
+        toastAction("saved");
         onSubmit?.();
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

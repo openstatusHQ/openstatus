@@ -17,7 +17,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface Props {
@@ -26,7 +26,6 @@ interface Props {
 
 export function SectionDanger({ monitorId }: Props) {
   const router = useRouter();
-  const { toast } = useToastAction();
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -34,11 +33,11 @@ export function SectionDanger({ monitorId }: Props) {
     startTransition(async () => {
       try {
         await api.monitor.delete.mutate({ id: monitorId });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

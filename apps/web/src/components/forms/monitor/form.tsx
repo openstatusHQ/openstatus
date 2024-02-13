@@ -23,7 +23,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
@@ -75,7 +75,6 @@ export function MonitorForm({
   const pathname = usePathname();
   const [isPending, startTransition] = React.useTransition();
   const [pingFailed, setPingFailed] = React.useState(false);
-  const { toast } = useToastAction();
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
@@ -90,9 +89,9 @@ export function MonitorForm({
       // to reset the `isDirty` state of them form while keeping the values for optimistic UI
       form.reset(undefined, { keepValues: true });
       router.refresh();
-      toast("saved");
+      toastAction("saved");
     } catch (error) {
-      toast("error");
+      toastAction("error");
     }
   };
 
@@ -107,7 +106,7 @@ export function MonitorForm({
         }
         await handleDataUpdateOrInsertion(props);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };
