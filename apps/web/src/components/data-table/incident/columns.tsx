@@ -14,7 +14,7 @@ export const columns: ColumnDef<Incident>[] = [
     cell: ({ row }) => {
       return (
         <Link
-          href={`./monitors/${row.original.id}/overview`}
+          href={`./monitors/${row.original.monitorId}/overview`}
           className="group flex items-center gap-2"
         >
           <span className="max-w-[125px] truncate group-hover:underline">

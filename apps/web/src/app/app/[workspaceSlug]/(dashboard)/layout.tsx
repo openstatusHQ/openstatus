@@ -1,8 +1,6 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
 
-import { Shell } from "@/components/dashboard/shell";
-import { AppSidebar } from "@/components/layout/app-sidebar";
 import { AppHeader } from "@/components/layout/header/app-header";
 import { api } from "@/trpc/server";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
