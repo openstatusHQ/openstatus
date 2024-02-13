@@ -22,6 +22,7 @@ export function ButtonReset() {
           <Button
             onClick={() => {
               router.push(pathname);
+              router.refresh();
             }}
             variant="ghost"
             size="lg"

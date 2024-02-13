@@ -59,7 +59,7 @@ export function Description({
               </div>
               <p
                 className={cn(
-                  "text-xs",
+                  "text-sm",
                   active
                     ? "text-foreground font-semibold"
                     : "text-muted-foreground",
