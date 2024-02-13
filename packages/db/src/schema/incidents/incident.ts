@@ -49,6 +49,9 @@ export const incidentTable = sqliteTable(
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
     resolvedBy: integer("resolved_by").references(() => user.id),
 
+    // If the incident was auto resolved
+    autoResolved: integer("auto_resolved", { mode: "boolean" }).default(false),
+
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),

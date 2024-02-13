@@ -7,21 +7,20 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { flyRegionsDict } from "@openstatus/utils";
 
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
-export const triggerAlerting = async ({
+export const triggerNotifications = async ({
   monitorId,
-  region,
   statusCode,
   message,
+  notifType,
 }: {
   monitorId: string;
-  region: keyof typeof flyRegionsDict;
   statusCode?: number;
   message?: string;
+  notifType: "alert" | "recovery";
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db
@@ -42,13 +41,24 @@ export const triggerAlerting = async ({
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider}`,
     );
     const monitor = selectMonitorSchema.parse(notif.monitor);
-    await providerToFunction[notif.notification.provider]({
-      monitor,
-      notification: selectNotificationSchema.parse(notif.notification),
-      region: flyRegionsDict[region].location,
-      statusCode,
-      message,
-    });
+    switch (notifType) {
+      case "alert":
+        await providerToFunction[notif.notification.provider].sendAlert({
+          monitor,
+          notification: selectNotificationSchema.parse(notif.notification),
+          statusCode,
+          message,
+        });
+        break;
+      case "recovery":
+        await providerToFunction[notif.notification.provider].sendRecovery({
+          monitor,
+          notification: selectNotificationSchema.parse(notif.notification),
+          statusCode,
+          message,
+        });
+        break;
+    }
     // ALPHA
     await checkerAudit.publishAuditLog({
       id: `monitor:${monitorId}`,

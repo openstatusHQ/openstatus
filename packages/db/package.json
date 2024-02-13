@@ -21,8 +21,9 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
+    "better-sqlite3": "9.4.1",
     "bufferutil": "4.0.7",
-    "drizzle-kit": "0.19.13",
+    "drizzle-kit": "0.20.14",
     "encoding": "0.1.13",
     "typescript": "5.2.2",
     "utf-8-validate": "6.0.3"
