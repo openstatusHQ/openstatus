@@ -17,8 +17,6 @@ import { CopyLinkButton } from "./_components/copy-link-button";
 import { MultiRegionTabs } from "./_components/multi-region-tabs";
 import { RegionInfo } from "./_components/region-info";
 import { ResponseDetailTabs } from "./_components/response-detail-tabs";
-import { ResponseHeaderTable } from "./_components/response-header-table";
-import { ResponseTimingTable } from "./_components/response-timing-table";
 import { SelectRegion } from "./_components/select-region";
 import { getCheckerDataById, timestampFormatter } from "./utils";
 
@@ -51,7 +49,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
   return (
     <>
       <BackButton href="/play/checker" />
-      <Shell className="grid gap-8">
+      <Shell className="flex flex-col gap-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-semibold">
@@ -67,7 +65,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
         </div>
         <MultiRegionTabs regions={data.checks} />
         <Separator />
-        <div className="grid gap-8">
+        <div className="flex flex-col gap-8">
           <div className="grid gap-8 md:grid-cols-2">
             <div>
               <SelectRegion defaultValue={region} />

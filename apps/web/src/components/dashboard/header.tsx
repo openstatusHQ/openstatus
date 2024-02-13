@@ -3,7 +3,7 @@ import { Skeleton } from "@openstatus/ui";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  title: string;
+  title?: string;
   description?: string | null;
   actions?: React.ReactNode | React.ReactNode[];
 }
@@ -15,11 +15,11 @@ function Header({ title, description, className, actions }: HeaderProps) {
   return (
     <div
       className={cn(
-        "col-span-full mr-12 flex items-start justify-between gap-1 lg:mr-0",
+        "col-span-full flex items-start justify-between gap-1",
         className,
       )}
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-1">
         <h1 className="font-cal text-3xl">{title}</h1>
         {description ? (
           <p className="text-muted-foreground">{description}</p>
@@ -42,7 +42,7 @@ function HeaderSkeleton({
   withDescription?: boolean;
 }) {
   return (
-    <div className="col-span-full mr-12 flex w-full justify-between lg:mr-0">
+    <div className="col-span-full flex w-full justify-between">
       <div className="grid w-full gap-3">
         <Skeleton className="h-8 w-full max-w-[200px]" />
         {withDescription && <Skeleton className="h-4 w-full max-w-[300px]" />}
