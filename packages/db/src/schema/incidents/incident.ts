@@ -61,7 +61,7 @@ export const incidentTable = sqliteTable(
   },
   (table) => {
     return {
-      unique: unique().on(table.monitorId, table.startedAt),
+      unique: unique().on(table.id, table.monitorId, table.startedAt),
     };
   },
 );
