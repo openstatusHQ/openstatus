@@ -1,11 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-  unique,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
 import { user } from "../users/user";
@@ -61,7 +55,7 @@ export const incidentTable = sqliteTable(
   },
   (table) => {
     return {
-      unique: unique().on(table.id, table.monitorId, table.startedAt),
+      unique: unique().on(table.monitorId, table.startedAt),
     };
   },
 );
