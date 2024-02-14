@@ -52,7 +52,6 @@ async function main() {
     .insert(monitor)
     .values([
       {
-        id: 1,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
@@ -65,7 +64,6 @@ async function main() {
         body: '{"hello":"world"}',
       },
       {
-        id: 2,
         active: false,
         workspaceId: 1,
         periodicity: "10m",
@@ -74,7 +72,6 @@ async function main() {
         regions: "gru",
       },
       {
-        id: 3,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
@@ -88,7 +85,7 @@ async function main() {
       },
     ])
     .run();
-    
+
   await db
     .insert(page)
     .values({

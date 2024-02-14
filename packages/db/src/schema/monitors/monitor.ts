@@ -18,7 +18,7 @@ import {
 } from "./constants";
 
 export const monitor = sqliteTable("monitor", {
-  id: integer("id").primaryKey(),
+  id: integer("id").primaryKey({ autoIncrement: true }),
   jobType: text("job_type", { enum: monitorJobTypes })
     .default("other")
     .notNull(),
