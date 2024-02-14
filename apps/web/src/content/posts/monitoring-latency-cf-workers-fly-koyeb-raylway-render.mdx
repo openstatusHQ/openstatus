@@ -1,0 +1,260 @@
+---
+title:
+  "Monitoring latency:Cloudflare Workers vs Fly vs Koyeb vs Railway vs Render"
+description:
+  We have updated our pricing. In this article, we will discuss the challenges
+  we faced while setting up our new pricing.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-02-14
+image: /assets/posts/our-new-pricing-explained/pricing-hard.png
+---
+
+We wanted to measure the latency of different cloud providers using OpenStatus.
+
+<Tweet id="1752762168041439731" />
+We thought it would be a great way to dog food our own product, and to improve it.
+
+We did not add Vercel for this and we should have. But I was tired to update the
+code just to make it work on it (Maybe next time).
+
+For this experience we have used a simple Hono server that return a simple
+response.
+
+```ts
+const app = new Hono();
+app.use("*", logger());
+
+app.use("*", poweredBy());
+
+app.get("/", (c) => {
+  return c.text(
+    "Just return the desired http status code, e.g. /404 🤯 \nhttps://www.openstatus.dev",
+  );
+});
+```
+
+You can find the code[here](https://github.com/openstatusHQ/status-code]), it’s
+open source 😉
+
+We have deployed this application on the cheapest or free-tier for each of these
+providers.
+
+Let’s analyse the data from the last two weeks
+
+## Cloudflare workers
+
+<Image
+  alt="Turso latency"
+  src="/assets/posts/monitoring-latency/monitor-cloudflare-workers.png"
+  width={650}
+  height={575}
+/>
+
+We can notice the Johannesburg is taking around 10 times more times than the
+other monitors
+
+From the Cloudflare request we can get the location of the workers that handle
+the request, with `Cf-ray` in the headers response.
+
+You can get the request headers in the request logs -> pick a request -> detail
+
+| Checker region | Workers region | number of request |
+| -------------- | -------------- | ----------------- |
+| HKG            | HKG            | 1831              |
+| SYD            | SYD            | 1831              |
+| AMS            | AMS            | 1831              |
+| IAD            | IAD            | 1831              |
+| GRU            | GRU            | 1791              |
+| GRU            | GIG            | 40                |
+| JNB            | AMS            | 741               |
+| JNB            | MUC            | 4                 |
+| JNB            | HKG            | 5                 |
+| JNB            | SIN            | 6                 |
+| JNB            | NRT            | 8                 |
+| JNB            | EWR            | 10                |
+| JNB            | CDG            | 82                |
+| JNB            | FRA            | 276               |
+| JNB            | LHR            | 699               |
+| JNB            | AMS            | 741               |
+
+We can see all the request from JNB is never routed to a worker close to JNB
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 17       | 2               | 17                 | 27        | 0              |
+| GRU    | 38       | 2               | 13                 | 28        | 0              |
+| HKG    | 19       | 2               | 13                 | 29        | 0              |
+| IAD    | 24       | 1               | 14                 | 30        | 0              |
+| JNB    | 123      | 168             | 182                | 185       | 0              |
+| SYD    | 51       | 1               | 11                 | 25        | 0              |
+
+(We are going to add this table in your dashboard soon)
+
+### Conclusion
+
+A part from the strange routing error for Johannesburg, Cloudflare workers are
+fast all across the globe.
+
+## Fly.io
+
+<Image
+  alt="Turso latency"
+  src="/assets/posts/monitoring-latency/monitor-fly.png"
+  width={650}
+  height={575}
+/>
+
+Here’s our config for Fly.io
+
+```
+app = 'statuscode'
+primary_region = 'ams'
+
+[build]
+  dockerfile = "./Dockerfile"
+
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
+```
+
+Our primary region is Amsterdam, and the fly instances are getting paused after
+a period of inactivity.
+
+We only have our monitor hitting our machine.
+
+It’s slow but according to the logs our machine start in `1.513643778s`
+
+```2024-02-14T11:24:16.107 proxy[286560ea703108] ams [info] Starting machine
+
+2024-02-14T11:24:16.322 app[286560ea703108] ams [info] [ 0.035736] PCI: Fatal: No config space access function found
+
+2024-02-14T11:24:16.533 app[286560ea703108] ams [info] INFO Starting init (commit: bfa79be)...
+
+2024-02-14T11:24:16.546 app[286560ea703108] ams [info] INFO Preparing to run: `/usr/local/bin/docker-entrypoint.sh bun start` as root
+
+2024-02-14T11:24:16.558 app[286560ea703108] ams [info] INFO [fly api proxy] listening at /.fly/api
+
+2024-02-14T11:24:16.565 app[286560ea703108] ams [info] 2024/02/14 11:24:16 listening on [fdaa:3:2ef:a7b:10c:3c9a:5b4:2]:22 (DNS: [fdaa::3]:53)
+
+2024-02-14T11:24:16.611 app[286560ea703108] ams [info] $ bun src/index.ts
+
+2024-02-14T11:24:16.618 runner[286560ea703108] ams [info] Machine started in 460ms
+
+2024-02-14T11:24:17.621 proxy[286560ea703108] ams [info] machine started in 1.513643778s
+
+2024-02-14T11:24:17.628 proxy[286560ea703108] ams [info] machine became reachable in 7.03669ms
+```
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 6        | 1               | 8                  | 1469      | 0              |
+| GRU    | 5        | 0               | 4                  | 1431      | 0              |
+| HKG    | 4        | 0               | 5                  | 1473      | 0              |
+| IAD    | 3        | 0               | 5                  | 1470      | 0              |
+| JNB    | 24       | 0               | 5                  | 1423      | 0              |
+| SYD    | 3        | 0               | 3                  | 1489      | 0              |
+
+The DNS is fast we are trying to connect to region in the same datacenter as our
+checker but we are slow down by the cold start of our machine
+
+We are using it on production but the machine never stop and we have much better
+result:
+
+<Image
+  alt="Fly  api "
+  src="/assets/posts/monitoring-latency/fly-api.png"
+  width={650}
+  height={575}
+/>
+
+## Koyeb
+
+<Image
+  alt="Koyeb latency"
+  src="/assets/posts/monitoring-latency/monitor-koyeb.png"
+  width={650}
+  height={575}
+/>
+
+I have deployed at the Frankfurt datacenter
+
+If we look at the request header none of them are cached They contains the
+`cf-cache-status: dynamic` Koyeb edge layer is handle by Cloudflare
+
+https://www.koyeb.com/blog/building-a-multi-region-service-mesh-with-kuma-envoy-anycast-bgp-and-mtls
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 50       | 2               | 17                 | 107       | 0              |
+| GRU    | 139      | 65              | 75                 | 407       | 0              |
+| HKG    | 48       | 2               | 13                 | 321       | 0              |
+| IAD    | 35       | 1               | 12                 | 129       | 0              |
+| JNB    | 298      | 1               | 11                 | 720       | 0              |
+| SYD    | 97       | 1               | 10                 | 711       | 0              |
+
+Our request are following this route \
+Cf workers -> koyeb Global load balancer -> koyeb backend
+
+Let’s see where did we hit the cf workers
+
+| Checker region | Workers region | number of request |
+| -------------- | -------------- | ----------------- |
+| AMS            | AMS            | 1866              |
+| GRU            | GRU            | 504               |
+| GRU            | IAD            | 38                |
+| GRU            | MIA            | 688               |
+| GRU            | EWR            | 337               |
+| GRU            | CIG            | 299               |
+| HKG            | HKG            | 1866              |
+| IAD            | IAD            | 1866              |
+| JNB            | JNB            | 1861              |
+| JNB            | AMS            | 1                 |
+| SYD            | SYD            | 1866              |
+
+Where were we route to Koyeb load balancer
+
+| Checker region | Koyeb Global Load Balancer | number of request |
+| -------------- | -------------------------- | ----------------- |
+| AMS            | FRA1                       | 1866              |
+| GRU            | WAS1                       | 1866              |
+| HKG            | SIN1                       | 1866              |
+| IAD            | WAS1                       | 1866              |
+| JNB            | PAR1                       | 4                 |
+| JNB            | SIN1                       | 1864              |
+| JNB            | FRA1                       | 1                 |
+| JNB            | SIN1                       | 1866              |
+
+## Railway
+
+<Image
+  alt="Railway latency"
+  src="/assets/posts/monitoring-latency/monitor-railway.png"
+  width={650}
+  height={575}
+/>
+
+Railway is using Google Cloud platform. It’s the only service that does not
+allow us to pick a specific region on the free plan. Our test app will be
+located to `us-west1` Portland, Oregon
+
+## Render
+
+<Image
+  alt="Render latency"
+  src="/assets/posts/monitoring-latency/monitor-render.png"
+  width={650}
+  height={575}
+/>
