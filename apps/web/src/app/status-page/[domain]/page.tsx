@@ -51,11 +51,12 @@ export default async function Page({ params }: Props) {
         <>
           <StatusCheck
             statusReports={page.statusReports}
-            monitors={page.monitors}
+            incidents={page.incidents}
           />
           <MonitorList
             monitors={page.monitors}
             statusReports={page.statusReports}
+            incidents={page.incidents}
           />
           {/* TODO: rename to StatusReportList */}
           <IncidentList

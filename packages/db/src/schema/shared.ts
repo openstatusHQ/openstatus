@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { selectIncidentSchema } from "./incidents/validation";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
@@ -36,10 +37,24 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   statusReports: selectStatusReportPageSchema,
 });
 
+export const selectIncidentPageSchema = z
+  .array(
+    selectIncidentSchema.pick({
+      id: true,
+      monitorId: true,
+      status: true,
+      createdAt: true,
+      acknowledgedAt: true,
+      resolvedAt: true,
+    }),
+  )
+  .default([]);
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
     statusReports: selectStatusReportPageSchema,
+    incidents: selectIncidentPageSchema,
     workspacePlan: workspacePlanSchema
       .nullable()
       .default("free")

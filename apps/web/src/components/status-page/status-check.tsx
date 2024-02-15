@@ -2,13 +2,13 @@ import { cva } from "class-variance-authority";
 import type { z } from "zod";
 
 import type {
-  selectPublicMonitorSchema,
+  selectIncidentPageSchema,
   selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
 
 import { getResponseListData } from "@/lib/tb";
 import type { StatusVariant } from "@/lib/tracker";
-import { calcStatus } from "@/lib/tracker";
+import { calcStatus, isOnGoingIncidents } from "@/lib/tracker";
 import { cn, notEmpty } from "@/lib/utils";
 import { Icons } from "../icons";
 
@@ -29,35 +29,30 @@ const check = cva("border-border rounded-full border p-1.5", {
 
 export async function StatusCheck({
   statusReports,
-  monitors,
+  incidents,
 }: {
   statusReports: z.infer<typeof selectStatusReportPageSchema>;
-  monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  incidents: z.infer<typeof selectIncidentPageSchema>;
 }) {
   const isIncident = statusReports.some(
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
+  // Need to filter out the incident that are resolved
+  const onGoingIncidents = isOnGoingIncidents(incidents);
 
-  const monitorsData = (
-    await Promise.all(
-      monitors.map((monitor) => {
-        return getResponseListData({
-          monitorId: String(monitor.id),
-          url: monitor.url,
-          limit: 10,
-        });
-      }),
-    )
-  ).filter(notEmpty);
-
-  const status = calcStatus(monitorsData);
+  // const status = calcStatus(monitorsData);
 
   const incident = {
     label: "Incident",
     variant: "incident",
   } as const;
 
-  const { label, variant } = isIncident ? incident : status;
+  const up = {
+    label: "Operational",
+    variant: "up",
+  } as const;
+
+  const { label, variant } = isIncident || onGoingIncidents ? incident : up;
 
   return (
     <div className="flex flex-col items-center gap-2">

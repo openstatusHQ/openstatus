@@ -1,9 +1,7 @@
 import { ImageResponse } from "next/og";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { getResponseListData } from "@/lib/tb";
-import { calcStatus } from "@/lib/tracker";
-import { notEmpty } from "@/lib/utils";
+import { isOnGoingIncidents } from "@/lib/tracker";
 import { api } from "@/trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
@@ -29,23 +27,16 @@ export async function GET(req: Request) {
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
 
-  const monitorsData = (
-    await Promise.all(
-      page?.monitors.map((monitor) => {
-        return getResponseListData({
-          monitorId: String(monitor.id),
-          limit: 10,
-        });
-      }) || [],
-    )
-  ).filter(notEmpty);
-
-  const status = calcStatus(monitorsData);
+  const status = page?.incidents
+    ? isOnGoingIncidents(page?.incidents)
+      ? "up"
+      : "incident"
+    : "up";
 
   return new ImageResponse(
     (
       <BasicLayout title={title} description={description} tw="py-24 px-24">
-        <StatusCheck variant={isIncident ? "incident" : status.variant} />
+        <StatusCheck variant={isIncident ? "incident" : status} />
       </BasicLayout>
     ),
     {

@@ -1,6 +1,7 @@
 import type { z } from "zod";
 
 import type {
+  selectIncidentPageSchema,
   selectPublicMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
@@ -12,9 +13,11 @@ import { Tracker } from "../tracker";
 export const Monitor = async ({
   monitor,
   statusReports,
+  incidents,
 }: {
   monitor: z.infer<typeof selectPublicMonitorSchema>;
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
+  incidents: z.infer<typeof selectIncidentPageSchema>;
 }) => {
   const gmt = convertTimezoneToGMT();
   const data = await getMonitorListData({

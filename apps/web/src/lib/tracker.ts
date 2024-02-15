@@ -1,3 +1,6 @@
+import type { z } from "zod";
+
+import type { selectIncidentPageSchema } from "@openstatus/db/src/schema/shared";
 import type { Monitor, Ping } from "@openstatus/tinybird";
 
 export type StatusVariant = "up" | "degraded" | "down" | "empty";
@@ -117,4 +120,10 @@ export const blacklistDates: Record<string, string> = {
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
   "Wed Oct 18 2023":
     "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
+};
+
+export const isOnGoingIncidents = (
+  incidents: z.infer<typeof selectIncidentPageSchema>,
+) => {
+  return incidents.some((incident) => incident.resolvedAt === null);
 };
