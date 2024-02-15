@@ -30,7 +30,7 @@ export default async function MonitorPage() {
   return (
     <>
       <DataTable columns={columns} data={monitors} />
-      <div className="mt-3">{isLimitReached ? <Limit /> : null}</div>
+      {isLimitReached ? <Limit /> : null}
     </>
   );
 }

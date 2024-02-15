@@ -4,7 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 export function HelpCallout() {
   return (
-    <Alert className="max-w-xl">
+    <Alert className="max-w-md">
       <HelpCircle className="h-4 w-4" />
       <AlertTitle className="">Need help?</AlertTitle>
       <AlertDescription className="text-muted-foreground">

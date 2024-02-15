@@ -1,5 +1,3 @@
-// TODO: move to components folder as not being used in any page.tsx or layout.tsx
-
 "use client";
 
 import * as React from "react";
@@ -48,7 +46,7 @@ export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
         <Button
           size="icon"
           variant="outline"
-          className="border-destructive/50 text-destructive/80 hover:text-destructive hover:bg-destructive/10 h-7 w-7 p-0"
+          className="border-destructive/50 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
         >
           <Icons.trash className="h-4 w-4" />
         </Button>

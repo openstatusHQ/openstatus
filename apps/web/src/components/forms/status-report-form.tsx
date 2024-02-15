@@ -22,7 +22,7 @@ import {
   AccordionTrigger,
   Button,
   Checkbox,
-  DateTimePicker,
+  DateTimePickerPopover,
   Form,
   FormControl,
   FormDescription,
@@ -376,7 +376,7 @@ export function StatusReportForm({
                       render={({ field }) => (
                         <FormItem className="flex flex-col sm:col-span-full">
                           <FormLabel>Date</FormLabel>
-                          <DateTimePicker
+                          <DateTimePickerPopover
                             date={
                               field.value ? new Date(field.value) : new Date()
                             }

@@ -43,7 +43,6 @@ export function DataTableRowActions<TData>({
 
   async function onDelete() {
     startTransition(async () => {
-      console.log({ notification });
       try {
         if (!notification.id) return;
         await api.notification.deleteNotification.mutate({
@@ -71,7 +70,7 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./notifications/edit?id=${notification.id}`}>
+          <Link href={`./notifications/${notification.id}/edit`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>

@@ -40,13 +40,13 @@ import { api } from "@/trpc/client";
 interface Props {
   defaultValues?: InsertStatusReportUpdate;
   statusReportId: number;
-  nextUrl?: string;
+  onSubmit?: () => void;
 }
 
 export function StatusReportUpdateForm({
   defaultValues,
   statusReportId,
-  nextUrl,
+  onSubmit,
 }: Props) {
   const form = useForm<InsertStatusReportUpdate>({
     resolver: zodResolver(insertStatusReportUpdateSchema),
@@ -62,7 +62,7 @@ export function StatusReportUpdateForm({
   const [isPending, startTransition] = React.useTransition();
   const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: InsertStatusReportUpdate) => {
+  const handleSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -71,9 +71,7 @@ export function StatusReportUpdateForm({
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
         toast("saved");
-        if (nextUrl) {
-          router.push(nextUrl);
-        }
+        onSubmit?.();
         router.refresh();
       } catch {
         toast("error");
@@ -86,7 +84,7 @@ export function StatusReportUpdateForm({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          form.handleSubmit(onSubmit)(e);
+          form.handleSubmit(handleSubmit)(e);
         }}
         className="grid w-full gap-6"
       >
