@@ -164,6 +164,7 @@ async function main() {
       workspaceId: 1,
       monitorId: 1,
       createdAt: new Date(),
+      startedAt: new Date(),
     })
     .run();
 
@@ -173,7 +174,8 @@ async function main() {
       id: 2,
       workspaceId: 1,
       monitorId: 1,
-      createdAt: new Date(Date.now() + 1000),
+      createdAt: new Date(),
+      startedAt: new Date(Date.now() + 1000),
     })
     .run();
   await db
