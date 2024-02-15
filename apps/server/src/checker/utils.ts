@@ -3,28 +3,48 @@ import type {
   Notification,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
-import { sendDiscordMessage } from "@openstatus/notification-discord";
-import { send as sendEmail } from "@openstatus/notification-emails";
-import { sendSlackMessage } from "@openstatus/notification-slack";
-import { sendTextMessage } from "@openstatus/notification-twillio-sms";
-import type { flyRegionsDict } from "@openstatus/utils";
+import {
+  sendAlert as sendDiscordAlert,
+  sendRecovery as sendDiscordRecovery,
+} from "@openstatus/notification-discord";
+import {
+  sendAlert as sendEmailAlert,
+  sendRecovery as sendEmailRecovery,
+} from "@openstatus/notification-emails";
+import {
+  sendAlert as sendSlackAlert,
+  sendRecovery as sendSlackRecovery,
+} from "@openstatus/notification-slack";
+import {
+  sendAlert as sendSmsAlert,
+  sendRecovery as sendSmsRecovery,
+} from "@openstatus/notification-twillio-sms";
 
 type SendNotification = ({
   monitor,
   notification,
-  region,
   statusCode,
+  message,
 }: {
   monitor: Monitor;
   notification: Notification;
-  region: keyof typeof flyRegionsDict;
   statusCode?: number;
   message?: string;
 }) => Promise<void>;
 
+type Notif = {
+  sendAlert: SendNotification;
+  sendRecovery: SendNotification;
+};
 export const providerToFunction = {
-  email: sendEmail,
-  slack: sendSlackMessage,
-  discord: sendDiscordMessage,
-  sms: sendTextMessage,
-} satisfies Record<NotificationProvider, SendNotification>;
+  email: {
+    sendAlert: sendEmailAlert,
+    sendRecovery: sendEmailRecovery,
+  },
+  slack: {
+    sendAlert: sendSlackAlert,
+    sendRecovery: sendSlackRecovery,
+  },
+  discord: { sendAlert: sendDiscordAlert, sendRecovery: sendDiscordRecovery },
+  sms: { sendAlert: sendSmsAlert, sendRecovery: sendSmsRecovery },
+} satisfies Record<NotificationProvider, Notif>;
