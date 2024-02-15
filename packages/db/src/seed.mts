@@ -88,7 +88,7 @@ async function main() {
       },
     ])
     .run();
-    
+
   await db
     .insert(page)
     .values({
@@ -173,7 +173,7 @@ async function main() {
       id: 2,
       workspaceId: 1,
       monitorId: 1,
-      createdAt: new Date(),
+      createdAt: new Date(Date.now() + 1000),
     })
     .run();
   await db
