@@ -77,6 +77,8 @@ export function Tracker({
   const uptime = getTotalUptimeString(data);
   const _data = addBlackListInfo(data);
 
+  console.log({ incidents });
+
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between text-sm">
@@ -261,22 +263,22 @@ export function DowntimeText({
   const startOfDayDate = startOfDay(new Date(day));
   const endOfDayDate = endOfDay(new Date(day));
 
-  const incidentLength =
-    Math.max(
-      ...incidents?.map((incident) => {
-        const { startedAt, resolvedAt } = incident;
-        if (!startedAt) return 0;
-        if (!resolvedAt)
-          return (
-            endOfDayDate.getTime() -
-            Math.max(startOfDayDate.getTime(), startedAt.getTime())
-          );
+  const incidentLength = incidents
+    ?.map((incident) => {
+      const { startedAt, resolvedAt } = incident;
+      if (!startedAt) return 0;
+      if (!resolvedAt)
         return (
-          Math.min(resolvedAt.getTime(), endOfDayDate.getTime()) -
+          endOfDayDate.getTime() -
           Math.max(startOfDayDate.getTime(), startedAt.getTime())
         );
-      }),
-    ) + 1;
+      return (
+        Math.min(resolvedAt.getTime(), endOfDayDate.getTime()) -
+        Math.max(startOfDayDate.getTime(), startedAt.getTime())
+      );
+    })
+    // add 1 second because end of day is 23:59:59
+    .reduce((acc, curr) => acc + 1 + curr, 0);
 
   const days = Math.floor(incidentLength / (1000 * 60 * 60 * 24));
   const minutes = Math.floor((incidentLength / (1000 * 60)) % 60);
