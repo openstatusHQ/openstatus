@@ -114,6 +114,9 @@ export async function checkRegion(
   const data = checkerSchema.safeParse(json);
 
   if (!data.success) {
+    console.error(
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+    );
     throw new Error(data.error.message);
   }
 
