@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
-import { Tracker } from "@/components/tracker";
+import { Tracker } from "@/components/tracker/tracker";
 import { getHomeMonitorListData } from "@/lib/tb";
 import { convertTimezoneToGMT } from "@/lib/timezone";
 
@@ -23,27 +23,12 @@ export async function TrackerExample() {
 }
 
 function ExampleTrackerFallback() {
-  return (
-    <Tracker
-      data={[]}
-      id={1}
-      name="Ping"
-      url="https://www.openstatus.dev/api/ping"
-    />
-  );
+  return <Tracker data={[]} name="Ping" description="Pong" />;
 }
 
 async function ExampleTracker() {
   const gmt = convertTimezoneToGMT();
   const data = await getHomeMonitorListData({ timezone: gmt });
   if (!data) return null;
-  return (
-    <Tracker
-      data={data}
-      id={1}
-      name="Ping"
-      context="play"
-      url="https://www.openstatus.dev/api/ping"
-    />
-  );
+  return <Tracker data={data} name="Ping" description="Pong" />;
 }

@@ -2,7 +2,7 @@ import type { Monitor } from "@openstatus/tinybird";
 
 import {
   addBlackListInfo,
-  getStatus,
+  getStatusByRatio,
   getTotalUptimeString,
 } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
@@ -25,7 +25,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
           })}
           <div tw="flex flex-row-reverse absolute left-0">
             {_data.map((item, i) => {
-              const { variant } = getStatus(item.ok / item.count);
+              const { variant } = getStatusByRatio(item.ok / item.count);
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (

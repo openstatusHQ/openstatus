@@ -22,9 +22,9 @@ const redis = Redis.fromEnv();
 enum Status {
   Operational = "operational",
   DegradedPerformance = "degraded_performance",
-  PartialOutage = "partial_outage",
-  MajorOutage = "major_outage",
-  UnderMaintenance = "under_maintenance",
+  PartialOutage = "partial_outage", // not used
+  MajorOutage = "major_outage", // not used
+  UnderMaintenance = "under_maintenance", // not used
   Unknown = "unknown",
   Incident = "incident",
 }
@@ -50,32 +50,23 @@ status.get("/:slug", async (c) => {
   } = await getStatusPageData(slug);
   endTime(c, "database");
 
-  if (monitorData.length === 0) {
-    await redis.set(slug, Status.Unknown, { ex: 60 }); // 1m cache
-    return c.json({ status: Status.Unknown });
-  }
-  const isIncident = [...pageStatusReportData, ...monitorStatusReportData].some(
-    (data) => {
-      if (!data.status_report) return false;
-      return !["monitoring", "resolved"].includes(data.status_report.status);
-    },
-  );
+  const isStatusReport = [
+    ...pageStatusReportData,
+    ...monitorStatusReportData,
+  ].some((data) => {
+    if (!data.status_report) return false;
+    return !["monitoring", "resolved"].includes(data.status_report.status);
+  });
 
-  if (isIncident) {
-    await redis.set(slug, Status.Incident, { ex: 60 }); // 1m cache
-    return c.json({ status: Status.Incident });
-  }
-
-  // we should  add the degradation of performance to the checker
-  // e.g. if the monitor performance is above a certain threshold
-  if (ongoingIncidents.length > 0) {
-    await redis.set(slug, Status.Incident, { ex: 60 }); // 1m cache
-    return c.json({ status: Status.Incident });
+  function getStatus() {
+    if (isStatusReport) return Status.Incident;
+    // if (monitorData.length === 0) return Status.Unknown;
+    if (ongoingIncidents.length > 0) return Status.DegradedPerformance;
+    return Status.Operational;
   }
 
-  const status = Status.Operational;
+  const status = getStatus();
   await redis.set(slug, status, { ex: 60 }); // 1m cache
-
   return c.json({ status });
 });
 
@@ -134,6 +125,7 @@ async function getStatusPageData(slug: string) {
       ),
     )
     .all();
+
   const [monitorStatusReportData, pageStatusReportData, ongoingIncidents] =
     await Promise.all([
       monitorStatusReportQuery,

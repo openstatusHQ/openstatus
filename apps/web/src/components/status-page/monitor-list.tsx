@@ -25,7 +25,7 @@ export const MonitorList = ({
             (i) => i.monitor.id === monitor.id,
           ),
         );
-        const incident = incidents.filter(
+        const monitorIncidents = incidents.filter(
           (incident) => incident.monitorId === monitor.id,
         );
         return (
@@ -33,7 +33,7 @@ export const MonitorList = ({
             key={index}
             monitor={monitor}
             statusReports={monitorStatusReport}
-            incidents={incident}
+            incidents={monitorIncidents}
           />
         );
       })}

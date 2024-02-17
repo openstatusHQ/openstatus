@@ -1,11 +1,7 @@
 import type { StatusVariant } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
-export function StatusCheck({
-  variant,
-}: {
-  variant: StatusVariant | "incident";
-}) {
+export function StatusCheck({ variant }: { variant: StatusVariant }) {
   function getVariant() {
     switch (variant) {
       case "down":

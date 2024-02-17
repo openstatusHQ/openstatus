@@ -6,9 +6,9 @@ import type {
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
 
+import { Tracker } from "@/components/tracker/tracker";
 import { getMonitorListData } from "@/lib/tb";
 import { convertTimezoneToGMT } from "@/lib/timezone";
-import { Tracker } from "../tracker";
 
 export const Monitor = async ({
   monitor,
@@ -30,5 +30,12 @@ export const Monitor = async ({
 
   if (!data) return <div>Something went wrong</div>;
 
-  return <Tracker data={data} reports={statusReports} {...monitor} />;
+  return (
+    <Tracker
+      data={data}
+      reports={statusReports}
+      incidents={incidents}
+      {...monitor}
+    />
+  );
 };

@@ -18,7 +18,11 @@ export default function AppPageLayout({
       >
         {children}
       </div>
-      {withHelpCallout ? <HelpCallout /> : null}
+      {withHelpCallout ? (
+        <div className="mt-4">
+          <HelpCallout />
+        </div>
+      ) : null}
     </Shell>
   );
 }

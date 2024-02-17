@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { isOnGoingIncidents } from "@/lib/tracker";
+import { getStatusByRatio, incidentStatus } from "@/lib/tracker";
 import { api } from "@/trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
@@ -23,20 +23,22 @@ export async function GET(req: Request) {
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 
-  const isIncident = page?.statusReports.some(
+  const isStatusReport = page?.statusReports.some(
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
 
-  const status = page?.incidents
-    ? isOnGoingIncidents(page?.incidents)
-      ? "up"
-      : "incident"
-    : "up";
+  const isIncident = page?.incidents.some(
+    (incident) => incident.resolvedAt === null,
+  );
+
+  const status = isStatusReport
+    ? incidentStatus
+    : getStatusByRatio(isIncident ? 0.5 : 1);
 
   return new ImageResponse(
     (
       <BasicLayout title={title} description={description} tw="py-24 px-24">
-        <StatusCheck variant={isIncident ? "incident" : status} />
+        <StatusCheck variant={status.variant} />
       </BasicLayout>
     ),
     {

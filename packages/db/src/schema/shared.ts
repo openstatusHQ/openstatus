@@ -43,7 +43,7 @@ export const selectIncidentPageSchema = z
       id: true,
       monitorId: true,
       status: true,
-      createdAt: true,
+      startedAt: true,
       acknowledgedAt: true,
       resolvedAt: true,
     }),

@@ -1,13 +1,15 @@
-import type { z } from "zod";
-
-import type { selectIncidentPageSchema } from "@openstatus/db/src/schema/shared";
 import type { Monitor, Ping } from "@openstatus/tinybird";
 
-export type StatusVariant = "up" | "degraded" | "down" | "empty";
+export type StatusVariant = "up" | "degraded" | "down" | "empty" | "incident";
 
 type GetStatusReturnType = {
   label: string;
   variant: StatusVariant;
+};
+
+export const incidentStatus: GetStatusReturnType = {
+  label: "Incident",
+  variant: "incident",
 };
 
 /**
@@ -15,7 +17,7 @@ type GetStatusReturnType = {
  * @param ratio
  * @returns
  */
-export const getStatus = (ratio: number): GetStatusReturnType => {
+export const getStatusByRatio = (ratio: number): GetStatusReturnType => {
   if (isNaN(ratio))
     return {
       label: "Missing",
@@ -106,8 +108,8 @@ export function calcStatus(data: Ping[][]) {
     { count: 0, ok: 0 },
   );
   const ratio = ok / count;
-  if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
-  return getStatus(ratio);
+  if (isNaN(ratio)) return getStatusByRatio(1); // outsmart caching issue
+  return getStatusByRatio(ratio);
 }
 
 /**
@@ -120,10 +122,4 @@ export const blacklistDates: Record<string, string> = {
     "OpenStatus faced issues between 24.08. and 27.08., preventing data collection.",
   "Wed Oct 18 2023":
     "OpenStatus migrated from Vercel to Fly to improve the performance of the checker.",
-};
-
-export const isOnGoingIncidents = (
-  incidents: z.infer<typeof selectIncidentPageSchema>,
-) => {
-  return incidents.some((incident) => incident.resolvedAt === null);
 };
