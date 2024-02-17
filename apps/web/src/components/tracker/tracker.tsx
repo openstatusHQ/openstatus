@@ -38,14 +38,15 @@ const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
       up: "bg-green-500/90 data-[state=open]:bg-green-500",
-      down: "bg-red-500/90 data-[state=open]:bg-red-500",
-      degraded: "bg-yellow-500/90 data-[state=open]:bg-yellow-500",
+      down: "bg-rose-500/90 data-[state=open]:bg-rose-500",
+      degraded: "bg-amber-500/90 data-[state=open]:bg-amber-500",
       empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
       blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
-      incident: "bg-red-500/90 data-[state=open]:bg-red-500",
+      incident: "bg-rose-500/90 data-[state=open]:bg-rose-500",
     },
     report: {
       0: "",
+      // IDEA: data-[state=open]:from-40% data-[state=open]:to-40%
       30: "bg-gradient-to-t from-blue-500/90 hover:from-blue-500 from-30% to-transparent to-30%",
     },
   },

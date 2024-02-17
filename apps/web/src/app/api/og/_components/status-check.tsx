@@ -6,19 +6,19 @@ export function StatusCheck({ variant }: { variant: StatusVariant }) {
     switch (variant) {
       case "down":
         return {
-          color: "bg-red-500",
+          color: "bg-rose-500",
           label: "Major Outage",
           icon: Minus,
         };
       case "degraded":
         return {
-          color: "bg-yellow-500",
+          color: "bg-amber-500",
           label: "Systems Degraded",
           icon: Minus,
         };
       case "incident":
         return {
-          color: "bg-yellow-500",
+          color: "bg-amber-500",
           label: "Incident Ongoing",
           icon: Alert,
         };

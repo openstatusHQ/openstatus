@@ -11,14 +11,14 @@ import type { StatusVariant } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 
-const check = cva("border-border rounded-full border p-1.5", {
+const check = cva("rounded-full border p-1.5", {
   variants: {
     variant: {
       up: "bg-green-500/80 border-green-500",
-      down: "bg-red-500/80 border-red-500",
-      degraded: "bg-yellow-500/80 border-yellow-500",
+      down: "bg-rose-500/80 border-rose-500",
+      degraded: "bg-amber-500/80 border-amber-500",
       empty: "bg-gray-500/80 border-gray-500",
-      incident: "bg-yellow-500/80 border-yellow-500",
+      incident: "bg-amber-500/80 border-amber-500",
     },
   },
   defaultVariants: {

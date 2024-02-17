@@ -38,7 +38,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
                   tw={cn("h-16 w-3 rounded-full mr-1", {
                     "bg-green-500": variant === "up",
                     "bg-red-500": variant === "down",
-                    "bg-yellow-500": variant === "degraded",
+                    "bg-amber-500": variant === "degraded",
                   })}
                 />
               );

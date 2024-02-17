@@ -49,7 +49,7 @@ export async function GET(req: Request) {
     if (blue) return "border-blue-300 bg-blue-50 text-blue-700";
     const red =
       String(statusCode).startsWith("4") || String(statusCode).startsWith("5");
-    if (red) return "border-red-300 bg-red-50 text-red-700";
+    if (red) return "border-rose-300 bg-rose-50 text-rose-700";
     return "border-gray-300 bg-gray-50 text-gray-700";
   }
 
