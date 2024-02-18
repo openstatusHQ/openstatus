@@ -1,0 +1,85 @@
+{
+  "regions": ["ams", "iad", "hkg", "jnb", "syd", "gru"],
+  "data": {
+    "regions": ["ams", "gru", "hkg", "iad", "jnb", "syd"],
+    "data": [
+      {
+        "timestamp": "Feb 18, 09:00",
+        "hkg": 521,
+        "ams": 213,
+        "jnb": 546,
+        "gru": 424,
+        "iad": 215,
+        "syd": 510
+      },
+      {
+        "timestamp": "Feb 18, 09:30",
+        "jnb": 1342,
+        "gru": 451,
+        "hkg": 364,
+        "ams": 234,
+        "iad": 206,
+        "syd": 787
+      },
+      {
+        "timestamp": "Feb 18, 10:00",
+        "hkg": 445,
+        "ams": 152,
+        "gru": 501,
+        "jnb": 499,
+        "iad": 284,
+        "syd": 561
+      }
+    ]
+  },
+  "metricsByRegion": [
+    {
+      "region": "syd",
+      "avgLatency": 701,
+      "p75Latency": 825,
+      "p90Latency": 859,
+      "p95Latency": 865,
+      "p99Latency": 894
+    },
+    {
+      "region": "gru",
+      "avgLatency": 677,
+      "p75Latency": 680,
+      "p90Latency": 774,
+      "p95Latency": 815,
+      "p99Latency": 998
+    },
+    {
+      "region": "iad",
+      "avgLatency": 165,
+      "p75Latency": 172,
+      "p90Latency": 180,
+      "p95Latency": 189,
+      "p99Latency": 196
+    },
+    {
+      "region": "ams",
+      "avgLatency": 142,
+      "p75Latency": 156,
+      "p90Latency": 190,
+      "p95Latency": 217,
+      "p99Latency": 245
+    },
+    {
+      "region": "hkg",
+      "avgLatency": 348,
+      "p75Latency": 366,
+      "p90Latency": 376,
+      "p95Latency": 381,
+      "p99Latency": 394
+    },
+    {
+      "region": "jnb",
+      "avgLatency": 1389,
+      "p75Latency": 1551,
+      "p90Latency": 1716,
+      "p95Latency": 1765,
+      "p99Latency": 1845
+    }
+  ]
+}
