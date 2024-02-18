@@ -36,7 +36,7 @@ export function getDateByPeriod(period: Period) {
       };
     case "7d":
       return {
-        from: subDays(startOfDay(new Date()), 14),
+        from: subDays(startOfDay(new Date()), 7),
         to: endOfDay(new Date()),
       };
     case "14d":
