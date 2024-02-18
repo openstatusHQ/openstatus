@@ -20,16 +20,19 @@ export interface RegionTableProps {
     data: (Partial<Record<Region, string>> & { timestamp: string })[];
   };
   metricsByRegion: ResponseTimeMetricsByRegion[];
+  caption?: string;
 }
 
 export function RegionTable({
   regions,
   data,
   metricsByRegion,
+  caption = "A list of your regions.",
 }: RegionTableProps) {
+  // console.log(JSON.stringify({ regions, data, metricsByRegion }, null, 2));
   return (
     <Table>
-      <TableCaption>A list of your regions.</TableCaption>
+      <TableCaption>{caption}</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[100px]">Region</TableHead>

@@ -7,9 +7,10 @@ import { RegionTable } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]
 
 export interface SimpleChartProps {
   staticFile: string;
+  caption?: string;
 }
 
-export function SimpleChart({ staticFile }: SimpleChartProps) {
+export function SimpleChart({ staticFile, caption }: SimpleChartProps) {
   const [data, setData] = useState<RegionTableProps | undefined>(undefined);
 
   useEffect(() => {
@@ -28,5 +29,5 @@ export function SimpleChart({ staticFile }: SimpleChartProps) {
 
   if (!data) return null;
 
-  return <RegionTable {...data} />;
+  return <RegionTable {...data} caption={caption} />;
 }
