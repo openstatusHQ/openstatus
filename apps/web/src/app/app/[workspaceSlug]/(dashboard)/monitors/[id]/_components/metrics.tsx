@@ -55,9 +55,9 @@ export function Metrics({
           suffix="#"
           delta={
             !isEmpty
-              ? failures === 0
+              ? lastFailures === 0
                 ? 1
-                : lastFailures / failures
+                : failures / lastFailures
               : undefined
           }
           variant="negative"
@@ -77,7 +77,7 @@ export function Metrics({
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];
-            const delta = value && lastValue ? lastValue / value : undefined;
+            const delta = value && lastValue ? value / lastValue : undefined;
             return (
               <MetricsCard
                 key={key}
