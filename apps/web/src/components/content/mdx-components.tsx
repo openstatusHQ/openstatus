@@ -5,6 +5,21 @@ import Link from "next/link";
 import type { TweetProps } from "react-tweet";
 import { Tweet } from "react-tweet";
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@openstatus/ui";
+
+import { MetricsCard } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/_components/metrics-card";
+import type { MetricsCardProps } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/_components/metrics-card";
+import type { SimpleChartProps } from "./simple-chart";
+import { SimpleChart } from "./simple-chart";
+
 export const components = {
   a: ({
     href = "",
@@ -40,4 +55,26 @@ export const components = {
   Image: (props: ImageProps) => {
     return <Image {...props} />;
   },
+  MetricsCard: (props: MetricsCardProps) => {
+    return (
+      // remove prose class from cards
+      <div className="not-prose">
+        <MetricsCard {...props} />
+      </div>
+    );
+  },
+  SimpleChart: (props: SimpleChartProps) => {
+    return (
+      <div className="not-prose">
+        <SimpleChart {...props} />
+      </div>
+    );
+  },
+  table: Table,
+  thead: TableHeader,
+  tbody: TableBody,
+  tfoot: TableFooter,
+  tr: TableRow,
+  th: TableHead,
+  td: TableCell,
 };

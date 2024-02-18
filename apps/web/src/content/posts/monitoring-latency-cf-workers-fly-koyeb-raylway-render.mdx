@@ -8,7 +8,7 @@ author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
 publishedAt: 2024-02-14
-image: /assets/posts/our-new-pricing-explained/pricing-hard.png
+image: /assets/posts/monitoring-latency-cf-workers-fly-koyeb-raylway-render/all-hosting-providers.png
 ---
 
 We wanted to measure the latency of different cloud providers using OpenStatus.
@@ -44,6 +44,24 @@ providers.
 Let’s analyse the data from the last two weeks
 
 ## Cloudflare workers
+
+<div className="grid grid-cols-3 gap-4 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10949} suffix="#" variant="info" />
+</div>
+
+<div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-5">
+  <MetricsCard title="avg" value={100} suffix="ms" />
+  <MetricsCard title="p75" value={149} suffix="ms" />
+  <MetricsCard title="p90" value={193} suffix="ms" />
+  <MetricsCard title="p95" value={300} suffix="ms" />
+  <MetricsCard title="p99" value={400} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart staticFile="/assets/posts/monitoring-latency-cf-workers-fly-koyeb-raylway-render/cloudflare.json" />
+</div>
 
 <Image
   alt="Turso latency"

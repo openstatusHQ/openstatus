@@ -13,7 +13,7 @@ import { flyRegionsDict } from "@openstatus/utils";
 import { formatNumber } from "../../_components/metrics-card";
 import { SimpleChart } from "./simple-chart";
 
-interface Props {
+export interface RegionTableProps {
   regions: Region[];
   data: {
     regions: Region[];
@@ -22,7 +22,11 @@ interface Props {
   metricsByRegion: ResponseTimeMetricsByRegion[];
 }
 
-export function RegionTable({ regions, data, metricsByRegion }: Props) {
+export function RegionTable({
+  regions,
+  data,
+  metricsByRegion,
+}: RegionTableProps) {
   return (
     <Table>
       <TableCaption>A list of your regions.</TableCaption>

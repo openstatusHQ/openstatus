@@ -5,12 +5,12 @@ import { LineChart } from "@tremor/react";
 
 import { dataFormatter } from "./utils";
 
-interface ChartProps {
+export interface SimpleChartProps {
   data: { timestamp: string; [key: string]: string }[];
   region: string;
 }
 
-export function SimpleChart({ data, region }: ChartProps) {
+export function SimpleChart({ data, region }: SimpleChartProps) {
   return (
     <LineChart
       data={data}
