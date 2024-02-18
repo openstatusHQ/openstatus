@@ -45,13 +45,11 @@ Let’s analyse the data from the last two weeks
 
 ## Cloudflare workers
 
-<div className="grid grid-cols-3 gap-4 md:grid-cols-5">
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
   <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
   <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
   <MetricsCard title="total pings" value={10949} suffix="#" variant="info" />
-</div>
-
-<div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-5">
+  <div className="hidden md:col-span-2 md:block" />
   <MetricsCard title="avg" value={100} suffix="ms" />
   <MetricsCard title="p75" value={149} suffix="ms" />
   <MetricsCard title="p90" value={193} suffix="ms" />
