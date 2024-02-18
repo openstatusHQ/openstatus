@@ -8,12 +8,13 @@ description:
 author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
-publishedAt: 2024-02-14
+publishedAt: 2024-02-18
 image: /assets/posts/monitoring-latency/all-hosting-providers.png
 ---
 
-We wanted to test the latency of Cloudflare Workers, Fly, Koyeb, Railway and
-Render using OpenStatus.
+We wanted to test the latency of [Cloudflare Workers](#cloudflare-workers),
+[Fly](#flyio), [Koyeb](#koyeb), [Railway](#railway) and [Render](#render) using
+OpenStatus.
 
 <Tweet id="1752762168041439731" />
 
@@ -33,10 +34,14 @@ app.get('/', (c) => {
 ```
 
 You can find the code [here](https://github.com/openstatusHQ/status-code]), it’s
-open source 😉
+open source 😉.
 
 We deployed the application on the cheapest or free tier offered by each
 provider.
+
+We monitored the latency of each provider using OpenStatus. We pinged them every
+**10 minutes** from our 6 locations located in Amsterdam, Sao Paulo, Hong Kong,
+Ashburn, Johannesburg, and Sydney.
 
 Let's analyze the data from the past two weeks.
 
@@ -138,7 +143,11 @@ We have not experienced any cold start issues.
 | JNB    | 24       | 0               | 5                  | 1423      | 0              |
 | SYD    | 3        | 0               | 3                  | 1489      | 0              |
 
-Here’s our config for Fly.io
+The DNS is fast. We are attempting to connect to a region in the same data
+center as our checker, but our machine's cold start is slowing us down, leading
+to the high TTFB.
+
+Here’s our config for Fly.io:
 
 ```
 app = 'statuscode'
@@ -168,7 +177,8 @@ We only have our monitor hitting our machine.
 
 It’s slow but according to the logs our machine start in `1.513643778s`
 
-```2024-02-14T11:24:16.107 proxy[286560ea703108] ams [info] Starting machine
+```
+2024-02-14T11:24:16.107 proxy[286560ea703108] ams [info] Starting machine
 
 2024-02-14T11:24:16.322 app[286560ea703108] ams [info] [ 0.035736] PCI: Fatal: No config space access function found
 
@@ -189,23 +199,7 @@ It’s slow but according to the logs our machine start in `1.513643778s`
 2024-02-14T11:24:17.628 proxy[286560ea703108] ams [info] machine became reachable in 7.03669ms
 ```
 
-| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
-| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
-| AMS    | 6        | 1               | 8                  | 1469      | 0              |
-| GRU    | 5        | 0               | 4                  | 1431      | 0              |
-| HKG    | 4        | 0               | 5                  | 1473      | 0              |
-| IAD    | 3        | 0               | 5                  | 1470      | 0              |
-| JNB    | 24       | 0               | 5                  | 1423      | 0              |
-| SYD    | 3        | 0               | 3                  | 1489      | 0              |
-
-The DNS is fast. We are attempting to connect to a region in the same data
-center as our checker, but our machine's cold start is slowing us down, leading
-to the high TTFB.
-
 #### OpenStatus Prod metrics
-
-We use it in production, and the machine never sleeps, yielding much better
-results.
 
 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
   <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
@@ -218,6 +212,9 @@ results.
   <MetricsCard title="p95" value={198} suffix="ms" />
   <MetricsCard title="p99" value={327} suffix="ms" />
 </div>
+
+We use Fly.io in production, and the machine never sleeps, yielding much better
+results.
 
 ## Koyeb
 
@@ -280,7 +277,7 @@ Let’s see where did we hit the cf workers
 | JNB            | AMS            | 1                 |
 | SYD            | SYD            | 1866              |
 
-Koyeb Global Load Balancer region we hit
+Koyeb Global Load Balancer region we hit:
 
 | Checker region | Koyeb Global Load Balancer | number of request |
 | -------------- | -------------------------- | ----------------- |
@@ -293,7 +290,7 @@ Koyeb Global Load Balancer region we hit
 | JNB            | FRA1                       | 1                 |
 | JNB            | SIN1                       | 1866              |
 
-I have deployed our app in the Frankfurt datacenter
+I have deployed our app in the Frankfurt data-center.
 
 ## Railway
 
@@ -331,7 +328,7 @@ I have deployed our app in the Frankfurt datacenter
 
 The headers don't provide any information.
 
-Railway is using Google Cloud platform. It’s the only service that does not
+Railway is using Google Cloud Platform. It’s the only service that does not
 allow us to pick a specific region on the free plan. Our test app will be
 located to `us-west1` Portland, Oregon. We can see that the latency is the
 lowest in IAD.
@@ -387,16 +384,16 @@ Render spins down a Free web service that goes 15 minutes without receiving inbo
 
 I think the failure are from the cold start of our app. We have a default
 timeout of 30s and the render app takes up to 50s to start. We might have hit
-inflection point between cold and warn.
+inflection point between cold and warm.
 
-## Conclussion
+## Conclusion
 
 If you are only looking from a latency perspective, Cloudflare Workers is the
 best choice. It’s fast worldwide and we haven’t encountered any cold start
-issues.
+issues. But it comes with its own limitations.
 
-But picking a cloud provider is not only about latency. It’s also about the DX.
-We have to take into account the ease of use, the pricing of each of them.
+Picking a cloud provider is not only about latency. It’s also about the DX. We
+have to take into account the ease of use and the pricing of each of them.
 
 For us we are using Fly.io in production, and we are happy with it.
 
