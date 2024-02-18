@@ -99,13 +99,13 @@ const badgeVariants = cva("", {
 
 function DeltaBadge({
   value,
-  decimal = 3,
+  decimal = 1,
 }: {
   value: number;
   decimal?: number;
 }) {
   const round = Math.pow(10, decimal); // 10^1 = 10 (1 decimal), 10^2 = 100 (2 decimals), etc.
-  const percentage = (Math.round((value - 1) * round) / round) * 100;
+  const percentage = Math.round((value - 1) * 100 * round) / round;
 
   const variant: VariantProps<typeof badgeVariants>["variant"] =
     percentage > 0 ? "increase" : percentage < 0 ? "decrease" : "default";
