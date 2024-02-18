@@ -52,9 +52,7 @@ export const components = {
       </div>
     );
   },
-  Image: (props: ImageProps) => {
-    return <Image {...props} />;
-  },
+  Image: (props: ImageProps) => <Image {...props} />,
   MetricsCard: (props: MetricsCardProps) => {
     return (
       // remove prose class from cards
@@ -70,11 +68,25 @@ export const components = {
       </div>
     );
   },
-  table: Table,
-  thead: TableHeader,
-  tbody: TableBody,
-  tfoot: TableFooter,
-  tr: TableRow,
-  th: TableHead,
-  td: TableCell,
+  table: (props: React.HTMLAttributes<HTMLTableElement>) => (
+    <Table {...props} />
+  ),
+  thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+    <TableHeader {...props} />
+  ),
+  tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+    <TableBody {...props} />
+  ),
+  tfoot: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+    <TableFooter {...props} />
+  ),
+  tr: (props: React.HTMLAttributes<HTMLTableRowElement>) => (
+    <TableRow {...props} />
+  ),
+  th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+    <TableHead {...props} />
+  ),
+  td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+    <TableCell {...props} />
+  ),
 };
