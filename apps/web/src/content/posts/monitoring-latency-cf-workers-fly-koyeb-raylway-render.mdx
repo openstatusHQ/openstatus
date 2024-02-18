@@ -77,8 +77,8 @@ Let's analyze the data from the past two weeks.
 | JNB    | 123      | 168             | 182                | 185       | 0              |
 | SYD    | 51       | 1               | 11                 | 25        | 0              |
 
-We can notice the Johannesburg is taking around 10 times more times than the
-other monitors.
+We can see that Johannesburg takes about 10 times longer than the other
+monitors.
 
 ### Headers
 
@@ -250,12 +250,11 @@ results.
 
 ### Headers
 
-If we look at the request header none of our request are cached They contains
-the `cf-cache-status: dynamic` Koyeb edge layer is handle by Cloudflare
-
+The request headers show that none of our requests are cached. They contain
+﻿cf-cache-status: dynamic. Cloudflare handles the Koyeb edge layer.
 https://www.koyeb.com/blog/building-a-multi-region-service-mesh-with-kuma-envoy-anycast-bgp-and-mtls
 
-Our request are following this route
+Our request follows this route:
 
 ```
 Cf workers -> koyeb Global load balancer -> koyeb backend
