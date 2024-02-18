@@ -2,8 +2,9 @@
 title:
   "Monitoring latency: Cloudflare Workers vs Fly vs Koyeb vs Railway vs Render"
 description:
-  We have deployed a simple Hono server on various cloud providers to test the
-  latency of each of them using OpenStatus.
+  We have deployed a simple Hono server on Cloudflare workers, Fly, Koyeb,
+  Railway and Render cloud providers to compare the latency of each of them
+  using OpenStatus.
 author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
@@ -18,23 +19,24 @@ Render using OpenStatus.
 
 It's a good way to dogfood our own product and improve it.
 
-For this test, we used a basic Hono server that returns a simple response.
+For this test, we used a basic [Hono](https://hono.dev) server that returns a
+simple text response.
 
 ```
 const app = new Hono(); app.use("*", logger());
 
 app.use("\*", poweredBy());
 
-app.get("/", (c) => { return c.text( "Just return the desired http status code,
-e.g. /404 🤯 \nhttps://www.openstatus.dev", ); });
-
+app.get('/', (c) => {
+  return c.text('Just return the desired http status code, e.g. /404 🤯 \nhttps://www.openstatus.dev')
+})
 ```
 
 You can find the code [here](https://github.com/openstatusHQ/status-code]), it’s
 open source 😉
 
-We have deployed this application on the cheapest or free tier available from
-each provider.
+We deployed the application on the cheapest or free tier offered by each
+provider.
 
 Let's analyze the data from the past two weeks.
 
@@ -70,6 +72,8 @@ Let's analyze the data from the past two weeks.
 We can notice the Johannesburg is taking around 10 times more times than the
 other monitors.
 
+### Headers
+
 From the Cloudflare request we can get the location of the workers that handle
 the request, with `Cf-ray` in the headers response.
 
@@ -97,7 +101,7 @@ We can see all the request from JNB is never routed to a nearby datacenter.
 Apart from the strange routing error in Johannesburg, Cloudflare workers are
 fast worldwide.
 
-We haven't encountered any cold start issues.
+We have not experienced any cold start issues.
 
 ## Fly.io
 
@@ -188,9 +192,11 @@ It’s slow but according to the logs our machine start in `1.513643778s`
 | JNB    | 24       | 0               | 5                  | 1423      | 0              |
 | SYD    | 3        | 0               | 3                  | 1489      | 0              |
 
-The DNS is fast. We are trying to connect to a region in the same data center as
-our checker, but we are slowed down by the cold start of our machine, which
-explains the high TTFB.
+The DNS is fast. We are attempting to connect to a region in the same data
+center as our checker, but our machine's cold start is slowing us down, leading
+to the high TTFB.
+
+#### OpenStatus Prod metrics
 
 We use it in production, and the machine never sleeps, yielding much better
 results.
@@ -236,7 +242,7 @@ results.
 | JNB    | 298      | 1               | 11                 | 720       | 0              |
 | SYD    | 97       | 1               | 10                 | 711       | 0              |
 
-I have deployed our app in the Frankfurt datacenter
+### Headers
 
 If we look at the request header none of our request are cached They contains
 the `cf-cache-status: dynamic` Koyeb edge layer is handle by Cloudflare
@@ -278,6 +284,8 @@ Koyeb Global Load Balancer region we hit
 | JNB            | FRA1                       | 1                 |
 | JNB            | SIN1                       | 1866              |
 
+I have deployed our app in the Frankfurt datacenter
+
 ## Railway
 
 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
@@ -307,9 +315,14 @@ Koyeb Global Load Balancer region we hit
 | JNB    | 18       | 193             | 178                | 319       | 0              |
 | SYD    | 21       | 108             | 105                | 280       | 0              |
 
+### Headers
+
+The headers don't provide any information.
+
 Railway is using Google Cloud platform. It’s the only service that does not
 allow us to pick a specific region on the free plan. Our test app will be
-located to `us-west1` Portland, Oregon
+located to `us-west1` Portland, Oregon. We can see that the latency is the
+lowest in IAD.
 
 By default our app did not scale down to 0. It was always running. We don't have
 any cold start.
@@ -343,6 +356,10 @@ any cold start.
 | JNB    | 36       | 161             | 167                | 720       | 0              |
 | SYD    | 103      | 1               | 4                  | 711       | 0              |
 
+### Headers
+
+The headers don't provide any information.
+
 We have deployed our app in the Frankfurt datacenter.
 
 According to the Render docs, the free tier will shut down the service after 15
@@ -367,3 +384,12 @@ But picking a cloud provider is not only about latency. It’s also about the DX
 We have to take into account the ease of use, the pricing of each of them.
 
 For us we are using Fly.io in production, and we are happy with it.
+
+### Bonus Vercel
+
+We haven't included Vercel in this test, but the code needs to be structure
+differently. We are running a test to compare the latency of Vercel Edge, Vercel
+Serverless.
+
+If you want to monitor your own website, create an account on
+[OpenStatus](https://www.openstatus.dev/app/sign-up?ref=blog-monitoring).
