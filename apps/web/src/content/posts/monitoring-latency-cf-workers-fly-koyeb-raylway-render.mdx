@@ -57,7 +57,7 @@ Let's analyze the data from the past two weeks.
 <div className="mt-4">
   <SimpleChart
     staticFile="/assets/posts/monitoring-latency/cloudflare.json"
-    caption="Cloudflare latency between 04. Feb and 18. Feb 2024."
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
   />
 </div>
 
@@ -123,7 +123,7 @@ We have not experienced any cold start issues.
 <div className="mt-4">
   <SimpleChart
     staticFile="/assets/posts/monitoring-latency/fly.json"
-    caption="Fly latency between 04. Feb and 18. Feb 2024."
+    caption="Fly avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
   />
 </div>
 
@@ -236,7 +236,7 @@ results.
 <div className="mt-4">
   <SimpleChart
     staticFile="/assets/posts/monitoring-latency/koyeb.json"
-    caption="Koyeb latency between 04. Feb and 18. Feb 2024."
+    caption="Koyeb avg. latency between 04. Feb and 18. Feb 2024."
   />
 </div>
 
@@ -312,7 +312,7 @@ I have deployed our app in the Frankfurt datacenter
 <div className="mt-4">
   <SimpleChart
     staticFile="/assets/posts/monitoring-latency/railway.json"
-    caption="Railway latency between 04. Feb and 18. Feb 2024."
+    caption="Railway avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
   />
 </div>
 
@@ -354,7 +354,10 @@ any cold start.
 </div>
 
 <div className="mt-4">
-  <SimpleChart staticFile="/assets/posts/monitoring-latency/render.json" />
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/render.json"
+    caption="Render avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
 </div>
 
 ### Timing metrics
