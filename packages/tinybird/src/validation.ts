@@ -154,16 +154,14 @@ export const tbParameterMonitorList = z.object({
 /**
  * Values from the pipe status_timezone
  */
-export const tbBuildMonitorList = z
-  .object({
-    count: z.number().int(),
-    ok: z.number().int(),
-    day: z.string().transform((val) => {
-      // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
-      return new Date(`${val} GMT`).toISOString();
-    }),
-  })
-  .merge(latencyMetrics);
+export const tbBuildMonitorList = z.object({
+  count: z.number().int(),
+  ok: z.number().int(),
+  day: z.string().transform((val) => {
+    // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+    return new Date(`${val} GMT`).toISOString();
+  }),
+});
 
 /**
  * Params for pipe home_stats

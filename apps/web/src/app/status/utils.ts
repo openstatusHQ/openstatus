@@ -36,15 +36,15 @@ export function getClassname(status: ExternalStatus) {
     case "All Systems Operational":
       return "text-green-500";
     case "Major System Outage":
-      return "text-red-500";
+      return "text-rose-500";
     case "Partial System Outage":
       return "text-orange-500";
     case "Minor Service Outage":
-      return "text-yellow-500";
+      return "text-amber-500";
     case "Degraded System Service":
-      return "text-yellow-500";
+      return "text-amber-500";
     case "Partially Degraded Service":
-      return "text-yellow-500";
+      return "text-amber-500";
     case "Service Under Maintenance":
       return "text-blue-500";
     default:

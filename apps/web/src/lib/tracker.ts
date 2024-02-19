@@ -1,10 +1,15 @@
 import type { Monitor, Ping } from "@openstatus/tinybird";
 
-export type StatusVariant = "up" | "degraded" | "down" | "empty";
+export type StatusVariant = "up" | "degraded" | "down" | "empty" | "incident";
 
 type GetStatusReturnType = {
   label: string;
   variant: StatusVariant;
+};
+
+export const incidentStatus: GetStatusReturnType = {
+  label: "Incident",
+  variant: "incident",
 };
 
 /**
@@ -12,7 +17,7 @@ type GetStatusReturnType = {
  * @param ratio
  * @returns
  */
-export const getStatus = (ratio: number): GetStatusReturnType => {
+export const getStatusByRatio = (ratio: number): GetStatusReturnType => {
   if (isNaN(ratio))
     return {
       label: "Missing",
@@ -103,8 +108,8 @@ export function calcStatus(data: Ping[][]) {
     { count: 0, ok: 0 },
   );
   const ratio = ok / count;
-  if (isNaN(ratio)) return getStatus(1); // outsmart caching issue
-  return getStatus(ratio);
+  if (isNaN(ratio)) return getStatusByRatio(1); // outsmart caching issue
+  return getStatusByRatio(ratio);
 }
 
 /**

@@ -35,7 +35,7 @@ export const incidentTable = sqliteTable(
     startedAt: integer("started_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
-    // Who has acknoledge the incident
+    // Who has acknowledged the incident
     acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
     acknowledgedBy: integer("acknowledged_by").references(() => user.id),
 

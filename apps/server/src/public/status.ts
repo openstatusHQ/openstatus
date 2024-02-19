@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { and, db, eq, inArray } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
+  incidentTable,
   monitor,
   monitorsToPages,
   monitorsToStatusReport,
@@ -10,23 +11,20 @@ import {
   pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
-import { getPublicStatus, Tinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
-import { env } from "../env";
 import { notEmpty } from "../utils/not-empty";
 
 // TODO: include ratelimiting
 
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
 
 enum Status {
   Operational = "operational",
   DegradedPerformance = "degraded_performance",
-  PartialOutage = "partial_outage",
-  MajorOutage = "major_outage",
-  UnderMaintenance = "under_maintenance",
+  PartialOutage = "partial_outage", // not used
+  MajorOutage = "major_outage", // not used
+  UnderMaintenance = "under_maintenance", // not used
   Unknown = "unknown",
   Incident = "incident",
 }
@@ -44,63 +42,33 @@ status.get("/:slug", async (c) => {
   }
 
   startTime(c, "database");
-  const { monitorData, pageStatusReportData, monitorStatusReportData } =
-    await getStatusPageData(slug);
+  const {
+    monitorData,
+    pageStatusReportData,
+    monitorStatusReportData,
+    ongoingIncidents,
+  } = await getStatusPageData(slug);
   endTime(c, "database");
 
-  const isIncident = [...pageStatusReportData, ...monitorStatusReportData].some(
-    (data) => {
-      if (!data.status_report) return false;
-      return !["monitoring", "resolved"].includes(data.status_report.status);
-    },
-  );
+  const isStatusReport = [
+    ...pageStatusReportData,
+    ...monitorStatusReportData,
+  ].some((data) => {
+    if (!data.status_report) return false;
+    return !["monitoring", "resolved"].includes(data.status_report.status);
+  });
 
-  startTime(c, "clickhouse");
-  const lastMonitorPings = await Promise.allSettled(
-    monitorData.map(async ({ monitors_to_pages }) => {
-      return await getPublicStatus(tb)({
-        monitorId: String(monitors_to_pages.monitorId),
-      });
-    }),
-  );
-  endTime(c, "clickhouse");
+  function getStatus() {
+    if (isStatusReport) return Status.Incident;
+    // if (monitorData.length === 0) return Status.Unknown;
+    if (ongoingIncidents.length > 0) return Status.DegradedPerformance;
+    return Status.Operational;
+  }
 
-  const data = lastMonitorPings.reduce(
-    (prev, curr) => {
-      if (curr.status === "fulfilled") {
-        const { ok, count } = curr.value.data.reduce(
-          (p, c) => {
-            p.ok += c.ok;
-            p.count += c.count;
-            return p;
-          },
-          { ok: 0, count: 0 },
-        );
-        prev.ok += ok;
-        prev.count += count;
-      }
-      return prev;
-    },
-    { ok: 0, count: 0 },
-  );
-
-  const ratio = data.ok / data.count;
-
-  const status: Status = isIncident ? Status.Incident : getStatus(ratio);
-
+  const status = getStatus();
   await redis.set(slug, status, { ex: 60 }); // 1m cache
-
   return c.json({ status });
 });
-
-function getStatus(ratio: number) {
-  if (isNaN(ratio)) return Status.Unknown;
-  if (ratio >= 0.98) return Status.Operational;
-  if (ratio >= 0.6) return Status.DegradedPerformance;
-  if (ratio >= 0.3) return Status.PartialOutage;
-  if (ratio >= 0) return Status.MajorOutage;
-  return Status.Unknown;
-}
 
 async function getStatusPageData(slug: string) {
   const monitorData = await db
@@ -116,8 +84,16 @@ async function getStatusPageData(slug: string) {
     .all();
 
   const monitorIds = monitorData.map((i) => i.monitor?.id).filter(notEmpty);
+  if (monitorIds.length === 0) {
+    return {
+      monitorData,
+      pageStatusReportData: [],
+      monitorStatusReportData: [],
+      ongoingIncidents: [],
+    };
+  }
 
-  const monitorStatusReportData = await db
+  const monitorStatusReportQuery = db
     .select()
     .from(monitorsToStatusReport)
     .leftJoin(
@@ -128,7 +104,7 @@ async function getStatusPageData(slug: string) {
     .all();
 
   // REMINDER: the query can overlap with the previous one
-  const pageStatusReportData = await db
+  const pageStatusReportDataQuery = db
     .select()
     .from(pagesToStatusReports)
     .leftJoin(
@@ -139,9 +115,28 @@ async function getStatusPageData(slug: string) {
     .where(eq(page.slug, slug))
     .all();
 
+  const ongoingIncidentsQuery = db
+    .select()
+    .from(incidentTable)
+    .where(
+      and(
+        isNull(incidentTable.resolvedAt),
+        inArray(incidentTable.monitorId, monitorIds),
+      ),
+    )
+    .all();
+
+  const [monitorStatusReportData, pageStatusReportData, ongoingIncidents] =
+    await Promise.all([
+      monitorStatusReportQuery,
+      pageStatusReportDataQuery,
+      ongoingIncidentsQuery,
+    ]);
+
   return {
     monitorData,
     pageStatusReportData,
     monitorStatusReportData,
+    ongoingIncidents,
   };
 }

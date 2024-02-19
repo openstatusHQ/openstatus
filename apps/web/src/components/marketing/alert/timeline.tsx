@@ -90,8 +90,8 @@ const timeline = [
     message: "3 incoming notifications from Grafana.",
     icon: {
       name: "webhook",
-      textColor: "text-yellow-500",
-      borderColor: "border-yellow-500/40",
+      textColor: "text-amber-500",
+      borderColor: "border-amber-500/40",
     },
   },
   {

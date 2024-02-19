@@ -2,24 +2,23 @@ import { cva } from "class-variance-authority";
 import type { z } from "zod";
 
 import type {
-  selectPublicMonitorSchema,
+  selectIncidentPageSchema,
   selectStatusReportPageSchema,
 } from "@openstatus/db/src/schema";
 
-import { getResponseListData } from "@/lib/tb";
+import { getStatusByRatio, incidentStatus } from "@/lib/tracker";
 import type { StatusVariant } from "@/lib/tracker";
-import { calcStatus } from "@/lib/tracker";
-import { cn, notEmpty } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 
-const check = cva("border-border rounded-full border p-1.5", {
+const check = cva("rounded-full border p-1.5", {
   variants: {
     variant: {
       up: "bg-green-500/80 border-green-500",
-      down: "bg-red-500/80 border-red-500",
-      degraded: "bg-yellow-500/80 border-yellow-500",
+      down: "bg-rose-500/80 border-rose-500",
+      degraded: "bg-amber-500/80 border-amber-500",
       empty: "bg-gray-500/80 border-gray-500",
-      incident: "bg-yellow-500/80 border-yellow-500",
+      incident: "bg-amber-500/80 border-amber-500",
     },
   },
   defaultVariants: {
@@ -29,35 +28,20 @@ const check = cva("border-border rounded-full border p-1.5", {
 
 export async function StatusCheck({
   statusReports,
-  monitors,
+  incidents,
 }: {
   statusReports: z.infer<typeof selectStatusReportPageSchema>;
-  monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  incidents: z.infer<typeof selectIncidentPageSchema>;
 }) {
-  const isIncident = statusReports.some(
+  const isStatusReport = statusReports.some(
     (incident) => !["monitoring", "resolved"].includes(incident.status),
   );
+  const isIncident = incidents.some((incident) => incident.resolvedAt === null);
 
-  const monitorsData = (
-    await Promise.all(
-      monitors.map((monitor) => {
-        return getResponseListData({
-          monitorId: String(monitor.id),
-          url: monitor.url,
-          limit: 10,
-        });
-      }),
-    )
-  ).filter(notEmpty);
+  // Forcing the status to be either 'degraded' or 'up'
+  const status = getStatusByRatio(isIncident ? 0.5 : 1);
 
-  const status = calcStatus(monitorsData);
-
-  const incident = {
-    label: "Incident",
-    variant: "incident",
-  } as const;
-
-  const { label, variant } = isIncident ? incident : status;
+  const { label, variant } = isStatusReport ? incidentStatus : status;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -72,24 +56,22 @@ export async function StatusCheck({
   );
 }
 
-interface StatusIconProps {
+export interface StatusIconProps {
   variant: StatusVariant | "incident";
   className?: string;
 }
 
-function StatusIcon({ variant, className }: StatusIconProps) {
+export function StatusIcon({ variant, className }: StatusIconProps) {
   const rootClassName = cn("h-5 w-5 text-background", className);
-  const MinusIcon = Icons["minus"];
-  const CheckIcon = Icons["check"];
-  const AlertTriangleIcon = Icons["alert-triangle"];
   if (variant === "incident") {
+    const AlertTriangleIcon = Icons["alert-triangle"];
     return <AlertTriangleIcon className={rootClassName} />;
   }
   if (variant === "degraded") {
-    return <MinusIcon className={rootClassName} />;
+    return <Icons.minus className={rootClassName} />;
   }
   if (variant === "down") {
-    return <MinusIcon className={rootClassName} />;
+    return <Icons.minus className={rootClassName} />;
   }
-  return <CheckIcon className={rootClassName} />;
+  return <Icons.check className={rootClassName} />;
 }

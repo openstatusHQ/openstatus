@@ -2,7 +2,7 @@ import type { Monitor } from "@openstatus/tinybird";
 
 import {
   addBlackListInfo,
-  getStatus,
+  getStatusByRatio,
   getTotalUptimeString,
 } from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
@@ -25,7 +25,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
           })}
           <div tw="flex flex-row-reverse absolute left-0">
             {_data.map((item, i) => {
-              const { variant } = getStatus(item.ok / item.count);
+              const { variant } = getStatusByRatio(item.ok / item.count);
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (
@@ -38,7 +38,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
                   tw={cn("h-16 w-3 rounded-full mr-1", {
                     "bg-green-500": variant === "up",
                     "bg-red-500": variant === "down",
-                    "bg-yellow-500": variant === "degraded",
+                    "bg-amber-500": variant === "degraded",
                   })}
                 />
               );
