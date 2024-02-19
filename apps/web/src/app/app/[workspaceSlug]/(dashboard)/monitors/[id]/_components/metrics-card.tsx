@@ -28,7 +28,8 @@ const metricsCardVariants = cva("flex flex-col px-3 py-2 border rounded-lg", {
   },
 });
 
-interface MetricsCardProps extends VariantProps<typeof metricsCardVariants> {
+export interface MetricsCardProps
+  extends VariantProps<typeof metricsCardVariants> {
   title: string;
   value?: number | null;
   suffix: string;
