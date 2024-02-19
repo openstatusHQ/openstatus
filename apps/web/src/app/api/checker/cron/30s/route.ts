@@ -12,7 +12,7 @@ export const maxDuration = 300;
 export async function GET(req: NextRequest) {
   if (isAuthorizedDomain(req.url)) {
     const checkInId = Sentry.captureCheckIn({
-      monitorSlug: "1-s-cron",
+      monitorSlug: "30-s-cron",
       status: "in_progress",
     });
     await cron({ periodicity: "30s", req });

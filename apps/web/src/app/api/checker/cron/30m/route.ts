@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     await cron({ periodicity: "30m", req });
     Sentry.captureCheckIn({
       checkInId,
-      monitorSlug: "1-min-cron",
+      monitorSlug: "30-min-cron",
       status: "ok",
     });
   }
