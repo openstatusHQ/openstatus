@@ -1,0 +1,18 @@
+---
+title: Auto Resolved Incidents
+description: Automatically resolve incidents when your endpoint is back.
+image: /assets/changelog/auto-resolved-incidents.png
+publishedAt: 2024-02-19
+---
+
+We have added auto-resolved incidents to the incident management feature. Now,
+once your endpoint is back up and running i.e. _more than 50% of the regions are
+not failing_, the incident will be automatically resolved. The time between the
+creation and resolution of the incident will be marked as downtime on the status
+page.
+
+Additionally, the calculated `p95` latency over a day has been removed. It is
+costly to calculate and was not providing much value.
+
+Instead, we are thinking of adding a chart that shows the latency of the last X
+days/hours. If you have ideas, [let us know](/discord)!
