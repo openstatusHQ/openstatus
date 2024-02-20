@@ -1,12 +1,19 @@
 import { notFound } from "next/navigation";
+import { z } from "zod";
 
-import { StatusPageForm } from "@/components/forms/status-page-form";
+import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
+
+const searchParamsSchema = z.object({
+  section: z.string().optional().default("monitors"),
+});
 
 export default async function EditPage({
   params,
+  searchParams,
 }: {
   params: { workspaceSlug: string; id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const id = Number(params.id);
   const page = await api.page.getPageById.query({ id });
@@ -16,6 +23,9 @@ export default async function EditPage({
     return notFound();
   }
 
+  // default is request
+  const search = searchParamsSchema.safeParse(searchParams);
+
   return (
     <StatusPageForm
       allMonitors={allMonitors}
@@ -23,6 +33,7 @@ export default async function EditPage({
         ...page,
         monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
       }}
+      defaultSection={search.success ? search.data.section : undefined}
     />
   );
 }

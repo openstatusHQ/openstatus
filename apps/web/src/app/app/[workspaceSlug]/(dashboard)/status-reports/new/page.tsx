@@ -1,4 +1,4 @@
-import { StatusReportForm } from "@/components/forms/status-report-form";
+import { StatusReportForm } from "@/components/forms/status-report/form";
 import { api } from "@/trpc/server";
 
 export default async function NewPage() {
@@ -6,5 +6,12 @@ export default async function NewPage() {
 
   const pages = await api.page.getPagesByWorkspace.query();
 
-  return <StatusReportForm monitors={monitors} pages={pages} nextUrl={"./"} />;
+  return (
+    <StatusReportForm
+      monitors={monitors}
+      pages={pages}
+      nextUrl={"./"}
+      defaultSection="update-message"
+    />
+  );
 }

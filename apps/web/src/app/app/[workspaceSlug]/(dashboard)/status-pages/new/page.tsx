@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { StatusPageForm } from "@/components/forms/status-page-form";
+import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 
 export default async function Page() {
@@ -13,6 +13,7 @@ export default async function Page() {
     <StatusPageForm
       allMonitors={allMonitors} // FIXME: rename to just 'monitors'
       nextUrl="./" // back to the overview page
+      defaultSection="monitors"
     />
   );
 }

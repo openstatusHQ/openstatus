@@ -36,7 +36,7 @@ import {
 } from "@openstatus/ui";
 
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { SectionHeader } from "../shared/section-header";
 import { RequestTestButton } from "./request-test-button";
 
 interface Props {
@@ -79,14 +79,11 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
 
   return (
     <div className="grid w-full gap-4">
-      <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">HTTP request settings</h4>
-        <p className="text-muted-foreground text-sm">
-          Create your HTTP. Add custom headers, payload and test your endpoint
-          before submitting.
-        </p>
-      </div>
-      <div className="flex items-end gap-3">
+      <SectionHeader
+        title="HTTP Request Settings"
+        description="Create your HTTP. Add custom headers, payload and test your endpoint before submitting."
+      />
+      <div className="flex items-end gap-4">
         <FormField
           control={form.control}
           name="method"
@@ -144,7 +141,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
       <div className="space-y-2 sm:col-span-full">
         <FormLabel>Request Header</FormLabel>
         {fields.map((field, index) => (
-          <div key={field.id} className="grid grid-cols-6 gap-6">
+          <div key={field.id} className="grid grid-cols-6 gap-4">
             <FormField
               control={form.control}
               name={`headers.${index}.key`}

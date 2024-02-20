@@ -27,7 +27,7 @@ import {
 } from "@openstatus/ui";
 
 import { NotificationForm } from "../notification-form";
-import { CheckboxLabel } from "./checkbox-label";
+import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -63,7 +63,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                   Select the notification channels you want to be informed.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {notifications?.map((item) => (
                   <FormField
                     key={item.id}
@@ -103,6 +103,9 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                   />
                 ))}
               </div>
+              {!notifications || notifications.length === 0 ? (
+                <FormDescription>Missing notifications.</FormDescription>
+              ) : null}
               <FormMessage />
             </FormItem>
           );

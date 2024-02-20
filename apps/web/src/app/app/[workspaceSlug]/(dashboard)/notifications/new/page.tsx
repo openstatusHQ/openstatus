@@ -1,7 +1,4 @@
-import { notFound } from "next/navigation";
-import * as z from "zod";
-
-import { NotificationForm } from "@/components/forms/notification-form";
+import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 
 export default async function EditPage({}: {

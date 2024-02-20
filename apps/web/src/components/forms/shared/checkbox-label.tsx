@@ -2,11 +2,14 @@ import { CheckCircle2 } from "lucide-react";
 
 import { Checkbox, Label } from "@openstatus/ui";
 
+import { cn } from "@/lib/utils";
+
 interface Props {
   id: string;
   children: React.ReactNode;
   checked?: boolean;
   onCheckedChange(checked: boolean): void;
+  className?: string;
 }
 
 export function CheckboxLabel({
@@ -14,6 +17,7 @@ export function CheckboxLabel({
   children,
   checked,
   onCheckedChange,
+  className,
 }: Props) {
   return (
     <div className="relative h-full">
@@ -25,7 +29,10 @@ export function CheckboxLabel({
       />
       <Label
         htmlFor={id}
-        className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full items-center gap-1 rounded-md border-2 p-4 pr-10"
+        className={cn(
+          "border-border bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full items-center gap-1 rounded-md border p-4 pr-10",
+          className,
+        )}
       >
         {children}
       </Label>

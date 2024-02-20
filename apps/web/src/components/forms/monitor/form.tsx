@@ -13,7 +13,7 @@ import type {
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { flyRegions, insertMonitorSchema } from "@openstatus/db/src/schema";
-import { Badge, Button, Form } from "@openstatus/ui";
+import { Badge, Form } from "@openstatus/ui";
 
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import {
@@ -22,12 +22,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
-import { Kbd } from "@/components/kbd";
-import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import { useToastAction } from "@/hooks/use-toast-action";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
+import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionDanger } from "./section-danger";
 import { SectionNotifications } from "./section-notifications";
@@ -77,23 +76,6 @@ export function MonitorForm({
   const [isPending, startTransition] = React.useTransition();
   const [pingFailed, setPingFailed] = React.useState(false);
   const { toast } = useToastAction();
-
-  React.useEffect(() => {
-    const callback = (event: KeyboardEvent) => {
-      // event.metaKey - pressed Command key on Macs
-      // event.ctrlKey - pressed Control key on Linux or Windows
-      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-        event.preventDefault();
-        form.handleSubmit(onSubmit)();
-      }
-    };
-    document.addEventListener("keydown", callback);
-    return () => {
-      document.removeEventListener("keydown", callback);
-    };
-    // no need to listen to `onSubmit` changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [form]);
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
@@ -206,32 +188,11 @@ export function MonitorForm({
               </TabsContent>
             ) : null}
           </Tabs>
-          <div className="grid gap-3 sm:justify-end">
-            <div className="flex flex-col gap-6 sm:col-span-full sm:flex-row sm:justify-end">
-              <Button
-                className="w-full sm:w-auto"
-                size="lg"
-                disabled={isPending}
-              >
-                {!isPending ? (
-                  <span className="flex gap-2">
-                    Confirm
-                    <Kbd>
-                      <span>⌘</span>
-                      <span>S</span>
-                    </Kbd>
-                  </span>
-                ) : (
-                  <LoadingAnimation />
-                )}
-              </Button>
-            </div>
-            {form.formState.isDirty ? (
-              <p className="text-muted-foreground text-xs">
-                You have unsaved changes
-              </p>
-            ) : null}
-          </div>
+          <SaveButton
+            isPending={isPending}
+            isDirty={form.formState.isDirty}
+            onSubmit={form.handleSubmit(onSubmit)}
+          />
         </form>
       </Form>
       <FailedPingAlertConfirmation
