@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
@@ -25,14 +23,11 @@ export function Events({
   collabsible?: boolean;
 }) {
   const [open, toggle] = React.useReducer((open) => !open, false);
-  const router = useRouter();
 
-  // TODO: make it simpler..
   const sortedArray = statusReportUpdates.sort((a, b) => {
-    const orderA = statusDict[a.status].order;
-    const orderB = statusDict[b.status].order;
-    return orderB - orderA;
+    return b.date.getTime() - a.date.getTime();
   });
+
   const slicedArray =
     open || !collabsible
       ? sortedArray
@@ -104,7 +99,7 @@ function EventMessage({
   message: string;
   className?: string;
 }) {
-  const Component = useProcessor(message);
+  const Component = useProcessor(message); // FIXME: make it work with markdown without hook!
   return (
     <div
       className={cn(
