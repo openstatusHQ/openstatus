@@ -42,12 +42,20 @@ status.get("/:slug", async (c) => {
   }
 
   startTime(c, "database");
-  const {
-    monitorData,
-    pageStatusReportData,
-    monitorStatusReportData,
-    ongoingIncidents,
-  } = await getStatusPageData(slug);
+
+  const currentPage = await db
+    .select()
+    .from(page)
+    .where(eq(page.slug, slug))
+    .get();
+
+  console.log(currentPage);
+  if (!currentPage) {
+    return c.json({ status: Status.Unknown });
+  }
+
+  const { pageStatusReportData, monitorStatusReportData, ongoingIncidents } =
+    await getStatusPageData(currentPage.id);
   endTime(c, "database");
 
   const isStatusReport = [
@@ -57,7 +65,6 @@ status.get("/:slug", async (c) => {
     if (!data.status_report) return false;
     return !["monitoring", "resolved"].includes(data.status_report.status);
   });
-
   function getStatus() {
     if (isStatusReport) return Status.Incident;
     // if (monitorData.length === 0) return Status.Unknown;
@@ -70,17 +77,20 @@ status.get("/:slug", async (c) => {
   return c.json({ status });
 });
 
-async function getStatusPageData(slug: string) {
+async function getStatusPageData(pageId: number) {
   const monitorData = await db
     .select()
     .from(monitorsToPages)
-    .leftJoin(
+    .innerJoin(
       monitor,
       // REMINDER: query only active monitors as they are the ones that are displayed on the status page
-      and(eq(monitorsToPages.monitorId, monitor.id), eq(monitor.active, true)),
+      and(
+        eq(monitorsToPages.monitorId, monitor.id),
+        eq(monitor.active, true),
+        eq(monitorsToPages.pageId, pageId),
+      ),
     )
-    .leftJoin(page, eq(monitorsToPages.pageId, page.id))
-    .where(eq(page.slug, slug))
+
     .all();
 
   const monitorIds = monitorData.map((i) => i.monitor?.id).filter(notEmpty);
@@ -96,23 +106,23 @@ async function getStatusPageData(slug: string) {
   const monitorStatusReportQuery = db
     .select()
     .from(monitorsToStatusReport)
-    .leftJoin(
+    .innerJoin(
       statusReport,
       eq(monitorsToStatusReport.statusReportId, statusReport.id),
     )
     .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
     .all();
 
-  // REMINDER: the query can overlap with the previous one
   const pageStatusReportDataQuery = db
     .select()
     .from(pagesToStatusReports)
-    .leftJoin(
+    .innerJoin(
       statusReport,
-      eq(pagesToStatusReports.statusReportId, statusReport.id),
+      and(
+        eq(pagesToStatusReports.statusReportId, statusReport.id),
+        eq(pagesToStatusReports.pageId, pageId),
+      ),
     )
-    .leftJoin(page, eq(pagesToStatusReports.pageId, page.id))
-    .where(eq(page.slug, slug))
     .all();
 
   const ongoingIncidentsQuery = db
@@ -134,7 +144,7 @@ async function getStatusPageData(slug: string) {
     ]);
 
   return {
-    monitorData,
+    // monitorData,
     pageStatusReportData,
     monitorStatusReportData,
     ongoingIncidents,
