@@ -28,6 +28,8 @@ export const publishPingResponse = tb.buildIngestEndpoint({
   event: tbIngestPingResponse,
 });
 
+// TODO: add longer cache for NODE_ENV === "development"
+
 export function getResponseList(tb: Tinybird) {
   return tb.buildPipe({
     pipe: "response_list__v2",

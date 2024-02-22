@@ -1,22 +1,17 @@
 import type { Monitor } from "@openstatus/tinybird";
+import { classNames, Tracker as OSTracker } from "@openstatus/tracker";
 
-import {
-  addBlackListInfo,
-  getStatusByRatio,
-  getTotalUptimeString,
-} from "@/lib/tracker";
 import { cn, formatDate } from "@/lib/utils";
 
 export function Tracker({ data }: { data: Monitor[] }) {
-  const _data = addBlackListInfo(data);
-  const uptime = getTotalUptimeString(data);
+  const tracker = new OSTracker({ data });
 
   return (
     <div tw="flex flex-col w-full my-12">
       <div tw="flex flex-col mx-auto">
         <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
           <p></p>
-          <p tw="font-medium">{uptime}</p>
+          <p tw="font-medium">{tracker.totalUptime}%</p>
         </div>
         {/* Empty State */}
         <div tw="flex flex-row relative">
@@ -24,8 +19,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
             return <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-black/20" />;
           })}
           <div tw="flex flex-row-reverse absolute left-0">
-            {_data.map((item, i) => {
-              const { variant } = getStatusByRatio(item.ok / item.count);
+            {tracker.days.map((item, i) => {
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (
@@ -35,11 +29,10 @@ export function Tracker({ data }: { data: Monitor[] }) {
               return (
                 <div
                   key={i}
-                  tw={cn("h-16 w-3 rounded-full mr-1", {
-                    "bg-green-500": variant === "up",
-                    "bg-red-500": variant === "down",
-                    "bg-amber-500": variant === "degraded",
-                  })}
+                  tw={cn(
+                    "h-16 w-3 rounded-full mr-1",
+                    classNames[item.variant],
+                  )}
                 />
               );
             })}

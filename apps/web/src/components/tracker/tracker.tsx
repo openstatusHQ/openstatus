@@ -5,14 +5,14 @@ import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { endOfDay, format, formatDuration, startOfDay } from "date-fns";
 import { ChevronRight, Info } from "lucide-react";
-import type { z } from "zod";
 
 import type {
-  selectIncidentPageSchema,
+  Incident,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 import type { Monitor } from "@openstatus/tinybird";
+import { classNames, Tracker as OSTracker } from "@openstatus/tracker";
 import {
   HoverCard,
   HoverCardContent,
@@ -24,25 +24,13 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import {
-  addBlackListInfo,
-  areDatesEqualByDayMonthYear,
-  getStatusByRatio,
-  getTotalUptimeString,
-  incidentStatus,
-} from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
-// What would be cool is tracker that turn from green to red  depending on the number of errors
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
-      up: "bg-green-500/90 data-[state=open]:bg-green-500",
-      down: "bg-rose-500/90 data-[state=open]:bg-rose-500",
-      degraded: "bg-amber-500/90 data-[state=open]:bg-amber-500",
-      empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
       blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
-      incident: "bg-rose-500/90 data-[state=open]:bg-rose-500",
+      ...classNames,
     },
     report: {
       0: "",
@@ -56,15 +44,12 @@ const tracker = cva("h-10 rounded-full flex-1", {
   },
 });
 
-// FIXME:
-type Incidents = z.infer<typeof selectIncidentPageSchema>;
-
 interface TrackerProps {
   data: Monitor[];
   name: string;
   description?: string;
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
-  incidents?: Incidents;
+  incidents?: Incident[];
 }
 
 export function Tracker({
@@ -74,8 +59,8 @@ export function Tracker({
   reports,
   incidents,
 }: TrackerProps) {
-  const uptime = getTotalUptimeString(data);
-  const _data = addBlackListInfo(data);
+  const tracker = new OSTracker({ data, statusReports: reports, incidents });
+  const uptime = tracker.totalUptime;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -95,95 +80,42 @@ export function Tracker({
             </TooltipProvider>
           ) : null}
         </div>
-        <p className="text-muted-foreground shrink-0 font-light">{uptime}</p>
+        <p className="text-muted-foreground shrink-0 font-light">{uptime}%</p>
       </div>
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
-          {_data.map((props, i) => {
-            const dateReports = reports?.filter((report) => {
-              const firstStatusReportUpdate = report.statusReportUpdates.sort(
-                (a, b) => a.date.getTime() - b.date.getTime(),
-              )?.[0];
-
-              if (!firstStatusReportUpdate) return false;
-
-              return areDatesEqualByDayMonthYear(
-                firstStatusReportUpdate.date,
-                new Date(props.day),
-              );
-            });
-
-            const dateIncidents = incidents?.filter((incident) => {
-              const { startedAt, resolvedAt } = incident;
-              const day = new Date(props.day);
-              const eod = endOfDay(day);
-              const sod = startOfDay(day);
-
-              if (!startedAt) return false; // not started
-              if (!resolvedAt) return true; // still ongoing
-
-              const hasResolvedBeforeStartOfDay =
-                resolvedAt.getTime() <= sod.getTime();
-
-              if (hasResolvedBeforeStartOfDay) return false;
-
-              const hasStartedBeforeEndOfDay =
-                startedAt.getTime() <= eod.getTime();
-
-              const hasResolvedBeforeEndOfDay =
-                resolvedAt.getTime() <= eod.getTime();
-
-              if (hasStartedBeforeEndOfDay || hasResolvedBeforeEndOfDay)
-                return true;
-
-              if (hasResolvedBeforeEndOfDay) return true;
-
-              return false;
-            });
-
-            return (
-              <Bar
-                key={i}
-                reports={dateReports}
-                incidents={dateIncidents}
-                {...props}
-              />
-            );
+          {tracker.days.map((props, i) => {
+            return <Bar key={i} {...props} />;
           })}
         </div>
       </div>
       <div className="text-muted-foreground flex items-center justify-between text-xs font-light">
-        <p>{_data.length - 1} days ago</p>
+        <p>{tracker.days.length - 1} days ago</p>
         <p>Today</p>
       </div>
     </div>
   );
 }
 
-type BarProps = Monitor & { blacklist?: string } & Pick<
-    TrackerProps,
-    "reports" | "incidents"
-  > & {
-    className?: string;
-  };
+type BarProps = OSTracker["days"][number] & {
+  className?: string;
+};
 
 export const Bar = ({
   count,
   ok,
   day,
+  variant,
+  label,
   blacklist,
-  reports,
+  statusReports,
   incidents,
   className,
 }: BarProps) => {
   const [open, setOpen] = React.useState(false);
-  const status = getStatusByRatio(ok / count);
-  const isIncident = incidents && incidents.length > 0;
-
-  const { label, variant } = isIncident ? incidentStatus : status;
 
   const rootClassName = tracker({
-    report: reports && reports.length > 0 ? 30 : undefined,
+    report: statusReports && statusReports.length > 0 ? 30 : undefined,
     variant: blacklist ? "blacklist" : variant,
   });
 
@@ -212,7 +144,7 @@ export const Bar = ({
               <div className="grid flex-1 gap-1">
                 <div className="flex justify-between gap-8 text-sm">
                   <p className="font-semibold">{label}</p>
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground flex-shrink-0">
                     {format(new Date(day), "MMM d")}
                   </p>
                 </div>
@@ -226,10 +158,10 @@ export const Bar = ({
                 </div>
               </div>
             </div>
-            {reports && reports.length > 0 ? (
+            {statusReports && statusReports.length > 0 ? (
               <>
                 <Separator className="my-1.5" />
-                <StatusReportList reports={reports} />
+                <StatusReportList reports={statusReports} />
               </>
             ) : null}
             {incidents && incidents.length > 0 ? (
@@ -268,9 +200,10 @@ export function DowntimeText({
   incidents,
   day,
 }: {
-  incidents: Incidents;
+  incidents: Incident[];
   day: string; // TODO: use Date
 }) {
+  // TODO: MOVE INTO TRACKER CLASS?
   const startOfDayDate = startOfDay(new Date(day));
   const endOfDayDate = endOfDay(new Date(day));
 
@@ -280,7 +213,7 @@ export function DowntimeText({
       if (!startedAt) return 0;
       if (!resolvedAt)
         return (
-          endOfDayDate.getTime() -
+          Math.min(endOfDayDate.getTime(), new Date().getTime()) -
           Math.max(startOfDayDate.getTime(), startedAt.getTime())
         );
       return (

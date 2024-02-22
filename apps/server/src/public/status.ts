@@ -11,6 +11,7 @@ import {
   pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
+import { Status, Tracker } from "@openstatus/tracker";
 import { Redis } from "@openstatus/upstash";
 
 import { notEmpty } from "../utils/not-empty";
@@ -18,16 +19,6 @@ import { notEmpty } from "../utils/not-empty";
 // TODO: include ratelimiting
 
 const redis = Redis.fromEnv();
-
-enum Status {
-  Operational = "operational",
-  DegradedPerformance = "degraded_performance",
-  PartialOutage = "partial_outage", // not used
-  MajorOutage = "major_outage", // not used
-  UnderMaintenance = "under_maintenance", // not used
-  Unknown = "unknown",
-  Incident = "incident",
-}
 
 export const status = new Hono();
 
@@ -49,7 +40,6 @@ status.get("/:slug", async (c) => {
     .where(eq(page.slug, slug))
     .get();
 
-  console.log(currentPage);
   if (!currentPage) {
     return c.json({ status: Status.Unknown });
   }
@@ -58,22 +48,18 @@ status.get("/:slug", async (c) => {
     await getStatusPageData(currentPage.id);
   endTime(c, "database");
 
-  const isStatusReport = [
+  const statusReports = [
     ...pageStatusReportData,
     ...monitorStatusReportData,
-  ].some((data) => {
-    if (!data.status_report) return false;
-    return !["monitoring", "resolved"].includes(data.status_report.status);
+  ].map((item) => {
+    return item.status_report;
   });
-  function getStatus() {
-    if (isStatusReport) return Status.Incident;
-    // if (monitorData.length === 0) return Status.Unknown;
-    if (ongoingIncidents.length > 0) return Status.DegradedPerformance;
-    return Status.Operational;
-  }
 
-  const status = getStatus();
+  const tracker = new Tracker({ incidents: ongoingIncidents, statusReports });
+
+  const status = tracker.currentStatus;
   await redis.set(slug, status, { ex: 60 }); // 1m cache
+
   return c.json({ status });
 });
 

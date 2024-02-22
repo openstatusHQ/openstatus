@@ -37,16 +37,18 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   statusReports: selectStatusReportPageSchema,
 });
 
+// FIXME: move all to `Incident` schema - avoid duplication
 export const selectIncidentPageSchema = z
   .array(
-    selectIncidentSchema.pick({
-      id: true,
-      monitorId: true,
-      status: true,
-      startedAt: true,
-      acknowledgedAt: true,
-      resolvedAt: true,
-    }),
+    selectIncidentSchema,
+    // .pick({
+    //   id: true,
+    //   monitorId: true,
+    //   status: true,
+    //   startedAt: true,
+    //   acknowledgedAt: true,
+    //   resolvedAt: true,
+    // }),
   )
   .default([]);
 
@@ -54,7 +56,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
     statusReports: selectStatusReportPageSchema,
-    incidents: selectIncidentPageSchema,
+    incidents: z.array(selectIncidentSchema),
     workspacePlan: workspacePlanSchema
       .nullable()
       .default("free")

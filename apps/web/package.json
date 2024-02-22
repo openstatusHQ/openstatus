@@ -24,6 +24,7 @@
     "@openstatus/plans": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
+    "@openstatus/tracker": "workspace:*",
     "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",

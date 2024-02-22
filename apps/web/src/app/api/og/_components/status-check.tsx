@@ -1,41 +1,34 @@
-import type { StatusVariant } from "@/lib/tracker";
+import type { Tracker } from "@openstatus/tracker";
+
 import { cn } from "@/lib/utils";
 
-export function StatusCheck({ variant }: { variant: StatusVariant }) {
+export function StatusCheck({ tracker }: { tracker: Tracker }) {
+  // MAYBE HAVE A SINGLE ENDPOINT
+  const label = tracker.toString;
+  const variant = tracker.currentVariant;
+  const className = tracker.currentClassName;
+
+  // FIXME: move icons into @openstatus/tracker lib
   function getVariant() {
     switch (variant) {
       case "down":
-        return {
-          color: "bg-rose-500",
-          label: "Major Outage",
-          icon: Minus,
-        };
+        return Minus;
       case "degraded":
-        return {
-          color: "bg-amber-500",
-          label: "Systems Degraded",
-          icon: Minus,
-        };
+        return Minus;
       case "incident":
-        return {
-          color: "bg-amber-500",
-          label: "Incident Ongoing",
-          icon: Alert,
-        };
+        return Alert;
       default:
-        return {
-          color: "bg-green-500",
-          label: "All Systems Operational",
-          icon: Check,
-        };
+        return Check;
     }
   }
 
-  const { icon, color, label } = getVariant();
+  const Icon = getVariant();
 
   return (
     <div tw="flex flex-col justify-center items-center gap-2 w-full">
-      <div tw={cn("flex text-white rounded-full p-3", color)}>{icon()}</div>
+      <div tw={cn("flex text-white rounded-full p-3", className)}>
+        <Icon />
+      </div>
       <p style={{ fontFamily: "Cal" }} tw="text-4xl">
         {label}
       </p>

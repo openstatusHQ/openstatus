@@ -67,6 +67,9 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
+      '@openstatus/tracker':
+        specifier: workspace:*
+        version: link:../../packages/tracker
       '@openstatus/upstash':
         specifier: workspace:*
         version: link:../../packages/upstash
@@ -146,6 +149,9 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
+      '@openstatus/tracker':
+        specifier: workspace:*
+        version: link:../../packages/tracker
       '@openstatus/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -735,6 +741,25 @@ importers:
       '@types/node':
         specifier: 20.8.0
         version: 20.8.0
+      typescript:
+        specifier: 5.2.2
+        version: 5.2.2
+
+  packages/tracker:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../db
+      '@openstatus/tinybird':
+        specifier: workspace:*
+        version: link:../tinybird
+      zod:
+        specifier: 3.22.2
+        version: 3.22.2
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.2.2
         version: 5.2.2
@@ -1358,6 +1383,10 @@ packages:
     peerDependencies:
       '@effect-ts/otel-node': '*'
     peerDependenciesMeta:
+      '@effect-ts/core':
+        optional: true
+      '@effect-ts/otel':
+        optional: true
       '@effect-ts/otel-node':
         optional: true
     dependencies:

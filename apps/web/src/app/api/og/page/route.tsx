@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
 
+import { Tracker } from "@openstatus/tracker";
+
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { getStatusByRatio, incidentStatus } from "@/lib/tracker";
 import { api } from "@/trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
@@ -23,22 +24,17 @@ export async function GET(req: Request) {
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 
-  const isStatusReport = page?.statusReports.some(
-    (incident) => !["monitoring", "resolved"].includes(incident.status),
-  );
+  const tracker = new Tracker({
+    incidents: page?.incidents,
+    statusReports: page?.statusReports,
+  });
 
-  const isIncident = page?.incidents.some(
-    (incident) => incident.resolvedAt === null,
-  );
-
-  const status = isStatusReport
-    ? incidentStatus
-    : getStatusByRatio(isIncident ? 0.5 : 1);
+  // const status = tracker.currentStatus;
 
   return new ImageResponse(
     (
       <BasicLayout title={title} description={description} tw="py-24 px-24">
-        <StatusCheck variant={status.variant} />
+        <StatusCheck tracker={tracker} />
       </BasicLayout>
     ),
     {
