@@ -5,6 +5,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Incident } from "@openstatus/db/src/schema";
 
+import { formatDateTime } from "@/lib/utils";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Incident>[] = [
@@ -29,7 +30,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Started At",
     cell: ({ row }) => {
       const { startedAt } = row.original;
-      const date = startedAt ? new Date(startedAt).toLocaleString() : "-";
+      const date = startedAt ? formatDateTime(startedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
@@ -44,9 +45,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Acknowledged At",
     cell: ({ row }) => {
       const { acknowledgedAt } = row.original;
-      const date = acknowledgedAt
-        ? new Date(acknowledgedAt).toLocaleString()
-        : "-";
+      const date = acknowledgedAt ? formatDateTime(acknowledgedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
@@ -61,7 +60,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Resolved At",
     cell: ({ row }) => {
       const { resolvedAt } = row.original;
-      const date = resolvedAt ? new Date(resolvedAt).toLocaleString() : "-";
+      const date = resolvedAt ? formatDateTime(resolvedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">

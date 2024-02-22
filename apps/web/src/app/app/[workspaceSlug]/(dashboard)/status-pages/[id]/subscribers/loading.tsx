@@ -1,5 +1,5 @@
-import { SkeletonForm } from "@/components/forms/skeleton-form";
+import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
 
 export default function Loading() {
-  return <SkeletonForm />;
+  return <DataTableSkeleton />;
 }
