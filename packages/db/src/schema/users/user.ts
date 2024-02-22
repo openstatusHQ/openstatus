@@ -9,7 +9,7 @@ import {
 import { workspace, workspaceRole } from "../workspaces";
 
 export const user = sqliteTable("user", {
-  id: integer("id").primaryKey(),
+  id: text("id").primaryKey().notNull(),
   tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
 
   firstName: text("first_name").default(""),
@@ -32,7 +32,7 @@ export const userRelations = relations(user, ({ many }) => ({
 export const usersToWorkspaces = sqliteTable(
   "users_to_workspaces",
   {
-    userId: integer("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => user.id),
     workspaceId: integer("workspace_id")
@@ -61,3 +61,36 @@ export const usersToWorkspaceRelations = relations(
     }),
   }),
 );
+
+export const providers = ["github", "google"] as const;
+
+export const oauthAccount = sqliteTable(
+  "oauth_account",
+  {
+    providerId: text("provider_id", { enum: providers }).notNull(),
+    providerUserId: text("provider_user_id").notNull(),
+
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => ({
+    providerIdProviderUserId: primaryKey({
+      columns: [t.providerId, t.providerUserId],
+    }),
+  }),
+);
+
+export const session = sqliteTable("session", {
+  id: text("id").notNull().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  expiresAt: integer("expires_at").notNull(),
+});
