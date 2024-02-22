@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
@@ -37,7 +38,9 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorSchema.parse(row.original);
+  const { monitor } = z
+    .object({ monitor: selectMonitorSchema })
+    .parse(row.original);
   const router = useRouter();
   const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
