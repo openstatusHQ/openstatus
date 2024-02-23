@@ -2,74 +2,103 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceToNow } from "date-fns";
 
 import type { Monitor } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import type {
+  Monitor as MonitorTracker,
+  ResponseTimeMetrics,
+} from "@openstatus/tinybird";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 
 import { StatusDot } from "@/components/monitor/status-dot";
+import { Bar } from "@/components/tracker/tracker";
 import { DataTableRowActions } from "./data-table-row-actions";
 
-export const columns: ColumnDef<Monitor>[] = [
+export const columns: ColumnDef<{
+  monitor: Monitor;
+  metrics?: ResponseTimeMetrics;
+  tracker?: MonitorTracker[];
+}>[] = [
   {
     accessorKey: "name",
     header: "Name",
     cell: ({ row }) => {
-      const { active, status } = row.original;
+      const { active, status, name } = row.original.monitor;
       return (
         <Link
-          href={`./monitors/${row.original.id}/overview`}
-          className="group flex items-center gap-2"
+          href={`./monitors/${row.original.monitor.id}/overview`}
+          className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
         >
           <StatusDot active={active} status={status} />
-          <span className="max-w-[125px] truncate group-hover:underline">
-            {row.getValue("name")}
-          </span>
+          <span className="truncate group-hover:underline">{name}</span>
         </Link>
       );
     },
   },
   {
-    accessorKey: "url",
-    header: "URL",
+    accessorKey: "tracker",
+    header: "Last 7 days",
     cell: ({ row }) => {
+      const tracker = row.original.tracker?.slice(0, 7).reverse();
       return (
-        <div className="flex">
-          <span className="max-w-[150px] truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {row.getValue("url")}
-          </span>
+        <div className="flex w-24 gap-1">
+          {tracker?.map((tracker) => (
+            <Bar key={tracker.day} className="h-5" {...tracker} />
+          ))}
         </div>
       );
     },
   },
   {
-    accessorKey: "description",
-    header: "Description",
+    accessorKey: "lastTimestamp",
+    header: "Last ping",
     cell: ({ row }) => {
-      return (
-        <div className="flex">
-          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {row.getValue("description") || "-"}
-          </span>
-        </div>
-      );
+      const timestamp = row.original.metrics?.lastTimestamp;
+      if (timestamp) {
+        const distance = formatDistanceToNow(new Date(timestamp));
+        return (
+          <Number
+            value={parseInt(distance.split(" ")[0])}
+            suffix={`${distance.split(" ")[1]} ago`}
+          />
+        );
+      }
+      return <span className="text-muted-foreground">-</span>;
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "uptime",
+    header: () => <HeaderTooltip>Uptime</HeaderTooltip>,
     cell: ({ row }) => {
-      const { active, status } = row.original;
-
-      if (!active) return <Badge variant="secondary">pause</Badge>;
-      if (status === "error") return <Badge variant="destructive">down</Badge>;
-      return <Badge variant="outline">up</Badge>;
+      const { count, ok } = row.original?.metrics || {};
+      if (!count || !ok)
+        return <span className="text-muted-foreground">-</span>;
+      const rounded = Math.round((ok / count) * 10_000) / 100;
+      return <Number value={rounded} suffix="%" />;
     },
   },
   {
-    accessorKey: "periodicity",
-    header: "Frequency",
+    accessorKey: "avgLatency",
+    header: () => <HeaderTooltip>AVG</HeaderTooltip>,
     cell: ({ row }) => {
-      return <span className="font-mono">{row.getValue("periodicity")}</span>;
+      const latency = row.original.metrics?.avgLatency;
+      if (latency) return <Number value={latency} suffix="ms" />;
+      return <span className="text-muted-foreground">-</span>;
+    },
+  },
+  {
+    accessorKey: "p95Latency",
+    header: () => <HeaderTooltip>P95</HeaderTooltip>,
+    cell: ({ row }) => {
+      const latency = row.original.metrics?.p95Latency;
+      if (latency) return <Number value={latency} suffix="ms" />;
+      return <span className="text-muted-foreground">-</span>;
     },
   },
   {
@@ -83,3 +112,27 @@ export const columns: ColumnDef<Monitor>[] = [
     },
   },
 ];
+
+function HeaderTooltip({ children }: { children: string }) {
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger className="underline decoration-dotted">
+          {children}
+        </TooltipTrigger>
+        <TooltipContent>Data from the last 24h</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+function Number({ value, suffix }: { value: number; suffix: string }) {
+  return (
+    <span className="font-mono">
+      {new Intl.NumberFormat("us").format(value).toString()}{" "}
+      <span className="text-muted-foreground text-xs font-normal">
+        {suffix}
+      </span>
+    </span>
+  );
+}

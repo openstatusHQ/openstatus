@@ -77,8 +77,6 @@ export function Tracker({
   const uptime = getTotalUptimeString(data);
   const _data = addBlackListInfo(data);
 
-  console.log({ incidents });
-
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between text-sm">
@@ -165,16 +163,26 @@ export function Tracker({
 type BarProps = Monitor & { blacklist?: string } & Pick<
     TrackerProps,
     "reports" | "incidents"
-  >;
+  > & {
+    className?: string;
+  };
 
-const Bar = ({ count, ok, day, blacklist, reports, incidents }: BarProps) => {
+export const Bar = ({
+  count,
+  ok,
+  day,
+  blacklist,
+  reports,
+  incidents,
+  className,
+}: BarProps) => {
   const [open, setOpen] = React.useState(false);
   const status = getStatusByRatio(ok / count);
   const isIncident = incidents && incidents.length > 0;
 
   const { label, variant } = isIncident ? incidentStatus : status;
 
-  const className = tracker({
+  const rootClassName = tracker({
     report: reports && reports.length > 0 ? 30 : undefined,
     variant: blacklist ? "blacklist" : variant,
   });
@@ -187,7 +195,7 @@ const Bar = ({ count, ok, day, blacklist, reports, incidents }: BarProps) => {
       onOpenChange={setOpen}
     >
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
-        <div className={className} />
+        <div className={cn(rootClassName, className)} />
       </HoverCardTrigger>
       <HoverCardContent side="top" className="w-auto max-w-[16rem] p-2">
         {blacklist ? (
@@ -196,7 +204,10 @@ const Bar = ({ count, ok, day, blacklist, reports, incidents }: BarProps) => {
           <div>
             <div className="flex gap-2">
               <div
-                className={cn(className, "h-auto w-1 flex-none rounded-full")}
+                className={cn(
+                  rootClassName,
+                  "h-auto w-1 flex-none rounded-full",
+                )}
               />
               <div className="grid flex-1 gap-1">
                 <div className="flex justify-between gap-8 text-sm">
