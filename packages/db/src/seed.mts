@@ -2,6 +2,7 @@ import "dotenv/config";
 
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
+import { generateId } from "lucia";
 
 import { env } from "../env.mjs";
 import {
@@ -106,7 +107,8 @@ async function main() {
   await db
     .insert(user)
     .values({
-      id: 1,
+      primaryId: 1,
+      id: generateId(15),
       tenantId: "1",
       firstName: "test",
       lastName: "user",

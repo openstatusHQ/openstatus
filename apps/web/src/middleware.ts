@@ -106,7 +106,7 @@ export default authMiddleware({
         const allowedWorkspaces = await db
           .select()
           .from(usersToWorkspaces)
-          .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+          .innerJoin(user, eq(user.pkId, usersToWorkspaces.userId))
           .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
           .where(eq(user.tenantId, auth.userId))
           .all();

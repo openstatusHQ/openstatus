@@ -41,7 +41,7 @@ export const workspaceRouter = createTRPCRouter({
 
   getUserWorkspaces: protectedProcedure.query(async (opts) => {
     const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
-      where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
+      where: eq(usersToWorkspaces.userId, opts.ctx.user.pkId),
       with: {
         workspace: true,
       },
@@ -77,7 +77,7 @@ export const workspaceRouter = createTRPCRouter({
       const _userToWorkspace =
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
-            eq(usersToWorkspaces.userId, opts.ctx.user.id),
+            eq(usersToWorkspaces.userId, opts.ctx.user.pkId),
             eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
@@ -87,7 +87,7 @@ export const workspaceRouter = createTRPCRouter({
       if (!["owner"].includes(_userToWorkspace.role))
         throw new Error("Not authorized to remove user from workspace");
 
-      if (opts.input.id === opts.ctx.user.id)
+      if (opts.input.id === opts.ctx.user.pkId)
         throw new Error("Cannot remove yourself from workspace");
 
       await opts.ctx.db
@@ -107,7 +107,7 @@ export const workspaceRouter = createTRPCRouter({
       const _userToWorkspace =
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
-            eq(usersToWorkspaces.userId, opts.ctx.user.id),
+            eq(usersToWorkspaces.userId, opts.ctx.user.pkId),
             eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });

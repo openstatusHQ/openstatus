@@ -43,8 +43,8 @@ export function DataTableRowActions<TData>({
   async function onDelete() {
     startTransition(async () => {
       try {
-        if (!user.id) return;
-        await api.workspace.removeWorkspaceUser.mutate({ id: user.id });
+        if (!user.pkId) return;
+        await api.workspace.removeWorkspaceUser.mutate({ id: user.pkId });
         toast("removed");
         router.refresh();
         setAlertOpen(false);

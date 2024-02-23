@@ -41,7 +41,7 @@ export const stripeRouter = createTRPCRouter({
         .select()
         .from(usersToWorkspaces)
         .where(eq(usersToWorkspaces.workspaceId, result.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.pkId))
         .get();
 
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
@@ -103,7 +103,7 @@ export const stripeRouter = createTRPCRouter({
         .select()
         .from(usersToWorkspaces)
         .where(eq(usersToWorkspaces.workspaceId, result.id))
-        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.id))
+        .innerJoin(currentUser, eq(usersToWorkspaces.userId, currentUser.pkId))
         .get();
 
       if (!userHasAccess || !userHasAccess.users_to_workspaces) return;
