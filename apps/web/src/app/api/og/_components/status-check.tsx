@@ -24,7 +24,7 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
 
   return (
     <div tw="flex flex-col justify-center items-center gap-2 w-full">
-      <div tw={cn("flex text-white rounded-full p-3", className)}>
+      <div tw={cn("flex text-white rounded-full p-3 border-2", className)}>
         <Icon />
       </div>
       <p style={{ fontFamily: "Cal" }} tw="text-4xl">

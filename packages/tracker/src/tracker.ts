@@ -94,8 +94,6 @@ export class Tracker {
       const eod = endOfDay(day);
       const sod = startOfDay(day);
 
-      console.log({ startedAt, resolvedAt, eod, sod });
-
       if (!startedAt) return false; // not started
 
       const hasStartedAfterEndOfDay = startedAt.getTime() >= eod.getTime();
