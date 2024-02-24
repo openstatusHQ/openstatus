@@ -7,7 +7,7 @@ import { Lucia } from "lucia";
 
 import { db } from "@openstatus/db";
 import type { User } from "@openstatus/db/src/schema";
-import { session, user } from "@openstatus/db/src/schema";
+import { selectUserSchema, session, user } from "@openstatus/db/src/schema";
 
 const adapter = new DrizzleSQLiteAdapter(db, session, user);
 
@@ -49,6 +49,10 @@ export const validateRequest = cache(
     }
 
     const result = await lucia.validateSession(sessionId);
+
+    if (!result.user) {
+      return { user: null, session: null };
+    }
     // next.js throws when you attempt to set cookie when rendering page
     try {
       if (result.session && result.session.fresh) {
@@ -70,8 +74,10 @@ export const validateRequest = cache(
     } catch {
       console.log("Error setting session cookie");
     }
-    // @ts-expect-error
-    return result;
+    return {
+      user: selectUserSchema.parse(result.user),
+      session: result.session,
+    };
   },
 );
 
