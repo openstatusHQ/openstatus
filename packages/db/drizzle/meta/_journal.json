@@ -155,6 +155,13 @@
       "when": 1708772082365,
       "tag": "0021_pink_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1708774295585,
+      "tag": "0022_stale_storm",
+      "breakpoints": true
     }
   ]
 }
