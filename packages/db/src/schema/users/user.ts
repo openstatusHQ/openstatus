@@ -9,7 +9,7 @@ import {
 import { workspace, workspaceRole } from "../workspaces";
 
 export const user = sqliteTable("user", {
-  id: integer("id").primaryKey(),
+  primaryKey: integer("primaryKey").primaryKey(),
   tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
 
   firstName: text("first_name").default(""),
@@ -34,7 +34,7 @@ export const usersToWorkspaces = sqliteTable(
   {
     userId: integer("user_id")
       .notNull()
-      .references(() => user.id),
+      .references(() => user.primaryKey),
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id),
@@ -57,7 +57,7 @@ export const usersToWorkspaceRelations = relations(
     }),
     user: one(user, {
       fields: [usersToWorkspaces.userId],
-      references: [user.id],
+      references: [user.primaryKey],
     }),
   }),
 );
