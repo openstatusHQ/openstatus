@@ -7,7 +7,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const incidentRouter = createTRPCRouter({
   // TODO: rename getIncidentsByWorkspace to make it consistent with the other methods
-  getAllIncidents: protectedProcedure
+  getIncidentsByWorkspace: protectedProcedure
     .output(z.array(selectIncidentSchema))
     .query(async (opts) => {
       const result = await opts.ctx.db

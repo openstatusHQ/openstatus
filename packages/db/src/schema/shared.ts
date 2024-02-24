@@ -18,44 +18,28 @@ export const selectPublicMonitorSchema = selectMonitorSchema.omit({
   method: true,
 });
 
-export const selectStatusReportPageSchema = z.array(
-  selectStatusReportSchema.extend({
-    statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
-    monitorsToStatusReports: z
-      .array(
-        z.object({
-          monitorId: z.number(),
-          statusReportId: z.number(),
-          monitor: selectPublicMonitorSchema,
-        }),
-      )
-      .default([]),
-  }),
-);
-export const selectPageSchemaWithRelation = selectPageSchema.extend({
-  monitors: z.array(selectMonitorSchema),
-  statusReports: selectStatusReportPageSchema,
+export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
+  statusReportUpdates: z.array(selectStatusReportUpdateSchema).default([]),
+  monitorsToStatusReports: z
+    .array(
+      z.object({
+        monitorId: z.number(),
+        statusReportId: z.number(),
+        monitor: selectPublicMonitorSchema,
+      }),
+    )
+    .default([]),
 });
 
-// FIXME: move all to `Incident` schema - avoid duplication
-export const selectIncidentPageSchema = z
-  .array(
-    selectIncidentSchema,
-    // .pick({
-    //   id: true,
-    //   monitorId: true,
-    //   status: true,
-    //   startedAt: true,
-    //   acknowledgedAt: true,
-    //   resolvedAt: true,
-    // }),
-  )
-  .default([]);
+export const selectPageSchemaWithRelation = selectPageSchema.extend({
+  monitors: z.array(selectMonitorSchema),
+  statusReports: z.array(selectStatusReportPageSchema),
+});
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
-    statusReports: selectStatusReportPageSchema,
+    statusReports: z.array(selectStatusReportPageSchema),
     incidents: z.array(selectIncidentSchema),
     workspacePlan: workspacePlanSchema
       .nullable()
@@ -74,3 +58,8 @@ export const selectPublicStatusReportSchemaWithRelation =
       .default([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),
   });
+
+export type StatusReportWithUpdates = z.infer<
+  typeof selectStatusReportPageSchema
+>;
+export type PublicMonitor = z.infer<typeof selectPublicMonitorSchema>;

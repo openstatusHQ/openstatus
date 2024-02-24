@@ -13,6 +13,12 @@ export enum Status {
 
 export type StatusVariant = "up" | "degraded" | "down" | "empty" | "incident";
 
+export type StatusDetails = {
+  long: string;
+  short: string;
+  variant: StatusVariant;
+};
+
 /**
  * Data used for the `Bar` component within the `Tracker` component.
  */

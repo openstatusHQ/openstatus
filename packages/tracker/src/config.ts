@@ -1,35 +1,42 @@
-import type { StatusVariant } from "./types";
+import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 
-export const statusDict: Record<Status, string> = {
-  [Status.Operational]: "Operational",
-  [Status.DegradedPerformance]: "Degraded Performance",
-  [Status.PartialOutage]: "Partial Outage",
-  [Status.MajorOutage]: "Major Outage",
-  [Status.UnderMaintenance]: "Under Maintenance",
-  [Status.Unknown]: "Unknown",
-  [Status.Incident]: "Downtime",
-};
-
-// SOMETIMES YOU WISH A BIT MORE TEXT
-export const statusLongDict: Record<Status, string> = {
-  [Status.Operational]: "All Systems Operational",
-  [Status.DegradedPerformance]: "Degraded Performance",
-  [Status.PartialOutage]: "Partial Outage",
-  [Status.MajorOutage]: "Major Outage",
-  [Status.UnderMaintenance]: "Under Maintenance",
-  [Status.Unknown]: "Unknown",
-  [Status.Incident]: "Downtime",
-};
-
-export const variants: Record<Status, StatusVariant> = {
-  [Status.Operational]: "up",
-  [Status.DegradedPerformance]: "degraded",
-  [Status.PartialOutage]: "down",
-  [Status.MajorOutage]: "down",
-  [Status.UnderMaintenance]: "down",
-  [Status.Unknown]: "empty",
-  [Status.Incident]: "incident",
+export const statusDetails: Record<Status, StatusDetails> = {
+  [Status.Operational]: {
+    long: "All Systems Operational",
+    short: "Operational",
+    variant: "up",
+  },
+  [Status.DegradedPerformance]: {
+    long: "Degraded Performance",
+    short: "Degraded",
+    variant: "degraded",
+  },
+  [Status.PartialOutage]: {
+    long: "Partial Outage",
+    short: "Partial",
+    variant: "down",
+  },
+  [Status.MajorOutage]: {
+    long: "Major Outage",
+    short: "Major",
+    variant: "down",
+  },
+  [Status.UnderMaintenance]: {
+    long: "Under Maintenance",
+    short: "Maintenance",
+    variant: "empty",
+  },
+  [Status.Unknown]: {
+    long: "Unknown",
+    short: "Unknown",
+    variant: "empty",
+  },
+  [Status.Incident]: {
+    long: "Downtime",
+    short: "Downtime",
+    variant: "incident",
+  },
 };
 
 // REMINDER: add `@openstatus/tracker/src/**/*.ts into tailwindcss content prop */

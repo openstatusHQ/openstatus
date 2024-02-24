@@ -3,14 +3,12 @@ import type { Tracker } from "@openstatus/tracker";
 import { cn } from "@/lib/utils";
 
 export function StatusCheck({ tracker }: { tracker: Tracker }) {
-  // MAYBE HAVE A SINGLE ENDPOINT
-  const label = tracker.toString;
-  const variant = tracker.currentVariant;
+  const details = tracker.currentDetails;
   const className = tracker.currentClassName;
 
   // FIXME: move icons into @openstatus/tracker lib
   function getVariant() {
-    switch (variant) {
+    switch (details.variant) {
       case "down":
         return Minus;
       case "degraded":
@@ -30,7 +28,7 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
         <Icon />
       </div>
       <p style={{ fontFamily: "Cal" }} tw="text-4xl">
-        {label}
+        {details.long}
       </p>
     </div>
   );

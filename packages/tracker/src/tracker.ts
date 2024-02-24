@@ -6,9 +6,9 @@ import type {
 import type { Monitor } from "@openstatus/tinybird";
 
 import { isInBlacklist } from "./blacklist";
-import { classNames, statusDict, variants } from "./config";
-import { mockMonitor } from "./mock";
-import type { StatusVariant } from "./types";
+import { classNames, statusDetails } from "./config";
+// import { mockMonitor } from "./mock";
+import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
 
@@ -76,7 +76,11 @@ export class Tracker {
   }
 
   get currentVariant(): StatusVariant {
-    return variants[this.currentStatus];
+    return statusDetails[this.currentStatus].variant;
+  }
+
+  get currentDetails(): StatusDetails {
+    return statusDetails[this.currentStatus];
   }
 
   get currentClassName(): string {
@@ -143,8 +147,8 @@ export class Tracker {
       const status = incidents.length
         ? Status.Incident
         : this.calculateUptimeStatus([props]);
-      const variant = variants[status];
-      const label = statusDict[status];
+      const variant = statusDetails[status].variant;
+      const label = statusDetails[status].short;
       return {
         ...props,
         blacklist,
@@ -159,7 +163,7 @@ export class Tracker {
   }
 
   get toString() {
-    return statusDict[this.currentStatus];
+    return statusDetails[this.currentStatus].short;
   }
 }
 

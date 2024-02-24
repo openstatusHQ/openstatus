@@ -31,7 +31,7 @@ export default async function MonitorPage() {
 
   const gmt = convertTimezoneToGMT();
 
-  const _incidents = await api.incident.getAllIncidents.query();
+  const _incidents = await api.incident.getIncidentsByWorkspace.query();
 
   // maybe not very efficient?
   // use Suspense and Client call instead?

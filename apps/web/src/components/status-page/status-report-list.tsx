@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronRight } from "lucide-react";
-import type { z } from "zod";
 
 import type {
-  selectPublicMonitorSchema,
-  selectStatusReportPageSchema,
+  PublicMonitor,
+  StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
 import { Button, Separator } from "@openstatus/ui";
 
@@ -18,29 +17,29 @@ import { Summary } from "../status-update/summary";
 
 // TODO: change layout - it is too packed with data rn
 
-export const IncidentList = ({
-  incidents,
+export const StatusReportList = ({
+  statusReports,
   monitors,
   context = "all",
 }: {
-  incidents: z.infer<typeof selectStatusReportPageSchema>;
-  monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  statusReports: StatusReportWithUpdates[];
+  monitors: PublicMonitor[];
   context?: "all" | "latest"; // latest 7 days
 }) => {
   const params = useParams<{ domain: string }>();
   const lastWeek = Date.now() - 1000 * 60 * 60 * 24 * 7;
 
   function getLastWeeksIncidents() {
-    return incidents.filter((incident) => {
+    return statusReports.filter((incident) => {
       return incident.statusReportUpdates.some(
         (update) => update.date.getTime() > lastWeek,
       );
     });
   }
 
-  const _incidents = context === "all" ? incidents : getLastWeeksIncidents();
+  const reports = context === "all" ? statusReports : getLastWeeksIncidents();
 
-  _incidents.sort((a, b) => {
+  reports.sort((a, b) => {
     if (a.updatedAt == undefined) return 1;
     if (b.updatedAt == undefined) return -1;
     return b.updatedAt.getTime() - a.updatedAt.getTime();
@@ -48,23 +47,23 @@ export const IncidentList = ({
 
   return (
     <>
-      {_incidents?.length > 0 ? (
+      {reports?.length > 0 ? (
         <div className="grid gap-3">
           <p className="text-muted-foreground text-sm font-light">
             {context === "all" ? "All incidents" : "Latest incidents"}
           </p>
           <div className="grid gap-8">
-            {_incidents.map((incident) => {
-              const affectedMonitors = incident.monitorsToStatusReports
+            {reports.map((report) => {
+              const affectedMonitors = report.monitorsToStatusReports
                 .map(({ monitorId }) => {
                   const monitor = monitors.find(({ id }) => monitorId === id);
                   return monitor || undefined;
                 })
                 .filter(notEmpty);
               return (
-                <div key={incident.id} className="group grid gap-4 text-left">
+                <div key={report.id} className="group grid gap-4 text-left">
                   <div className="flex items-center gap-1">
-                    <h3 className="text-xl font-semibold">{incident.title}</h3>
+                    <h3 className="text-xl font-semibold">{report.title}</h3>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -72,16 +71,16 @@ export const IncidentList = ({
                       asChild
                     >
                       <Link
-                        href={setPrefixUrl(`/incidents/${incident.id}`, params)}
+                        href={setPrefixUrl(`/incidents/${report.id}`, params)}
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Link>
                     </Button>
                   </div>
-                  <Summary report={incident} monitors={affectedMonitors} />
+                  <Summary report={report} monitors={affectedMonitors} />
                   <Separator />
                   <Events
-                    statusReportUpdates={incident.statusReportUpdates}
+                    statusReportUpdates={report.statusReportUpdates}
                     collabsible
                   />
                 </div>
