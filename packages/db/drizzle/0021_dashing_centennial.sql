@@ -1,3 +1,7 @@
+ALTER TABLE `user` RENAME COLUMN `id` TO `pk_id`;
+--> statement-breakpoint
+ALTER TABLE `user` ADD COLUMN `id` text;
+--> statement-breakpoint
 CREATE TABLE `oauth_account` (
 	`provider_id` text NOT NULL,
 	`provider_user_id` text NOT NULL,
@@ -15,6 +19,3 @@ CREATE TABLE `session` (
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-ALTER TABLE `user` RENAME COLUMN `id` TO `pk_id`;
---> statement-breakpoint
-ALTER TABLE `user` ADD COLUMN `id` text;
