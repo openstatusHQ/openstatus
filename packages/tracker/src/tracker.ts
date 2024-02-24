@@ -7,7 +7,6 @@ import type { Monitor } from "@openstatus/tinybird";
 
 import { isInBlacklist } from "./blacklist";
 import { classNames, statusDetails } from "./config";
-// import { mockMonitor } from "./mock";
 import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
@@ -141,12 +140,19 @@ export class Tracker {
       const blacklist = isInBlacklist(day);
       const incidents = this.getIncidentsByDay(day);
       const statusReports = this.getStatusReportsByDay(props);
+
+      const isMissingData = props.count === 0;
+
       // FIXME:
       const status = incidents.length
         ? Status.Incident
+        : isMissingData
+        ? Status.Unknown
         : this.calculateUptimeStatus([props]);
+
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;
+
       return {
         ...props,
         blacklist,
@@ -154,7 +160,7 @@ export class Tracker {
         statusReports,
         status,
         variant,
-        label,
+        label: isMissingData ? "Missing" : label,
       };
     });
     return data;
@@ -164,6 +170,3 @@ export class Tracker {
     return statusDetails[this.currentStatus].short;
   }
 }
-
-// const tracker = new Tracker({ data: mockMonitor });
-// console.log(tracker.days);

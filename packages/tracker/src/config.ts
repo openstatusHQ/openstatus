@@ -44,6 +44,6 @@ export const classNames: Record<StatusVariant, string> = {
   up: "bg-green-500/90 data-[state=open]:bg-green-500 border-green-500",
   degraded: "bg-amber-500/90 data-[state=open]:bg-amber-500 border-amber-500",
   down: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
-  empty: "bg-gray-500/90 data-[state=open]:bg-gray-500 border-gray-500",
+  empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
   incident: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
 };

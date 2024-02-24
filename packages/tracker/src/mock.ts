@@ -1,5 +1,7 @@
 import type { Monitor } from "@openstatus/tinybird";
 
+import { Tracker } from "./tracker";
+
 export const mockMonitor: Monitor[] = [
   { day: "2024-02-21 00:00:00", count: 762, ok: 762 },
   { day: "2024-02-20 00:00:00", count: 864, ok: 864 },
@@ -48,3 +50,6 @@ export const mockMonitor: Monitor[] = [
   { day: "2024-01-08 00:00:00", count: 864, ok: 864 },
   { day: "2024-01-07 00:00:00", count: 671, ok: 671 },
 ];
+
+const tracker = new Tracker({ data: mockMonitor });
+console.log(tracker.totalUptime);
