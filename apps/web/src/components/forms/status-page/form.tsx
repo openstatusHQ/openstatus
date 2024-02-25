@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 
 import { insertPageSchema } from "@openstatus/db/src/schema";
 import type { InsertPage, Monitor } from "@openstatus/db/src/schema";
-import { Badge, Button, Form, useToast } from "@openstatus/ui";
+import { Badge, Form } from "@openstatus/ui";
 
 import {
   Tabs,
@@ -17,8 +17,8 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useToastAction } from "@/hooks/use-toast-action";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toast, toastAction } from "@/lib/toast";
 import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import { SaveButton } from "../shared/save-button";
@@ -69,8 +69,6 @@ export function StatusPageForm({
   const watchSlug = form.watch("slug");
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
-  const { toast } = useToastAction();
-  const { toast: defaultToast } = useToast();
   const updateSearchParams = useUpdateSearchParams();
 
   const checkUniqueSlug = useCallback(async () => {
@@ -116,23 +114,21 @@ export function StatusPageForm({
           router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
         }
 
-        defaultToast({
-          title: "Saved successfully.",
+        toast.success("Saved successfully.", {
           description: "Your status page is ready to go.",
-          action: (
-            <Button variant="outline">
-              <a href={`https://${props.slug}.openstatus.dev`} target="_blank">
-                Visit
-              </a>
-            </Button>
-          ),
+          action: {
+            label: "Visit",
+            onClick: () =>
+              window.open(`https://${props.slug}.openstatus.dev`, "_blank")
+                ?.location,
+          },
         });
         if (nextUrl) {
           router.push(nextUrl);
         }
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };
@@ -153,7 +149,7 @@ export function StatusPageForm({
           const isUnique = await checkUniqueSlug();
           if (!isUnique) {
             // the user will already have the "error" message - we include a toast as well
-            toast("unique-slug");
+            toastAction("unique-slug");
           } else {
             if (onSubmit) {
               void form.handleSubmit(onSubmit)(e);

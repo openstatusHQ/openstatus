@@ -121,7 +121,7 @@ export function StatusPageForm({
           router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
         }
 
-        toast("Saved successfully.", {
+        toast.success("Saved successfully.", {
           description: "Your status page is ready to go.",
           action: {
             label: "Visit",
