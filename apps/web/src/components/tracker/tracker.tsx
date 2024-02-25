@@ -61,6 +61,7 @@ export function Tracker({
 }: TrackerProps) {
   const tracker = new OSTracker({ data, statusReports: reports, incidents });
   const uptime = tracker.totalUptime;
+  const isMissing = tracker.isDataMissing;
 
   return (
     <div className="flex flex-col gap-1.5">
@@ -80,7 +81,9 @@ export function Tracker({
             </TooltipProvider>
           ) : null}
         </div>
-        <p className="text-muted-foreground shrink-0 font-light">{uptime}%</p>
+        {!isMissing ? (
+          <p className="text-muted-foreground shrink-0 font-light">{uptime}%</p>
+        ) : null}
       </div>
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">

@@ -14,12 +14,12 @@ export const statusDetails: Record<Status, StatusDetails> = {
   },
   [Status.PartialOutage]: {
     long: "Partial Outage",
-    short: "Partial",
+    short: "Outage",
     variant: "down",
   },
   [Status.MajorOutage]: {
     long: "Major Outage",
-    short: "Major",
+    short: "Outage",
     variant: "down",
   },
   [Status.UnderMaintenance]: {

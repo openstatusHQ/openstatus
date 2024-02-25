@@ -33,7 +33,13 @@ export class Tracker {
   }
 
   private calculateUptime(data: { ok: number; count: number }[]) {
-    const { count, ok } = data.reduce(
+    const { count, ok } = this.aggregatedData(data);
+    if (count === 0) return 100; // starting with 100% uptime
+    return Math.round((ok / count) * 10_000) / 100; // round to 2 decimal places
+  }
+
+  private aggregatedData(data: { ok: number; count: number }[]) {
+    return data.reduce(
       (prev, curr) => {
         prev.ok += curr.ok;
         prev.count += curr.count;
@@ -41,8 +47,11 @@ export class Tracker {
       },
       { count: 0, ok: 0 },
     );
-    if (count === 0) return 100; // starting with 100% uptime
-    return Math.round((ok / count) * 10_000) / 100; // round to 2 decimal places
+  }
+
+  get isDataMissing() {
+    const { count } = this.aggregatedData(this.data);
+    return count === 0;
   }
 
   private calculateUptimeStatus(data: { ok: number; count: number }[]): Status {
