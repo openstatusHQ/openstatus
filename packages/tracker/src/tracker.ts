@@ -62,9 +62,9 @@ export class Tracker {
 
   private calculateUptimeStatus(data: { ok: number; count: number }[]): Status {
     const uptime = this.calculateUptime(data);
-    if (uptime >= 99.8) return Status.Operational;
-    if (uptime >= 95) return Status.DegradedPerformance;
-    if (uptime > 50) return Status.PartialOutage;
+    if (uptime >= 98) return Status.Operational;
+    if (uptime >= 60) return Status.DegradedPerformance;
+    if (uptime > 30) return Status.PartialOutage;
     return Status.MajorOutage;
   }
 
