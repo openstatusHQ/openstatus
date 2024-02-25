@@ -20,7 +20,7 @@ export const webhookRouter = createTRPCRouter({
     if (opts.input.data.type === "user.created") {
       // There's no primary key with drizzle I checked the tennant is not already in the database
       const alreadyExists = await opts.ctx.db
-        .select({ id: user.id })
+        .select({ id: user.pkId })
         .from(user)
         .where(eq(user.tenantId, opts.input.data.data.id))
         .get();
@@ -93,7 +93,7 @@ export const webhookRouter = createTRPCRouter({
   userSignedIn: webhookProcedure.mutation(async (opts) => {
     if (opts.input.data.type === "session.created") {
       const currentUser = await opts.ctx.db
-        .select({ id: user.id, email: user.email })
+        .select({ id: user.pkId, email: user.email })
         .from(user)
         .where(eq(user.tenantId, opts.input.data.data.user_id))
         .get();

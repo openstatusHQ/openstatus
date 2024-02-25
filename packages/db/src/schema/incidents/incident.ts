@@ -37,11 +37,11 @@ export const incidentTable = sqliteTable(
       .default(sql`(strftime('%s', 'now'))`),
     // Who has acknowledged the incident
     acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
-    acknowledgedBy: integer("acknowledged_by").references(() => user.id),
+    acknowledgedBy: integer("acknowledged_by").references(() => user.primaryId),
 
     // Who has resolved it
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
-    resolvedBy: integer("resolved_by").references(() => user.id),
+    resolvedBy: integer("resolved_by").references(() => user.primaryId),
 
     // If the incident was auto resolved
     autoResolved: integer("auto_resolved", { mode: "boolean" }).default(false),

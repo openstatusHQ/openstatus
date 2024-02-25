@@ -66,7 +66,7 @@ export const incidentRouter = createTRPCRouter({
         .update(schema.incidentTable)
         .set({
           acknowledgedAt: new Date(),
-          acknowledgedBy: opts.ctx.user.id,
+          acknowledgedBy: opts.ctx.user.pkId,
         })
         .where(
           and(
@@ -102,7 +102,7 @@ export const incidentRouter = createTRPCRouter({
         .update(schema.incidentTable)
         .set({
           resolvedAt: new Date(),
-          resolvedBy: opts.ctx.user.id,
+          resolvedBy: opts.ctx.user.pkId,
         })
         .where(
           and(

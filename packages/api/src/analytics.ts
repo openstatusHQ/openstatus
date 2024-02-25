@@ -2,8 +2,8 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { User } from "@openstatus/db/src/schema";
 
 export async function trackNewPage(user: User, config: { slug: string }) {
-  await analytics.identify(user.id, {
-    userId: user.id,
+  await analytics.identify(user.pkId, {
+    userId: user.pkId,
     email: user.email,
   });
   await trackAnalytics({
@@ -16,8 +16,8 @@ export async function trackNewMonitor(
   user: User,
   config: { url: string; periodicity: string },
 ) {
-  await analytics.identify(user.id, {
-    userId: user.id,
+  await analytics.identify(user.pkId, {
+    userId: user.pkId,
     email: user.email,
   });
   await trackAnalytics({
@@ -34,8 +34,8 @@ export async function trackNewNotification(
   user: User,
   config: { provider: string },
 ) {
-  await analytics.identify(user.id, {
-    userId: user.id,
+  await analytics.identify(user.pkId, {
+    userId: user.pkId,
     email: user.email,
   });
   await trackAnalytics({
