@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 
 import { insertPageSchema } from "@openstatus/db/src/schema";
 import type { InsertPage, Monitor } from "@openstatus/db/src/schema";
-import { Button, Form, useToast } from "@openstatus/ui";
+import { Badge, Button, Form, useToast } from "@openstatus/ui";
 
 import {
   Tabs,
@@ -169,7 +169,14 @@ export function StatusPageForm({
           onValueChange={onValueChange}
         >
           <TabsList>
-            <TabsTrigger value="monitors">Monitors</TabsTrigger>
+            <TabsTrigger value="monitors">
+              Monitors{" "}
+              {defaultValues?.monitors?.length ? (
+                <Badge variant="secondary" className="ml-1">
+                  {defaultValues.monitors.length}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
           <TabsContent value="monitors">
