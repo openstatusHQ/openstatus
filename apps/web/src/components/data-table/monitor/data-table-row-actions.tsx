@@ -28,7 +28,7 @@ import {
 
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -42,7 +42,6 @@ export function DataTableRowActions<TData>({
     .object({ monitor: selectMonitorSchema })
     .parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -51,11 +50,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -69,10 +68,10 @@ export function DataTableRowActions<TData>({
           ...rest,
           active: !monitor.active,
         });
-        toast("success");
+        toastAction("success");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -92,12 +91,12 @@ export function DataTableRowActions<TData>({
         const data = (await res.json()) as RegionChecker;
 
         if (data.status >= 200 && data.status < 300) {
-          toast("test-success");
+          toastAction("test-success");
         } else {
-          toast("test-error");
+          toastAction("test-error");
         }
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

@@ -19,7 +19,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
@@ -62,7 +62,6 @@ export function StatusReportForm({
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: InsertStatusReport) => {
     startTransition(async () => {
@@ -92,9 +91,9 @@ export function StatusReportForm({
           router.push(nextUrl);
         }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

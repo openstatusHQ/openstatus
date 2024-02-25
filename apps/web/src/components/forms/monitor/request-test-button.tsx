@@ -26,7 +26,7 @@ import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
 import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -36,7 +36,6 @@ interface Props {
 export function RequestTestButton({ form, pingEndpoint }: Props) {
   const [check, setCheck] = React.useState<RegionChecker | undefined>();
   const [value, setValue] = React.useState<MonitorFlyRegion>(flyRegions[0]);
-  const { toast } = useToastAction();
   const [isPending, startTransition] = React.useTransition();
 
   const onClick = () => {
@@ -45,7 +44,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
     const { url } = form.getValues();
 
     if (!url) {
-      toast("test-warning-empty-url");
+      toastAction("test-warning-empty-url");
       return;
     }
 
@@ -55,12 +54,12 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
         setCheck(data);
         const isOk = data.status >= 200 && data.status < 300;
         if (isOk) {
-          toast("test-success");
+          toastAction("test-success");
         } else {
-          toast("test-error");
+          toastAction("test-error");
         }
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

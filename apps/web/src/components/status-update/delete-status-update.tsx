@@ -18,12 +18,11 @@ import {
 
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -31,11 +30,11 @@ export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
     startTransition(async () => {
       try {
         await api.statusReport.deleteStatusReportUpdate.mutate({ id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

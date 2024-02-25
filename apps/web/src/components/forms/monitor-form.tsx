@@ -65,7 +65,8 @@ import { flyRegionsDict } from "@openstatus/utils";
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
@@ -117,7 +118,6 @@ export function MonitorForm({
   const [isTestPending, startTestTransition] = React.useTransition();
   const [pingFailed, setPingFailed] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
-  const { toast } = useToastAction();
   const watchMethod = form.watch("method");
 
   const { fields, append, remove } = useFieldArray({
@@ -136,9 +136,9 @@ export function MonitorForm({
         router.push(nextUrl);
       }
       router.refresh();
-      toast("saved");
+      toastAction("saved");
     } catch (error) {
-      toast("error");
+      toastAction("error");
     }
   };
 
@@ -195,7 +195,7 @@ export function MonitorForm({
     }
     const { url } = form.getValues();
     if (!url) {
-      toast("test-warning-empty-url");
+      toastAction("test-warning-empty-url");
       return;
     }
 
@@ -203,12 +203,12 @@ export function MonitorForm({
       try {
         const data = await pingEndpoint();
         if (data.status >= 200 && data.status < 300) {
-          toast("test-success");
+          toastAction("test-success");
         } else {
-          toast("test-error");
+          toastAction("test-error");
         }
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };

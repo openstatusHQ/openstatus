@@ -8,13 +8,12 @@ import type { Monitor } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 export function PauseButton({ monitor }: { monitor: Monitor }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const { toast } = useToastAction();
 
   async function toggle() {
     startTransition(async () => {
@@ -23,10 +22,10 @@ export function PauseButton({ monitor }: { monitor: Monitor }) {
           ...monitor,
           active: !monitor.active,
         });
-        toast("success");
+        toastAction("success");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

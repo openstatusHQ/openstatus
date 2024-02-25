@@ -43,7 +43,7 @@ export default function RootLayout({
       <body className={`${inter.className} ${calSans.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
-          <Toaster />
+          <Toaster richColors />
           <TailwindIndicator />
         </ThemeProvider>
       </body>
