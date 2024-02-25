@@ -55,7 +55,9 @@ export function SectionDanger({ monitorId }: Props) {
       <div>
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
-            <Button variant="destructive">Delete</Button>
+            <Button variant="destructive" className="w-full sm:w-auto">
+              Delete
+            </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>

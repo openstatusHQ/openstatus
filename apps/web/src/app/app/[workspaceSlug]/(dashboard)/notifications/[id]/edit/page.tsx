@@ -1,4 +1,4 @@
-import { NotificationForm } from "@/components/forms/notification-form";
+import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 
 export default async function EditPage({

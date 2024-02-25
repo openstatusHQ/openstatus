@@ -15,6 +15,8 @@ import {
   Switch,
 } from "@openstatus/ui";
 
+import { SectionHeader } from "../shared/section-header";
+
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   plan: WorkspacePlan;
@@ -22,8 +24,12 @@ interface Props {
 
 export function General({ form }: Props) {
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="flex items-center gap-3">
+    <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
+      <SectionHeader
+        title="Basic Information"
+        description="Be able to find your monitor easily."
+      />
+      <div className="flex w-full gap-4 sm:col-span-2">
         <FormField
           control={form.control}
           name="name"
@@ -42,7 +48,7 @@ export function General({ form }: Props) {
           control={form.control}
           name="active"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between space-x-1 space-y-0 sm:col-span-2">
+            <FormItem className="flex flex-row items-center justify-between space-x-1 space-y-0">
               <FormLabel>Active</FormLabel>
               <FormControl>
                 <Switch
@@ -55,6 +61,7 @@ export function General({ form }: Props) {
           )}
         />
       </div>
+      {/* TODO: add FancyBox with "Create Tag option" once `monitor_tabs` db table is set up */}
     </div>
   );
 }

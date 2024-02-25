@@ -20,7 +20,8 @@ import {
 } from "@openstatus/ui";
 import { flyRegions, flyRegionsDict } from "@openstatus/utils";
 
-import { CheckboxLabel } from "./checkbox-label";
+import { CheckboxLabel } from "../shared/checkbox-label";
+import { SectionHeader } from "../shared/section-header";
 
 // TODO: centralize in a shared file!
 const cronJobs = [
@@ -41,13 +42,10 @@ export function SectionScheduling({ form, plan }: Props) {
   const periodicityLimit = getLimit(plan, "periodicity");
   return (
     <div className="grid w-full gap-4">
-      <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">Schedule and Regions</h4>
-        <p className="text-muted-foreground text-sm">
-          Customize the period of time and the regions where your endpoint will
-          be monitored.
-        </p>
-      </div>
+      <SectionHeader
+        title="Schedule and Regions"
+        description="Customize the period of time and the regions where your endpoint will be monitored."
+      />
       <div className="grid sm:grid-cols-2 md:grid-cols-3">
         <FormField
           control={form.control}
@@ -98,7 +96,7 @@ export function SectionScheduling({ form, plan }: Props) {
                   Select the regions you want to monitor your endpoint from.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {flyRegions.map((item) => (
                   <FormField
                     key={item}

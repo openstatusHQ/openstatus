@@ -1,4 +1,4 @@
-import { StatusReportForm } from "@/components/forms/status-report-form";
+import { StatusReportForm } from "@/components/forms/status-report/form";
 import { api } from "@/trpc/server";
 
 export default async function EditPage({
@@ -31,6 +31,7 @@ export default async function EditPage({
           message: "",
         }
       }
+      defaultSection="connect"
     />
   );
 }

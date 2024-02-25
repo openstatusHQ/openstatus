@@ -17,7 +17,8 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { CheckboxLabel } from "./checkbox-label";
+import { CheckboxLabel } from "../shared/checkbox-label";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -30,18 +31,15 @@ interface Props {
 export function SectionStatusPage({ form, pages }: Props) {
   return (
     <div className="flex w-full flex-col gap-4">
-      <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">Status Page</h4>
-        <p className="text-muted-foreground text-sm">
-          Customize the informations about your monitor on the corresponding
-          status page.
-        </p>
-      </div>
+      <SectionHeader
+        title="Status Page"
+        description="Customize the informations about your monitor on the corresponding status page."
+      />
       <FormField
         control={form.control}
         name="description"
         render={({ field }) => (
-          <FormItem className="sm:col-span-2">
+          <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
               <Input
@@ -68,7 +66,7 @@ export function SectionStatusPage({ form, pages }: Props) {
                   Select the pages where you want to display the monitor.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {pages?.map((item) => (
                   <FormField
                     key={item.id}
@@ -103,6 +101,9 @@ export function SectionStatusPage({ form, pages }: Props) {
                   />
                 ))}
               </div>
+              {!pages || pages.length === 0 ? (
+                <FormDescription>Missing status pages.</FormDescription>
+              ) : null}
               <FormMessage />
             </FormItem>
           );

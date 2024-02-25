@@ -64,20 +64,21 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
       }
     });
   };
+
+  const { flag } = flyRegionsDict[value as keyof typeof flyRegionsDict];
+
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
-      <div className="ring-offset-background focus-within:ring-ring group flex flex h-10 max-w-max items-center rounded-md bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+      <div className="ring-offset-background focus-within:ring-ring group flex h-10 items-center rounded-md bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
         <Select
           value={value}
           onValueChange={(value: MonitorFlyRegion) => setValue(value)}
         >
           <SelectTrigger
-            className="w-16 rounded-r-none focus:ring-0"
+            className="flex-1 rounded-r-none focus:ring-0"
             aria-label={value}
           >
-            <SelectValue>
-              {flyRegionsDict[value as keyof typeof flyRegionsDict]?.flag}
-            </SelectValue>
+            <SelectValue>{flag}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {flyRegions.map((region) => {
@@ -96,7 +97,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
               <Button
                 onClick={onClick}
                 disabled={isPending}
-                className="h-full rounded-l-none focus:ring-0"
+                className="h-full flex-1 rounded-l-none focus:ring-0"
               >
                 {isPending ? (
                   <LoadingAnimation />
