@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
 
-import type { Monitor } from "@openstatus/db/src/schema";
+import type { Incident, Monitor } from "@openstatus/db/src/schema";
 import type {
   Monitor as MonitorTracker,
   ResponseTimeMetrics,
 } from "@openstatus/tinybird";
+import { Tracker } from "@openstatus/tracker";
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +24,8 @@ import { DataTableRowActions } from "./data-table-row-actions";
 export const columns: ColumnDef<{
   monitor: Monitor;
   metrics?: ResponseTimeMetrics;
-  tracker?: MonitorTracker[];
+  data?: MonitorTracker[];
+  incidents?: Incident[];
 }>[] = [
   {
     accessorKey: "name",
@@ -45,10 +47,13 @@ export const columns: ColumnDef<{
     accessorKey: "tracker",
     header: "Last 7 days",
     cell: ({ row }) => {
-      const tracker = row.original.tracker?.slice(0, 7).reverse();
+      const tracker = new Tracker({
+        data: row.original.data?.slice(0, 7).reverse(),
+        incidents: row.original.incidents,
+      });
       return (
         <div className="flex w-24 gap-1">
-          {tracker?.map((tracker) => (
+          {tracker.days?.map((tracker) => (
             <Bar key={tracker.day} className="h-5" {...tracker} />
           ))}
         </div>
@@ -61,12 +66,13 @@ export const columns: ColumnDef<{
     cell: ({ row }) => {
       const timestamp = row.original.metrics?.lastTimestamp;
       if (timestamp) {
-        const distance = formatDistanceToNow(new Date(timestamp));
+        const distance = formatDistanceToNowStrict(new Date(timestamp), {
+          addSuffix: true,
+        });
         return (
-          <Number
-            value={parseInt(distance.split(" ")[0])}
-            suffix={`${distance.split(" ")[1]} ago`}
-          />
+          <div className="text-muted-foreground flex max-w-[84px] sm:max-w-none">
+            <span className="truncate">{distance}</span>
+          </div>
         );
       }
       return <span className="text-muted-foreground">-</span>;
@@ -129,7 +135,7 @@ function HeaderTooltip({ children }: { children: string }) {
 function Number({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span className="font-mono">
-      {new Intl.NumberFormat("us").format(value).toString()}{" "}
+      {new Intl.NumberFormat("us").format(value).toString()}
       <span className="text-muted-foreground text-xs font-normal">
         {suffix}
       </span>

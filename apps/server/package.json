@@ -21,6 +21,7 @@
     "@openstatus/notification-twillio-sms": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
+    "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "0.7.1",

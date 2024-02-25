@@ -1,8 +1,8 @@
 import type { z } from "zod";
 
 import type {
-  selectIncidentPageSchema,
-  selectPublicMonitorSchema,
+  Incident,
+  PublicMonitor,
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
 
@@ -13,9 +13,9 @@ export const MonitorList = ({
   statusReports,
   incidents,
 }: {
-  monitors: z.infer<typeof selectPublicMonitorSchema>[];
+  monitors: PublicMonitor[];
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
-  incidents: z.infer<typeof selectIncidentPageSchema>;
+  incidents: Incident[];
 }) => {
   return (
     <div className="grid gap-4">

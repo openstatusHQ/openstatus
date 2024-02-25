@@ -31,6 +31,8 @@ export default async function MonitorPage() {
 
   const gmt = convertTimezoneToGMT();
 
+  const _incidents = await api.incident.getIncidentsByWorkspace.query();
+
   // maybe not very efficient?
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
@@ -41,7 +43,7 @@ export default async function MonitorPage() {
         interval: 24,
       });
 
-      const tracker = await getMonitorListData({
+      const data = await getMonitorListData({
         monitorId: String(monitor.id),
         url: monitor.url,
         timezone: gmt,
@@ -51,7 +53,11 @@ export default async function MonitorPage() {
         ? metrics.sort((a, b) => (a.time - b.time < 0 ? 1 : -1))
         : [undefined];
 
-      return { monitor, metrics: current, tracker };
+      const incidents = _incidents.filter(
+        (incident) => incident.monitorId === monitor.id,
+      );
+
+      return { monitor, metrics: current, data, incidents };
     }),
   );
 
