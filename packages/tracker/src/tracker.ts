@@ -17,6 +17,12 @@ type StatusReports = (StatusReport & {
 })[];
 type Incidents = Incident[];
 
+/**
+ * Tracker Class is supposed to handle the data and calculate from a single monitor.
+ * But we use it to handle the StatusCheck as well (with no data for a single monitor).
+ * We can create Inheritence to handle the StatusCheck and Monitor separately and even
+ * StatusPage with multiple Monitors.
+ */
 export class Tracker {
   private data: Monitors = [];
   private statusReports: StatusReports = [];
