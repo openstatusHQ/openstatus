@@ -83,7 +83,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
         title="HTTP Request Settings"
         description="Create your HTTP. Add custom headers, payload and test your endpoint before submitting."
       />
-      <div className="flex items-end gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <FormField
           control={form.control}
           name="method"
@@ -98,7 +98,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
                 defaultValue={field.value}
               >
                 <FormControl>
-                  <SelectTrigger className="w-[120px]">
+                  <SelectTrigger className="sm:w-[120px]">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>

@@ -42,16 +42,17 @@ export function SectionAdvanced({ form }: Props) {
   };
 
   return (
-    <div className="grid w-full gap-4">
+    <div className="grid w-full gap-4 md:grid-cols-3">
       <SectionHeader
         title="Advanced Settings"
         description="Provide informations about what your status page is for. A favicon can be uploaded to customize your status page. It will be used as an icon on the header as well."
+        className="md:col-span-full"
       />
       <FormField
         control={form.control}
         name="description"
         render={({ field }) => (
-          <FormItem className="sm:col-span-full">
+          <FormItem className="md:col-span-full">
             <FormLabel>Description</FormLabel>
             <FormControl>
               <Input
@@ -70,7 +71,7 @@ export function SectionAdvanced({ form }: Props) {
         control={form.control}
         name="icon"
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="col-span-full md:col-span-1">
             <FormLabel>Favicon</FormLabel>
             <FormControl>
               <>
