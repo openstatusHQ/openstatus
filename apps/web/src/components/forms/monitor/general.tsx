@@ -26,8 +26,8 @@ export function General({ form }: Props) {
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader
-        title="Alert"
-        description="Select the notification channels you want to be informed."
+        title="Basic Information"
+        description="Be able to find your monitor easily."
       />
       <div className="flex w-full gap-4 sm:col-span-2">
         <FormField
@@ -61,6 +61,7 @@ export function General({ form }: Props) {
           )}
         />
       </div>
+      {/* TODO: add FancyBox with "Create Tag option" once `monitor_tabs` db table is set up */}
     </div>
   );
 }
