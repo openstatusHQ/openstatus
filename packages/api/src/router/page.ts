@@ -239,16 +239,19 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      const incidents = await opts.ctx.db
-        .select()
-        .from(incidentTable)
-        .where(
-          inArray(
-            incidentTable.monitorId,
-            monitors.map((m) => m.id),
-          ),
-        )
-        .all();
+      const incidents =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(incidentTable)
+              .where(
+                inArray(
+                  incidentTable.monitorId,
+                  monitors.map((m) => m.id),
+                ),
+              )
+              .all()
+          : [];
 
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
