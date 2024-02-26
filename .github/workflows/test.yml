@@ -17,6 +17,8 @@ jobs:
         image: ghcr.io/tursodatabase/libsql-server:latest
         ports:
           - 8080:8080
+        env:
+          DATABASE_AUTH_TOKEN: "hello"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
