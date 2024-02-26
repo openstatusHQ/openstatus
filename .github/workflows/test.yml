@@ -18,13 +18,13 @@ jobs:
         ports:
           - 8080:8080
         env:
-          DATABASE_AUTH_TOKEN: "hello"
+          SQLD_HTTP_AUTH: "hello"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       DATABASE_URL: http://127.0.0.1:8080
-      DATABASE_AUTH_TOKEN: "hello"
+      SQLD_HTTP_AUTH: "hello"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
