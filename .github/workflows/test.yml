@@ -17,14 +17,14 @@ jobs:
         image: ghcr.io/tursodatabase/libsql-server:latest
         ports:
           - 8080:8080
-        env:
-          SQLD_HTTP_AUTH: "hello"
+        # env:
+        #   SQLD_HTTP_AUTH: "hello"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       DATABASE_URL: http://127.0.0.1:8080
-      SQLD_HTTP_AUTH: "hello"
+      # DATABASE_TOKEN: "hello"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
