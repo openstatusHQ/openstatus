@@ -17,8 +17,8 @@ jobs:
         image: ghcr.io/tursodatabase/libsql-server:latest
         ports:
           - 8080:8080
-        env:
-          SQLD_HTTP_AUTH: "basic:token"
+        # env:
+        #   SQLD_HTTP_AUTH: "basic:token"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
