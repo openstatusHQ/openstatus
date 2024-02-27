@@ -24,7 +24,7 @@ jobs:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       DATABASE_URL: http://127.0.0.1:8080
-      SQLD_HTTP_AUTH: "basic:token"
+      DATABASE_AUTH_TOKEN: "basic:token"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
