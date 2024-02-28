@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const date1 = new Date();
   date1.setDate(date1.getDate() - 3);
   const date2 = new Date();
-  date2.setDate(date2.getDate() - 3);
+  date2.setDate(date2.getDate() - 2);
   const users = await db
     .select()
     .from(user)
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     if (user.email) {
       await sendEmail({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "Level up your website and API monitoring.",
+        subject: "How's it going with OpenStatus?",
         to: [user.email],
         react: FollowUpEmail(),
       });

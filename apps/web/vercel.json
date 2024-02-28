@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/internal/email",
-      "schedule": "00 18 * * *"
+      "schedule": "00 17 * * *"
     }
   ]
 }
