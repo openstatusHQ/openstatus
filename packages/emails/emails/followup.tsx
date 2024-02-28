@@ -10,7 +10,7 @@ const FollowUpEmail = () => {
           Hey
           <br />
           <br />
-          How’s everything going with Tinybird so far? Let me know if you run
+          How’s everything going with OpenStatus so far? Let me know if you run
           into any issues, or have any feedback, good or bad!
           <br />
           <br />
