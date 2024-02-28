@@ -23,6 +23,10 @@
     {
       "path": "/api/checker/cron/1h",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/internal/email",
+      "schedule": "00 18 * * *"
     }
   ]
 }
