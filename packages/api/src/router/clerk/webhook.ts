@@ -69,7 +69,7 @@ export const webhookRouter = createTRPCRouter({
 
       await sendEmail({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "Welcome to OpenStatus.dev 👋",
+        subject: "Level up your website and API monitoring.",
         to: [opts.input.data.data.email_addresses[0].email_address],
         react: WelcomeEmail(),
       });
