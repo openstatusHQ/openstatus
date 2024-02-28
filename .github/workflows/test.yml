@@ -14,17 +14,17 @@ jobs:
     timeout-minutes: 15
     services:
       sqld:
-        image: ghcr.io/tursodatabase/libsql-server:latest
+        image: ghcr.io/tursodatabase/libsql-server:v0.23.3
         ports:
           - 8080:8080
-        env:
-          SQLD_HTTP_AUTH: "basic:dXNlcjpwYXNzd29yZA=="
+        # env:
+        #   SQLD_HTTP_AUTH: "basic:token"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       DATABASE_URL: http://127.0.0.1:8080
-      SQLD_HTTP_AUTH: "basic:dXNlcjpwYXNzd29yZA=="
+      DATABASE_AUTH_TOKEN: "basic:token"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
