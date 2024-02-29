@@ -91,7 +91,7 @@ export const columns: ColumnDef<{
   },
   {
     accessorKey: "avgLatency",
-    header: () => <HeaderTooltip>AVG</HeaderTooltip>,
+    header: () => <HeaderTooltip>P50</HeaderTooltip>,
     cell: ({ row }) => {
       const latency = row.original.metrics?.avgLatency;
       if (latency) return <Number value={latency} suffix="ms" />;

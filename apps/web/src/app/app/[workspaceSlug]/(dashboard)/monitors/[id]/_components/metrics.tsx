@@ -81,7 +81,10 @@ export function Metrics({
             return (
               <MetricsCard
                 key={key}
-                title={key.replace("Latency", "")}
+                title={
+                  // FIXME: rename in tb
+                  key === "avgLatency" ? "P50" : key.replace("Latency", "")
+                }
                 value={value || 0}
                 suffix="ms"
                 delta={delta}
