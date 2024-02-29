@@ -1,0 +1,145 @@
+---
+title: "Monitoring latency: Vercel Serverless Function vs Vercel Edge Function"
+description:
+  Vercel offers . In this article, we will compare the latency of both runtimes.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-02-29
+image: /assets/posts/monitoring-latency/all-hosting-providers.png
+---
+
+In our previous article we have compared the latency of differents cloud
+providers but we did not include Vercel. In this article, we will compare the
+latency of Vercel Serverless Function vs Vercel Edge Function.
+
+For this test we are going to use a simple NextJS application using app router.
+Here is the code of the routes:
+
+```ts
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
+
+export const maxDuration = 25; // to trick and not using the same function as the other ping route
+
+export async function GET() {
+  return NextResponse.json({ ping: "pong" }, { status: 200 });
+}
+
+export async function POST(req: Request) {
+  const body = await req.json();
+  return NextResponse.json({ ping: body }, { status: 200 });
+}
+```
+
+We have 4 routes, 3 of them are using the nodejs runtime and one is using edge
+runtime.
+
+- `/api/ping` is using the nodejs runtime
+- `/api/ping/warm` is using the nodejs runtime
+- `/api/ping/cold` is using the nodejs runtime
+- `/api/ping/edge` is using the edge runtime
+
+Each route have a different `maxDuration`, it's a trick to avoid bundling the
+functions in the same physical functions.
+
+Here is the repository of the
+[application](https://github.com/openstatusHQ/openstatus-next-latency).
+
+## Vercel Serverless Function - NodeJS runtime
+
+They are using the nodejs runtime. We have access to all the nodejs API. Our
+function are deployed to a single location: iad1 - Washington, D.C., USA.
+
+### Warm - `/api/ping/warm`
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={12090} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="p50" value={246} suffix="ms" />
+  <MetricsCard title="p75" value={305} suffix="ms" />
+  <MetricsCard title="p90" value={442} suffix="ms" />
+  <MetricsCard title="p95" value={563} suffix="ms" />
+  <MetricsCard title="p99" value={855} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/cloudflare.json"
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 5 minutes to keep it warm.
+
+### Cold - `/api/ping/cold`
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={2010} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="p50" value={859} suffix="ms" />
+  <MetricsCard title="p75" value={933} suffix="ms" />
+  <MetricsCard title="p90" value={1004} suffix="ms" />
+  <MetricsCard title="p95" value={1046} suffix="ms" />
+  <MetricsCard title="p99" value={1156} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/cloudflare.json"
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 30 minutes to keep it cold, to ensure the
+functions will be scaled down.
+
+### Cold Roulette - `/api/ping`
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={6036} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="p50" value={305} suffix="ms" />
+  <MetricsCard title="p75" value={791} suffix="ms" />
+  <MetricsCard title="p90" value={914} suffix="ms" />
+  <MetricsCard title="p95" value={972} suffix="ms" />
+  <MetricsCard title="p99" value={1086} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/cloudflare.json"
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+We are pinging this functions every 10 minutes. It's an inflection point where
+we never now if the function will be warm or cold.
+
+## Vercel Edge Function - Edge runtime
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={6042} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="p50" value={106} suffix="ms" />
+  <MetricsCard title="p75" value={124} suffix="ms" />
+  <MetricsCard title="p90" value={152} suffix="ms" />
+  <MetricsCard title="p95" value={178} suffix="ms" />
+  <MetricsCard title="p99" value={328} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/cloudflare.json"
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
