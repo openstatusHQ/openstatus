@@ -37,7 +37,7 @@ export function RegionTable({
         <TableRow>
           <TableHead className="w-[100px]">Region</TableHead>
           <TableHead className="min-w-[300px]">Trend</TableHead>
-          <TableHead className="w-[50px]">AVG</TableHead>
+          <TableHead className="w-[50px]">P50</TableHead>
           <TableHead className="w-[50px]">P95</TableHead>
           <TableHead className="w-[50px]">P99</TableHead>
         </TableRow>
