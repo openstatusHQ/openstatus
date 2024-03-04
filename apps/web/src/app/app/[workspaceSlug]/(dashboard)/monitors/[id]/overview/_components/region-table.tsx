@@ -60,7 +60,7 @@ export function RegionTable({
                   <SimpleChart data={data.data} region={region} />
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  {formatNumber(metrics?.avgLatency)}
+                  {formatNumber(metrics?.p50Latency)}
                   <span className="text-muted-foreground text-xs font-normal">
                     ms
                   </span>

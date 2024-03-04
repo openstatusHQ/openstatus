@@ -4,26 +4,18 @@ import * as z from "zod";
 
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
-import {
-  getResponseGraphData,
-  getResponseTimeMetricsByRegionData,
-  getResponseTimeMetricsData,
-} from "@/lib/tb";
+import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { ButtonReset } from "../_components/button-reset";
 import { DatePickerPreset } from "../_components/date-picker-preset";
 import { Metrics } from "../_components/metrics";
-import {
-  getDateByPeriod,
-  getHoursByPeriod,
-  getMinutesByInterval,
-  intervals,
-  periods,
-  quantiles,
-} from "../utils";
+import { getMinutesByInterval, intervals, periods, quantiles } from "../utils";
 import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 const DEFAULT_QUANTILE = "p95";
 const DEFAULT_INTERVAL = "30m";
@@ -48,11 +40,6 @@ const searchParamsSchema = z.object({
           ?.split(",")
           .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
     ),
-  // fromDate: z.coerce
-  //   .number()
-  //   .optional()
-  //   .default(startOfDay(new Date()).getTime()),
-  // toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
 });
 
 export default async function Page({
@@ -73,41 +60,36 @@ export default async function Page({
     return notFound();
   }
 
-  const date = getDateByPeriod(search.data.period);
-  const intervalMinutes = getMinutesByInterval(search.data.interval);
+  const { period, quantile, interval, regions } = search.data;
+
+  // TODO: work it out easier
+  const intervalMinutes = getMinutesByInterval(interval);
   const periodicityMinutes = getMinutesByInterval(monitor.periodicity);
-  const periodicityHours = getHoursByPeriod(search.data.period);
 
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const data = await getResponseGraphData({
+  const metrics = (
+    await tb.endpointMetrics(period)({
+      monitorId: id,
+      url: monitor.url,
+    })
+  ).data;
+
+  const data = await tb.endpointChart(period)({
     monitorId: id,
     url: monitor.url,
-    ...search.data,
-    /**
-     *
-     */
-    fromDate: date.from.getTime(),
-    toDate: date.to.getTime(),
     interval: minutes,
   });
 
-  const metrics = await getResponseTimeMetricsData({
-    monitorId: id,
-    url: monitor.url,
-    interval: periodicityHours,
-  });
-
-  const metricsByRegion = await getResponseTimeMetricsByRegionData({
-    monitorId: id,
-    url: monitor.url,
-    interval: periodicityHours,
-  });
+  const metricsByRegion = (
+    await tb.endpointMetricsByRegion(period)({
+      monitorId: id,
+      url: monitor.url,
+    })
+  ).data;
 
   if (!data || !metrics || !metricsByRegion) return null;
-
-  const { period, quantile, interval, regions } = search.data;
 
   const isDirty =
     period !== DEFAULT_PERIOD ||
@@ -118,7 +100,7 @@ export default async function Page({
   return (
     <div className="grid gap-4">
       <div className="flex justify-between gap-2">
-        <DatePickerPreset period={period} />
+        <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
       </div>
       <Metrics metrics={metrics} period={period} />
@@ -128,7 +110,7 @@ export default async function Page({
         period={period}
         quantile={quantile}
         interval={interval}
-        regions={regions as Region[]}
+        regions={regions as Region[]} // FIXME: not properly reseted after filtered
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
         metricsByRegion={metricsByRegion}

@@ -1,13 +1,15 @@
 import * as z from "zod";
 
+import { OSTinybird } from "@openstatus/tinybird";
 import { flyRegions } from "@openstatus/utils";
 
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
+import { env } from "@/env";
 import { getResponseListData } from "@/lib/tb";
 import { api } from "@/trpc/server";
 
-//
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 /**
  * allowed URL search params

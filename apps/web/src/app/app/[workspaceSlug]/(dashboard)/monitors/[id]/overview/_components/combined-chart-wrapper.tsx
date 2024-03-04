@@ -47,15 +47,19 @@ export function CombinedChartWrapper({
   return (
     <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex w-full gap-2 sm:flex-row sm:justify-between">
-          <Toggle
-            pressed={combinedRegions}
-            onPressedChange={setCombinedRegions}
-            variant="outline"
-          >
-            <LineChart className="mr-2 h-4 w-4" />
-            {!combinedRegions ? "Combine regions" : "Split regions"}
-          </Toggle>
+        <div className="flex w-full items-end gap-2 sm:flex-row sm:justify-between">
+          <div className="flex flex-col gap-1.5">
+            <p className="text-muted-foreground text-xs">Change the view</p>
+            <Toggle
+              pressed={combinedRegions}
+              onPressedChange={setCombinedRegions}
+              variant="outline"
+              className="w-max"
+            >
+              <LineChart className="mr-2 h-4 w-4" />
+              {!combinedRegions ? "Combine regions" : "Split regions"}
+            </Toggle>
+          </div>
           <RegionsPreset
             regions={monitor.regions as Region[]}
             selectedRegions={regions}

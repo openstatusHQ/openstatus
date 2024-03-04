@@ -12,7 +12,6 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectSeparator,
   SelectTrigger,
   SelectValue,
   Separator,
@@ -79,12 +78,9 @@ export function QuantilePreset({
         <SelectContent>
           {quantiles.map((quantile) => {
             return (
-              <React.Fragment key={quantile}>
-                {quantile === "avg" && <SelectSeparator />}
-                <SelectItem value={quantile} className="uppercase">
-                  {quantile}
-                </SelectItem>
-              </React.Fragment>
+              <SelectItem key={quantile} value={quantile} className="uppercase">
+                {quantile}
+              </SelectItem>
             );
           })}
         </SelectContent>
