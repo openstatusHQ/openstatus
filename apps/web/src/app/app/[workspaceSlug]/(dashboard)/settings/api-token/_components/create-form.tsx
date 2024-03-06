@@ -35,7 +35,8 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
   async function onCreate() {
     try {
       const res = await create(ownerId);
-      if (res.result) {
+      if (!res) toastAction("error");
+      if (res?.result) {
         setRawKey(res.result.key);
       }
     } catch {
