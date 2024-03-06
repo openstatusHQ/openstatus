@@ -10,6 +10,8 @@ import { env } from "@/env";
 
 const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
+// REMINDER: server actions should have middlewares to do auth checks
+
 export async function create(ownerId: number) {
   const _user = await currentUser();
 
