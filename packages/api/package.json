@@ -12,6 +12,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/plans": "workspace:*",
+    "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.7.0",
     "@trpc/client": "10.38.5",
     "@trpc/server": "10.38.5",

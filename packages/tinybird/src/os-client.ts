@@ -189,11 +189,9 @@ export class OSTinybird {
   }
 
   // FEATURE: include a simple Widget for the user to refresh the page or display on the top of the page
-  endpointLastCronTimestamp(type: "monitor" | "workspace") {
-    const parameters = z.object({
-      monitorId: z.string(),
-      url: z.string().url().optional(),
-    });
+  // type: "workspace" | "monitor"
+  endpointLastCronTimestamp(type: "workspace") {
+    const parameters = z.object({ workspaceId: z.string() });
 
     return async (props: z.infer<typeof parameters>) => {
       try {
