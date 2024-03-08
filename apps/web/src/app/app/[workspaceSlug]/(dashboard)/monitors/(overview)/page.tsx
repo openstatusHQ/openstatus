@@ -11,6 +11,8 @@ import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 
+// import { RefreshWidget } from "../_components/refresh-widget";
+
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export default async function MonitorPage() {
@@ -59,10 +61,17 @@ export default async function MonitorPage() {
     }),
   );
 
+  // const lastCronTimestamp = monitorsWithData?.reduce((prev, acc) => {
+  //   const lastTimestamp = acc.metrics?.lastTimestamp || 0;
+  //   if (lastTimestamp > prev) return lastTimestamp;
+  //   return prev;
+  // }, 0);
+
   return (
     <>
       <DataTable columns={columns} data={monitorsWithData} />
       {isLimitReached ? <Limit /> : null}
+      {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>
   );
 }
