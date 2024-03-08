@@ -44,7 +44,7 @@ export default async function MonitorPage() {
 
       const data = await tb.endpointStatusPeriod("7d")({
         monitorId: String(monitor.id),
-        // url: monitor.url,
+        url: monitor.url, // FIXME: we should avoid adding url to the parameters
       });
 
       const [current] = metrics?.sort((a, b) =>

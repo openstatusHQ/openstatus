@@ -20,6 +20,7 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
+  // FIXME: DRY - this is a duplicate of the OSTinybird endpoint
   const ping = tbBuildResponseList.parse(row.original);
   return (
     <DropdownMenu>

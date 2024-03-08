@@ -126,7 +126,7 @@ export class OSTinybird {
   endpointStatusPeriod(period: "7d" | "45d") {
     const parameters = z.object({
       monitorId: z.string(),
-      // url: z.string().optional(), FIXME: in tb materialized view
+      url: z.string().optional(),
     });
 
     return async (props: z.infer<typeof parameters>) => {
@@ -153,6 +153,8 @@ export class OSTinybird {
     };
   }
 
+  // TBH: not sure if we need more than 1d for that, better allow the user
+  // to click on a specific region and time
   endpointList(period: "1h" | "1d") {
     const parameters = z.object({
       monitorId: z.string(),
@@ -226,3 +228,7 @@ export class OSTinybird {
     });
   }
 }
+
+/**
+ * TODO: if it would be possible to...
+ */

@@ -39,7 +39,7 @@ export default async function Page({
   }
 
   // FIXME: the other pipes are missing and mv need to include `timestamp` in the data
-  const allowedPeriods = ["1d"] as const;
+  const allowedPeriods = ["1h", "1d"] as const;
   const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
   const data = await tb.endpointList(period)({
