@@ -42,12 +42,10 @@ export default async function Page({
   const allowedPeriods = ["1d"] as const;
   const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
-  const data = (
-    await tb.endpointList(period)({
-      monitorId: id,
-      url: monitor.url,
-    })
-  ).data;
+  const data = await tb.endpointList(period)({
+    monitorId: id,
+    url: monitor.url,
+  });
 
   if (!data) return null;
 
