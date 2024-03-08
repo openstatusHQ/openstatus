@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { flyRegions } from "@openstatus/utils";
 
+const MIN_CACHE = 30; // 30s
 const DEFAULT_CACHE = 120; // 2min
 
 export const latencySchema = z.object({
@@ -187,6 +188,30 @@ export class OSTinybird {
     };
   }
 
+  // FEATURE: include a simple Widget for the user to refresh the page or display on the top of the page
+  endpointLastCronTimestamp(type: "monitor" | "workspace") {
+    const parameters = z.object({
+      monitorId: z.string(),
+      url: z.string().url().optional(),
+    });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: `__ttl_1h_last_timestamp_${type}_get__v0`,
+          parameters,
+          data: z.object({ cronTimestamp: z.number().int() }),
+          opts: {
+            revalidate: MIN_CACHE,
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+
   endpointResponseDetails() {
     return this.tb.buildPipe({
       pipe: "response_details__v0", // TODO: make it also a bit dynamic to avoid query through too much data
@@ -225,6 +250,9 @@ export class OSTinybird {
             return null;
           }),
       }),
+      opts: {
+        revalidate: DEFAULT_CACHE,
+      },
     });
   }
 }
