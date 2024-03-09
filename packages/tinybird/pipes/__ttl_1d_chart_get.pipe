@@ -1,0 +1,28 @@
+VERSION 0
+
+TOKEN "__ttl_1d_chart_get_endpoint_read_4815" READ
+
+NODE __ttl_1d_chart_get_0
+SQL >
+
+    %
+    SELECT
+        region,
+        toStartOfInterval(
+            toDateTime(cronTimestamp / 1000),
+            INTERVAL {{ Int64(interval, 30) }} MINUTE
+        ) as h,
+        toUnixTimestamp64Milli(toDateTime64(h, 3)) as timestamp,
+        round(quantile(0.5)(latency)) as p50Latency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.9)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency
+    FROM __ttl_1d_mv__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+    GROUP BY h, region
+    ORDER BY h DESC
+
+

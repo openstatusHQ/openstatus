@@ -1,0 +1,20 @@
+VERSION 0
+
+NODE __ttl_7d_0
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        monitorId,
+        region,
+        statusCode,
+        url,
+        workspaceId,
+        cronTimestamp
+    FROM ping_response__v7
+
+TYPE materialized
+DATASOURCE __ttl_7d_mv__v0
+
+
