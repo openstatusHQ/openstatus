@@ -32,7 +32,7 @@ export function Metrics({
   const uptime = isEmpty ? 1 : current.ok / current.count;
   const lastUptime = last.ok / last.count;
 
-  const failures = current.ok === 0 ? 0 : current.count - current.ok;
+  const failures = current.count === 0 ? 0 : current.count - current.ok;
   const lastFailures = last.count - last.ok;
 
   const distance = current.lastTimestamp
