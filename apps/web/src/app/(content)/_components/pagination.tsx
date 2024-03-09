@@ -17,8 +17,8 @@ export function Pagination({
       {/* {prev ? (
         <div className="w-1/2 flex-1 text-left">
           <Button asChild variant="link">
-            <Link href={`/changelog/${prev.slug}`}>
-              <ChevronLeft className="mr-2 h-4 w-4" />
+            <Link href={`/changelog/${prev.slug}`} className="group">
+              <ChevronLeft className="text-muted-foreground group-hover:text-foreground mr-2 h-4 w-4" />
               <span className="truncate">{prev.title}</span>
             </Link>
           </Button>
@@ -29,9 +29,9 @@ export function Pagination({
       {next ? (
         <div className="w-1/2 flex-1 text-right">
           <Button asChild variant="link">
-            <Link href={`/changelog/${next.slug}`}>
+            <Link href={`/changelog/${next.slug}`} className="group">
               <span className="truncate">{next.title}</span>
-              <ChevronRight className="ml-2 h-4 w-4" />
+              <ChevronRight className="text-muted-foreground group-hover:text-foreground ml-2 h-4 w-4" />
             </Link>
           </Button>
         </div>
