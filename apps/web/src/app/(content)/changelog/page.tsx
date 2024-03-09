@@ -22,8 +22,9 @@ export const metadata: Metadata = {
     title: "Changelog | OpenStatus",
   },
 };
+
 export default async function Changelog() {
-  const posts = allChangelogs.sort(
+  const changelogs = allChangelogs.sort(
     (a, b) =>
       new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
@@ -34,15 +35,15 @@ export default async function Changelog() {
         title="Changelog"
         description="All the latest features, fixes and work to OpenStatus."
       >
-        {posts.map((post) => (
+        {changelogs.map((changelog) => (
           <Timeline.Article
-            key={post.slug}
-            publishedAt={post.publishedAt}
-            imageSrc={post.image}
-            title={post.title}
-            href={`./changelog/${post.slug}`}
+            key={changelog.slug}
+            publishedAt={changelog.publishedAt}
+            imageSrc={changelog.image}
+            title={changelog.title}
+            href={`./changelog/${changelog.slug}`}
           >
-            <Mdx code={post.body.code} />
+            <Mdx code={changelog.body.code} />
           </Timeline.Article>
         ))}
       </Timeline>
