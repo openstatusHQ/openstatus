@@ -17,7 +17,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { StatusDot } from "@/components/monitor/status-dot";
+import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { Bar } from "@/components/tracker/tracker";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -37,7 +37,7 @@ export const columns: ColumnDef<{
           href={`./monitors/${row.original.monitor.id}/overview`}
           className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
         >
-          <StatusDot active={active} status={status} />
+          <StatusDotWithTooltip active={active} status={status} />
           <span className="truncate group-hover:underline">{name}</span>
         </Link>
       );
