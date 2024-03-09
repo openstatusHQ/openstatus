@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceStrict } from "date-fns";
 
 import type { Incident } from "@openstatus/db/src/schema";
 
@@ -70,7 +71,28 @@ export const columns: ColumnDef<Incident>[] = [
       );
     },
   },
+  {
+    header: "Duration",
+    cell: ({ row }) => {
+      const { startedAt, resolvedAt } = row.original;
 
+      if (!resolvedAt) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+
+      const duration = formatDistanceStrict(
+        new Date(startedAt),
+        new Date(resolvedAt),
+      );
+      return (
+        <div className="flex">
+          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {duration}
+          </span>
+        </div>
+      );
+    },
+  },
   {
     id: "actions",
     cell: ({ row }) => {
