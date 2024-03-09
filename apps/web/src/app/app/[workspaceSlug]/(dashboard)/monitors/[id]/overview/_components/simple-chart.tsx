@@ -15,10 +15,10 @@ export interface SimpleChartProps {
 export function SimpleChart({ data, region }: SimpleChartProps) {
   const [value, setValue] = useState<EventProps>(null);
 
-  useEffect(() => {
-    console.log(value);
-    // const href = `./details?monitorId=${ping.monitorId}&cronTimestamp=${ping.cronTimestamp}&region=${ping.region}`;
-  }, [value]);
+  // useEffect(() => {
+  //   // console.log(value);
+  //   // const href = `./details?monitorId=${ping.monitorId}&cronTimestamp=${ping.cronTimestamp}&region=${ping.region}`;
+  // }, [value]);
 
   return (
     <LineChart
@@ -46,6 +46,7 @@ export function SimpleChart({ data, region }: SimpleChartProps) {
 const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
   if (!active || !payload) return null;
   const data = payload?.[0]; // BUG: when onValueChange is set, payload is duplicated
+  if (!data) return null;
 
   return (
     <div className="rounded-tremor-default text-tremor-default dark:text-dark-tremor-default bg-tremor-background dark:bg-dark-tremor-background shadow-tremor-dropdown border-tremor-border dark:border-dark-tremor-border border p-2">
