@@ -1,43 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { HelpCircle, Hourglass } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 import {
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Separator,
 } from "@openstatus/ui";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
-import { cn } from "@/lib/utils";
 import { intervals } from "../utils";
 import type { Interval } from "../utils";
+import { SearchParamsPreset } from "./search-params-preset";
 
-export function IntervalPreset({
-  interval,
-  className,
-}: {
-  interval: Interval;
-  className?: string;
-}) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const updateSearchParams = useUpdateSearchParams();
-
-  function onSelect(value: Interval) {
-    const searchParams = updateSearchParams({ interval: value });
-    router.replace(`${pathname}?${searchParams}`, { scroll: false });
-  }
-
+export function IntervalPreset({ interval }: { interval: Interval }) {
   return (
     <div className="grid gap-1">
       <div className="flex items-center gap-1.5">
@@ -56,21 +34,14 @@ export function IntervalPreset({
           </PopoverContent>
         </Popover>
       </div>
-      <Select onValueChange={onSelect} defaultValue={interval}>
-        <SelectTrigger className={cn("w-[150px]", className)} id="interval">
-          <span className="flex items-center gap-2">
-            <Hourglass className="h-4 w-4" />
-            <SelectValue />
-          </span>
-        </SelectTrigger>
-        <SelectContent>
-          {intervals.map((interval) => (
-            <SelectItem key={interval} value={interval}>
-              {interval}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchParamsPreset
+        disabled={false}
+        defaultValue={interval}
+        values={intervals}
+        searchParam="interval"
+        icon="hour-glass"
+        placeholder="Pick an interval"
+      />
     </div>
   );
 }

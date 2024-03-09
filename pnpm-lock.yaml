@@ -391,6 +391,9 @@ importers:
       '@openstatus/plans':
         specifier: workspace:*
         version: link:../plans
+      '@openstatus/tinybird':
+        specifier: workspace:*
+        version: link:../tinybird
       '@t3-oss/env-core':
         specifier: 0.7.0
         version: 0.7.0(typescript@5.2.2)(zod@3.22.2)
@@ -1389,6 +1392,10 @@ packages:
     peerDependencies:
       '@effect-ts/otel-node': '*'
     peerDependenciesMeta:
+      '@effect-ts/core':
+        optional: true
+      '@effect-ts/otel':
+        optional: true
       '@effect-ts/otel-node':
         optional: true
     dependencies:

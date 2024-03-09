@@ -1,0 +1,15 @@
+VERSION 0
+
+TOKEN "__ttl_1h_last_timestamp_monitor_get__v0_endpoint_read_5766" READ
+
+NODE __ttl_1h_last_timestamp_monitor_get__v0_0
+SQL >
+
+    %
+    SELECT max(cronTimestamp) as cronTimestamp
+    FROM __ttl_1h_mv__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+
+

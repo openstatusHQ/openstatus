@@ -45,7 +45,9 @@ export const columns: ColumnDef<{
   },
   {
     accessorKey: "tracker",
-    header: "Last 7 days",
+    header: () => (
+      <HeaderTooltip label="Last 7 days" content="UTC time period" />
+    ),
     cell: ({ row }) => {
       const tracker = new Tracker({
         data: row.original.data?.slice(0, 7).reverse(),
@@ -80,7 +82,9 @@ export const columns: ColumnDef<{
   },
   {
     accessorKey: "uptime",
-    header: () => <HeaderTooltip>Uptime</HeaderTooltip>,
+    header: () => (
+      <HeaderTooltip label="Uptime" content="Data from the last 24h" />
+    ),
     cell: ({ row }) => {
       const { count, ok } = row.original?.metrics || {};
       if (!count || !ok)
@@ -90,17 +94,21 @@ export const columns: ColumnDef<{
     },
   },
   {
-    accessorKey: "avgLatency",
-    header: () => <HeaderTooltip>P50</HeaderTooltip>,
+    accessorKey: "p50Latency",
+    header: () => (
+      <HeaderTooltip label="P50" content="Data from the last 24h" />
+    ),
     cell: ({ row }) => {
-      const latency = row.original.metrics?.avgLatency;
+      const latency = row.original.metrics?.p50Latency;
       if (latency) return <Number value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
   {
     accessorKey: "p95Latency",
-    header: () => <HeaderTooltip>P95</HeaderTooltip>,
+    header: () => (
+      <HeaderTooltip label="P95" content="Data from the last 24h" />
+    ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p95Latency;
       if (latency) return <Number value={latency} suffix="ms" />;
@@ -119,14 +127,14 @@ export const columns: ColumnDef<{
   },
 ];
 
-function HeaderTooltip({ children }: { children: string }) {
+function HeaderTooltip({ label, content }: { label: string; content: string }) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger className="underline decoration-dotted">
-          {children}
+          {label}
         </TooltipTrigger>
-        <TooltipContent>Data from the last 24h</TooltipContent>
+        <TooltipContent>{content}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

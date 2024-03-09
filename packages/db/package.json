@@ -8,7 +8,8 @@
     "push": "drizzle-kit push:sqlite",
     "migrate": "bun src/migrate.mts",
     "studio": "drizzle-kit studio",
-    "seed": "bun src/seed.mts"
+    "seed": "bun src/seed.mts",
+    "dev": "turso dev --db-file openstatus.db"
   },
   "dependencies": {
     "@libsql/client": "0.5.2",

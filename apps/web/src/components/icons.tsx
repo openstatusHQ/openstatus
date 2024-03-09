@@ -5,6 +5,7 @@ import {
   Book,
   Bot,
   Calendar,
+  CandlestickChart,
   Check,
   Clock,
   Cog,
@@ -12,6 +13,7 @@ import {
   CreditCard,
   Fingerprint,
   Globe2,
+  Hourglass,
   Image,
   KeyRound,
   Laptop,
@@ -96,6 +98,8 @@ export const Icons = {
   book: Book,
   newspaper: Newspaper,
   youtube: Youtube,
+  "hour-glass": Hourglass,
+  "candlestick-chart": CandlestickChart,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
