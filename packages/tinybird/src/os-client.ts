@@ -5,6 +5,7 @@ import { flyRegions } from "@openstatus/utils";
 
 const MIN_CACHE = 30; // 30s
 const DEFAULT_CACHE = 120; // 2min
+const MAX_CACHE = 86400; // 1d
 
 export const latencySchema = z.object({
   p50Latency: z.number().int().nullable(),
@@ -210,48 +211,59 @@ export class OSTinybird {
     };
   }
 
-  endpointResponseDetails() {
-    return this.tb.buildPipe({
-      pipe: "response_details__v0", // TODO: make it also a bit dynamic to avoid query through too much data
-      parameters: z.object({
-        monitorId: z.string().default(""),
-        url: z.string().url().optional(),
-        region: z.enum(flyRegions).optional(),
-        cronTimestamp: z.number().int().optional(),
-      }),
-      data: z.object({
-        monitorId: z.string().default(""),
-        url: z.string().url().optional(),
-        region: z.enum(flyRegions).optional(),
-        cronTimestamp: z.number().int().optional(),
-        message: z.string().nullable().optional(),
-        headers: z
-          .string()
-          .nullable()
-          .optional()
-          .transform((val) => {
-            if (!val) return null;
-            const value = z
-              .record(z.string(), z.string())
-              .safeParse(JSON.parse(val));
-            if (value.success) return value.data;
-            return null;
-          }),
-        timing: z
-          .string()
-          .nullable()
-          .optional()
-          .transform((val) => {
-            if (!val) return null;
-            const value = timingSchema.safeParse(JSON.parse(val));
-            if (value.success) return value.data;
-            return null;
-          }),
-      }),
-      opts: {
-        revalidate: DEFAULT_CACHE,
-      },
+  endpointResponseDetails(period: "7d") {
+    const parameters = z.object({
+      monitorId: z.string().default("").optional(),
+      url: z.string().url().optional(),
+      region: z.enum(flyRegions).optional(),
+      cronTimestamp: z.number().int().optional(),
     });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: `__ttl_${period}_all_details_get__v0`, // TODO: make it also a bit dynamic to avoid query through too much data
+          parameters,
+          data: z.object({
+            latency: z.number().int(), // in ms
+            statusCode: z.number().int().nullable().default(null),
+            monitorId: z.string().default(""),
+            url: z.string().url().optional(),
+            region: z.enum(flyRegions),
+            cronTimestamp: z.number().int().optional(),
+            message: z.string().nullable().optional(),
+            headers: z
+              .string()
+              .nullable()
+              .optional()
+              .transform((val) => {
+                if (!val) return null;
+                const value = z
+                  .record(z.string(), z.string())
+                  .safeParse(JSON.parse(val));
+                if (value.success) return value.data;
+                return null;
+              }),
+            timing: z
+              .string()
+              .nullable()
+              .optional()
+              .transform((val) => {
+                if (!val) return null;
+                const value = timingSchema.safeParse(JSON.parse(val));
+                if (value.success) return value.data;
+                return null;
+              }),
+          }),
+          opts: {
+            revalidate: MAX_CACHE,
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
   }
 }
 
