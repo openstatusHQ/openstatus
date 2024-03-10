@@ -11,6 +11,6 @@
     "@openstatus/tsconfig": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@types/node": "20.8.0",
-    "typescript": "5.2.2"
+    "typescript": "5.4.2"
   }
 }

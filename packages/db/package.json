@@ -25,7 +25,7 @@
     "bufferutil": "4.0.7",
     "drizzle-kit": "0.20.14",
     "encoding": "0.1.13",
-    "typescript": "5.2.2",
+    "typescript": "5.4.2",
     "utf-8-validate": "6.0.3"
   },
   "author": ""

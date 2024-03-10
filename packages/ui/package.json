@@ -12,10 +12,10 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",
-    "@types/react": "18.2.24",
-    "@types/react-dom": "18.2.19",
+    "@types/react": "18.2.64",
+    "@types/react-dom": "18.2.21",
     "eslint": "8.50.0",
-    "typescript": "5.2.2"
+    "typescript": "5.4.2"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.1",

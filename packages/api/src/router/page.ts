@@ -158,7 +158,8 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ slug: z.string().toLowerCase() }))
     .output(selectPublicPageSchemaWithRelation.optional())
     .query(async (opts) => {
-      console.log(opts.input.slug);
+      if (!opts.input.slug) return;
+
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
       });

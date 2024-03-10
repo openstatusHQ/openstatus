@@ -12,7 +12,9 @@ const getBaseUrl = () => {
 
 const lambdas = ["clerkRouter", "stripeRouter"];
 
-export const endingLink = (opts?: { headers?: HTTPHeaders }) =>
+export const endingLink = (opts?: {
+  headers?: HTTPHeaders | (() => HTTPHeaders);
+}) =>
   ((runtime) => {
     const sharedOpts = {
       headers: opts?.headers, // REMINDER: fails when trying to `getTotalActiveMonitors()`

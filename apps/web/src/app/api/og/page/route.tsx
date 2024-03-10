@@ -20,7 +20,6 @@ export async function GET(req: Request) {
   const slug = searchParams.has("slug") ? searchParams.get("slug") : undefined;
 
   const page = await api.page.getPageBySlug.query({ slug: slug || "" });
-
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 
