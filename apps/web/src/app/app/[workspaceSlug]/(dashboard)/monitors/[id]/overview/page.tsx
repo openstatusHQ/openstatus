@@ -8,6 +8,7 @@ import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
 import { env } from "@/env";
+import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
 import { ButtonReset } from "../_components/button-reset";
 import { DatePickerPreset } from "../_components/date-picker-preset";
@@ -51,6 +52,7 @@ export default async function Page({
 }) {
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
+  const preferredSettings = getPreferredSettings();
 
   const monitor = await api.monitor.getMonitorById.query({
     id: Number(id),
@@ -110,6 +112,7 @@ export default async function Page({
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
         metricsByRegion={metricsByRegion}
+        preferredSettings={preferredSettings}
       />
     </div>
   );

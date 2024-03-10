@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { LineChart } from "lucide-react";
 
 import type { Monitor } from "@openstatus/db/src/schema";
@@ -11,6 +11,8 @@ import type {
 } from "@openstatus/tinybird";
 import { Toggle } from "@openstatus/ui";
 
+import { usePreferredSettings } from "@/lib/preferred-settings/client";
+import type { PreferredSettings } from "@/lib/preferred-settings/server";
 import { IntervalPreset } from "../../_components/interval-preset";
 import { QuantilePreset } from "../../_components/quantile-preset";
 import { RegionsPreset } from "../../_components/region-preset";
@@ -28,6 +30,7 @@ export function CombinedChartWrapper({
   monitor,
   isQuantileDisabled,
   metricsByRegion,
+  preferredSettings: defaultPreferredSettings,
 }: {
   data: ResponseGraph[];
   period: Period;
@@ -37,12 +40,18 @@ export function CombinedChartWrapper({
   monitor: Monitor;
   isQuantileDisabled: boolean;
   metricsByRegion: ResponseTimeMetricsByRegion[];
+  preferredSettings: PreferredSettings;
 }) {
   const chartData = useMemo(
     () => groupDataByTimestamp(data, period, quantile),
     [data, period, quantile],
   );
-  const [combinedRegions, setCombinedRegions] = useState(false);
+
+  const [preferredSettings, setPreferredSettings] = usePreferredSettings(
+    defaultPreferredSettings,
+  );
+
+  const combinedRegions = preferredSettings?.combinedRegions ?? false;
 
   return (
     <>
@@ -52,7 +61,9 @@ export function CombinedChartWrapper({
             <p className="text-muted-foreground text-xs">Change the view</p>
             <Toggle
               pressed={combinedRegions}
-              onPressedChange={setCombinedRegions}
+              onPressedChange={(value) => {
+                setPreferredSettings({ combinedRegions: value });
+              }}
               variant="outline"
               className="w-max"
             >
