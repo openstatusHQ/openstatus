@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {
   title?: string;
-  description?: string | null;
+  description?: React.ReactNode;
   actions?: React.ReactNode | React.ReactNode[];
 }
 
@@ -21,9 +21,11 @@ function Header({ title, description, className, actions }: HeaderProps) {
     >
       <div className="flex min-w-0 flex-col gap-1">
         <h1 className="font-cal text-3xl">{title}</h1>
-        {description ? (
+        {typeof description === "string" ? (
           <p className="text-muted-foreground">{description}</p>
-        ) : null}
+        ) : (
+          description
+        )}
       </div>
       {actions ? (
         <div className="flex flex-1 items-center justify-end gap-2">
