@@ -125,9 +125,7 @@ export function DataTable<TData, TValue>({
                   {row.getIsExpanded() && (
                     <TableRow
                       data-state="expanded"
-                      // CUSTOMIZE
-                      // className="data-[state=expanded]:bg-muted/50"
-                      className="hover:bg-background "
+                      className="data-[state=expanded]:bg-muted/20 hover:bg-muted/20"
                     >
                       {/* 2nd row is a custom 1 cell row */}
                       <TableCell colSpan={row.getVisibleCells().length}>
