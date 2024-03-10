@@ -4,11 +4,14 @@ import * as React from "react";
 import type {
   ColumnDef,
   ColumnFiltersState,
+  ExpandedState,
+  Row,
   SortingState,
 } from "@tanstack/react-table";
 import {
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
@@ -30,17 +33,23 @@ import { DataTableToolbar } from "./data-table-toolbar";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  // filters?: ColumnFiltersState; could also be an idea
+  renderSubComponent(props: { row: Row<TData> }): React.ReactElement;
+  getRowCanExpand(row: Row<TData>): boolean;
+  autoResetExpanded?: boolean;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  renderSubComponent,
+  getRowCanExpand,
+  autoResetExpanded,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  const [expanded, setExpanded] = React.useState<ExpandedState>({});
 
   const table = useReactTable({
     data,
@@ -51,9 +60,14 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onExpandedChange: setExpanded,
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand,
+    autoResetExpanded,
     state: {
       sorting,
       columnFilters,
+      expanded,
     },
   });
 
@@ -83,19 +97,45 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow
+                    data-state={
+                      (row.getIsSelected() || row.getIsExpanded()) && "selected"
+                    }
+                    onClick={() => {
+                      // FIXME: this is a workaround for single row expansion
+                      if (row.getIsExpanded()) {
+                        row.toggleExpanded();
+                      } else {
+                        table.resetExpanded();
+                        row.toggleExpanded();
+                      }
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && (
+                    <TableRow
+                      data-state="expanded"
+                      // CUSTOMIZE
+                      // className="data-[state=expanded]:bg-muted/50"
+                      className="hover:bg-background "
+                    >
+                      {/* 2nd row is a custom 1 cell row */}
+                      <TableCell colSpan={row.getVisibleCells().length}>
+                        {renderSubComponent({ row })}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>

@@ -4,12 +4,11 @@ import * as z from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { columns } from "@/components/data-table/columns";
-import { DataTable } from "@/components/data-table/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { DatePickerPreset } from "../_components/date-picker-preset";
 import { periods } from "../utils";
+import { DataTableWrapper } from "./_components/data-table-wrapper";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -38,7 +37,6 @@ export default async function Page({
     return notFound();
   }
 
-  // FIXME: the other pipes are missing and mv need to include `timestamp` in the data
   const allowedPeriods = ["1h", "1d"] as const;
   const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
@@ -54,7 +52,7 @@ export default async function Page({
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
         <DatePickerPreset defaultValue={period} values={allowedPeriods} />
       </div>
-      <DataTable columns={columns} data={data} />
+      <DataTableWrapper data={data} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { flyRegions } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
 import { env } from "../../env";
@@ -19,5 +20,18 @@ export const tinybirdRouter = createTRPCRouter({
     .input(z.object({ period: z.string() }))
     .query(async (opts) => {
       const workspaceId = String(opts.ctx.workspace.id);
+    }),
+
+  responseDetails: protectedProcedure
+    .input(
+      z.object({
+        monitorId: z.string().default("").optional(),
+        url: z.string().url().optional(),
+        region: z.enum(flyRegions).optional(),
+        cronTimestamp: z.number().int().optional(),
+      }),
+    )
+    .query(async (opts) => {
+      return await tb.endpointResponseDetails("7d")(opts.input);
     }),
 });
