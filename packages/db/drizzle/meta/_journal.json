@@ -148,6 +148,27 @@
       "when": 1707905605592,
       "tag": "0020_flat_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1708772082365,
+      "tag": "0021_pink_the_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1708774295585,
+      "tag": "0022_stale_storm",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1708775186843,
+      "tag": "0023_motionless_mikhail_rasputin",
+      "breakpoints": true
     }
   ]
 }
