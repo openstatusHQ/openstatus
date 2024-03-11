@@ -16,6 +16,7 @@ import {
 import { marketingPagesConfig } from "@/config/pages";
 import { socialsConfig } from "@/config/socials";
 import { AppLink } from "./app-link";
+import { LoginButton } from "./login-button";
 import { SocialIconButton } from "./social-icon-button";
 
 export function MarketingMenu() {
@@ -61,13 +62,16 @@ export function MarketingMenu() {
               );
             })}
           </ul>
-          <ul className="flex gap-2">
-            {socialsConfig.map((props, i) => (
-              <li key={i}>
-                <SocialIconButton {...props} />
-              </li>
-            ))}
-          </ul>
+          <div className="flex justify-between gap-2">
+            <ul className="flex flex-wrap gap-2">
+              {socialsConfig.map((props, i) => (
+                <li key={i}>
+                  <SocialIconButton {...props} />
+                </li>
+              ))}
+            </ul>
+            <LoginButton variant="outline" />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

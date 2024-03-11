@@ -9,6 +9,7 @@ import { Button } from "@openstatus/ui";
 import { marketingPagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
 import { BrandName } from "./brand-name";
+import { LoginButton } from "./login-button";
 import { MarketingMenu } from "./marketing-menu";
 
 interface Props {
@@ -49,13 +50,7 @@ export function MarketingHeader({ className }: Props) {
         <div className="block md:hidden">
           <MarketingMenu />
         </div>
-        <Button asChild className="rounded-full">
-          {isSignedIn ? (
-            <Link href="/app">Dashboard</Link>
-          ) : (
-            <Link href="/app/sign-up">Sign Up</Link>
-          )}
-        </Button>
+        <LoginButton />
       </div>
     </header>
   );
