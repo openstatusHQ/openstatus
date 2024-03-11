@@ -15,7 +15,7 @@ import { env } from "@/env";
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export async function ResponseDetails(props: ResponseDetailsParams) {
-  const details = await tb.endpointResponseDetails("7d")(props);
+  const details = await tb.endpointResponseDetails("45d")(props);
 
   if (!details || details?.length === 0) return null;
 

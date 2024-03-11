@@ -127,6 +127,15 @@ export const monitorRouter = createTRPCRouter({
           ),
         )
         .get();
+
+      const parsedMonitor = selectMonitorSchema.safeParse(currentMonitor);
+
+      if (!parsedMonitor.success) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not allowed to access the monitor.",
+        });
+      }
       return selectMonitorSchema.parse(currentMonitor);
     }),
 

@@ -211,7 +211,7 @@ export class OSTinybird {
     };
   }
 
-  endpointResponseDetails(period: "7d") {
+  endpointResponseDetails(period: "7d" | "45d") {
     const parameters = z.object({
       monitorId: z.string().default("").optional(),
       url: z.string().url().optional(),
