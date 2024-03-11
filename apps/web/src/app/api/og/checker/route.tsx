@@ -18,10 +18,8 @@ import {
 export const runtime = "edge";
 
 export async function GET(req: Request) {
-  const interMediumData = await interMedium;
-  const interRegularData = await interRegular;
-  const interLightData = await interLight;
-  const calSemiBoldData = await calSemiBold;
+  const [interRegularData, interLightData, calSemiBoldData, interMediumData] =
+    await Promise.all([interRegular, interLight, calSemiBold, interMedium]);
 
   const { searchParams } = new URL(req.url);
 

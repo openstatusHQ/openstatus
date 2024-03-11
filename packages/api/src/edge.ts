@@ -7,6 +7,7 @@ import { notificationRouter } from "./router/notification";
 import { pageRouter } from "./router/page";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
 import { statusReportRouter } from "./router/statusReport";
+import { tinybirdRouter } from "./router/tinybird";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
@@ -24,4 +25,5 @@ export const edgeRouter = createTRPCRouter({
   invitation: invitationRouter,
   incident: incidentRouter,
   pageSubscriber: pageSubscriberRouter,
+  tinybird: tinybirdRouter,
 });

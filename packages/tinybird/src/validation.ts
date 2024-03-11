@@ -113,7 +113,7 @@ export const tbBuildResponseDetails = tbBuildResponseList.extend({
 });
 
 export const latencyMetrics = z.object({
-  avgLatency: z.number().int().nullable(),
+  p50Latency: z.number().int().nullable(),
   p75Latency: z.number().int().nullable(),
   p90Latency: z.number().int().nullable(),
   p95Latency: z.number().int().nullable(),
@@ -213,7 +213,6 @@ export const tbBuildResponseTimeMetrics = z
     count: z.number().int(),
     ok: z.number().int(),
     lastTimestamp: z.number().int().nullable().optional(),
-    time: z.number().int(), // only to sort the data - cannot be done on server because of UNION ALL
   })
   .merge(latencyMetrics);
 

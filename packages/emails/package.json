@@ -23,8 +23,8 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "@types/react": "18.2.24",
+    "@types/react": "18.2.64",
     "react": "18.2.0",
-    "typescript": "5.2.2"
+    "typescript": "5.4.2"
   }
 }

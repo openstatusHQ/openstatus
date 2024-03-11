@@ -11,16 +11,15 @@ import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
 export const runtime = "edge";
 
 export async function GET(req: Request) {
-  const interRegularData = await interRegular;
-  const interLightData = await interLight;
-  const calSemiBoldData = await calSemiBold;
+  const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
+    [interRegular, interLight, calSemiBold],
+  );
 
   const { searchParams } = new URL(req.url);
 
   const slug = searchParams.has("slug") ? searchParams.get("slug") : undefined;
 
   const page = await api.page.getPageBySlug.query({ slug: slug || "" });
-
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 

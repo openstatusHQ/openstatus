@@ -7,7 +7,7 @@ import type { Period } from "../utils";
 import { MetricsCard } from "./metrics-card";
 
 const metricsOrder = [
-  "avgLatency",
+  "p50Latency",
   "p75Latency",
   "p90Latency",
   "p95Latency",
@@ -24,7 +24,7 @@ export function Metrics({
   if (!metrics) return null;
 
   const [current, last] = metrics.sort((a, b) =>
-    a.time - b.time < 0 ? 1 : -1,
+    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
   );
 
   const isEmpty = current.count === 0;
@@ -32,7 +32,7 @@ export function Metrics({
   const uptime = isEmpty ? 1 : current.ok / current.count;
   const lastUptime = last.ok / last.count;
 
-  const failures = current.ok === 0 ? 0 : current.count - current.ok;
+  const failures = current.count === 0 ? 0 : current.count - current.ok;
   const lastFailures = last.count - last.ok;
 
   const distance = current.lastTimestamp
@@ -81,10 +81,7 @@ export function Metrics({
             return (
               <MetricsCard
                 key={key}
-                title={
-                  // FIXME: rename in tb
-                  key === "avgLatency" ? "P50" : key.replace("Latency", "")
-                }
+                title={key.replace("Latency", "")}
                 value={value || 0}
                 suffix="ms"
                 delta={delta}

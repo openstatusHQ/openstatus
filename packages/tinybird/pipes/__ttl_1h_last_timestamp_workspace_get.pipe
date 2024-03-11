@@ -1,0 +1,13 @@
+VERSION 0
+
+TOKEN "__ttl_1h_last_timestamp_workspace_get__v0_endpoint_read_5322" READ
+
+NODE __ttl_1h_last_timestamp_workspace_get__v0_0
+SQL >
+
+    %
+    SELECT max(cronTimestamp) as cronTimestamp
+    FROM __ttl_1h_mv__v0
+    WHERE workspaceId = {{ String(workspaceId, '1') }}
+
+

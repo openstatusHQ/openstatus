@@ -2,45 +2,27 @@
 
 import * as React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { CandlestickChart, HelpCircle } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 import {
   Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
   Separator,
 } from "@openstatus/ui";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
-import { cn } from "@/lib/utils";
 import { quantiles } from "../utils";
 import type { Quantile } from "../utils";
+import { SearchParamsPreset } from "./search-params-preset";
 
 export function QuantilePreset({
   quantile,
   disabled,
-  className,
 }: {
   quantile: Quantile;
   disabled?: boolean;
-  className?: string;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const updateSearchParams = useUpdateSearchParams();
-
-  function onSelect(value: Quantile) {
-    const searchParams = updateSearchParams({ quantile: value });
-    router.replace(`${pathname}?${searchParams}`, { scroll: false });
-  }
-
   return (
     <div className="grid gap-1">
       <div className="flex items-center gap-1.5">
@@ -62,33 +44,17 @@ export function QuantilePreset({
           </PopoverContent>
         </Popover>
       </div>
-      <Select
-        onValueChange={onSelect}
-        defaultValue={quantile}
+      <SearchParamsPreset
         disabled={disabled}
-      >
-        <SelectTrigger
-          className={cn("w-[150px] uppercase", className)}
-          id="quantile"
-        >
-          <span className="flex items-center gap-2">
-            <CandlestickChart className="h-4 w-4" />
-            <SelectValue />
-          </span>
-        </SelectTrigger>
-        <SelectContent>
-          {quantiles.map((quantile) => {
-            return (
-              <React.Fragment key={quantile}>
-                {quantile === "avg" && <SelectSeparator />}
-                <SelectItem value={quantile} className="uppercase">
-                  {quantile}
-                </SelectItem>
-              </React.Fragment>
-            );
-          })}
-        </SelectContent>
-      </Select>
+        defaultValue={quantile}
+        values={quantiles}
+        searchParam="quantile"
+        icon="candlestick-chart"
+        placeholder="Pick a quantile"
+        formatter={(value: Quantile) => (
+          <span className="uppercase">{value}</span>
+        )}
+      />
     </div>
   );
 }

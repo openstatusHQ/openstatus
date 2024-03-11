@@ -18,7 +18,7 @@
     "prettier": "3.0.3",
     "prettier-plugin-tailwindcss": "0.5.4",
     "turbo": "1.10.12",
-    "typescript": "5.2.2"
+    "typescript": "5.4.2"
   },
   "packageManager": "pnpm@8.7.6",
   "name": "openstatus",

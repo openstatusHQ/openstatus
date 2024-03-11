@@ -8,6 +8,14 @@ import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertPage } from "@openstatus/db/src/schema";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   FormControl,
   FormDescription,
@@ -26,19 +34,58 @@ interface Props {
 
 export function SectionAdvanced({ form }: Props) {
   const inputFileRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = React.useState(false);
+  const [file, setFile] = React.useState<File | null>(null);
+
+  /**
+   * Determine the width and height of the uploaded image - it ideally is a square
+   */
+  const getFileDimensions = async (file: File) => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+    return { width: img.naturalWidth, height: img.naturalHeight };
+  };
 
   const handleChange = async (file: FileList | null) => {
     if (!file || file.length === 0) {
       return;
     }
 
-    const response = await fetch(`/api/upload?filename=${file[0].name}`, {
+    const { height, width } = await getFileDimensions(file[0]);
+
+    // remove rounding issues from transformations
+    if (!(Math.abs(height - width) <= 1)) {
+      setOpen(true);
+      setFile(file[0]);
+      return;
+    }
+
+    const newblob = await handleUpload(file[0]);
+    form.setValue("icon", newblob.url);
+  };
+
+  const handleUpload = async (file: File) => {
+    const response = await fetch(`/api/upload?filename=${file.name}`, {
       method: "POST",
-      body: file[0],
+      body: file,
     });
 
     const newblob = (await response.json()) as PutBlobResult;
-    form.setValue("icon", newblob.url);
+    return newblob;
+  };
+
+  const handleCancel = () => {
+    inputFileRef.current?.value && (inputFileRef.current.value = "");
+  };
+
+  const handleConfirm = async () => {
+    if (file) {
+      const newblob = await handleUpload(file);
+      form.setValue("icon", newblob.url);
+      setFile(null);
+    }
+    setOpen(false);
   };
 
   return (
@@ -110,6 +157,23 @@ export function SectionAdvanced({ form }: Props) {
           </FormItem>
         )}
       />
+      <AlertDialog open={open} onOpenChange={(value) => setOpen(value)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Incorrect image size</AlertDialogTitle>
+            <AlertDialogDescription>
+              For the best result, the image should be a square. You can still
+              upload it, but it will be cropped.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancel}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirm}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

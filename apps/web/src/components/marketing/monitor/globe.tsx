@@ -1,21 +1,36 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import createGlobe from "cobe";
 
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 const SIZE = 350;
 
+// https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/By_example/Detect_WebGL
+function isWebGLContext() {
+  const canvas = document.createElement("canvas");
+  const gl =
+    canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+  return gl instanceof WebGLRenderingContext;
+}
+
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prefersReducedMotion = useMediaQuery(
-    "((prefers-reduced-motion: reduce))",
+    "(prefers-reduced-motion: reduce)",
   );
+  const [disabledWebGL, setDisabledWebGL] = useState(false);
 
   useEffect(() => {
     let phi = 0;
     if (!canvasRef.current) return;
+    if (!document) return;
+    if (!isWebGLContext()) {
+      setDisabledWebGL(true);
+      return;
+    }
 
     const globe = createGlobe(canvasRef.current, {
       devicePixelRatio: 2,
@@ -64,6 +79,17 @@ export function Globe() {
       globe.destroy();
     };
   }, [prefersReducedMotion]);
+
+  if (disabledWebGL) {
+    return (
+      <div className="flex items-center justify-center">
+        <p className="text-muted-foreground text-sm">
+          <span className="font-semibold">Hint</span>: enable{" "}
+          <span className="font-semibold">WebGL</span> to render the globe.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex justify-center">
