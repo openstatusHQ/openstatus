@@ -5,7 +5,11 @@
     "type": "git",
     "url": "https://github.com/openstatusHQ/openstatus.git"
   },
-  "keywords": ["openstatus", "react", "monitoring"],
+  "keywords": [
+    "openstatus",
+    "react",
+    "monitoring"
+  ],
   "homepage": "https://github.com/openstatusHQ/openstatus#readme",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,7 +19,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "dev":"tsup --watch && pnpm run dev:tailwind",
+    "dev": "tsup --watch && pnpm run dev:tailwind",
     "dev:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch",
     "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
     "build": "tsup && pnpm run build:tailwind"
@@ -23,10 +27,10 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "@types/react": "18.2.24",
+    "@types/react": "18.2.64",
     "tailwindcss": "3.3.2",
     "tsup": "7.2.0",
-    "typescript": "5.2.2"
+    "typescript": "5.4.2"
   },
   "peerDependencies": {
     "react": "^18.0.0"

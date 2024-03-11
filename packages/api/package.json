@@ -7,24 +7,24 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.29.7",
+    "@clerk/nextjs": "4.29.9",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.7.0",
-    "@trpc/client": "10.38.5",
-    "@trpc/server": "10.38.5",
+    "@trpc/client": "10.45.1",
+    "@trpc/server": "10.45.1",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
     "zod": "3.22.2",
-    "next": "14.1.0"
+    "next": "14.1.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.2.2",
+    "typescript": "5.4.2",
     "bun-types": "1.0.8"
   },
   "keywords": [],
