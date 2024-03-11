@@ -41,7 +41,7 @@ export default async function Details({
   }
 }
 
-export function PageEmptyState() {
+function PageEmptyState() {
   return (
     <EmptyState
       title="No log found"
