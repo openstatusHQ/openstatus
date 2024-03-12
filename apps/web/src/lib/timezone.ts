@@ -35,11 +35,7 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 }
 
 export function getServerTimezoneFormat() {
-  return format(
-    zonedTimeToUtc(new Date(), "Europe/Berlin"),
-    "LLL dd, y HH:mm:ss zzz",
-    { timeZone: "UTC" },
-  );
+  return format(new Date(), "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
 }
 
 /**
