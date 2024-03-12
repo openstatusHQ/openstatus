@@ -29,15 +29,21 @@ export const StatusReportList = ({
   const params = useParams<{ domain: string }>();
   const lastWeek = Date.now() - 1000 * 60 * 60 * 24 * 7;
 
-  function getLastWeeksIncidents() {
+  function getLastWeekOrOpenIncidents() {
     return statusReports.filter((incident) => {
-      return incident.statusReportUpdates.some(
+      const hasLastWeekReports = incident.statusReportUpdates.some(
         (update) => update.date.getTime() > lastWeek,
       );
+      const hasOpenIncident = ["identified", "investigating"].includes(
+        incident.status,
+      );
+
+      return hasLastWeekReports || hasOpenIncident;
     });
   }
 
-  const reports = context === "all" ? statusReports : getLastWeeksIncidents();
+  const reports =
+    context === "all" ? statusReports : getLastWeekOrOpenIncidents();
 
   reports.sort((a, b) => {
     if (a.updatedAt == undefined) return 1;

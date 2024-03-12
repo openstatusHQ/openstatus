@@ -6,12 +6,17 @@
 import { Suspense, use } from "react";
 import type { Row } from "@tanstack/react-table";
 
+import type { OSTinybird } from "@openstatus/tinybird";
+
 import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
 import { CopyToClipboardButton } from "@/components/dashboard/copy-to-clipboard-button";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { api } from "@/trpc/client";
+
+// EXAMPLE: get the type of the response of the endpoint
+type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type
 type Monitor = {

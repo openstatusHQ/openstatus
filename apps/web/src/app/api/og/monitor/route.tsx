@@ -1,11 +1,14 @@
 import { ImageResponse } from "next/og";
 
+import { OSTinybird } from "@openstatus/tinybird";
+
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
-import { getMonitorListData } from "@/lib/tb";
-import { convertTimezoneToGMT } from "@/lib/timezone";
+import { env } from "@/env";
 import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const runtime = "edge";
 
@@ -26,13 +29,10 @@ export async function GET(req: Request) {
   const monitorId =
     (searchParams.has("id") && searchParams.get("id")) || undefined;
 
-  const timezone = convertTimezoneToGMT();
-
   const data =
     (monitorId &&
-      (await getMonitorListData({
+      (await tb.endpointStatusPeriod("45d")({
         monitorId,
-        timezone,
       }))) ||
     [];
 

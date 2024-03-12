@@ -5,10 +5,12 @@ import type {
   PublicMonitor,
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
+import { OSTinybird } from "@openstatus/tinybird";
 
 import { Tracker } from "@/components/tracker/tracker";
-import { getMonitorListData } from "@/lib/tb";
-import { convertTimezoneToGMT } from "@/lib/timezone";
+import { env } from "@/env";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const Monitor = async ({
   monitor,
@@ -19,10 +21,8 @@ export const Monitor = async ({
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
 }) => {
-  const gmt = convertTimezoneToGMT();
-  const data = await getMonitorListData({
+  const data = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitor.id),
-    timezone: gmt,
     url: monitor.url,
   });
 

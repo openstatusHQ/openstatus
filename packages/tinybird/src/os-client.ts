@@ -131,7 +131,10 @@ export class OSTinybird {
       url: z.string().optional(),
     });
 
-    return async (props: z.infer<typeof parameters>) => {
+    return async (
+      props: z.infer<typeof parameters>,
+      opts?: { revalidate: number | undefined }, // RETHINK: not the best way to handle it
+    ) => {
       try {
         const res = await this.tb.buildPipe({
           pipe: `__ttl_${period}_count_get__v0`,
@@ -145,7 +148,7 @@ export class OSTinybird {
             ok: z.number().default(0),
           }),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            revalidate: opts?.revalidate || DEFAULT_CACHE,
           },
         })(props);
         return res.data;
