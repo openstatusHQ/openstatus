@@ -17,7 +17,7 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
-  const serverDate = getServerTimezoneFormat();
+  const formattedServerDate = getServerTimezoneFormat();
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -29,7 +29,7 @@ export async function StatusCheck({
       </div>
       <p className="text-muted-foreground text-xs">
         Status Check <span className="text-muted-foreground/50 text-xs">•</span>{" "}
-        {serverDate}
+        {formattedServerDate}
       </p>
     </div>
   );

@@ -1,12 +1,9 @@
-import { formatInTimeZone } from "date-fns-tz";
-
 import { OSTinybird } from "@openstatus/tinybird";
 
 import { Shell } from "@/components/dashboard/shell";
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
 import { getServerTimezoneFormat } from "@/lib/timezone";
-import { formatDateTime } from "@/lib/utils";
 import { HeaderPlay } from "../../_components/header-play";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
@@ -22,7 +19,7 @@ export default async function StatusPlay() {
     },
   );
 
-  const serverDate = getServerTimezoneFormat();
+  const formattedServerDate = getServerTimezoneFormat();
 
   return (
     <Shell>
@@ -35,7 +32,7 @@ export default async function StatusPlay() {
           {data && <Tracker data={data} name="Ping" description="Pong" />}
         </div>
         <p className="text-muted-foreground text-center text-sm">
-          {serverDate}
+          {formattedServerDate}
         </p>
         {/* REMINDER: more playground component  */}
       </div>

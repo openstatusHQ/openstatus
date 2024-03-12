@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { formatInTimeZone, getTimezoneOffset } from "date-fns-tz";
+import { format, getTimezoneOffset, zonedTimeToUtc } from "date-fns-tz";
 
 export function getRequestHeaderTimezone() {
   const headersList = headers();
@@ -35,10 +35,10 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 }
 
 export function getServerTimezoneFormat() {
-  return formatInTimeZone(
-    new Date(),
-    "Europe/Berlin",
+  return format(
+    zonedTimeToUtc(new Date(), "Europe/Berlin"),
     "LLL dd, y HH:mm:ss zzz",
+    { timeZone: "UTC" },
   );
 }
 
