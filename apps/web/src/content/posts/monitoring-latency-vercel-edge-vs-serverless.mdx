@@ -182,6 +182,12 @@ We are pinging this functions every 10 minutes.
 
 ## Conclusion
 
+| Runtime               | p50 | p95   | p99   |
+| --------------------- | --- | ----- | ----- |
+| Serverless Cold Start | 859 | 1,046 | 1,156 |
+| Serverless Warm       | 246 | 563   | 855   |
+| Edge                  | 106 | 178   | 328   |
+
 Edge functions are approximately 9 times faster than Serverless functions during
 cold starts, but only 2 times faster when the function is warm.
 
