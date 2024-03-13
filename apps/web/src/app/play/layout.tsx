@@ -20,15 +20,8 @@ export const metadata: Metadata = {
 
 export default function PlayLayout({
   children,
-  modal,
 }: {
   children: React.ReactNode;
-  modal: React.ReactNode;
 }) {
-  return (
-    <MarketingLayout>
-      {children}
-      {modal}
-    </MarketingLayout>
-  );
+  return <MarketingLayout>{children}</MarketingLayout>;
 }

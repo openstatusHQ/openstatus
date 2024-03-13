@@ -5,6 +5,7 @@ import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
 import {
+  incidentTable,
   monitor,
   monitorsToPages,
   notification,
@@ -72,6 +73,19 @@ async function main() {
         method: "GET",
         regions: "gru",
       },
+      {
+        id: 3,
+        workspaceId: 1,
+        active: true,
+        url: "https://www.openstatus.dev",
+        name: "OpenStatus",
+        description: "OpenStatus website",
+        method: "GET",
+        periodicity: "1m",
+        regions: "ams",
+        headers: '[{"key":"key", "value":"value"}]',
+        body: '{"hello":"world"}',
+      },
     ])
     .run();
 
@@ -132,6 +146,38 @@ async function main() {
     })
     .run();
 
+  await db
+    .insert(statusReport)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      title: "Test Status Report",
+      status: "investigating",
+      updatedAt: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(incidentTable)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      monitorId: 1,
+      createdAt: new Date(),
+      startedAt: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(incidentTable)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      monitorId: 1,
+      createdAt: new Date(),
+      startedAt: new Date(Date.now() + 1000),
+    })
+    .run();
   await db
     .insert(statusReportUpdate)
     .values({

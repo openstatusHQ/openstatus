@@ -21,11 +21,12 @@
     "@openstatus/notification-twillio-sms": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
+    "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@t3-oss/env-core": "0.7.1",
     "@unkey/api": "0.16.0",
-    "hono": "3.9.2",
+    "hono": "4.0.0",
     "nanoid": "5.0.2",
     "zod": "3.22.2"
   },

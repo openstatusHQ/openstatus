@@ -1,22 +1,26 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
-import { endOfDay, startOfDay } from "date-fns";
 import * as z from "zod";
 
-import { StatusDot } from "@/components/monitor/status-dot";
-import { getResponseGraphData } from "@/lib/tb";
+import { flyRegions } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
+import { Separator } from "@openstatus/ui";
+
+import { env } from "@/env";
+import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
+import { ButtonReset } from "../_components/button-reset";
 import { DatePickerPreset } from "../_components/date-picker-preset";
-import { IntervalPreset } from "../_components/interval-preset";
-import { QuantilePreset } from "../_components/quantile-preset";
-import {
-  getDateByPeriod,
-  getMinutesByInterval,
-  intervals,
-  periods,
-  quantiles,
-} from "../utils";
-import { ChartWrapper } from "./_components/chart-wrapper";
+import { Metrics } from "../_components/metrics";
+import { getMinutesByInterval, intervals, periods, quantiles } from "../utils";
+import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+
+const DEFAULT_QUANTILE = "p95";
+const DEFAULT_INTERVAL = "30m";
+const DEFAULT_PERIOD = "1d";
 
 /**
  * allowed URL search params
@@ -24,14 +28,19 @@ import { ChartWrapper } from "./_components/chart-wrapper";
 const searchParamsSchema = z.object({
   statusCode: z.coerce.number().optional(),
   cronTimestamp: z.coerce.number().optional(),
-  quantile: z.enum(quantiles).optional().default("p95"),
-  interval: z.enum(intervals).optional().default("30m"),
-  period: z.enum(periods).optional().default("1d"),
-  fromDate: z.coerce
-    .number()
+  quantile: z.enum(quantiles).optional().default(DEFAULT_QUANTILE),
+  interval: z.enum(intervals).optional().default(DEFAULT_INTERVAL),
+  period: z.enum(periods).optional().default(DEFAULT_PERIOD),
+  regions: z
+    .string()
     .optional()
-    .default(startOfDay(new Date()).getTime()),
-  toDate: z.coerce.number().optional().default(endOfDay(new Date()).getTime()),
+    .transform(
+      (value) =>
+        value
+          ?.trim()
+          ?.split(",")
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+    ),
 });
 
 export default async function Page({
@@ -43,6 +52,7 @@ export default async function Page({
 }) {
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
+  const preferredSettings = getPreferredSettings();
 
   const monitor = await api.monitor.getMonitorById.query({
     id: Number(id),
@@ -52,51 +62,58 @@ export default async function Page({
     return notFound();
   }
 
-  const date = getDateByPeriod(search.data.period);
-  const minutes = getMinutesByInterval(search.data.interval);
+  const { period, quantile, interval, regions } = search.data;
 
-  const data = await getResponseGraphData({
+  // TODO: work it out easier
+  const intervalMinutes = getMinutesByInterval(interval);
+  const periodicityMinutes = getMinutesByInterval(monitor.periodicity);
+
+  const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
+  const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
+
+  const metrics = await tb.endpointMetrics(period)({
     monitorId: id,
-    ...search.data,
-    /**
-     *
-     */
-    fromDate: date.from.getTime(),
-    toDate: date.to.getTime(),
+    url: monitor.url,
+  });
+
+  const data = await tb.endpointChart(period)({
+    monitorId: id,
+    url: monitor.url,
     interval: minutes,
   });
 
-  if (!data) return null;
+  const metricsByRegion = await tb.endpointMetricsByRegion(period)({
+    monitorId: id,
+    url: monitor.url,
+  });
 
-  const { period, quantile, interval } = search.data;
+  if (!data || !metrics || !metricsByRegion) return null;
+
+  const isDirty =
+    period !== DEFAULT_PERIOD ||
+    quantile !== DEFAULT_QUANTILE ||
+    interval !== DEFAULT_INTERVAL ||
+    flyRegions.length !== regions.length;
 
   return (
     <div className="grid gap-4">
-      <div>
-        <p className="text-muted-foreground inline-flex items-center gap-2 text-sm">
-          <StatusDot status={monitor.status} active={monitor.active} />
-          <span>
-            {monitor.active
-              ? monitor.status === "active"
-                ? "up"
-                : "down"
-              : "pause"}{" "}
-            · checked every{" "}
-            <code className="text-foreground">{monitor.periodicity}</code>
-          </span>
-        </p>
+      <div className="flex justify-between gap-2">
+        <DatePickerPreset defaultValue={period} values={periods} />
+        {isDirty ? <ButtonReset /> : null}
       </div>
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        {/* IDEA: add tooltip for description */}
-        <DatePickerPreset period={period} />
-        <QuantilePreset quantile={quantile} />
-        <IntervalPreset interval={interval} />
-      </div>
-      <ChartWrapper period={period} quantile={quantile} data={data} />
-      <p className="text-muted-foreground text-center text-xs">
-        Select your preferred time range, percentile for insights, and time
-        interval for granular analysis.
-      </p>
+      <Metrics metrics={metrics} period={period} />
+      <Separator className="my-8" />
+      <CombinedChartWrapper
+        data={data}
+        period={period}
+        quantile={quantile}
+        interval={interval}
+        regions={regions as Region[]} // FIXME: not properly reseted after filtered
+        monitor={monitor}
+        isQuantileDisabled={isQuantileDisabled}
+        metricsByRegion={metricsByRegion}
+        preferredSettings={preferredSettings}
+      />
     </div>
   );
 }

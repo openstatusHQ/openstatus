@@ -1,0 +1,15 @@
+VERSION 0
+
+NODE response_graph_0
+SQL >
+
+    %
+    SELECT *
+    FROM ping_response__v7
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        AND cronTimestamp = {{ Int64(cronTimestamp, 1706467215188) }}
+        AND region = {{ String(region, 'ams') }}
+
+

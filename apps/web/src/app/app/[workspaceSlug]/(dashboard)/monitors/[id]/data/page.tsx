@@ -2,12 +2,15 @@ import * as React from "react";
 import { notFound } from "next/navigation";
 import * as z from "zod";
 
-import { columns } from "@/components/data-table/columns";
-import { DataTable } from "@/components/data-table/data-table";
-import { getResponseListData } from "@/lib/tb";
+import { OSTinybird } from "@openstatus/tinybird";
+
+import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { DatePickerPreset } from "../_components/date-picker-preset";
-import { getDateByPeriod, periods } from "../utils";
+import { periods } from "../utils";
+import { DataTableWrapper } from "./_components/data-table-wrapper";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 /**
  * allowed URL search params
@@ -34,12 +37,12 @@ export default async function Page({
     return notFound();
   }
 
-  const date = getDateByPeriod(search.data.period);
+  const allowedPeriods = ["1h", "1d"] as const;
+  const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
-  const data = await getResponseListData({
+  const data = await tb.endpointList(period)({
     monitorId: id,
-    fromDate: date.from.getTime(),
-    toDate: date.to.getTime(),
+    url: monitor.url,
   });
 
   if (!data) return null;
@@ -47,9 +50,9 @@ export default async function Page({
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        <DatePickerPreset period={search.data.period} />
+        <DatePickerPreset defaultValue={period} values={allowedPeriods} />
       </div>
-      <DataTable columns={columns} data={data} />
+      <DataTableWrapper data={data} />
     </div>
   );
 }

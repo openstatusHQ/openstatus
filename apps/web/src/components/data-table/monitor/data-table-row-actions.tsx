@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
@@ -25,8 +26,9 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
+import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -36,9 +38,10 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorSchema.parse(row.original);
+  const { monitor } = z
+    .object({ monitor: selectMonitorSchema })
+    .parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -47,11 +50,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -65,10 +68,10 @@ export function DataTableRowActions<TData>({
           ...rest,
           active: !monitor.active,
         });
-        toast("success");
+        toastAction("success");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -77,17 +80,23 @@ export function DataTableRowActions<TData>({
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
 
-      const res = await fetch("/api/checker/test", {
-        method: "POST",
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({ url, body, method, headers }),
-      });
-      if (res.ok) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+      try {
+        const res = await fetch(`/api/checker/test`, {
+          method: "POST",
+          headers: new Headers({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ url, body, method, headers }),
+        });
+        const data = (await res.json()) as RegionChecker;
+
+        if (data.status >= 200 && data.status < 300) {
+          toastAction("test-success");
+        } else {
+          toastAction("test-error");
+        }
+      } catch {
+        toastAction("error");
       }
     });
   }

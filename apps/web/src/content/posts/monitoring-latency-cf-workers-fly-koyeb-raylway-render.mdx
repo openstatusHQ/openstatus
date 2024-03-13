@@ -1,0 +1,469 @@
+---
+title:
+  "Monitoring latency: Cloudflare Workers vs Fly vs Koyeb vs Railway vs Render"
+description:
+  Want to know which providers offer the lowest latency? We deployed a simple
+  Hono server on differerent cloud and compared their latency using OpenStatus.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-02-19
+image: /assets/posts/monitoring-latency/all-hosting-providers.png
+---
+
+> ⚠️ We are using the default settings for each provider and conducting
+> datacenter to datacenter requests. A real-world application's results are
+> going to be different. ⚠️
+
+You want to know which cloud providers offer the lowest latency?
+
+In this post, I compare the latency of
+[Cloudflare Workers](#cloudflare-workers), [Fly](#flyio), [Koyeb](#koyeb),
+[Railway](#railway) and [Render](#render) using
+[OpenStatus](https://www.openstatus.dev).
+
+I deployed the application on the cheapest or free tier offered by each
+provider.
+
+For this test, I used a basic [Hono](https://hono.dev) server that returns a
+simple text response.
+
+```js
+const app = new Hono();
+app.use("*", logger());
+
+app.use("*", poweredBy());
+
+app.get("/", (c) => {
+  return c.text(
+    "Just return the desired http status code, e.g. /404 🤯 \nhttps://www.openstatus.dev",
+  );
+});
+```
+
+You can find the code [here](https://github.com/openstatusHQ/status-code), it’s
+open source 😉.
+
+OpenStatus monitored our endpoint every **10 minutes** from **6 locations**
+located in Amsterdam, Ashburn, Hong Kong, Johannesburg, Sao Paulo and Sydney.
+
+It's a good way to test our own product and improve it.
+
+Let's analyze the data from the past two weeks.
+
+## Cloudflare workers
+
+Cloudflare Workers is a serverless platform by Cloudflare. It lets you build new
+applications using JavaScript/Typescript. You can deploy up to 100 worker
+scripts for free, running on more than 275 network locations.
+
+### Latency metrics
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10956} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={182} suffix="ms" />
+  <MetricsCard title="p75" value={138} suffix="ms" />
+  <MetricsCard title="p90" value={695} suffix="ms" />
+  <MetricsCard title="p95" value={778} suffix="ms" />
+  <MetricsCard title="p99" value={991} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/cloudflare.json"
+    caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+### Timing metrics
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 17       | 2               | 17                 | 27        | 0              |
+| GRU    | 38       | 2               | 13                 | 28        | 0              |
+| HKG    | 19       | 2               | 13                 | 29        | 0              |
+| IAD    | 24       | 1               | 14                 | 30        | 0              |
+| JNB    | 123      | 168             | 182                | 185       | 0              |
+| SYD    | 51       | 1               | 11                 | 25        | 0              |
+
+I can notice that Johannesburg's latency is about ten times higher than that of
+the other monitors.
+
+### Headers
+
+From the Cloudflare request I can get the location of the workers that handle
+the request, with `Cf-ray` in the headers response.
+
+| Checker region | Workers region | number of request |
+| -------------- | -------------- | ----------------- |
+| HKG            | HKG            | 1831              |
+| SYD            | SYD            | 1831              |
+| AMS            | AMS            | 1831              |
+| IAD            | IAD            | 1831              |
+| GRU            | GRU            | 1791              |
+| GRU            | GIG            | 40                |
+| JNB            | AMS            | 741               |
+| JNB            | MUC            | 4                 |
+| JNB            | HKG            | 5                 |
+| JNB            | SIN            | 6                 |
+| JNB            | NRT            | 8                 |
+| JNB            | EWR            | 10                |
+| JNB            | CDG            | 82                |
+| JNB            | FRA            | 276               |
+| JNB            | LHR            | 699               |
+| JNB            | AMS            | 741               |
+
+I can see all the request from JNB is never routed to a nearby data-center.
+
+Apart from the strange routing error in Johannesburg, Cloudflare workers are
+fast worldwide.
+
+I have not experienced any cold start issues.
+
+## Fly.io
+
+Fly.io simplifies deploying and running server-side applications globally.
+Developers can deploy their applications near users worldwide for low latency
+and high performance. It uses a lightweight Firecracker VM to easily deploy
+Docker images.
+
+### Latency metrics
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10952} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={1471} suffix="ms" />
+  <MetricsCard title="p75" value={1514} suffix="ms" />
+  <MetricsCard title="p90" value={1555} suffix="ms" />
+  <MetricsCard title="p95" value={1626} suffix="ms" />
+  <MetricsCard title="p99" value={2547} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/fly.json"
+    caption="Fly avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+### Timing metrics
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 6        | 1               | 8                  | 1469      | 0              |
+| GRU    | 5        | 0               | 4                  | 1431      | 0              |
+| HKG    | 4        | 0               | 5                  | 1473      | 0              |
+| IAD    | 3        | 0               | 5                  | 1470      | 0              |
+| JNB    | 24       | 0               | 5                  | 1423      | 0              |
+| SYD    | 3        | 0               | 3                  | 1489      | 0              |
+
+The DNS is fast, our checker is attempting to connect to a region in the same
+data center, but our machine's cold start is slowing us down, leading to the
+high TTFB.
+
+Here’s our config for Fly.io:
+
+```toml
+app = 'statuscode'
+primary_region = 'ams'
+
+[build]
+  dockerfile = "./Dockerfile"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 256
+```
+
+The primary region of our server is Amsterdam, and the fly instances is getting
+paused after a period of inactivity.
+
+The machine starts slowly, as indicated by the logs showing a start time of
+`1.513643778s.`
+
+```
+2024-02-14T11:24:16.107 proxy[286560ea703108] ams [info] Starting machine
+
+2024-02-14T11:24:16.322 app[286560ea703108] ams [info] [ 0.035736] PCI: Fatal: No config space access function found
+
+2024-02-14T11:24:16.533 app[286560ea703108] ams [info] INFO Starting init (commit: bfa79be)...
+
+2024-02-14T11:24:16.546 app[286560ea703108] ams [info] INFO Preparing to run: `/usr/local/bin/docker-entrypoint.sh bun start` as root
+
+2024-02-14T11:24:16.558 app[286560ea703108] ams [info] INFO [fly api proxy] listening at /.fly/api
+
+2024-02-14T11:24:16.565 app[286560ea703108] ams [info] 2024/02/14 11:24:16 listening on [fdaa:3:2ef:a7b:10c:3c9a:5b4:2]:22 (DNS: [fdaa::3]:53)
+
+2024-02-14T11:24:16.611 app[286560ea703108] ams [info] $ bun src/index.ts
+
+2024-02-14T11:24:16.618 runner[286560ea703108] ams [info] Machine started in 460ms
+
+2024-02-14T11:24:17.621 proxy[286560ea703108] ams [info] machine started in 1.513643778s
+
+2024-02-14T11:24:17.628 proxy[286560ea703108] ams [info] machine became reachable in 7.03669ms
+```
+
+#### OpenStatus Prod metrics
+
+If you update your fly.toml file to include the following, you can get the zero
+cold start and achieve a better latency.
+
+```
+  min_machines_running = 1
+```
+
+This is our data for our production server deploy on Fly.io.
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={12076} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={61} suffix="ms" />
+  <MetricsCard title="p75" value={67} suffix="ms" />
+  <MetricsCard title="p90" value={164} suffix="ms" />
+  <MetricsCard title="p95" value={198} suffix="ms" />
+  <MetricsCard title="p99" value={327} suffix="ms" />
+</div>
+
+> We use Fly.io in production, and the machine never sleeps, yielding much
+> better results.
+
+## Koyeb
+
+Koyeb is a developer-friendly serverless platform that allows for global app
+deployment without the need for operations, servers, or infrastructure
+management. Koyeb offers a free Starter plan that includes one Web Service, one
+Database service. The platform focuses on ease of deployment and scalability for
+developers
+
+### Latency metrics
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={0} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10955} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={539} suffix="ms" />
+  <MetricsCard title="p75" value={738} suffix="ms" />
+  <MetricsCard title="p90" value={881} suffix="ms" />
+  <MetricsCard title="p95" value={1013} suffix="ms" />
+  <MetricsCard title="p99" value={1525} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/koyeb.json"
+    caption="Koyeb avg. latency between 04. Feb and 18. Feb 2024."
+  />
+</div>
+
+### Timing metrics
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 50       | 2               | 17                 | 107       | 0              |
+| GRU    | 139      | 65              | 75                 | 407       | 0              |
+| HKG    | 48       | 2               | 13                 | 321       | 0              |
+| IAD    | 35       | 1               | 12                 | 129       | 0              |
+| JNB    | 298      | 1               | 11                 | 720       | 0              |
+| SYD    | 97       | 1               | 10                 | 711       | 0              |
+
+### Headers
+
+The request headers show that none of our requests are cached. They contain
+`cf-cache-status: dynamic`. Cloudflare handles the Koyeb edge layer.
+https://www.koyeb.com/blog/building-a-multi-region-service-mesh-with-kuma-envoy-anycast-bgp-and-mtls
+
+Our requests follow this route:
+
+```
+Cf workers -> koyeb Global load balancer -> koyeb backend
+```
+
+Let’s see where did we hit the cf workers
+
+| Checker region | Workers region | number of request |
+| -------------- | -------------- | ----------------- |
+| AMS            | AMS            | 1866              |
+| GRU            | GRU            | 504               |
+| GRU            | IAD            | 38                |
+| GRU            | MIA            | 688               |
+| GRU            | EWR            | 337               |
+| GRU            | CIG            | 299               |
+| HKG            | HKG            | 1866              |
+| IAD            | IAD            | 1866              |
+| JNB            | JNB            | 1861              |
+| JNB            | AMS            | 1                 |
+| SYD            | SYD            | 1866              |
+
+Koyeb Global Load Balancer region we hit:
+
+| Checker region | Koyeb Global Load Balancer | number of request |
+| -------------- | -------------------------- | ----------------- |
+| AMS            | FRA1                       | 1866              |
+| GRU            | WAS1                       | 1866              |
+| HKG            | SIN1                       | 1866              |
+| IAD            | WAS1                       | 1866              |
+| JNB            | PAR1                       | 4                 |
+| JNB            | SIN1                       | 1864              |
+| JNB            | FRA1                       | 1                 |
+| JNB            | SIN1                       | 1866              |
+
+I have deployed our app in the Frankfurt data-center.
+
+## Railway
+
+Railway is a cloud platform designed for building, shipping, and monitoring
+applications without the need for Platform Engineers. It simplifies the
+application development process by offering seamless deployment and monitoring
+capabilities.
+
+### Latency metrics
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={99.991} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={1} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10955} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={381} suffix="ms" />
+  <MetricsCard title="p75" value={469} suffix="ms" />
+  <MetricsCard title="p90" value={653} suffix="ms" />
+  <MetricsCard title="p95" value={661} suffix="ms" />
+  <MetricsCard title="p99" value={850} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/railway.json"
+    caption="Railway avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+### Timing metrics
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 9        | 21              | 18                 | 158       | 0              |
+| GRU    | 14       | 115             | 127                | 178       | 0              |
+| HKG    | 8        | 45              | 54                 | 225       | 0              |
+| IAD    | 7        | 2               | 14                 | 65        | 0              |
+| JNB    | 18       | 193             | 178                | 319       | 0              |
+| SYD    | 21       | 108             | 105                | 280       | 0              |
+
+### Headers
+
+The headers don't provide any information.
+
+Railway is using Google Cloud Platform. It’s the only service that does not
+allow us to pick a specific region on the free plan. Our test app will be
+located to `us-west1` Portland, Oregon. We can see that the latency is the
+lowest in IAD.
+
+By default our app did not scale down to 0. It was always running. We don't have
+any cold start.
+
+## Render
+
+Render is a platform that simplifies deploying and scaling web applications and
+services. It offers features like automated SSL, automatic scaling, native
+support for popular frameworks, and one-click deployments from Git. The platform
+focuses on simplicity and developer productivity.
+
+### Latency metrics
+
+<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+  <MetricsCard title="uptime" value={99.89} suffix="%" variant="positive" />
+  <MetricsCard title="fails" value={12} suffix="#" variant="negative" />
+  <MetricsCard title="total pings" value={10946} suffix="#" variant="info" />
+  <div className="hidden md:col-span-2 md:block" />
+  <MetricsCard title="avg" value={451} suffix="ms" />
+  <MetricsCard title="p75" value={447} suffix="ms" />
+  <MetricsCard title="p90" value={591} suffix="ms" />
+  <MetricsCard title="p95" value={707} suffix="ms" />
+  <MetricsCard title="p99" value={902} suffix="ms" />
+</div>
+
+<div className="mt-4">
+  <SimpleChart
+    staticFile="/assets/posts/monitoring-latency/render.json"
+    caption="Render avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
+  />
+</div>
+
+### Timing metrics
+
+| Region | DNS (ms) | Connection (ms) | TLS Handshake (ms) | TTFB (ms) | Transfert (ms) |
+| ------ | -------- | --------------- | ------------------ | --------- | -------------- |
+| AMS    | 20       | 2               | 7                  | 107       | 0              |
+| GRU    | 61       | 2               | 6                  | 407       | 0              |
+| HKG    | 76       | 2               | 6                  | 321       | 0              |
+| IAD    | 15       | 1               | 5                  | 129       | 0              |
+| JNB    | 36       | 161             | 167                | 720       | 0              |
+| SYD    | 103      | 1               | 4                  | 711       | 0              |
+
+### Headers
+
+The headers don't provide any information.
+
+I have deployed our app in the Frankfurt data-center.
+
+According to the Render docs, the free tier will shut down the service after 15
+minutes of inactivity. However, our app is being accessed by a monitor every 10
+minutes. We should never scale down to 0.
+
+```
+Render spins down a Free web service that goes 15 minutes without receiving inbound traffic. Render spins the service back up whenever it next receives a request to process.
+```
+
+I think the failures are due to the cold start of our app. We have a default
+timeout of 30s and the render app takes up to 50s to start.We might have hit an
+inflection point between cold and warm.
+
+## Conclusion
+
+Here are the results of our test:
+
+| Provider   | Uptime | Fails Ping | Total Pings | AVG latency (ms) | P75 (ms) | P90 (ms) | P95 (ms) | P99 (ms) |
+| ---------- | ------ | ---------- | ----------- | ---------------- | -------- | -------- | -------- | -------- |
+| CF Workers | 100    | 0          | 10,956      | 182              | 138      | 690      | 778      | 991      |
+| Fly.io     | 100    | 0          | 10,952      | 1,471            | 1,514    | 1,555    | 1,626    | 2,547    |
+| Koyeb      | 100    | 0          | 10,955      | 536              | 738      | 881      | 1,013    | 1,525    |
+| Railway    | 99.991 | 1          | 10,955      | 381              | 469      | 653      | 661      | 850      |
+| Render     | 99.89  | 12         | 10,946      | 451              | 447      | 591      | 707      | 902      |
+
+If you value low latency, Cloudflare Workers are the best option for fast global
+performance without cold start issues. They deploy your app worldwide
+efficiently.
+
+For multi-region deployment, check out Koyeb and Fly.io.
+
+For specific region deployment, Railway and Render are good choices.
+
+Choosing a cloud provider involves considering not just latency but also user
+experience and pricing.
+
+We use Fly.io in production and are satisfied with it.
+
+#### Vercel (coming soon)
+
+I haven't included Vercel in this test. But I am currently running a test to
+compare the latency of Vercel Edge, Vercel Serverless. Results will be published
+soon.
+
+If you want to monitor your API or website, create an account on
+[OpenStatus](https://www.openstatus.dev/app/sign-up?ref=blog-monitoring).

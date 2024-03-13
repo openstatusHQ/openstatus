@@ -3,7 +3,7 @@
   <h3 align="center">OpenStatus</h3>
 
   <p align="center">
-    The Open-Source monitoring platform with incident management.
+    The Open-Source website & API monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -49,7 +49,7 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 
 ### Requirements
 
-- [Node.js](https://nodejs.org/en/) >= 18.0.0
+- [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 8.6.2
 
 ### Setup
@@ -68,23 +68,56 @@ with us or send us an email at [ping@openstatus.dev](mailto:ping@openstatus.dev)
 
 3. Set up your .env file
 
-   from `apps/web` and `packages/db` you will find .env.example create your own.
+   From `apps/web` and `packages/db`, you will find .env.example. Create your
+   own copy.
 
 4. Follow the steps to run your sqlite database locally inside of
    [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
 
-5. Start the development server
+5. Start the development with the below command
 
    ```sh
     pnpm dev
    ```
 
-6. Open [http://localhost:3000](http://localhost:3000) with your browser to see
-   the result.
+   It will:
+
+   - run the web app on port `3000`
+   - run the api server on port `3001`
+   - run the docs on port `3002`
+
+6. See the results:
+
+- open [http://localhost:3000](http://localhost:3000) for the web app
+- open [http://localhost:3001/ping](http://localhost:3001/ping) for the api
+  server health check
+- open [http://localhost:3002](http://localhost:3002) for the docs
 
 For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
-access the link via ngrok (free), after login, append `/api/webhook/clerk` to
-the link you get after entering:
+access the link, you can use tunneling tools like
+[Tunnelmole](https://github.com/robbie-cahill/tunnelmole-client), an open source
+tunnelling tool or ngrok, a popular closed source tunnelling tool.
+
+### Using Tunnelmole
+
+1. Install Tunnelmole with
+   `curl -O https://install.tunnelmole.com/384HK/install && sudo bash install`.
+   (On Windows, download
+   [tmole.exe](https://tunnelmole.com/downloads/tmole.exe))
+2. Run `tmole 3000`. In the output, you'll see two URLs, one HTTP, and an HTTPS
+   URL. It's best to use the HTTPS URL for privacy and security.
+
+```
+➜  ~ tmole 3000
+http://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
+https://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
+```
+
+Append `/api/webhook/clerk` to the HTTPs URL.
+
+### Using ngrok
+
+After login, append `/api/webhook/clerk` to the link you get after entering:
 
 ```
 $ ngrok http 3000

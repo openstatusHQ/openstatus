@@ -74,24 +74,38 @@ export const cachedCheckerSchema = z.object({
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
-export type Method = "GET" | "POST" | "PUT" | "DELETE";
+export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
 
 export async function checkRegion(
   url: string,
   region: MonitorFlyRegion,
-  opts?: { method: Method },
-) {
+  opts?: {
+    method?: Method;
+    headers?: { value: string; key: string }[];
+    body?: string;
+  },
+): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
     headers: {
+      Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
-      // TODO: move to @/env
-      "x-openstatus-key": process.env.PLAYGROUND_UNKEY_API_KEY!,
       "fly-prefer-region": region,
     },
     method: "POST",
-    body: JSON.stringify({ url, method: opts?.method || "GET" }),
-    // cache: "force-cache",
+    body: JSON.stringify({
+      url,
+      method: opts?.method || "GET",
+      headers: opts?.headers?.reduce((acc, { key, value }) => {
+        if (!key) return acc; // key === "" is an invalid header
+
+        return {
+          ...acc,
+          [key]: value,
+        };
+      }, {}),
+      body: opts?.body,
+    }),
     next: { revalidate: 0 },
   });
 
@@ -100,6 +114,9 @@ export async function checkRegion(
   const data = checkerSchema.safeParse(json);
 
   if (!data.success) {
+    console.error(
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+    );
     throw new Error(data.error.message);
   }
 

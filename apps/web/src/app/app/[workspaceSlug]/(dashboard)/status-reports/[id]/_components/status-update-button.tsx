@@ -1,20 +1,42 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-import { Button } from "@openstatus/ui";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@openstatus/ui";
 
-export function StatusUpdateButton() {
-  const pathname = usePathname();
+import { StatusReportUpdateForm } from "@/components/forms/status-report-update/form";
 
-  if (pathname.endsWith("/update/edit")) {
-    return <Button disabled>Status Update</Button>;
-  }
-
+export function StatusUpdateButton({
+  statusReportId,
+}: {
+  statusReportId: number;
+}) {
+  const [open, setOpen] = useState(false);
   return (
-    <Button asChild>
-      <Link href="./update/edit">Status Update</Link>
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>Status Update</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-screen overflow-y-scroll sm:max-w-[650px]">
+        <DialogHeader>
+          <DialogTitle>New Status Report</DialogTitle>
+          <DialogDescription>
+            Provide a status update and add it to the report history.
+          </DialogDescription>
+        </DialogHeader>
+        <StatusReportUpdateForm
+          statusReportId={statusReportId}
+          onSubmit={() => setOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

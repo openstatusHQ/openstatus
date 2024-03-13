@@ -34,19 +34,19 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface Props {
   defaultValues?: InsertStatusReportUpdate;
   statusReportId: number;
-  nextUrl?: string;
+  onSubmit?: () => void;
 }
 
 export function StatusReportUpdateForm({
   defaultValues,
   statusReportId,
-  nextUrl,
+  onSubmit,
 }: Props) {
   const form = useForm<InsertStatusReportUpdate>({
     resolver: zodResolver(insertStatusReportUpdateSchema),
@@ -60,9 +60,8 @@ export function StatusReportUpdateForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: InsertStatusReportUpdate) => {
+  const handleSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -70,13 +69,11 @@ export function StatusReportUpdateForm({
         } else {
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
-        toast("saved");
-        if (nextUrl) {
-          router.push(nextUrl);
-        }
+        toastAction("saved");
+        onSubmit?.();
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };
@@ -86,7 +83,7 @@ export function StatusReportUpdateForm({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          form.handleSubmit(onSubmit)(e);
+          form.handleSubmit(handleSubmit)(e);
         }}
         className="grid w-full gap-6"
       >

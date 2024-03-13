@@ -17,7 +17,7 @@ export function ResponseHeaderTable({
 }) {
   return (
     <Table>
-      <TableCaption>Response Headers</TableCaption>
+      <TableCaption className="mt-2">Response Headers</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="md:min-w-[200px]">Key</TableHead>

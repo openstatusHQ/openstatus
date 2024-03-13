@@ -1,0 +1,25 @@
+VERSION 0
+
+DESCRIPTION >
+	TODO: descripe what it is for!
+
+
+NODE __ttl_45d_count_0
+SQL >
+
+    SELECT
+        time,
+        monitorId,
+        url,
+        countState() AS count,
+        countState(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM __ttl_45d_mv__v0
+    GROUP BY
+        time,
+        monitorId,
+        url
+
+TYPE materialized
+DATASOURCE __ttl_45d_count_mv__v0
+
+

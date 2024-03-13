@@ -1,11 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  integer,
-  primaryKey,
-  sqliteTable,
-  text,
-  unique,
-} from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
 import { user } from "../users/user";
@@ -41,13 +35,16 @@ export const incidentTable = sqliteTable(
     startedAt: integer("started_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(strftime('%s', 'now'))`),
-    // Who has acknoledge the incident
+    // Who has acknowledged the incident
     acknowledgedAt: integer("acknowledged_at", { mode: "timestamp" }),
     acknowledgedBy: integer("acknowledged_by").references(() => user.id),
 
     // Who has resolved it
     resolvedAt: integer("resolved_at", { mode: "timestamp" }),
     resolvedBy: integer("resolved_by").references(() => user.id),
+
+    // If the incident was auto resolved
+    autoResolved: integer("auto_resolved", { mode: "boolean" }).default(false),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,

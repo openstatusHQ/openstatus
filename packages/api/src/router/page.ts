@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { and, eq, inArray, or, sql } from "@openstatus/db";
 import {
+  incidentTable,
   insertPageSchema,
   monitor,
   monitorsToPages,
@@ -155,8 +156,10 @@ export const pageRouter = createTRPCRouter({
   // public if we use trpc hooks to get the page from the url
   getPageBySlug: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase() }))
+    .output(selectPublicPageSchemaWithRelation.optional())
     .query(async (opts) => {
-      console.log(opts.input.slug);
+      if (!opts.input.slug) return;
+
       const result = await opts.ctx.db.query.page.findFirst({
         where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
       });
@@ -237,9 +240,24 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
+      const incidents =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(incidentTable)
+              .where(
+                inArray(
+                  incidentTable.monitorId,
+                  monitors.map((m) => m.id),
+                ),
+              )
+              .all()
+          : [];
+
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
         monitors,
+        incidents,
         statusReports,
         workspacePlan: workspaceResult?.plan,
       });

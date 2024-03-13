@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceStrict } from "date-fns";
 
 import type { Incident } from "@openstatus/db/src/schema";
 
+import { formatDateTime } from "@/lib/utils";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Incident>[] = [
@@ -14,7 +16,7 @@ export const columns: ColumnDef<Incident>[] = [
     cell: ({ row }) => {
       return (
         <Link
-          href={`./monitors/${row.original.id}/overview`}
+          href={`./monitors/${row.original.monitorId}/overview`}
           className="group flex items-center gap-2"
         >
           <span className="max-w-[125px] truncate group-hover:underline">
@@ -29,7 +31,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Started At",
     cell: ({ row }) => {
       const { startedAt } = row.original;
-      const date = startedAt ? new Date(startedAt).toLocaleString() : "-";
+      const date = startedAt ? formatDateTime(startedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
@@ -44,9 +46,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Acknowledged At",
     cell: ({ row }) => {
       const { acknowledgedAt } = row.original;
-      const date = acknowledgedAt
-        ? new Date(acknowledgedAt).toLocaleString()
-        : "-";
+      const date = acknowledgedAt ? formatDateTime(acknowledgedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
@@ -61,7 +61,7 @@ export const columns: ColumnDef<Incident>[] = [
     header: "Resolved At",
     cell: ({ row }) => {
       const { resolvedAt } = row.original;
-      const date = resolvedAt ? new Date(resolvedAt).toLocaleString() : "-";
+      const date = resolvedAt ? formatDateTime(resolvedAt) : "-";
       return (
         <div className="flex">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
@@ -71,7 +71,28 @@ export const columns: ColumnDef<Incident>[] = [
       );
     },
   },
+  {
+    header: "Duration",
+    cell: ({ row }) => {
+      const { startedAt, resolvedAt } = row.original;
 
+      if (!resolvedAt) {
+        return <span className="text-muted-foreground">-</span>;
+      }
+
+      const duration = formatDistanceStrict(
+        new Date(startedAt),
+        new Date(resolvedAt),
+      );
+      return (
+        <div className="flex">
+          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {duration}
+          </span>
+        </div>
+      );
+    },
+  },
   {
     id: "actions",
     cell: ({ row }) => {

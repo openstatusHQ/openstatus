@@ -1,17 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
 
-import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/[workspaceSlug]/(dashboard)/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
+import { DeleteStatusReportUpdateButtonIcon } from "./delete-status-update";
+import { EditStatusReportUpdateIconButton } from "./edit-status-update";
 
 export function Events({
   statusReportUpdates,
@@ -23,14 +23,11 @@ export function Events({
   collabsible?: boolean;
 }) {
   const [open, toggle] = React.useReducer((open) => !open, false);
-  const router = useRouter();
 
-  // TODO: make it simpler..
   const sortedArray = statusReportUpdates.sort((a, b) => {
-    const orderA = statusDict[a.status].order;
-    const orderB = statusDict[b.status].order;
-    return orderB - orderA;
+    return b.date.getTime() - a.date.getTime();
   });
+
   const slicedArray =
     open || !collabsible
       ? sortedArray
@@ -63,16 +60,10 @@ export function Events({
             <div className="mt-1 grid flex-1">
               {editable ? (
                 <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex group-active:flex">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7 p-0"
-                    onClick={() => {
-                      router.push(`./update/edit?statusUpdate=${update.id}`);
-                    }}
-                  >
-                    <Icons.pencil className="h-4 w-4" />
-                  </Button>
+                  <EditStatusReportUpdateIconButton
+                    statusReportId={update.statusReportId}
+                    statusReportUpdate={update}
+                  />
                   <DeleteStatusReportUpdateButtonIcon id={update.id} />
                 </div>
               ) : undefined}
@@ -108,7 +99,7 @@ function EventMessage({
   message: string;
   className?: string;
 }) {
-  const Component = useProcessor(message);
+  const Component = useProcessor(message); // FIXME: make it work with markdown without hook!
   return (
     <div
       className={cn(

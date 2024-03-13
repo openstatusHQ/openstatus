@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
-import { AppHeader } from "@/components/layout/app-header";
+import { AppHeader } from "@/components/layout/header/app-header";
 
 export default async function AppLayout({
   children,

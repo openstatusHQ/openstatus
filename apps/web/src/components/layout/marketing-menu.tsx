@@ -13,15 +13,11 @@ import {
   SheetTrigger,
 } from "@openstatus/ui";
 
+import { marketingPagesConfig } from "@/config/pages";
+import { socialsConfig } from "@/config/socials";
 import { AppLink } from "./app-link";
-
-const pages = [
-  { href: "/blog", label: "Blog", segment: "blog" },
-  { href: "/play", label: "Playground", segment: "play" },
-  { href: "/changelog", label: "Changelog", segment: "changelog" },
-  { href: "/pricing", label: "Pricing", segment: "pricing" },
-  { href: "https://docs.openstatus.dev", label: "Documentation" },
-];
+import { LoginButton } from "./login-button";
+import { SocialIconButton } from "./social-icon-button";
 
 export function MarketingMenu() {
   const [open, setOpen] = React.useState(false);
@@ -50,29 +46,32 @@ export function MarketingMenu() {
         </SheetHeader>
         <div className="flex flex-1 flex-col justify-between gap-4">
           <ul className="grid gap-1">
-            {pages.map(({ href, label, segment }) => {
+            {marketingPagesConfig.map(({ href, title, segment }) => {
               const isExternal = href.startsWith("http");
               const externalProps = isExternal ? { target: "_blank" } : {};
+              const isActive = pathname.startsWith(href);
               return (
                 <li key={href} className="w-full">
                   <AppLink
                     href={href}
-                    label={label}
-                    segment={segment}
+                    label={title}
+                    active={isActive}
                     {...externalProps}
                   />
                 </li>
               );
             })}
           </ul>
-          <ul className="grid gap-1">
-            <li className="w-full">
-              <AppLink href="/github" label="GitHub" icon="github" />
-            </li>
-            <li className="w-full">
-              <AppLink href="/discord" label="Discord" icon="discord" />
-            </li>
-          </ul>
+          <div className="flex justify-between gap-2">
+            <ul className="flex flex-wrap gap-2">
+              {socialsConfig.map((props, i) => (
+                <li key={i}>
+                  <SocialIconButton {...props} />
+                </li>
+              ))}
+            </ul>
+            <LoginButton variant="outline" />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

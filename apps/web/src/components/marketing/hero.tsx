@@ -32,9 +32,10 @@ export function Hero() {
         >
           A better way to monitor your services.
         </h1>
-        <p className="text-muted-foreground mx-auto max-w-md text-lg md:max-w-lg md:text-xl">
-          Reduce alert fatigue by triggering only relevant alerts when your
-          services experience downtime.
+        <p className="text-muted-foreground mx-auto max-w-md text-lg md:max-w-xl md:text-xl">
+          Monitor your API and website from 6 continents, detect some
+          performance issues and receive notifications before your users are
+          affected.
         </p>
       </div>
       <div className="my-4 grid gap-2 sm:grid-cols-2">

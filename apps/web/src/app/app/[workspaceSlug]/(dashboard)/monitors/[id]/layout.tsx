@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 
+import { Badge } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
-import { Navbar } from "@/components/dashboard/navbar";
+import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { api } from "@/trpc/server";
-import { PauseButton } from "./_components/pause-button";
 
 export default async function Layout({
   children,
@@ -22,33 +24,30 @@ export default async function Layout({
     return notFound();
   }
 
-  const navigation = [
-    {
-      label: "Overview",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/overview`,
-      segment: "overview",
-    },
-    {
-      label: "Requests Log",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/data`,
-      segment: "data",
-    },
-    {
-      label: "Settings",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/edit`,
-      segment: "edit",
-    },
-  ];
-
   return (
-    <div className="grid grid-cols-1 gap-6 md:gap-8">
+    <AppPageWithSidebarLayout id="monitors">
       <Header
         title={monitor.name}
-        description={monitor.url}
-        actions={<PauseButton monitor={monitor} />}
+        description={
+          <div className="text-muted-foreground flex flex-wrap items-center gap-2">
+            <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <StatusDotWithTooltip
+              active={monitor.active}
+              status={monitor.status}
+            />
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <Badge className="inline-flex" variant="secondary">
+              {monitor.method}
+            </Badge>
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <span className="text-sm">
+              every <code>{monitor.periodicity}</code>
+            </span>
+          </div>
+        }
       />
-      <Navbar className="col-span-full" navigation={navigation} />
       {children}
-    </div>
+    </AppPageWithSidebarLayout>
   );
 }

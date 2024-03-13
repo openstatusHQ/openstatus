@@ -15,17 +15,15 @@ const postToWebhook = async (content: string, webhookUrl: string) => {
   });
 };
 
-export const sendDiscordMessage = async ({
+export const sendAlert = async ({
   monitor,
   notification,
-  region,
   statusCode,
   message,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
-  region: string;
   message?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
@@ -36,12 +34,39 @@ export const sendDiscordMessage = async ({
     await postToWebhook(
       `Your monitor ${name} is down 🚨
 
-      Your monitor with url ${monitor.url} is down in ${region} with ${
+      Your monitor with url ${monitor.url} is down with ${
         statusCode ? `status code ${statusCode}` : `error message ${message}`
       }.`,
       webhookUrl,
     );
   } catch (err) {
+    console.error(err);
+    // Do something
+  }
+};
+
+export const sendRecovery = async ({
+  monitor,
+  notification,
+  statusCode,
+  message,
+}: {
+  monitor: Monitor;
+  notification: Notification;
+  statusCode?: number;
+  message?: string;
+}) => {
+  const notificationData = JSON.parse(notification.data);
+  const { discord: webhookUrl } = notificationData; // webhook url
+  const { name } = monitor;
+
+  try {
+    await postToWebhook(
+      `Your monitor ${name}|${monitor.url}  is up again 🎉`,
+      webhookUrl,
+    );
+  } catch (err) {
+    console.error(err);
     // Do something
   }
 };

@@ -6,13 +6,13 @@ import { DataTable } from "@/components/data-table/incident/data-table";
 import { api } from "@/trpc/server";
 
 export default async function IncidentPage() {
-  const incidents = await api.incident.getAllIncidents.query();
+  const incidents = await api.incident.getIncidentsByWorkspace.query();
 
   if (incidents?.length === 0)
     return (
       <EmptyState
-        icon="activity"
-        title="No Incidents "
+        icon="siren"
+        title="No incidents"
         description="Hopefully you will see this screen for a long time."
         action={undefined}
       />

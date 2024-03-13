@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import "@openstatus/db/env.mjs";
 import "@openstatus/analytics/env";
-import "@openstatus/vercel/env";
 
 export const env = createEnv({
   server: {
@@ -64,4 +63,5 @@ export const env = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     EXTERNAL_API_URL: process.env.EXTERNAL_API_URL,
   },
+  skipValidation: true,
 });

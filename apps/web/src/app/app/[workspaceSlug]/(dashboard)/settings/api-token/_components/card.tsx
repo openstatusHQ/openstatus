@@ -23,31 +23,45 @@ export async function ApiKeys({ ownerId }: { ownerId: number }) {
   const key = data.result.keys?.[0] || undefined;
 
   return (
-    <Container
-      title="API Token"
-      description="Use our API endpoints to create your monitors programmatically."
-      actions={
-        <>
-          {key ? (
-            <RevokeButton keyId={key.id} />
-          ) : (
-            <CreateForm ownerId={ownerId} />
-          )}
-        </>
-      }
-    >
-      {key ? (
-        <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <dt>Token</dt>
-            <dd className="font-mono">{key.start}...</dd>
-          </div>
-          <div className="flex min-w-0 items-center justify-between gap-3">
-            <dt>Created At</dt>
-            <dd>{formatDate(new Date(key.createdAt!))}</dd>
-          </div>
-        </dl>
-      ) : null}
-    </Container>
+    <>
+      <Container
+        title="API Token"
+        description="Use our API endpoints to create your monitors programmatically."
+        actions={
+          <>
+            {key ? (
+              <RevokeButton keyId={key.id} />
+            ) : (
+              <CreateForm ownerId={ownerId} />
+            )}
+          </>
+        }
+      >
+        {key ? (
+          <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <dt>Token</dt>
+              <dd className="font-mono">{key.start}...</dd>
+            </div>
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <dt>Created At</dt>
+              <dd>{formatDate(new Date(key.createdAt!))}</dd>
+            </div>
+          </dl>
+        ) : null}
+      </Container>
+      <p className="text-foreground text-sm">
+        Read more about APIs in our{" "}
+        <a
+          className="text-foreground underline underline-offset-4 hover:no-underline"
+          href="https://docs.openstatus.dev/api-reference/auth"
+          target="_blank"
+          rel="noreferrer"
+        >
+          docs
+        </a>
+        .
+      </p>
+    </>
   );
 }

@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import Link from "next/link";
 
+import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 
-import { Tracker } from "@/components/tracker";
-import { getHomeMonitorListData } from "@/lib/tb";
-import { convertTimezoneToGMT } from "@/lib/timezone";
+import { Tracker } from "@/components/tracker/tracker";
+import { env } from "@/env";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export async function TrackerExample() {
   return (
@@ -23,27 +25,20 @@ export async function TrackerExample() {
 }
 
 function ExampleTrackerFallback() {
-  return (
-    <Tracker
-      data={[]}
-      id={1}
-      name="Ping"
-      url="https://www.openstatus.dev/api/ping"
-    />
-  );
+  return <Tracker data={[]} name="Ping" description="Pong" />;
 }
 
 async function ExampleTracker() {
-  const gmt = convertTimezoneToGMT();
-  const data = await getHomeMonitorListData({ timezone: gmt });
-  if (!data) return null;
-  return (
-    <Tracker
-      data={data}
-      id={1}
-      name="Ping"
-      context="play"
-      url="https://www.openstatus.dev/api/ping"
-    />
+  const data = await tb.endpointStatusPeriod("45d")(
+    {
+      monitorId: "1",
+      url: "https://www.openstatus.dev",
+    },
+    {
+      revalidate: 600, // 10 minutes
+    },
   );
+
+  if (!data) return null;
+  return <Tracker data={data} name="Ping" description="Pong" />;
 }

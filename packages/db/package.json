@@ -8,23 +8,25 @@
     "push": "drizzle-kit push:sqlite",
     "migrate": "bun src/migrate.mts",
     "studio": "drizzle-kit studio",
-    "seed": "bun src/seed.mts"
+    "seed": "bun src/seed.mts",
+    "dev": "turso dev --db-file openstatus.db"
   },
   "dependencies": {
-    "@libsql/client": "0.3.4",
+    "@libsql/client": "0.5.2",
     "@t3-oss/env-core": "0.7.0",
     "dotenv": "16.3.1",
-    "drizzle-orm": "0.28.6",
+    "drizzle-orm": "0.29.3",
     "drizzle-zod": "0.5.1",
     "zod": "3.22.2"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
+    "better-sqlite3": "9.4.1",
     "bufferutil": "4.0.7",
-    "drizzle-kit": "0.19.13",
+    "drizzle-kit": "0.20.14",
     "encoding": "0.1.13",
-    "typescript": "5.2.2",
+    "typescript": "5.4.2",
     "utf-8-validate": "6.0.3"
   },
   "author": ""

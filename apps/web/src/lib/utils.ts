@@ -15,6 +15,10 @@ export function formatDate(date: Date) {
   return format(date, "LLL dd, y");
 }
 
+export function formatDateTime(date: Date) {
+  return format(date, "LLL dd, y HH:mm:ss");
+}
+
 export function notEmpty<TValue>(
   value: TValue | null | undefined,
 ): value is TValue {

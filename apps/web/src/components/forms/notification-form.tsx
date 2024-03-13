@@ -35,7 +35,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -101,16 +101,17 @@ interface Props {
   defaultValues?: InsertNotification;
   onSubmit?: () => void;
   workspacePlan: WorkspacePlan;
+  nextUrl?: string;
 }
 
 export function NotificationForm({
   defaultValues,
   onSubmit: onExternalSubmit,
   workspacePlan,
+  nextUrl,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
-  const { toast } = useToastAction();
   const router = useRouter();
   const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
@@ -147,10 +148,13 @@ export function NotificationForm({
             ...rest,
           });
         }
+        if (nextUrl) {
+          router.push(nextUrl);
+        }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         onExternalSubmit?.();
       }
@@ -163,9 +167,9 @@ export function NotificationForm({
     startTestTransition(async () => {
       const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
       if (isSuccessfull) {
-        toast("test-success");
+        toastAction("test-success");
       } else {
-        toast("test-error");
+        toastAction("test-error");
       }
     });
   }
@@ -175,6 +179,7 @@ export function NotificationForm({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid w-full gap-6"
+        id="notification-form" // we use a form id to connect the submit button to the form (as we also have the form nested inside of `MonitorForm`)
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
@@ -300,7 +305,12 @@ export function NotificationForm({
               )}
             </Button>
           )}
-          <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
+          <Button
+            form="notification-form"
+            className="w-full sm:w-auto"
+            size="lg"
+            disabled={isPending}
+          >
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

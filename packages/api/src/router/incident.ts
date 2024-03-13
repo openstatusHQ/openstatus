@@ -6,7 +6,8 @@ import { selectIncidentSchema } from "@openstatus/db/src/schema";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const incidentRouter = createTRPCRouter({
-  getAllIncidents: protectedProcedure
+  // TODO: rename getIncidentsByWorkspace to make it consistent with the other methods
+  getIncidentsByWorkspace: protectedProcedure
     .output(z.array(selectIncidentSchema))
     .query(async (opts) => {
       const result = await opts.ctx.db

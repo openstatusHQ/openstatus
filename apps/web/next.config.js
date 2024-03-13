@@ -4,26 +4,22 @@ const { withContentlayer } = require("next-contentlayer");
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: [
-    "@openstatus/ui",
-    "@openstatus/api",
-    "@react-email/components",
-    "@react-email/render",
-    "@react-email/html",
-  ],
-
+  transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
-    serverActions: true,
     serverComponentsExternalPackages: [
       "libsql",
       "@react-email/components",
       "@react-email/render",
+      "@google-cloud/tasks",
+      // "@libsql/client",
+      // "better-sqlite3"
     ],
-    logging: {
-      level: "verbose",
+    optimizePackageImports: ["@tremor/react"],
+  },
+  logging: {
+    fetches: {
       fullUrl: true,
     },
-    optimizePackageImports: ["@tremor/react"],
   },
   images: {
     remotePatterns: [

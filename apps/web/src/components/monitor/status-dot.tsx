@@ -1,9 +1,8 @@
 import type { Monitor } from "@openstatus/db/src/schema";
 
-export function StatusDot({
-  active,
-  status,
-}: Pick<Monitor, "active" | "status">) {
+export interface StatusDotProps extends Pick<Monitor, "active" | "status"> {}
+
+export function StatusDot({ active, status }: StatusDotProps) {
   if (!active) {
     return (
       <span className="relative flex h-2 w-2">

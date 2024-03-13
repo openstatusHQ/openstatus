@@ -39,6 +39,9 @@ export const usersToWorkspaces = sqliteTable(
       .notNull()
       .references(() => workspace.id),
     role: text("role", { enum: workspaceRole }).notNull().default("member"),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
   },
   (t) => ({
     pk: primaryKey(t.userId, t.workspaceId),

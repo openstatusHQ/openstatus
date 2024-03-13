@@ -17,12 +17,18 @@ import { timingDict } from "../config";
 import type { Timing } from "../utils";
 import { getTimingPhases, getTotalLatency } from "../utils";
 
-export function ResponseTimingTable({ timing }: { timing: Timing }) {
+export function ResponseTimingTable({
+  timing,
+  hideInfo = false,
+}: {
+  timing: Timing;
+  hideInfo?: boolean;
+}) {
   const total = getTotalLatency(timing);
   const timingPhases = getTimingPhases(timing);
   return (
     <Table>
-      <TableCaption>Response Timing</TableCaption>
+      <TableCaption className="mt-2">Response Timing</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[120px] md:w-[150px]">Timing</TableHead>
@@ -39,17 +45,19 @@ export function ResponseTimingTable({ timing }: { timing: Timing }) {
               <TableCell>
                 <div className="flex w-[80px] items-center justify-between gap-2">
                   <p className="text-muted-foreground">{short}</p>
-                  <Popover>
-                    <PopoverTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
-                      <Info className="h-4 w-4" />
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <p className="font-medium">{long}</p>
-                      <p className="text-muted-foreground text-sm">
-                        {description}
-                      </p>
-                    </PopoverContent>
-                  </Popover>
+                  {!hideInfo ? (
+                    <Popover>
+                      <PopoverTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
+                        <Info className="h-4 w-4" />
+                      </PopoverTrigger>
+                      <PopoverContent>
+                        <p className="font-medium">{long}</p>
+                        <p className="text-muted-foreground text-sm">
+                          {description}
+                        </p>
+                      </PopoverContent>
+                    </Popover>
+                  ) : null}
                 </div>
               </TableCell>
               <TableCell>

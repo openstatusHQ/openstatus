@@ -22,7 +22,7 @@ import {
   AccordionTrigger,
   Button,
   Checkbox,
-  DateTimePicker,
+  DateTimePickerPopover,
   Form,
   FormControl,
   FormDescription,
@@ -44,7 +44,7 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -81,7 +81,6 @@ export function StatusReportForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
   const onSubmit = ({ ...props }: InsertStatusReport) => {
     startTransition(async () => {
@@ -111,9 +110,9 @@ export function StatusReportForm({
           router.push(nextUrl);
         }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };
@@ -376,7 +375,7 @@ export function StatusReportForm({
                       render={({ field }) => (
                         <FormItem className="flex flex-col sm:col-span-full">
                           <FormLabel>Date</FormLabel>
-                          <DateTimePicker
+                          <DateTimePickerPopover
                             date={
                               field.value ? new Date(field.value) : new Date()
                             }

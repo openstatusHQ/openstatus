@@ -67,6 +67,9 @@ export const monitorsToPages = sqliteTable(
     pageId: integer("page_id")
       .notNull()
       .references(() => page.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),

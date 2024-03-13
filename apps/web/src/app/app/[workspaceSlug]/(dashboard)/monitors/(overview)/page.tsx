@@ -1,13 +1,19 @@
 import * as React from "react";
 import Link from "next/link";
 
+import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
 import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
+import { env } from "@/env";
 import { api } from "@/trpc/server";
+
+// import { RefreshWidget } from "../_components/refresh-widget";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export default async function MonitorPage() {
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
@@ -27,10 +33,45 @@ export default async function MonitorPage() {
       />
     );
 
+  const _incidents = await api.incident.getIncidentsByWorkspace.query();
+
+  // maybe not very efficient?
+  // use Suspense and Client call instead?
+  const monitorsWithData = await Promise.all(
+    monitors.map(async (monitor) => {
+      const metrics = await tb.endpointMetrics("1d")({
+        monitorId: String(monitor.id),
+        url: monitor.url,
+      });
+
+      const data = await tb.endpointStatusPeriod("7d")({
+        monitorId: String(monitor.id),
+        url: monitor.url, // FIXME: we should avoid adding url to the parameters
+      });
+
+      const [current] = metrics?.sort((a, b) =>
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+      ) || [undefined];
+
+      const incidents = _incidents.filter(
+        (incident) => incident.monitorId === monitor.id,
+      );
+
+      return { monitor, metrics: current, data, incidents };
+    }),
+  );
+
+  // const lastCronTimestamp = monitorsWithData?.reduce((prev, acc) => {
+  //   const lastTimestamp = acc.metrics?.lastTimestamp || 0;
+  //   if (lastTimestamp > prev) return lastTimestamp;
+  //   return prev;
+  // }, 0);
+
   return (
     <>
-      <DataTable columns={columns} data={monitors} />
-      <div className="mt-3">{isLimitReached ? <Limit /> : null}</div>
+      <DataTable columns={columns} data={monitorsWithData} />
+      {isLimitReached ? <Limit /> : null}
+      {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>
   );
 }

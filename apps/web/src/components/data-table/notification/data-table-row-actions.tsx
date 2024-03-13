@@ -25,7 +25,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -37,23 +37,21 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const notification = selectNotificationSchema.parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
-      console.log({ notification });
       try {
         if (!notification.id) return;
         await api.notification.deleteNotification.mutate({
           id: notification.id,
         });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -71,7 +69,7 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./notifications/edit?id=${notification.id}`}>
+          <Link href={`./notifications/${notification.id}/edit`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>

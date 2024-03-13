@@ -18,7 +18,7 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
@@ -35,16 +35,15 @@ export function WorkspaceForm({ defaultValues }: { defaultValues: Schema }) {
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToastAction();
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
         await api.workspace.updateWorkspace.mutate(data);
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

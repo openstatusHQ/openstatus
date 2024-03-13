@@ -30,7 +30,7 @@ export function PricingPlanRadio() {
               key === "team" && "bg-muted/50",
             )}
           >
-            <span className="capitalize">{key}</span>
+            <span className="text-sm capitalize">{key}</span>
             <span className="text-muted-foreground mt-1 text-xs font-light">
               {allPlans[key].price}€/month
             </span>

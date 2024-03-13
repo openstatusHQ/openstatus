@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
-import { IncidentList } from "@/components/status-page/incident-list";
+import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
 
 type Props = {
@@ -22,7 +22,10 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      <IncidentList incidents={page.statusReports} monitors={page.monitors} />
+      <StatusReportList
+        statusReports={page.statusReports}
+        monitors={page.monitors}
+      />
     </div>
   );
 }

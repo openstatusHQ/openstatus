@@ -49,6 +49,10 @@
     {
       "name": "API Reference",
       "url": "api-reference"
+    },
+    {
+      "name": "Contributor Guides",
+      "url": "contributing"
     }
   ],
   "anchors": [
@@ -66,54 +70,65 @@
   "navigation": [
     {
       "group": "Introduction",
+      "pages": ["introduction"]
+    },
+    {
+      "group": "Features",
       "pages": [
-        "introduction",
+        "features/incident",
+        "features/heartbeat",
+        "features/monitor",
         {
-          "group": "Getting Started",
+          "group": "Notifications",
           "pages": [
-            "getting-started/monitor",
-            "getting-started/status-page",
-            "getting-started/incident",
-            "getting-started/status-report",
-            "getting-started/notification",
-            "getting-started/heartbeat"
+            "features/notification",
+            {
+              "group": "Notification Channels",
+              "pages": [
+                "features/notification/discord",
+                "features/notification/phone-call",
+                "features/notification/slack",
+                "features/notification/sms",
+                "features/notification/telegram"
+              ]
+            }
           ]
         },
-        "getting-started/status-widget"
+        "features/status-page",
+        "features/status-report",
+        "features/status-page-subscribers"
       ]
     },
     {
-      "group": "Incident Management",
-      "pages": ["incident-automation/get-started"]
-    },
-    {
-      "group": "Developer Guides",
+      "group": "Developer Tools",
       "pages": [
-        "developer-guide/requirements",
-        "developer-guide/get-started",
-        "developer-guide/setup-env",
-        "developer-guide/setup"
+        "packages/react",
+        "packages/status-widget",
+        "packages/terraform"
       ]
     },
     {
-      "group": "Integrations",
+      "group": "Contributor Guides",
       "pages": [
-        "integrations/discord",
-        "integrations/phone-call",
-        "integrations/slack",
-        "integrations/sms",
-        "integrations/telegram"
+        "contributing/requirements",
+        "contributing/get-started",
+        "contributing/setup-env",
+        "contributing/setup"
       ]
-    },
-    {
-      "group": "Libraries",
-      "pages": ["packages/react"]
     },
     {
       "group": "API Documentation",
       "icon": "code",
       "pages": [
         "api-reference/auth",
+        {
+          "group": "Incident",
+          "pages": [
+            "api-reference/incident/get-incident:id",
+            "api-reference/incident/get-incident",
+            "api-reference/incident/put-incident:id"
+          ]
+        },
         {
           "group": "Monitor",
           "pages": [

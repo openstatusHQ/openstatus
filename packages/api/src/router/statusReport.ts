@@ -147,8 +147,6 @@ export const statusReportRouter = createTRPCRouter({
 
       if (!statusReportInput.id) return;
 
-      console.log({ pages });
-
       const { title, status } = statusReportInput;
 
       const currentStatusReport = await opts.ctx.db
@@ -226,13 +224,6 @@ export const statusReportRouter = createTRPCRouter({
       const removedPages = currentPagesToStatusReports
         .map(({ pageId }) => pageId)
         .filter((x) => !pages?.includes(x));
-
-      console.log({
-        currentPagesToStatusReports,
-        removedPages,
-        pages,
-        addedPages,
-      });
 
       if (Boolean(removedPages.length)) {
         await opts.ctx.db

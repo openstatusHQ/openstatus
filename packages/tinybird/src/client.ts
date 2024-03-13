@@ -4,14 +4,10 @@ import {
   tbBuildHomeStats,
   tbBuildMonitorList,
   tbBuildPublicStatus,
-  tbBuildResponseGraph,
-  tbBuildResponseList,
   tbIngestPingResponse,
   tbParameterHomeStats,
   tbParameterMonitorList,
   tbParameterPublicStatus,
-  tbParameterResponseGraph,
-  tbParameterResponseList,
 } from "./validation";
 
 // REMINDER:
@@ -21,29 +17,6 @@ export const publishPingResponse = tb.buildIngestEndpoint({
   datasource: "ping_response__v6",
   event: tbIngestPingResponse,
 });
-
-export function getResponseList(tb: Tinybird) {
-  return tb.buildPipe({
-    pipe: "response_list__v2",
-    parameters: tbParameterResponseList,
-    data: tbBuildResponseList,
-    opts: {
-      // cache: "default",
-      revalidate: 600, // 10 min cache
-    },
-  });
-}
-
-export function getResponseGraph(tb: Tinybird) {
-  return tb.buildPipe({
-    pipe: "response_graph__v0",
-    parameters: tbParameterResponseGraph,
-    data: tbBuildResponseGraph,
-    opts: {
-      revalidate: 60, // 1 min cache
-    },
-  });
-}
 
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({

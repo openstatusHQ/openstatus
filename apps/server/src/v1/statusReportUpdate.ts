@@ -14,6 +14,7 @@ import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 
 const statusReportUpdateApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -36,11 +37,9 @@ export const statusUpdateSchema = z.object({
     description: "The status of the update",
   }),
   id: z.coerce.string().openapi({ description: "The id of the update" }),
-  date: z
-    .preprocess((val) => String(val), z.string())
-    .openapi({
-      description: "The date of the update in ISO 8601 format",
-    }),
+  date: isoDate.openapi({
+    description: "The date of the update in ISO8601 format",
+  }),
   message: z.string().openapi({
     description: "The message of the update",
   }),
@@ -53,8 +52,8 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z.string().datetime().openapi({
-    description: "The date of the update in ISO 8601 format",
+  date: isoDate.openapi({
+    description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({
     description: "The message of the update",
@@ -97,7 +96,7 @@ statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
     .where(eq(statusReportUpdate.id, Number(id)))
     .get();
 
-  if (!update) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!update) return c.json({ code: 404, message: "Not Found" }, 404);
 
   const currentStatusReport = await db
     .select()
@@ -110,11 +109,11 @@ statusReportUpdateApi.openapi(getUpdateRoute, async (c) => {
     )
     .get();
   if (!currentStatusReport)
-    return c.jsonT({ code: 401, message: "Not Authorized" });
+    return c.json({ code: 401, message: "Not Authorized" }, 401);
 
   const data = statusUpdateSchema.parse(update);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const createStatusUpdate = createRoute({
@@ -166,7 +165,7 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
     )
     .get();
   if (!_currentStatusReport)
-    return c.jsonT({ code: 401, message: "Not Authorized" });
+    return c.json({ code: 401, message: "Not Authorized" }, 401);
 
   const res = await db
     .insert(statusReportUpdate)
@@ -216,7 +215,7 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
     }
   }
   const data = statusUpdateSchema.parse(res);
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 export { statusReportUpdateApi };

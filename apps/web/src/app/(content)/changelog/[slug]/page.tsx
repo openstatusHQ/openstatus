@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { allChangelogs } from "contentlayer/generated";
 
+import { Separator } from "@openstatus/ui";
+
 import {
   defaultMetadata,
   ogMetadata,
@@ -10,6 +12,7 @@ import {
 import { Changelog } from "@/components/content/changelog";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
+import { Pagination } from "../../_components/pagination";
 
 // export const dynamic = "force-static";
 
@@ -59,6 +62,20 @@ export async function generateMetadata({
   };
 }
 
+function getChangelogPagination(slug: string) {
+  const changelogs = allChangelogs.sort(
+    (a, b) =>
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+  );
+  const findIndex = changelogs.findIndex(
+    (changelog) => changelog.slug === slug,
+  );
+  return {
+    prev: changelogs?.[findIndex - 1],
+    next: changelogs?.[findIndex + 1],
+  };
+}
+
 export default function ChangelogPage({
   params,
 }: {
@@ -70,11 +87,15 @@ export default function ChangelogPage({
     notFound();
   }
 
+  const { next, prev } = getChangelogPagination(params.slug);
+
   return (
     <>
       <BackButton href="/changelog" />
-      <Shell className="sm:py-8 md:py-12">
+      <Shell className="flex flex-col gap-8 sm:py-8 md:gap-12 md:py-12">
         <Changelog post={post} />
+        <Separator className="mx-auto max-w-prose" />
+        <Pagination {...{ next, prev }} />
       </Shell>
     </>
   );

@@ -3,6 +3,7 @@ import * as z from "zod";
 
 import { Header } from "@/components/dashboard/header";
 import { StatusReportForm } from "@/components/forms/status-report-form";
+import AppPageLayout from "@/components/layout/app-page-layout";
 import { api } from "@/trpc/server";
 
 /**
@@ -38,34 +39,32 @@ export default async function EditPage({
   const pages = await api.page.getPagesByWorkspace.query();
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+    <AppPageLayout>
       <Header
         title="Status Report"
         description="Create a public report for your incident"
       />
-      <div className="col-span-full">
-        <StatusReportForm
-          monitors={monitors}
-          pages={pages}
-          defaultValues={
-            statusUpdate
-              ? // TODO: we should move the mapping to the trpc layer
-                // so we don't have to do this in the UI
-                // it should be something like defaultValues={statusReport}
-                {
-                  ...statusUpdate,
-                  monitors: statusUpdate?.monitorsToStatusReports.map(
-                    ({ monitorId }) => monitorId,
-                  ),
-                  pages: statusUpdate?.pagesToStatusReports.map(
-                    ({ pageId }) => pageId,
-                  ),
-                  message: "",
-                }
-              : undefined
-          }
-        />
-      </div>
-    </div>
+      <StatusReportForm
+        monitors={monitors}
+        pages={pages}
+        defaultValues={
+          statusUpdate
+            ? // TODO: we should move the mapping to the trpc layer
+              // so we don't have to do this in the UI
+              // it should be something like defaultValues={statusReport}
+              {
+                ...statusUpdate,
+                monitors: statusUpdate?.monitorsToStatusReports.map(
+                  ({ monitorId }) => monitorId,
+                ),
+                pages: statusUpdate?.pagesToStatusReports.map(
+                  ({ pageId }) => pageId,
+                ),
+                message: "",
+              }
+            : undefined
+        }
+      />
+    </AppPageLayout>
   );
 }

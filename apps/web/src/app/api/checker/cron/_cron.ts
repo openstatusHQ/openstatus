@@ -1,5 +1,4 @@
 import type { NextRequest } from "next/server";
-import type { SignedInAuthObject } from "@clerk/nextjs/api";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { z } from "zod";
@@ -46,7 +45,8 @@ export const cron = async ({
   const timestamp = Date.now();
 
   const ctx = createTRPCContext({ req, serverSideCall: true });
-  ctx.auth = { userId: "cron" } as SignedInAuthObject;
+  // FIXME: we should the proper type
+  ctx.auth = { userId: "cron" } as any;
   const caller = edgeRouter.createCaller(ctx);
 
   const monitors = await caller.monitor.getMonitorsForPeriodicity({
@@ -65,7 +65,7 @@ export const cron = async ({
     for (const region of selectedRegions) {
       const status =
         monitorStatus.find((m) => region === m.region)?.status || "active";
-      const response = await createCronTask({
+      const response = createCronTask({
         row,
         timestamp,
         client,
@@ -77,7 +77,7 @@ export const cron = async ({
       if (periodicity === "30s") {
         // we schedule another task in 30s
         const scheduledAt = timestamp + 30 * 1000;
-        const response = await createCronTask({
+        const response = createCronTask({
           row,
           timestamp: scheduledAt,
           client,
@@ -90,6 +90,7 @@ export const cron = async ({
     }
   }
   await Promise.all(allResult);
+
   console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
 };
 // timestamp needs to be in ms
@@ -136,6 +137,5 @@ const createCronTask = async ({
   };
 
   const request = { parent: parent, task: newTask };
-  const [response] = await client.createTask(request);
-  return response;
+  return client.createTask(request);
 };

@@ -30,7 +30,7 @@ export function CustomerPortalButton({ workspaceSlug }: Props) {
   return (
     <Button
       size="sm"
-      variant="outline"
+      variant="secondary"
       onClick={getUserCustomerPortal}
       disabled={isPending}
     >

@@ -5,9 +5,9 @@ import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
-import { IncidentList } from "@/components/status-page/incident-list";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
+import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
 
 const url =
@@ -51,15 +51,15 @@ export default async function Page({ params }: Props) {
         <>
           <StatusCheck
             statusReports={page.statusReports}
-            monitors={page.monitors}
+            incidents={page.incidents}
           />
           <MonitorList
             monitors={page.monitors}
             statusReports={page.statusReports}
+            incidents={page.incidents}
           />
-          {/* TODO: rename to StatusReportList */}
-          <IncidentList
-            incidents={page.statusReports}
+          <StatusReportList
+            statusReports={page.statusReports}
             monitors={page.monitors}
             context="latest"
           />

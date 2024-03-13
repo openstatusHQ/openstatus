@@ -1,17 +1,25 @@
-import { Label } from "@openstatus/ui";
+import { OSTinybird } from "@openstatus/tinybird";
 
 import { Shell } from "@/components/dashboard/shell";
-import { Tracker } from "@/components/tracker";
-import { getHomeMonitorListData } from "@/lib/tb";
-import { convertTimezoneToGMT, getRequestHeaderTimezone } from "@/lib/timezone";
+import { Tracker } from "@/components/tracker/tracker";
+import { env } from "@/env";
+import { getServerTimezoneFormat } from "@/lib/timezone";
 import { HeaderPlay } from "../../_components/header-play";
-import { TimezoneCombobox } from "./timezone-combobox";
 
-export default async function StatusPlay({ timezone }: { timezone?: string }) {
-  const requestTimezone = getRequestHeaderTimezone();
-  const gmt = convertTimezoneToGMT(timezone);
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
-  const data = await getHomeMonitorListData({ timezone: gmt });
+export default async function StatusPlay() {
+  const data = await tb.endpointStatusPeriod("45d")(
+    {
+      monitorId: "1",
+      url: "https://www.openstatus.dev",
+    },
+    {
+      revalidate: 600, // 10 minutes
+    },
+  );
+
+  const formattedServerDate = getServerTimezoneFormat();
 
   return (
     <Shell>
@@ -21,23 +29,12 @@ export default async function StatusPlay({ timezone }: { timezone?: string }) {
           description="Gain the trust of your users by showing them the uptime of your API or website."
         />
         <div className="mx-auto w-full max-w-md">
-          {data && (
-            <Tracker
-              data={data}
-              id={1}
-              name="Ping"
-              url="https://www.openstatus.dev/api/ping"
-            />
-          )}
+          {data && <Tracker data={data} name="Ping" description="Pong" />}
         </div>
-        <div className="mt-6 flex justify-start">
-          <div className="grid items-center gap-1">
-            <Label className="text-muted-foreground text-xs">Timezone</Label>
-            <TimezoneCombobox
-              defaultValue={timezone || requestTimezone || undefined}
-            />
-          </div>
-        </div>
+        <p className="text-muted-foreground text-center text-sm">
+          {formattedServerDate}
+        </p>
+        {/* REMINDER: more playground component  */}
       </div>
     </Shell>
   );

@@ -1,4 +1,5 @@
 import { Header } from "@/components/dashboard/header";
+import AppPageLayout from "@/components/layout/app-page-layout";
 
 export default async function Layout({
   children,
@@ -6,9 +7,9 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 md:gap-8">
+    <AppPageLayout>
       <Header title="Monitor" description="Create your monitor" />
-      <div className="col-span-full">{children}</div>
-    </div>
+      {children}
+    </AppPageLayout>
   );
 }

@@ -1,0 +1,19 @@
+{
+  "name": "@openstatus/tracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {},
+  "dependencies": {
+    "@openstatus/db": "workspace:*",
+    "@openstatus/tinybird": "workspace:*",
+    "zod": "3.22.2"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.4.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
