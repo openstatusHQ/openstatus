@@ -1,7 +1,8 @@
 ---
 title: "Monitoring latency: Vercel Serverless Function vs Vercel Edge Function"
 description:
-  Vercel offers . In this article, we will compare the latency of both runtimes.
+  In this article, we will compare the latency of Edge Functions vs Serverless
+  Functions.
 author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
@@ -9,9 +10,11 @@ publishedAt: 2024-03-14
 image: /assets/posts/monitoring-vercel/serverless-vs-edge.png
 ---
 
-In our previous article, we compared the latency of various cloud providers but
-did not include Vercel. This article will compare the latency of Vercel
-Serverless Function with Vercel Edge Function.
+In our previous
+[article](https://www.openstatus.dev/blog/monitoring-latency-cf-workers-fly-koyeb-raylway-render),
+we compared the latency of various cloud providers but did not include Vercel.
+This article will compare the latency of Vercel Serverless Function with Vercel
+Edge Function.
 
 We will test a basic Next.js application with the app router. Below is the code
 for the routes:
