@@ -103,13 +103,9 @@ export function DataTable<TData, TValue>({
                       (row.getIsSelected() || row.getIsExpanded()) && "selected"
                     }
                     onClick={() => {
-                      // FIXME: this is a workaround for single row expansion
-                      if (row.getIsExpanded()) {
-                        row.toggleExpanded();
-                      } else {
-                        table.resetExpanded();
-                        row.toggleExpanded();
-                      }
+                      // REMINDER: this is a workaround for single row expansion
+                      if (!row.getIsExpanded()) table.resetExpanded();
+                      row.toggleExpanded();
                     }}
                     className="cursor-pointer"
                   >

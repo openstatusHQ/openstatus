@@ -38,6 +38,7 @@ export function DataTableRowActions<TData>({
   const incident = selectIncidentSchema.parse(row.original);
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
+  const [alertOpen, setAlertOpen] = React.useState(false);
 
   async function resolved() {
     startTransition(async () => {
@@ -70,16 +71,17 @@ export function DataTableRowActions<TData>({
       try {
         if (!incident.id) return;
         await api.incident.delete.mutate({ id: incident.id });
-        toast("success");
+        toastAction("success");
+        setAlertOpen(false);
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
 
   return (
-    <AlertDialog>
+    <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
