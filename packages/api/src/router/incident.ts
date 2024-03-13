@@ -112,4 +112,25 @@ export const incidentRouter = createTRPCRouter({
         );
       return true;
     }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const incidentToDelete = await opts.ctx.db
+        .select()
+        .from(schema.incidentTable)
+        .where(
+          and(
+            eq(schema.incidentTable.id, opts.input.id),
+            eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .get();
+      if (!incidentToDelete) return;
+
+      await opts.ctx.db
+        .delete(schema.incidentTable)
+        .where(eq(schema.incidentTable.id, incidentToDelete.id))
+        .run();
+    }),
 });
