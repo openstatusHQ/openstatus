@@ -5,16 +5,16 @@ description:
 author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
-publishedAt: 2024-02-29
-image: /assets/posts/monitoring-latency/all-hosting-providers.png
+publishedAt: 2024-03-14
+image: /assets/posts/monitoring-vercel/serverless-vs-edge.png
 ---
 
-In our previous article we have compared the latency of differents cloud
-providers but we did not include Vercel. In this article, we will compare the
-latency of Vercel Serverless Function vs Vercel Edge Function.
+In our previous article, we compared the latency of various cloud providers but
+did not include Vercel. This article will compare the latency of Vercel
+Serverless Function with Vercel Edge Function.
 
-For this test we are going to use a simple NextJS application using app router.
-Here is the code of the routes:
+We will test a basic Next.js application with the app router. Below is the code
+for the routes:
 
 ```ts
 import { NextResponse } from "next/server";
@@ -33,13 +33,12 @@ export async function POST(req: Request) {
 }
 ```
 
-We have 4 routes, 3 of them are using the nodejs runtime and one is using edge
-runtime.
+We have 4 routes, 3 using the NodeJS runtime and one is using Edge runtime.
 
-- `/api/ping` is using the nodejs runtime
-- `/api/ping/warm` is using the nodejs runtime
-- `/api/ping/cold` is using the nodejs runtime
-- `/api/ping/edge` is using the edge runtime
+- `/api/ping` is using the NodeJS runtime
+- `/api/ping/warm` is using the NodeJS runtime
+- `/api/ping/cold` is using the NodeJS runtime
+- `/api/ping/edge` is using the Edge runtime
 
 Each route have a different `maxDuration`, it's a trick to avoid bundling the
 functions in the same physical functions.
@@ -49,8 +48,22 @@ Here is the repository of the
 
 ## Vercel Serverless Function - NodeJS runtime
 
-They are using the nodejs runtime. We have access to all the nodejs API. Our
-function are deployed to a single location: iad1 - Washington, D.C., USA.
+They are using the NodeJS runtime. We have access to all the nodejs API. Our
+function are deployed in a single location: iad1 - Washington, D.C., USA.
+
+We analyzed the header of each request and observe that all requests are
+processed in a data center near our location before being routed to our
+serverless location.
+
+- `ams` -> `fra1` -> `iad1`
+- `gru` -> `gru1` -> `iad1`
+- `hkg` -> `hkg1` -> `iad1`
+- `iad` -> `iad1` -> `iad1`
+- `jnb` -> `cpt1` -> `iad1`
+- `syd` -> `syd1` -> `iad1`
+
+We never encountered a request routed to a different data center, and we never
+hit the Vercel cache.
 
 ### Warm - `/api/ping/warm`
 
@@ -96,8 +109,8 @@ We are pinging this functions every 5 minutes to keep it warm.
   />
 </div>
 
-We are pinging this functions every 30 minutes to keep it cold, to ensure the
-functions will be scaled down.
+We are pinging this functions every 30 minutes to ensure the functions will be
+scaled down.
 
 ### Cold Roulette - `/api/ping`
 
@@ -121,9 +134,27 @@ functions will be scaled down.
 </div>
 
 We are pinging this functions every 10 minutes. It's an inflection point where
-we never now if the function will be warm or cold.
+we never know if the function will be warm or cold.
 
-## Vercel Edge Function - Edge runtime
+## Vercel Edge Function
+
+Vercel Edge Functions is using the Edge Runtime. They are deployed globally and
+executed in a datacenter close to the user.
+
+They have limitations compared to the NodeJs runtime, but they have a faster
+cold start.
+
+We analyzed the request header and found that the `X-Vercel-Id` header indicates
+the request is processed in a datacenter near the user.
+
+- `ams` -> `fra1`
+- `gru` -> `gru1`
+- `hkg` -> `hkg1`
+- `iad` -> `iad1`
+- `jnb` -> `cpt1`
+- `syd` -> `syd1`
+
+### Edge - `/api/ping/edge`
 
 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
   <MetricsCard title="uptime" value={100} suffix="%" variant="positive" />
@@ -143,3 +174,14 @@ we never now if the function will be warm or cold.
     caption="Cloudflare avg. latency between 04. Feb and 18. Feb 2024 aggregated in a 1h window."
   />
 </div>
+
+We are pinging this functions every 10 minutes.
+
+## Conclusion
+
+Edge functions are around 9 times faster than Serverless function in case of
+cold start. And only 2 times faster when the function is warm.
+
+But they are about the same latency wherever the user is located. If you care
+about your users and you have a global audience, you should consider using Edge
+Functions.
