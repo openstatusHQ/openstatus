@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
-import * as z from "zod";
 
 import { BackButton } from "@/components/layout/back-button";
 import StatusPlay from "./_components/status-play";
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  timezone: z.string().optional(),
-});
 
 export const metadata: Metadata = {
   title: "Status Page Preview",
@@ -21,18 +13,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function PlayPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  const timezone = search.success ? search.data.timezone : undefined;
+export const revalidate = 600;
 
+export default async function PlayPage() {
   return (
     <>
       <BackButton href="/" />
-      <StatusPlay timezone={timezone} />
+      <StatusPlay />
     </>
   );
 }

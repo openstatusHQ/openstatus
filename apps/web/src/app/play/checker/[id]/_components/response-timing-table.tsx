@@ -28,7 +28,7 @@ export function ResponseTimingTable({
   const timingPhases = getTimingPhases(timing);
   return (
     <Table>
-      <TableCaption>Response Timing</TableCaption>
+      <TableCaption className="mt-2">Response Timing</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="w-[120px] md:w-[150px]">Timing</TableHead>

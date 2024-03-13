@@ -1,0 +1,11 @@
+VERSION 0
+
+NODE __ttl_7d_all_0
+SQL >
+
+    SELECT toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time, * FROM ping_response__v7
+
+TYPE materialized
+DATASOURCE __ttl_7d_all_mv__v0
+
+

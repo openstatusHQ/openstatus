@@ -29,8 +29,8 @@ export default async function Layout({
       <Header
         title={monitor.name}
         description={
-          <div className="text-muted-foreground flex items-center gap-2">
-            <span>{monitor.url}</span>
+          <div className="text-muted-foreground flex flex-wrap items-center gap-2">
+            <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusDotWithTooltip
               active={monitor.active}

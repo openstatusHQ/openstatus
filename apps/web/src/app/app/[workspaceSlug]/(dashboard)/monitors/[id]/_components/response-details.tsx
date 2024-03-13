@@ -1,3 +1,4 @@
+import { OSTinybird } from "@openstatus/tinybird";
 import type { ResponseDetailsParams } from "@openstatus/tinybird";
 
 import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
@@ -9,10 +10,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
-import { getResponseDetailsData } from "@/lib/tb";
+import { env } from "@/env";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export async function ResponseDetails(props: ResponseDetailsParams) {
-  const details = await getResponseDetailsData(props);
+  const details = await tb.endpointResponseDetails("45d")(props);
 
   if (!details || details?.length === 0) return null;
 

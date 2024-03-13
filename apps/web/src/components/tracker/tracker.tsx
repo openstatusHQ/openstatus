@@ -93,7 +93,7 @@ export function Tracker({
         </div>
       </div>
       <div className="text-muted-foreground flex items-center justify-between text-xs font-light">
-        <p>{tracker.days.length - 1} days ago</p>
+        <p>{tracker.days.length} days ago</p>
         <p>Today</p>
       </div>
     </div>
