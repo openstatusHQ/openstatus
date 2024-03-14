@@ -51,8 +51,11 @@ Here is the repository of the
 
 ## Vercel Serverless Function - NodeJS runtime
 
-They are using the NodeJS runtime. We have access to all the nodejs API. Our
+They are using the NodeJS 18 runtime. We have access to all the nodejs API. Our
 function are deployed in a single location: iad1 - Washington, D.C., USA.
+
+Upgrading to Node.js 20 could enhance cold start performance, but it's still in
+beta.
 
 We analyzed the header of each request and observe that all requests are
 processed in a data center near our location before being routed to our
@@ -188,8 +191,8 @@ We are pinging this functions every 10 minutes.
 | Serverless Warm       | 246 | 563   | 855   |
 | Edge                  | 106 | 178   | 328   |
 
-Edge functions are approximately 9 times faster than Serverless functions during
-cold starts, but only 2 times faster when the function is warm.
+Globablly Edge functions are approximately 9 times faster than Serverless
+functions during cold starts, but only 2 times faster when the function is warm.
 
 Edge functions have similar latency regardless of the user's location. If you
 value your users and have a worldwide audience, you should consider Edge
