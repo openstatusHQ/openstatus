@@ -16,6 +16,8 @@ import { Metrics } from "../_components/metrics";
 import { getMinutesByInterval, intervals, periods, quantiles } from "../utils";
 import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
 
+// import { groupDataByTimestamp } from "./_components/utils";
+
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 const DEFAULT_QUANTILE = "p95";
@@ -94,6 +96,15 @@ export default async function Page({
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
     flyRegions.length !== regions.length;
+
+  // GET VALUES FOR BLOG POST
+  // console.log(
+  //   JSON.stringify({
+  //     regions,
+  //     data: groupDataByTimestamp(data, period, quantile),
+  //     metricsByRegion,
+  //   }),
+  // );
 
   return (
     <div className="grid gap-4">
