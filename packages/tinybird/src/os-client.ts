@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { flyRegions } from "@openstatus/utils";
 
-const MIN_CACHE = 30; // 30s
+const MIN_CACHE = 60; // 60s
 const DEFAULT_CACHE = 120; // 2min
 const MAX_CACHE = 86400; // 1d
 
