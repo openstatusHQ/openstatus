@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, db, eq, isNotNull } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
 import type { Variables } from "./index";
