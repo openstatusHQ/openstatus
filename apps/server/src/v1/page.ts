@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, eq, sql } from "@openstatus/db";
+import { and, desc, eq, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
@@ -34,18 +34,33 @@ const PageSchema = z.object({
     description: "The title of the page",
     example: "My Page",
   }),
+  description: z.string().openapi({
+    description: "The description of the page",
+    example: "My awesome status page",
+  }),
   slug: z.string().openapi({
     description: "The slug of the page",
     example: "my-page",
   }),
-  customDomain: z.string().openapi({
-    description: "The custom domain of the page",
-    example: "my-page.com",
-  }),
-  icon: z.string().url().openapi({
-    description: "The icon of the page",
-    example: "https://example.com/icon.png",
-  }),
+  customDomain: z
+    .string()
+    .openapi({
+      description: "The custom domain of the page",
+      example: "my-page.com",
+    })
+    .transform((val) => (val ? val : undefined))
+    .nullish(),
+
+  icon: z
+    .string()
+    .openapi({
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    })
+    .url()
+    .or(z.literal(""))
+    .transform((val) => (val ? val : undefined))
+    .nullish(),
   monitors: z
     .array(z.number())
     .openapi({
@@ -64,10 +79,14 @@ const CreatePageSchema = z.object({
     description: "The description of the page",
     example: "My awesome status page",
   }),
-  icon: z.string().url().openapi({
-    description: "The icon of the page",
-    example: "https://example.com/icon.png",
-  }),
+  icon: z
+    .string()
+    .url()
+    .openapi({
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    })
+    .optional(),
   slug: z.string().openapi({
     description: "The slug of the page",
     example: "my-page",
@@ -289,8 +308,11 @@ pageApi.openapi(postRoute, async (c) => {
   const newPage = await db
     .insert(page)
     .values({ workspaceId, ...input })
-    .run();
+    .returning()
+    .get();
 
   const data = PageSchema.parse(newPage);
   return c.json(data);
 });
+
+export { pageApi };
