@@ -1,8 +1,13 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, eq } from "@openstatus/db";
+import { and, desc, eq, inArray, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorsToPages,
+  page,
+  pageSubscriber,
+} from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
 import { sendEmail } from "@openstatus/emails/emails/send";
 
@@ -25,6 +30,133 @@ const ParamsSchema = z.object({
     }),
 });
 
+const PageSchema = z.object({
+  id: z.number().openapi({
+    description: "The id of the page",
+    example: 1,
+  }),
+  title: z.string().openapi({
+    description: "The title of the page",
+    example: "My Page",
+  }),
+  description: z.string().openapi({
+    description: "The description of the page",
+    example: "My awesome status page",
+  }),
+  slug: z.string().openapi({
+    description: "The slug of the page",
+    example: "my-page",
+  }),
+  customDomain: z
+    .string()
+    .openapi({
+      description: "The custom domain of the page",
+      example: "my-page.com",
+    })
+    .transform((val) => (val ? val : undefined))
+    .nullish(),
+
+  icon: z
+    .string()
+    .openapi({
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    })
+    .url()
+    .or(z.literal(""))
+    .transform((val) => (val ? val : undefined))
+    .nullish(),
+  monitors: z
+    .array(z.number())
+    .openapi({
+      description: "The monitors of the page",
+      example: [1, 2],
+    })
+    .optional(),
+});
+
+const CreatePageSchema = z.object({
+  title: z.string().openapi({
+    description: "The title of the page",
+    example: "My Page",
+  }),
+  description: z.string().openapi({
+    description: "The description of the page",
+    example: "My awesome status page",
+  }),
+  icon: z
+    .string()
+    .url()
+    .openapi({
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    })
+    .optional(),
+  slug: z.string().openapi({
+    description: "The slug of the page",
+    example: "my-page",
+  }),
+  customDomain: z
+    .string()
+    .openapi({
+      description: "The custom domain of the page",
+      example: "my-page.com",
+    })
+    .optional()
+    .default(""),
+  monitors: z
+    .array(z.number())
+    .openapi({
+      description: "The monitors of the page",
+      example: [1, 2],
+    })
+    .nullish(),
+});
+
+const UpdatePageSchema = z.object({
+  title: z
+    .string()
+    .openapi({
+      description: "The title of the page",
+      example: "My Page",
+    })
+    .optional(),
+  description: z.string().openapi({
+    description: "The description of the page",
+    example: "My awesome status page",
+  }),
+  icon: z
+    .string()
+    .url()
+    .openapi({
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    })
+    .optional(),
+  slug: z
+    .string()
+    .openapi({
+      description: "The slug of the page",
+      example: "my-page",
+    })
+    .optional(),
+  customDomain: z
+    .string()
+    .openapi({
+      description: "The custom domain of the page",
+      example: "my-page.com",
+    })
+    .optional()
+    .default(""),
+  monitors: z
+    .array(z.number())
+    .openapi({
+      description: "The monitors of the page",
+      example: [1, 2],
+    })
+    .nullish(),
+});
+
 const pageSubscriberSchema = z.object({
   email: z.string().email().openapi({
     description: "The email of the subscriber",
@@ -33,9 +165,9 @@ const pageSubscriberSchema = z.object({
 
 const postRouteSubscriber = createRoute({
   method: "post",
-  tags: ["status_report"],
+  tags: ["page"],
   path: "/:id/update",
-  description: "Add a subscriber to a status report",
+  description: "Add a subscriber to a status page",
   request: {
     params: ParamsSchema,
     body: {
@@ -129,3 +261,250 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
     ...data,
   });
 });
+
+const getRoute = createRoute({
+  method: "get",
+  tags: ["page"],
+  description: "Get a status page",
+  path: "/:id",
+  request: {
+    params: ParamsSchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: PageSchema,
+        },
+      },
+      description: "Get an Status page",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+pageApi.openapi(getRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+
+  const pageId = Number(id);
+  const result = await db
+    .select()
+    .from(page)
+    .where(and(eq(page.workspaceId, workspaceId), eq(page.id, pageId)))
+    .get();
+
+  if (!result) return c.json({ code: 404, message: "Not Found" }, 404);
+  const data = PageSchema.parse(result);
+
+  return c.json(data);
+});
+
+const postRoute = createRoute({
+  method: "post",
+  tags: ["page"],
+  description: "Create a status page",
+  path: "/",
+  request: {
+    body: {
+      description: "The monitor to create",
+      content: {
+        "application/json": {
+          schema: CreatePageSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: PageSchema,
+        },
+      },
+      description: "Get an Status page",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+pageApi.openapi(postRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+
+  // Check if the user has reached the limit of pages
+  const count = (
+    await db
+      .select({ count: sql<number>`count(*)` })
+      .from(page)
+      .where(eq(page.workspaceId, workspaceId))
+      .all()
+  )[0].count;
+
+  const workspacePlan = c.get("workspacePlan");
+
+  if (count >= workspacePlan.limits["status-pages"])
+    return c.json({ code: 403, message: "Forbidden" }, 403);
+
+  const input = c.req.valid("json");
+
+  const countSlug = (
+    await db
+      .select({ count: sql<number>`count(*)` })
+      .from(page)
+      .where(eq(page.slug, input.slug))
+      .all()
+  )[0].count;
+
+  if (countSlug > 0)
+    return c.json({ code: 400, message: "Slug already taken" }, 400);
+
+  const { monitors, ...rest } = input;
+  if (monitors) {
+    const monitorsData = await db
+      .select()
+      .from(monitor)
+      .where(
+        and(
+          inArray(monitor.id, monitors),
+          eq(monitor.workspaceId, workspaceId),
+        ),
+      )
+      .all();
+    if (monitorsData.length !== monitors.length)
+      return c.json({ code: 400, message: "Monitor not found" }, 400);
+  }
+  const newPage = await db
+    .insert(page)
+    .values({ workspaceId, ...rest })
+    .returning()
+    .get();
+
+  if (monitors) {
+    for (const monitorId of monitors) {
+      await db
+        .insert(monitorsToPages)
+        .values({ pageId: newPage.id, monitorId })
+        .run();
+    }
+  }
+  const data = PageSchema.parse(newPage);
+  return c.json(data);
+});
+
+const putRoute = createRoute({
+  method: "put",
+  tags: ["page"],
+  description: "Update a status page",
+  path: "/:id",
+  request: {
+    params: ParamsSchema,
+    body: {
+      description: "The monitor to update",
+      content: {
+        "application/json": {
+          schema: UpdatePageSchema,
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: PageSchema,
+        },
+      },
+      description: "Get an Status page",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+pageApi.openapi(putRoute, async (c) => {
+  const input = c.req.valid("json");
+
+  const workspaceId = Number(c.get("workspaceId"));
+  const { id } = c.req.valid("param");
+
+  if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
+
+  const _page = await db
+    .select()
+    .from(page)
+    .where(eq(page.id, Number(id)))
+    .get();
+
+  if (!_page) return c.json({ code: 404, message: "Not Found" }, 404);
+
+  if (workspaceId !== _page.workspaceId)
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
+
+  if (input.slug) {
+    const countSlug = (
+      await db
+        .select({ count: sql<number>`count(*)` })
+        .from(page)
+        .where(eq(page.slug, input.slug))
+        .all()
+    )[0].count;
+
+    if (countSlug > 0)
+      return c.json({ code: 400, message: "Slug already taken" }, 400);
+  }
+  const { monitors, ...rest } = input;
+  if (monitors) {
+    const monitorsData = await db
+      .select()
+      .from(monitor)
+      .where(
+        and(
+          inArray(monitor.id, monitors),
+          eq(monitor.workspaceId, workspaceId),
+        ),
+      )
+      .all();
+    if (monitorsData.length !== monitors.length)
+      return c.json({ code: 400, message: "Monitor not found" }, 400);
+  }
+
+  const newPage = await db
+    .update(page)
+    .set({ ...rest })
+    .returning()
+    .get();
+
+  const data = PageSchema.parse(newPage);
+
+  if (monitors) {
+    for (const monitorId of monitors) {
+      await db
+        .insert(monitorsToPages)
+        .values({ pageId: _page.id, monitorId })
+        .run();
+    }
+  }
+  return c.json(data);
+});
+
+export { pageApi };

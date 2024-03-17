@@ -26,7 +26,7 @@ export const sendAlert = async ({
     },
     body: JSON.stringify({
       to: email,
-      from: "Notifications <ping@openstatus.dev>",
+      from: "Notifications <ping@notifications.openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is down 🚨`,
       html: `<p>Hi,<br><br>Your monitor ${monitor.name} is down. </p><p>URL : ${
