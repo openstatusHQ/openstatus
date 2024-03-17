@@ -305,6 +305,17 @@ pageApi.openapi(postRoute, async (c) => {
 
   const input = c.req.valid("json");
 
+  const countSlug = (
+    await db
+      .select({ count: sql<number>`count(*)` })
+      .from(page)
+      .where(eq(page.slug, input.slug))
+      .all()
+  )[0].count;
+
+  if (countSlug > 0)
+    return c.json({ code: 400, message: "Slug already taken" }, 400);
+
   const newPage = await db
     .insert(page)
     .values({ workspaceId, ...input })
