@@ -1,4 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
 import { page } from "@openstatus/db/src/schema";
@@ -23,6 +24,8 @@ export type Variables = {
 };
 
 export const api = new OpenAPIHono<{ Variables: Variables }>();
+
+api.use("/openapi", cors());
 
 api.doc("/openapi", {
   openapi: "3.0.0",
