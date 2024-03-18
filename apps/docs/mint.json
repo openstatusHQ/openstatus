@@ -140,6 +140,21 @@
           ]
         },
         {
+          "group": "Notification",
+          "pages": [
+            "api-reference/notification/notification-page:id",
+            "api-reference/notification/notification-page"
+          ]
+        },
+        {
+          "group": "Page",
+          "pages": [
+            "api-reference/page/get-page:id",
+            "api-reference/page/post-page",
+            "api-reference/page/put-page:id"
+          ]
+        },
+        {
           "group": "Status Report",
           "pages": [
             "api-reference/status_report/get-status_report:id",
