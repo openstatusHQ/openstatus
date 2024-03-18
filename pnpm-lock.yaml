@@ -88,6 +88,9 @@ importers:
       nanoid:
         specifier: 5.0.2
         version: 5.0.2
+      validator:
+        specifier: 13.11.0
+        version: 13.11.0
       zod:
         specifier: 3.22.2
         version: 3.22.2
@@ -95,6 +98,9 @@ importers:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../../packages/tsconfig
+      '@types/validator':
+        specifier: 13.11.6
+        version: 13.11.6
       bun-types:
         specifier: 1.0.11
         version: 1.0.11
@@ -1392,10 +1398,6 @@ packages:
     peerDependencies:
       '@effect-ts/otel-node': '*'
     peerDependenciesMeta:
-      '@effect-ts/core':
-        optional: true
-      '@effect-ts/otel':
-        optional: true
       '@effect-ts/otel-node':
         optional: true
     dependencies:
@@ -5409,7 +5411,6 @@ packages:
 
   /@types/validator@13.11.6:
     resolution: {integrity: sha512-HUgHujPhKuNzgNXBRZKYexwoG+gHKU+tnfPqjWXFghZAnn73JElicMkuSKJyLGr9JgyA8IgK7fj88IyA9rwYeQ==}
-    dev: false
 
   /@types/ws@8.5.8:
     resolution: {integrity: sha512-flUksGIQCnJd6sZ1l5dqCEG/ksaoAg/eUwiLAGTJQcfgvZJKF++Ta4bJA6A5aPSJmsr+xlseHn4KLgVlNnvPTg==}
