@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, desc, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import {
   monitor,
@@ -314,7 +314,7 @@ const postRoute = createRoute({
   path: "/",
   request: {
     body: {
-      description: "The monitor to create",
+      description: "The status page to create",
       content: {
         "application/json": {
           schema: CreatePageSchema,
