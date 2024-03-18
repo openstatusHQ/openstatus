@@ -10,7 +10,7 @@ export async function GET() {
     site_url: "https://www.openstatus.dev",
     managingEditor: "ping@openstatus.dev (OpenStatus Team)",
     webMaster: "ping@openstatus.dev (OpenStatus Team)",
-    copyright: `Copyright ${new Date().getFullYear().toString()}, Dave Gray`,
+    copyright: `Copyright ${new Date().getFullYear().toString()}, OpenStatus`,
     language: "en-US",
     pubDate: new Date().toUTCString(),
     ttl: 60,
