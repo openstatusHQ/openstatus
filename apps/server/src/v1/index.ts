@@ -2,7 +2,6 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
-import { page } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/plans/src/types";
 
 import { incidentsApi } from "./incidents";
