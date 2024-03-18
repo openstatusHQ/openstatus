@@ -46,10 +46,6 @@ const NotificationSchema = z.object({
   }),
   payload: NotificationDataSchema.openapi({
     description: "The data of the notification",
-    examples: [
-      { email: "ping@openstatus.dev" },
-      { discord: "https://discord.com/api/webhooks/{channelId}/xxx..." },
-    ],
   }),
   monitors: z
     .array(z.number())
@@ -71,10 +67,6 @@ const CreateNotificationSchema = z.object({
   }),
   payload: NotificationDataSchema.openapi({
     description: "The data of the notification",
-    examples: [
-      { email: "ping@openstatus.dev" },
-      { discord: "https://discord.com/api/webhooks/{channelId}/xxx..." },
-    ],
   }),
   monitors: z
     .array(z.number())
