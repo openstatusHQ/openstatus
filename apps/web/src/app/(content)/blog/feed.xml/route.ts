@@ -16,15 +16,20 @@ export async function GET() {
     ttl: 60,
   });
 
-  allPosts.map((post) => {
-    feed.item({
-      title: post.title,
-      description: post.description,
-      url: `https://www.openstatus.dev/blog/${post.slug}`,
-      author: post.author.name,
-      date: post.publishedAt,
+  allPosts
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+    )
+    .map((post) => {
+      feed.item({
+        title: post.title,
+        description: post.description,
+        url: `https://www.openstatus.dev/blog/${post.slug}`,
+        author: post.author.name,
+        date: post.publishedAt,
+      });
     });
-  });
   return new Response(feed.xml({ indent: true }), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
