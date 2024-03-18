@@ -142,8 +142,8 @@
         {
           "group": "Notification",
           "pages": [
-            "api-reference/notification/notification-page:id",
-            "api-reference/notification/notification-page"
+            "api-reference/notification/get-notification:id",
+            "api-reference/notification/post-notification"
           ]
         },
         {
