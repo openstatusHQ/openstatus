@@ -3,9 +3,13 @@ import { z } from "zod";
 
 import { flyRegions } from "@openstatus/utils";
 
-const MIN_CACHE = 60; // 60s
-const DEFAULT_CACHE = 120; // 2min
-const MAX_CACHE = 86400; // 1d
+const isProd = process.env.NODE_ENV === "production";
+
+const DEV_CACHE = 3_600; // 1h
+
+const MIN_CACHE = isProd ? 60 : DEV_CACHE; // 60s
+const DEFAULT_CACHE = isProd ? 120 : DEV_CACHE; // 2min
+const MAX_CACHE = 86_400; // 1d
 
 export const latencySchema = z.object({
   p50Latency: z.number().int().nullable(),
