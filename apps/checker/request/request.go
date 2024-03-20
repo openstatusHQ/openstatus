@@ -12,6 +12,7 @@ type CheckerRequest struct {
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
 	Status string `json:"status"`
+	StatusCode []int `json:"statusCode,omitempty"`
 }
 
 type PingRequest struct {

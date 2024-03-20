@@ -28,6 +28,15 @@ const regionsToArraySchema = z.preprocess((val) => {
   return [];
 }, z.array(monitorRegionSchema));
 
+const statusCodeArraySchema = z.preprocess((val) => {
+  if (String(val).length > 0) {
+    return String(val)
+      .split(",")
+      .map((m) => Number(m));
+  }
+  return [];
+}, z.array(z.number()));
+
 const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
@@ -51,6 +60,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("other"),
   regions: regionsToArraySchema.default([]),
+  statusCode: statusCodeArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
@@ -67,6 +77,11 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   regions: z.array(monitorRegionSchema).default([]).optional(),
   headers: headersSchema.default([]),
+  statusCode: z
+    .array(z.number())
+    .default([])
+    .transform((val) => val.join(","))
+    .optional(),
 }).extend({
   method: monitorMethodsSchema.default("GET"),
   notifications: z.array(z.number()).optional().default([]),

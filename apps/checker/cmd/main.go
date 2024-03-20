@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 
@@ -93,12 +94,20 @@ func main() {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
 			statusCode := statusCode(res.StatusCode)
+
+			var successfulRequest bool
+			if len(req.StatusCode) > 0 {
+				successfulRequest = slices.Contains(req.StatusCode, res.StatusCode)
+			} else {
+				successfulRequest = statusCode.IsSuccessful()
+			}
+
 			// let's retry at least once if the status code is not successful.
-			if !statusCode.IsSuccessful() && called < 2 {
+			if !successfulRequest && called < 2 {
 				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
 			}
 
-			if !statusCode.IsSuccessful() && req.Status == "active" {
+			if !successfulRequest && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
@@ -110,7 +119,7 @@ func main() {
 				})
 			}
 
-			if req.Status == "error" && statusCode.IsSuccessful() {
+			if req.Status == "error" && successfulRequest {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
