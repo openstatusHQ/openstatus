@@ -73,6 +73,7 @@ export const monitorRouter = createTRPCRouter({
           workspaceId: opts.ctx.workspace.id,
           regions: regions?.join(","),
           headers: headers ? JSON.stringify(headers) : undefined,
+          statusCode: data.statusCode ? data.statusCode.join(",") : undefined,
         })
         .returning()
         .get();
@@ -167,6 +168,7 @@ export const monitorRouter = createTRPCRouter({
           regions: regions?.join(","),
           updatedAt: new Date(),
           headers: headers ? JSON.stringify(headers) : undefined,
+          statusCode: data.statusCode ? data.statusCode.join(",") : undefined,
         })
         .where(
           and(

@@ -69,6 +69,7 @@ export function MonitorForm({
       method: defaultValues?.method ?? "GET",
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
+      statusCode: [...(defaultValues?.statusCode || [])],
     },
   });
   const router = useRouter();

@@ -77,11 +77,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   regions: z.array(monitorRegionSchema).default([]).optional(),
   headers: headersSchema.default([]),
-  statusCode: z
-    .array(z.number())
-    .default([])
-    .transform((val) => val.join(","))
-    .optional(),
+  statusCode: z.array(z.number()).default([]),
 }).extend({
   method: monitorMethodsSchema.default("GET"),
   notifications: z.array(z.number()).optional().default([]),
