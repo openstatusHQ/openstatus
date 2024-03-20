@@ -161,7 +161,7 @@ function TagsTooltip({ tags }: { tags: MonitorTag[] }) {
         <TooltipTrigger>
           <Badge variant="secondary">+{tags.length}</Badge>
         </TooltipTrigger>
-        <TooltipContent className="flex gap-2">
+        <TooltipContent side="top" className="flex gap-2">
           {tags.map((tag) => (
             <TagBadge key={tag.id} {...tag} />
           ))}

@@ -135,9 +135,9 @@ export function TagsMultiBox({
             variant="outline"
             role="combobox"
             aria-expanded={openCombobox}
-            className="text-foreground w-full w-full justify-between"
+            className="text-foreground h-auto w-full justify-between"
           >
-            <span className="flex gap-2 truncate">
+            <span className="flex flex-wrap gap-2 truncate">
               {values.length > 0
                 ? values.map((id) => {
                     const tag = tags.find((tag) => tag.id === id);
@@ -148,9 +148,8 @@ export function TagsMultiBox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        {/* FIXME: same with as trigger */}
         <PopoverContent className="w-full p-0">
-          <Command loop>
+          <Command className="w-[var(--radix-popover-trigger-width)]" loop>
             <CommandInput
               ref={inputRef}
               placeholder="Search tag..."
