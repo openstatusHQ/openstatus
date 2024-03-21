@@ -142,6 +142,7 @@
         {
           "group": "Notification",
           "pages": [
+            "api-reference/notification/get-notification",
             "api-reference/notification/get-notification:id",
             "api-reference/notification/post-notification"
           ]
@@ -149,9 +150,11 @@
         {
           "group": "Page",
           "pages": [
+            "api-reference/page/get-page",
             "api-reference/page/get-page:id",
             "api-reference/page/post-page",
-            "api-reference/page/put-page:id"
+            "api-reference/page/put-page:id",
+            "api-reference/page/post-page:id/update"
           ]
         },
         {

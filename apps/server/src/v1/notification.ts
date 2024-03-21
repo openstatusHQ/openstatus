@@ -76,6 +76,65 @@ const CreateNotificationSchema = z.object({
     })
     .nullish(),
 });
+
+const getAllRoute = createRoute({
+  method: "get",
+  tags: ["notification"],
+  description: "Get a notification",
+  path: "/",
+
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(NotificationSchema),
+        },
+      },
+      description: "Get all your workspace notification",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+notificationApi.openapi(getAllRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+
+  const result = await db
+    .select()
+    .from(notification)
+    .where(and(eq(page.workspaceId, workspaceId)))
+    .all();
+
+  if (!result) return c.json({ code: 404, message: "Not Found" }, 404);
+  const data = [];
+
+  for (const r of result) {
+    const linkedMonitors = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.notificationId, r.id))
+      .all();
+
+    const monitorsId = linkedMonitors.map((m) => m.monitorId);
+
+    const p = NotificationSchema.parse({
+      ...result,
+      payload: JSON.parse(r.data || "{}"),
+      monitors: monitorsId,
+    });
+    data.push(p);
+  }
+
+  return c.json(data);
+});
+
 const getRoute = createRoute({
   method: "get",
   tags: ["notification"],
