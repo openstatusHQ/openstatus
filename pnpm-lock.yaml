@@ -43,6 +43,9 @@ importers:
       '@hono/zod-openapi':
         specifier: 0.8.3
         version: 0.8.3(hono@4.0.0)(zod@3.22.2)
+      '@openstatus/analytics':
+        specifier: workspace:^
+        version: link:../../packages/analytics
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db

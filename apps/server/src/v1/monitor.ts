@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
+import { trackAnalytics } from "@openstatus/analytics";
 import { db, eq, sql } from "@openstatus/db";
 import {
   flyRegions,
@@ -63,7 +64,7 @@ const MonitorSchema = z
       .default([])
       .openapi({
         example: ["ams"],
-        description: "The regions to use",
+        description: "Where we should monitor it",
       }),
     name: z
       .string()
@@ -127,7 +128,7 @@ const monitorInput = z
     }),
     regions: regionInput.openapi({
       example: "ams",
-      description: "The regions to use",
+      description: "The regions where we should monitor your endpoint",
     }),
     name: z.string().openapi({
       example: "Documenso",
@@ -140,7 +141,7 @@ const monitorInput = z
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z.string().openapi({
       example: "Hello World",
-      description: "The body",
+      description: "The body of your request",
     }),
     active: z.boolean().default(false).openapi({
       description: "If the monitor is active",
@@ -346,6 +347,15 @@ monitorApi.openapi(postRoute, async (c) => {
 
   const data = MonitorSchema.parse(_newMonitor);
 
+  if (env.JITSU_WRITE_KEY) {
+    trackAnalytics({
+      event: "Monitor Created",
+      url: input.url,
+      periodicity: input.periodicity,
+      api: true,
+      workspaceId: String(workspaceId),
+    });
+  }
   return c.json(data);
 });
 

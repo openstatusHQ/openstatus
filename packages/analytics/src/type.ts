@@ -8,10 +8,13 @@ export type AnalyticsEvents =
       event: "Monitor Created";
       url: string;
       periodicity: string;
+      api?: boolean;
+      workspaceId?: string;
     }
   | {
       event: "Page Created";
       slug: string;
+      api?: boolean;
     }
   | { event: "User Upgraded"; email: string }
   | { event: "User Signed In" }
