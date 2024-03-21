@@ -492,7 +492,6 @@ const dailyStatsSchema = z.object({
     .number()
     .int()
     .openapi({ description: "The total number of request" }),
-  avgLatency: z.number().int().openapi({ description: "The average latency" }),
   day: isoDate,
 });
 
