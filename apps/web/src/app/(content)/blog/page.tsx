@@ -41,6 +41,7 @@ export default async function Post() {
           <Button variant="outline" size="icon" asChild>
             <a href="/blog/feed.xml" target="_blank">
               <Rss className="h-4 w-4" />
+              <span className="sr-only">RSS feed</span>
             </a>
           </Button>
         }
