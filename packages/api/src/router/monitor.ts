@@ -19,12 +19,7 @@ import {
 import { allPlans } from "@openstatus/plans";
 
 import { trackNewMonitor } from "../analytics";
-import {
-  createTRPCRouter,
-  cronProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
