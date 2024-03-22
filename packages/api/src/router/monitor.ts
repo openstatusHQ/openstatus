@@ -19,12 +19,7 @@ import {
 import { allPlans } from "@openstatus/plans";
 
 import { trackNewMonitor } from "../analytics";
-import {
-  createTRPCRouter,
-  cronProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -285,58 +280,6 @@ export const monitorRouter = createTRPCRouter({
         .all();
 
       return z.array(selectMonitorSchema).parse(monitors);
-    }),
-
-  getMonitorsForPeriodicity: cronProcedure
-    .input(z.object({ periodicity: monitorPeriodicitySchema }))
-    .query(async (opts) => {
-      const result = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.periodicity, opts.input.periodicity),
-            eq(monitor.active, true),
-          ),
-        )
-        .all();
-      return z.array(selectMonitorSchema).parse(result);
-    }),
-
-  getMonitorStatusByMonitorId: cronProcedure
-    .input(z.object({ monitorId: z.number() }))
-    .query(async (opts) => {
-      const result = await opts.ctx.db
-        .select()
-        .from(monitorStatusTable)
-        .where(eq(monitorStatusTable.monitorId, opts.input.monitorId))
-        .all();
-      return z.array(selectMonitorStatusSchema).parse(result);
-    }),
-
-  // FOR TESTING
-  upsertMonitorStatus: cronProcedure
-    .input(insertMonitorStatusSchema)
-    .mutation(async (opts) => {
-      const { status, region, monitorId } = opts.input;
-      await opts.ctx.db
-        .insert(monitorStatusTable)
-        .values({ status, region, monitorId: Number(monitorId) })
-        .onConflictDoUpdate({
-          target: [monitorStatusTable.monitorId, monitorStatusTable.region],
-          set: { status, updatedAt: new Date() },
-        });
-    }),
-
-  getAllPagesForMonitor: cronProcedure
-    .input(z.object({ monitorId: z.number() }))
-    .query(async (opts) => {
-      const allPages = await opts.ctx.db
-        .select()
-        .from(monitorsToPages)
-        .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
-        .all();
-      return allPages;
     }),
 
   // rename to getActiveMonitorsCount
