@@ -206,27 +206,3 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
-
-/**
- * Reusable middleware that enforces only cron before running the
- * procedure
- */
-const enforeUserIsCron = t.middleware(async ({ ctx, next }) => {
-  if (!ctx.auth?.userId || ctx.auth.userId !== "cron") {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-
-  return next({
-    ctx: {
-      auth: {
-        ...ctx.auth,
-        userId: ctx.auth.userId,
-      },
-    },
-  });
-});
-
-/**
- * Protected (cron) procedure
- */
-export const cronProcedure = t.procedure.use(enforeUserIsCron);

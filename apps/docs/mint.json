@@ -164,7 +164,7 @@
             "api-reference/status_report/get-status_report",
             "api-reference/status_report/delete-status_report:id",
             "api-reference/status_report/post-status_report",
-            "api-reference/status_report/post-status_report:idupdate"
+            "api-reference/status_report/post-status_report:id/update"
           ]
         },
         {
