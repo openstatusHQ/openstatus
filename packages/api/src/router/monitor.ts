@@ -354,6 +354,41 @@ export const monitorRouter = createTRPCRouter({
       .parse(monitors);
   }),
 
+  toggleMonitorActive: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const monitorToUpdate = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .get();
+
+      if (!monitorToUpdate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
+      await opts.ctx.db
+        .update(monitor)
+        .set({
+          active: !monitorToUpdate.active,
+        })
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .run();
+    }),
+
   // rename to getActiveMonitorsCount
   getTotalActiveMonitors: publicProcedure.query(async (opts) => {
     const monitors = await opts.ctx.db
