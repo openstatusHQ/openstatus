@@ -72,6 +72,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   notifications: z.array(z.number()).optional().default([]),
   pages: z.array(z.number()).optional().default([]),
   body: z.string().default("").optional(),
+  tags: z.array(z.number()).optional().default([]),
 });
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;

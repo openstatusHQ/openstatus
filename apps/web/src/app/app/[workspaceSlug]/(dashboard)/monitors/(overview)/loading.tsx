@@ -1,5 +1,11 @@
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton";
+import { DataTableToolbarSkeleton } from "@/components/data-table/data-table-toolbar-skeleton";
 
 export default function Loading() {
-  return <DataTableSkeleton />;
+  return (
+    <div className="space-y-4">
+      <DataTableToolbarSkeleton />
+      <DataTableSkeleton />
+    </div>
+  );
 }

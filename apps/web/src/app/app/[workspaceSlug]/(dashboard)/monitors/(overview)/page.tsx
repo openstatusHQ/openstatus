@@ -34,6 +34,7 @@ export default async function MonitorPage() {
     );
 
   const _incidents = await api.incident.getIncidentsByWorkspace.query();
+  const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
@@ -57,7 +58,11 @@ export default async function MonitorPage() {
         (incident) => incident.monitorId === monitor.id,
       );
 
-      return { monitor, metrics: current, data, incidents };
+      const tags = monitor.monitorTagsToMonitors.map(
+        ({ monitorTag }) => monitorTag,
+      );
+
+      return { monitor, metrics: current, data, incidents, tags };
     }),
   );
 
@@ -69,7 +74,7 @@ export default async function MonitorPage() {
 
   return (
     <>
-      <DataTable columns={columns} data={monitorsWithData} />
+      <DataTable columns={columns} data={monitorsWithData} tags={tags} />
       {isLimitReached ? <Limit /> : null}
       {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>

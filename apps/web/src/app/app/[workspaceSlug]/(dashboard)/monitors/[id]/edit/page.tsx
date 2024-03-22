@@ -26,6 +26,8 @@ export default async function EditPage({
 
   const pages = await api.page.getPagesByWorkspace.query();
 
+  const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
+
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
 
@@ -40,9 +42,15 @@ export default async function EditPage({
           )
           .map(({ id }) => id),
         notifications: monitorNotifications?.map(({ id }) => id),
+        tags: tags
+          .filter((tag) =>
+            tag.monitor.map(({ monitorId }) => monitorId).includes(id),
+          )
+          .map(({ id }) => id),
       }}
       plan={workspace?.plan}
       notifications={notifications}
+      tags={tags}
       pages={pages}
     />
   );

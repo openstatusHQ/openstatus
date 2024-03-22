@@ -64,9 +64,8 @@ export function DataTableRowActions<TData>({
       try {
         const { jobType, ...rest } = monitor;
         if (!monitor.id) return;
-        await api.monitor.update.mutate({
-          ...rest,
-          active: !monitor.active,
+        await api.monitor.toggleMonitorActive.mutate({
+          id: monitor.id,
         });
         toastAction("success");
         router.refresh();
