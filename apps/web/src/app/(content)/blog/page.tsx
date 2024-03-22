@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { allPosts } from "contentlayer/generated";
+import { Rss } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 
@@ -36,6 +37,13 @@ export default async function Post() {
       <Timeline
         title="Blog"
         description="All the latest articles and news from OpenStatus."
+        actions={
+          <Button variant="outline" size="icon" asChild>
+            <a href="/blog/feed.xml" target="_blank">
+              <Rss className="h-4 w-4" />
+            </a>
+          </Button>
+        }
       >
         {posts.map((post) => (
           <Timeline.Article
