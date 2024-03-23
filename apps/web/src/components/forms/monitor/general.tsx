@@ -19,7 +19,6 @@ import {
   Switch,
 } from "@openstatus/ui";
 
-import { TagBadge } from "@/components/monitor/tag-badge";
 import { SectionHeader } from "../shared/section-header";
 import { TagsMultiBox } from "./tags-multi-box";
 
@@ -30,7 +29,6 @@ interface Props {
 }
 
 export function General({ form, tags }: Props) {
-  const watchTags = form.watch("tags");
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader

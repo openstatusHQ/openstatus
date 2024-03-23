@@ -2,7 +2,7 @@
   "name": "@openstatus/utils",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {},
   "dependencies": {},
   "devDependencies": {

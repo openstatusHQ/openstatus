@@ -29,6 +29,7 @@ import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
+import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
 import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
@@ -72,7 +73,7 @@ export function MonitorForm({
       method: defaultValues?.method ?? "GET",
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
-      statusCode: [...(defaultValues?.statusCode || [])],
+      statusCode: defaultValues?.statusCode ?? [],
       tags: defaultValues?.tags ?? [],
     },
   });
@@ -103,12 +104,16 @@ export function MonitorForm({
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       try {
-        // const pingResult = await pingEndpoint();
-        // const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
-        // if (!isOk) {
-        //   setPingFailed(true);
-        //   return;
-        // }
+        const pingResult = await pingEndpoint();
+        console.log(pingResult);
+        const isOk =
+          props.statusCode && props.statusCode?.length > 0
+            ? props.statusCode.includes(pingResult?.status)
+            : pingResult?.status >= 200 && pingResult?.status < 300;
+        if (!isOk) {
+          setPingFailed(true);
+          return;
+        }
         await handleDataUpdateOrInsertion(props);
       } catch {
         toastAction("error");
@@ -154,6 +159,7 @@ export function MonitorForm({
             <TabsList>
               <TabsTrigger value="request">Request</TabsTrigger>
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+              <TabsTrigger value="assertions">Assertions</TabsTrigger>
               <TabsTrigger value="notifications">
                 Notifications{" "}
                 {defaultValues?.notifications?.length ? (
@@ -179,6 +185,9 @@ export function MonitorForm({
             </TabsContent>
             <TabsContent value="scheduling">
               <SectionScheduling {...{ form, plan }} />
+            </TabsContent>
+            <TabsContent value="assertions">
+              <SectionAssertions {...{ form }} />
             </TabsContent>
             <TabsContent value="notifications">
               <SectionNotifications {...{ form, plan, notifications }} />

@@ -19,6 +19,7 @@ import {
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   monitorId: number;
@@ -44,13 +45,10 @@ export function SectionDanger({ monitorId }: Props) {
 
   return (
     <div className="grid w-full gap-4">
-      <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">Delete monitor</h4>
-        <p className="text-muted-foreground">
-          This action cannot be undone. This will permanently delete the
-          monitor.
-        </p>
-      </div>
+      <SectionHeader
+        title="Danger Zone"
+        description="This action cannot be undone. This will permanently delete the monitor."
+      />
       <div>
         <AlertDialog open={open} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
