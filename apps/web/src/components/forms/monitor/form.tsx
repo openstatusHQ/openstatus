@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import type {
   InsertMonitor,
   MonitorFlyRegion,
+  MonitorTag,
   Notification,
   Page,
   WorkspacePlan,
@@ -39,6 +40,7 @@ interface Props {
   defaultValues?: InsertMonitor;
   plan?: WorkspacePlan;
   notifications?: Notification[];
+  tags?: MonitorTag[];
   pages?: Page[];
   nextUrl?: string;
 }
@@ -49,6 +51,7 @@ export function MonitorForm({
   plan = "free",
   notifications,
   pages,
+  tags,
   nextUrl,
 }: Props) {
   const form = useForm<InsertMonitor>({
@@ -70,6 +73,7 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       statusCode: [...(defaultValues?.statusCode || [])],
+      tags: defaultValues?.tags ?? [],
     },
   });
   const router = useRouter();
@@ -99,12 +103,12 @@ export function MonitorForm({
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       try {
-        const pingResult = await pingEndpoint();
-        const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
-        if (!isOk) {
-          setPingFailed(true);
-          return;
-        }
+        // const pingResult = await pingEndpoint();
+        // const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
+        // if (!isOk) {
+        //   setPingFailed(true);
+        //   return;
+        // }
         await handleDataUpdateOrInsertion(props);
       } catch {
         toastAction("error");
@@ -141,7 +145,7 @@ export function MonitorForm({
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           className="flex w-full flex-col gap-6"
         >
-          <General {...{ form, plan }} />
+          <General {...{ form, plan, tags }} />
           <Tabs
             defaultValue={defaultSection}
             className="w-full"

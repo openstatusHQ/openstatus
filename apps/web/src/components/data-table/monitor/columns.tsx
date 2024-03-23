@@ -4,13 +4,14 @@ import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNowStrict } from "date-fns";
 
-import type { Incident, Monitor } from "@openstatus/db/src/schema";
+import type { Incident, Monitor, MonitorTag } from "@openstatus/db/src/schema";
 import type {
   Monitor as MonitorTracker,
   ResponseTimeMetrics,
 } from "@openstatus/tinybird";
 import { Tracker } from "@openstatus/tracker";
 import {
+  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -18,6 +19,7 @@ import {
 } from "@openstatus/ui";
 
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
+import { TagBadge } from "@/components/monitor/tag-badge";
 import { Bar } from "@/components/tracker/tracker";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -26,9 +28,11 @@ export const columns: ColumnDef<{
   metrics?: ResponseTimeMetrics;
   data?: MonitorTracker[];
   incidents?: Incident[];
+  tags?: MonitorTag[];
 }>[] = [
   {
     accessorKey: "name",
+    accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
     header: "Name",
     cell: ({ row }) => {
       const { active, status, name } = row.original.monitor;
@@ -40,6 +44,29 @@ export const columns: ColumnDef<{
           <StatusDotWithTooltip active={active} status={status} />
           <span className="truncate group-hover:underline">{name}</span>
         </Link>
+      );
+    },
+  },
+  {
+    accessorKey: "tags",
+    header: "Tags",
+    cell: ({ row }) => {
+      const { tags } = row.original;
+      const [first, second, ...rest] = tags || [];
+      return (
+        <div className="flex gap-2">
+          {first ? <TagBadge {...first} /> : null}
+          {second ? <TagBadge {...second} /> : null}
+          {rest.length > 0 ? <TagsTooltip tags={rest || []} /> : null}
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      if (!Array.isArray(value)) return true;
+      // REMINDER: if one value is found, return true
+      // we could consider restricting it to all the values have to be found
+      return value.some(
+        (item) => row.original.tags?.some((tag) => tag.name === item),
       );
     },
   },
@@ -126,6 +153,23 @@ export const columns: ColumnDef<{
     },
   },
 ];
+
+function TagsTooltip({ tags }: { tags: MonitorTag[] }) {
+  return (
+    <TooltipProvider>
+      <Tooltip delayDuration={200}>
+        <TooltipTrigger>
+          <Badge variant="secondary">+{tags.length}</Badge>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="flex gap-2">
+          {tags.map((tag) => (
+            <TagBadge key={tag.id} {...tag} />
+          ))}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 function HeaderTooltip({ label, content }: { label: string; content: string }) {
   return (

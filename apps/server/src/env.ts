@@ -12,6 +12,8 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     FLY_REGION: z.enum(flyRegions),
     CRON_SECRET: z.string(),
+    JITSU_WRITE_KEY: z.string().optional(),
+    JITSU_HOST: z.string().optional(),
   },
 
   /**

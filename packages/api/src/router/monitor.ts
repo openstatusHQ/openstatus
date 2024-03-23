@@ -9,22 +9,20 @@ import {
   monitorPeriodicitySchema,
   monitorStatusTable,
   monitorsToPages,
+  monitorTag,
+  monitorTagsToMonitors,
   notification,
   notificationsToMonitors,
   page,
   selectMonitorSchema,
   selectMonitorStatusSchema,
+  selectMonitorTagSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
 import { trackNewMonitor } from "../analytics";
-import {
-  createTRPCRouter,
-  cronProcedure,
-  protectedProcedure,
-  publicProcedure,
-} from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -61,7 +59,7 @@ export const monitorRouter = createTRPCRouter({
       }
 
       // FIXME: this is a hotfix
-      const { regions, headers, notifications, id, pages, ...data } =
+      const { regions, headers, notifications, id, pages, tags, ...data } =
         opts.input;
 
       const newMonitor = await opts.ctx.db
@@ -79,9 +77,11 @@ export const monitorRouter = createTRPCRouter({
         .get();
 
       if (notifications.length > 0) {
-        // We should make sure the user has access to the notifications
         const allNotifications = await opts.ctx.db.query.notification.findMany({
-          where: inArray(notification.id, notifications),
+          where: and(
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+            inArray(notification.id, notifications),
+          ),
         });
 
         const values = allNotifications.map((notification) => ({
@@ -92,10 +92,28 @@ export const monitorRouter = createTRPCRouter({
         await opts.ctx.db.insert(notificationsToMonitors).values(values).run();
       }
 
+      if (tags.length > 0) {
+        const allTags = await opts.ctx.db.query.monitorTag.findMany({
+          where: and(
+            eq(monitorTag.workspaceId, opts.ctx.workspace.id),
+            inArray(monitorTag.id, tags),
+          ),
+        });
+
+        const values = allTags.map((monitorTag) => ({
+          monitorId: newMonitor.id,
+          monitorTagId: monitorTag.id,
+        }));
+
+        await opts.ctx.db.insert(monitorTagsToMonitors).values(values).run();
+      }
+
       if (pages.length > 0) {
-        // We should make sure the user has access to the notifications
         const allPages = await opts.ctx.db.query.page.findMany({
-          where: inArray(page.id, pages),
+          where: and(
+            eq(page.workspaceId, opts.ctx.workspace.id),
+            inArray(page.id, pages),
+          ),
         });
 
         const values = allPages.map((page) => ({
@@ -132,12 +150,13 @@ export const monitorRouter = createTRPCRouter({
       const parsedMonitor = selectMonitorSchema.safeParse(currentMonitor);
 
       if (!parsedMonitor.success) {
+        console.log(parsedMonitor.error);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "You are not allowed to access the monitor.",
         });
       }
-      return selectMonitorSchema.parse(currentMonitor);
+      return parsedMonitor.data;
     }),
 
   update: protectedProcedure
@@ -159,7 +178,10 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      const { regions, headers, notifications, pages, ...data } = opts.input;
+      console.log(opts.input);
+
+      const { regions, headers, notifications, pages, tags, ...data } =
+        opts.input;
 
       const currentMonitor = await opts.ctx.db
         .update(monitor)
@@ -215,6 +237,44 @@ export const monitorRouter = createTRPCRouter({
                 notificationsToMonitors.notificationId,
                 removedNotifications,
               ),
+            ),
+          )
+          .run();
+      }
+
+      const currentMonitorTags = await opts.ctx.db
+        .select()
+        .from(monitorTagsToMonitors)
+        .where(eq(monitorTagsToMonitors.monitorId, currentMonitor.id))
+        .all();
+
+      const addedTags = tags.filter(
+        (x) =>
+          !currentMonitorTags
+            .map(({ monitorTagId }) => monitorTagId)
+            ?.includes(x),
+      );
+
+      if (addedTags.length > 0) {
+        const values = addedTags.map((monitorTagId) => ({
+          monitorId: currentMonitor.id,
+          monitorTagId,
+        }));
+
+        await opts.ctx.db.insert(monitorTagsToMonitors).values(values).run();
+      }
+
+      const removedTags = currentMonitorTags
+        .map(({ monitorTagId }) => monitorTagId)
+        .filter((x) => !tags?.includes(x));
+
+      if (removedTags.length > 0) {
+        await opts.ctx.db
+          .delete(monitorTagsToMonitors)
+          .where(
+            and(
+              eq(monitorTagsToMonitors.monitorId, currentMonitor.id),
+              inArray(monitorTagsToMonitors.monitorTagId, removedTags),
             ),
           )
           .run();
@@ -277,68 +337,58 @@ export const monitorRouter = createTRPCRouter({
         .run();
     }),
 
-  getMonitorsByWorkspace: protectedProcedure
-    .output(z.array(selectMonitorSchema))
-    .query(async (opts) => {
-      const monitors = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(eq(monitor.workspaceId, opts.ctx.workspace.id))
-        .all();
+  getMonitorsByWorkspace: protectedProcedure.query(async (opts) => {
+    const monitors = await opts.ctx.db.query.monitor.findMany({
+      where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+      with: {
+        monitorTagsToMonitors: { with: { monitorTag: true } },
+      },
+    });
 
-      return z.array(selectMonitorSchema).parse(monitors);
-    }),
+    return z
+      .array(
+        selectMonitorSchema.extend({
+          monitorTagsToMonitors: z
+            .array(z.object({ monitorTag: selectMonitorTagSchema }))
+            .default([]),
+        }),
+      )
+      .parse(monitors);
+  }),
 
-  getMonitorsForPeriodicity: cronProcedure
-    .input(z.object({ periodicity: monitorPeriodicitySchema }))
-    .query(async (opts) => {
-      const result = await opts.ctx.db
+  toggleMonitorActive: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const monitorToUpdate = await opts.ctx.db
         .select()
         .from(monitor)
         .where(
           and(
-            eq(monitor.periodicity, opts.input.periodicity),
-            eq(monitor.active, true),
+            eq(monitor.id, opts.input.id),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
           ),
         )
-        .all();
-      return z.array(selectMonitorSchema).parse(result);
-    }),
+        .get();
 
-  getMonitorStatusByMonitorId: cronProcedure
-    .input(z.object({ monitorId: z.number() }))
-    .query(async (opts) => {
-      const result = await opts.ctx.db
-        .select()
-        .from(monitorStatusTable)
-        .where(eq(monitorStatusTable.monitorId, opts.input.monitorId))
-        .all();
-      return z.array(selectMonitorStatusSchema).parse(result);
-    }),
-
-  // FOR TESTING
-  upsertMonitorStatus: cronProcedure
-    .input(insertMonitorStatusSchema)
-    .mutation(async (opts) => {
-      const { status, region, monitorId } = opts.input;
-      await opts.ctx.db
-        .insert(monitorStatusTable)
-        .values({ status, region, monitorId: Number(monitorId) })
-        .onConflictDoUpdate({
-          target: [monitorStatusTable.monitorId, monitorStatusTable.region],
-          set: { status, updatedAt: new Date() },
+      if (!monitorToUpdate) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
         });
-    }),
+      }
 
-  getAllPagesForMonitor: cronProcedure
-    .input(z.object({ monitorId: z.number() }))
-    .query(async (opts) => {
-      const allPages = await opts.ctx.db
-        .select()
-        .from(monitorsToPages)
-        .where(eq(monitorsToPages.monitorId, opts.input.monitorId))
-        .all();
-      return allPages;
+      await opts.ctx.db
+        .update(monitor)
+        .set({
+          active: !monitorToUpdate.active,
+        })
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .run();
     }),
 
   // rename to getActiveMonitorsCount

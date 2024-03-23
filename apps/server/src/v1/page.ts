@@ -307,6 +307,46 @@ pageApi.openapi(getRoute, async (c) => {
   return c.json(data);
 });
 
+const getAllRoute = createRoute({
+  method: "get",
+  tags: ["page"],
+  description: "Get all your status page",
+  path: "/",
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.array(PageSchema),
+        },
+      },
+      description: "Get an Status page",
+    },
+    400: {
+      content: {
+        "application/json": {
+          schema: ErrorSchema,
+        },
+      },
+      description: "Returns an error",
+    },
+  },
+});
+
+pageApi.openapi(getAllRoute, async (c) => {
+  const workspaceId = Number(c.get("workspaceId"));
+
+  const result = await db
+    .select()
+    .from(page)
+    .where(and(eq(page.workspaceId, workspaceId)))
+    .get();
+
+  if (!result) return c.json({ code: 404, message: "Not Found" }, 404);
+  const data = z.array(PageSchema).parse(result);
+
+  return c.json(data);
+});
+
 const postRoute = createRoute({
   method: "post",
   tags: ["page"],

@@ -7,16 +7,25 @@ interface TimelineProps {
   title: string;
   description: string;
   children?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
-export function Timeline({ title, description, children }: TimelineProps) {
+export function Timeline({
+  title,
+  description,
+  children,
+  actions,
+}: TimelineProps) {
   return (
     <div className="grid gap-8">
       <div className="grid gap-4 md:grid-cols-5 md:gap-8">
         <div className="md:col-span-1" />
-        <div className="grid gap-4 md:col-span-4">
-          <h1 className="text-foreground font-cal text-4xl">{title}</h1>
-          <p className="text-muted-foreground">{description}</p>
+        <div className="flex items-end justify-between gap-3 md:col-span-4">
+          <div className="grid gap-4">
+            <h1 className="text-foreground font-cal text-4xl">{title}</h1>
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+          <div>{actions}</div>
         </div>
       </div>
       {children}

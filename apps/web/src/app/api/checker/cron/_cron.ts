@@ -1,12 +1,16 @@
 import type { NextRequest } from "next/server";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import type { z } from "zod";
+import { z } from "zod";
 
-import { createTRPCContext } from "@openstatus/api";
-import { edgeRouter } from "@openstatus/api/src/edge";
+import { and, db, eq } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
-import { selectMonitorSchema } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorStatusTable,
+  selectMonitorSchema,
+  selectMonitorStatusSchema,
+} from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import type { payloadSchema } from "../schema";
@@ -44,23 +48,34 @@ export const cron = async ({
   console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
-  const ctx = createTRPCContext({ req, serverSideCall: true });
-  // FIXME: we should the proper type
-  ctx.auth = { userId: "cron" } as any;
-  const caller = edgeRouter.createCaller(ctx);
+  // const ctx = createTRPCContext({ req, serverSideCall: true });
+  // // FIXME: we should the proper type
+  // ctx.auth = { userId: "cron" } as any;
+  // const caller = edgeRouter.createCaller(ctx);
 
-  const monitors = await caller.monitor.getMonitorsForPeriodicity({
-    periodicity: periodicity,
-  });
-
+  // const monitors = await caller.monitor.getMonitorsForPeriodicity({
+  //   periodicity: periodicity,
+  // });
+  const result = await db
+    .select()
+    .from(monitor)
+    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
+    .all();
+  const monitors = z.array(selectMonitorSchema).parse(result);
   const allResult = [];
 
   for (const row of monitors) {
     const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
 
-    const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
-      monitorId: row.id,
-    });
+    const result = await db
+      .select()
+      .from(monitorStatusTable)
+      .where(eq(monitorStatusTable.monitorId, row.id))
+      .all();
+    const monitorStatus = z.array(selectMonitorStatusSchema).parse(result);
+    // const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
+    //   monitorId: row.id,
+    // });
 
     for (const region of selectedRegions) {
       const status =

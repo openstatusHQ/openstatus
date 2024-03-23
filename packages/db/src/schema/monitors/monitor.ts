@@ -7,6 +7,7 @@ import {
 } from "drizzle-orm/sqlite-core";
 import test from "node:test";
 
+import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
 import { monitorsToStatusReport } from "../status_reports";
@@ -54,6 +55,7 @@ export const monitor = sqliteTable("monitor", {
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToPages: many(monitorsToPages),
   monitorsToStatusReports: many(monitorsToStatusReport),
+  monitorTagsToMonitors: many(monitorTagsToMonitors),
   workspace: one(workspace, {
     fields: [monitor.workspaceId],
     references: [workspace.id],
