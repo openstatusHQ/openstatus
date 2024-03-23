@@ -444,6 +444,21 @@ importers:
         specifier: 5.4.2
         version: 5.4.2
 
+  packages/assertions:
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      jsonpath-plus:
+        specifier: 7.2.0
+        version: 7.2.0
+      typescript:
+        specifier: 5.4.2
+        version: 5.4.2
+      zod:
+        specifier: 3.22.2
+        version: 3.22.2
+
   packages/config/eslint:
     dependencies:
       '@types/eslint':
@@ -1407,6 +1422,10 @@ packages:
     peerDependencies:
       '@effect-ts/otel-node': '*'
     peerDependenciesMeta:
+      '@effect-ts/core':
+        optional: true
+      '@effect-ts/otel':
+        optional: true
       '@effect-ts/otel-node':
         optional: true
     dependencies:
@@ -9360,6 +9379,11 @@ packages:
       universalify: 2.0.0
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  /jsonpath-plus@7.2.0:
+    resolution: {integrity: sha512-zBfiUPM5nD0YZSBT/o/fbCUlCcepMIdP0CJZxM1+KgA4f2T206f6VAg9e7mX35+KlMaIc5qXW34f3BnwJ3w+RA==}
+    engines: {node: '>=12.0.0'}
+    dev: true
 
   /jsx-ast-utils@3.3.5:
     resolution: {integrity: sha512-ZZow9HBI5O6EPgSJLUb8n2NKgmVWTwCvHGwFuJlMjvLFqlGG6pjirPhtdsseaLZjSibD8eegzmYpUZwoIlj2cQ==}
