@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import { allChangelogs } from "contentlayer/generated";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Button } from "@openstatus/ui";
 

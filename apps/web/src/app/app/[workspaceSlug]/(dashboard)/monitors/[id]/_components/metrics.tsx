@@ -65,7 +65,7 @@ export function Metrics({
         {distance ? (
           <MetricsCard
             title="last ping"
-            value={parseInt(distance.split(" ")[0])}
+            value={Number.parseInt(distance.split(" ")[0])}
             suffix={`${distance.split(" ")[1]} ago`}
             variant="neutral"
           />

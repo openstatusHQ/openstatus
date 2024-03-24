@@ -19,7 +19,7 @@ export const tinybirdRouter = createTRPCRouter({
   monitorMetricsFromWorkspace: protectedProcedure
     .input(z.object({ period: z.string() }))
     .query(async (opts) => {
-      const workspaceId = String(opts.ctx.workspace.id);
+      const _workspaceId = String(opts.ctx.workspace.id);
     }),
 
   responseDetails: protectedProcedure

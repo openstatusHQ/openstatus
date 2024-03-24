@@ -10,7 +10,7 @@ import {
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForPlan, PLANS } from "./utils";
+import { PLANS, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =

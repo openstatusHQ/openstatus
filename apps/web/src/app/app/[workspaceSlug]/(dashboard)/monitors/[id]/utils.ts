@@ -44,9 +44,10 @@ export function getDateByPeriod(period: Period) {
         from: subDays(startOfDay(new Date()), 14),
         to: endOfDay(new Date()),
       };
-    default:
+    default: {
       const _exhaustiveCheck: never = period;
       throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
+    }
   }
 }
 
@@ -62,9 +63,10 @@ export function getHoursByPeriod(period: Period) {
       return 168;
     case "14d":
       return 336;
-    default:
+    default: {
       const _exhaustiveCheck: never = period;
       throw new Error(`Unhandled period: ${_exhaustiveCheck}`);
+    }
   }
 }
 
@@ -80,9 +82,10 @@ export function periodFormatter(period: Period) {
       return "Last 7 days";
     case "14d":
       return "Last 14 days";
-    default:
+    default: {
       const _exhaustiveCheck: never = period;
       return _exhaustiveCheck;
+    }
   }
 }
 
@@ -103,8 +106,9 @@ export function getMinutesByInterval(interval: MonitorPeriodicity) {
       return 60;
     case "other":
       return 60; // TODO: remove "other" from here
-    default:
+    default: {
       const _exhaustiveCheck: never = interval;
       throw new Error(`Unhandled interval: ${_exhaustiveCheck}`);
+    }
   }
 }

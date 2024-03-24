@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { Changelog } from "contentlayer/generated";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 

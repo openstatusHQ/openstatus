@@ -19,7 +19,7 @@ export async function middleware(
 
     if (!result.ownerId) return c.text("Unauthorized", 401);
 
-    const plan = await getLimitByWorkspaceId(parseInt(result.ownerId));
+    const plan = await getLimitByWorkspaceId(Number.parseInt(result.ownerId));
 
     c.set("workspacePlan", plan);
     c.set("workspaceId", `${result.ownerId}`);

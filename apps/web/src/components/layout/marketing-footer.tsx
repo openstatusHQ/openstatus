@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 import { socialsConfig } from "@/config/socials";
 import { cn } from "@/lib/utils";

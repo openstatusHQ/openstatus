@@ -32,7 +32,7 @@ export function FAQs() {
       <div>
         <Accordion type="single" collapsible className="w-full">
           {faqs.map((faq, i) => (
-            <AccordionItem key={i} value={`item-${i}`}>
+            <AccordionItem key={faq._id} value={`item-${i}`}>
               <AccordionTrigger>{faq.title}</AccordionTrigger>
               <AccordionContent>
                 <Mdx code={faq.body.code} />

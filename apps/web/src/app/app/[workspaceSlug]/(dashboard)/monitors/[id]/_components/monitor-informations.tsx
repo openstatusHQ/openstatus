@@ -7,10 +7,10 @@ export function MonitorInformations({
 }: {
   periodicity: MonitorPeriodicity;
 }) {
-  return <div className="flex flex-wrap gap-4 md:gap-6"></div>;
+  return <div className="flex flex-wrap gap-4 md:gap-6" />;
 }
 
-const periodicityDict = {
+const _periodicityDict = {
   "30s": {
     value: 30,
     unit: "seconds",

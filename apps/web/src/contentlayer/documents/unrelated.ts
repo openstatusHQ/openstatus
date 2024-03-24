@@ -2,7 +2,7 @@ import { defineDocumentType } from "contentlayer/source-files";
 
 export const Unrelated = defineDocumentType(() => ({
   name: "Unrelated",
-  filePathPattern: `unrelated/*.mdx`,
+  filePathPattern: "unrelated/*.mdx",
   contentType: "mdx",
   fields: {},
   computedFields: {

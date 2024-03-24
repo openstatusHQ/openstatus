@@ -34,7 +34,7 @@ export function CopyLinkButton() {
             className="h-7 w-7"
             onClick={() => {
               const text =
-                typeof window !== undefined ? window.location.href : "";
+                typeof window !== "undefined" ? window.location.href : "";
               copyToClipboard(text);
               setHasCopied(true);
             }}

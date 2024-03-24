@@ -2,7 +2,7 @@ import { defineDocumentType } from "contentlayer/source-files";
 
 export const FAQ = defineDocumentType(() => ({
   name: "FAQ",
-  filePathPattern: `faq/*.mdx`,
+  filePathPattern: "faq/*.mdx",
   contentType: "mdx",
   fields: {
     title: {

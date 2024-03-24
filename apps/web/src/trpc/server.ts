@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
 import { createTRPCProxyClient, loggerLink } from "@trpc/client";
+import { headers } from "next/headers";
 import superjson from "superjson";
 
 import type { AppRouter } from "@openstatus/api";

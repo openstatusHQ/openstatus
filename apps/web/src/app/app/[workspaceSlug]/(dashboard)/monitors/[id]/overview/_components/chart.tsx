@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import type { CustomTooltipProps, EventProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
+import { useState } from "react";
 
 import type { Region } from "@openstatus/tinybird";
 
@@ -72,6 +72,7 @@ const customTooltip = ({
               : true;
             return (
               <div
+                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                 key={idx}
                 className={cn("flex flex-1 gap-2", !isActive && "opacity-60")}
               >

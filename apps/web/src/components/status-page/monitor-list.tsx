@@ -19,7 +19,7 @@ export const MonitorList = ({
 }) => {
   return (
     <div className="grid gap-4">
-      {monitors.map((monitor, index) => {
+      {monitors.map((monitor, _index) => {
         const monitorStatusReport = statusReports.filter((statusReport) =>
           statusReport.monitorsToStatusReports.some(
             (i) => i.monitor.id === monitor.id,
@@ -30,7 +30,7 @@ export const MonitorList = ({
         );
         return (
           <Monitor
-            key={index}
+            key={monitor.id}
             monitor={monitor}
             statusReports={monitorStatusReport}
             incidents={monitorIncidents}

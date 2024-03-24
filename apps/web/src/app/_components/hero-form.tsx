@@ -20,7 +20,7 @@ export const HeroForm = () => {
           if (email) {
             sendWaitingListEmail(String(email));
           }
-        } catch (e) {
+        } catch (_e) {
           toast.error("Something went wrong");
         }
       }}

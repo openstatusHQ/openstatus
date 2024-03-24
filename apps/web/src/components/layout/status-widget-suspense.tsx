@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import { ExternalLink } from "lucide-react";
+import { Suspense } from "react";
 
 import type { StatusWidgetProps } from "@openstatus/react";
 import { StatusWidget } from "@openstatus/react";
@@ -35,6 +35,7 @@ export function StatusWidgetContainer(props: StatusWidgetProps) {
               <a
                 target="_blank"
                 href="https://docs.openstatus.dev/packages/react"
+                rel="noreferrer"
               >
                 Install your own <ExternalLink className="ml-1 h-3 w-3" />
               </a>

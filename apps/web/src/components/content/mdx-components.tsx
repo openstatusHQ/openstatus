@@ -1,7 +1,13 @@
-import * as React from "react";
 import type { ImageProps } from "next/image";
 import Image from "next/image";
 import Link from "next/link";
+
+import type {
+  AnchorHTMLAttributes,
+  HTMLAttributes,
+  TdHTMLAttributes,
+  ThHTMLAttributes,
+} from "react";
 import type { TweetProps } from "react-tweet";
 import { Tweet } from "react-tweet";
 
@@ -21,10 +27,7 @@ import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
 
 export const components = {
-  a: ({
-    href = "",
-    ...props
-  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+  a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
     if (href.startsWith("http")) {
       return (
         <a
@@ -68,25 +71,21 @@ export const components = {
       </div>
     );
   },
-  table: (props: React.HTMLAttributes<HTMLTableElement>) => (
-    <Table {...props} />
-  ),
-  thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  table: (props: HTMLAttributes<HTMLTableElement>) => <Table {...props} />,
+  thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
     <TableHeader {...props} />
   ),
-  tbody: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => (
     <TableBody {...props} />
   ),
-  tfoot: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  tfoot: (props: HTMLAttributes<HTMLTableSectionElement>) => (
     <TableFooter {...props} />
   ),
-  tr: (props: React.HTMLAttributes<HTMLTableRowElement>) => (
-    <TableRow {...props} />
-  ),
-  th: (props: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+  tr: (props: HTMLAttributes<HTMLTableRowElement>) => <TableRow {...props} />,
+  th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
     <TableHead {...props} />
   ),
-  td: (props: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+  td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
     <TableCell {...props} />
   ),
 };

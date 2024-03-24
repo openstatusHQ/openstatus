@@ -3,7 +3,7 @@
 import { Redis } from "@upstash/redis";
 import { Resend } from "resend";
 
-import { validateEmailNotDisposable, WaitingList } from "@openstatus/emails";
+import { WaitingList, validateEmailNotDisposable } from "@openstatus/emails";
 
 import { env } from "@/env";
 

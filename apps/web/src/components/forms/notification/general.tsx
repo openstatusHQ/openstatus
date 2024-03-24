@@ -129,6 +129,7 @@ export function General({ form, plan }: Props) {
                       href={providerMetaData.setupDocLink}
                       target="_blank"
                       className="underline hover:no-underline"
+                      rel="noreferrer"
                     >
                       How to setup your {toCapitalize(watchProvider)} webhook
                     </a>

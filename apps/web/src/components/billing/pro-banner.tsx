@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ArrowRight, Rocket, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowRight, Rocket, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@openstatus/ui";
 

@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button, Skeleton } from "@openstatus/ui";
 

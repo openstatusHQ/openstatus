@@ -6,7 +6,7 @@ import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { env } from "@/env";
 import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
-import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
+import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -37,15 +37,13 @@ export async function GET(req: Request) {
     [];
 
   return new ImageResponse(
-    (
-      <BasicLayout
-        title={title}
-        description={description}
-        tw={data.length === 0 ? "mt-32" : undefined}
-      >
-        {Boolean(data.length) ? <Tracker data={data} /> : null}
-      </BasicLayout>
-    ),
+    <BasicLayout
+      title={title}
+      description={description}
+      tw={data.length === 0 ? "mt-32" : undefined}
+    >
+      {data.length ? <Tracker data={data} /> : null}
+    </BasicLayout>,
     {
       ...SIZE,
       fonts: [

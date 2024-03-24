@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Clock, FileCode, Gauge, Palette, PanelTop } from "lucide-react";
+import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
 import type { CardProps } from "@/components/play/card";
@@ -33,7 +33,7 @@ export default async function PlayPage() {
           const isFirst = i === 0;
           return (
             <Card
-              key={i}
+              key={play.href}
               className={isFirst ? "sm:col-span-2" : undefined}
               {...play}
             />

@@ -46,7 +46,7 @@ export const pageSubscriberRouter = createTRPCRouter({
 
       const _page = await opts.ctx.db.query.page.findFirst({
         where: and(
-          eq(page.id, subscriber!.pageId),
+          eq(page.id, subscriber.pageId),
           eq(page.workspaceId, opts.ctx.workspace.id),
         ),
       });
@@ -79,7 +79,7 @@ export const pageSubscriberRouter = createTRPCRouter({
 
       const _page = await opts.ctx.db.query.page.findFirst({
         where: and(
-          eq(page.id, subscriber!.pageId),
+          eq(page.id, subscriber.pageId),
           eq(page.workspaceId, opts.ctx.workspace.id),
         ),
       });

@@ -31,7 +31,7 @@ export default function AboutPage() {
               <Member {...member} />
             </li>
           ))}
-          <li></li>
+          <li />
         </ul>
         <Separator className="my-2" />
         <Shell className="dark:border-card-foreground/30 mx-auto w-auto shadow sm:px-8 sm:py-8 md:px-12 md:py-12">

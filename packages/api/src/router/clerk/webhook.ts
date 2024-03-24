@@ -4,7 +4,7 @@ import * as z from "zod";
 import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
-import { sendEmail, WelcomeEmail } from "@openstatus/emails";
+import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { clerkEvent } from "./type";

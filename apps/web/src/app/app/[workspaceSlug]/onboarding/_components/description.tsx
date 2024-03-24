@@ -43,12 +43,12 @@ export function Description({
   return (
     <div className="border-border flex h-full flex-col gap-6 border-l pl-6 md:pl-8">
       <div className="flex gap-5">
-        {steps.map((item, i) => {
+        {steps.map((item, _i) => {
           const { icon, name } = onboardingConfig[item];
           const StepIcon = Icons[icon];
           const active = step === item;
           return (
-            <div key={i} className="flex items-center gap-2">
+            <div key={name} className="flex items-center gap-2">
               <div
                 className={cn(
                   "border-border max-w-max rounded-full border p-2",
@@ -71,9 +71,9 @@ export function Description({
           );
         })}
       </div>
-      {config?.description.map(({ title, text }, i) => {
+      {config?.description.map(({ title, text }) => {
         return (
-          <dl key={i} className="grid gap-1">
+          <dl key={title} className="grid gap-1">
             <dt className="font-medium">{title}</dt>
             <dd className="text-muted-foreground">{text}</dd>
           </dl>

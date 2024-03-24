@@ -1,5 +1,5 @@
 import type { Monitor } from "@openstatus/tinybird";
-import { classNames, Tracker as OSTracker } from "@openstatus/tracker";
+import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 
 import { cn, formatDate } from "@/lib/utils";
 
@@ -10,12 +10,12 @@ export function Tracker({ data }: { data: Monitor[] }) {
     <div tw="flex flex-col w-full my-12">
       <div tw="flex flex-col mx-auto">
         <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
-          <p></p>
           <p tw="font-medium">{tracker.totalUptime}%</p>
         </div>
         {/* Empty State */}
         <div tw="flex flex-row relative">
           {new Array(data.length).fill(null).map((_, i) => {
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             return <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-black/20" />;
           })}
           <div tw="flex flex-row-reverse absolute left-0">
@@ -23,11 +23,13 @@ export function Tracker({ data }: { data: Monitor[] }) {
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-green-400" />
                 );
               }
               return (
                 <div
+                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                   key={i}
                   tw={cn(
                     "h-16 w-3 rounded-full mr-1",

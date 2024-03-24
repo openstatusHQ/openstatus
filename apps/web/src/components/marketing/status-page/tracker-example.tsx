@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";

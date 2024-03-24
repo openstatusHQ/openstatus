@@ -38,7 +38,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
 
   const txtVerification =
     (status === "Pending Verification" &&
-      domainJson?.verification?.find((x: any) => x.type === "TXT")) ||
+      domainJson?.verification?.find((x) => x.type === "TXT")) ||
     null;
 
   return (
@@ -140,7 +140,7 @@ export default function DomainConfiguration({ domain }: { domain: string }) {
                   <div>
                     <p className="text-sm font-bold">Value</p>
                     <p className="mt-2 font-mono text-sm">
-                      {`cname.vercel-dns.com`}
+                      {"cname.vercel-dns.com"}
                     </p>
                   </div>
                   <div>

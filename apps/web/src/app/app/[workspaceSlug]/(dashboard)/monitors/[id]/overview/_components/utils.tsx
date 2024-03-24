@@ -65,7 +65,7 @@ export function groupDataByTimestamp(
  * @returns
  */
 export function renderTimestamp(timestamp: number, period: Period) {
-  const isInDay = ["1h", "1d"].includes(period);
+  const _isInDay = ["1h", "1d"].includes(period);
   const date = new Date(timestamp);
   return format(date, "MMM d, HH:mm");
 }

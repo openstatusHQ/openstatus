@@ -8,11 +8,11 @@ import {
 import { cn } from "@/lib/utils";
 import { BasicLayout } from "../_components/basic-layout";
 import {
+  SIZE,
   calSemiBold,
   interLight,
   interMedium,
   interRegular,
-  SIZE,
 } from "../utils";
 
 export const runtime = "edge";
@@ -70,7 +70,9 @@ export async function GET(req: Request) {
         >
           {data?.url}
         </h2>
-        <p tw="text-slate-500 text-right">{timestampFormatter(data!.time)}</p>
+        {data && (
+          <p tw="text-slate-500 text-right">{timestampFormatter(data.time)}</p>
+        )}
         <div tw="flex">
           <div tw="flex flex-col flex-1">
             <p tw="text-slate-600 mb-1">Min. Request</p>
@@ -86,20 +88,26 @@ export async function GET(req: Request) {
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
                 Status
               </p>
-              <p
-                tw={cn(
-                  "text-lg border rounded-full px-3 mb-2",
-                  getStatusColor(min!.status),
-                )}
-              >
-                {min?.status}
-              </p>
+              {min?.status && (
+                <p
+                  tw={cn(
+                    "text-lg border rounded-full px-3 mb-2",
+                    getStatusColor(min.status)
+                  )}
+                >
+                  {min?.status}
+                </p>
+              )}
             </div>
             <div tw="flex items-center">
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
                 Region
               </p>
-              <p tw="text-black text-xl mb-2">{regionFormatter(min!.region)}</p>
+              {min?.region && (
+                <p tw="text-black text-xl mb-2">
+                  {regionFormatter(min.region)}
+                </p>
+              )}
             </div>
             <div tw="flex items-center">
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
@@ -113,20 +121,26 @@ export async function GET(req: Request) {
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
                 Status
               </p>
-              <p
-                tw={cn(
-                  "text-lg border rounded-full px-3 mb-2",
-                  getStatusColor(max!.status),
-                )}
-              >
-                {max?.status}
-              </p>
+              {max?.status && (
+                <p
+                  tw={cn(
+                    "text-lg border rounded-full px-3 mb-2",
+                    getStatusColor(max.status)
+                  )}
+                >
+                  {max?.status}
+                </p>
+              )}
             </div>
             <div tw="flex items-center">
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
                 Region
               </p>
-              <p tw="text-black text-xl mb-2">{regionFormatter(max!.region)}</p>
+              {max?.region && (
+                <p tw="text-black text-xl mb-2">
+                  {regionFormatter(max.region)}
+                </p>
+              )}
             </div>
             <div tw="flex items-center">
               <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
@@ -166,6 +180,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    },
+    }
   );
 }

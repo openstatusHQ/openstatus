@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
 import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
+import * as React from "react";
 
 import { Badge } from "./badge";
 import { Command, CommandGroup, CommandItem } from "./command";
@@ -55,8 +55,7 @@ export const MultiSelect = ({
 
   React.useEffect(() => {
     onChange?.(selected);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected]);
+  }, [selected, onChange]);
 
   return (
     <Command
@@ -70,6 +69,7 @@ export const MultiSelect = ({
               <Badge key={option.value} variant="secondary">
                 {option.label}
                 <button
+                  type="button"
                   className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -111,7 +111,7 @@ export const MultiSelect = ({
                       e.preventDefault();
                       e.stopPropagation();
                     }}
-                    onSelect={(value) => {
+                    onSelect={(_value) => {
                       setInputValue("");
                       setSelected((prev) => [...prev, option]);
                     }}

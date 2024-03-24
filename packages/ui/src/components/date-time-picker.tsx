@@ -1,8 +1,8 @@
 // CREDITS: https://gist.github.com/fernandops26/da681c4b12e52191803b4fcb040cdebb
 "use client";
 
-import * as React from "react";
 import { DateTime } from "luxon";
+import * as React from "react";
 import type { SelectSingleEventHandler } from "react-day-picker";
 
 import { Calendar } from "../components/calendar";
@@ -24,7 +24,7 @@ export function DateTimePicker({
     DateTime.fromJSDate(date),
   );
 
-  const handleSelect: SelectSingleEventHandler = (day, selected) => {
+  const handleSelect: SelectSingleEventHandler = (_day, selected) => {
     const selectedDay = DateTime.fromJSDate(selected);
     const modifiedDay = selectedDay.set({
       hour: selectedDateTime.hour,

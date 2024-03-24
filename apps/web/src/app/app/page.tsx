@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/header/app-header";
@@ -32,6 +32,7 @@ export default function Page() {
                     href="https://openstatus.dev/discord"
                     target="_blank"
                     className="text-foreground underline underline-offset-4 hover:no-underline"
+                    rel="noreferrer"
                   >
                     Discord
                   </a>{" "}

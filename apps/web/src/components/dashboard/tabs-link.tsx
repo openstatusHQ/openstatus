@@ -1,15 +1,13 @@
 "use client";
 
-import * as React from "react";
+import { cn } from "@/lib/utils";
+import { Separator } from "@openstatus/ui";
 import type { LinkProps } from "next/link";
 import Link from "next/link";
+import type { HTMLAttributes } from "react";
+import type { ReactNode } from "react";
 
-import { Separator } from "@openstatus/ui";
-
-import { cn } from "@/lib/utils";
-
-export interface TabsContainerProps
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface TabsContainerProps extends HTMLAttributes<HTMLDivElement> {
   hideSeparator?: boolean;
 }
 
@@ -30,7 +28,7 @@ export function TabsContainer({
 }
 
 export interface TabsLinkProps extends LinkProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   active?: boolean;
   disabled?: boolean;

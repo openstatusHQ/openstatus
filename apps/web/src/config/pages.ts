@@ -220,10 +220,11 @@ export function getPageBySegment(
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);
     return page;
-  } else if (Array.isArray(segment) && segment.length > 0) {
+  }
+  if (Array.isArray(segment) && segment.length > 0) {
     const [firstSegment, ...restSegments] = segment;
     const childPage = currentPage.find((page) => page.segment === firstSegment);
-    if (childPage && childPage.children) {
+    if (childPage?.children) {
       return getPageBySegment(restSegments, childPage.children);
     }
     return childPage;

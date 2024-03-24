@@ -1,8 +1,8 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import Link from "next/link";
-import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
 import type { Page } from "@openstatus/db/src/schema";
@@ -51,8 +51,8 @@ export const columns: ColumnDef<
       return (
         <div className="flex items-center gap-2">
           <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {monitors.slice(0, amount).map(({ monitor: { name } }, i) => (
-              <Badge key={i} variant="outline">
+            {monitors.slice(0, amount).map(({ monitor: { name } }) => (
+              <Badge key={name} variant="outline">
                 {name}
               </Badge>
             ))}

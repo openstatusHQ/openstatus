@@ -1,5 +1,5 @@
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { User } from "@openstatus/db/src/schema";
+import type { User } from "@openstatus/db/src/schema";
 
 export async function trackNewPage(user: User, config: { slug: string }) {
   await analytics.identify(user.id, {

@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { trackAnalytics } from "@openstatus/analytics";
 import { db, eq, sql } from "@openstatus/db";
@@ -8,7 +8,7 @@ import {
   monitorMethods,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema";
-import { getMonitorList, Tinybird } from "@openstatus/tinybird";
+import { Tinybird, getMonitorList } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";

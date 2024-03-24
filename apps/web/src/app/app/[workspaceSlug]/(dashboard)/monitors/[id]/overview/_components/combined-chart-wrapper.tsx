@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import { LineChart } from "lucide-react";
+import { useMemo } from "react";
 
 import type { Monitor } from "@openstatus/db/src/schema";
 import type {

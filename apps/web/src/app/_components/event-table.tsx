@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import { formatDistance } from "date-fns";
+import React from "react";
 
 import type { Ping } from "@openstatus/tinybird";
 import {

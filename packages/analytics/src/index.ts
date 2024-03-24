@@ -1,7 +1,7 @@
 import { emptyAnalytics, jitsuAnalytics } from "@jitsu/js";
 
 import { env } from "../env";
-import { AnalyticsEvents } from "./type";
+import type { AnalyticsEvents } from "./type";
 
 export const analytics =
   env.JITSU_HOST && env.JITSU_WRITE_KEY

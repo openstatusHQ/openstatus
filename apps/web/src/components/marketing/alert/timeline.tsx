@@ -1,11 +1,10 @@
-import * as React from "react";
-import { format } from "date-fns";
-
 import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { ReactNode } from "react";
 
-export function TimelineContainer({ children }: { children: React.ReactNode }) {
+export function TimelineContainer({ children }: { children: ReactNode }) {
   return (
     // first:md:order-2 does not work
     <div className="mx-auto flex max-w-md flex-col justify-center gap-3 md:order-2">
@@ -56,7 +55,11 @@ export function Timeline() {
   return (
     <TimelineContainer>
       {timeline.map((event, i) => (
-        <TimelineEvent key={i} isLast={i === timeline.length - 1} {...event} />
+        <TimelineEvent
+          key={event.message}
+          isLast={i === timeline.length - 1}
+          {...event}
+        />
       ))}
     </TimelineContainer>
   );

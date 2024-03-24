@@ -3,14 +3,17 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
+    "lint": "biome lint .",
+    "format": "pnpm biome format . --write && pnpm biome check . --apply-unsafe ",
+    "lint:turbo": "turbo run lint",
     "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "format:prettier": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
     "tsc": "tsc",
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.6.2",
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "@openstatus/eslint-config": "workspace:*",
     "@turbo/gen": "1.10.12",

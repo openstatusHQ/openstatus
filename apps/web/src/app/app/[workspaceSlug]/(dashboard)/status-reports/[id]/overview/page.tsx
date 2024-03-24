@@ -1,6 +1,6 @@
-import * as React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import * as React from "react";
 
 import { Button, Separator } from "@openstatus/ui";
 
@@ -15,7 +15,7 @@ export default async function OverviewPage({
   params: { workspaceSlug: string; id: string };
 }) {
   const report = await api.statusReport.getStatusReportById.query({
-    id: parseInt(params.id),
+    id: Number.parseInt(params.id),
   });
 
   if (!report) return notFound();

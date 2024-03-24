@@ -1,6 +1,6 @@
+import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
 import {
@@ -37,17 +37,18 @@ export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
     // On client side, get the host from window
+    // biome-ignore lint: to fix later
     host = window.location.host;
   }
   // we should improve here for custom vercel deploy page
-  if (host && host.includes(".") && !host.includes(".vercel.app")) {
+  if (host?.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
       subdomain = candidate;
     }
   }
-  if (host && host.includes("ngrok-free.app")) {
+  if (host?.includes("ngrok-free.app")) {
     return null;
   }
   // In case the host is a custom domain
@@ -138,7 +139,7 @@ export default authMiddleware({
               .get();
 
             if (!firstMonitor) {
-              console.log(`>>> Redirecting to onboarding`, slug);
+              console.log(">>> Redirecting to onboarding", slug);
               const onboardingURL = new URL(`/app/${slug}/onboarding`, req.url);
               return NextResponse.redirect(onboardingURL);
             }

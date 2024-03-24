@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
+import { ChevronsUpDown } from "lucide-react";
 import {
   usePathname,
   useSearchParams,
   useSelectedLayoutSegment,
 } from "next/navigation";
-import { ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 
 import {
   Collapsible,
@@ -19,13 +19,8 @@ import { AppSidebar } from "./app-sidebar";
 
 export function AppMenu({ page }: { page?: Page }) {
   const [open, setOpen] = React.useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const selectedSegment = useSelectedLayoutSegment();
 
-  React.useEffect(() => {
-    setOpen(false);
-  }, [pathname, searchParams]); // remove searchParams if not needed
+  const selectedSegment = useSelectedLayoutSegment();
 
   if (!page) return null;
 

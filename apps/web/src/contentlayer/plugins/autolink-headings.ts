@@ -1,6 +1,7 @@
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import type * as unified from "unified";
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const autolinkHeadings: unified.Pluggable<any[]> = [
   rehypeAutolinkHeadings,
   {

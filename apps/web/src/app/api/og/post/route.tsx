@@ -4,11 +4,11 @@ import { ImageResponse } from "next/og";
 import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { BasicLayout } from "../_components/basic-layout";
 import {
-  calSemiBold,
   DEFAULT_URL,
+  SIZE,
+  calSemiBold,
   interLight,
   interRegular,
-  SIZE,
 } from "../utils";
 
 export const runtime = "edge";
@@ -30,18 +30,16 @@ export async function GET(req: Request) {
     : undefined;
 
   return new ImageResponse(
-    (
-      <BasicLayout title={title} description={description}>
-        {image ? (
-          <img
-            alt=""
-            style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
-            tw="flex w-full"
-            src={new URL(image, DEFAULT_URL).toString()}
-          />
-        ) : null}
-      </BasicLayout>
-    ),
+    <BasicLayout title={title} description={description}>
+      {image ? (
+        <img
+          alt=""
+          style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
+          tw="flex w-full"
+          src={new URL(image, DEFAULT_URL).toString()}
+        />
+      ) : null}
+    </BasicLayout>,
     {
       ...SIZE,
       fonts: [

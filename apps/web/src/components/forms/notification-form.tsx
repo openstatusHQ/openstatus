@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -275,6 +275,7 @@ export function NotificationForm({
                           href={providerMetaData.setupDocLink}
                           target="_blank"
                           className="underline hover:no-underline"
+                          rel="noreferrer"
                         >
                           How to setup your {toCapitalize(watchProvider)}{" "}
                           webhook
