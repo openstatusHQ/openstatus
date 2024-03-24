@@ -52,84 +52,106 @@ export async function GET(req: Request) {
   }
 
   return new ImageResponse(
-    <BasicLayout
-      title="Speed Checker"
-      description="Experience the performance of your application from around the different continents."
-      tw="pt-4 pb-8"
-    >
-      <h2
-        style={{
-          width: (SIZE.width * 3) / 4,
-          lineClamp: 2,
-          textOverflow: "ellipsis",
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-        }}
-        tw="text-3xl text-left font-medium mb-0"
+    (
+      <BasicLayout
+        title="Speed Checker"
+        description="Experience the performance of your application from around the different continents."
+        tw="pt-4 pb-8"
       >
-        {data?.url}
-      </h2>
-      {data && (
-        <p tw="text-slate-500 text-right">{timestampFormatter(data.time)}</p>
-      )}
-      <div tw="flex">
-        <div tw="flex flex-col flex-1">
-          <p tw="text-slate-600 mb-1">Min. Request</p>
+        <h2
+          style={{
+            width: (SIZE.width * 3) / 4,
+            lineClamp: 2,
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+          tw="text-3xl text-left font-medium mb-0"
+        >
+          {data?.url}
+        </h2>
+        {data && (
+          <p tw="text-slate-500 text-right">{timestampFormatter(data.time)}</p>
+        )}
+        <div tw="flex">
+          <div tw="flex flex-col flex-1">
+            <p tw="text-slate-600 mb-1">Min. Request</p>
+          </div>
+          <div tw="flex flex-col flex-1">
+            <p tw="text-slate-600 mb-1">Max. Request</p>
+          </div>
         </div>
-        <div tw="flex flex-col flex-1">
-          <p tw="text-slate-600 mb-1">Max. Request</p>
-        </div>
-      </div>
-      <div tw="flex w-full h-px bg-slate-200" />
-      <div tw="flex">
-        <div tw="flex flex-col flex-1">
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">Status</p>
-            <p
-              tw={cn(
-                "text-lg border rounded-full px-3 mb-2",
-                getStatusColor(min.status),
+        <div tw="flex w-full h-px bg-slate-200" />
+        <div tw="flex">
+          <div tw="flex flex-col flex-1">
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Status
+              </p>
+              {min?.status && (
+                <p
+                  tw={cn(
+                    "text-lg border rounded-full px-3 mb-2",
+                    getStatusColor(min.status)
+                  )}
+                >
+                  {min?.status}
+                </p>
               )}
-            >
-              {min?.status}
-            </p>
-          </div>
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">Region</p>
-            <p tw="text-black text-xl mb-2">{regionFormatter(min.region)}</p>
-          </div>
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
-              Latency
-            </p>
-            <p tw="text-black text-xl font-mono mb-2">{min?.latency}ms</p>
-          </div>
-        </div>
-        <div tw="flex flex-col flex-1">
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">Status</p>
-            <p
-              tw={cn(
-                "text-lg border rounded-full px-3 mb-2",
-                getStatusColor(max.status),
+            </div>
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Region
+              </p>
+              {min?.region && (
+                <p tw="text-black text-xl mb-2">
+                  {regionFormatter(min.region)}
+                </p>
               )}
-            >
-              {max?.status}
-            </p>
+            </div>
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Latency
+              </p>
+              <p tw="text-black text-xl font-mono mb-2">{min?.latency}ms</p>
+            </div>
           </div>
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">Region</p>
-            <p tw="text-black text-xl mb-2">{regionFormatter(max.region)}</p>
-          </div>
-          <div tw="flex items-center">
-            <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
-              Latency
-            </p>
-            <p tw="text-black text-xl font-mono mb-2">{max?.latency}ms</p>
+          <div tw="flex flex-col flex-1">
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Status
+              </p>
+              {max?.status && (
+                <p
+                  tw={cn(
+                    "text-lg border rounded-full px-3 mb-2",
+                    getStatusColor(max.status)
+                  )}
+                >
+                  {max?.status}
+                </p>
+              )}
+            </div>
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Region
+              </p>
+              {max?.region && (
+                <p tw="text-black text-xl mb-2">
+                  {regionFormatter(max.region)}
+                </p>
+              )}
+            </div>
+            <div tw="flex items-center">
+              <p tw="text-slate-600 font-medium text-lg mr-2 w-24 mb-2">
+                Latency
+              </p>
+              <p tw="text-black text-xl font-mono mb-2">{max?.latency}ms</p>
+            </div>
           </div>
         </div>
-      </div>
-    </BasicLayout>,
+      </BasicLayout>
+    ),
     {
       ...SIZE,
       fonts: [
@@ -158,6 +180,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    },
+    }
   );
 }
