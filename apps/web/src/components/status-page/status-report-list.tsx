@@ -32,10 +32,10 @@ export const StatusReportList = ({
   function getLastWeekOrOpenIncidents() {
     return statusReports.filter((incident) => {
       const hasLastWeekReports = incident.statusReportUpdates.some(
-        (update) => update.date.getTime() > lastWeek,
+        (update) => update.date.getTime() > lastWeek
       );
       const hasOpenIncident = ["identified", "investigating"].includes(
-        incident.status,
+        incident.status
       );
 
       return hasLastWeekReports || hasOpenIncident;
@@ -46,9 +46,9 @@ export const StatusReportList = ({
     context === "all" ? statusReports : getLastWeekOrOpenIncidents();
 
   reports.sort((a, b) => {
-    if (a.updatedAt === undefined) return 1;
-    if (b.updatedAt === undefined) return -1;
-    return b.updatedAt?.getTime() - a.updatedAt?.getTime();
+    if (!a?.updatedAt) return 1;
+    if (!b?.updatedAt) return -1;
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
   return (
