@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import { deserialize, StatusAssertion } from "@openstatus/assertions";
 import type {
   InsertMonitor,
   MonitorFlyRegion,
@@ -29,6 +30,7 @@ import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
+import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
 import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
@@ -54,6 +56,9 @@ export function MonitorForm({
   tags,
   nextUrl,
 }: Props) {
+  const assertions = defaultValues?.assertions
+    ? deserialize(defaultValues?.assertions).map((a) => a.schema)
+    : [];
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
     defaultValues: {
@@ -73,6 +78,7 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
+      statusAssertions: assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
     },
   });
   const router = useRouter();
@@ -153,6 +159,7 @@ export function MonitorForm({
             <TabsList>
               <TabsTrigger value="request">Request</TabsTrigger>
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+              <TabsTrigger value="assertions">Assertions</TabsTrigger>
               <TabsTrigger value="notifications">
                 Notifications{" "}
                 {defaultValues?.notifications?.length ? (
@@ -175,6 +182,9 @@ export function MonitorForm({
             </TabsList>
             <TabsContent value="request">
               <SectionRequests {...{ form, plan, pingEndpoint }} />
+            </TabsContent>
+            <TabsContent value="assertions">
+              <SectionAssertions {...{ form }} />
             </TabsContent>
             <TabsContent value="scheduling">
               <SectionScheduling {...{ form, plan }} />

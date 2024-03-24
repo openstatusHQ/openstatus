@@ -134,6 +134,9 @@ importers:
       '@openstatus/api':
         specifier: workspace:*
         version: link:../../packages/api
+      '@openstatus/assertions':
+        specifier: workspace:*
+        version: link:../../packages/assertions
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -397,6 +400,9 @@ importers:
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../analytics
+      '@openstatus/assertions':
+        specifier: workspace:*
+        version: link:../assertions
       '@openstatus/db':
         specifier: workspace:*
         version: link:../db
@@ -514,6 +520,9 @@ importers:
         specifier: 3.22.2
         version: 3.22.2
     devDependencies:
+      '@openstatus/assertions':
+        specifier: workspace:*
+        version: link:../assertions
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
