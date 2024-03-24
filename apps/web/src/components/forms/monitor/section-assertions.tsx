@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 
 import { numberCompareDictionary } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
