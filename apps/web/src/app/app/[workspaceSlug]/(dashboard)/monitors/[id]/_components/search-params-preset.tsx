@@ -1,8 +1,5 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
-
 import {
   Select,
   SelectContent,
@@ -10,6 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui";
+import { usePathname, useRouter } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { Icons } from "@/components/icons";
 import type { ValidIcon } from "@/components/icons";
@@ -30,7 +29,7 @@ export function SearchParamsPreset<T extends string>({
   searchParam: string;
   icon?: ValidIcon;
   placeholder?: string;
-  formatter?(value: T): React.ReactNode;
+  formatter?(value: T): ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();

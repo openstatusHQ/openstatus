@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Slash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -8,10 +8,9 @@ import {
   useSelectedLayoutSegment,
   useSelectedLayoutSegments,
 } from "next/navigation";
-import { Slash } from "lucide-react";
+import { Fragment, useEffect, useState } from "react";
 
 import { SelectWorkspace } from "@/components/workspace/select-workspace";
-import { pagesConfig } from "@/config/pages";
 import { notEmpty } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -34,7 +33,7 @@ export function Breadcrumbs() {
     // label,
   ].filter(notEmpty);
 
-  const isWorkspaceSlug = params.workspaceSlug;
+  const _isWorkspaceSlug = params.workspaceSlug;
 
   return (
     <div className="flex items-center">
@@ -101,7 +100,7 @@ function useIdLabel() {
       }
     }
     getInfos();
-  }, [params, selectedSegment, selectedSegments]);
+  }, [params, selectedSegment, isRoot, label]);
 
   return label;
 }

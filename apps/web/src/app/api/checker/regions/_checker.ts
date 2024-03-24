@@ -105,6 +105,7 @@ export const ping = async (
   const headers =
     data?.headers?.reduce((o, v) => {
       if (v.key.trim() === "") return o; // removes empty keys from the header
+      // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
       return { ...o, [v.key]: v.value };
     }, {}) || {};
 
@@ -136,7 +137,7 @@ const triggerAlerting = async ({ monitorId }: { monitorId: string }) => {
     )
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
-  for (const notif of notifications) {
+  for (const _notif of notifications) {
     // await providerToFunction[notif.notification.provider]({
     //   monitor: selectMonitorSchema.parse(notif.monitor),
     //   notification: selectNotificationSchema.parse(notif.notification),

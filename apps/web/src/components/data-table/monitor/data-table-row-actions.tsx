@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -80,7 +80,7 @@ export function DataTableRowActions<TData>({
       const { url, body, method, headers } = monitor;
 
       try {
-        const res = await fetch(`/api/checker/test`, {
+        const res = await fetch("/api/checker/test", {
           method: "POST",
           headers: new Headers({
             "Content-Type": "application/json",

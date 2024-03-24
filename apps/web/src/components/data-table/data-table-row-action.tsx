@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
 
 import { tbBuildResponseList } from "@openstatus/tinybird";
 import {

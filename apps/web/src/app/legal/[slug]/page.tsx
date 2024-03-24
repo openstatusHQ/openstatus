@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import { allLegalPosts } from "contentlayer/generated";
+import { notFound } from "next/navigation";
 
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";

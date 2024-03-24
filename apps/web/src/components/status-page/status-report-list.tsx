@@ -1,8 +1,8 @@
 "use client";
 
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 
 import type {
   PublicMonitor,
@@ -46,9 +46,9 @@ export const StatusReportList = ({
     context === "all" ? statusReports : getLastWeekOrOpenIncidents();
 
   reports.sort((a, b) => {
-    if (a.updatedAt == undefined) return 1;
-    if (b.updatedAt == undefined) return -1;
-    return b.updatedAt.getTime() - a.updatedAt.getTime();
+    if (a.updatedAt === undefined) return 1;
+    if (b.updatedAt === undefined) return -1;
+    return b.updatedAt?.getTime() - a.updatedAt?.getTime();
   });
 
   return (

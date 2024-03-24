@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { allChangelogs } from "contentlayer/generated";
+import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 

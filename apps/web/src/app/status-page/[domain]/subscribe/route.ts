@@ -3,7 +3,7 @@ import { z } from "zod";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { sendEmail, SubscribeEmail } from "@openstatus/emails";
+import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
 export async function POST(
   req: Request,
@@ -47,7 +47,7 @@ export async function POST(
     }),
     from: "OpenStatus <notification@openstatus.dev>",
     to: [result.email],
-    subject: "Verify your subscription to " + pageData.title,
+    subject: `Verify your subscription to ${pageData.title}`,
   });
   await db
     .insert(pageSubscriber)

@@ -1,6 +1,6 @@
-import { Suspense } from "react";
-import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { Suspense } from "react";
 
 import { Badge, Button } from "@openstatus/ui";
 

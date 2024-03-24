@@ -1,14 +1,8 @@
 "use client";
-
-import React from "react";
-
 import useMouseMove from "@/hooks/use-mouse-move";
+import type { ReactNode } from "react";
 
-export default function Background({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Background({ children }: { children: ReactNode }) {
   // --x and --y will be updated based on mouse position
   useMouseMove();
   return (

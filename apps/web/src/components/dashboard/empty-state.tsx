@@ -1,13 +1,12 @@
-import * as React from "react";
-
 import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";
+import type { ComponentProps, ReactNode } from "react";
 
-interface Props extends React.ComponentProps<"div"> {
+interface Props extends ComponentProps<"div"> {
   icon: ValidIcon;
   title: string;
   description: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
 }
 
 export function EmptyState({ icon, title, description, action }: Props) {

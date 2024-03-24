@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { useCallback, useEffect, useRef, useTransition } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { PutBlobResult } from "@vercel/blob";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import { insertPageSchema } from "@openstatus/db/src/schema";
@@ -102,7 +102,7 @@ export function StatusPageForm({
 
     void watchSlugChanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [checkUniqueSlug]);
+  }, [checkUniqueSlug, form.clearErrors, form.setError]);
 
   useEffect(() => {
     if (!defaultValues?.title) {

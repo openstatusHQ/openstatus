@@ -30,7 +30,7 @@ interface Props {
 }
 
 export function General({ form, tags }: Props) {
-  const watchTags = form.watch("tags");
+  const _watchTags = form.watch("tags");
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader

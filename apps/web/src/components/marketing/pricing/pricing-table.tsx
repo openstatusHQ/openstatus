@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment } from "react";
-import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Fragment } from "react";
 
 import type { WorkspacePlan } from "@openstatus/plans";
 import {
@@ -112,7 +112,7 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value, badge }, i) => {
+                {features.map(({ label, value, badge }, _i) => {
                   return (
                     <TableRow key={key}>
                       <TableCell className="gap-1">
@@ -121,7 +121,7 @@ export function PricingTable({
                           <Badge variant="secondary">{badge}</Badge>
                         ) : null}
                       </TableCell>
-                      {selectedPlans.map((plan, i) => {
+                      {selectedPlans.map((plan, _i) => {
                         const limitValue = plan.limits[value];
                         function renderContent() {
                           if (typeof limitValue === "boolean") {

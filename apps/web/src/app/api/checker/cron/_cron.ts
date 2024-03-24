@@ -1,6 +1,6 @@
-import type { NextRequest } from "next/server";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 
 import { and, db, eq } from "@openstatus/db";

@@ -1,5 +1,5 @@
+import { format, getTimezoneOffset } from "date-fns-tz";
 import { headers } from "next/headers";
-import { format, getTimezoneOffset, zonedTimeToUtc } from "date-fns-tz";
 
 export function getRequestHeaderTimezone() {
   const headersList = headers();
@@ -26,7 +26,7 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 
   const msOffset = getTimezoneOffset(timezone);
 
-  if (isNaN(msOffset)) return "Etc/UTC";
+  if (Number.isNaN(msOffset)) return "Etc/UTC";
 
   const hrOffset = Math.round(msOffset / (1000 * 60 * 60)); // avoid weird 30min timezones
   const offset = hrOffset >= 0 ? `-${hrOffset}` : `+${Math.abs(hrOffset)}`;

@@ -45,7 +45,7 @@ export async function ApiKeys({ ownerId }: { ownerId: number }) {
             </div>
             <div className="flex min-w-0 items-center justify-between gap-3">
               <dt>Created At</dt>
-              <dd>{formatDate(new Date(key.createdAt!))}</dd>
+              <dd>{key.createdAt && formatDate(new Date(key.createdAt))}</dd>
             </div>
           </dl>
         ) : null}

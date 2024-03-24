@@ -2,7 +2,7 @@ import { defineDocumentType } from "contentlayer/source-files";
 
 export const LegalPost = defineDocumentType(() => ({
   name: "LegalPost",
-  filePathPattern: `legal/*.mdx`,
+  filePathPattern: "legal/*.mdx",
   contentType: "mdx",
   fields: {
     title: {

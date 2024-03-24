@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { CustomTooltipProps, EventProps } from "@tremor/react";
+import type { CustomTooltipProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 
 import { dataFormatter } from "./utils";
@@ -13,13 +12,6 @@ export interface SimpleChartProps {
 
 // TODO: allow click to open `./details` intercepting route
 export function SimpleChart({ data, region }: SimpleChartProps) {
-  const [value, setValue] = useState<EventProps>(null);
-
-  // useEffect(() => {
-  //   // console.log(value);
-  //   // const href = `./details?monitorId=${ping.monitorId}&cronTimestamp=${ping.cronTimestamp}&region=${ping.region}`;
-  // }, [value]);
-
   return (
     <LineChart
       data={data}
@@ -53,6 +45,7 @@ const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
       <div className="flex flex-col gap-3">
         {[data].map((category, idx) => {
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <div key={idx} className="flex flex-1 gap-2">
               <div
                 className={`flex w-1 flex-col bg-${category.color}-500 rounded`}

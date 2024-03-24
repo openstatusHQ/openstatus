@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
+import Link from "next/link";
 
 import type { ButtonProps } from "@openstatus/ui";
 import { Button } from "@openstatus/ui";

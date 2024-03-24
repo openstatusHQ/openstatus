@@ -2,8 +2,8 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Ping } from "@openstatus/tinybird";
 import {
@@ -52,6 +52,7 @@ export function InputSearch({
       events.reduce(
         (prev, curr) => {
           return {
+            // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
             ...prev,
             status: [...new Set([curr.statusCode, ...(prev.status || [])])],
             region: [...new Set([curr.region, ...(prev.region || [])])],

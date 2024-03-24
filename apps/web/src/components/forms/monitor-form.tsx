@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import type {
@@ -65,7 +65,6 @@ import { flyRegionsDict } from "@openstatus/utils";
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
@@ -105,7 +104,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -137,7 +136,7 @@ export function MonitorForm({
       }
       router.refresh();
       toastAction("saved");
-    } catch (error) {
+    } catch (_error) {
       toastAction("error");
     }
   };
@@ -159,7 +158,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -178,7 +177,7 @@ export function MonitorForm({
 
   const pingEndpoint = async () => {
     const { url, body, method, headers } = form.getValues();
-    const res = await fetch(`/api/checker/test`, {
+    const res = await fetch("/api/checker/test", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",

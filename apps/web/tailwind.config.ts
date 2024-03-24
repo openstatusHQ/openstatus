@@ -132,8 +132,8 @@ module.exports = {
         /* */
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
         /* Tremor */
         "tremor-small": "0.375rem",

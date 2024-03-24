@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
 import { cva } from "class-variance-authority";
 import { endOfDay, format, formatDuration, startOfDay } from "date-fns";
 import { ChevronRight, Info } from "lucide-react";
+import Link from "next/link";
+import * as React from "react";
 
 import type {
   Incident,
@@ -12,7 +12,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 import type { Monitor } from "@openstatus/tinybird";
-import { classNames, Tracker as OSTracker } from "@openstatus/tracker";
+import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 import {
   HoverCard,
   HoverCardContent,
@@ -88,6 +88,7 @@ export function Tracker({
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {tracker.days.map((props, i) => {
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             return <Bar key={i} {...props} />;
           })}
         </div>

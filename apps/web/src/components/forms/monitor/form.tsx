@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -65,7 +65,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -94,7 +94,7 @@ export function MonitorForm({
       form.reset(undefined, { keepValues: true });
       router.refresh();
       toastAction("saved");
-    } catch (error) {
+    } catch (_error) {
       toastAction("error");
     }
   };
@@ -117,7 +117,7 @@ export function MonitorForm({
 
   const pingEndpoint = async (region?: MonitorFlyRegion) => {
     const { url, body, method, headers } = form.getValues();
-    const res = await fetch(`/api/checker/test`, {
+    const res = await fetch("/api/checker/test", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",

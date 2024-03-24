@@ -1,7 +1,3 @@
-import * as React from "react";
-import type { Column } from "@tanstack/react-table";
-import { Check, PlusCircle } from "lucide-react";
-
 import {
   Badge,
   Button,
@@ -17,6 +13,9 @@ import {
   PopoverTrigger,
   Separator,
 } from "@openstatus/ui";
+import type { Column } from "@tanstack/react-table";
+import { Check, PlusCircle } from "lucide-react";
+import type { ComponentType } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,7 +25,7 @@ interface DataTableFacetedFilter<TData, TValue> {
   options: {
     label: string;
     value: string | number;
-    icon?: React.ComponentType<{ className?: string }>;
+    icon?: ComponentType<{ className?: string }>;
   }[];
 }
 

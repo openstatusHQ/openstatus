@@ -1,12 +1,8 @@
-import * as React from "react";
-import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
 
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AuthLayout({ children }: { children: ReactNode }) {
   const { userId } = auth();
 
   if (userId) {

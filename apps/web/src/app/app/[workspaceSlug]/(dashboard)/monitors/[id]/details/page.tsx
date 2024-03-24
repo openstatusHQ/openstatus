@@ -33,10 +33,10 @@ export default async function Details({
 
   try {
     await api.monitor.getMonitorById.query({
-      id: parseInt(search.data.monitorId),
+      id: Number.parseInt(search.data.monitorId),
     });
     return <ResponseDetails {...search.data} />;
-  } catch (e) {
+  } catch (_e) {
     return <PageEmptyState />;
   }
 }

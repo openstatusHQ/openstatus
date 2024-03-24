@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useSelectedLayoutSegment } from "next/navigation";
+import * as React from "react";
 
 import { TabsContainer, TabsLink } from "./tabs-link";
 

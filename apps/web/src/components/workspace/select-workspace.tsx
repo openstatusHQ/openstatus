@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import * as React from "react";
 
 import type { Workspace } from "@openstatus/db/src/schema";
 import {

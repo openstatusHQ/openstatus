@@ -81,7 +81,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
       webhookUrl,
     );
     return true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 };

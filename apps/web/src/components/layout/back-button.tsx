@@ -1,6 +1,6 @@
+import { ChevronLeft } from "lucide-react";
 import type { LinkProps } from "next/link";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 
 import { Button } from "@openstatus/ui";
 

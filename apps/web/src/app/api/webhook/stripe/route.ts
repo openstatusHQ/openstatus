@@ -1,6 +1,6 @@
-import type { NextRequest } from "next/server";
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import type { NextRequest } from "next/server";
 
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter, stripe } from "@openstatus/api/src/lambda";

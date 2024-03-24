@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
+import Link from "next/link";
 
 import type { Incident } from "@openstatus/db/src/schema";
 

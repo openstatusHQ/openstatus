@@ -3,8 +3,8 @@
 
 "use client";
 
-import { Suspense, use } from "react";
 import type { Row } from "@tanstack/react-table";
+import { Suspense, use } from "react";
 
 import type { OSTinybird } from "@openstatus/tinybird";
 

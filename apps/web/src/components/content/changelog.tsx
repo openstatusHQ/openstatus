@@ -1,10 +1,10 @@
-import Image from "next/image";
 import type { Changelog } from "contentlayer/generated";
+import Image from "next/image";
 
 import { Mdx } from "@/components/content/mdx";
 import { formatDate } from "@/lib/utils";
 
-export function Changelog({ post }: { post: Changelog }) {
+export function ChangelogCard({ post }: { post: Changelog }) {
   return (
     <article className="relative mx-auto flex max-w-prose flex-col gap-8">
       <div className="grid w-full gap-3">

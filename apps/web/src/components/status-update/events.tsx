@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { format } from "date-fns";
+import * as React from "react";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
@@ -32,8 +32,8 @@ export function Events({
     open || !collabsible
       ? sortedArray
       : sortedArray.length > 0
-      ? [sortedArray[0]]
-      : [];
+        ? [sortedArray[0]]
+        : [];
   //
 
   return (

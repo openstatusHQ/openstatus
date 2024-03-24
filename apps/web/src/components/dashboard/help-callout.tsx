@@ -20,6 +20,7 @@ export function HelpCallout() {
           href="/discord"
           target="_blank"
           className="text-foreground font-medium underline hover:no-underline"
+          rel="noreferrer"
         >
           Discord
         </a>

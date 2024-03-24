@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Check, ChevronsUpDown, Edit2 } from "lucide-react";
+import * as React from "react";
 
 import type { MonitorTag } from "@openstatus/db/src/schema";
 import {

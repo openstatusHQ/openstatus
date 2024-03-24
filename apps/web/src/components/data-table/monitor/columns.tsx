@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNowStrict } from "date-fns";
+import Link from "next/link";
 
 import type { Incident, Monitor, MonitorTag } from "@openstatus/db/src/schema";
 import type {
@@ -61,12 +61,12 @@ export const columns: ColumnDef<{
         </div>
       );
     },
-    filterFn: (row, id, value) => {
+    filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
-      return value.some(
-        (item) => row.original.tags?.some((tag) => tag.name === item),
+      return value.some((item) =>
+        row.original.tags?.some((tag) => tag.name === item),
       );
     },
   },
@@ -117,7 +117,7 @@ export const columns: ColumnDef<{
       if (!count || !ok)
         return <span className="text-muted-foreground">-</span>;
       const rounded = Math.round((ok / count) * 10_000) / 100;
-      return <Number value={rounded} suffix="%" />;
+      return <DisplayNumber value={rounded} suffix="%" />;
     },
   },
   {
@@ -127,7 +127,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p50Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -138,7 +138,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p95Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -184,7 +184,7 @@ function HeaderTooltip({ label, content }: { label: string; content: string }) {
   );
 }
 
-function Number({ value, suffix }: { value: number; suffix: string }) {
+function DisplayNumber({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span className="font-mono">
       {new Intl.NumberFormat("us").format(value).toString()}

@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { Globe2 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 
 import type { Region } from "@openstatus/tinybird";
 import {

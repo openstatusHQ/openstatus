@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { PauseCircle, PlayCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 import type { Monitor } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
