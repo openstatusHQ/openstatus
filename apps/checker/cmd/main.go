@@ -120,7 +120,7 @@ func main() {
 					case request.AssertionJsonBody:
 						fmt.Println("assertion type", assert.AssertionType)
 					default:
-						fmt.Println("assertion type", assert.AssertionType)
+						fmt.Println("⚠️ Not Handled assertion type", assert.AssertionType)
 					}
 				}
 			} else {

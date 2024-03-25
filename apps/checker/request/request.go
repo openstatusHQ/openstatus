@@ -55,7 +55,7 @@ type CheckerRequest struct {
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
 	Status        string            `json:"status"`
-	RawAssertions []json.RawMessage `json:"assertions"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 }
 
 type PingRequest struct {
