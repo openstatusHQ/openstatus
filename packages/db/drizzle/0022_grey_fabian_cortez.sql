@@ -1,0 +1,1 @@
+ALTER TABLE monitor ADD `status_code` text DEFAULT '200';

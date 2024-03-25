@@ -28,14 +28,15 @@ checkerRoute.post("/updateStatus", async (c) => {
     statusCode: z.number().optional(),
     region: z.enum(flyRegions),
     cronTimestamp: z.number(),
-    // status: z.enum(["active", "error"]),
+    status: z.enum(["active", "error"]),
   });
 
   const result = payloadSchema.safeParse(json);
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
   }
-  const { monitorId, message, region, statusCode, cronTimestamp } = result.data;
+  const { monitorId, message, region, statusCode, cronTimestamp, status } =
+    result.data;
 
   console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
@@ -59,7 +60,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     .get();
 
   // if we are in error
-  if (!statusCode || statusCode < 200 || statusCode > 300) {
+  if (status === "error") {
     // create incident
     // trigger alerting
     await checkerAudit.publishAuditLog({
@@ -135,7 +136,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     }
   }
   // When the status is ok
-  if (statusCode && statusCode >= 200 && statusCode < 300) {
+  if (status === "active") {
     await upsertMonitorStatus({
       monitorId: monitorId,
       status: "active",

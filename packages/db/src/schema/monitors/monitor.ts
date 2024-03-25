@@ -5,6 +5,7 @@ import {
   sqliteTable,
   text,
 } from "drizzle-orm/sqlite-core";
+import test from "node:test";
 
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
@@ -35,6 +36,8 @@ export const monitor = sqliteTable("monitor", {
 
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
+
+  statusCode: text("status_code").default("200"),
 
   headers: text("headers").default(""),
   body: text("body").default(""),
