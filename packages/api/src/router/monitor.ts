@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { Assertion, serialize, StatusAssertion } from "@openstatus/assertions";
+import {
+  Assertion,
+  HeaderAssertion,
+  serialize,
+  StatusAssertion,
+} from "@openstatus/assertions";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
@@ -64,12 +69,16 @@ export const monitorRouter = createTRPCRouter({
         pages,
         tags,
         statusAssertions,
+        headerAssertions,
         ...data
       } = opts.input;
 
       const assertions: Assertion[] = [];
       for (const a of statusAssertions ?? []) {
         assertions.push(new StatusAssertion(a));
+      }
+      for (const a of headerAssertions ?? []) {
+        assertions.push(new HeaderAssertion(a));
       }
 
       const newMonitor = await opts.ctx.db
@@ -197,12 +206,16 @@ export const monitorRouter = createTRPCRouter({
         pages,
         tags,
         statusAssertions,
+        headerAssertions,
         ...data
       } = opts.input;
 
       const assertions: Assertion[] = [];
       for (const a of statusAssertions ?? []) {
         assertions.push(new StatusAssertion(a));
+      }
+      for (const a of headerAssertions ?? []) {
+        assertions.push(new HeaderAssertion(a));
       }
 
       const currentMonitor = await opts.ctx.db

@@ -19,6 +19,13 @@ import {
 import { Icons } from "@/components/icons";
 import { SectionHeader } from "../shared/section-header";
 
+// IMPROVEMENT: use FormFields incl. error message
+
+export const setEmptyOrStr = (v: unknown) => {
+  if (typeof v === "string" && v.trim() === "") return undefined;
+  return v;
+};
+
 interface Props {
   form: UseFormReturn<InsertMonitor>;
 }
@@ -28,56 +35,124 @@ export function SectionAssertions({ form }: Props) {
     control: form.control,
     name: "statusAssertions",
   });
+  const headerAssertions = useFieldArray({
+    control: form.control,
+    name: "headerAssertions",
+  });
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
         title="Assertions"
-        description="Validate the response to ensure your service is working as expected."
+        description={
+          <>
+            Validate the response to ensure your service is working as expected.
+            <br />
+            <span className="decoration-border underline underline-offset-4">
+              By default, we check for a{" "}
+              <span className="text-foreground font-medium">
+                <code>2xx</code> status code
+              </span>
+            </span>
+            .
+          </>
+        }
       />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-        <div className="col-span-6 space-y-4 md:col-span-4">
-          {statusAssertions.fields.map((f, i) => (
-            <div key={f.id} className="flex items-center gap-4">
-              <p className="text-muted-foreground shrink-0 text-sm">
-                Status code
-              </p>
-              <Select
-                {...form.register(`statusAssertions.${i}.compare`, {
-                  required: true,
-                })}
+      <div className="flex flex-col gap-4">
+        {statusAssertions.fields.map((f, i) => (
+          <div key={f.id} className="grid grid-cols-12 items-center gap-4">
+            <p className="text-muted-foreground col-span-2 text-sm">
+              Status Code
+            </p>
+            <div className="col-span-3" />
+            <Select
+              {...form.register(`statusAssertions.${i}.compare`, {
+                required: true,
+              })}
+            >
+              <SelectTrigger className="col-span-3 w-full">
+                <SelectValue defaultValue="eq" placeholder="Equal" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(numberCompareDictionary).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input
+              {...form.register(`statusAssertions.${i}.target`, {
+                required: true,
+                valueAsNumber: true,
+              })}
+              type="number"
+              placeholder="200"
+              className="col-span-3"
+            />
+            <div className="col-span-1">
+              <Button
+                size="icon"
+                onClick={() => statusAssertions.remove(i)}
+                variant="ghost"
+                type="button"
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue defaultValue="eq" placeholder="Equal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(numberCompareDictionary).map(
-                    ([key, value]) => (
-                      <SelectItem key={key} value={key}>
-                        {value}
-                      </SelectItem>
-                    ),
-                  )}
-                </SelectContent>
-              </Select>
-              <Input
-                {...form.register(`statusAssertions.${i}.target`, {
-                  required: true,
-                  valueAsNumber: true,
-                })}
-                type="number"
-              />
-              <div>
-                <Button
-                  size="icon"
-                  onClick={() => statusAssertions.remove(i)}
-                  variant="ghost"
-                  type="button"
-                >
-                  <Icons.trash className="h-4 w-4" />
-                </Button>
-              </div>
+                <Icons.trash className="h-4 w-4" />
+              </Button>
             </div>
-          ))}
+          </div>
+        ))}
+        {headerAssertions.fields.map((f, i) => (
+          <div key={f.id} className="grid grid-cols-12 items-center gap-4">
+            <p className="text-muted-foreground col-span-2 text-sm">
+              Response Header
+            </p>
+            <Input
+              {...form.register(`headerAssertions.${i}.key`, {
+                required: true,
+                setValueAs: setEmptyOrStr,
+              })}
+              className="col-span-3"
+              placeholder="X-Header"
+            />
+
+            <Select
+              {...form.register(`headerAssertions.${i}.compare`, {
+                required: true,
+              })}
+            >
+              <SelectTrigger className="col-span-3 w-full">
+                <SelectValue defaultValue="eq" placeholder="Equal" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(numberCompareDictionary).map(([key, value]) => (
+                  <SelectItem key={key} value={key}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              {...form.register(`headerAssertions.${i}.target`, {
+                required: true,
+                setValueAs: setEmptyOrStr,
+              })}
+              className="col-span-3"
+              placeholder="x-value"
+            />
+
+            <div className="col-span-1">
+              <Button
+                size="icon"
+                onClick={() => headerAssertions.remove(i)}
+                variant="ghost"
+              >
+                <Icons.trash className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        <div className="flex gap-4">
           <Button
             variant="outline"
             type="button"
@@ -91,6 +166,21 @@ export function SectionAssertions({ form }: Props) {
             }
           >
             Add Status Code Assertion
+          </Button>
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() =>
+              headerAssertions.append({
+                version: "v1",
+                type: "header",
+                key: "Content-Type",
+                compare: "eq",
+                target: "application/json",
+              })
+            }
+          >
+            Add Header Assertion
           </Button>
         </div>
       </div>

@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import { cn } from "@/lib/utils";
 
 export function SectionHeader({
@@ -6,7 +8,7 @@ export function SectionHeader({
   className,
 }: {
   title: string;
-  description: string;
+  description: React.ReactNode;
   className?: string;
 }) {
   return (
