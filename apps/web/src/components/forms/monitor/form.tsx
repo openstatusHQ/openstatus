@@ -32,7 +32,6 @@ import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
-import { SectionLimits } from "./section-limits";
 import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
