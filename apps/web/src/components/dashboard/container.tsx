@@ -25,11 +25,11 @@ function Container({
 }: CardProps) {
   return (
     <Card
-      className={cn("border-border/50 relative w-full shadow-none", className)}
+      className={cn("relative w-full border-border/50 shadow-none", className)}
     >
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle className="text-lg font-medium tracking-normal">
+          <CardTitle className="font-medium text-lg tracking-normal">
             {title}
           </CardTitle>
           {description ? (

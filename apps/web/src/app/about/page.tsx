@@ -14,18 +14,18 @@ export default function AboutPage() {
   return (
     <MarketingLayout>
       <div className="my-8 grid w-full gap-8">
-        <h1 className="text-foreground font-cal text-4xl">About OpenStatus</h1>
-        <div className="text-muted-foreground grid max-w-2xl gap-2 text-lg">
+        <h1 className="font-cal text-4xl text-foreground">About OpenStatus</h1>
+        <div className="grid max-w-2xl gap-2 text-lg text-muted-foreground">
           <p>
             OpenStatus is on a mission to provide a{" "}
-            <span className="text-foreground font-medium">reliable</span>,{" "}
-            <span className="text-foreground font-medium">easy</span> and{" "}
-            <span className="text-foreground font-medium">fast</span> way to
+            <span className="font-medium text-foreground">reliable</span>,{" "}
+            <span className="font-medium text-foreground">easy</span> and{" "}
+            <span className="font-medium text-foreground">fast</span> way to
             synthetically monitor your APIs and websites.
           </p>
           <p className="italic">Made by developers for developers.</p>
         </div>
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:gap-8">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-8 sm:gap-6">
           {members.map((member) => (
             <li key={member.name}>
               <Member {...member} />
@@ -34,11 +34,11 @@ export default function AboutPage() {
           <li />
         </ul>
         <Separator className="my-2" />
-        <Shell className="dark:border-card-foreground/30 mx-auto w-auto shadow sm:px-8 sm:py-8 md:px-12 md:py-12">
+        <Shell className="mx-auto w-auto shadow dark:border-card-foreground/30 md:px-12 sm:px-8 md:py-12 sm:py-8">
           {story ? (
             <Mdx
               code={story.body.code}
-              className="sm:prose-lg prose-li:my-0 mx-auto"
+              className="sm:prose-lg mx-auto prose-li:my-0"
             />
           ) : null}
         </Shell>

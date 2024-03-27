@@ -48,7 +48,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
         <Shell className="mx-auto flex items-center justify-between gap-4 p-2 px-2 md:p-3">
           <div className="relative sm:w-[100px]">
             {page?.icon ? (
-              <div className="bg-muted border-border flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border">
+              <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
                 <Image
                   height={28}
                   width={28}
@@ -73,7 +73,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
       <footer className="z-10 mx-auto flex w-full max-w-xl items-center justify-between">
         <div />
         {!isWhiteLabel ? (
-          <p className="text-muted-foreground text-center text-sm">
+          <p className="text-center text-muted-foreground text-sm">
             powered by{" "}
             <a
               href="https://www.openstatus.dev"

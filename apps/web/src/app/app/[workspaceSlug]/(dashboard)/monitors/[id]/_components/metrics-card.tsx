@@ -57,15 +57,15 @@ export function MetricsCard({
 }: MetricsCardProps) {
   return (
     <div className={cn(metricsCardVariants({ variant, fading, className }))}>
-      <p className="text-muted-foreground text-sm font-light uppercase">
+      <p className="font-light text-muted-foreground text-sm uppercase">
         {title}
       </p>
       <div className="flex flex-1 items-center gap-2">
         <p className="flex">
-          <code className="mr-1 font-mono text-xl font-semibold empty:mr-0">
+          <code className="mr-1 font-mono font-semibold text-xl empty:mr-0">
             {formatNumber(value)}
           </code>
-          <span className="text-muted-foreground self-center text-xs">
+          <span className="self-center text-muted-foreground text-xs">
             {suffix}
           </span>
         </p>

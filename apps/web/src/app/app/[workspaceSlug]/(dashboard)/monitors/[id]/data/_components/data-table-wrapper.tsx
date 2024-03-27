@@ -79,7 +79,7 @@ function Details({ row }: { row: Row<Monitor> }) {
 
   return (
     <div className="relative">
-      <div className="absolute right-0 top-1">
+      <div className="absolute top-1 right-0">
         <CopyToClipboardButton text={url.toString()} tooltipText="Copy link" />
       </div>
       <ResponseDetailTabs

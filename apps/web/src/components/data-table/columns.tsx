@@ -51,7 +51,7 @@ export const columns: ColumnDef<Ping>[] = [
               <DataTableStatusBadge {...{ statusCode }} />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-muted-foreground max-w-xs sm:max-w-sm">
+              <p className="max-w-xs text-muted-foreground sm:max-w-sm">
                 {message}
               </p>
             </TooltipContent>

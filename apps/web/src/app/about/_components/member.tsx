@@ -17,7 +17,7 @@ export interface MemberProps {
 export function Member({ name, role, image, socials }: MemberProps) {
   return (
     <div className="grid w-full gap-3">
-      <div className="border-border relative aspect-square max-w-full overflow-hidden rounded-lg border">
+      <div className="relative aspect-square max-w-full overflow-hidden rounded-lg border border-border">
         <Image src={image.src} alt={name} layout="fill" objectFit="contain" />
       </div>
       <div className="flex items-start justify-between gap-2">

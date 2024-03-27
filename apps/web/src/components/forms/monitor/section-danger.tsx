@@ -45,7 +45,7 @@ export function SectionDanger({ monitorId }: Props) {
   return (
     <div className="grid w-full gap-4">
       <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">Delete monitor</h4>
+        <h4 className="font-medium text-foreground">Delete monitor</h4>
         <p className="text-muted-foreground">
           This action cannot be undone. This will permanently delete the
           monitor.

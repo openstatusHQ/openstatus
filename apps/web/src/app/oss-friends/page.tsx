@@ -24,7 +24,7 @@ const OpenSourceFriends = async () => {
   const openSourceFriends = z.array(OSSFriendSchema).parse(data.data);
   return (
     <MarketingLayout>
-      <h1 className="text-foreground font-cal mb-5 text-4xl">
+      <h1 className="mb-5 font-cal text-4xl text-foreground">
         Our OpenSource Friends
       </h1>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -47,7 +47,7 @@ const OpenSourceFriends = async () => {
             <CardFooter>
               <div className="flex items-center gap-2.5">
                 <Link href={friend.href} target="_blank">
-                  <Icons.globe className="text-muted-foreground hover:text-foreground h-5 w-5" />
+                  <Icons.globe className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                 </Link>
               </div>
             </CardFooter>

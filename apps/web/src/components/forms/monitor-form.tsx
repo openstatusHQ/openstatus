@@ -227,7 +227,7 @@ export function MonitorForm({
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="my-1.5 flex flex-col gap-2">
-              <p className="text-sm font-semibold leading-none">
+              <p className="font-semibold text-sm leading-none">
                 Endpoint Check
               </p>
               <p className="text-muted-foreground text-sm">
@@ -283,7 +283,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       Custom Request
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -422,7 +422,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       More Configurations
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -607,7 +607,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">Alerts</p>
+                    <p className="font-semibold text-sm leading-none">Alerts</p>
                     <p className="text-muted-foreground text-sm">
                       How do you want to get informed if things break?
                     </p>

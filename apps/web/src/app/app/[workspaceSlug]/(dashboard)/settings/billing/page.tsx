@@ -14,7 +14,7 @@ export default async function BillingPage() {
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-lg font-medium">
+        <h3 className="font-medium text-lg">
           <span className="capitalize">{workspace.plan}</span> plan
         </h3>
         <CustomerPortalButton workspaceSlug={workspace.slug} />
@@ -24,7 +24,7 @@ export default async function BillingPage() {
           const limit = limits[key as keyof typeof currentNumbers];
           return (
             <div key={key}>
-              <div className="text-muted-foreground mb-1 flex items-center justify-between">
+              <div className="mb-1 flex items-center justify-between text-muted-foreground">
                 <p className="text-sm capitalize">{key.replace("-", " ")}</p>
                 <p className="text-xs">
                   <span className="text-foreground">{value}</span> / {limit}

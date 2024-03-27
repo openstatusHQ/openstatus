@@ -26,13 +26,13 @@ export function Summary({
 
   return (
     <div className="grid grid-cols-5 gap-3 text-sm">
-      <p className="text-muted-foreground col-start-1">Started</p>
+      <p className="col-start-1 text-muted-foreground">Started</p>
       <p className="col-span-4">
         {firstUpdate ? (
           <code>{format(new Date(firstUpdate.date), "LLL dd, y HH:mm")}</code>
         ) : null}
       </p>
-      <p className="text-muted-foreground col-start-1">Status</p>
+      <p className="col-start-1 text-muted-foreground">Status</p>
       <div className="col-span-4 flex items-center gap-2">
         <StatusBadge status={report.status} />
         {firstUpdate && lastUpdate && report.status === "resolved" ? (
@@ -41,7 +41,7 @@ export function Summary({
           </span>
         ) : null}
       </div>
-      <p className="text-muted-foreground col-start-1">Affected</p>
+      <p className="col-start-1 text-muted-foreground">Affected</p>
       <ul className="col-span-4 flex gap-2">
         {monitors.length > 0 ? (
           monitors.map(({ name, id }) => (

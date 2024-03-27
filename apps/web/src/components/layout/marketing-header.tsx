@@ -28,7 +28,7 @@ export function MarketingHeader({ className }: Props) {
       <div className="flex items-center md:col-span-1">
         <BrandName />
       </div>
-      <div className="border-border mx-auto hidden items-center justify-center rounded-full border px-2 backdrop-blur-[2px] md:col-span-3 md:flex md:gap-1">
+      <div className="mx-auto hidden items-center justify-center rounded-full border border-border px-2 backdrop-blur-[2px] md:col-span-3 md:flex md:gap-1">
         {marketingPagesConfig.map(({ href, title, segment }) => {
           const isExternal = href.startsWith("http");
           const externalProps = isExternal ? { target: "_blank" } : {};

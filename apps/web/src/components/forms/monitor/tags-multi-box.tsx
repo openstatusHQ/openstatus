@@ -135,7 +135,7 @@ export function TagsMultiBox({
             variant="outline"
             role="combobox"
             aria-expanded={openCombobox}
-            className="text-foreground h-auto w-full justify-between"
+            className="h-auto w-full justify-between text-foreground"
           >
             <span className="flex flex-wrap gap-2 truncate">
               {values.length > 0

@@ -175,7 +175,7 @@ export function StatusPageForm({
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Endpoint Check</p>
+            <p className="font-semibold text-sm leading-none">Endpoint Check</p>
             <p className="text-muted-foreground text-sm">
               The easiest way to get started.
             </p>
@@ -279,7 +279,7 @@ export function StatusPageForm({
             <AccordionContent>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="my-1.5 flex flex-col gap-2">
-                  <p className="text-sm font-semibold leading-none">
+                  <p className="font-semibold text-sm leading-none">
                     More Configurations
                   </p>
                   <p className="text-muted-foreground text-sm">
@@ -325,7 +325,7 @@ export function StatusPageForm({
                             )}
                             {field.value && (
                               <div className="flex items-center">
-                                <div className="border-border h-10 w-10 rounded-sm border p-1">
+                                <div className="h-10 w-10 rounded-sm border border-border p-1">
                                   <Image
                                     src={field.value}
                                     width={64}

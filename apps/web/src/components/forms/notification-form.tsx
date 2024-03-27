@@ -183,7 +183,7 @@ export function NotificationForm({
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Alerts</p>
+            <p className="font-semibold text-sm leading-none">Alerts</p>
             <p className="text-muted-foreground text-sm">
               Select the notification channels you want to be informed.
             </p>

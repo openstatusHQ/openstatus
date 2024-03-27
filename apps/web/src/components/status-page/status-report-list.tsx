@@ -55,7 +55,7 @@ export const StatusReportList = ({
     <>
       {reports?.length > 0 ? (
         <div className="grid gap-3">
-          <p className="text-muted-foreground text-sm font-light">
+          <p className="font-light text-muted-foreground text-sm">
             {context === "all" ? "All incidents" : "Latest incidents"}
           </p>
           <div className="grid gap-8">
@@ -69,7 +69,7 @@ export const StatusReportList = ({
               return (
                 <div key={report.id} className="group grid gap-4 text-left">
                   <div className="flex items-center gap-1">
-                    <h3 className="text-xl font-semibold">{report.title}</h3>
+                    <h3 className="font-semibold text-xl">{report.title}</h3>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -95,7 +95,7 @@ export const StatusReportList = ({
           </div>
         </div>
       ) : (
-        <p className="text-muted-foreground text-center text-sm font-light">
+        <p className="text-center font-light text-muted-foreground text-sm">
           {context === "all"
             ? "No incidents."
             : "No incidents in the last week."}

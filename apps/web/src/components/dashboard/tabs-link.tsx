@@ -43,14 +43,14 @@ export function TabsLink({
 }: TabsLinkProps) {
   return (
     <li
-      className={cn("flex shrink-0 list-none border-b-2 border-transparent", {
+      className={cn("flex shrink-0 list-none border-transparent border-b-2", {
         "border-primary": active,
         "pointer-events-none opacity-70": disabled,
       })}
     >
       <Link
         className={cn(
-          "text-muted-foreground hover:text-primary rounded-md px-4 pb-3 pt-2 text-sm font-medium",
+          "rounded-md px-4 pt-2 pb-3 font-medium text-muted-foreground text-sm hover:text-primary",
           {
             "text-primary": active,
           },

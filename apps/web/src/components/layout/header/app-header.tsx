@@ -15,7 +15,7 @@ export function AppHeader() {
   const { isLoaded, isSignedIn } = useUser();
   return (
     // TODO: discuss amount of top-3 and top-6
-    <header className="border-border sticky top-2 z-50 w-full">
+    <header className="sticky top-2 z-50 w-full border-border">
       <Shell className="bg-background/70 px-3 py-3 backdrop-blur-lg md:px-6 md:py-3">
         <div className="flex w-full items-center justify-between">
           <Breadcrumbs />

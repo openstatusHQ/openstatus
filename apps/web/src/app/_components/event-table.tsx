@@ -59,16 +59,16 @@ export function EventTable({ events }: { events: Ping[] }) {
                       {event.statusCode}
                       <div
                         className={cn(
-                          "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
+                          "ml-1 h-1.5 w-1.5 rounded-full bg-foreground",
                           isOk ? "bg-green-500" : "bg-red-500",
                         )}
                       />
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground font-light">
+                  <TableCell className="font-light text-muted-foreground">
                     {event.latency}
                   </TableCell>
-                  <TableCell className="text-muted-foreground truncate text-right">
+                  <TableCell className="truncate text-right text-muted-foreground">
                     {event.region}
                   </TableCell>
                 </TableRow>
@@ -78,7 +78,7 @@ export function EventTable({ events }: { events: Ping[] }) {
         </Table>
       </div>
       {!open && (
-        <div className="bg-gradient to-background absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent from-20%">
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient bg-gradient-to-b from-20% from-transparent to-background">
           <Button
             onClick={toggle}
             variant="outline"

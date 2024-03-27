@@ -28,7 +28,7 @@ export default async function PlayPage() {
   return (
     <>
       <BackButton href="/" />
-      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
         {playgrounds.map((play, i) => {
           const isFirst = i === 0;
           return (
