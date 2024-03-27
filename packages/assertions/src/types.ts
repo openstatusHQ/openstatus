@@ -1,6 +1,6 @@
-import { z } from "zod";
+import type { z } from "zod";
 
-import { assertion } from "./v1";
+import type { assertion } from "./v1";
 
 export type AssertionRequest = {
   body: string;

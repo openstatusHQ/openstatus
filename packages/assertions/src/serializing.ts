@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Assertion } from "./types";
+import type { Assertion } from "./types";
 import {
   base,
   HeaderAssertion,

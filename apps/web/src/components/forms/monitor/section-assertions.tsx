@@ -4,7 +4,10 @@ import * as React from "react";
 import { useFieldArray } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
-import { numberCompareDictionary } from "@openstatus/assertions";
+import {
+  numberCompareDictionary,
+  stringCompareDictionary,
+} from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   Button,
@@ -124,7 +127,7 @@ export function SectionAssertions({ form }: Props) {
                 <SelectValue defaultValue="eq" placeholder="Equal" />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(numberCompareDictionary).map(([key, value]) => (
+                {Object.entries(stringCompareDictionary).map(([key, value]) => (
                   <SelectItem key={key} value={key}>
                     {value}
                   </SelectItem>

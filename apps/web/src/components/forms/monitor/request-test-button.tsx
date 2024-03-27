@@ -2,6 +2,7 @@ import React from "react";
 import { Send } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 
+import { deserialize } from "@openstatus/assertions";
 import type {
   InsertMonitor,
   MonitorFlyRegion,
@@ -10,6 +11,8 @@ import {
   Button,
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
   Select,
   SelectContent,
   SelectItem,
@@ -26,15 +29,19 @@ import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
 import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
 import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  pingEndpoint(region?: MonitorFlyRegion): Promise<RegionChecker>;
+  pingEndpoint(
+    region?: MonitorFlyRegion,
+  ): Promise<{ data: RegionChecker; error?: string }>;
 }
 
 export function RequestTestButton({ form, pingEndpoint }: Props) {
-  const [check, setCheck] = React.useState<RegionChecker | undefined>();
+  const [check, setCheck] = React.useState<
+    { data: RegionChecker; error?: string } | undefined
+  >();
   const [value, setValue] = React.useState<MonitorFlyRegion>(flyRegions[0]);
   const [isPending, startTransition] = React.useTransition();
 
@@ -50,13 +57,13 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
 
     startTransition(async () => {
       try {
-        const data = await pingEndpoint(value);
-        setCheck(data);
-        const isOk = data.status >= 200 && data.status < 300;
+        const { data, error } = await pingEndpoint(value);
+        setCheck({ data, error });
+        const isOk = !error;
         if (isOk) {
           toastAction("test-success");
         } else {
-          toastAction("test-error");
+          toast.error(error);
         }
       } catch {
         toastAction("error");
@@ -65,6 +72,8 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
   };
 
   const { flag } = flyRegionsDict[value as keyof typeof flyRegionsDict];
+
+  const { statusAssertions, headerAssertions } = form.getValues();
 
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
@@ -114,10 +123,22 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
         </TooltipProvider>
       </div>
       <DialogContent className="max-h-screen w-full overflow-auto sm:max-w-3xl sm:p-8">
+        <DialogHeader>
+          <DialogTitle>Response</DialogTitle>
+        </DialogHeader>
         {check ? (
           <div className="grid gap-8">
-            <RegionInfo check={check} />
-            <ResponseDetailTabs timing={check.timing} headers={check.headers} />
+            <RegionInfo check={check.data} error={check.error} />
+            <ResponseDetailTabs
+              timing={check.data.timing}
+              headers={check.data.headers}
+              assertions={deserialize(
+                JSON.stringify([
+                  ...(statusAssertions || []),
+                  ...(headerAssertions || []),
+                ]),
+              )}
+            />
           </div>
         ) : null}
       </DialogContent>

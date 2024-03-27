@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { deserialize, StatusAssertion } from "@openstatus/assertions";
+import * as assertions from "@openstatus/assertions";
 import type {
   InsertMonitor,
   MonitorFlyRegion,
@@ -25,13 +25,14 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
+import { SectionLimits } from "./section-limits";
 import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
@@ -56,8 +57,8 @@ export function MonitorForm({
   tags,
   nextUrl,
 }: Props) {
-  const assertions = defaultValues?.assertions
-    ? deserialize(defaultValues?.assertions).map((a) => a.schema)
+  const _assertions = defaultValues?.assertions
+    ? assertions.deserialize(defaultValues?.assertions).map((a) => a.schema)
     : [];
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
@@ -78,7 +79,8 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
-      statusAssertions: assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
   });
   const router = useRouter();
@@ -108,12 +110,12 @@ export function MonitorForm({
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       try {
-        // const pingResult = await pingEndpoint();
-        // const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
-        // if (!isOk) {
-        //   setPingFailed(true);
-        //   return;
-        // }
+        const { error } = await pingEndpoint();
+        if (error) {
+          setPingFailed(true);
+          toast.error(error);
+          return;
+        }
         await handleDataUpdateOrInsertion(props);
       } catch {
         toastAction("error");
@@ -122,7 +124,9 @@ export function MonitorForm({
   };
 
   const pingEndpoint = async (region?: MonitorFlyRegion) => {
-    const { url, body, method, headers } = form.getValues();
+    const { url, body, method, headers, statusAssertions, headerAssertions } =
+      form.getValues();
+
     const res = await fetch(`/api/checker/test`, {
       method: "POST",
       headers: new Headers({
@@ -130,8 +134,41 @@ export function MonitorForm({
       }),
       body: JSON.stringify({ url, body, method, headers, region }),
     });
+
+    const as = assertions.deserialize(
+      JSON.stringify([
+        ...(statusAssertions || []),
+        ...(headerAssertions || []),
+      ]),
+    );
+
     const data = (await res.json()) as RegionChecker;
-    return data;
+
+    const _headers: Record<string, string> = {};
+    res.headers.forEach((value, key) => (_headers[key] = value));
+
+    if (as.length > 0) {
+      for (const a of as) {
+        const { success, message } = a.assert({
+          body: "", // data.body ?? "",
+          header: data.headers ?? {},
+          status: data.status,
+        });
+        if (!success) {
+          return { data, error: `Assertion error: ${message}` };
+        }
+      }
+    } else {
+      // default assertion if no assertions are provided
+      if (res.status < 200 || res.status >= 300) {
+        return {
+          data,
+          error: `Default assertion error: The response status was not 2XX: ${data.status}.`,
+        };
+      }
+    }
+
+    return { data, error: undefined };
   };
 
   function onValueChange(value: string) {

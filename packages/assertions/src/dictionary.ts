@@ -1,6 +1,6 @@
-import { z } from "zod";
+import type { z } from "zod";
 
-import { numberCompare, stringCompare } from "./v1";
+import type { numberCompare, stringCompare } from "./v1";
 
 export const numberCompareDictionary: Record<
   z.infer<typeof numberCompare>,

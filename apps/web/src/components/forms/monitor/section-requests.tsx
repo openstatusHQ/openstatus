@@ -42,7 +42,9 @@ import { RequestTestButton } from "./request-test-button";
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   plan: WorkspacePlan;
-  pingEndpoint(region?: MonitorFlyRegion): Promise<RegionChecker>;
+  pingEndpoint(
+    region?: MonitorFlyRegion,
+  ): Promise<{ data: RegionChecker; error?: string }>;
 }
 
 // TODO: add Dialog with response informations when pingEndpoint!
@@ -220,7 +222,11 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Write your json payload.</FormDescription>
+                <FormDescription>
+                  Write your json payload. We automatically append{" "}
+                  <code>"Content-Type": "application/json"</code> to the request
+                  header.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
