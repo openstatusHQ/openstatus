@@ -29,7 +29,7 @@ export function ResponseHeaderTable({
           <TableRow key={key}>
             <TableCell className="group">
               <div className="flex items-center justify-between gap-4">
-                <code className="font-medium">{key}</code>
+                <code className="break-all font-medium">{key}</code>
                 <CopyToClipboardButton
                   copyValue={key}
                   className="invisible group-hover:visible"
@@ -38,7 +38,7 @@ export function ResponseHeaderTable({
             </TableCell>
             <TableCell className="group">
               <div className="flex items-center justify-between gap-4">
-                <code>{value}</code>
+                <code className="break-all">{value}</code>
                 <CopyToClipboardButton
                   copyValue={value}
                   className="invisible group-hover:visible"

@@ -11,6 +11,7 @@ export const payloadSchema = z.object({
   url: z.string(),
   cronTimestamp: z.number(),
   status: z.enum(monitorStatus),
+  assertions: z.string().nullable(),
 });
 
 export type Payload = z.infer<typeof payloadSchema>;

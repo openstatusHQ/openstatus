@@ -155,6 +155,13 @@
       "when": 1710677383007,
       "tag": "0021_reflective_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1711307113089,
+      "tag": "0022_chunky_rockslide",
+      "breakpoints": true
     }
   ]
 }

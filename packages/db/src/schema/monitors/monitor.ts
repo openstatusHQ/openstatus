@@ -41,6 +41,8 @@ export const monitor = sqliteTable("monitor", {
   method: text("method", { enum: monitorMethods }).default("GET"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
+  assertions: text("assertions"),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

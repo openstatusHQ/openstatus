@@ -1,13 +1,16 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import {
+  Assertion,
+  HeaderAssertion,
+  serialize,
+  StatusAssertion,
+} from "@openstatus/assertions";
 import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
-  insertMonitorStatusSchema,
   monitor,
-  monitorPeriodicitySchema,
-  monitorStatusTable,
   monitorsToPages,
   monitorTag,
   monitorTagsToMonitors,
@@ -15,7 +18,6 @@ import {
   notificationsToMonitors,
   page,
   selectMonitorSchema,
-  selectMonitorStatusSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
@@ -59,8 +61,25 @@ export const monitorRouter = createTRPCRouter({
       }
 
       // FIXME: this is a hotfix
-      const { regions, headers, notifications, id, pages, tags, ...data } =
-        opts.input;
+      const {
+        regions,
+        headers,
+        notifications,
+        id,
+        pages,
+        tags,
+        statusAssertions,
+        headerAssertions,
+        ...data
+      } = opts.input;
+
+      const assertions: Assertion[] = [];
+      for (const a of statusAssertions ?? []) {
+        assertions.push(new StatusAssertion(a));
+      }
+      for (const a of headerAssertions ?? []) {
+        assertions.push(new HeaderAssertion(a));
+      }
 
       const newMonitor = await opts.ctx.db
         .insert(monitor)
@@ -71,6 +90,7 @@ export const monitorRouter = createTRPCRouter({
           workspaceId: opts.ctx.workspace.id,
           regions: regions?.join(","),
           headers: headers ? JSON.stringify(headers) : undefined,
+          assertions: assertions.length > 0 ? serialize(assertions) : undefined,
         })
         .returning()
         .get();
@@ -179,8 +199,24 @@ export const monitorRouter = createTRPCRouter({
 
       console.log(opts.input);
 
-      const { regions, headers, notifications, pages, tags, ...data } =
-        opts.input;
+      const {
+        regions,
+        headers,
+        notifications,
+        pages,
+        tags,
+        statusAssertions,
+        headerAssertions,
+        ...data
+      } = opts.input;
+
+      const assertions: Assertion[] = [];
+      for (const a of statusAssertions ?? []) {
+        assertions.push(new StatusAssertion(a));
+      }
+      for (const a of headerAssertions ?? []) {
+        assertions.push(new HeaderAssertion(a));
+      }
 
       const currentMonitor = await opts.ctx.db
         .update(monitor)
@@ -189,6 +225,7 @@ export const monitorRouter = createTRPCRouter({
           regions: regions?.join(","),
           updatedAt: new Date(),
           headers: headers ? JSON.stringify(headers) : undefined,
+          assertions: serialize(assertions),
         })
         .where(
           and(

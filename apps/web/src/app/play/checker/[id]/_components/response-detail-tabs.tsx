@@ -1,3 +1,5 @@
+import type { Assertion } from "@openstatus/assertions";
+
 import {
   Tabs,
   TabsContent,
@@ -5,6 +7,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import type { Timing } from "../utils";
+import { ResponseAssertion } from "./response-assertion";
 import { ResponseHeaderTable } from "./response-header-table";
 import { ResponseTimingTable } from "./response-timing-table";
 
@@ -12,10 +15,12 @@ export async function ResponseDetailTabs({
   timing,
   headers,
   message,
+  assertions,
 }: {
   timing: Timing | null;
   headers: Record<string, string> | null;
   message?: string | null;
+  assertions?: Assertion[] | null;
 }) {
   return (
     <Tabs defaultValue="headers">
@@ -24,6 +29,12 @@ export async function ResponseDetailTabs({
         <TabsTrigger value="timing">Timing</TabsTrigger>
         <TabsTrigger value="message" disabled={!message}>
           Message
+        </TabsTrigger>
+        <TabsTrigger
+          value="assertions"
+          disabled={!assertions || assertions.length === 0}
+        >
+          Assertions
         </TabsTrigger>
       </TabsList>
       <TabsContent value="headers">
@@ -41,6 +52,9 @@ export async function ResponseDetailTabs({
             </p>
           </div>
         ) : null}
+      </TabsContent>
+      <TabsContent value="assertions">
+        {assertions ? <ResponseAssertion {...{ assertions }} /> : null}
       </TabsContent>
     </Tabs>
   );
