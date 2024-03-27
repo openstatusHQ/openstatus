@@ -224,8 +224,10 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
                 </FormControl>
                 <FormDescription>
                   Write your json payload. We automatically append{" "}
-                  <code>"Content-Type": "application/json"</code> to the request
-                  header.
+                  <code>
+                    &quot;Content-Type&quot;: &quot;application/json&quot;
+                  </code>{" "}
+                  to the request header.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
