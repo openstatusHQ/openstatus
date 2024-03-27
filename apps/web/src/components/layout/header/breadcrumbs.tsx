@@ -65,6 +65,7 @@ export function Breadcrumbs() {
 }
 
 // This is a custom hook that returns the label of the current id
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 function useIdLabel() {
   const params = useParams();
   const selectedSegment = useSelectedLayoutSegment();

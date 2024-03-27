@@ -16,6 +16,7 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { api } from "@/trpc/client";
 
 // EXAMPLE: get the type of the response of the endpoint
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type

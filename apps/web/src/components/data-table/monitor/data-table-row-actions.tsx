@@ -62,6 +62,7 @@ export function DataTableRowActions<TData>({
   async function onToggleActive() {
     startTransition(async () => {
       try {
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         const { jobType, ...rest } = monitor;
         if (!monitor.id) return;
         await api.monitor.toggleMonitorActive.mutate({

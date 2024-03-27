@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@openstatus/ui";
 
 export function Pagination({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   prev,
   next,
 }: {

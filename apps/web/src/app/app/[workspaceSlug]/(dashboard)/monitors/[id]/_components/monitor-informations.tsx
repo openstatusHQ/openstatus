@@ -3,6 +3,7 @@ import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 import { MetricsCard } from "./metrics-card";
 
 export function MonitorInformations({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   periodicity,
 }: {
   periodicity: MonitorPeriodicity;

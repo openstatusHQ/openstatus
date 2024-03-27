@@ -130,7 +130,7 @@ export default authMiddleware({
           console.log(">>> No workspace slug available");
           if (allowedWorkspaces.length > 0) {
             const firstWorkspace = allowedWorkspaces[0].workspace;
-            const { id, slug } = firstWorkspace;
+            const { slug } = firstWorkspace;
             console.log(">>> Redirecting to first related workspace", slug);
             const firstMonitor = await db
               .select()

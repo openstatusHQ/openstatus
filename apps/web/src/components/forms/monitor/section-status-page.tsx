@@ -57,6 +57,7 @@ export function SectionStatusPage({ form, pages }: Props) {
       <FormField
         control={form.control}
         name="pages"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>

@@ -54,6 +54,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
       <FormField
         control={form.control}
         name="notifications"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>

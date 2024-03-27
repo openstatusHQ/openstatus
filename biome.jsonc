@@ -1,6 +1,11 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.6.2/schema.json",
-
+  "files": {
+    "ignore": [
+      "packages/ui/src/components/*.tsx",
+      "packages/ui/src/components/*.ts"
+    ]
+  },
   "linter": {
     "enabled": true,
     "rules": {

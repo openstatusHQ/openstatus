@@ -21,6 +21,7 @@ const searchParamsSchema = z.object({
 });
 
 export default async function Details({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   params,
   searchParams,
 }: {

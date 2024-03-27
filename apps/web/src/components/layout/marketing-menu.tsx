@@ -45,6 +45,7 @@ export function MarketingMenu() {
         </SheetHeader>
         <div className="flex flex-1 flex-col justify-between gap-4">
           <ul className="grid gap-1">
+            {/* biome-ignore lint/correctness/noUnusedVariables: <explanation> */}
             {marketingPagesConfig.map(({ href, title, segment }) => {
               const isExternal = href.startsWith("http");
               const externalProps = isExternal ? { target: "_blank" } : {};

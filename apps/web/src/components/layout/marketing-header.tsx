@@ -17,6 +17,7 @@ interface Props {
 }
 
 export function MarketingHeader({ className }: Props) {
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   const { isSignedIn } = useUser();
   const pathname = usePathname();
 
