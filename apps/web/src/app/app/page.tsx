@@ -22,8 +22,8 @@ export default function Page() {
           <Shell className="relative flex flex-1 flex-col items-center justify-center">
             <div className="grid gap-4">
               <div className="text-center">
-                <p className="font-cal mb-1 text-3xl">Creating Workspace</p>
-                <p className="text-muted-foreground mb-5 text-xl">
+                <p className="mb-1 font-cal text-3xl">Creating Workspace</p>
+                <p className="mb-5 text-muted-foreground text-xl">
                   Should be done in a second.
                 </p>
                 <p className="text-muted-foreground">

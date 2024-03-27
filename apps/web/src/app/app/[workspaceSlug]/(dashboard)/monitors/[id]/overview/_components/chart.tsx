@@ -59,7 +59,7 @@ const customTooltip = ({
 }: CustomTooltipProps & { value: EventProps }) => {
   if (!active || !payload) return null;
   return (
-    <div className="rounded-tremor-default text-tremor-default dark:text-dark-tremor-default bg-tremor-background dark:bg-dark-tremor-background shadow-tremor-dropdown border-tremor-border dark:border-dark-tremor-border border p-2">
+    <div className="rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown dark:border-dark-tremor-border dark:bg-dark-tremor-background dark:text-dark-tremor-default">
       <div className="flex flex-col gap-2">
         <p className="text-tremor-content dark:text-dark-tremor-content">
           {label}
@@ -77,13 +77,13 @@ const customTooltip = ({
                 className={cn("flex flex-1 gap-2", !isActive && "opacity-60")}
               >
                 <div
-                  className={`flex w-1 flex-col bg-${category.color}-500 rounded`}
+                  className={`bg- flex w-1 flex-col${category.color}-500 rounded`}
                 />
                 <div className="flex w-full justify-between gap-2">
-                  <p className="text-tremor-content dark:text-dark-tremor-content shrink-0">
+                  <p className="shrink-0 text-tremor-content dark:text-dark-tremor-content">
                     {regionFormatter(category.dataKey as Region)}
                   </p>
-                  <p className="text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis font-mono font-medium">
+                  <p className="font-medium font-mono text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis">
                     {dataFormatter(category.value as number)}
                   </p>
                 </div>

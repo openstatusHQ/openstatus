@@ -40,7 +40,7 @@ export default function RootLayout({
   // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <html lang="en">
-      <body className={`${inter.className} ${calSans.variable}`}>
+      <body className={`${inter.className}${calSans.variable}`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
           <Toaster richColors />

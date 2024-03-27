@@ -21,7 +21,7 @@ export function MarketingFooter({ className }: Props) {
           <div className="col-span-2 flex flex-col gap-3">
             <div>
               <BrandName />
-              <p className="text-muted-foreground mt-2 text-sm font-light">
+              <p className="mt-2 font-light text-muted-foreground text-sm">
                 We are on a mission to provide a reliable, easy and fast way to
                 monitor your APIs and websites.{" "}
                 <span className="underline decoration-dotted underline-offset-2">
@@ -32,7 +32,7 @@ export function MarketingFooter({ className }: Props) {
             <StatusWidgetContainer slug="status" />
           </div>
           <div className="order-2 flex flex-col gap-3 text-sm">
-            <p className="text-foreground font-semibold">Resources</p>
+            <p className="font-semibold text-foreground">Resources</p>
             <FooterLink href="/blog" label="Blog" />
             <FooterLink href="/pricing" label="Pricing" />
             <FooterLink href="https://docs.openstatus.dev" label="Docs" />
@@ -40,14 +40,14 @@ export function MarketingFooter({ className }: Props) {
             <FooterLink href="/status" label="External Providers Monitoring" />
           </div>
           <div className="order-3 flex flex-col gap-3 text-sm">
-            <p className="text-foreground font-semibold">Company</p>
+            <p className="font-semibold text-foreground">Company</p>
             <FooterLink href="/about" label="About" />
             <FooterLink href="/changelog" label="Changelog" />
             <FooterLink href="/legal/terms" label="Terms" />
             <FooterLink href="/legal/privacy" label="Privacy" />
           </div>
           <div className="order-3 flex flex-col gap-3 text-sm">
-            <p className="text-foreground font-semibold">Tools</p>
+            <p className="font-semibold text-foreground">Tools</p>
             <FooterLink href="/play/checker" label="Speed Checker" />
             <FooterLink href="https://openstat.us" label="All Status Codes" />
           </div>
@@ -85,7 +85,7 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
 
   return (
     <Link
-      className="text-muted-foreground hover:text-foreground inline-flex items-center underline underline-offset-4 hover:no-underline"
+      className="inline-flex items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
       href={href}
       {...externalProps}
     >

@@ -8,7 +8,7 @@ import { Icons } from "../icons";
 
 export function CardContainer({ children }: { children: React.ReactNode }) {
   return (
-    <Shell className="flex flex-col gap-6 bg-gradient-to-br from-[hsl(var(--muted))] from-0% to-transparent to-20%">
+    <Shell className="flex flex-col gap-6 bg-gradient-to-br from-0% from-[hsl(var(--muted))] to-20% to-transparent">
       {children}
     </Shell>
   );
@@ -25,7 +25,7 @@ export function CardHeader({ children }: { children: React.ReactNode }) {
 export function CardIcon({ icon }: { icon: ValidIcon }) {
   const Icon = Icons[icon];
   return (
-    <div className="border-border rounded-full border p-2">
+    <div className="rounded-full border border-border p-2">
       <Icon className="h-5 w-5" />
     </div>
   );
@@ -33,14 +33,14 @@ export function CardIcon({ icon }: { icon: ValidIcon }) {
 
 export function CardTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-cal bg-gradient-to-tl from-[hsl(var(--muted))] from-0% to-[hsl(var(--foreground))] to-40% bg-clip-text text-center text-3xl text-transparent">
+    <h3 className="bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-center font-cal text-3xl text-transparent">
       {children}
     </h3>
   );
 }
 
 export function CardDescription({ children }: { children: React.ReactNode }) {
-  return <p className="text-muted-foreground text-center">{children}</p>;
+  return <p className="text-center text-muted-foreground">{children}</p>;
 }
 
 export function CardContent({
@@ -88,8 +88,8 @@ export function CardFeature(props: FeatureDescription) {
     <li>
       <p className="flex flex-col">
         <span>
-          <FeatureIcon className="text-foreground/80 mb-1 mr-1.5 inline-flex h-4 w-4" />
-          <span className="text-foreground font-medium">
+          <FeatureIcon className="mr-1.5 mb-1 inline-flex h-4 w-4 text-foreground/80" />
+          <span className="font-medium text-foreground">
             {props.catchline.replace(".", "")}
           </span>{" "}
         </span>

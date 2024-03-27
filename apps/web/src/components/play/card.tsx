@@ -37,7 +37,7 @@ export function Card({
   return (
     <Shell
       className={cn(
-        "hover:dark:border-card-foreground/30 group flex flex-col gap-3 hover:shadow",
+        "group flex flex-col gap-3 hover:dark:border-card-foreground/30 hover:shadow",
         shellClassName,
         className,
       )}
@@ -53,8 +53,8 @@ export function Card({
             Learn more
           </Link>
         </Button>
-        <div className="border-border bg-background rounded-full border p-2 transition-transform duration-200 group-hover:-rotate-12">
-          {Icon && <Icon className="text-muted-foreground h-5 w-5" />}
+        <div className="group-hover:-rotate-12 rounded-full border border-border bg-background p-2 transition-transform duration-200">
+          {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
         </div>
       </div>
     </Shell>

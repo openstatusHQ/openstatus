@@ -36,7 +36,7 @@ export default async function IncidentPage({
         </Button>
       </div>
       <div className="flex items-center gap-1">
-        <h3 className="text-xl font-semibold">{report.title}</h3>
+        <h3 className="font-semibold text-xl">{report.title}</h3>
         <CopyLinkButton />
       </div>
       <Summary report={report} monitors={affectedMonitors} />

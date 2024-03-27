@@ -32,7 +32,7 @@ export function SectionMonitor({ monitors, form }: Props) {
         name="monitors"
         render={() => (
           <FormItem>
-            <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
               {monitors?.map((item) => (
                 <FormField
                   key={item.id}
@@ -60,7 +60,7 @@ export function SectionMonitor({ monitors, form }: Props) {
                             className="flex w-full flex-col items-start gap-2"
                           >
                             <span>{item.name}</span>
-                            <span className="text-muted-foreground w-full truncate font-normal">
+                            <span className="w-full truncate font-normal text-muted-foreground">
                               {item.url}
                             </span>
                           </CheckboxLabel>

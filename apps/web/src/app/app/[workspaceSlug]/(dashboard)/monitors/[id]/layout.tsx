@@ -29,7 +29,7 @@ export default async function Layout({
       <Header
         title={monitor.name}
         description={
-          <div className="text-muted-foreground flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
             <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusDotWithTooltip

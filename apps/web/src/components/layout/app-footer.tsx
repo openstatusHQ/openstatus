@@ -6,7 +6,7 @@ export function AppFooter() {
   return (
     <footer className="w-full">
       <Shell className="flex items-center justify-between">
-        <div className="text-muted-foreground text-xs font-light">
+        <div className="font-light text-muted-foreground text-xs">
           All rights reserved &copy;
         </div>
         <div className="text-right text-xs">
@@ -16,7 +16,7 @@ export function AppFooter() {
           >
             Terms
           </Link>
-          <span className="text-muted-foreground/70 mx-1">&bull;</span>
+          <span className="mx-1 text-muted-foreground/70">&bull;</span>
           <Link
             href="/legal/privacy"
             className="text-foreground underline underline-offset-4 hover:no-underline"

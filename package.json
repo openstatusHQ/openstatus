@@ -7,19 +7,14 @@
     "format": "pnpm biome format . --write && pnpm biome check . --apply-unsafe ",
     "lint:turbo": "turbo run lint",
     "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
-    "format:prettier": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
     "tsc": "tsc",
     "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "1.6.2",
-    "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "@openstatus/eslint-config": "workspace:*",
     "@turbo/gen": "1.10.12",
     "eslint": "8.50.0",
-    "prettier": "3.0.3",
-    "prettier-plugin-tailwindcss": "0.5.4",
     "turbo": "1.10.12",
     "typescript": "5.4.2"
   },

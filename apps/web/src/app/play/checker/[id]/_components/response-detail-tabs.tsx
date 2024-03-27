@@ -35,8 +35,8 @@ export async function ResponseDetailTabs({
       <TabsContent value="message">
         {message ? (
           <div>
-            <pre className="bg-muted rounded-md p-4 text-sm">{message}</pre>
-            <p className="text-muted-foreground mt-4 text-center text-sm">
+            <pre className="rounded-md bg-muted p-4 text-sm">{message}</pre>
+            <p className="mt-4 text-center text-muted-foreground text-sm">
               Response Message
             </p>
           </div>

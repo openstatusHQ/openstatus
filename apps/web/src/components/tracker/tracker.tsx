@@ -67,7 +67,7 @@ export function Tracker({
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between text-sm">
         <div className="flex items-center gap-2">
-          <p className="text-foreground line-clamp-1 font-semibold">{name}</p>
+          <p className="line-clamp-1 font-semibold text-foreground">{name}</p>
           {description ? (
             <TooltipProvider>
               <Tooltip>
@@ -82,7 +82,7 @@ export function Tracker({
           ) : null}
         </div>
         {!isMissing ? (
-          <p className="text-muted-foreground shrink-0 font-light">{uptime}%</p>
+          <p className="shrink-0 font-light text-muted-foreground">{uptime}%</p>
         ) : null}
       </div>
       <div className="relative h-full w-full">
@@ -93,7 +93,7 @@ export function Tracker({
           })}
         </div>
       </div>
-      <div className="text-muted-foreground flex items-center justify-between text-xs font-light">
+      <div className="flex items-center justify-between font-light text-muted-foreground text-xs">
         <p>{tracker.days.length} days ago</p>
         <p>Today</p>
       </div>
@@ -148,11 +148,11 @@ export const Bar = ({
               <div className="grid flex-1 gap-1">
                 <div className="flex justify-between gap-8 text-sm">
                   <p className="font-semibold">{label}</p>
-                  <p className="text-muted-foreground flex-shrink-0">
+                  <p className="flex-shrink-0 text-muted-foreground">
                     {format(new Date(day), "MMM d")}
                   </p>
                 </div>
-                <div className="text-muted-foreground flex justify-between gap-8 text-xs font-light">
+                <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
                   <p>
                     <code className="text-green-500">{count}</code> requests
                   </p>
@@ -189,7 +189,7 @@ export function StatusReportList({ reports }: { reports: StatusReport[] }) {
           <Link
             // TODO: include setPrefixUrl for local development
             href={`./incidents/${report.id}`}
-            className="hover:text-foreground group flex items-center justify-between gap-2"
+            className="group flex items-center justify-between gap-2 hover:text-foreground"
           >
             <span className="truncate">{report.title}</span>
             <ChevronRight className="h-4 w-4" />

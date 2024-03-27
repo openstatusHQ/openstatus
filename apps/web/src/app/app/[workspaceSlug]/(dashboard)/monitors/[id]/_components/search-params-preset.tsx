@@ -48,7 +48,7 @@ export function SearchParamsPreset<T extends string>({
       onValueChange={onSelect}
       disabled={disabled}
     >
-      <SelectTrigger className="bg-background w-[150px] text-left">
+      <SelectTrigger className="w-[150px] bg-background text-left">
         <span className="flex items-center gap-2">
           {Icon ? <Icon className="h-4 w-4" /> : null}
           <SelectValue placeholder={placeholder} />

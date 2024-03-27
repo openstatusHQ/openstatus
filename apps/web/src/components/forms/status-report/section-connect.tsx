@@ -40,7 +40,7 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                   Select the pages that you want to refer the incident to.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-6 md:grid-cols-3 sm:grid-cols-2">
                 {pages?.map((item) => (
                   <FormField
                     key={item.id}
@@ -95,7 +95,7 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                   will be displayed on the status page they are attached to.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-6 md:grid-cols-3 sm:grid-cols-2">
                 {monitors?.map((item) => (
                   <FormField
                     key={item.id}

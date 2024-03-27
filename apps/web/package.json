@@ -80,7 +80,7 @@
     "zod": "3.22.2"
   },
   "devDependencies": {
-    "@headlessui/tailwindcss":"0.2.0",
+    "@headlessui/tailwindcss": "0.2.0",
     "@openstatus/eslint-config": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/luxon": "3.3.1",

@@ -10,9 +10,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   }
   return (
     <div className="grid min-h-screen grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-      <aside className="border-border col-span-1 flex w-full items-center justify-center border p-3 backdrop-blur-[2px] md:p-6">
+      <aside className="col-span-1 flex w-full items-center justify-center border border-border p-3 backdrop-blur-[2px] md:p-6">
         <div className="w-full max-w-lg text-left">
-          <h1 className="font-cal text-foreground mb-3 text-2xl">
+          <h1 className="mb-3 font-cal text-2xl text-foreground">
             Open Source Monitoring Service
           </h1>
           <p className="text-muted-foreground">

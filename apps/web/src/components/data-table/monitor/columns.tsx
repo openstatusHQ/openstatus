@@ -99,7 +99,7 @@ export const columns: ColumnDef<{
           addSuffix: true,
         });
         return (
-          <div className="text-muted-foreground flex max-w-[84px] sm:max-w-none">
+          <div className="flex max-w-[84px] text-muted-foreground sm:max-w-none">
             <span className="truncate">{distance}</span>
           </div>
         );
@@ -188,7 +188,7 @@ function DisplayNumber({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span className="font-mono">
       {new Intl.NumberFormat("us").format(value).toString()}
-      <span className="text-muted-foreground text-xs font-normal">
+      <span className="font-normal text-muted-foreground text-xs">
         {suffix}
       </span>
     </span>

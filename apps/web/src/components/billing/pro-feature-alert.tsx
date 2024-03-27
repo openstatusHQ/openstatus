@@ -22,7 +22,7 @@ export function ProFeatureAlert({ feature }: Props) {
         upgrade your plan. Go to{" "}
         <Link
           href={`/app/${params.workspaceSlug}/settings/billing`}
-          className="text-foreground inline-flex items-center font-medium underline underline-offset-4 hover:no-underline"
+          className="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
         >
           settings
         </Link>

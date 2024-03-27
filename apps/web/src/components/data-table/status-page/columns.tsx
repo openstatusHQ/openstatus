@@ -50,7 +50,7 @@ export const columns: ColumnDef<
       const amount = 3;
       return (
         <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {monitors.slice(0, amount).map(({ monitor: { name } }) => (
               <Badge key={name} variant="outline">
                 {name}
@@ -77,7 +77,7 @@ export const columns: ColumnDef<
         <Image
           src={row.getValue("icon")}
           alt=""
-          className="border-border rounded-sm border"
+          className="rounded-sm border border-border"
           width={20}
           height={20}
         />

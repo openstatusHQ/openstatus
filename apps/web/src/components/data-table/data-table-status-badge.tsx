@@ -22,7 +22,7 @@ export function DataTableStatusBadge({
       {statusCode || "Error"}
       <div
         className={cn(
-          "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
+          "ml-1 h-1.5 w-1.5 rounded-full bg-foreground",
           isOk ? "bg-green-500" : "bg-red-500",
         )}
       />

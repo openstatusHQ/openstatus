@@ -14,13 +14,13 @@ export async function Stats() {
           <h3 className="font-cal text-3xl">
             {numberFormatter(tbTotalStats?.[0].count || 0)}
           </h3>
-          <p className="text-muted-foreground font-light">Total pings</p>
+          <p className="font-light text-muted-foreground">Total pings</p>
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
             {numberFormatter(tbLastHourStats?.[0].count || 0)}
           </h3>
-          <p className="text-muted-foreground font-light">
+          <p className="font-light text-muted-foreground">
             Pings in the last hour
           </p>
         </div>
@@ -29,7 +29,7 @@ export async function Stats() {
             {/* {numberFormatter(totalActiveMonitors)} */}
             1500+
           </h3>
-          <p className="text-muted-foreground font-light">Active monitors</p>
+          <p className="font-light text-muted-foreground">Active monitors</p>
         </div>
       </div>
     </Shell>

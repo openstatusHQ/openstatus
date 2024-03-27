@@ -14,6 +14,7 @@ const searchParamsSchema = z.object({
 });
 
 export default async function EditPage({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   params,
   searchParams,
 }: {

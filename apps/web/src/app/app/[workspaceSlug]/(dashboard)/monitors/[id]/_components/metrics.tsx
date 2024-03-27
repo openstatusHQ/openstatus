@@ -41,7 +41,7 @@ export function Metrics({
 
   return (
     <div className="grid gap-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5 md:gap-6">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5 sm:grid-cols-4 md:gap-6">
         <MetricsCard
           title="uptime"
           value={uptime * 100}
@@ -73,7 +73,7 @@ export function Metrics({
         <MetricsCard title="total pings" value={current.count} suffix="#" />
       </div>
       <div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5 md:gap-6">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5 sm:grid-cols-4 md:gap-6">
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];
@@ -90,7 +90,7 @@ export function Metrics({
             );
           })}
         </div>
-        <p className="text-muted-foreground mt-4 text-xs">
+        <p className="mt-4 text-muted-foreground text-xs">
           Metrics calculated from the{" "}
           <span className="font-medium lowercase">
             {periodFormatter(period)}

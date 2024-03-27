@@ -49,7 +49,7 @@ export function ChangelogViewedButton() {
       >
         Changelog
         {show ? (
-          <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-green-500" />
+          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500" />
         ) : null}
       </Link>
     </Button>

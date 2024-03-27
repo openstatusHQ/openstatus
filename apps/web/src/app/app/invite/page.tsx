@@ -25,7 +25,7 @@ export default async function InvitePage({
 
   return (
     <div className="flex h-full flex-1 flex-col items-center justify-center gap-4">
-      <p className="text-muted-foreground text-lg">{message}</p>
+      <p className="text-lg text-muted-foreground">{message}</p>
       <Button>
         <Link href="/app">Dashboard</Link>
       </Button>
