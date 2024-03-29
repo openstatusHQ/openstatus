@@ -87,6 +87,9 @@ func main() {
 		}
 		defer requestClient.CloseIdleConnections()
 
+		// Might be a more efficient way to do it
+		assertionAsString := ""
+
 		var called int
 		op := func() error {
 			called++
@@ -99,6 +102,7 @@ func main() {
 			var isSuccessfull bool = true
 			if len(req.RawAssertions) > 0 {
 				for _, a := range req.RawAssertions {
+					assertionAsString = assertionAsString + string(a)
 					var assert request.Assertion
 					err = json.Unmarshal(a, &assert)
 					if err != nil {
@@ -132,6 +136,9 @@ func main() {
 				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
 			}
 
+			// it's in error if not successful
+			res.Error = !isSuccessfull
+
 			if !isSuccessfull && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
@@ -154,6 +161,7 @@ func main() {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
+
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -170,6 +178,8 @@ func main() {
 				Timestamp:     req.CronTimestamp,
 				MonitorID:     req.MonitorID,
 				WorkspaceID:   req.WorkspaceID,
+				Error:         true,
+				Assertions:    assertionAsString,
 			}); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -191,7 +201,6 @@ func main() {
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
-		return
 	})
 
 	router.POST("/ping/:region", func(c *gin.Context) {
