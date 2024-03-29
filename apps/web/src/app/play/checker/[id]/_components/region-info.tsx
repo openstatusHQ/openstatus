@@ -1,10 +1,10 @@
+import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
 import {
   latencyFormatter,
   regionFormatter,
   timestampFormatter,
 } from "../utils";
 import type { RegionChecker } from "../utils";
-import { StatusBadge } from "./status-badge";
 
 export function RegionInfo({
   check,
@@ -39,7 +39,7 @@ export function RegionInfo({
         <p className="text-muted-foreground">Status:</p>
       </div>
       <div className="col-span-3 sm:col-span-6">
-        <StatusBadge statusCode={check.status} />
+        <StatusCodeBadge statusCode={check.status} />
       </div>
       {error ? (
         <>

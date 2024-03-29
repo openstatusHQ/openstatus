@@ -20,9 +20,13 @@ export const columns: ColumnDef<Ping>[] = [
   {
     id: "computedValue",
     cell: ({ row }) => {
-      // TODO: get computed value from tb - or check if error is present
-      // if (row.original.computedValue === false) return <div className="h-2 w-2 rounded-full bg-pink-500" />;
-      return <div className="h-2 w-2 rounded-full bg-green-500" />;
+      // TODO: updated based on our strategy
+      if (!row.original.statusCode)
+        return <div className="h-2 w-2 rounded-full bg-pink-500" />;
+      if (row.original.statusCode >= 200 && row.original.statusCode < 300) {
+        return <div className="h-2 w-2 rounded-full bg-green-500" />;
+      }
+      return <div className="h-2 w-2 rounded-full bg-pink-500" />;
     },
   },
   {
