@@ -1,7 +1,7 @@
 import { JSONPath } from "jsonpath-plus";
 import { z } from "zod";
 
-import { Assertion, AssertionRequest, AssertionResult } from "./types";
+import type { Assertion, AssertionRequest, AssertionResult } from "./types";
 
 export const stringCompare = z.enum([
   "contains",

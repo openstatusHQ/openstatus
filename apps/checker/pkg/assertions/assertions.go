@@ -1,6 +1,12 @@
 package assertions
 
-import "github.com/openstatushq/openstatus/apps/checker/request"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/openstatushq/openstatus/apps/checker/request"
+)
 
 type BodyString struct {
 	AssertionType request.AssertionType    `json:"type"`
@@ -16,9 +22,62 @@ type StatusTarget struct {
 
 type HeaderTarget struct {
 	AssertionType request.AssertionType    `json:"type"`
-	Comparator    request.NumberComparator `json:"compare"`
+	Comparator    request.StringComparator `json:"compare"`
 	Target        string                   `json:"target"`
 	Key           string                   `json:"key"`
+}
+
+type StringTargetType struct {
+	Comparator request.StringComparator
+	Target     string
+}
+
+func (target StringTargetType) StringEvaluate(s string) bool {
+	switch target.Comparator {
+	case request.StringContains:
+		return strings.Contains(target.Target, s)
+	case request.StringNotContains:
+		return !strings.Contains(target.Target, s)
+	case request.StringEmpty:
+		return s == ""
+	case request.StringNotEmpty:
+		return s != ""
+	case request.StringEquals:
+		return s == target.Target
+	case request.StringNotEquals:
+		return s != target.Target
+	case request.StringGreaterThan:
+		return s > target.Target
+	case request.StringGreaterThanEqual:
+		return s >= target.Target
+	case request.StringLowerThan:
+		return s < target.Target
+	case request.StringLowerThanEqual:
+		return s <= target.Target
+	}
+
+	return false
+}
+
+func (target HeaderTarget) HeaderEvaluate(s string) bool {
+
+	fmt.Println(s)
+
+	headers := map[string]interface{}{}
+
+	if err := json.Unmarshal([]byte(s), &headers); err != nil {
+		panic(err)
+	}
+	v, found := headers[target.Key]
+	if !found {
+		return false
+	}
+
+	t := StringTargetType{Comparator: target.Comparator, Target: target.Target}
+	// convert all headers to array
+	str := fmt.Sprintf("%v", v)
+
+	return t.StringEvaluate(str)
 }
 
 func (target StatusTarget) StatusEvaluate(value int64) bool {
@@ -50,7 +109,7 @@ func (target StatusTarget) StatusEvaluate(value int64) bool {
 			return false
 		}
 	default:
-
+		fmt.Println("something strange ", target)
 	}
 	return true
 }

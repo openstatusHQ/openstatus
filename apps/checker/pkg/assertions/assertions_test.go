@@ -83,3 +83,37 @@ func TestIntTarget_IntEvaluate(t *testing.T) {
 		})
 	}
 }
+
+func TestHeaderTarget_HeaderEvaluate(t *testing.T) {
+	type fields struct {
+		AssertionType request.AssertionType
+		Comparator    request.StringComparator
+		Target        string
+		Key           string
+	}
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{name: "Header 1", fields: fields{Comparator: request.StringEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","Vary":"Accept-Encoding"}`}, want: false},
+		{name: "Header 1", fields: fields{Comparator: request.StringEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","headers1":"Accept-Encoding"}`}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			target := HeaderTarget{
+				AssertionType: tt.fields.AssertionType,
+				Comparator:    tt.fields.Comparator,
+				Target:        tt.fields.Target,
+				Key:           tt.fields.Key,
+			}
+			if got := target.HeaderEvaluate(tt.args.s); got != tt.want {
+				t.Errorf("HeaderTarget.HeaderEvaluate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

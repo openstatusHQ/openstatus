@@ -88,7 +88,12 @@ func main() {
 		defer requestClient.CloseIdleConnections()
 
 		// Might be a more efficient way to do it
-		assertionAsString := ""
+		var i interface{} = req.RawAssertions
+		jsonBytes, _ := json.Marshal(i)
+		assertionAsString := string(jsonBytes)
+		if assertionAsString == "null" {
+			assertionAsString = ""
+		}
 
 		var called int
 		op := func() error {
@@ -102,7 +107,6 @@ func main() {
 			var isSuccessfull bool = true
 			if len(req.RawAssertions) > 0 {
 				for _, a := range req.RawAssertions {
-					assertionAsString = assertionAsString + string(a)
 					var assert request.Assertion
 					err = json.Unmarshal(a, &assert)
 					if err != nil {
@@ -112,6 +116,12 @@ func main() {
 					}
 					switch assert.AssertionType {
 					case request.AssertionHeaders:
+						var target assertions.HeaderTarget
+						if err := json.Unmarshal(a, &target); err != nil {
+							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
+						}
+						isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
+
 						fmt.Println("assertion type", assert.AssertionType)
 					case request.AssertionTextBody:
 						fmt.Println("assertion type", assert.AssertionType)
@@ -143,6 +153,7 @@ func main() {
 				res.Error = 1
 			}
 
+			res.Assertions = assertionAsString
 			if !isSuccessfull && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{

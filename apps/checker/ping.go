@@ -31,7 +31,7 @@ type PingData struct {
 	Timing        string `json:"timing,omitempty"`
 	Headers       string `json:"headers,omitempty"`
 	Error         uint8  `json:"error"`
-	Assertions    string `json:"assertions,omitempty"`
+	Assertions    string `json:"assertions"`
 }
 
 type Timing struct {
