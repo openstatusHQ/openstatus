@@ -106,18 +106,19 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
                 onClick={onClick}
                 disabled={isPending}
                 className="h-full flex-1 rounded-l-none focus:ring-0"
+                variant="secondary"
               >
                 {isPending ? (
-                  <LoadingAnimation />
+                  <LoadingAnimation variant="inverse" />
                 ) : (
                   <>
-                    Ping <Send className="ml-2 h-4 w-4" />
+                    Test <Send className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Send a request to your endpoint</p>
+              <p>Ping your endpoint</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

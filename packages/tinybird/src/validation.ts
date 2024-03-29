@@ -40,12 +40,17 @@ export const tbBuildResponseList = z.object({
   workspaceId: z.string(),
   monitorId: z.string(),
   timestamp: z.number().int(),
+  error: z
+    .number()
+    .default(0)
+    .transform((val) => val !== 0),
   statusCode: z.number().int().nullable().default(null),
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
   region: z.enum(flyRegions),
   message: z.string().nullable().optional(),
+  assertions: z.string().nullable().optional(),
 });
 
 /**

@@ -11,6 +11,8 @@ const MIN_CACHE = isProd ? 60 : DEV_CACHE; // 60s
 const DEFAULT_CACHE = isProd ? 120 : DEV_CACHE; // 2min
 const MAX_CACHE = 86_400; // 1d
 
+const VERSION = "v1";
+
 export const latencySchema = z.object({
   p50Latency: z.number().int().nullable(),
   p75Latency: z.number().int().nullable(),
@@ -50,7 +52,7 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_chart_get__v0`,
+          pipe: `__ttl_${period}_chart_get__${VERSION}`,
           parameters,
           data: z
             .object({
@@ -78,7 +80,7 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_metrics_get__v0`,
+          pipe: `__ttl_${period}_metrics_get__${VERSION}`,
           parameters,
           data: z
             .object({
@@ -108,7 +110,7 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_metrics_get_by_region__v0`,
+          pipe: `__ttl_${period}_metrics_get_by_region__${VERSION}`,
           parameters,
           data: z
             .object({
@@ -141,7 +143,7 @@ export class OSTinybird {
     ) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_count_get__v0`,
+          pipe: `__ttl_${period}_count_get__${VERSION}`,
           parameters,
           data: z.object({
             day: z.string().transform((val) => {
@@ -173,17 +175,22 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_list_get__v0`,
+          pipe: `__ttl_${period}_list_get__${VERSION}`,
           parameters,
           data: z.object({
             latency: z.number().int(), // in ms
             monitorId: z.string(),
             region: z.enum(flyRegions),
+            error: z
+              .number()
+              .default(0)
+              .transform((val) => val !== 0),
             statusCode: z.number().int().nullable().default(null),
             timestamp: z.number().int(),
             url: z.string().url(),
             workspaceId: z.string(),
             cronTimestamp: z.number().int().nullable().default(Date.now()),
+            assertions: z.string().nullable().optional(),
           }),
           opts: {
             revalidate: DEFAULT_CACHE,
@@ -204,7 +211,7 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_1h_last_timestamp_${type}_get__v0`,
+          pipe: `__ttl_1h_last_timestamp_${type}_get__${VERSION}`,
           parameters,
           data: z.object({ cronTimestamp: z.number().int() }),
           opts: {
@@ -229,13 +236,17 @@ export class OSTinybird {
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_all_details_get__v0`, // TODO: make it also a bit dynamic to avoid query through too much data
+          pipe: `__ttl_${period}_all_details_get__${VERSION}`,
           parameters,
           data: z.object({
             latency: z.number().int(), // in ms
             statusCode: z.number().int().nullable().default(null),
             monitorId: z.string().default(""),
             url: z.string().url().optional(),
+            error: z
+              .number()
+              .default(0)
+              .transform((val) => val !== 0),
             region: z.enum(flyRegions),
             cronTimestamp: z.number().int().optional(),
             message: z.string().nullable().optional(),
@@ -261,6 +272,7 @@ export class OSTinybird {
                 if (value.success) return value.data;
                 return null;
               }),
+            assertions: z.string().nullable().optional(), // REMINDER: maybe include Assertions.serialize here
           }),
           opts: {
             revalidate: MAX_CACHE,

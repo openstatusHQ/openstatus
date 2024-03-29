@@ -1,4 +1,4 @@
-VERSION 0
+VERSION 1
 
 DESCRIPTION >
 	TODO: descripe what it is for!
@@ -12,14 +12,14 @@ SQL >
         monitorId,
         url,
         countState() AS count,
-        countState(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
-    FROM __ttl_45d_mv__v0
+        countState(if(error = 0, 1, NULL)) AS ok
+    FROM __ttl_45d_mv__v1
     GROUP BY
         time,
         monitorId,
         url
 
 TYPE materialized
-DATASOURCE __ttl_45d_count_mv__v0
+DATASOURCE __ttl_45d_count_mv__v1
 
 

@@ -30,6 +30,7 @@ import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
+import { RequestTestButton } from "./request-test-button";
 import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
 import { SectionNotifications } from "./section-notifications";
@@ -195,7 +196,14 @@ export function MonitorForm({
             <TabsList>
               <TabsTrigger value="request">Request</TabsTrigger>
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
-              <TabsTrigger value="assertions">Assertions</TabsTrigger>
+              <TabsTrigger value="assertions">
+                Assertions{" "}
+                {_assertions.length ? (
+                  <Badge variant="secondary" className="ml-1">
+                    {_assertions.length}
+                  </Badge>
+                ) : null}
+              </TabsTrigger>
               <TabsTrigger value="notifications">
                 Notifications{" "}
                 {defaultValues?.notifications?.length ? (
@@ -237,11 +245,14 @@ export function MonitorForm({
               </TabsContent>
             ) : null}
           </Tabs>
-          <SaveButton
-            isPending={isPending}
-            isDirty={form.formState.isDirty}
-            onSubmit={form.handleSubmit(onSubmit)}
-          />
+          <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
+            <RequestTestButton {...{ form, pingEndpoint }} />
+            <SaveButton
+              isPending={isPending}
+              isDirty={form.formState.isDirty}
+              onSubmit={form.handleSubmit(onSubmit)}
+            />
+          </div>
         </form>
       </Form>
       <FailedPingAlertConfirmation

@@ -1,6 +1,4 @@
-VERSION 0
-
-TOKEN "__ttl_3d_chart_get_endpoint_read_5551" READ
+VERSION 1
 
 NODE __ttl_3d_chart_get_0
 SQL >

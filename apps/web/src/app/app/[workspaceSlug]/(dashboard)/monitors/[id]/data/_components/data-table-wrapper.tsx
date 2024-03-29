@@ -6,6 +6,7 @@
 import { Suspense, use } from "react";
 import type { Row } from "@tanstack/react-table";
 
+import * as assertions from "@openstatus/assertions";
 import type { OSTinybird } from "@openstatus/tinybird";
 
 import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
@@ -28,6 +29,8 @@ type Monitor = {
   timestamp: number;
   workspaceId: string;
   cronTimestamp: number | null;
+  error: boolean;
+  assertions?: string | null;
 };
 
 export function DataTableWrapper({ data }: { data: Monitor[] }) {
@@ -85,6 +88,7 @@ function Details({ row }: { row: Row<Monitor> }) {
         timing={first.timing}
         headers={first.headers}
         message={first.message}
+        assertions={assertions.deserialize(first.assertions || "[]")}
       />
     </div>
   );

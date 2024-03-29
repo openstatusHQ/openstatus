@@ -9,11 +9,7 @@ import {
   monitorMethods,
   monitorMethodsSchema,
 } from "@openstatus/db/src/schema";
-import type {
-  InsertMonitor,
-  MonitorFlyRegion,
-  WorkspacePlan,
-} from "@openstatus/db/src/schema";
+import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
@@ -35,21 +31,17 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { SectionHeader } from "../shared/section-header";
 import { RequestTestButton } from "./request-test-button";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   plan: WorkspacePlan;
-  pingEndpoint(
-    region?: MonitorFlyRegion,
-  ): Promise<{ data: RegionChecker; error?: string }>;
 }
 
 // TODO: add Dialog with response informations when pingEndpoint!
 
-export function SectionRequests({ form, pingEndpoint }: Props) {
+export function SectionRequests({ form }: Props) {
   const { fields, append, remove } = useFieldArray({
     name: "headers",
     control: form.control,
@@ -85,12 +77,12 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
         title="HTTP Request Settings"
         description="Create your HTTP. Add custom headers, payload and test your endpoint before submitting."
       />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+      <div className="grid gap-4 sm:grid-cols-7">
         <FormField
           control={form.control}
           name="method"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="sm:col-span-1">
               <FormLabel>Method</FormLabel>
               <Select
                 onValueChange={(value) => {
@@ -100,7 +92,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
                 defaultValue={field.value}
               >
                 <FormControl>
-                  <SelectTrigger className="sm:w-[120px]">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
@@ -120,7 +112,7 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
           control={form.control}
           name="url"
           render={({ field }) => (
-            <FormItem className="w-full">
+            <FormItem className="sm:col-span-5">
               <FormLabel>URL</FormLabel>
               <FormControl>
                 {/* <InputWithAddons
@@ -138,7 +130,6 @@ export function SectionRequests({ form, pingEndpoint }: Props) {
             </FormItem>
           )}
         />
-        <RequestTestButton {...{ form, pingEndpoint }} />
       </div>
       <div className="space-y-2 sm:col-span-full">
         <FormLabel>Request Header</FormLabel>

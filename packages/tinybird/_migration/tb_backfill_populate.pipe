@@ -1,0 +1,21 @@
+NODE mat_node
+SQL >
+
+    SELECT
+        latency,
+        monitorId,
+        toLowCardinality(region) region,
+        statusCode,
+        if(statusCode >= 200 AND statusCode < 300, toInt8(0), toInt8(1)) AS error,
+        timestamp,
+        url,
+        workspaceId,
+        cronTimestamp,
+        message,
+        timing,
+        headers,
+    FROM ping_response__v7
+    WHERE fromUnixTimestamp64Milli(cronTimestamp) <= '2024-03-29 13:16:00.000'
+
+TYPE materialized
+DATASOURCE ping_response__v8

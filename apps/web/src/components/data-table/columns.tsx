@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Check, X } from "lucide-react";
 import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
@@ -18,15 +19,19 @@ import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
-    id: "computedValue",
+    id: "state",
     cell: ({ row }) => {
-      // TODO: updated based on our strategy
-      if (!row.original.statusCode)
-        return <div className="h-2 w-2 rounded-full bg-pink-500" />;
-      if (row.original.statusCode >= 200 && row.original.statusCode < 300) {
-        return <div className="h-2 w-2 rounded-full bg-green-500" />;
-      }
-      return <div className="h-2 w-2 rounded-full bg-pink-500" />;
+      if (row.original.error)
+        return (
+          <div className="max-w-max rounded-full bg-rose-500 p-1">
+            <X className="text-background h-3 w-3" />
+          </div>
+        );
+      return (
+        <div className="max-w-max rounded-full bg-green-500 p-1">
+          <Check className="text-background h-3 w-3" />
+        </div>
+      );
     },
   },
   {

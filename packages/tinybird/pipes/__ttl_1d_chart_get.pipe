@@ -1,4 +1,4 @@
-VERSION 0
+VERSION 1
 
 TOKEN "__ttl_1d_chart_get_endpoint_read_4815" READ
 
@@ -18,7 +18,7 @@ SQL >
         round(quantile(0.9)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM __ttl_1d_mv__v0
+    FROM __ttl_1d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
         {% if defined(url) %} AND url = {{ String(url) }} {% end %}
