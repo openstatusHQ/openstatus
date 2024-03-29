@@ -137,7 +137,11 @@ func main() {
 			}
 
 			// it's in error if not successful
-			res.Error = !isSuccessfull
+			if isSuccessfull {
+				res.Error = 0
+			} else {
+				res.Error = 1
+			}
 
 			if !isSuccessfull && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
@@ -178,7 +182,7 @@ func main() {
 				Timestamp:     req.CronTimestamp,
 				MonitorID:     req.MonitorID,
 				WorkspaceID:   req.WorkspaceID,
-				Error:         true,
+				Error:         1,
 				Assertions:    assertionAsString,
 			}); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
@@ -255,7 +259,6 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, res)
-		return
 	})
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),
