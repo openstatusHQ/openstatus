@@ -175,11 +175,15 @@ export function MonitorForm({
 
       return { data, error: undefined };
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return {
+          error: `Abort error: request takes more then ${formatDuration(
+            ABORT_TIMEOUT,
+          )}.`,
+        };
+      }
       return {
-        data: undefined,
-        error: `Abort error: request takes more then ${formatDuration(
-          ABORT_TIMEOUT,
-        )}.`,
+        error: "Something went wrong. Please try again.",
       };
     }
   };
