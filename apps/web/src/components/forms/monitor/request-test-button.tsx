@@ -35,7 +35,7 @@ interface Props {
   form: UseFormReturn<InsertMonitor>;
   pingEndpoint(
     region?: MonitorFlyRegion,
-  ): Promise<{ data: RegionChecker; error?: string }>;
+  ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
 export function RequestTestButton({ form, pingEndpoint }: Props) {
@@ -58,7 +58,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
     startTransition(async () => {
       try {
         const { data, error } = await pingEndpoint(value);
-        setCheck({ data, error });
+        if (data) setCheck({ data, error });
         const isOk = !error;
         if (isOk) {
           toastAction("test-success");

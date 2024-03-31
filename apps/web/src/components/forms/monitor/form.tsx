@@ -26,6 +26,7 @@ import {
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import { toast, toastAction } from "@/lib/toast";
+import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
@@ -47,6 +48,8 @@ interface Props {
   pages?: Page[];
   nextUrl?: string;
 }
+
+const ABORT_TIMEOUT = 7_000; // in ms
 
 export function MonitorForm({
   defaultSection,
@@ -127,48 +130,58 @@ export function MonitorForm({
     const { url, body, method, headers, statusAssertions, headerAssertions } =
       form.getValues();
 
-    const res = await fetch(`/api/checker/test`, {
-      method: "POST",
-      headers: new Headers({
-        "Content-Type": "application/json",
-      }),
-      body: JSON.stringify({ url, body, method, headers, region }),
-    });
+    try {
+      const res = await fetch(`/api/checker/test`, {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ url, body, method, headers, region }),
+        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+      });
 
-    const as = assertions.deserialize(
-      JSON.stringify([
-        ...(statusAssertions || []),
-        ...(headerAssertions || []),
-      ]),
-    );
+      const as = assertions.deserialize(
+        JSON.stringify([
+          ...(statusAssertions || []),
+          ...(headerAssertions || []),
+        ]),
+      );
 
-    const data = (await res.json()) as RegionChecker;
+      const data = (await res.json()) as RegionChecker;
 
-    const _headers: Record<string, string> = {};
-    res.headers.forEach((value, key) => (_headers[key] = value));
+      const _headers: Record<string, string> = {};
+      res.headers.forEach((value, key) => (_headers[key] = value));
 
-    if (as.length > 0) {
-      for (const a of as) {
-        const { success, message } = a.assert({
-          body: "", // data.body ?? "",
-          header: data.headers ?? {},
-          status: data.status,
-        });
-        if (!success) {
-          return { data, error: `Assertion error: ${message}` };
+      if (as.length > 0) {
+        for (const a of as) {
+          const { success, message } = a.assert({
+            body: "", // data.body ?? "",
+            header: data.headers ?? {},
+            status: data.status,
+          });
+          if (!success) {
+            return { data, error: `Assertion error: ${message}` };
+          }
+        }
+      } else {
+        // default assertion if no assertions are provided
+        if (res.status < 200 || res.status >= 300) {
+          return {
+            data,
+            error: `Assertion error: The response status was not 2XX: ${data.status}.`,
+          };
         }
       }
-    } else {
-      // default assertion if no assertions are provided
-      if (res.status < 200 || res.status >= 300) {
-        return {
-          data,
-          error: `Default assertion error: The response status was not 2XX: ${data.status}.`,
-        };
-      }
-    }
 
-    return { data, error: undefined };
+      return { data, error: undefined };
+    } catch (error) {
+      return {
+        data: undefined,
+        error: `Abort error: request takes more then ${formatDuration(
+          ABORT_TIMEOUT,
+        )}.`,
+      };
+    }
   };
 
   function onValueChange(value: string) {

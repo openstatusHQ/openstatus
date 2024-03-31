@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 
+import { formatDuration } from "@/lib/utils";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
@@ -26,21 +27,6 @@ interface Props {
 // FIXME: replace with enum
 // TODO: can be also replaced by a custom number input with max value (+ validation)
 const limits = [100, 250, 500, 1_000, 2_000, 5_000, 10_000, 20_000, 40_000];
-
-function formatDuration(ms: number) {
-  if (ms < 0) ms = -ms;
-  const time = {
-    day: Math.floor(ms / 86400000),
-    hour: Math.floor(ms / 3600000) % 24,
-    min: Math.floor(ms / 60000) % 60,
-    sec: Math.floor(ms / 1000) % 60,
-    ms: Math.floor(ms) % 1000,
-  };
-  return Object.entries(time)
-    .filter((val) => val[1] !== 0)
-    .map(([key, val]) => `${val} ${key}${val !== 1 && key !== "ms" ? "s" : ""}`)
-    .join(", ");
-}
 
 export function SectionLimits({ form }: Props) {
   return (
