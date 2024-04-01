@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
 
 export const payloadSchema = z.object({
@@ -11,7 +12,7 @@ export const payloadSchema = z.object({
   url: z.string(),
   cronTimestamp: z.number(),
   status: z.enum(monitorStatus),
-  assertions: z.string().nullable(),
+  assertions: z.array(base).nullable(),
 });
 
 export type Payload = z.infer<typeof payloadSchema>;
