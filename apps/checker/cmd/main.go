@@ -263,14 +263,22 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-
-		res, err := checker.SinglePing(c.Request.Context(), requestClient, req)
-		if err != nil {
+		var res checker.Response
+		op := func() error {
+			r, err := checker.SinglePing(c.Request.Context(), requestClient, req)
+			if err != nil {
+				return fmt.Errorf("unable to ping: %w", err)
+			}
+			res = r
+			return nil
+		}
+		if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
 		c.JSON(http.StatusOK, res)
 	})
+
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),
 		Handler: router,
