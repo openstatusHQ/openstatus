@@ -61,8 +61,6 @@ func (target StringTargetType) StringEvaluate(s string) bool {
 
 func (target HeaderTarget) HeaderEvaluate(s string) bool {
 
-	fmt.Println(s)
-
 	headers := map[string]interface{}{}
 
 	if err := json.Unmarshal([]byte(s), &headers); err != nil {

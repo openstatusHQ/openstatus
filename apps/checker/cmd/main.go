@@ -115,14 +115,13 @@ func main() {
 
 					}
 					switch assert.AssertionType {
-					case request.AssertionHeaders:
+					case request.AssertionHeader:
 						var target assertions.HeaderTarget
 						if err := json.Unmarshal(a, &target); err != nil {
 							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 						}
 						isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
 
-						fmt.Println("assertion type", assert.AssertionType)
 					case request.AssertionTextBody:
 						fmt.Println("assertion type", assert.AssertionType)
 					case request.AssertionStatus:

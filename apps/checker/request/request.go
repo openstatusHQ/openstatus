@@ -5,7 +5,7 @@ import "encoding/json"
 type AssertionType string
 
 const (
-	AssertionHeaders  AssertionType = "headers"
+	AssertionHeader   AssertionType = "header"
 	AssertionTextBody AssertionType = "textBody"
 	AssertionStatus   AssertionType = "status"
 	AssertionJsonBody AssertionType = "jsonBody"
