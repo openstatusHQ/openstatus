@@ -133,6 +133,7 @@ const createCronTask = async ({
     body: row.body,
     headers: row.headers,
     status: status,
+    assertions: row.assertions,
   };
 
   const newTask: google.cloud.tasks.v2beta3.ITask = {

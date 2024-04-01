@@ -2,6 +2,7 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
+import { Check, X } from "lucide-react";
 import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
@@ -17,6 +18,22 @@ import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
+  {
+    id: "state",
+    cell: ({ row }) => {
+      if (row.original.error)
+        return (
+          <div className="max-w-max rounded-full bg-rose-500 p-1">
+            <X className="text-background h-3 w-3" />
+          </div>
+        );
+      return (
+        <div className="max-w-max rounded-full bg-green-500 p-1">
+          <Check className="text-background h-3 w-3" />
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "cronTimestamp",
     header: ({ column }) => (

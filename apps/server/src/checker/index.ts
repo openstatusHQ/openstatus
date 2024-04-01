@@ -4,7 +4,10 @@ import { z } from "zod";
 import { and, db, eq, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
 import { flyRegions } from "@openstatus/db/src/schema/monitors/constants";
-import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
+import {
+  monitorStatusSchema,
+  selectMonitorSchema,
+} from "@openstatus/db/src/schema/monitors/validation";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
@@ -28,14 +31,16 @@ checkerRoute.post("/updateStatus", async (c) => {
     statusCode: z.number().optional(),
     region: z.enum(flyRegions),
     cronTimestamp: z.number(),
-    // status: z.enum(["active", "error"]),
+    status: monitorStatusSchema,
   });
 
   const result = payloadSchema.safeParse(json);
+
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
   }
-  const { monitorId, message, region, statusCode, cronTimestamp } = result.data;
+  const { monitorId, message, region, statusCode, cronTimestamp, status } =
+    result.data;
 
   console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
@@ -59,18 +64,13 @@ checkerRoute.post("/updateStatus", async (c) => {
     .get();
 
   // if we are in error
-  if (!statusCode || statusCode < 200 || statusCode > 300) {
-    // create incident
+  if (status === "error") {
     // trigger alerting
     await checkerAudit.publishAuditLog({
       id: `monitor:${monitorId}`,
       action: "monitor.failed",
       targets: [{ id: monitorId, type: "monitor" }],
-      metadata: {
-        region: region,
-        statusCode: statusCode,
-        message,
-      },
+      metadata: { region, statusCode, message },
     });
     // We upsert the status of the  monitor
     await upsertMonitorStatus({
@@ -114,6 +114,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             ),
           )
           .get();
+
         if (incident === undefined) {
           await db
             .insert(incidentTable)
@@ -135,7 +136,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     }
   }
   // When the status is ok
-  if (statusCode && statusCode >= 200 && statusCode < 300) {
+  if (status === "active") {
     await upsertMonitorStatus({
       monitorId: monitorId,
       status: "active",

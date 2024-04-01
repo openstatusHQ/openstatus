@@ -16,6 +16,7 @@
     "@hookform/resolvers": "3.3.1",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/api": "workspace:*",
+    "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",

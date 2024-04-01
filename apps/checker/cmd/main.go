@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
+	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/logger"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -85,6 +87,14 @@ func main() {
 		}
 		defer requestClient.CloseIdleConnections()
 
+		// Might be a more efficient way to do it
+		var i interface{} = req.RawAssertions
+		jsonBytes, _ := json.Marshal(i)
+		assertionAsString := string(jsonBytes)
+		if assertionAsString == "null" {
+			assertionAsString = ""
+		}
+
 		var called int
 		op := func() error {
 			called++
@@ -93,12 +103,58 @@ func main() {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
 			statusCode := statusCode(res.StatusCode)
+
+			var isSuccessfull bool = true
+			if len(req.RawAssertions) > 0 {
+				for _, a := range req.RawAssertions {
+					var assert request.Assertion
+					err = json.Unmarshal(a, &assert)
+					if err != nil {
+						// handle error
+						return fmt.Errorf("unable to unmarshal assertion: %w", err)
+
+					}
+					switch assert.AssertionType {
+					case request.AssertionHeaders:
+						var target assertions.HeaderTarget
+						if err := json.Unmarshal(a, &target); err != nil {
+							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
+						}
+						isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
+
+						fmt.Println("assertion type", assert.AssertionType)
+					case request.AssertionTextBody:
+						fmt.Println("assertion type", assert.AssertionType)
+					case request.AssertionStatus:
+						var target assertions.StatusTarget
+						if err := json.Unmarshal(a, &target); err != nil {
+							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
+						}
+						isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.StatusCode))
+					case request.AssertionJsonBody:
+						fmt.Println("assertion type", assert.AssertionType)
+					default:
+						fmt.Println("⚠️ Not Handled assertion type", assert.AssertionType)
+					}
+				}
+			} else {
+				isSuccessfull = statusCode.IsSuccessful()
+			}
+
 			// let's retry at least once if the status code is not successful.
-			if !statusCode.IsSuccessful() && called < 2 {
+			if !isSuccessfull && called < 2 {
 				return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
 			}
 
-			if !statusCode.IsSuccessful() && req.Status == "active" {
+			// it's in error if not successful
+			if isSuccessfull {
+				res.Error = 0
+			} else {
+				res.Error = 1
+			}
+
+			res.Assertions = assertionAsString
+			if !isSuccessfull && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
@@ -110,7 +166,7 @@ func main() {
 				})
 			}
 
-			if req.Status == "error" && statusCode.IsSuccessful() {
+			if req.Status == "error" && isSuccessfull {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
@@ -120,6 +176,7 @@ func main() {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
+
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -136,6 +193,8 @@ func main() {
 				Timestamp:     req.CronTimestamp,
 				MonitorID:     req.MonitorID,
 				WorkspaceID:   req.WorkspaceID,
+				Error:         1,
+				Assertions:    assertionAsString,
 			}); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -157,7 +216,6 @@ func main() {
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
-		return
 	})
 
 	router.POST("/ping/:region", func(c *gin.Context) {
@@ -205,15 +263,22 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-
-		res, err := checker.SinglePing(c.Request.Context(), requestClient, req)
-		if err != nil {
+		var res checker.Response
+		op := func() error {
+			r, err := checker.SinglePing(c.Request.Context(), requestClient, req)
+			if err != nil {
+				return fmt.Errorf("unable to ping: %w", err)
+			}
+			res = r
+			return nil
+		}
+		if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
 		c.JSON(http.StatusOK, res)
-		return
 	})
+
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),
 		Handler: router,

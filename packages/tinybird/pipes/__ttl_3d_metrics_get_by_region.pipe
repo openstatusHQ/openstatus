@@ -1,6 +1,4 @@
-VERSION 0
-
-TOKEN "__ttl_3d_metrics_get_by_region__v0_endpoint_read_3349" READ
+VERSION 1
 
 NODE __ttl_3d_metrics_get_by_region_0
 SQL >
@@ -14,7 +12,7 @@ SQL >
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency,
         count() as count,
-        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        count(if(error = 0, 1, NULL)) AS ok,
         max(cronTimestamp) AS lastTimestamp
     FROM __ttl_3d_mv__v0
     WHERE

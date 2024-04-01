@@ -1,0 +1,7 @@
+{
+  "extends": "@openstatus/tsconfig/base.json",
+  "compilerOptions": {
+    "lib": ["es2015", "dom"]
+  },
+  "include": ["src", "*.ts"]
+}

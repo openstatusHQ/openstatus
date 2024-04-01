@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
+import * as assertions from "@openstatus/assertions";
 import type {
   InsertMonitor,
   MonitorFlyRegion,
@@ -24,11 +25,14 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
+import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
+import { RequestTestButton } from "./request-test-button";
+import { SectionAssertions } from "./section-assertions";
 import { SectionDanger } from "./section-danger";
 import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
@@ -45,6 +49,8 @@ interface Props {
   nextUrl?: string;
 }
 
+const ABORT_TIMEOUT = 7_000; // in ms
+
 export function MonitorForm({
   defaultSection,
   defaultValues,
@@ -54,6 +60,9 @@ export function MonitorForm({
   tags,
   nextUrl,
 }: Props) {
+  const _assertions = defaultValues?.assertions
+    ? assertions.deserialize(defaultValues?.assertions).map((a) => a.schema)
+    : [];
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
     defaultValues: {
@@ -73,6 +82,8 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
+      statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
   });
   const router = useRouter();
@@ -102,12 +113,12 @@ export function MonitorForm({
   const onSubmit = ({ ...props }: InsertMonitor) => {
     startTransition(async () => {
       try {
-        // const pingResult = await pingEndpoint();
-        // const isOk = pingResult?.status >= 200 && pingResult?.status < 300;
-        // if (!isOk) {
-        //   setPingFailed(true);
-        //   return;
-        // }
+        const { error } = await pingEndpoint();
+        if (error) {
+          setPingFailed(true);
+          toast.error(error);
+          return;
+        }
         await handleDataUpdateOrInsertion(props);
       } catch {
         toastAction("error");
@@ -116,16 +127,65 @@ export function MonitorForm({
   };
 
   const pingEndpoint = async (region?: MonitorFlyRegion) => {
-    const { url, body, method, headers } = form.getValues();
-    const res = await fetch(`/api/checker/test`, {
-      method: "POST",
-      headers: new Headers({
-        "Content-Type": "application/json",
-      }),
-      body: JSON.stringify({ url, body, method, headers, region }),
-    });
-    const data = (await res.json()) as RegionChecker;
-    return data;
+    const { url, body, method, headers, statusAssertions, headerAssertions } =
+      form.getValues();
+
+    try {
+      const res = await fetch(`/api/checker/test`, {
+        method: "POST",
+        headers: new Headers({
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ url, body, method, headers, region }),
+        signal: AbortSignal.timeout(ABORT_TIMEOUT),
+      });
+
+      const as = assertions.deserialize(
+        JSON.stringify([
+          ...(statusAssertions || []),
+          ...(headerAssertions || []),
+        ]),
+      );
+
+      const data = (await res.json()) as RegionChecker;
+
+      const _headers: Record<string, string> = {};
+      res.headers.forEach((value, key) => (_headers[key] = value));
+
+      if (as.length > 0) {
+        for (const a of as) {
+          const { success, message } = a.assert({
+            body: "", // data.body ?? "",
+            header: data.headers ?? {},
+            status: data.status,
+          });
+          if (!success) {
+            return { data, error: `Assertion error: ${message}` };
+          }
+        }
+      } else {
+        // default assertion if no assertions are provided
+        if (res.status < 200 || res.status >= 300) {
+          return {
+            data,
+            error: `Assertion error: The response status was not 2XX: ${data.status}.`,
+          };
+        }
+      }
+
+      return { data, error: undefined };
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return {
+          error: `Abort error: request takes more then ${formatDuration(
+            ABORT_TIMEOUT,
+          )}.`,
+        };
+      }
+      return {
+        error: "Something went wrong. Please try again.",
+      };
+    }
   };
 
   function onValueChange(value: string) {
@@ -153,6 +213,14 @@ export function MonitorForm({
             <TabsList>
               <TabsTrigger value="request">Request</TabsTrigger>
               <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+              <TabsTrigger value="assertions">
+                Assertions{" "}
+                {_assertions.length ? (
+                  <Badge variant="secondary" className="ml-1">
+                    {_assertions.length}
+                  </Badge>
+                ) : null}
+              </TabsTrigger>
               <TabsTrigger value="notifications">
                 Notifications{" "}
                 {defaultValues?.notifications?.length ? (
@@ -176,6 +244,9 @@ export function MonitorForm({
             <TabsContent value="request">
               <SectionRequests {...{ form, plan, pingEndpoint }} />
             </TabsContent>
+            <TabsContent value="assertions">
+              <SectionAssertions {...{ form }} />
+            </TabsContent>
             <TabsContent value="scheduling">
               <SectionScheduling {...{ form, plan }} />
             </TabsContent>
@@ -191,11 +262,14 @@ export function MonitorForm({
               </TabsContent>
             ) : null}
           </Tabs>
-          <SaveButton
-            isPending={isPending}
-            isDirty={form.formState.isDirty}
-            onSubmit={form.handleSubmit(onSubmit)}
-          />
+          <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
+            <RequestTestButton {...{ form, pingEndpoint }} />
+            <SaveButton
+              isPending={isPending}
+              isDirty={form.formState.isDirty}
+              onSubmit={form.handleSubmit(onSubmit)}
+            />
+          </div>
         </form>
       </Form>
       <FailedPingAlertConfirmation

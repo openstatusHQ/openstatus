@@ -1,6 +1,8 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import * as assertions from "@openstatus/assertions";
+
 import {
   flyRegions,
   monitorJobTypes,
@@ -73,6 +75,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   pages: z.array(z.number()).optional().default([]),
   body: z.string().default("").optional(),
   tags: z.array(z.number()).optional().default([]),
+  statusAssertions: z.array(assertions.statusAssertion).optional(),
+  headerAssertions: z.array(assertions.headerAssertion).optional(),
 });
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;

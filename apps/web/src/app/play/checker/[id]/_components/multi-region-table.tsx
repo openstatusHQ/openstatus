@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
 import type { RegionChecker } from "../utils";
 import {
   getTimingPhases,
@@ -15,7 +16,6 @@ import {
   latencyFormatter,
   regionFormatter,
 } from "../utils";
-import { StatusBadge } from "./status-badge";
 
 // TBD: add the popover infos about timing details
 
@@ -45,7 +45,7 @@ export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
                 {regionFormatter(region)}
               </TableCell>
               <TableCell>
-                <StatusBadge statusCode={status} />
+                <StatusCodeBadge statusCode={status} />
               </TableCell>
               <TableCell className="text-muted-foreground">
                 <code>{latencyFormatter(dns)}</code>

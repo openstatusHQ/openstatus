@@ -2,7 +2,8 @@ import { Badge } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 
-export function StatusBadge({ statusCode }: { statusCode: number }) {
+export function StatusCodeBadge({ statusCode }: { statusCode: number }) {
+  const yellow = String(statusCode).startsWith("1");
   const green = String(statusCode).startsWith("2");
   const blue = String(statusCode).startsWith("3");
   const rose =
@@ -17,6 +18,8 @@ export function StatusBadge({ statusCode }: { statusCode: number }) {
           blue,
         "border-rose-500/20 bg-rose-500/10 text-rose-800 dark:text-rose-300":
           rose,
+        "border-yellow-500/20 bg-yellow-500/10 text-yellow-800 dark:text-yellow-300":
+          yellow,
       })}
     >
       {statusCode}
