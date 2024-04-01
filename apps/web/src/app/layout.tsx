@@ -11,6 +11,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
+import { Bubble } from "@/components/support/bubble";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import Background from "./_components/background";
@@ -45,6 +46,7 @@ export default function RootLayout({
           <Background>{children}</Background>
           <Toaster richColors />
           <TailwindIndicator />
+          <Bubble />
         </ThemeProvider>
       </body>
     </html>
