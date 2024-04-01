@@ -30,14 +30,14 @@ export function LatestChangelogs() {
         {latestChangelogs.map((changelog) => (
           <li
             key={changelog.slug}
-            className="border-accent group relative grid gap-2 border-l-2 px-4 py-2"
+            className="group relative grid gap-2 border-accent border-l-2 px-4 py-2"
           >
             <Link href={`/changelog/${changelog.slug}`}>
-              <div className="bg-border group-hover:bg-muted-foreground absolute -left-1.5 top-4 h-2.5 w-2.5 rounded-full" />
+              <div className="-left-1.5 absolute top-4 h-2.5 w-2.5 rounded-full bg-border group-hover:bg-muted-foreground" />
               <p className="text-muted-foreground">
                 {formatDate(new Date(changelog.publishedAt))}
               </p>
-              <p className="line-clamp-1 text-lg font-medium">
+              <p className="line-clamp-1 font-medium text-lg">
                 {changelog.title}
               </p>
             </Link>

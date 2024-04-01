@@ -47,7 +47,7 @@ export function ResponseTimingTable({
                   <p className="text-muted-foreground">{short}</p>
                   {!hideInfo ? (
                     <Popover>
-                      <PopoverTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
+                      <PopoverTrigger className="text-muted-foreground data-[state=open]:text-foreground hover:text-foreground">
                         <Info className="h-4 w-4" />
                       </PopoverTrigger>
                       <PopoverContent>
@@ -65,7 +65,7 @@ export function ResponseTimingTable({
               </TableCell>
               <TableCell>
                 <div
-                  className="bg-foreground h-3 rounded-md"
+                  className="h-3 rounded-md bg-foreground"
                   style={{
                     width: `${(value / total) * 100}%`,
                     minWidth: "1px",

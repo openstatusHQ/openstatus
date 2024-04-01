@@ -68,7 +68,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <BackButton href="/blog" />
-      <Shell className="sm:py-8 md:py-12">
+      <Shell className="md:py-12 sm:py-8">
         <Article post={post} />
       </Shell>
     </>

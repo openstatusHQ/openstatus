@@ -36,8 +36,7 @@ export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
       </TableHeader>
       <TableBody>
         {regions.map(({ region, status, timing }) => {
-          const { dns, connection, tls, ttfb, transfer } =
-            getTimingPhases(timing);
+          const { dns, connection, tls, ttfb } = getTimingPhases(timing);
           const total = getTotalLatency(timing);
           return (
             <TableRow key={region}>

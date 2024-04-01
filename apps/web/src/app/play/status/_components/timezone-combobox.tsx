@@ -49,7 +49,7 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
               ? timezones.find((timezone) => timezone.value === value)?.label
               : "Select timezone..."}
             {defaultValue?.toLowerCase() === currentTimezone?.toLowerCase() ? (
-              <span className="text-muted-foreground ml-1 text-xs font-light">
+              <span className="ml-1 font-light text-muted-foreground text-xs">
                 (default)
               </span>
             ) : null}

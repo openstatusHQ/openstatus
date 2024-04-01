@@ -11,16 +11,16 @@ export default function AppearancePage() {
   const { setTheme, theme } = useTheme();
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 sm:grid-cols-2">
       <button type="button" onClick={() => setTheme("light")}>
         <LightModeCard active={theme === "light"} />
-        <span className="text-muted-foreground mt-2 text-sm font-light">
+        <span className="mt-2 font-light text-muted-foreground text-sm">
           Light
         </span>
       </button>
       <button type="button" onClick={() => setTheme("dark")}>
         <DarkModeCard active={theme === "dark"} />
-        <span className="text-muted-foreground mt-2 text-sm font-light">
+        <span className="mt-2 font-light text-muted-foreground text-sm">
           Dark
         </span>
       </button>
@@ -28,7 +28,7 @@ export default function AppearancePage() {
         <div className="relative">
           <LightModeCard active={theme === "system"} />
           <div
-            className="absolute bottom-0 left-0 right-0 top-0"
+            className="absolute top-0 right-0 bottom-0 left-0"
             style={{
               clipPath: "polygon(100% 0, 0 0, 100% 100%)",
             }}
@@ -36,7 +36,7 @@ export default function AppearancePage() {
             <DarkModeCard active={theme === "system"} />
           </div>
         </div>
-        <span className="text-muted-foreground mt-2 text-sm font-light">
+        <span className="mt-2 font-light text-muted-foreground text-sm">
           System
         </span>
       </button>
@@ -48,8 +48,8 @@ function LightModeCard({ active }: { active: boolean }) {
   return (
     <div
       className={cn(
-        "border-muted items-center rounded-md border-2 p-1",
-        active && "ring-ring ring-offset-background ring-2 ring-offset-2",
+        "items-center rounded-md border-2 border-muted p-1",
+        active && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
     >
       <div className="space-y-2 rounded-sm bg-[#ecedef] p-2">
@@ -74,8 +74,8 @@ function DarkModeCard({ active }: { active: boolean }) {
   return (
     <div
       className={cn(
-        "border-muted bg-popover items-center rounded-md border-2 p-1",
-        active && "ring-ring ring-offset-background ring-2 ring-offset-2",
+        "items-center rounded-md border-2 border-muted bg-popover p-1",
+        active && "ring-2 ring-ring ring-offset-2 ring-offset-background",
       )}
     >
       <div className="space-y-2 rounded-sm bg-slate-950 p-2">

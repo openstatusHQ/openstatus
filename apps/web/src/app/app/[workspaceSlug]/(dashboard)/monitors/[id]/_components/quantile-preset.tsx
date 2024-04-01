@@ -29,7 +29,7 @@ export function QuantilePreset({
         <Label htmlFor="quantile">Quantile</Label>
         <Popover>
           <PopoverTrigger>
-            <HelpCircle className="text-muted-foreground h-4 w-4" />
+            <HelpCircle className="h-4 w-4 text-muted-foreground" />
           </PopoverTrigger>
           <PopoverContent side="top" className="text-sm">
             <p>

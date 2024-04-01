@@ -5,7 +5,7 @@ import { Button } from "@openstatus/ui";
 export function BottomCTA() {
   return (
     <div className="my-8 flex flex-col items-center justify-between gap-6">
-      <p className="text-muted-foreground max-w-lg text-center text-lg">
+      <p className="max-w-lg text-center text-lg text-muted-foreground">
         Learn over time how your services are performing, and inform your users
         when there are issues.
       </p>

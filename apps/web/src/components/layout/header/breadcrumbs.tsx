@@ -43,10 +43,10 @@ export function Breadcrumbs() {
           alt="OpenStatus"
           height={30}
           width={30}
-          className="border-border rounded-full border"
+          className="rounded-full border border-border"
         />
       </Link>
-      <Slash className="text-muted-foreground ml-2.5 mr-0.5 h-4 w-4 -rotate-12" />
+      <Slash className="-rotate-12 mr-0.5 ml-2.5 h-4 w-4 text-muted-foreground" />
       {params.workspaceSlug ? (
         <div className="w-40">
           <SelectWorkspace />
@@ -54,8 +54,8 @@ export function Breadcrumbs() {
       ) : null}
       {breadcrumbs.map((breadcrumb) => (
         <Fragment key={breadcrumb}>
-          <Slash className="text-muted-foreground ml-0.5 mr-2.5 h-4 w-4 -rotate-12" />
-          <p className="text-primary rounded-md text-sm font-medium">
+          <Slash className="-rotate-12 mr-2.5 ml-0.5 h-4 w-4 text-muted-foreground" />
+          <p className="rounded-md font-medium text-primary text-sm">
             {breadcrumb}
           </p>
         </Fragment>
@@ -65,6 +65,7 @@ export function Breadcrumbs() {
 }
 
 // This is a custom hook that returns the label of the current id
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 function useIdLabel() {
   const params = useParams();
   const selectedSegment = useSelectedLayoutSegment();

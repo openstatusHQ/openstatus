@@ -41,7 +41,7 @@ export function Description({
 }) {
   const config = step && onboardingConfig[step];
   return (
-    <div className="border-border flex h-full flex-col gap-6 border-l pl-6 md:pl-8">
+    <div className="flex h-full flex-col gap-6 border-border border-l pl-6 md:pl-8">
       <div className="flex gap-5">
         {steps.map((item, _i) => {
           const { icon, name } = onboardingConfig[item];
@@ -51,7 +51,7 @@ export function Description({
             <div key={name} className="flex items-center gap-2">
               <div
                 className={cn(
-                  "border-border max-w-max rounded-full border p-2",
+                  "max-w-max rounded-full border border-border p-2",
                   active && "border-accent-foreground",
                 )}
               >
@@ -61,7 +61,7 @@ export function Description({
                 className={cn(
                   "text-sm",
                   active
-                    ? "text-foreground font-semibold"
+                    ? "font-semibold text-foreground"
                     : "text-muted-foreground",
                 )}
               >

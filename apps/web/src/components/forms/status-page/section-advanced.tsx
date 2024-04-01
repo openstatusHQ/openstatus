@@ -133,7 +133,7 @@ export function SectionAdvanced({ form }: Props) {
                 )}
                 {field.value && (
                   <div className="flex items-center">
-                    <div className="border-border h-10 w-10 rounded-sm border p-1">
+                    <div className="h-10 w-10 rounded-sm border border-border p-1">
                       <Image
                         src={field.value}
                         width={64}

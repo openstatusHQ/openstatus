@@ -26,12 +26,12 @@ export function PricingPlanRadio() {
           <Label
             htmlFor={key}
             className={cn(
-              "border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex flex-col items-center justify-between rounded-md border-2 p-4",
+              "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
               key === "team" && "bg-muted/50",
             )}
           >
             <span className="text-sm capitalize">{key}</span>
-            <span className="text-muted-foreground mt-1 text-xs font-light">
+            <span className="mt-1 font-light text-muted-foreground text-xs">
               {allPlans[key].price}€/month
             </span>
           </Label>

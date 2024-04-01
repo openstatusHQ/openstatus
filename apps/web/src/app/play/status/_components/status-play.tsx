@@ -31,7 +31,7 @@ export default async function StatusPlay() {
         <div className="mx-auto w-full max-w-md">
           {data && <Tracker data={data} name="Ping" description="Pong" />}
         </div>
-        <p className="text-muted-foreground text-center text-sm">
+        <p className="text-center text-muted-foreground text-sm">
           {formattedServerDate}
         </p>
         {/* REMINDER: more playground component  */}
