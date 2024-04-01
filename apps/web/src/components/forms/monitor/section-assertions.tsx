@@ -11,6 +11,9 @@ import {
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   Button,
+  FormControl,
+  FormField,
+  FormItem,
   Input,
   Select,
   SelectContent,
@@ -22,7 +25,7 @@ import {
 import { Icons } from "@/components/icons";
 import { SectionHeader } from "../shared/section-header";
 
-// IMPROVEMENT: use FormFields incl. error message
+// IMPROVEMENT: use FormFields incl. error message (fixes the Select component)
 
 export const setEmptyOrStr = (v: unknown) => {
   if (typeof v === "string" && v.trim() === "") return undefined;
@@ -67,22 +70,33 @@ export function SectionAssertions({ form }: Props) {
               Status Code
             </p>
             <div className="col-span-3" />
-            <Select
-              {...form.register(`statusAssertions.${i}.compare`, {
-                required: true,
-              })}
-            >
-              <SelectTrigger className="col-span-3 w-full">
-                <SelectValue defaultValue="eq" placeholder="Equal" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(numberCompareDictionary).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <FormField
+              control={form.control}
+              name={`statusAssertions.${i}.compare`}
+              render={({ field }) => (
+                <FormItem className="col-span-3 w-full">
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue defaultValue="eq" placeholder="Equal" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(numberCompareDictionary).map(
+                        ([key, value]) => (
+                          <SelectItem key={key} value={key}>
+                            {value}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
             <Input
               {...form.register(`statusAssertions.${i}.target`, {
                 required: true,
@@ -117,33 +131,38 @@ export function SectionAssertions({ form }: Props) {
               className="col-span-3"
               placeholder="X-Header"
             />
-
-            <Select
-              {...form.register(`headerAssertions.${i}.compare`, {
-                required: true,
-              })}
-            >
-              <SelectTrigger className="col-span-3 w-full">
-                <SelectValue defaultValue="eq" placeholder="Equal" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(stringCompareDictionary).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
+            <FormField
+              control={form.control}
+              name={`headerAssertions.${i}.compare`}
+              render={({ field }) => (
+                <FormItem className="col-span-3 w-full">
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue defaultValue="eq" placeholder="Equal" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(stringCompareDictionary).map(
+                        ([key, value]) => (
+                          <SelectItem key={key} value={key}>
+                            {value}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
             <Input
-              {...form.register(`headerAssertions.${i}.target`, {
-                required: true,
-                setValueAs: setEmptyOrStr,
-              })}
+              {...form.register(`headerAssertions.${i}.target`)}
               className="col-span-3"
               placeholder="x-value"
             />
-
             <div className="col-span-1">
               <Button
                 size="icon"
