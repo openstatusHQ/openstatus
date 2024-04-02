@@ -101,7 +101,7 @@ func TestHeaderTarget_HeaderEvaluate(t *testing.T) {
 		want   bool
 	}{
 		{name: "Header 1", fields: fields{Comparator: request.StringEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","Vary":"Accept-Encoding"}`}, want: false},
-		{name: "Header 1", fields: fields{Comparator: request.StringEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","headers1":"Accept-Encoding"}`}, want: true},
+		{name: "Header 2", fields: fields{Comparator: request.StringNotEmpty, Target: "", Key: "headers1"}, args: args{s: `{"Content-Type":"text/plain;charset=UTF-8","Strict-Transport-Security":"max-age=3153600000","headers1":"Accept-Encoding"}`}, want: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
