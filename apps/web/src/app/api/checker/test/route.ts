@@ -31,6 +31,7 @@ export async function POST(request: Request) {
     if (url === "https://www.openstatus.dev/api/checker/test") {
       return NextResponse.json({ success: true }, { status: 200 });
     }
+
     const res = await checkRegion(url, region, { method, headers, body });
 
     return NextResponse.json(res);

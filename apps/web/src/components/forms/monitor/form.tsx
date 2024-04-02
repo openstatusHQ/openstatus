@@ -126,11 +126,32 @@ export function MonitorForm({
     });
   };
 
-  const pingEndpoint = async (region?: MonitorFlyRegion) => {
-    const { url, body, method, headers, statusAssertions, headerAssertions } =
-      form.getValues();
-
+  const validateJSON = (value?: string) => {
+    if (!value) return;
     try {
+      const obj = JSON.parse(value) as Record<string, unknown>;
+      form.clearErrors("body");
+      return obj;
+    } catch (e) {
+      form.setError("body", {
+        message: "Not a valid JSON object",
+      });
+      return false;
+    }
+  };
+
+  const pingEndpoint = async (region?: MonitorFlyRegion) => {
+    try {
+      const { url, body, method, headers, statusAssertions, headerAssertions } =
+        form.getValues();
+
+      if (body && body !== "") {
+        const validJSON = validateJSON(body);
+        if (!validJSON) {
+          return { error: "Not a valid JSON object.", data: undefined };
+        }
+      }
+
       const res = await fetch(`/api/checker/test`, {
         method: "POST",
         headers: new Headers({
@@ -139,6 +160,12 @@ export function MonitorForm({
         body: JSON.stringify({ url, body, method, headers, region }),
         signal: AbortSignal.timeout(ABORT_TIMEOUT),
       });
+
+      if (!res.ok) {
+        return {
+          error: "Something went wrong. Please try again.",
+        };
+      }
 
       const as = assertions.deserialize(
         JSON.stringify([
@@ -175,6 +202,7 @@ export function MonitorForm({
 
       return { data, error: undefined };
     } catch (error) {
+      console.error(error);
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(

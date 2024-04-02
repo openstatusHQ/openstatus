@@ -32,7 +32,6 @@ import {
 } from "@openstatus/ui";
 
 import { SectionHeader } from "../shared/section-header";
-import { RequestTestButton } from "./request-test-button";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -207,6 +206,7 @@ export function SectionRequests({ form }: Props) {
                   </TooltipProvider>
                 </div>
                 <FormControl>
+                  {/* FIXME: cannot enter 'Enter' */}
                   <Textarea
                     rows={8}
                     placeholder='{ "hello": "world" }'
