@@ -63,7 +63,7 @@ func (target HeaderTarget) HeaderEvaluate(s string) bool {
 	headers := make(map[string]any)
 
 	if err := json.Unmarshal([]byte(s), &headers); err != nil {
-		panic(err)
+		return false
 	}
 
 	v, found := headers[target.Key]
