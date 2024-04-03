@@ -1,17 +1,20 @@
-name: Fly Deploy
+name: Fly Deploy Checker
 on:
   push:
     branches:
       - main
+    paths:
+      - "apps/checker/**"
 jobs:
-  deploy:
-    name: Deploy API
+  deploy-checker:
+    name: Deploy Checker
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run:
-          flyctl deploy --config apps/server/fly.toml
-          --dockerfile  apps/server/Dockerfile --remote-only --wait-timeout=500
+      - working-directory: apps/checker
+        name: Deploy API
+        run: |
+          flyctl deploy --remote-only --wait-timeout=500
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
