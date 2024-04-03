@@ -129,7 +129,6 @@ func main() {
 						}
 						isSuccessfull = isSuccessfull && target.StringEvaluate(res.Body)
 
-						fmt.Println("assertion type", assert.AssertionType)
 					case request.AssertionStatus:
 						var target assertions.StatusTarget
 						if err := json.Unmarshal(a, &target); err != nil {
@@ -182,6 +181,8 @@ func main() {
 				})
 			}
 
+			// Small trick to avoid sending the body at the moment to TB
+			res.Body = ""
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
