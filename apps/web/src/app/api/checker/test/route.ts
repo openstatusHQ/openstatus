@@ -5,6 +5,7 @@ import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 
 import { checkRegion } from "@/app/play/checker/[id]/utils"; // TODO: move into a shared package
 import { payloadSchema } from "../schema";
+import { isAnInvalidTestUrl } from "../utils";
 
 export const runtime = "edge";
 export const preferredRegion = "auto";
@@ -28,9 +29,10 @@ export async function POST(request: Request) {
 
     const { url, region, method, headers, body } = _valid.data;
     // 🧑‍💻 for the smart one who want to create a loop hole
-    if (url === "https://www.openstatus.dev/api/checker/test") {
+    if (isAnInvalidTestUrl(url)) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
+
     const res = await checkRegion(url, region, { method, headers, body });
 
     return NextResponse.json(res);

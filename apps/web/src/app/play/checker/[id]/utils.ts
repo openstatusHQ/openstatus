@@ -104,7 +104,7 @@ export async function checkRegion(
           [key]: value,
         };
       }, {}),
-      body: opts?.body,
+      body: opts?.body ? JSON.parse(opts.body) : undefined,
     }),
     next: { revalidate: 0 },
   });
