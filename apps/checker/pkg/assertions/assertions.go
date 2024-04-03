@@ -60,12 +60,12 @@ func (target StringTargetType) StringEvaluate(s string) bool {
 }
 
 func (target HeaderTarget) HeaderEvaluate(s string) bool {
-
-	headers := map[string]interface{}{}
+	headers := make(map[string]any)
 
 	if err := json.Unmarshal([]byte(s), &headers); err != nil {
 		panic(err)
 	}
+
 	v, found := headers[target.Key]
 	if !found {
 		return false
