@@ -123,6 +123,12 @@ func main() {
 						isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
 
 					case request.AssertionTextBody:
+						var target assertions.StringTargetType
+						if err := json.Unmarshal(a, &target); err != nil {
+							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
+						}
+						isSuccessfull = isSuccessfull && target.StringEvaluate(res.Body)
+
 						fmt.Println("assertion type", assert.AssertionType)
 					case request.AssertionStatus:
 						var target assertions.StatusTarget

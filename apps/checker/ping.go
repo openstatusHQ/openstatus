@@ -32,6 +32,7 @@ type PingData struct {
 	Headers       string `json:"headers,omitempty"`
 	Error         uint8  `json:"error"`
 	Assertions    string `json:"assertions"`
+	Body          string
 }
 
 type Timing struct {
@@ -126,7 +127,7 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	}
 	defer response.Body.Close()
 
-	_, err = io.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		return PingData{
 			Latency:       latency,
@@ -167,6 +168,7 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 		URL:           inputData.URL,
 		Timing:        string(timingAsString),
 		Headers:       string(headersAsString),
+		Body:          string(body),
 	}, nil
 }
 
