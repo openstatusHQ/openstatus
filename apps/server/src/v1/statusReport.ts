@@ -218,6 +218,16 @@ statusReportApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
+  await db
+    .insert(statusReportUpdate)
+    .values({
+      status: input.status,
+      date: new Date(),
+      message: "",
+      statusReportId: _newStatusReport.id,
+    })
+    .returning();
+
   const data = statusReportExtendedSchema.parse(_newStatusReport);
 
   return c.json(data);
@@ -320,18 +330,21 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
 
   const statusReportId = Number(id);
-  const _statusReport = await db
-    .select()
-    .from(statusReport)
+
+  const _updatedStatusReport = await db
+    .update(statusReport)
+    .set({ status: input.status })
     .where(
       and(
         eq(statusReport.id, statusReportId),
         eq(statusReport.workspaceId, workspaceId),
       ),
     )
+    .returning()
     .get();
 
-  if (!_statusReport) return c.json({ code: 404, message: "Not Found" }, 404);
+  if (!_updatedStatusReport)
+    return c.json({ code: 404, message: "Not Found" }, 404);
 
   const _statusReportUpdate = await db
     .insert(statusReportUpdate)
