@@ -218,7 +218,7 @@ statusReportApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
-  await db
+  const _statusReportHistory = await db
     .insert(statusReportUpdate)
     .values({
       status: input.status,
@@ -226,9 +226,13 @@ statusReportApi.openapi(postRoute, async (c) => {
       message: "",
       statusReportId: _newStatusReport.id,
     })
-    .returning();
+    .returning()
+    .get();
 
-  const data = statusReportExtendedSchema.parse(_newStatusReport);
+  const data = statusReportExtendedSchema.parse({
+    ..._newStatusReport,
+    status_report_updates: [_statusReportHistory.id],
+  });
 
   return c.json(data);
 });
