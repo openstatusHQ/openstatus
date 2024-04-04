@@ -153,6 +153,8 @@ func main() {
 			// it's in error if not successful
 			if isSuccessfull {
 				res.Error = 0
+				// Small trick to avoid sending the body at the moment to TB
+				res.Body = ""
 			} else {
 				res.Error = 1
 			}
@@ -181,8 +183,6 @@ func main() {
 				})
 			}
 
-			// Small trick to avoid sending the body at the moment to TB
-			res.Body = ""
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -201,6 +201,7 @@ func main() {
 				WorkspaceID:   req.WorkspaceID,
 				Error:         1,
 				Assertions:    assertionAsString,
+				Body:          "",
 			}); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
