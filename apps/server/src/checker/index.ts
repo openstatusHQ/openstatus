@@ -151,7 +151,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     });
 
     if (incident) {
-      const redisKey = `${monitorId}-${cronTimestamp}-resolved`;
+      const redisKey = `${monitorId}-${incident.id}-resolved`;
       //   // We add the new region to the set
       await redis.sadd(redisKey, region);
       //   // let's add an expire to the set
