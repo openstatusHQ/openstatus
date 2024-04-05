@@ -1,5 +1,6 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
+import { format } from "date-fns";
 import * as z from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
@@ -9,6 +10,7 @@ import { api } from "@/trpc/server";
 import { DatePickerPreset } from "../_components/date-picker-preset";
 import { periods } from "../utils";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
+import { DownloadCSVButton } from "./_components/download-csv-button";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -17,6 +19,27 @@ const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
  */
 const searchParamsSchema = z.object({
   period: z.enum(periods).optional().default("1h"),
+  // improve coersion + array + ...
+  region: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",");
+    }),
+  statusCode: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",").map(parseInt);
+    }),
+  error: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",").map((v) => v === "true");
+    }),
+  pageSize: z.coerce.number().optional().default(10),
+  pageIndex: z.coerce.number().optional().default(0),
 });
 
 export default async function Page({
@@ -34,10 +57,10 @@ export default async function Page({
   });
 
   if (!monitor || !search.success) {
-    return notFound();
+    return notFound(); // maybe not if search.success is false, add a toast message
   }
 
-  const allowedPeriods = ["1h", "1d"] as const;
+  const allowedPeriods = ["1h", "1d", "3d", "7d"] as const;
   const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
   const data = await tb.endpointList(period)({
@@ -49,10 +72,27 @@ export default async function Page({
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+      <div className="flex flex-row items-center justify-between gap-4">
         <DatePickerPreset defaultValue={period} values={allowedPeriods} />
+        {/* <DownloadCSVButton
+          data={data}
+          filename={`${format(new Date(), "yyyy-mm-dd")}-${period}-${
+            monitor.name
+          }`}
+        /> */}
       </div>
-      <DataTableWrapper data={data} />
+      <DataTableWrapper
+        data={data}
+        filters={[
+          { id: "statusCode", value: search.data.statusCode },
+          { id: "region", value: search.data.region },
+          { id: "error", value: search.data.error },
+        ].filter((v) => v.value !== undefined)}
+        pagination={{
+          pageIndex: search.data.pageIndex,
+          pageSize: search.data.pageSize,
+        }}
+      />
     </div>
   );
 }

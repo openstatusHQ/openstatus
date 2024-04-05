@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatDistanceToNowStrict } from "date-fns";
 
 import type { LatencyMetric, ResponseTimeMetrics } from "@openstatus/tinybird";
@@ -72,7 +73,7 @@ export function Metrics({
         ) : null}
         <MetricsCard title="total pings" value={current.count} suffix="#" />
       </div>
-      <div>
+      <div className="grid gap-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5 md:gap-6">
           {metricsOrder.map((key) => {
             const value = current[key];
@@ -90,13 +91,28 @@ export function Metrics({
             );
           })}
         </div>
-        <p className="text-muted-foreground mt-4 text-xs">
-          Metrics calculated from the{" "}
-          <span className="font-medium lowercase">
-            {periodFormatter(period)}
-          </span>{" "}
-          over all the regions and compared with the previous period.
-        </p>
+        <div className="grid gap-2">
+          <p className="text-muted-foreground text-xs">
+            Metrics calculated from the{" "}
+            <span className="font-medium lowercase">
+              {periodFormatter(period)}
+            </span>{" "}
+            over all the regions and compared with the previous period.
+          </p>
+          {/* restricted to max 3d as we only support it in the list -> TODO: add more periods */}
+          {failures > 0 && ["1h", "1d", "3d", "7d"].includes(period) ? (
+            <p className="text-destructive text-xs">
+              The monitor had {failures} failed ping(s). See more in the{" "}
+              <Link
+                href={`./data?error=true&period=${period}`}
+                className=" underline underline-offset-4 hover:no-underline"
+              >
+                response logs
+              </Link>
+              .
+            </p>
+          ) : null}
+        </div>
       </div>
     </div>
   );

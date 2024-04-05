@@ -4,7 +4,11 @@
 "use client";
 
 import { Suspense, use } from "react";
-import type { Row } from "@tanstack/react-table";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  Row,
+} from "@tanstack/react-table";
 
 import * as assertions from "@openstatus/assertions";
 import type { OSTinybird } from "@openstatus/tinybird";
@@ -20,7 +24,7 @@ import { api } from "@/trpc/client";
 type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type
-type Monitor = {
+export type Monitor = {
   monitorId: string;
   url: string;
   latency: number;
@@ -33,13 +37,23 @@ type Monitor = {
   assertions?: string | null;
 };
 
-export function DataTableWrapper({ data }: { data: Monitor[] }) {
+export function DataTableWrapper({
+  data,
+  filters,
+  pagination,
+}: {
+  data: Monitor[];
+  filters?: ColumnFiltersState;
+  pagination?: PaginationState;
+}) {
   return (
     <DataTable
       columns={columns}
       data={data}
       getRowCanExpand={() => true}
       renderSubComponent={renderSubComponent}
+      defaultColumnFilters={filters}
+      defaultPagination={pagination}
     />
   );
 }
