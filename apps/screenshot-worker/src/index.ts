@@ -55,11 +55,11 @@ app.post(
     const db = createDrizzleClient(env);
     const browser = await puppeteer.launch(c.env.MYBROWSER);
     const page = await browser.newPage();
-    await page.goto("https://www.openstatus.dev");
+    await page.goto(data.url);
     const img = await page.screenshot();
     const id = `${data.incidentId}-${Date.now()}.png`;
     const url = `https://screenshot.openstat.us/${id}`;
-    const r = await c.env.MY_BUCKET.put(id, img);
+    await c.env.MY_BUCKET.put(id, img);
     await browser.close();
     if (data.kind === "incident") {
       await db
