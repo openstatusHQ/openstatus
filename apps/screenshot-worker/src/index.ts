@@ -55,7 +55,7 @@ app.post(
     const db = createDrizzleClient(env);
     const browser = await puppeteer.launch(c.env.MYBROWSER);
     const page = await browser.newPage();
-    await page.goto(data.url);
+    await page.goto(data.url, { waitUntil: "networkidle2" });
     const img = await page.screenshot();
     const id = `${data.incidentId}-${Date.now()}.png`;
     const url = `https://screenshot.openstat.us/${id}`;
