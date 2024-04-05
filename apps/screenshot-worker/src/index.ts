@@ -53,14 +53,29 @@ app.post(
 
     const env = c.env;
     const db = createDrizzleClient(env);
-    const browser = await puppeteer.launch(c.env.MYBROWSER);
+
+    const sessionId = await getRandomSession(c.env.MYBROWSER);
+    let browser;
+    if (sessionId) {
+      try {
+        browser = await puppeteer.connect(env.MYBROWSER, sessionId);
+      } catch (e) {
+        // another worker may have connected first
+        console.log(`Failed to connect to ${sessionId}. Error ${e}`);
+      }
+    }
+    if (!browser) {
+      // No open sessions, launch new session
+      browser = await puppeteer.launch(env.MYBROWSER);
+    }
+
     const page = await browser.newPage();
     await page.goto(data.url, { waitUntil: "networkidle2" });
     const img = await page.screenshot();
+    await browser.disconnect();
     const id = `${data.incidentId}-${Date.now()}.png`;
     const url = `https://screenshot.openstat.us/${id}`;
     await c.env.MY_BUCKET.put(id, img);
-    await browser.close();
     if (data.kind === "incident") {
       await db
         .update(incidentTable)
@@ -78,5 +93,25 @@ app.post(
     return c.text("Screenshot saved");
   },
 );
+const getRandomSession = async (
+  endpoint: puppeteer.BrowserWorker,
+): Promise<string | undefined> => {
+  const sessions: puppeteer.ActiveSession[] =
+    await puppeteer.sessions(endpoint);
+  console.log(`Sessions: ${JSON.stringify(sessions)}`);
+  const sessionsIds = sessions
+    .filter((v) => {
+      return !v.connectionId; // remove sessions with workers connected to them
+    })
+    .map((v) => {
+      return v.sessionId;
+    });
+  if (sessionsIds.length === 0) {
+    return;
+  }
 
+  const sessionId = sessionsIds[Math.floor(Math.random() * sessionsIds.length)];
+
+  return sessionId!;
+};
 export default app;

@@ -2,7 +2,7 @@
   "name": "@openstatus/screenshot-worker",
   "version": "0.0.1",
   "scripts": {
-    "dev": "wrangler dev src/index.ts",
+    "dev": "wrangler dev src/index.ts --remote",
     "deploy": "wrangler deploy --minify src/index.ts"
   },
   "dependencies": {
