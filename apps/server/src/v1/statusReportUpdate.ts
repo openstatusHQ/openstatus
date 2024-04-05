@@ -210,7 +210,7 @@ statusReportUpdateApi.openapi(createStatusUpdate, async (c) => {
         subject: `New status update for ${pageInfo.title}`,
         html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
         `,
-        from: "Notification OpenStatus <notification@openstatus.dev>",
+        from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
       });
     }
   }

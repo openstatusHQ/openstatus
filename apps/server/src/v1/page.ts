@@ -240,7 +240,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
       token: token,
       page: page.title,
     }),
-    from: "OpenStatus <notification@openstatus.dev>",
+    from: "OpenStatus <notification@notifications.openstatus.dev>",
     to: [input.email],
     subject: "Verify your subscription",
   });

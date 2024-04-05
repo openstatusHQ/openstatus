@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { trackAnalytics } from "@openstatus/analytics";
-import { db, eq, sql } from "@openstatus/db";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   flyRegions,
   monitor,
@@ -325,7 +325,12 @@ monitorApi.openapi(postRoute, async (c) => {
     await db
       .select({ count: sql<number>`count(*)` })
       .from(monitor)
-      .where(eq(monitor.workspaceId, Number(workspaceId)))
+      .where(
+        and(
+          eq(monitor.workspaceId, Number(workspaceId)),
+          isNull(monitor.deletedAt),
+        ),
+      )
       .all()
   )[0].count;
 
@@ -480,7 +485,11 @@ monitorApi.openapi(deleteRoute, async (c) => {
   if (workspaceId !== _monitor.workspaceId)
     return c.json({ code: 401, message: "Unauthorized" }, 401);
 
-  await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
+  await db
+    .update(monitor)
+    .set({ active: false, deletedAt: new Date() })
+    .where(eq(monitor.id, monitorId))
+    .run();
   return c.json({ message: "Deleted" });
 });
 
