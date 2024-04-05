@@ -162,6 +162,13 @@
       "when": 1711307113089,
       "tag": "0022_chunky_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1712311348272,
+      "tag": "0023_dry_blink",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ export const env = createEnv({
     CRON_SECRET: z.string(),
     JITSU_WRITE_KEY: z.string().optional(),
     JITSU_HOST: z.string().optional(),
+    SCREENSHOT_SERVICE_URL: z.string(),
   },
 
   /**
