@@ -43,7 +43,7 @@ export const columns: ColumnDef<Incident>[] = [
               href={incidentScreenshotUrl}
               target="_blank"
               rel="noreferrer"
-              className="relative relative h-5 w-5 rounded border"
+              className="relative relative h-5 w-5 overflow-hidden rounded border"
             >
               <Image
                 src={incidentScreenshotUrl}
