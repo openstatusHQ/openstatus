@@ -50,12 +50,12 @@ export default async function CheckPage({ params, searchParams }: Props) {
     <>
       <BackButton href="/play/checker" />
       <Shell className="flex flex-col gap-8">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold">
-              <span className="truncate">{data.url}</span>
+        <div className="flex justify-between gap-4">
+          <div className="flex max-w-[calc(100%-50px)] flex-col gap-1">
+            <h1 className="text-wrap truncate text-lg font-semibold sm:text-xl md:text-3xl">
+              {data.url}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {timestampFormatter(data.time)}
             </p>
           </div>
