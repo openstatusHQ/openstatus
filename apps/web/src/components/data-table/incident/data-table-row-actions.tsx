@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
@@ -107,6 +108,10 @@ export function DataTableRowActions<TData>({
           >
             Resolved
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <Link href={`./incidents/${incident.id}/overview`}>
+            <DropdownMenuItem>Details</DropdownMenuItem>
+          </Link>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">

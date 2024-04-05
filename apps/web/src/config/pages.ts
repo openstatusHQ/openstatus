@@ -96,6 +96,16 @@ export const statusPagesPagesConfig: Page[] = [
   },
 ];
 
+const incidentPagesConfig: Page[] = [
+  {
+    title: "Overview",
+    description: "Timeline with all the actions.",
+    href: "/incidents/[id]/overview",
+    icon: "file-clock",
+    segment: "overview",
+  },
+];
+
 export const statusReportsPagesConfig: Page[] = [
   {
     title: "Overview",
@@ -140,6 +150,7 @@ export const pagesConfig = [
     href: "/incidents",
     icon: "siren",
     segment: "incidents",
+    children: incidentPagesConfig,
   },
   {
     title: "Status Pages",

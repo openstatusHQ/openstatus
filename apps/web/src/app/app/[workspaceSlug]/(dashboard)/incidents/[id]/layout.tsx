@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { api } from "@/trpc/server";
 
@@ -12,16 +13,20 @@ export default async function Layout({
 }) {
   const id = params.id;
 
-  const monitor = await api.incident.getIncidentById.query({
+  const incidents = await api.incident.getIncidentsByWorkspace.query();
+  const incident = await api.incident.getIncidentById.query({
     id: Number(id),
   });
 
-  if (!monitor) {
+  if (!incident) {
     return notFound();
   }
 
+  const incidentIndex = incidents.findIndex((item) => item.id === incident.id);
+
   return (
     <AppPageWithSidebarLayout id="incidents">
+      <Header title={`Incident #${incidentIndex + 1}`} />
       {children}
     </AppPageWithSidebarLayout>
   );
