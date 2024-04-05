@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
@@ -30,13 +31,27 @@ export const columns: ColumnDef<Incident>[] = [
     accessorKey: "startedAt",
     header: "Started At",
     cell: ({ row }) => {
-      const { startedAt } = row.original;
+      const { startedAt, incidentScreenshotUrl } = row.original;
       const date = startedAt ? formatDateTime(startedAt) : "-";
       return (
-        <div className="flex">
+        <div className="flex gap-2">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
             {date}
           </span>
+          {incidentScreenshotUrl ? (
+            <a
+              href={incidentScreenshotUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="relative relative h-5 w-5 overflow-hidden rounded border"
+            >
+              <Image
+                src={incidentScreenshotUrl}
+                alt="incident screenshot"
+                fill={true}
+              />
+            </a>
+          ) : null}
         </div>
       );
     },
@@ -60,13 +75,27 @@ export const columns: ColumnDef<Incident>[] = [
     accessorKey: "resolvedAt",
     header: "Resolved At",
     cell: ({ row }) => {
-      const { resolvedAt } = row.original;
+      const { resolvedAt, recoveryScreenshotUrl } = row.original;
       const date = resolvedAt ? formatDateTime(resolvedAt) : "-";
       return (
-        <div className="flex">
+        <div className="flex gap-2">
           <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
             {date}
           </span>
+          {recoveryScreenshotUrl ? (
+            <a
+              href={recoveryScreenshotUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="relative h-5 w-5 overflow-hidden rounded border"
+            >
+              <Image
+                src={recoveryScreenshotUrl}
+                alt="recovery screenshot"
+                fill={true}
+              />
+            </a>
+          ) : null}
         </div>
       );
     },

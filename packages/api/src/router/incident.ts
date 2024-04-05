@@ -30,7 +30,7 @@ export const incidentRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .output(selectIncidentSchema)
     .query(async (opts) => {
-      const currentIncident = await opts.ctx.db
+      const result = await opts.ctx.db
         .select()
         .from(schema.incidentTable)
         .where(
@@ -39,8 +39,16 @@ export const incidentRouter = createTRPCRouter({
             eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
           ),
         )
+        .leftJoin(
+          schema.monitor,
+          eq(schema.incidentTable.monitorId, schema.monitor.id),
+        )
         .get();
-      return selectIncidentSchema.parse(currentIncident);
+
+      return selectIncidentSchema.parse({
+        ...result?.incident,
+        monitorName: result?.monitor?.name,
+      });
     }),
 
   acknowledgeIncident: protectedProcedure
