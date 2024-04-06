@@ -1,0 +1,14 @@
+# flyctl launch added from .gitignore
+**/node_modules
+**/dist
+**/.wrangler
+**/.dev.vars
+
+# Change them to your taste:
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+**/bun.lockb
+fly.toml
+
+node_modules
