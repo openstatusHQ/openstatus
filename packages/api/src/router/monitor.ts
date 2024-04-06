@@ -12,6 +12,7 @@ import {
   insertMonitorSchema,
   monitor,
   monitorsToPages,
+  monitorsToStatusReport,
   monitorTag,
   monitorTagsToMonitors,
   notification,
@@ -381,7 +382,20 @@ export const monitorRouter = createTRPCRouter({
         .where(eq(monitor.id, monitorToDelete.id))
         .run();
 
-      //  might delete the notifications and tags related to the monitor
+      await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorsToPages)
+          .where(eq(monitorsToPages.monitorId, monitorToDelete.id));
+        await tx
+          .delete(monitorTagsToMonitors)
+          .where(eq(monitorTagsToMonitors.monitorId, monitorToDelete.id));
+        await tx
+          .delete(monitorsToStatusReport)
+          .where(eq(monitorsToStatusReport.monitorId, monitorToDelete.id));
+        await tx
+          .delete(notificationsToMonitors)
+          .where(eq(notificationsToMonitors.monitorId, monitorToDelete.id));
+      });
     }),
 
   getMonitorsByWorkspace: protectedProcedure.query(async (opts) => {
