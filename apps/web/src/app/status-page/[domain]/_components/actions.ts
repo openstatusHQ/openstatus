@@ -72,7 +72,7 @@ export async function handleSubscribe(formData: FormData) {
       token: token,
       page: pageData.title,
     }),
-    from: "OpenStatus <notification@openstatus.dev>",
+    from: "OpenStatus <notification@notifications.openstatus.dev>",
     to: [validatedFields.data.email],
     subject: "Verify your subscription to " + pageData.title,
   });

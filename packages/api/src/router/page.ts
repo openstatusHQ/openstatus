@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, inArray, or, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, or, sql } from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -51,6 +51,7 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(monitor.id, monitors),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt),
         ),
       });
 
@@ -235,7 +236,11 @@ export const pageRouter = createTRPCRouter({
               .select()
               .from(monitor)
               .where(
-                and(inArray(monitor.id, monitorsId), eq(monitor.active, true)), // REMINDER: this is hardcoded
+                and(
+                  inArray(monitor.id, monitorsId),
+                  eq(monitor.active, true),
+                  isNull(monitor.deletedAt),
+                ), // REMINDER: this is hardcoded
               )
               .all()
           : [];

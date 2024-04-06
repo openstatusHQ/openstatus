@@ -7,7 +7,7 @@ import {
   serialize,
   StatusAssertion,
 } from "@openstatus/assertions";
-import { and, eq, inArray, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
   monitor,
@@ -37,7 +37,10 @@ export const monitorRouter = createTRPCRouter({
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
-          where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNull(monitor.deletedAt),
+          ),
         })
       ).length;
 
@@ -158,6 +161,7 @@ export const monitorRouter = createTRPCRouter({
         where: and(
           eq(monitor.id, opts.input.id),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt),
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -203,8 +207,6 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      console.log(opts.input);
-
       const {
         regions,
         headers,
@@ -237,6 +239,7 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNull(monitor.deletedAt),
           ),
         )
         .returning()
@@ -373,14 +376,20 @@ export const monitorRouter = createTRPCRouter({
       if (!monitorToDelete) return;
 
       await opts.ctx.db
-        .delete(monitor)
+        .update(monitor)
+        .set({ deletedAt: new Date(), active: false })
         .where(eq(monitor.id, monitorToDelete.id))
         .run();
+
+      //  might delete the notifications and tags related to the monitor
     }),
 
   getMonitorsByWorkspace: protectedProcedure.query(async (opts) => {
     const monitors = await opts.ctx.db.query.monitor.findMany({
-      where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+      where: and(
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ),
       with: {
         monitorTagsToMonitors: { with: { monitorTag: true } },
       },
@@ -407,6 +416,7 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNull(monitor.deletedAt),
           ),
         )
         .get();
@@ -467,7 +477,10 @@ export const monitorRouter = createTRPCRouter({
     const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
     const monitorNumbers = (
       await opts.ctx.db.query.monitor.findMany({
-        where: eq(monitor.workspaceId, opts.ctx.workspace.id),
+        where: and(
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt),
+        ),
       })
     ).length;
 

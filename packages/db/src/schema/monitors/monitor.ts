@@ -49,6 +49,8 @@ export const monitor = sqliteTable("monitor", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
+
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
