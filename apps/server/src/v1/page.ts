@@ -338,8 +338,7 @@ pageApi.openapi(getAllRoute, async (c) => {
   const result = await db
     .select()
     .from(page)
-    .where(and(eq(page.workspaceId, workspaceId)))
-    .get();
+    .where(and(eq(page.workspaceId, workspaceId)));
 
   if (!result) return c.json({ code: 404, message: "Not Found" }, 404);
   const data = z.array(PageSchema).parse(result);
