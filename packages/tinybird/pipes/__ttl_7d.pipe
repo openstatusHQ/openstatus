@@ -12,7 +12,8 @@ SQL >
         statusCode,
         url,
         workspaceId,
-        cronTimestamp
+        cronTimestamp,
+        timestamp
     FROM ping_response__v8
 
 TYPE materialized

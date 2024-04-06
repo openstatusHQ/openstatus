@@ -2,7 +2,6 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Check, X } from "lucide-react";
 import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
@@ -19,20 +18,14 @@ import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
-    id: "state",
+    accessorKey: "error",
+    header: () => null,
     cell: ({ row }) => {
       if (row.original.error)
-        return (
-          <div className="max-w-max rounded-full bg-rose-500 p-1">
-            <X className="text-background h-3 w-3" />
-          </div>
-        );
-      return (
-        <div className="max-w-max rounded-full bg-green-500 p-1">
-          <Check className="text-background h-3 w-3" />
-        </div>
-      );
+        return <div className="h-2.5 w-2.5 rounded-full bg-rose-500" />;
+      return <div className="h-2.5 w-2.5 rounded-full bg-green-500" />;
     },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
   },
   {
     accessorKey: "cronTimestamp",
@@ -86,6 +79,14 @@ export const columns: ColumnDef<Ping>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Latency (ms)" />
     ),
+    filterFn: (row, id, value) => {
+      const { select, input } = value || {};
+      if (select === "min" && input)
+        return parseInt(row.getValue(id)) > parseInt(input);
+      if (select === "max" && input)
+        return parseInt(row.getValue(id)) < parseInt(input);
+      return true;
+    },
   },
   {
     accessorKey: "region",

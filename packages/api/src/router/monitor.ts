@@ -153,20 +153,26 @@ export const monitorRouter = createTRPCRouter({
 
   getMonitorById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .output(selectMonitorSchema) // REMINDER: use more!
     .query(async (opts) => {
-      const currentMonitor = await opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
+      const _monitor = await opts.ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, opts.input.id),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+        ),
+        with: {
+          monitorTagsToMonitors: { with: { monitorTag: true } },
+        },
+      });
 
-      const parsedMonitor = selectMonitorSchema.safeParse(currentMonitor);
+      const parsedMonitor = selectMonitorSchema
+        .extend({
+          monitorTagsToMonitors: z
+            .object({
+              monitorTag: selectMonitorTagSchema,
+            })
+            .array(),
+        })
+        .safeParse(_monitor);
 
       if (!parsedMonitor.success) {
         console.log(parsedMonitor.error);

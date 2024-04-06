@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import type { Column } from "@tanstack/react-table";
 import { Check, PlusCircle } from "lucide-react";
 
@@ -18,6 +19,7 @@ import {
   Separator,
 } from "@openstatus/ui";
 
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 
 interface DataTableFacetedFilter<TData, TValue> {
@@ -25,7 +27,7 @@ interface DataTableFacetedFilter<TData, TValue> {
   title?: string;
   options: {
     label: string;
-    value: string | number;
+    value: string | number | boolean;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 }
@@ -35,10 +37,20 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: DataTableFacetedFilter<TData, TValue>) {
+  const router = useRouter();
+  const updateSearchParams = useUpdateSearchParams();
+
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(
-    column?.getFilterValue() as (string | number)[],
+    column?.getFilterValue() as (string | number | boolean)[],
   );
+
+  const updatePageSearchParams = (
+    values: Record<string, number | string | null>,
+  ) => {
+    const newSearchParams = updateSearchParams(values);
+    router.replace(`?${newSearchParams}`, { scroll: false });
+  };
 
   return (
     <Popover>
@@ -69,7 +81,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     .map((option) => (
                       <Badge
                         variant="secondary"
-                        key={option.value}
+                        key={String(option.value)}
                         className="rounded-sm px-1 font-normal"
                       >
                         {option.label}
@@ -91,7 +103,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
-                    key={option.value}
+                    key={String(option.value)}
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value);
@@ -102,6 +114,14 @@ export function DataTableFacetedFilter<TData, TValue>({
                       column?.setFilterValue(
                         filterValues.length ? filterValues : undefined,
                       );
+
+                      // update search params
+                      const key = column?.id;
+                      if (key) {
+                        updatePageSearchParams({
+                          [key]: filterValues?.join(",") || null,
+                        });
+                      }
                     }}
                   >
                     <div
