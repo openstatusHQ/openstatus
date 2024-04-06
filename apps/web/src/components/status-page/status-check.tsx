@@ -1,8 +1,17 @@
 import type { Incident, StatusReport } from "@openstatus/db/src/schema";
 import type { StatusVariant } from "@openstatus/tracker";
 import { Tracker } from "@openstatus/tracker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 
-import { getServerTimezoneFormat } from "@/lib/timezone";
+import {
+  getServerTimezoneFormat,
+  getServerTimezoneUTCFormat,
+} from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 
@@ -17,6 +26,7 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
+  const formattedUTCServerDate = getServerTimezoneUTCFormat();
   const formattedServerDate = getServerTimezoneFormat();
 
   return (
@@ -27,10 +37,22 @@ export async function StatusCheck({
           <StatusIcon variant={details.variant} />
         </span>
       </div>
-      <p className="text-muted-foreground text-xs">
-        Status Check <span className="text-muted-foreground/50 text-xs">•</span>{" "}
-        {formattedServerDate}
-      </p>
+      <div className="flex flex-wrap gap-2">
+        <p className="text-muted-foreground text-xs">Status Check</p>
+        <span className="text-muted-foreground/50 text-xs">•</span>{" "}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger className="text-muted-foreground text-xs underline decoration-dashed underline-offset-4">
+              {formattedServerDate}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-muted-foreground text-xs">
+                {formattedUTCServerDate}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }
