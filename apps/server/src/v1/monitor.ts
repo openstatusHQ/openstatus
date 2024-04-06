@@ -562,6 +562,7 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     });
   }
 
+  // FIXME: we should use the OSTinybird client
   console.log("fetching from tinybird");
   const res = await getMonitorList(tb)({
     monitorId: String(monitorId),

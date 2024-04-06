@@ -38,6 +38,7 @@ export class OSTinybird {
   private tb: Tinybird;
 
   // FIXME: use Tinybird instead with super(args) maybe
+  // how about passing here the `opts: {revalidate}` to access it within the functions?
   constructor(private args: { token: string; baseUrl?: string | undefined }) {
     this.tb = new Tinybird(args);
   }
@@ -131,10 +132,12 @@ export class OSTinybird {
     };
   }
 
-  endpointStatusPeriod(period: "7d" | "45d") {
+  endpointStatusPeriod(
+    period: "7d" | "45d",
+    timezone: "UTC" = "UTC", // "EST" | "PST" | "CET"
+  ) {
     const parameters = z.object({
       monitorId: z.string(),
-      url: z.string().optional(),
     });
 
     return async (
@@ -143,7 +146,7 @@ export class OSTinybird {
     ) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: `__ttl_${period}_count_get__${VERSION}`,
+          pipe: `__ttl_${period}_count_${timezone.toLowerCase()}_get__${VERSION}`,
           parameters,
           data: z.object({
             day: z.string().transform((val) => {
