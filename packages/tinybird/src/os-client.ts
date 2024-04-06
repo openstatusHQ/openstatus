@@ -164,9 +164,7 @@ export class OSTinybird {
     };
   }
 
-  // TBH: not sure if we need more than 1d for that, better allow the user
-  // to click on a specific region and time
-  endpointList(period: "1h" | "1d") {
+  endpointList(period: "1h" | "1d" | "3d" | "7d") {
     const parameters = z.object({
       monitorId: z.string(),
       url: z.string().optional(),

@@ -11,7 +11,6 @@ import type {
 } from "@openstatus/tinybird";
 import { Tracker } from "@openstatus/tracker";
 import {
-  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -19,7 +18,7 @@ import {
 } from "@openstatus/ui";
 
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
-import { TagBadge } from "@/components/monitor/tag-badge";
+import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { Bar } from "@/components/tracker/tracker";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -52,14 +51,7 @@ export const columns: ColumnDef<{
     header: "Tags",
     cell: ({ row }) => {
       const { tags } = row.original;
-      const [first, second, ...rest] = tags || [];
-      return (
-        <div className="flex gap-2">
-          {first ? <TagBadge {...first} /> : null}
-          {second ? <TagBadge {...second} /> : null}
-          {rest.length > 0 ? <TagsTooltip tags={rest || []} /> : null}
-        </div>
-      );
+      return <TagBadgeWithTooltip tags={tags} />;
     },
     filterFn: (row, id, value) => {
       if (!Array.isArray(value)) return true;
@@ -153,23 +145,6 @@ export const columns: ColumnDef<{
     },
   },
 ];
-
-function TagsTooltip({ tags }: { tags: MonitorTag[] }) {
-  return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger>
-          <Badge variant="secondary">+{tags.length}</Badge>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="flex gap-2">
-          {tags.map((tag) => (
-            <TagBadge key={tag.id} {...tag} />
-          ))}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
 
 function HeaderTooltip({ label, content }: { label: string; content: string }) {
   return (

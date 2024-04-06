@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 
-import { Badge } from "@openstatus/ui";
-
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
+import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
 
 export default async function Layout({
@@ -37,9 +36,11 @@ export default async function Layout({
               status={monitor.status}
             />
             <span className="text-muted-foreground/50 text-xs">•</span>
-            <Badge className="inline-flex" variant="secondary">
-              {monitor.method}
-            </Badge>
+            <TagBadgeWithTooltip
+              tags={monitor.monitorTagsToMonitors.map(
+                ({ monitorTag }) => monitorTag,
+              )}
+            />
             <span className="text-muted-foreground/50 text-xs">•</span>
             <span className="text-sm">
               every <code>{monitor.periodicity}</code>

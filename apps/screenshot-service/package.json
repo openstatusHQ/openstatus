@@ -1,0 +1,24 @@
+{
+  "name": "@openstatus/screenshot-service",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "bun run --hot src/index.ts",
+    "start": "NODE_ENV=production bun run src/index.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.550.0",
+    "@hono/zod-validator": "0.2.1",
+    "@libsql/client": "0.6.0",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/utils": "workspace:^",
+    "@t3-oss/env-core": "0.7.1",
+    "drizzle-orm": "0.30.7",
+    "hono": "4.2.2",
+    "playwright": "1.43.0",
+    "zod": "3.22.2"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "typescript": "5.4.4"
+  }
+}

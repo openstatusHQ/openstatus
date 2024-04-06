@@ -28,7 +28,7 @@ export function ResponseHeaderTable({
         {Object.entries(headers).map(([key, value]) => (
           <TableRow key={key}>
             <TableCell className="group">
-              <div className="flex items-center justify-between gap-4">
+              <div className="min-[130px] flex items-center justify-between gap-1">
                 <code className="break-all font-medium">{key}</code>
                 <CopyToClipboardButton
                   copyValue={key}
@@ -37,7 +37,7 @@ export function ResponseHeaderTable({
               </div>
             </TableCell>
             <TableCell className="group">
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-1">
                 <code className="break-all">{value}</code>
                 <CopyToClipboardButton
                   copyValue={value}
