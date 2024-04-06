@@ -1,0 +1,5 @@
+{
+  "extends": "@openstatus/tsconfig/base.json",
+  "include": ["src", "*.ts", "**/*.ts"],
+  "compilerOptions": {}
+}
