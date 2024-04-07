@@ -1,14 +1,13 @@
-# Data Source created from Pipe '__ttl_7d_count__v0'
-VERSION 0
+# Data Source created from Pipe '__ttl_7d_count_utc__v1'
+VERSION 1
 
 SCHEMA >
-    `time` DateTime,
+    `time` DateTime('UTC'),
     `monitorId` String,
-    `url` String,
     `count` AggregateFunction(count),
     `ok` AggregateFunction(count, Nullable(UInt8))
 
 ENGINE "AggregatingMergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"
-ENGINE_SORTING_KEY "time, monitorId, url"
+ENGINE_SORTING_KEY "monitorId, time"
 ENGINE_TTL "time + toIntervalDay(7)"

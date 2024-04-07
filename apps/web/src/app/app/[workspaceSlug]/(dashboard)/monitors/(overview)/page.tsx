@@ -42,12 +42,10 @@ export default async function MonitorPage() {
     monitors.map(async (monitor) => {
       const metrics = await tb.endpointMetrics("1d")({
         monitorId: String(monitor.id),
-        url: monitor.url,
       });
 
       const data = await tb.endpointStatusPeriod("7d")({
         monitorId: String(monitor.id),
-        url: monitor.url, // FIXME: we should avoid adding url to the parameters
       });
 
       const [current] = metrics?.sort((a, b) =>

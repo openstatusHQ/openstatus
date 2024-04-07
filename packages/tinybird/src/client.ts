@@ -18,6 +18,9 @@ export const publishPingResponse = tb.buildIngestEndpoint({
   event: tbIngestPingResponse,
 });
 
+/**
+ * @deprecated but still used in server - please use OSTinybird.endpointStatusPeriod
+ */
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
     pipe: "status_timezone__v1",
@@ -31,23 +34,7 @@ export function getMonitorList(tb: Tinybird) {
 }
 
 /**
- * That pipe is used in the homepage to show the status while having cached data
- * FYI We had 3TB of processed data during August. We will be able to reduce it signifcantly.
- * The cache is only applied on the homepage.
- */
-export function getHomeMonitorList(tb: Tinybird) {
-  return tb.buildPipe({
-    pipe: "status_timezone__v1",
-    parameters: tbParameterMonitorList,
-    data: tbBuildMonitorList,
-    opts: {
-      revalidate: 600, // 10 minutes cache
-    },
-  });
-}
-
-/**
- * Homepage stats used for our marketing page.
+ * Homepage stats used for our marketing page
  */
 export function getHomeStats(tb: Tinybird) {
   return tb.buildPipe({

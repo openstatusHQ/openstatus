@@ -16,7 +16,6 @@ SQL >
     FROM __ttl_1h_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND time >= toDateTime64(now() - INTERVAL 1 HOUR, 3)
     UNION ALL
     SELECT
@@ -31,7 +30,6 @@ SQL >
     FROM __ttl_1d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND time >= toDateTime64(now() - INTERVAL 2 HOUR, 3)
         AND time < toDateTime64(now() - INTERVAL 1 HOUR, 3)
 

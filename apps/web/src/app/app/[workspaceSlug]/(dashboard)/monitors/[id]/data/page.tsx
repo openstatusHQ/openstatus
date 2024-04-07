@@ -63,10 +63,7 @@ export default async function Page({
   const allowedPeriods = ["1h", "1d", "3d", "7d"] as const;
   const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
-  const data = await tb.endpointList(period)({
-    monitorId: id,
-    url: monitor.url,
-  });
+  const data = await tb.endpointList(period)({ monitorId: id });
 
   if (!data) return null;
 

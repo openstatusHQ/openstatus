@@ -4,22 +4,20 @@ DESCRIPTION >
 	TODO: descripe what it is for!
 
 
-NODE __ttl_45d_count_0
+NODE __ttl_7d_count_utc_0
 SQL >
 
     SELECT
-        time,
+        toStartOfDay(toTimeZone(time, 'UTC')) AS time,
         monitorId,
-        url,
         countState() AS count,
         countState(if(error = 0, 1, NULL)) AS ok
-    FROM __ttl_45d_mv__v1
+    FROM __ttl_7d_mv__v1
     GROUP BY
         time,
-        monitorId,
-        url
+        monitorId
 
 TYPE materialized
-DATASOURCE __ttl_45d_count_mv__v1
+DATASOURCE __ttl_7d_count_utc_mv__v1
 
 
