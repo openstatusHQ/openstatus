@@ -19,7 +19,6 @@ SQL >
     FROM __ttl_7d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC
 

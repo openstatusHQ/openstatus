@@ -9,7 +9,6 @@ SQL >
     FROM __ttl_1h_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     ORDER BY cronTimestamp DESC
 
 

@@ -73,20 +73,15 @@ export default async function Page({
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const metrics = await tb.endpointMetrics(period)({
-    monitorId: id,
-    url: monitor.url,
-  });
+  const metrics = await tb.endpointMetrics(period)({ monitorId: id });
 
   const data = await tb.endpointChart(period)({
     monitorId: id,
-    url: monitor.url,
     interval: minutes,
   });
 
   const metricsByRegion = await tb.endpointMetricsByRegion(period)({
     monitorId: id,
-    url: monitor.url,
   });
 
   if (!data || !metrics || !metricsByRegion) return null;

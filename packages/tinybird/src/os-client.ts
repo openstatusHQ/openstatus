@@ -47,7 +47,6 @@ export class OSTinybird {
     const parameters = z.object({
       interval: z.number().int().optional(),
       monitorId: z.string(),
-      url: z.string().optional(),
     });
 
     return async (props: z.infer<typeof parameters>) => {
@@ -73,10 +72,7 @@ export class OSTinybird {
   }
 
   endpointMetrics(period: "1h" | "1d" | "3d" | "7d" | "14d") {
-    const parameters = z.object({
-      monitorId: z.string(),
-      url: z.string().optional(),
-    });
+    const parameters = z.object({ monitorId: z.string() });
 
     return async (props: z.infer<typeof parameters>) => {
       try {
@@ -103,10 +99,7 @@ export class OSTinybird {
   }
 
   endpointMetricsByRegion(period: "1h" | "1d" | "3d" | "7d" | "14d") {
-    const parameters = z.object({
-      monitorId: z.string(),
-      url: z.string().optional(),
-    });
+    const parameters = z.object({ monitorId: z.string() });
 
     return async (props: z.infer<typeof parameters>) => {
       try {
@@ -136,9 +129,7 @@ export class OSTinybird {
     period: "7d" | "45d",
     timezone: "UTC" = "UTC", // "EST" | "PST" | "CET"
   ) {
-    const parameters = z.object({
-      monitorId: z.string(),
-    });
+    const parameters = z.object({ monitorId: z.string() });
 
     return async (
       props: z.infer<typeof parameters>,
@@ -172,7 +163,6 @@ export class OSTinybird {
   endpointList(period: "1h" | "1d") {
     const parameters = z.object({
       monitorId: z.string(),
-      url: z.string().optional(),
     });
 
     return async (props: z.infer<typeof parameters>) => {
@@ -231,7 +221,6 @@ export class OSTinybird {
   endpointResponseDetails(period: "7d" | "45d") {
     const parameters = z.object({
       monitorId: z.string().default("").optional(),
-      url: z.string().url().optional(),
       region: z.enum(flyRegions).optional(),
       cronTimestamp: z.number().int().optional(),
     });

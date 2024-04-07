@@ -42,7 +42,6 @@ export default async function MonitorPage() {
     monitors.map(async (monitor) => {
       const metrics = await tb.endpointMetrics("1d")({
         monitorId: String(monitor.id),
-        url: monitor.url,
       });
 
       const data = await tb.endpointStatusPeriod("7d")({
