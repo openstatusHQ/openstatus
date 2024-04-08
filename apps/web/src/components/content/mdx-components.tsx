@@ -15,10 +15,8 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import {
-  MetricsCard,
-  MetricsCardProps,
-} from "../monitor-dashboard/metrics-card";
+import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
+import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
 
