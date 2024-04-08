@@ -120,6 +120,20 @@ test("create a status report update", async () => {
   });
 });
 
+test("Get Status Report should return current status of report", async () => {
+  const res = await api.request("/status_report/1", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: 1,
+    status: "investigating",
+    status_report_updates: expect.any(Array),
+  });
+});
+
 test("Create a status report update not in db should return 404", async () => {
   const res = await api.request("/status_report/404/update", {
     method: "POST",
