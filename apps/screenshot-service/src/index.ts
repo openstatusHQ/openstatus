@@ -47,34 +47,50 @@ app.post(
       headless: true, // set this to true
     });
 
-    const page = await browser.newPage();
-    await page.goto(data.url, { waitUntil: "networkidle" });
-    const img = await page.screenshot();
-    const id = `${data.incidentId}-${Date.now()}.png`;
-    const url = `https://screenshot.openstat.us/${id}`;
+    try {
+      const page = await browser.newPage();
+      await page.goto(data.url, { waitUntil: "load" });
+      const img = await page.screenshot({ fullPage: true });
+      const id = `${data.incidentId}-${Date.now()}.png`;
+      const url = `https://screenshot.openstat.us/${id}`;
 
-    await S3.send(
-      new PutObjectCommand({
-        Body: img,
-        Bucket: "incident-screenshot",
-        Key: id,
-        ContentType: "image/png",
-      }),
-    );
+      await S3.send(
+        new PutObjectCommand({
+          Body: img,
+          Bucket: "incident-screenshot",
+          Key: id,
+          ContentType: "image/png",
+        }),
+      );
 
-    if (data.kind === "incident") {
-      await db
-        .update(incidentTable)
-        .set({ incidentScreenshotUrl: url })
-        .where(eq(incidentTable.id, data.incidentId))
-        .run();
-    }
-    if (data.kind === "recovery") {
-      await db
-        .update(incidentTable)
-        .set({ recoveryScreenshotUrl: url })
-        .where(eq(incidentTable.id, data.incidentId))
-        .run();
+      if (data.kind === "incident") {
+        await db
+          .update(incidentTable)
+          .set({ incidentScreenshotUrl: url })
+          .where(eq(incidentTable.id, data.incidentId))
+          .run();
+      }
+      if (data.kind === "recovery") {
+        await db
+          .update(incidentTable)
+          .set({ recoveryScreenshotUrl: url })
+          .where(eq(incidentTable.id, data.incidentId))
+          .run();
+      }
+    } catch (e) {
+      console.log("could not take screenshot timeout");
+      if (data.kind === "incident") {
+        await db
+          .update(incidentTable)
+          .set({
+            incidentScreenshotUrl:
+              "https://screenshot.openstat.us/err-connection-timed-out.jpg",
+          })
+          .where(eq(incidentTable.id, data.incidentId))
+          .run();
+      }
+      //
+      console.log(e);
     }
 
     return c.text("Screenshot saved");
@@ -86,6 +102,7 @@ app.get("/", async (c) => {
     headless: true, // set this to true
   });
   const page = await browser.newPage();
+
   await page.goto("https://www.openstatus.dev", { waitUntil: "networkidle" });
   const img = await page.screenshot();
   const id = `test-$${Date.now()}.png`;

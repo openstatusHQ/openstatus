@@ -31,8 +31,9 @@ const WelcomeEmail = () => {
           </a>{" "}
           and{" "}
           <a href="https://docs.openstatus.dev/packages/react">React Widget</a>
-          <br />- Build your own status page with our <a href="">API</a> and
-          host it where you want. Here's our{" "}
+          <br />- Build your own status page with our{" "}
+          <a href="https://docs.openstatus.dev/api-reference">API</a> and host
+          it where you want. Here's our{" "}
           <a href="https://github.com/openstatusHQ/astro-status-page">
             Astro template
           </a>{" "}
