@@ -28,16 +28,16 @@ type HeaderTarget struct {
 }
 
 type StringTargetType struct {
-	Comparator request.StringComparator
-	Target     string
+	Comparator request.StringComparator `json:"compare"`
+	Target     string                   `json:"target"`
 }
 
 func (target StringTargetType) StringEvaluate(s string) bool {
 	switch target.Comparator {
 	case request.StringContains:
-		return strings.Contains(target.Target, s)
+		return strings.Contains(s, target.Target)
 	case request.StringNotContains:
-		return !strings.Contains(target.Target, s)
+		return !strings.Contains(s, target.Target)
 	case request.StringEmpty:
 		return s == ""
 	case request.StringNotEmpty:

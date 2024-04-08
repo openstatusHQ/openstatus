@@ -123,7 +123,12 @@ func main() {
 						isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
 
 					case request.AssertionTextBody:
-						fmt.Println("assertion type", assert.AssertionType)
+						var target assertions.StringTargetType
+						if err := json.Unmarshal(a, &target); err != nil {
+							return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
+						}
+						isSuccessfull = isSuccessfull && target.StringEvaluate(res.Body)
+
 					case request.AssertionStatus:
 						var target assertions.StatusTarget
 						if err := json.Unmarshal(a, &target); err != nil {
@@ -148,6 +153,8 @@ func main() {
 			// it's in error if not successful
 			if isSuccessfull {
 				res.Error = 0
+				// Small trick to avoid sending the body at the moment to TB
+				res.Body = ""
 			} else {
 				res.Error = 1
 			}
@@ -194,6 +201,7 @@ func main() {
 				WorkspaceID:   req.WorkspaceID,
 				Error:         1,
 				Assertions:    assertionAsString,
+				Body:          "",
 			}); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
