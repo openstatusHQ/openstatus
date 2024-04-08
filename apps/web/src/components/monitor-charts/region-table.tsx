@@ -10,7 +10,7 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
-import { formatNumber } from "../../_components/metrics-card";
+import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
 import { SimpleChart } from "./simple-chart";
 
 export interface RegionTableProps {

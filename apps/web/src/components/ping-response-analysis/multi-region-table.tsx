@@ -9,13 +9,13 @@ import {
 } from "@openstatus/ui";
 
 import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
-import type { RegionChecker } from "../utils";
 import {
   getTimingPhases,
   getTotalLatency,
   latencyFormatter,
   regionFormatter,
-} from "../utils";
+} from "./utils";
+import type { RegionChecker } from "./utils";
 
 // TBD: add the popover infos about timing details
 

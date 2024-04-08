@@ -2,8 +2,8 @@
 
 import * as React from "react";
 
-import { periodFormatter } from "../utils";
-import type { Period } from "../utils";
+import { periodFormatter } from "@/lib/monitor/utils";
+import type { Period } from "@/lib/monitor/utils";
 import { SearchParamsPreset } from "./search-params-preset";
 
 export function DatePickerPreset({

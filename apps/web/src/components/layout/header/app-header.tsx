@@ -2,17 +2,35 @@
 
 import Link from "next/link";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { allChangelogs } from "contentlayer/generated";
 import { ArrowUpRight } from "lucide-react";
 
 import { Button, Skeleton } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
-import { ChangelogViewedButton } from "@/components/workspace/changelog-viewed-button";
+import { useCookieState } from "@/hooks/use-cookie-state";
 import { AppTabs } from "./app-tabs";
 import { Breadcrumbs } from "./breadcrumbs";
 
+const lastChangelog = allChangelogs
+  .sort(
+    (a, b) =>
+      new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
+  )
+  .pop();
+
 export function AppHeader() {
   const { isLoaded, isSignedIn } = useUser();
+  const [lastViewed, setLastViewed] = useCookieState(
+    "last-viewed-changelog",
+    new Date(0).toISOString(),
+  );
+
+  const show =
+    lastChangelog && lastViewed
+      ? new Date(lastViewed) < new Date(lastChangelog.publishedAt)
+      : false;
+
   return (
     // TODO: discuss amount of top-3 and top-6
     <header className="border-border sticky top-2 z-50 w-full">
@@ -23,7 +41,19 @@ export function AppHeader() {
           <div className="flex items-center gap-1">
             <ul className="hidden gap-1 sm:flex">
               <li className="w-full">
-                <ChangelogViewedButton />
+                <Button variant="link" asChild>
+                  <Link
+                    href="/changelog"
+                    target="_blank"
+                    onClick={() => setLastViewed(new Date().toISOString())}
+                    className="relative"
+                  >
+                    Changelog
+                    {show ? (
+                      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-green-500" />
+                    ) : null}
+                  </Link>
+                </Button>
               </li>
               <li className="w-full">
                 <Button variant="link" asChild>

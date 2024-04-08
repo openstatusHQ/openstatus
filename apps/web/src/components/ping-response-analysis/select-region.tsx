@@ -14,7 +14,7 @@ import {
 } from "@openstatus/ui";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
-import { regionFormatter } from "../utils";
+import { regionFormatter } from "./utils";
 
 export function SelectRegion({
   defaultValue,

@@ -11,8 +11,8 @@ import {
   Separator,
 } from "@openstatus/ui";
 
-import { intervals } from "../utils";
-import type { Interval } from "../utils";
+import { intervals } from "@/lib/monitor/utils";
+import type { Interval } from "@/lib/monitor/utils";
 import { SearchParamsPreset } from "./search-params-preset";
 
 export function IntervalPreset({ interval }: { interval: Interval }) {

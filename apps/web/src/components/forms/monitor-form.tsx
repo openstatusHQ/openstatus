@@ -62,9 +62,9 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";

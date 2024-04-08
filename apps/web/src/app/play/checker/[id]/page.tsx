@@ -13,12 +13,15 @@ import {
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
-import { CopyLinkButton } from "./_components/copy-link-button";
-import { MultiRegionTabs } from "./_components/multi-region-tabs";
-import { RegionInfo } from "./_components/region-info";
-import { ResponseDetailTabs } from "./_components/response-detail-tabs";
-import { SelectRegion } from "./_components/select-region";
-import { getCheckerDataById, timestampFormatter } from "./utils";
+import { CopyLinkButton } from "@/components/ping-response-analysis/copy-link-button";
+import { MultiRegionTabs } from "@/components/ping-response-analysis/multi-region-tabs";
+import { RegionInfo } from "@/components/ping-response-analysis/region-info";
+import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import { SelectRegion } from "@/components/ping-response-analysis/select-region";
+import {
+  getCheckerDataById,
+  timestampFormatter,
+} from "@/components/ping-response-analysis/utils";
 
 /**
  * allowed URL search params

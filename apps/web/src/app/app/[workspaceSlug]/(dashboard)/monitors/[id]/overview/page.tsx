@@ -7,16 +7,19 @@ import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
+import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
+import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
+import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
+import { Metrics } from "@/components/monitor-dashboard/metrics";
 import { env } from "@/env";
+import {
+  getMinutesByInterval,
+  intervals,
+  periods,
+  quantiles,
+} from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
-import { ButtonReset } from "../_components/button-reset";
-import { DatePickerPreset } from "../_components/date-picker-preset";
-import { Metrics } from "../_components/metrics";
-import { getMinutesByInterval, intervals, periods, quantiles } from "../utils";
-import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
-
-// import { groupDataByTimestamp } from "./_components/utils";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 

@@ -2,8 +2,8 @@
 
 import { BarChart } from "@tremor/react";
 
-import type { RegionChecker } from "../utils";
-import { getTimingPhases, latencyFormatter, regionFormatter } from "../utils";
+import type { RegionChecker } from "./utils";
+import { getTimingPhases, latencyFormatter, regionFormatter } from "./utils";
 
 export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
   const data = regions.map((item) => {

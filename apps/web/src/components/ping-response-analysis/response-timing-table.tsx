@@ -13,9 +13,9 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import { timingDict } from "../config";
-import type { Timing } from "../utils";
-import { getTimingPhases, getTotalLatency } from "../utils";
+import { timingDict } from "./config";
+import type { Timing } from "./utils";
+import { getTimingPhases, getTotalLatency } from "./utils";
 
 export function ResponseTimingTable({
   timing,

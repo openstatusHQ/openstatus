@@ -1,14 +1,13 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
-import { format } from "date-fns";
 import * as z from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 
+import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { env } from "@/env";
+import { periods } from "@/lib/monitor/utils";
 import { api } from "@/trpc/server";
-import { DatePickerPreset } from "../_components/date-picker-preset";
-import { periods } from "../utils";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
 import { DownloadCSVButton } from "./_components/download-csv-button";
 

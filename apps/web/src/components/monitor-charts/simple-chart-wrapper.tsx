@@ -1,6 +1,6 @@
 import type { Region, ResponseGraph } from "@openstatus/tinybird";
 
-import type { Period, Quantile } from "../../utils";
+import type { Period, Quantile } from "@/lib/monitor/utils";
 import { SimpleChart } from "./simple-chart";
 import { groupDataByTimestamp } from "./utils";
 

@@ -3,8 +3,8 @@ import { formatDistanceToNowStrict } from "date-fns";
 
 import type { LatencyMetric, ResponseTimeMetrics } from "@openstatus/tinybird";
 
-import { periodFormatter } from "../utils";
-import type { Period } from "../utils";
+import { periodFormatter } from "@/lib/monitor/utils";
+import type { Period } from "@/lib/monitor/utils";
 import { MetricsCard } from "./metrics-card";
 
 const metricsOrder = [

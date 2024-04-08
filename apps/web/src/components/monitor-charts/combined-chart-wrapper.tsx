@@ -11,12 +11,12 @@ import type {
 } from "@openstatus/tinybird";
 import { Toggle } from "@openstatus/ui";
 
+import { IntervalPreset } from "@/components/monitor-dashboard/interval-preset";
+import { QuantilePreset } from "@/components/monitor-dashboard/quantile-preset";
+import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
+import type { Interval, Period, Quantile } from "@/lib/monitor/utils";
 import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
-import { IntervalPreset } from "../../_components/interval-preset";
-import { QuantilePreset } from "../../_components/quantile-preset";
-import { RegionsPreset } from "../../_components/region-preset";
-import type { Interval, Period, Quantile } from "../../utils";
 import { Chart } from "./chart";
 import { RegionTable } from "./region-table";
 import { groupDataByTimestamp } from "./utils";
