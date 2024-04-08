@@ -64,8 +64,8 @@ export default async function IncidentPage({
       </div>
       <div className="max-w-xl">
         <Event label="Started" icon="alert-triangle" date={incident.startedAt}>
-          {incident.incidentScreenshotUrl ? (
-            <div className="border-border bg-background relative h-64 w-full overflow-hidden rounded-xl border">
+          <div className="border-border bg-background relative h-64 w-full overflow-hidden rounded-xl border">
+            {incident?.incidentScreenshotUrl ? (
               <a
                 href={incident.incidentScreenshotUrl}
                 target="_blank"
@@ -78,8 +78,15 @@ export default async function IncidentPage({
                   className="object-contain"
                 />
               </a>
-            </div>
-          ) : null}
+            ) : (
+              <Image
+                src="https://screenshot.openstat.us/err-connection-timed-out.jpg"
+                fill={true}
+                alt="incident screenshot"
+                className="object-cover"
+              />
+            )}
+          </div>
         </Event>
         {incident?.acknowledgedAt ? (
           <Event
