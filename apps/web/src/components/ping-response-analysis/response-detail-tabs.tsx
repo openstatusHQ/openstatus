@@ -6,10 +6,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
-import type { Timing } from "../utils";
 import { ResponseAssertion } from "./response-assertion";
 import { ResponseHeaderTable } from "./response-header-table";
 import { ResponseTimingTable } from "./response-timing-table";
+import type { Timing } from "./utils";
 
 export async function ResponseDetailTabs({
   timing,

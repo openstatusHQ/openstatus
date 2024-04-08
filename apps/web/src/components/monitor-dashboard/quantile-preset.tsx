@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { HelpCircle } from "lucide-react";
 
 import {
@@ -12,8 +11,8 @@ import {
   Separator,
 } from "@openstatus/ui";
 
-import { quantiles } from "../utils";
-import type { Quantile } from "../utils";
+import { quantiles } from "@/lib/monitor/utils";
+import type { Quantile } from "@/lib/monitor/utils";
 import { SearchParamsPreset } from "./search-params-preset";
 
 export function QuantilePreset({

@@ -1,15 +1,17 @@
+// TODO: move to `ping-response-analysis`
+
 import { OSTinybird } from "@openstatus/tinybird";
 import type { ResponseDetailsParams } from "@openstatus/tinybird";
 
-import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
-import { ResponseHeaderTable } from "@/app/play/checker/[id]/_components/response-header-table";
-import { ResponseTimingTable } from "@/app/play/checker/[id]/_components/response-timing-table";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
+import { RegionInfo } from "@/components/ping-response-analysis/region-info";
+import { ResponseHeaderTable } from "@/components/ping-response-analysis/response-header-table";
+import { ResponseTimingTable } from "@/components/ping-response-analysis/response-timing-table";
 import { env } from "@/env";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });

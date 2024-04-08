@@ -1,10 +1,6 @@
 import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
-import {
-  latencyFormatter,
-  regionFormatter,
-  timestampFormatter,
-} from "../utils";
-import type { RegionChecker } from "../utils";
+import { latencyFormatter, regionFormatter, timestampFormatter } from "./utils";
+import type { RegionChecker } from "./utils";
 
 export function RegionInfo({
   check,

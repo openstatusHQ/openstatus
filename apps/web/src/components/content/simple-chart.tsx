@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-import type { RegionTableProps } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/overview/_components/region-table";
-import { RegionTable } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/overview/_components/region-table";
+import type { RegionTableProps } from "@/components/monitor-charts/region-table";
+import { RegionTable } from "@/components/monitor-charts/region-table";
 
 export interface SimpleChartProps {
   staticFile: string;

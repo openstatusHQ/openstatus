@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import type { Region, ResponseGraph } from "@openstatus/tinybird";
 import { regionsDict } from "@openstatus/utils";
 
-import type { Period, Quantile } from "../../utils";
+import type { Period, Quantile } from "@/lib/monitor/utils";
 
 /**
  *
@@ -65,7 +65,6 @@ export function groupDataByTimestamp(
  * @returns
  */
 export function renderTimestamp(timestamp: number, period: Period) {
-  const isInDay = ["1h", "1d"].includes(period);
   const date = new Date(timestamp);
   return format(date, "MMM d, HH:mm");
 }

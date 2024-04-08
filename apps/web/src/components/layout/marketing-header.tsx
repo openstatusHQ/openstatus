@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 
 import { Button } from "@openstatus/ui";
 
@@ -17,7 +16,6 @@ interface Props {
 }
 
 export function MarketingHeader({ className }: Props) {
-  const { isSignedIn } = useUser();
   const pathname = usePathname();
 
   return (

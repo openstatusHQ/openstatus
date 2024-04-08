@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 
-import { checkRegion } from "@/app/play/checker/[id]/utils"; // TODO: move into a shared package
+import { checkRegion } from "@/components/ping-response-analysis/utils";
 import { payloadSchema } from "../schema";
 import { isAnInvalidTestUrl } from "../utils";
 

@@ -1,8 +1,8 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
-import type { RegionChecker } from "../utils";
 import { MultiRegionChart } from "./multi-region-chart";
 import { MultiRegionTable } from "./multi-region-table";
+import type { RegionChecker } from "./utils";
 
 export function MultiRegionTabs({ regions }: { regions: RegionChecker[] }) {
   return (
