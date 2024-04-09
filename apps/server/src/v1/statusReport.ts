@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
+  monitorsToStatusReport,
   page,
   pagesToStatusReports,
   pageSubscriber,
@@ -33,6 +34,38 @@ const ParamsSchema = z.object({
     }),
 });
 
+const statusSchema = z.object({
+  id: z.number().openapi({ description: "The id of the status report" }),
+  title: z.string().openapi({
+    example: "Documenso",
+    description: "The title of the status report",
+  }),
+  status: z.enum(statusReportStatus).openapi({
+    description: "The current status of the report",
+  }),
+  date: isoDate.openapi({
+    description: "The date of the report in ISO8601 format",
+  }),
+  status_report_updates: z.array(z.number()).openapi({
+    description: "The ids of the status report updates",
+  }),
+  message: z.string().openapi({
+    description: "The message of the current status of incident",
+  }),
+  monitors_id: z
+    .array(z.number())
+    .openapi({
+      description: "id of monitors this report needs to refer",
+    })
+    .nullable(),
+  pages_id: z
+    .array(z.number())
+    .openapi({
+      description: "id of status pages this report needs to refer",
+    })
+    .nullable(),
+});
+
 const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
@@ -45,7 +78,7 @@ const createStatusReportUpdateSchema = z.object({
   }),
 });
 
-const statusSchema = z.object({
+const createStatusReportSchema = z.object({
   title: z.string().openapi({
     example: "Documenso",
     description: "The title of the status report",
@@ -53,14 +86,24 @@ const statusSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The current status of the report",
   }),
-});
-
-const statusReportExtendedSchema = statusSchema.extend({
-  id: z.number().openapi({ description: "The id of the status report" }),
-  status_report_updates: z
+  message: z.string().openapi({
+    description: "The message of the current status of incident",
+  }),
+  date: isoDate
+    .openapi({
+      description: "The date of the report in ISO8601 format",
+    })
+    .default(new Date()),
+  monitors_id: z
     .array(z.number())
     .openapi({
-      description: "The ids of the status report updates",
+      description: "id of monitors this report needs to refer",
+    })
+    .default([]),
+  pages_id: z
+    .array(z.number())
+    .openapi({
+      description: "id of status pages this report needs to refer",
     })
     .default([]),
 });
@@ -75,7 +118,7 @@ const getAllRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(statusReportExtendedSchema),
+          schema: z.array(statusSchema),
         },
       },
       description: "Get all status reports",
@@ -96,21 +139,36 @@ statusReportApi.openapi(getAllRoute, async (c) => {
   const _statusReports = await db.query.statusReport.findMany({
     with: {
       statusReportUpdates: true,
+      monitorsToStatusReports: true,
+      pagesToStatusReports: true,
     },
     where: eq(statusReport.workspaceId, workspaceId),
   });
 
   if (!_statusReports) return c.json({ code: 404, message: "Not Found" }, 404);
 
-  const data = z.array(statusReportExtendedSchema).parse(
-    _statusReports.map((statusReport) => ({
-      ...statusReport,
-      status_report_updates: statusReport.statusReportUpdates.map(
-        (statusReportUpdate) => {
-          return statusReportUpdate.id;
-        },
-      ),
-    })),
+  const data = z.array(statusSchema).parse(
+    _statusReports.map((statusReport) => {
+      const {
+        statusReportUpdates,
+        monitorsToStatusReports,
+        pagesToStatusReports,
+      } = statusReport;
+      const { message, date } =
+        statusReportUpdates[statusReportUpdates.length - 1];
+      return {
+        ...statusReport,
+        message,
+        date,
+        monitors_id: monitorsToStatusReports.length
+          ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
+          : null,
+        pages_id: pagesToStatusReports.length
+          ? pagesToStatusReports.map((page) => page.pageId)
+          : null,
+        status_report_updates: statusReportUpdates.map((update) => update.id),
+      };
+    }),
   );
 
   return c.json(data);
@@ -128,7 +186,7 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: statusReportExtendedSchema,
+          schema: statusSchema,
         },
       },
       description: "Get all status reports",
@@ -152,6 +210,8 @@ statusReportApi.openapi(getRoute, async (c) => {
   const _statusUpdate = await db.query.statusReport.findFirst({
     with: {
       statusReportUpdates: true,
+      monitorsToStatusReports: true,
+      pagesToStatusReports: true,
     },
     where: and(
       eq(statusReport.workspaceId, workspaceId),
@@ -160,11 +220,23 @@ statusReportApi.openapi(getRoute, async (c) => {
   });
 
   if (!_statusUpdate) return c.json({ code: 404, message: "Not Found" }, 404);
-  const data = statusReportExtendedSchema.parse({
+  const { statusReportUpdates, monitorsToStatusReports, pagesToStatusReports } =
+    _statusUpdate;
+
+  // most recent report information
+  const { message, date } = statusReportUpdates[statusReportUpdates.length - 1];
+
+  const data = statusSchema.parse({
     ..._statusUpdate,
-    status_report_updates: _statusUpdate.statusReportUpdates.map(
-      (update) => update.id,
-    ),
+    message,
+    date,
+    monitors_id: monitorsToStatusReports.length
+      ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
+      : null,
+    pages_id: pagesToStatusReports.length
+      ? pagesToStatusReports.map((page) => page.pageId)
+      : null,
+    status_report_updates: statusReportUpdates.map((update) => update.id),
   });
 
   return c.json(data);
@@ -180,7 +252,7 @@ const postRoute = createRoute({
       description: "The status report to create",
       content: {
         "application/json": {
-          schema: statusSchema,
+          schema: createStatusReportSchema,
         },
       },
     },
@@ -189,7 +261,7 @@ const postRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: statusReportExtendedSchema,
+          schema: statusSchema,
         },
       },
       description: "Status report created",
@@ -208,7 +280,6 @@ const postRoute = createRoute({
 statusReportApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
-
   const _newStatusReport = await db
     .insert(statusReport)
     .values({
@@ -221,16 +292,59 @@ statusReportApi.openapi(postRoute, async (c) => {
   const _statusReportHistory = await db
     .insert(statusReportUpdate)
     .values({
-      status: input.status,
-      date: new Date(),
-      message: "",
+      ...input,
+      date: new Date(input.date),
       statusReportId: _newStatusReport.id,
     })
     .returning()
     .get();
 
-  const data = statusReportExtendedSchema.parse({
+  const { pages_id, monitors_id } = input;
+
+  let pageToStatus;
+  let monitorToStatus;
+
+  if (pages_id.length) {
+    pageToStatus = await db
+      .insert(pagesToStatusReports)
+      .values(
+        pages_id.map((id) => {
+          return {
+            pageId: id,
+            statusReportId: _newStatusReport.id,
+          };
+        }),
+      )
+      .returning();
+  }
+
+  if (monitors_id.length) {
+    monitorToStatus = await db
+      .insert(monitorsToStatusReport)
+      .values(
+        monitors_id.map((id) => {
+          return {
+            monitorId: id,
+            statusReportId: _newStatusReport.id,
+          };
+        }),
+      )
+      .returning();
+  }
+
+  const { message, date } = _statusReportHistory;
+  const data = statusSchema.parse({
     ..._newStatusReport,
+    message,
+    date,
+    monitors_id:
+      monitorToStatus && monitorToStatus.length
+        ? monitorToStatus.map((monitor) => monitor.monitorId)
+        : null,
+    pages_id:
+      pageToStatus && pageToStatus.length
+        ? pageToStatus.map((page) => page.pageId)
+        : null,
     status_report_updates: [_statusReportHistory.id],
   });
 
