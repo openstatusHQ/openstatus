@@ -176,6 +176,13 @@
       "when": 1712354121499,
       "tag": "0024_young_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1712602151883,
+      "tag": "0025_pink_william_stryker",
+      "breakpoints": true
     }
   ]
 }
