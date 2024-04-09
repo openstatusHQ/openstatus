@@ -76,6 +76,28 @@ checkerRoute.post("/updateStatus", async (c) => {
       status: "degraded",
       region: region,
     });
+    const currentMonitor = await db
+      .select()
+      .from(schema.monitor)
+      .where(eq(schema.monitor.id, Number(monitorId)))
+      .get();
+    if (currentMonitor?.status === "active") {
+      const redisKey = `${monitorId}-${cronTimestamp}-error`;
+      // We add the new region to the set
+      await redis.sadd(redisKey, region);
+      // let's add an expire to the set
+      await redis.expire(redisKey, 60 * 60 * 24);
+      // We get the number of regions affected
+      const nbAffectedRegion = await redis.scard(redisKey);
+
+      const monitor = selectMonitorSchema.parse(currentMonitor);
+
+      const numberOfRegions = monitor.regions.length;
+
+      if (nbAffectedRegion > numberOfRegions / 2) {
+        // send  degraded
+      }
+    }
   }
   // if we are in error
   if (status === "error") {
