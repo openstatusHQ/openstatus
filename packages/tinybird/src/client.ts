@@ -42,7 +42,7 @@ export function getHomeStats(tb: Tinybird) {
     parameters: tbParameterHomeStats,
     data: tbBuildHomeStats,
     opts: {
-      revalidate: 86400, // 60 * 60 * 24 = 86400s = 1d
+      revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
     },
   });
 }
