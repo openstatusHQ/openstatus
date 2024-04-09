@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  monitorDegradedSchema,
   monitorFailedSchema,
   monitorRecoveredSchema,
   notificationSentSchema,
@@ -21,6 +22,7 @@ export const ingestActionEventSchema = z
     // and made available to devs as library
     z.discriminatedUnion("action", [
       monitorRecoveredSchema,
+      monitorDegradedSchema,
       monitorFailedSchema,
       notificationSentSchema,
     ]),

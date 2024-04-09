@@ -83,7 +83,7 @@ func main() {
 		}
 		//  We need a new client for each request to avoid connection reuse.
 		requestClient := &http.Client{
-			Timeout: 45 * time.Second,
+			Timeout: time.Duration(req.Timeout) * time.Millisecond,
 		}
 		defer requestClient.CloseIdleConnections()
 
@@ -160,6 +160,7 @@ func main() {
 			}
 
 			res.Assertions = assertionAsString
+			// That part could be refactored
 			if !isSuccessfull && req.Status == "active" {
 				// Q: Why here we do not check if the status was previously active?
 				checker.UpdateStatus(ctx, checker.UpdateData{
@@ -171,8 +172,7 @@ func main() {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
-
-			if req.Status == "error" && isSuccessfull {
+			if isSuccessfull && req.Status == "error" {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
@@ -181,6 +181,28 @@ func main() {
 					StatusCode:    res.StatusCode,
 					CronTimestamp: req.CronTimestamp,
 				})
+			}
+			if isSuccessfull && req.Status == "degraded" {
+				if req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
+					checker.UpdateStatus(ctx, checker.UpdateData{
+						MonitorId:     req.MonitorID,
+						Status:        "active",
+						Region:        flyRegion,
+						StatusCode:    res.StatusCode,
+						CronTimestamp: req.CronTimestamp,
+					})
+				}
+			}
+			if isSuccessfull && req.Status == "active" {
+				if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+					checker.UpdateStatus(ctx, checker.UpdateData{
+						MonitorId:     req.MonitorID,
+						Status:        "degraded",
+						Region:        flyRegion,
+						StatusCode:    res.StatusCode,
+						CronTimestamp: req.CronTimestamp,
+					})
+				}
 			}
 
 			if err := tinybirdClient.SendEvent(ctx, res); err != nil {

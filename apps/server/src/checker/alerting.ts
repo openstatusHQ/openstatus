@@ -20,7 +20,7 @@ export const triggerNotifications = async ({
   monitorId: string;
   statusCode?: number;
   message?: string;
-  notifType: "alert" | "recovery";
+  notifType: "alert" | "recovery" | "degraded";
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db

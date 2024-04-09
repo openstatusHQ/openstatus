@@ -63,6 +63,20 @@ checkerRoute.post("/updateStatus", async (c) => {
     )
     .get();
 
+  if (status === "degraded") {
+    await checkerAudit.publishAuditLog({
+      id: `monitor:${monitorId}`,
+      action: "monitor.degraded",
+      targets: [{ id: monitorId, type: "monitor" }],
+      metadata: { region, statusCode: Number(statusCode) },
+    });
+    // We upsert the status of the  monitor
+    await upsertMonitorStatus({
+      monitorId: monitorId,
+      status: "degraded",
+      region: region,
+    });
+  }
   // if we are in error
   if (status === "error") {
     // trigger alerting

@@ -14,6 +14,19 @@ export const monitorRecoveredSchema = z.object({
 });
 
 /**
+ * The schema for the monitor.recovered action.
+ * It represents the event when a monitor has recovered from a failure.
+ */
+export const monitorDegradedSchema = z.object({
+  action: z.literal("monitor.degraded"),
+  metadata: z.object({
+    region: z.string(),
+    statusCode: z.number(),
+    cronTimestamp: z.number().optional(),
+  }),
+});
+
+/**
  * The schema for the monitor.failed action.
  * It represents the event when a monitor has failed.
  */

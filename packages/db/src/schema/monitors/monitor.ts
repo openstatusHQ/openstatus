@@ -41,6 +41,12 @@ export const monitor = sqliteTable("monitor", {
   method: text("method", { enum: monitorMethods }).default("GET"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
+  // Custom timeout for this monitor
+  timeout: integer("timeout"), // in milliseconds
+
+  // Threshold for the monitor to be considered degraded
+  degradedAfter: integer("degraded_after"), // in milliseconds
+
   assertions: text("assertions"),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(

@@ -50,6 +50,8 @@ type CheckerRequest struct {
 	Method        string `json:"method"`
 	CronTimestamp int64  `json:"cronTimestamp"`
 	Body          string `json:"body"`
+	Timeout       int64  `json:"timeout"`
+	DegradedAfter int64  `json:"degradedAfter,omitempty"`
 	Headers       []struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`

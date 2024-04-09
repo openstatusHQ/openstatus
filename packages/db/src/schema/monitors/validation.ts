@@ -52,6 +52,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("other"),
+  timeout: z.number().optional().default(45000),
   regions: regionsToArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
