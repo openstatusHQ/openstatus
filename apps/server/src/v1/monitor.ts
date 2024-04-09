@@ -8,7 +8,7 @@ import {
   monitorMethods,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema";
-import { getMonitorList, Tinybird } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
@@ -16,7 +16,7 @@ import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 import { isoDate } from "./utils";
 
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
 
 const ParamsSchema = z.object({
@@ -573,16 +573,13 @@ monitorApi.openapi(getMonitorStats, async (c) => {
 
   // FIXME: we should use the OSTinybird client
   console.log("fetching from tinybird");
-  const res = await getMonitorList(tb)({
+  const res = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitorId),
-    limit: 30,
-    //  return data in utc
-    timezone: "Etc/UTC",
   });
 
-  await redis.set(`${monitorId}-daily-stats`, res.data, { ex: 600 });
+  await redis.set(`${monitorId}-daily-stats`, res, { ex: 600 });
 
-  return c.json({ data: res.data });
+  return c.json({ data: res });
 });
 
 export { monitorApi };
