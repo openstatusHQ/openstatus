@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
 import { api } from ".";
-import { iso8601Regex } from "./test-utils";
 
 test("GET one status report", async () => {
   const res = await api.request("/status_report/1", {
@@ -12,12 +11,47 @@ test("GET one status report", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: 1,
-    // TODO: discuss if we should return `updates` instead of `status_report_updates`
-    status_report_updates: expect.any(Array),
+    title: "Test Status Report",
+    status: "monitoring",
+    status_report_updates: [1, 3],
+    message: "test",
+    monitors_id: null,
+    pages_id: [1],
   });
 });
 
-test("create one status report", async () => {
+test("Get all status report", async () => {
+  const res = await api.request("/status_report", {
+    headers: {
+      "x-openstatus-key": "1",
+    },
+  });
+  expect(res.status).toBe(200);
+  expect({ data: await res.json() }).toMatchObject({
+    data: [
+      {
+        id: 1,
+        title: "Test Status Report",
+        status: "monitoring",
+        status_report_updates: [1, 3],
+        message: "test",
+        monitors_id: null,
+        pages_id: [1],
+      },
+      {
+        id: 2,
+        title: "Test Status Report",
+        status: "investigating",
+        status_report_updates: [2],
+        message: "Message",
+        monitors_id: [1, 2],
+        pages_id: [1],
+      },
+    ],
+  });
+});
+
+test("Create one status report including passing optional fields", async () => {
   const res = await api.request("/status_report", {
     method: "POST",
     headers: {
@@ -26,13 +60,21 @@ test("create one status report", async () => {
     },
     body: JSON.stringify({
       status: "investigating",
-      title: "Test Status Report",
+      title: "New Status Report",
+      message: "Message",
+      monitors_id: [1],
+      pages_id: [1],
     }),
   });
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
-    id: expect.any(Number),
-    status_report_updates: expect.any(Array),
+    id: 3,
+    title: "New Status Report",
+    status: "investigating",
+    status_report_updates: [4],
+    message: "Message",
+    monitors_id: [1],
+    pages_id: [1],
   });
 });
 
@@ -72,21 +114,54 @@ test("Create one status report with invalid data should return 403", async () =>
   });
 });
 
-test("Get all status report", async () => {
+test("Create status report with non existing monitor ids should return 400", async () => {
   const res = await api.request("/status_report", {
+    method: "POST",
     headers: {
       "x-openstatus-key": "1",
+      "content-type": "application/json",
     },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "New Status Report",
+      message: "Message",
+      monitors_id: [100],
+      pages_id: [1],
+    }),
   });
-  expect(res.status).toBe(200);
-  expect((await res.json())[0]).toMatchObject({
-    id: expect.any(Number),
-    status_report_updates: expect.any(Array),
+
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    code: 400,
+    message: "monitor(s) with id [100] doesn't exist ",
+  });
+});
+
+test("Create status report with non existing page ids should return 400", async () => {
+  const res = await api.request("/status_report", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "New Status Report",
+      message: "Message",
+      monitors_id: [1],
+      pages_id: [100],
+    }),
+  });
+
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    code: 400,
+    message: "page(s) with id [100] doesn't exist ",
   });
 });
 
 test("Delete a status report", async () => {
-  const res = await api.request("/status_report/2", {
+  const res = await api.request("/status_report/3", {
     method: "DELETE",
     headers: {
       "x-openstatus-key": "1",
@@ -95,6 +170,99 @@ test("Delete a status report", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     message: "Deleted",
+  });
+});
+test("create a status report update with empty body should return current report info", async () => {
+  const res = await api.request("/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: 1,
+    title: "Test Status Report",
+    status: "monitoring",
+    status_report_updates: [1, 3],
+    message: "test",
+    monitors_id: null,
+    pages_id: [1],
+  });
+});
+
+test("Create status report update with non existing monitor ids should return 400", async () => {
+  const res = await api.request("/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "New Status Report",
+      message: "Message",
+      monitors_id: [100],
+      pages_id: [1],
+    }),
+  });
+
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    code: 400,
+    message: "monitor(s) with id [100] doesn't exist ",
+  });
+});
+
+test("Create status report update with non existing page ids should return 400", async () => {
+  const res = await api.request("/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      status: "investigating",
+      title: "New Status Report",
+      message: "Message",
+      monitors_id: [1],
+      pages_id: [100],
+    }),
+  });
+
+  expect(res.status).toBe(400);
+  expect(await res.json()).toMatchObject({
+    code: 400,
+    message: "page(s) with id [100] doesn't exist ",
+  });
+});
+
+test("Update with title, monitor & page should not create record in status_report_update table", async () => {
+  const res = await api.request("/status_report/1/update", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "Doesn't add record",
+      monitors_id: [1],
+      pages_id: [],
+    }),
+  });
+
+  expect(res.status).toBe(200);
+  expect(await res.json()).toMatchObject({
+    id: 1,
+    title: "Doesn't add record",
+    status: "monitoring",
+    status_report_updates: [1, 3],
+    message: "test",
+    monitors_id: [1],
+    pages_id: null,
   });
 });
 
@@ -106,17 +274,23 @@ test("create a status report update", async () => {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      status: "investigating",
-      date: "2023-11-08T21:03:13.000Z",
-      message: "Test Status Report",
+      title: "Updated Status Report",
+      status: "resolved",
+      message: "New Message",
+      monitors_id: [1, 2],
+      pages_id: [],
     }),
   });
   expect(res.status).toBe(200);
+
   expect(await res.json()).toMatchObject({
-    status: "investigating",
-    id: expect.any(String),
-    date: expect.stringMatching(iso8601Regex),
-    message: "Test Status Report",
+    id: 1,
+    title: "Updated Status Report",
+    status: "resolved",
+    status_report_updates: [1, 3, 4],
+    message: "New Message",
+    monitors_id: [1, 2],
+    pages_id: null,
   });
 });
 
@@ -129,7 +303,7 @@ test("Get Status Report should return current status of report", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     id: 1,
-    status: "investigating",
+    status: "resolved",
     status_report_updates: expect.any(Array),
   });
 });
@@ -150,7 +324,7 @@ test("Create a status report update not in db should return 404", async () => {
   expect(res.status).toBe(404);
   expect(await res.json()).toMatchObject({
     code: 404,
-    message: "Not Found",
+    message: `status report with id 404 doesn't exist`,
   });
 });
 
@@ -168,27 +342,4 @@ test("Create a status report update without auth key should return 401", async (
     }),
   });
   expect(res.status).toBe(401);
-});
-
-test("Create a status report update with invalid data should return 403", async () => {
-  const res = await api.request("/status_report/1/update", {
-    method: "POST",
-    headers: {
-      "x-openstatus-key": "1",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      //passing in incompelete body
-      date: "2023-11-08T21:03:13.000Z",
-      message: "Test Status Report",
-    }),
-  });
-  expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });
