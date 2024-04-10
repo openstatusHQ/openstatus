@@ -609,14 +609,20 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
 
   if (!_updatedStatusReport)
     return c.json(
-      { code: 500, message: "Error while updating status report" },
-      500,
+      {
+        code: 404,
+        message: `status report with id ${statusReportId} doesn't exist`,
+      },
+      404,
     );
 
   if (!statusReportHistory)
     return c.json(
-      { code: 500, message: "Error while querying report history" },
-      500,
+      {
+        code: 404,
+        message: `status reports history with id ${statusReportId} doesn't exist`,
+      },
+      404,
     );
 
   const _mostRecentUpdate = statusReportHistory[statusReportHistory.length - 1];
