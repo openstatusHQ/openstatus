@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
-import { and, db, eq, isNotNull } from "@openstatus/db";
+import { and, asc, db, eq, isNotNull } from "@openstatus/db";
 import {
   monitorsToStatusReport,
   page,
@@ -15,7 +15,6 @@ import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
-import { statusUpdateSchema } from "./statusReportUpdate";
 import { isoDate } from "./utils";
 
 const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
@@ -34,7 +33,7 @@ const ParamsSchema = z.object({
     }),
 });
 
-const statusSchema = z.object({
+const reportSchema = z.object({
   id: z.number().openapi({ description: "The id of the status report" }),
   title: z.string().openapi({
     example: "Documenso",
@@ -64,18 +63,6 @@ const statusSchema = z.object({
       description: "id of status pages this report needs to refer",
     })
     .nullable(),
-});
-
-const createStatusReportUpdateSchema = z.object({
-  status: z.enum(statusReportStatus).openapi({
-    description: "The status of the update",
-  }),
-  date: isoDate.openapi({
-    description: "The date of the update in ISO8601 format",
-  }),
-  message: z.string().openapi({
-    description: "The message of the update",
-  }),
 });
 
 const createStatusReportSchema = z.object({
@@ -108,6 +95,45 @@ const createStatusReportSchema = z.object({
     .default([]),
 });
 
+const updateStatusReportSchema = z.object({
+  title: z
+    .string()
+    .openapi({
+      example: "Documenso",
+      description: "The title of the status report to update",
+    })
+    .optional(),
+  status: z
+    .enum(statusReportStatus)
+    .openapi({
+      description: "The status of the report to update",
+    })
+    .optional(),
+  message: z
+    .string()
+    .openapi({
+      description: "The message of the status of incident to update",
+    })
+    .optional(),
+  date: isoDate
+    .openapi({
+      description: "The date of the report in ISO8601 format to update",
+    })
+    .optional(),
+  monitors_id: z
+    .array(z.number())
+    .openapi({
+      description: "id of monitors this report needs to refer when update",
+    })
+    .optional(),
+  pages_id: z
+    .array(z.number())
+    .openapi({
+      description: "id of status pages this report needs to refer when update",
+    })
+    .optional(),
+});
+
 const getAllRoute = createRoute({
   method: "get",
   tags: ["status_report"],
@@ -118,7 +144,7 @@ const getAllRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(statusSchema),
+          schema: z.array(reportSchema),
         },
       },
       description: "Get all status reports",
@@ -147,7 +173,7 @@ statusReportApi.openapi(getAllRoute, async (c) => {
 
   if (!_statusReports) return c.json({ code: 404, message: "Not Found" }, 404);
 
-  const data = z.array(statusSchema).parse(
+  const data = z.array(reportSchema).parse(
     _statusReports.map((statusReport) => {
       const {
         statusReportUpdates,
@@ -186,7 +212,7 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: statusSchema,
+          schema: reportSchema,
         },
       },
       description: "Get all status reports",
@@ -226,7 +252,7 @@ statusReportApi.openapi(getRoute, async (c) => {
   // most recent report information
   const { message, date } = statusReportUpdates[statusReportUpdates.length - 1];
 
-  const data = statusSchema.parse({
+  const data = reportSchema.parse({
     ..._statusUpdate,
     message,
     date,
@@ -261,7 +287,7 @@ const postRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: statusSchema,
+          schema: reportSchema,
         },
       },
       description: "Status report created",
@@ -333,7 +359,7 @@ statusReportApi.openapi(postRoute, async (c) => {
   }
 
   const { message, date } = _statusReportHistory;
-  const data = statusSchema.parse({
+  const data = reportSchema.parse({
     ..._newStatusReport,
     message,
     date,
@@ -417,7 +443,7 @@ const postRouteUpdate = createRoute({
       description: "the status report update",
       content: {
         "application/json": {
-          schema: createStatusReportUpdateSchema,
+          schema: updateStatusReportSchema,
         },
       },
     },
@@ -426,7 +452,7 @@ const postRouteUpdate = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: statusUpdateSchema,
+          schema: reportSchema,
         },
       },
       description: "Status report updated",
@@ -449,30 +475,192 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
 
   const statusReportId = Number(id);
 
-  const _updatedStatusReport = await db
-    .update(statusReport)
-    .set({ status: input.status })
-    .where(
-      and(
-        eq(statusReport.id, statusReportId),
-        eq(statusReport.workspaceId, workspaceId),
-      ),
-    )
-    .returning()
-    .get();
+  const { title, date, message, monitors_id, pages_id, status } = input;
+
+  //  monitors check
+  const associatedMonitorsId: number[] = [];
+  const associatedPagesId: number[] = [];
+
+  if (monitors_id) {
+    let monitors: number[];
+    if (monitors_id.length) {
+      monitors = (
+        await db.query.monitor.findMany({
+          columns: {
+            id: true,
+          },
+        })
+      ).map((m) => m.id);
+
+      const nonExistingId = monitors_id.filter((m) => !monitors.includes(m));
+
+      if (nonExistingId.length) {
+        return c.json(
+          {
+            code: 400,
+            message: `monitor(s) with id [${nonExistingId}] doesn't exist `,
+          },
+          400,
+        );
+      }
+    }
+  }
+
+  // pages check
+
+  if (pages_id) {
+    let pages: number[];
+    if (pages_id.length) {
+      pages = (
+        await db.query.page.findMany({
+          columns: {
+            id: true,
+          },
+        })
+      ).map((m) => m.id);
+
+      const nonExistingId = pages_id.filter((m) => !pages.includes(m));
+
+      if (nonExistingId.length) {
+        return c.json(
+          {
+            code: 400,
+            message: `page(s) with id [${nonExistingId}] doesn't exist `,
+          },
+          400,
+        );
+      }
+    }
+  }
+
+  const [_updatedStatusReport, statusReportHistory] = await Promise.all([
+    status || title
+      ? db
+          .update(statusReport)
+          .set({ ...(status && { status }), ...(title && { title }) })
+          .where(
+            and(
+              eq(statusReport.id, statusReportId),
+              eq(statusReport.workspaceId, workspaceId),
+            ),
+          )
+          .returning()
+          .get()
+      : db.query.statusReport.findFirst({
+          where: and(
+            eq(statusReport.id, statusReportId),
+            eq(statusReport.workspaceId, workspaceId),
+          ),
+        }),
+    db.query.statusReportUpdate.findMany({
+      where: eq(statusReportUpdate.statusReportId, statusReportId),
+      orderBy: asc(statusReportUpdate.createdAt),
+    }),
+  ]);
 
   if (!_updatedStatusReport)
-    return c.json({ code: 404, message: "Not Found" }, 404);
+    return c.json(
+      { code: 500, message: "Error while updating status report" },
+      500,
+    );
 
-  const _statusReportUpdate = await db
-    .insert(statusReportUpdate)
-    .values({
-      ...input,
-      date: new Date(input.date),
-      statusReportId: Number(id),
-    })
-    .returning()
-    .get();
+  if (!statusReportHistory)
+    return c.json(
+      { code: 500, message: "Error while querying report history" },
+      500,
+    );
+
+  const _mostRecentUpdate = statusReportHistory[statusReportHistory.length - 1];
+
+  const {
+    status: prevStatus,
+    date: prevDate,
+    message: prevMessage,
+  } = _mostRecentUpdate;
+
+  // only have status_report_update_changes in status_report_update_table
+  // if anyone status | date | message was intended to update
+
+  const isUpdates =
+    status != undefined || date != undefined || message != undefined;
+
+  const _statusReportUpdate = isUpdates
+    ? await db
+        .insert(statusReportUpdate)
+        .values({
+          status: status ? status : prevStatus,
+          date: date ? new Date(date) : prevDate,
+          message: message ? message : prevMessage,
+          statusReportId: Number(id),
+        })
+        .returning()
+        .get()
+    : _mostRecentUpdate;
+
+  if (monitors_id) {
+    if (monitors_id.length) {
+      const updateToNew = monitors_id.map((id) => {
+        return { monitorId: id, statusReportId };
+      });
+      await db
+        .delete(monitorsToStatusReport)
+        .where(eq(monitorsToStatusReport.statusReportId, statusReportId));
+      associatedMonitorsId.push(
+        ...(
+          await db
+            .insert(monitorsToStatusReport)
+            .values([...updateToNew])
+            .returning()
+        ).map((m) => m.monitorId),
+      );
+    } else {
+      await db
+        .delete(monitorsToStatusReport)
+        .where(eq(monitorsToStatusReport.statusReportId, statusReportId));
+    }
+  } else {
+    associatedMonitorsId.push(
+      ...(
+        await db.query.monitorsToStatusReport.findMany({
+          where: eq(monitorsToStatusReport.statusReportId, statusReportId),
+        })
+      ).map((m) => m.monitorId),
+    );
+  }
+
+  if (pages_id) {
+    if (pages_id.length) {
+      const updateToNew = pages_id.map((id) => {
+        return { pageId: id, statusReportId };
+      });
+
+      await db
+        .delete(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.statusReportId, statusReportId));
+
+      associatedPagesId.push(
+        ...(
+          await db
+            .insert(pagesToStatusReports)
+            .values([...updateToNew])
+            .returning()
+        ).map((m) => m.pageId),
+      );
+    } else {
+      await db
+        .delete(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.statusReportId, statusReportId));
+    }
+  } else {
+    associatedPagesId.push(
+      ...(
+        await db.query.pagesToStatusReports.findMany({
+          where: eq(pagesToStatusReports.statusReportId, statusReportId),
+        })
+      ).map((p) => p.pageId),
+    );
+  }
+
   // send email
   const workspacePlan = c.get("workspacePlan");
   if (workspacePlan !== allPlans.free) {
@@ -510,7 +698,33 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
       });
     }
   }
-  const data = statusUpdateSchema.parse(_statusReportUpdate);
+
+  const {
+    status: curStatus,
+    date: curDate,
+    message: curMessage,
+  } = _statusReportUpdate;
+
+  const { title: curTitle } = _updatedStatusReport;
+
+  const status_report_updates = [
+    ...statusReportHistory.map((report) => report.id),
+  ];
+
+  if (isUpdates) {
+    status_report_updates.push(_statusReportUpdate.id);
+  }
+
+  const data = reportSchema.parse({
+    id: statusReportId,
+    title: curTitle,
+    status: curStatus,
+    date: curDate,
+    message: curMessage,
+    monitors_id: associatedMonitorsId.length ? associatedMonitorsId : null,
+    pages_id: associatedPagesId.length ? associatedPagesId : null,
+    status_report_updates,
+  });
 
   return c.json({
     ...data,
