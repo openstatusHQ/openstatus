@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 
 import type { Status } from "@openstatus/react";
 import { getStatus } from "@openstatus/react";
