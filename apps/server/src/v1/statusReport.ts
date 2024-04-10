@@ -306,6 +306,55 @@ const postRoute = createRoute({
 statusReportApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
+
+  const { pages_id, monitors_id } = input;
+
+  if (monitors_id.length) {
+    const monitors = (
+      await db.query.monitor.findMany({
+        columns: {
+          id: true,
+        },
+      })
+    ).map((m) => m.id);
+
+    const nonExistingId = monitors_id.filter((m) => !monitors.includes(m));
+
+    if (nonExistingId.length) {
+      return c.json(
+        {
+          code: 400,
+          message: `monitor(s) with id [${nonExistingId}] doesn't exist `,
+        },
+        400,
+      );
+    }
+  }
+
+  // pages check
+
+  if (pages_id.length) {
+    const pages = (
+      await db.query.page.findMany({
+        columns: {
+          id: true,
+        },
+      })
+    ).map((m) => m.id);
+
+    const nonExistingId = pages_id.filter((m) => !pages.includes(m));
+
+    if (nonExistingId.length) {
+      return c.json(
+        {
+          code: 400,
+          message: `page(s) with id [${nonExistingId}] doesn't exist `,
+        },
+        400,
+      );
+    }
+  }
+
   const _newStatusReport = await db
     .insert(statusReport)
     .values({
@@ -325,52 +374,52 @@ statusReportApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
-  const { pages_id, monitors_id } = input;
-
-  let pageToStatus;
-  let monitorToStatus;
+  const pageToStatusIds: number[] = [];
+  const monitorToStatusIds: number[] = [];
 
   if (pages_id.length) {
-    pageToStatus = await db
-      .insert(pagesToStatusReports)
-      .values(
-        pages_id.map((id) => {
-          return {
-            pageId: id,
-            statusReportId: _newStatusReport.id,
-          };
-        }),
-      )
-      .returning();
+    pageToStatusIds.push(
+      ...(
+        await db
+          .insert(pagesToStatusReports)
+          .values(
+            pages_id.map((id) => {
+              return {
+                pageId: id,
+                statusReportId: _newStatusReport.id,
+              };
+            }),
+          )
+          .returning()
+      ).map((page) => page.pageId),
+    );
   }
 
   if (monitors_id.length) {
-    monitorToStatus = await db
-      .insert(monitorsToStatusReport)
-      .values(
-        monitors_id.map((id) => {
-          return {
-            monitorId: id,
-            statusReportId: _newStatusReport.id,
-          };
-        }),
-      )
-      .returning();
+    monitorToStatusIds.push(
+      ...(
+        await db
+          .insert(monitorsToStatusReport)
+          .values(
+            monitors_id.map((id) => {
+              return {
+                monitorId: id,
+                statusReportId: _newStatusReport.id,
+              };
+            }),
+          )
+          .returning()
+      ).map((monitor) => monitor.monitorId),
+    );
   }
 
-  const { message, date } = _statusReportHistory;
+  const { message: curMessage, date: curDate } = _statusReportHistory;
   const data = reportSchema.parse({
     ..._newStatusReport,
-    message,
-    date,
-    monitors_id:
-      monitorToStatus && monitorToStatus.length
-        ? monitorToStatus.map((monitor) => monitor.monitorId)
-        : null,
-    pages_id:
-      pageToStatus && pageToStatus.length
-        ? pageToStatus.map((page) => page.pageId)
-        : null,
+    message: curMessage,
+    date: curDate,
+    monitors_id: monitorToStatusIds.length ? monitorToStatusIds : null,
+    pages_id: pageToStatusIds.length ? pageToStatusIds : null,
     status_report_updates: [_statusReportHistory.id],
   });
 
