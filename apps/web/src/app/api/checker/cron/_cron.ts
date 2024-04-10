@@ -104,7 +104,7 @@ export const cron = async ({
       }
     }
   }
-  await Promise.all(allResult);
+  await Promise.allSettled(allResult);
 
   console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
 };
