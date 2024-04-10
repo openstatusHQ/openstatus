@@ -1,12 +1,10 @@
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 
-import type { Status, StatusResponse } from "@openstatus/react";
+import type { Status } from "@openstatus/react";
+import { getStatus } from "@openstatus/react";
 
-export const statusDictionary: Record<
-  Status,
-  { label: string; color: string }
-> = {
+const statusDictionary: Record<Status, { label: string; color: string }> = {
   operational: {
     label: "Operational",
     color: "bg-green-500",
@@ -36,19 +34,6 @@ export const statusDictionary: Record<
     color: "bg-gray-500",
   },
 } as const;
-
-export async function getStatus(slug: string): Promise<StatusResponse> {
-  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
-    cache: "no-cache",
-  });
-
-  if (res.ok) {
-    const data = (await res.json()) as StatusResponse;
-    return data;
-  }
-
-  return { status: "unknown" };
-}
 
 export async function GET(
   req: NextRequest,
