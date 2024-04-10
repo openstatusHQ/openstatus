@@ -1,13 +1,7 @@
 import { ImageResponse } from "next/og";
+import { NextRequest } from "next/server";
 
 import type { Status, StatusResponse } from "@openstatus/react";
-
-import {
-  calSemiBold,
-  interLight,
-  interMedium,
-  interRegular,
-} from "../../../api/og/utils";
 
 export const statusDictionary: Record<
   Status,
@@ -56,58 +50,28 @@ export async function getStatus(slug: string): Promise<StatusResponse> {
   return { status: "unknown" };
 }
 
-export async function GET(req: Request) {
-  const [interRegularData, interLightData, calSemiBoldData, interMediumData] =
-    await Promise.all([interRegular, interLight, calSemiBold, interMedium]);
-  //  use the domain instead of the slug
-  const { status } = await getStatus("openstatus");
+export async function GET(
+  req: NextRequest,
+  { params }: { params: { domain: string } },
+) {
+  const { status } = await getStatus(params.domain);
+  const theme = req.nextUrl.searchParams.get("theme");
 
-  //  check for the mode dark or light and return the coresponding one
   const { label, color } = statusDictionary[status];
+
+  const light = "border-gray-200 text-gray-700 bg-white";
+  const dark = "border-gray-800 text-gray-300 bg-gray-900";
 
   return new ImageResponse(
     (
-      <div tw="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 hover:text-black dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white">
+      <div
+        tw={`flex max-w-fit items-center rounded-md border px-3 py-1 text-sm ${
+          theme === "dark" ? dark : light
+        }`}
+      >
         {label}
-        <span className="relative flex h-2 w-2">
-          {status === "operational" ? (
-            <span
-              tw={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
-            />
-          ) : null}
-          <span tw={`relative inline-flex h-2 w-2 rounded-full ${color}`} />
-        </span>
+        <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
       </div>
     ),
-    {
-      width: 118,
-      height: 30,
-      fonts: [
-        {
-          name: "Inter",
-          data: interMediumData,
-          style: "normal",
-          weight: 500,
-        },
-        {
-          name: "Inter",
-          data: interRegularData,
-          style: "normal",
-          weight: 400,
-        },
-        {
-          name: "Inter",
-          data: interLightData,
-          style: "normal",
-          weight: 300,
-        },
-        {
-          name: "Cal",
-          data: calSemiBoldData,
-          style: "normal",
-          weight: 600,
-        },
-      ],
-    },
   );
 }
