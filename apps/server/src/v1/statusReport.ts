@@ -80,18 +80,20 @@ const createStatusReportSchema = z.object({
     .openapi({
       description: "The date of the report in ISO8601 format",
     })
-    .default(new Date()),
+    .optional(),
   monitors_id: z
     .array(z.number())
     .openapi({
       description: "id of monitors this report needs to refer",
     })
+    .optional()
     .default([]),
   pages_id: z
     .array(z.number())
     .openapi({
       description: "id of status pages this report needs to refer",
     })
+    .optional()
     .default([]),
 });
 
