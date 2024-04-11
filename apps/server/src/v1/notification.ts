@@ -1,6 +1,4 @@
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
-import isEmail from "validator/lib/isEmail";
-import isMobilePhone from "validator/lib/isMobilePhone";
 
 import { and, db, eq, inArray } from "@openstatus/db";
 import {

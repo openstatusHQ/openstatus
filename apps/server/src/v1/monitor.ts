@@ -352,7 +352,7 @@ monitorApi.openapi(postRoute, async (c) => {
     .values({
       ...rest,
       workspaceId: workspaceId,
-      headers: input.headers ? JSON.stringify(input.headers) : undefined,
+      headers: headers ? JSON.stringify(headers) : undefined,
     })
     .returning()
     .get();
@@ -434,7 +434,7 @@ monitorApi.openapi(putRoute, async (c) => {
     .update(monitor)
     .set({
       ...rest,
-      headers: input.headers ? JSON.stringify(input.headers) : undefined,
+      headers: headers ? JSON.stringify(headers) : undefined,
     })
     .returning()
     .get();
