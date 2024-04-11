@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/openstatusHQ/rum-server/pkg/clickhouse"
+	"github.com/openstatusHQ/rum-server/pkg/turso"
 	"github.com/openstatusHQ/rum-server/pkg/utils"
 	"github.com/openstatusHQ/rum-server/request"
 
@@ -38,6 +39,15 @@ func main() {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to create clickhouse client")
 		return
 	}
+
+	sqlClient, err := turso.GetClient()
+	if err != nil {
+		fmt.Println(err)
+		log.Ctx(ctx).Error().Err(err).Msg("failed to create clickhouse client")
+		return
+	}
+	defer sqlClient.Close()
+
 	router := gin.New()
 	v1 := router.Group("/v1")
 
@@ -58,12 +68,19 @@ func main() {
 		}
 
 		// Check if dsn exists
+		_, err := turso.GetCurrentWorkspace(sqlClient, req.DSN)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+
+		// we should read from user agent and get the  user ip information when we are not using the cloudflare proxy
 
 		value := fmt.Sprintf(`INSERT INTO cwv VALUES (
 			now('Etc/UTC'), '%s','%s', '%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s','%s','%s','%s', %f
 		)`, req.Browser, req.City, req.Continent, req.Country, req.DSN, req.Device, req.EventName, req.Href, req.ID, req.Language, req.OS, req.Page, req.RegionCode, req.Screen, req.Speed, req.Timezone, req.Value)
 		fmt.Println(value)
-		err := chClient.AsyncInsert(ctx, value, true)
+		err = chClient.AsyncInsert(ctx, value, true)
 
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
