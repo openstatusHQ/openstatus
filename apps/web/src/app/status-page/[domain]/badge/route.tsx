@@ -4,21 +4,22 @@ import type { NextRequest } from "next/server";
 import type { Status } from "@openstatus/react";
 import { getStatus } from "@openstatus/react";
 
+// Keep the `label` size within a maximum of 'Operational' to stay within the `SIZE` restriction
 const statusDictionary: Record<Status, { label: string; color: string }> = {
   operational: {
     label: "Operational",
     color: "bg-green-500",
   },
   degraded_performance: {
-    label: "Degraded Performance",
+    label: "Degraded",
     color: "bg-yellow-500",
   },
   partial_outage: {
-    label: "Partial Outage",
+    label: "Outage",
     color: "bg-yellow-500",
   },
   major_outage: {
-    label: "Major Outage",
+    label: "Outage",
     color: "bg-red-500",
   },
   unknown: {
@@ -30,10 +31,12 @@ const statusDictionary: Record<Status, { label: string; color: string }> = {
     color: "bg-yellow-500",
   },
   under_maintenance: {
-    label: "Under Maintenance",
+    label: "Maintenance",
     color: "bg-gray-500",
   },
 } as const;
+
+const SIZE = { width: 120, height: 34 };
 
 export async function GET(
   req: NextRequest,
@@ -50,13 +53,15 @@ export async function GET(
   return new ImageResponse(
     (
       <div
-        tw={`flex max-w-fit items-center rounded-md border px-3 py-1 text-sm ${
+        tw={`flex items-center justify-center rounded-md border px-3 py-1 text-sm ${
           theme === "dark" ? dark : light
         }`}
+        style={{ ...SIZE }}
       >
         {label}
         <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
       </div>
     ),
+    { ...SIZE },
   );
 }
