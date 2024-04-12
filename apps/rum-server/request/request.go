@@ -1,21 +1,31 @@
 package request
 
 type WebVitalsRequest struct {
+	DSN       string  `json:"dsn"`
+	EventName string  `json:"event_name"`
+	Href      string  `json:"href"`
+	ID        string  `json:"id"`
+	Path      string  `json:"path"`
+	Speed     string  `json:"speed"`
+	Value     float64 `json:"value"`
+}
+
+type CloudflareRequestProxy struct {
 	DSN        string  `json:"dsn"`
-	ID         string  `json:"id"`
 	EventName  string  `json:"event_name"`
 	Href       string  `json:"href"`
-	Language   string  `json:"language,omitempty"`
-	OS         string  `json:"os,omitempty"`
-	Page       string  `json:"page"`
+	ID         string  `json:"id"`
+	Path       string  `json:"path"`
 	Speed      string  `json:"speed"`
 	Value      float64 `json:"value"`
+	Language   string  `json:"language"`
+	OS         string  `json:"os"`
 	Screen     string  `json:"screen"`
-	Country    string  `json:"country,omitempty"`
-	City       string  `json:"city,omitempty"`
-	RegionCode string  `json:"region_code,omitempty"`
-	Timezone   string  `json:"timezone,omitempty"`
-	Device     string  `json:"device,omitempty"`
-	Continent  string  `json:"continent,omitempty"`
-	Browser    string  `json:"browser,omitempty"`
+	Country    string  `json:"country"`
+	City       string  `json:"city"`
+	RegionCode string  `json:"region_code"`
+	Timezone   string  `json:"timezone"`
+	Device     string  `json:"device"`
+	Continent  string  `json:"continent"`
+	Browser    string  `json:"browser"`
 }

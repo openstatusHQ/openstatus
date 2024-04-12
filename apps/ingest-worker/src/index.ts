@@ -14,11 +14,8 @@ const schema = z.object({
   event_name: z.string(),
   href: z.string(),
   id: z.string(),
-  language: z.string().optional(),
-  os: z.string().optional(),
-  page: z.string().optional(),
-  screen: z.string().optional(),
   speed: z.string(),
+  path: z.string(),
   value: z.number(),
 });
 
@@ -30,13 +27,17 @@ const chSchema = schema.extend({
   device: z.string().default(""),
   region_code: z.string().default(""),
   timezone: z.string().default(""),
+  language: z.string(),
+  os: z.string(),
+  page: z.string(),
+  screen: z.string(),
 });
 
 app.get("/", (c) => {
   return c.text("Hello Hono!");
 });
 
-app.post("/ingest", zValidator("json", schema), async (c) => {
+app.post("/ingest", zValidator("json", z.array(schema)), async (c) => {
   const data = c.req.valid("json");
   const userAgent = c.req.header("user-agent") || "";
 
@@ -47,24 +48,31 @@ app.post("/ingest", zValidator("json", schema), async (c) => {
   const browser = browserName(userAgent) || "";
 
   const os = detectOS(userAgent) || "";
-  const payload = chSchema.parse({
-    ...data,
-    browser,
-    country,
-    city,
-    timezone,
-    region_code,
-    os,
+  const payload = data.map((d) => {
+    return chSchema.parse({
+      ...d,
+      browser,
+      country,
+      city,
+      timezone,
+      region_code,
+      os,
+    });
   });
 
   const insert = async () => {
-    await fetch(c.env.API_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const res = [];
+    for (const p of payload) {
+      const r = fetch(c.env.API_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(p),
+      });
+      res.push(r);
+    }
+    await Promise.allSettled(res);
   };
   c.executionCtx.waitUntil(insert());
   return c.json({ status: "ok" }, 200);

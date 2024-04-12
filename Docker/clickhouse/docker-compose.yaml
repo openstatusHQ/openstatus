@@ -1,0 +1,30 @@
+version: "3"
+
+services:
+  ch:
+    image: clickhouse/clickhouse-server:22.8.21.38-alpine
+    ports:
+      # enable whichever ports you need. prob just 9000 for starters
+      # tcp
+      - 127.0.0.1:9000:9000
+      # http
+      - 127.0.0.1:8123:8123
+      # postgresql
+      - 127.0.0.1:9005:9005
+    volumes:
+      # optional to persist data locally
+      - ./data:/var/lib/clickhouse/
+      # optional to add own config
+      - ./extra-config.xml:/etc/clickhouse-server/config.d/extra-config.xml
+      # optional to add users or enable settings for a default user
+      # - ./user.xml:/etc/clickhouse-server/users.d/user.xml
+      # qol to mount own sql scripts to run them from inside container with
+      # clickhouse client < /sql/myquery.sql
+      - ../../packages/db/clickhouse:/docker-entrypoint-initdb.d
+    # adjust mem_limit and cpus to machine
+    mem_limit: 2G
+    cpus: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
