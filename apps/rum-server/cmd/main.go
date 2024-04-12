@@ -124,6 +124,10 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
+	})
+
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", utils.Env("PORT", "8080")),
 		Handler: router,
@@ -141,7 +145,4 @@ func main() {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
 		return
 	}
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
-	})
 }

@@ -34,10 +34,10 @@ const chSchema = schema.extend({
 });
 
 app.get("/", (c) => {
-  return c.text("Hello Hono!");
+  return c.text("Hello OpenStatus!");
 });
 
-app.post("/ingest", zValidator("json", z.array(schema)), async (c) => {
+app.post("/", zValidator("json", z.array(schema)), async (c) => {
   const data = c.req.valid("json");
   const userAgent = c.req.header("user-agent") || "";
 
