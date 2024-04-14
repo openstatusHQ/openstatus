@@ -86,6 +86,8 @@ export default authMiddleware({
     "/status-page/(.*)",
     "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
     "/incidents/(.*)", // used when trying subdomain slug via status.documenso.com/incidents/123
+    "/monitors", // used when trying subdomain slug via status.documenso.com/monitors
+    "/monitors/(.*)", // used when trying subdomain slug via status.documenso.com/monitors/123
     "/verify/(.*)", // used when trying subdomain slug via status.documenso.com/incidents
     "/public/(.*)",
   ],
