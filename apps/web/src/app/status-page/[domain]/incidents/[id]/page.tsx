@@ -1,13 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
 
-import { Button, Separator } from "@openstatus/ui";
-
-import { Events } from "@/components/status-update/events";
-import { Summary } from "@/components/status-update/summary";
+import { Header } from "@/components/dashboard/header";
+import {
+  StatusReportDescription,
+  StatusReportUpdates,
+} from "@/components/status-page/status-report";
 import { api } from "@/trpc/server";
-import { setPrefixUrl } from "../../utils";
 import { CopyLinkButton } from "./_components/copy-link-button";
 
 export default async function IncidentPage({
@@ -27,21 +25,18 @@ export default async function IncidentPage({
   );
 
   return (
-    <div className="grid gap-4 text-left">
-      <div>
-        <Button variant="link" size="sm" className="px-0" asChild>
-          <Link href={setPrefixUrl("/", params)}>
-            <ChevronLeft className="h-4 w-4" /> Back
-          </Link>
-        </Button>
-      </div>
-      <div className="flex items-center gap-1">
-        <h3 className="text-xl font-semibold">{report.title}</h3>
-        <CopyLinkButton />
-      </div>
-      <Summary report={report} monitors={affectedMonitors} />
-      <Separator />
-      <Events statusReportUpdates={report.statusReportUpdates} />
+    <div className="grid gap-8 text-left">
+      <Header
+        title={report.title}
+        description={
+          <StatusReportDescription
+            report={report}
+            monitors={affectedMonitors}
+          />
+        }
+        actions={<CopyLinkButton />}
+      />
+      <StatusReportUpdates report={report} />
     </div>
   );
 }

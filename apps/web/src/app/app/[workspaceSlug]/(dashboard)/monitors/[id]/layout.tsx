@@ -35,12 +35,16 @@ export default async function Layout({
               active={monitor.active}
               status={monitor.status}
             />
-            <span className="text-muted-foreground/50 text-xs">•</span>
-            <TagBadgeWithTooltip
-              tags={monitor.monitorTagsToMonitors.map(
-                ({ monitorTag }) => monitorTag,
-              )}
-            />
+            {monitor.monitorTagsToMonitors.length > 0 ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <TagBadgeWithTooltip
+                  tags={monitor.monitorTagsToMonitors.map(
+                    ({ monitorTag }) => monitorTag,
+                  )}
+                />
+              </>
+            ) : null}
             <span className="text-muted-foreground/50 text-xs">•</span>
             <span className="text-sm">
               every <code>{monitor.periodicity}</code>

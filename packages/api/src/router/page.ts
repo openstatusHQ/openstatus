@@ -222,7 +222,9 @@ export const pageRouter = createTRPCRouter({
           ? await opts.ctx.db.query.statusReport.findMany({
               where: or(inArray(statusReport.id, statusReportIds)),
               with: {
-                statusReportUpdates: true,
+                statusReportUpdates: {
+                  orderBy: (reports, { desc }) => desc(reports.date),
+                },
                 monitorsToStatusReports: { with: { monitor: true } },
                 pagesToStatusReports: true,
               },

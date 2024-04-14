@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { LineChart } from "lucide-react";
 
-import type { Monitor } from "@openstatus/db/src/schema";
+import type { Monitor, PublicMonitor } from "@openstatus/db/src/schema";
 import type {
   Region,
   ResponseGraph,
@@ -37,7 +37,7 @@ export function CombinedChartWrapper({
   quantile: Quantile;
   interval: Interval;
   regions: Region[];
-  monitor: Monitor;
+  monitor: Monitor | PublicMonitor;
   isQuantileDisabled: boolean;
   metricsByRegion: ResponseTimeMetricsByRegion[];
   preferredSettings: PreferredSettings;

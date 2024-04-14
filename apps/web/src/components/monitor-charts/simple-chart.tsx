@@ -30,6 +30,7 @@ export function SimpleChart({ data, region }: SimpleChartProps) {
       valueFormatter={dataFormatter}
       curveType="monotone"
       autoMinValue
+      showAnimation
       noDataText=""
       showXAxis={false}
       showYAxis={false}
@@ -38,7 +39,6 @@ export function SimpleChart({ data, region }: SimpleChartProps) {
       customTooltip={customTooltip}
       // FEATURE: it would be nice, if on click, the tooltip would be open
       // onValueChange={(v) => setValue(v)}
-      showAnimation={true}
     />
   );
 }

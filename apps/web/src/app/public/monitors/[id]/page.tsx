@@ -7,6 +7,7 @@ import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
+import { Shell } from "@/components/dashboard/shell";
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
 import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
@@ -59,7 +60,7 @@ export default async function Page({
   const search = searchParamsSchema.safeParse(searchParams);
   const preferredSettings = getPreferredSettings();
 
-  const monitor = await api.monitor.getMonitorById.query({
+  const monitor = await api.monitor.getPublicMonitorById.query({
     id: Number(id),
   });
 
@@ -95,34 +96,35 @@ export default async function Page({
     interval !== DEFAULT_INTERVAL ||
     flyRegions.length !== regions.length;
 
-  // GET VALUES FOR BLOG POST
-  // console.log(
-  //   JSON.stringify({
-  //     regions,
-  //     data: groupDataByTimestamp(data, period, quantile),
-  //     metricsByRegion,
-  //   }),
-  // );
-
   return (
-    <div className="grid gap-4">
-      <div className="flex justify-between gap-2">
-        <DatePickerPreset defaultValue={period} values={periods} />
-        {isDirty ? <ButtonReset /> : null}
-      </div>
-      <Metrics metrics={metrics} period={period} showErrorLink />
-      <Separator className="my-8" />
-      <CombinedChartWrapper
-        data={data}
-        period={period}
-        quantile={quantile}
-        interval={interval}
-        regions={regions as Region[]} // FIXME: not properly reseted after filtered
-        monitor={monitor}
-        isQuantileDisabled={isQuantileDisabled}
-        metricsByRegion={metricsByRegion}
-        preferredSettings={preferredSettings}
-      />
+    <div className="relative flex w-full flex-col gap-6">
+      <Shell className="bg-background/80 sticky top-2 z-10 flex items-center justify-between gap-2 backdrop-blur-sm">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold">{monitor.name}</p>
+          <p className="text-muted-foreground truncate text-base">
+            {monitor.url}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {isDirty ? <ButtonReset /> : null}
+          <DatePickerPreset defaultValue={period} values={periods} />
+        </div>
+      </Shell>
+      <Shell className="grid gap-4">
+        <Metrics metrics={metrics} period={period} />
+        <Separator className="my-8" />
+        <CombinedChartWrapper
+          data={data}
+          period={period}
+          quantile={quantile}
+          interval={interval}
+          regions={regions as Region[]} // FIXME: not properly reseted after filtered
+          monitor={monitor}
+          isQuantileDisabled={isQuantileDisabled}
+          metricsByRegion={metricsByRegion}
+          preferredSettings={preferredSettings}
+        />
+      </Shell>
     </div>
   );
 }
