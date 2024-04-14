@@ -45,7 +45,7 @@ func main() {
 	sqlClient, err := turso.GetClient()
 	if err != nil {
 		fmt.Println(err)
-		log.Ctx(ctx).Error().Err(err).Msg("failed to create clickhouse client")
+		log.Ctx(ctx).Error().Err(err).Msg("failed to create turso client")
 		return
 	}
 	defer sqlClient.Close()
@@ -59,7 +59,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "pong"})
+		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
 	})
 	v1.POST("/vitals", func(c *gin.Context) {
 		var req request.WebVitalsRequest
@@ -122,10 +122,6 @@ func main() {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
-	})
-
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
 	})
 
 	httpServer := &http.Server{

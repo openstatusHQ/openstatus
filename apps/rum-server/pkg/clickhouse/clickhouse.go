@@ -2,6 +2,7 @@ package clickhouse
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -14,7 +15,7 @@ import (
 func NewClient() (driver.Conn, error) {
 
 	var (
-		dbUrl      = utils.Env("CLICKHOUSE_URL", "http://localhost:8123")
+		dbUrl      = utils.Env("CLICKHOUSE_URL", "localhost:9000")
 		dbName     = utils.Env("CLICKHOUSE_DATABASE", "default")
 		dbUsername = utils.Env("CLICKHOUSE_USERNAME", "default")
 		dbPassword = utils.Env("CLICKHOUSE_PASSWORD", "")
@@ -26,10 +27,11 @@ func NewClient() (driver.Conn, error) {
 				Username: dbUsername,
 				Password: dbPassword,
 			},
+			// Protocol: clickhouse.HTTP,
 			// for  dev
-			// TLS: &tls.Config{
-			// 	// InsecureSkipVerify: true,
-			// },
+			TLS: &tls.Config{
+				InsecureSkipVerify: true,
+			},
 			Settings: clickhouse.Settings{
 				"max_execution_time": 60,
 			},

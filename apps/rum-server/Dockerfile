@@ -4,10 +4,10 @@ WORKDIR /go/src/app
 
 RUN apk add --no-cache tzdata
 
-RUN apk update \
-    && apk add build-base \
-    && apk add alpine-sdk \
-    && apk add musl-dev
+# RUN apk update \
+#     && apk add build-base \
+#     && apk add alpine-sdk \
+#     && apk add musl-dev
 
 ENV TZ=UTC
 
