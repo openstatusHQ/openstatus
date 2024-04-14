@@ -191,7 +191,9 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   getPublicMonitorById: publicProcedure
-    .input(z.object({ id: z.number() }))
+    // REMINDER: if on status page, we should check if the monitor is associated with the page
+    // otherwise, using `/public` we don't need to check
+    .input(z.object({ id: z.number(), slug: z.string().optional() }))
     .query(async (opts) => {
       const _monitor = await opts.ctx.db.query.monitor.findFirst({
         where: and(
@@ -201,6 +203,20 @@ export const monitorRouter = createTRPCRouter({
         ),
       });
       if (!_monitor) return undefined;
+
+      if (opts.input.slug) {
+        const _page = await opts.ctx.db.query.page.findFirst({
+          where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+          with: { monitorsToPages: true },
+        });
+
+        const hasPageRelation = _page?.monitorsToPages.find(
+          ({ monitorId }) => _monitor.id === monitorId,
+        );
+
+        if (!hasPageRelation) return undefined;
+      }
+
       return selectPublicMonitorSchema.parse(_monitor);
     }),
 

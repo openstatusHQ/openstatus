@@ -63,6 +63,7 @@ export default async function Page({
 
   const monitor = await api.monitor.getPublicMonitorById.query({
     id: Number(id),
+    slug: params.domain,
   });
 
   if (!monitor || !search.success) {
