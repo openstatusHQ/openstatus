@@ -26,12 +26,9 @@ export function MonitoringCard() {
         <Globe />
         <CardFeatureContainer>
           {features?.map((feature, i) => <CardFeature key={i} {...feature} />)}
-          <div className="order-first flex items-center justify-center gap-3 md:order-none">
-            <Button asChild variant="default" className="rounded-full">
-              <Link href="/play/checker">Speed Checker</Link>
-            </Button>
+          <div className="order-first text-center md:order-none">
             <Button asChild variant="outline" className="rounded-full">
-              <Link href="/public/monitors/1">Public Dashboard</Link>
+              <Link href="/play/checker">Playground</Link>
             </Button>
           </div>
         </CardFeatureContainer>
