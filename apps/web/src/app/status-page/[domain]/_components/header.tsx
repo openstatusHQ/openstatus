@@ -9,8 +9,8 @@ import type { WorkspacePlan } from "@openstatus/plans";
 
 import { Shell } from "@/components/dashboard/shell";
 import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";
-import { SubscribeButton } from "./_components/subscribe-button";
 import { Menu } from "./menu";
+import { SubscribeButton } from "./subscribe-button";
 
 type Props = {
   navigation: {
