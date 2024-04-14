@@ -8,9 +8,9 @@ import {
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
 import { api } from "@/trpc/server";
-import { setPrefixUrl } from "../utils";
-import { Footer } from "./footer";
-import { Header } from "./header";
+import { Footer } from "./_components/footer";
+import { Header } from "./_components/header";
+import { setPrefixUrl } from "./utils";
 
 type Props = {
   params: { domain: string };
