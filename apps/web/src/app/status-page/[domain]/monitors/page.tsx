@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
+import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
@@ -62,19 +64,16 @@ export default async function Page({
       />
       {monitorsWithData ? (
         <div className="grid gap-6">
-          <div className="text-muted-foreground">
-            <p>
-              Response time over the{" "}
-              <span className="text-foreground font-medium">last {period}</span>{" "}
-              across{" "}
-              <span className="text-foreground font-medium">
-                all selected regions
-              </span>{" "}
-              within a{" "}
-              <span className="text-foreground font-medium">p95 quantile</span>.
-            </p>
-            <p>Click a monitor to access more detailed informations.</p>
-          </div>
+          <p className="text-muted-foreground">
+            Response time over the{" "}
+            <span className="text-foreground font-medium">last {period}</span>{" "}
+            across{" "}
+            <span className="text-foreground font-medium">
+              all selected regions
+            </span>{" "}
+            within a{" "}
+            <span className="text-foreground font-medium">p95 quantile</span>.
+          </p>
           <ul className="grid gap-6">
             {monitorsWithData?.map(({ monitor, data }) => {
               const group =
@@ -85,18 +84,25 @@ export default async function Page({
                   quantile,
                 );
               return (
-                <li
-                  key={monitor.id}
-                  className="hover:bg-accent group -m-2 grid gap-2 rounded-md p-2"
-                >
-                  <Link href={`./monitors/${monitor.id}`}>
-                    <p className="text-sm font-semibold">{monitor.name}</p>
-                    {group ? (
-                      <SimpleChart data={group.data} region="ams" />
-                    ) : (
-                      <p>missing data</p>
-                    )}
-                  </Link>
+                <li key={monitor.id} className="grid gap-2">
+                  <div className="flex w-full min-w-0 items-center justify-between gap-3">
+                    <div className="w-full min-w-0">
+                      <p className="text-sm font-semibold">{monitor.name}</p>
+                      <p className="text-muted-foreground truncate text-sm">
+                        {monitor.url}
+                      </p>
+                    </div>
+                    <Button variant="link" size="sm" asChild>
+                      <Link href={`./monitors/${monitor.id}`}>
+                        Details <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                  {group ? (
+                    <SimpleChart data={group.data} region="ams" />
+                  ) : (
+                    <p>missing data</p>
+                  )}
                 </li>
               );
             })}

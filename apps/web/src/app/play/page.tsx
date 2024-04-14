@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { Clock, FileCode, Gauge, Palette, PanelTop } from "lucide-react";
+import {
+  Activity,
+  Clock,
+  FileCode,
+  Gauge,
+  Palette,
+  PanelTop,
+} from "lucide-react";
 
 import { BackButton } from "@/components/layout/back-button";
 import type { CardProps } from "@/components/play/card";
@@ -54,10 +61,15 @@ const playgrounds: CardProps[] = [
     variant: "primary",
   },
   {
+    href: "/public/1",
+    title: "Public Dashboard",
+    description: "Get a demo of wha data we collect for your monitor.",
+    icon: Activity,
+  },
+  {
     href: "/play/status",
     title: "Status Page",
-    description:
-      "Get a status page for your website or api, supporting timezones.",
+    description: "Get a status page for your website or api.",
     icon: PanelTop,
   },
   {

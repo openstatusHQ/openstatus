@@ -110,6 +110,10 @@ const MonitorSchema = z
       .boolean()
       .default(false)
       .openapi({ description: "If the monitor is active" }),
+    public: z
+      .boolean()
+      .default(false)
+      .openapi({ description: "If the monitor is public" }),
   })
   .openapi({
     description: "The monitor",
@@ -145,6 +149,9 @@ const monitorInput = z
     }),
     active: z.boolean().default(false).openapi({
       description: "If the monitor is active",
+    }),
+    public: z.boolean().default(false).openapi({
+      description: "If the monitor is public",
     }),
     headers: z
       .preprocess(

@@ -37,7 +37,7 @@ export const cardConfig = {
         icon: "globe",
         catchline: "Latency Monitoring.",
         description:
-          "Monitor the latency of your endpoints from all over the world. We currently support all the continents.",
+          "Monitor the latency of your endpoints from all over the world. We support all the continents.",
       },
       {
         icon: "play",
