@@ -16,7 +16,6 @@ import { env } from "@/env";
 import {
   getMinutesByInterval,
   intervals,
-  periods,
   quantiles,
 } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
@@ -27,6 +26,8 @@ const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 const DEFAULT_QUANTILE = "p95";
 const DEFAULT_INTERVAL = "30m";
 const DEFAULT_PERIOD = "1d";
+
+const periods = ["1d", "7d"] as const; // satisfies Period[]
 
 /**
  * allowed URL search params

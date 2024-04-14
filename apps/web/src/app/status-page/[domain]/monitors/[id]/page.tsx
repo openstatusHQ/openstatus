@@ -100,10 +100,7 @@ export default async function Page({
 
   return (
     <div className="relative flex w-full flex-col gap-6">
-      <Header
-        title={monitor.name}
-        description={monitor.description || monitor.url}
-      />
+      <Header title={monitor.name} description={monitor.url} />
       <div className="flex items-center justify-between gap-2">
         <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
