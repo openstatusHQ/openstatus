@@ -23,8 +23,8 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
   const Icon = getVariant();
 
   return (
-    <div tw="flex flex-col justify-center items-center gap-2 w-full">
-      <div tw={cn("flex text-white rounded-full p-3 border-2", className)}>
+    <div tw="flex flex-col justify-center items-center w-full">
+      <div tw={cn("flex text-white rounded-full p-3 border-2 mb-2", className)}>
         <Icon />
       </div>
       <p style={{ fontFamily: "Cal" }} tw="text-4xl">
