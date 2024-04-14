@@ -18,9 +18,11 @@ const metricsOrder = [
 export function Metrics({
   metrics,
   period,
+  showErrorLink,
 }: {
   metrics?: ResponseTimeMetrics[];
   period: Period;
+  showErrorLink?: boolean;
 }) {
   if (!metrics) return null;
 
@@ -41,8 +43,8 @@ export function Metrics({
     : undefined;
 
   return (
-    <div className="grid gap-6">
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5 md:gap-6">
+    <div className="@container grid gap-6">
+      <div className="@xl:grid-cols-4 @3xl:grid-cols-5 @3xl:gap-6 grid grid-cols-2 gap-4">
         <MetricsCard
           title="uptime"
           value={uptime * 100}
@@ -74,7 +76,7 @@ export function Metrics({
         <MetricsCard title="total pings" value={current.count} suffix="#" />
       </div>
       <div className="grid gap-4">
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-5 md:gap-6">
+        <div className="@xl:grid-cols-4 @3xl:grid-cols-5 @3xl:gap-6 grid grid-cols-2 gap-4">
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];
@@ -100,7 +102,9 @@ export function Metrics({
             over all the regions and compared with the previous period.
           </p>
           {/* restricted to max 3d as we only support it in the list -> TODO: add more periods */}
-          {failures > 0 && ["1h", "1d", "3d", "7d"].includes(period) ? (
+          {showErrorLink &&
+          failures > 0 &&
+          ["1h", "1d", "3d", "7d"].includes(period) ? (
             <p className="text-destructive text-xs">
               The monitor had {failures} failed ping(s). See more in the{" "}
               <Link

@@ -43,6 +43,8 @@ export const monitor = sqliteTable("monitor", {
 
   assertions: text("assertions"),
 
+  public: integer("public", { mode: "boolean" }).default(false),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

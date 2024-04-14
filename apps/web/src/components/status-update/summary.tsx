@@ -16,13 +16,9 @@ export function Summary({
   report: StatusReport & { statusReportUpdates: StatusReportUpdate[] };
   monitors: Pick<Monitor, "name">[];
 }) {
-  const sortedStatusReportUpdates = report.statusReportUpdates.sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
-
-  const firstUpdate = sortedStatusReportUpdates?.[0];
+  const firstUpdate = report.statusReportUpdates?.[0];
   const lastUpdate =
-    sortedStatusReportUpdates?.[sortedStatusReportUpdates.length - 1];
+    report.statusReportUpdates?.[report.statusReportUpdates.length - 1];
 
   return (
     <div className="grid grid-cols-5 gap-3 text-sm">

@@ -176,6 +176,13 @@
       "when": 1712354121499,
       "tag": "0024_young_proudstar",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1713095971713,
+      "tag": "0025_strong_thunderball",
+      "breakpoints": true
     }
   ]
 }

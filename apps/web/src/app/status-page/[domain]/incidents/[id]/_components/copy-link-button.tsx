@@ -31,7 +31,6 @@ export function CopyLinkButton() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
             onClick={() => {
               const text =
                 typeof window !== undefined ? window.location.href : "";

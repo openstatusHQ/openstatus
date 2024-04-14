@@ -82,6 +82,7 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
+      public: defaultValues?.public ?? false,
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
@@ -286,7 +287,7 @@ export function MonitorForm({
             </TabsContent>
             {defaultValues?.id ? (
               <TabsContent value="danger">
-                <SectionDanger monitorId={defaultValues.id} />
+                <SectionDanger monitorId={defaultValues.id} {...{ form }} />
               </TabsContent>
             ) : null}
           </Tabs>

@@ -27,7 +27,7 @@ export function RegionTable({
   regions,
   data,
   metricsByRegion,
-  caption = "A list of your regions.",
+  caption = "A list of all the selected regions.",
 }: RegionTableProps) {
   // console.log(JSON.stringify({ regions, data, metricsByRegion }, null, 2));
   return (

@@ -71,6 +71,28 @@ export class OSTinybird {
     };
   }
 
+  endpointChartAllRegions(period: "7d" | "14d") {
+    const parameters = z.object({
+      monitorId: z.string(),
+    });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: `__ttl_${period}_chart_all_regions_get__${VERSION}`, // TODO: add pipe to @openstatus/tinybird
+          parameters,
+          data: z.object({ timestamp: z.number().int() }).merge(latencySchema),
+          opts: {
+            revalidate: DEFAULT_CACHE,
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+
   endpointMetrics(period: "1h" | "1d" | "3d" | "7d" | "14d") {
     const parameters = z.object({ monitorId: z.string() });
 

@@ -21,6 +21,7 @@ import {
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
+  selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -187,6 +188,20 @@ export const monitorRouter = createTRPCRouter({
         });
       }
       return parsedMonitor.data;
+    }),
+
+  getPublicMonitorById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const _monitor = await opts.ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, opts.input.id),
+          isNull(monitor.deletedAt),
+          eq(monitor.public, true),
+        ),
+      });
+      if (!_monitor) return undefined;
+      return selectPublicMonitorSchema.parse(_monitor);
     }),
 
   update: protectedProcedure
