@@ -31,7 +31,7 @@ export function MonitoringCard() {
               <Link href="/play/checker">Speed Checker</Link>
             </Button>
             <Button asChild variant="outline" className="rounded-full">
-              <Link href="/public/1">Public Dashboard</Link>
+              <Link href="/public/monitors/1">Public Dashboard</Link>
             </Button>
           </div>
         </CardFeatureContainer>

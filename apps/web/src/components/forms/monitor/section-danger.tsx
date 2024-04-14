@@ -77,7 +77,7 @@ export function SectionDanger({ monitorId, form }: Props) {
                   from the overview page will be public. You will be able to
                   share it via a connected status page or{" "}
                   <code className="underline underline-offset-4">
-                    openstatus.dev/public/{form.getValues("id")}
+                    openstatus.dev/public/monitors/{form.getValues("id")}
                   </code>
                   .
                 </FormDescription>

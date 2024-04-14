@@ -61,7 +61,7 @@ const playgrounds: CardProps[] = [
     variant: "primary",
   },
   {
-    href: "/public/1",
+    href: "/public/monitors/1",
     title: "Public Dashboard",
     description: "Get a demo of wha data we collect for your monitor.",
     icon: Activity,
