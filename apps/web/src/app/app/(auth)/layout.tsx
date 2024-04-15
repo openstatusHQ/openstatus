@@ -1,5 +1,6 @@
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs";
 
@@ -16,7 +17,7 @@ export default function AuthLayout({
   return (
     <div className="grid min-h-screen grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
       <aside className="border-border col-span-1 flex w-full flex-col gap-4 border p-3 backdrop-blur-[2px] md:p-6">
-        <div className="relative">
+        <Link href="/" className="relative">
           <Image
             src="/icon.png"
             alt="OpenStatus"
@@ -24,7 +25,7 @@ export default function AuthLayout({
             width={30}
             className="border-border rounded-full border"
           />
-        </div>
+        </Link>
         <div className="flex w-full max-w-lg flex-1 flex-col justify-center text-left">
           <h1 className="font-cal text-foreground mb-3 text-2xl">
             Open Source Monitoring Service

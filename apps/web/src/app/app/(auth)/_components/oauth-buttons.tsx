@@ -33,27 +33,29 @@ export function OauthButtons() {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <Button onClick={() => oauthSignIn("oauth_github")}>
-        {isLoading === "oauth_github" ? (
-          <LoadingAnimation className="h-4 w-4" />
-        ) : (
-          <>
-            <Icons.github className="mr-2 h-4 w-4" />
-            GitHub
-          </>
-        )}
-      </Button>
-      <Button onClick={() => oauthSignIn("oauth_google")}>
-        {isLoading === "oauth_google" ? (
-          <LoadingAnimation className="h-4 w-4" />
-        ) : (
-          <>
-            <Icons.google className="mr-2 h-4 w-4" />
-            Google
-          </>
-        )}
-      </Button>
+    <div className="@container">
+      <div className="@md:flex-row flex w-full flex-col gap-2">
+        <Button onClick={() => oauthSignIn("oauth_github")} className="w-full">
+          {isLoading === "oauth_github" ? (
+            <LoadingAnimation className="h-4 w-4" />
+          ) : (
+            <>
+              <Icons.github className="mr-2 h-4 w-4" />
+              GitHub
+            </>
+          )}
+        </Button>
+        <Button onClick={() => oauthSignIn("oauth_google")} className="w-full">
+          {isLoading === "oauth_google" ? (
+            <LoadingAnimation className="h-4 w-4" />
+          ) : (
+            <>
+              <Icons.google className="mr-2 h-4 w-4" />
+              Google
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
