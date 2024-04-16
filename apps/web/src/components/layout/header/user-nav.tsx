@@ -42,7 +42,7 @@ export function UserNav() {
             <p className="truncate text-sm font-medium leading-none">
               {user.fullName}
             </p>
-            <p className="text-muted-foreground text-xs leading-none">
+            <p className="text-muted-foreground truncate text-xs leading-none">
               {user.emailAddresses?.[0].emailAddress}
             </p>
           </div>
