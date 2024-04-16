@@ -851,8 +851,8 @@ importers:
   packages/tinybird:
     dependencies:
       '@chronark/zod-bird':
-        specifier: 0.3.1
-        version: 0.3.1
+        specifier: 0.3.6
+        version: 0.3.6
       zod:
         specifier: 3.22.2
         version: 3.22.2
@@ -1947,10 +1947,10 @@ packages:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  /@chronark/zod-bird@0.3.1:
-    resolution: {integrity: sha512-4PNJx41m37Psk/3XAxdXxMb9VGAep43/puiwxAyFWYzIoQ1kq3Cwh1sA51LkTFSVHm+B2peMmW+p3/+oCHH9zg==}
+  /@chronark/zod-bird@0.3.6:
+    resolution: {integrity: sha512-hE8kCGLJK5ncH8F7uPaqPiOOqo68vUI66nusg7HO5X9BcyN8lXfeQliu6Ou1kOSq95OYshf9nB2fk2+LEvF4ng==}
     dependencies:
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@clerk/backend@0.38.3(react@18.2.0):
@@ -2209,10 +2209,6 @@ packages:
     peerDependencies:
       '@effect-ts/otel-node': '*'
     peerDependenciesMeta:
-      '@effect-ts/core':
-        optional: true
-      '@effect-ts/otel':
-        optional: true
       '@effect-ts/otel-node':
         optional: true
     dependencies:
@@ -15552,6 +15548,10 @@ packages:
 
   /zod@3.22.2:
     resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+
+  /zod@3.22.4:
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
+    dev: false
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
