@@ -25,6 +25,8 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
 
   const { timing, headers, message } = response;
 
+  const defaultValue = headers ? "headers" : timing ? "timing" : "message";
+
   return (
     <div className="grid gap-8">
       <RegionInfo
@@ -35,7 +37,7 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
           time: response.cronTimestamp || 0,
         }}
       />
-      <Tabs defaultValue="headers">
+      <Tabs defaultValue={defaultValue}>
         <TabsList>
           <TabsTrigger value="headers" disabled={!headers}>
             Headers
@@ -56,7 +58,13 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
         <TabsContent value="message">
           {message ? (
             <div>
-              <pre className="bg-muted rounded-md p-4 text-sm">{message}</pre>
+              <pre
+                className="bg-muted text-wrap rounded-md p-4 text-sm"
+                // @ts-expect-error textWrap is not a valid prop even though it is
+                style={{ textWrap: "wrap" }}
+              >
+                {message}
+              </pre>
               <p className="text-muted-foreground mt-4 text-center text-sm">
                 Response Message
               </p>

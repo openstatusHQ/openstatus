@@ -22,11 +22,16 @@ export async function ResponseDetailTabs({
   message?: string | null;
   assertions?: Assertion[] | null;
 }) {
+  const defaultValue = headers ? "headers" : timing ? "timing" : "message";
   return (
-    <Tabs defaultValue="headers">
+    <Tabs defaultValue={defaultValue}>
       <TabsList>
-        <TabsTrigger value="headers">Headers</TabsTrigger>
-        <TabsTrigger value="timing">Timing</TabsTrigger>
+        <TabsTrigger value="headers" disabled={!headers}>
+          Headers
+        </TabsTrigger>
+        <TabsTrigger value="timing" disabled={!timing}>
+          Timing
+        </TabsTrigger>
         <TabsTrigger value="message" disabled={!message}>
           Message
         </TabsTrigger>
@@ -46,7 +51,13 @@ export async function ResponseDetailTabs({
       <TabsContent value="message">
         {message ? (
           <div>
-            <pre className="bg-muted rounded-md p-4 text-sm">{message}</pre>
+            <pre
+              className="bg-muted text-wrap rounded-md p-4 text-sm"
+              // @ts-expect-error textWrap is not a valid prop even though it is
+              style={{ textWrap: "wrap" }}
+            >
+              {message}
+            </pre>
             <p className="text-muted-foreground mt-4 text-center text-sm">
               Response Message
             </p>
