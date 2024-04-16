@@ -21,11 +21,11 @@
     "stripe": "13.8.0",
     "superjson": "1.13.3",
     "zod": "3.22.2",
-    "next": "14.1.2"
+    "next": "14.2.1"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.4.2",
+    "typescript": "5.4.5",
     "bun-types": "1.0.8"
   },
   "keywords": [],
