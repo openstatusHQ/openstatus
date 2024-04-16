@@ -100,7 +100,10 @@ export class OSTinybird {
   endpointMetrics(period: "1h" | "1d" | "3d" | "7d" | "14d") {
     const parameters = z.object({ monitorId: z.string() });
 
-    return async (props: z.infer<typeof parameters>) => {
+    return async (
+      props: z.infer<typeof parameters>,
+      opts?: { revalidate: number | undefined }, // RETHINK: not the best way to handle it
+    ) => {
       try {
         const res = await this.tb.buildPipe({
           pipe: `__ttl_${period}_metrics_get__${VERSION}`,
@@ -115,7 +118,7 @@ export class OSTinybird {
             .merge(latencySchema),
           opts: {
             next: {
-              revalidate: DEFAULT_CACHE,
+              revalidate: opts?.revalidate || DEFAULT_CACHE,
             },
           },
         })(props);

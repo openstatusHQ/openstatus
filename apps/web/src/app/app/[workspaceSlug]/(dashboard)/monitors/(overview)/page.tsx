@@ -40,13 +40,19 @@ export default async function MonitorPage() {
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
-      const metrics = await tb.endpointMetrics("1d")({
-        monitorId: String(monitor.id),
-      });
+      const metrics = await tb.endpointMetrics("1d")(
+        {
+          monitorId: String(monitor.id),
+        },
+        { revalidate: 0 },
+      );
 
-      const data = await tb.endpointStatusPeriod("7d")({
-        monitorId: String(monitor.id),
-      });
+      const data = await tb.endpointStatusPeriod("7d")(
+        {
+          monitorId: String(monitor.id),
+        },
+        { revalidate: 0 },
+      );
 
       const [current] = metrics?.sort((a, b) =>
         (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
