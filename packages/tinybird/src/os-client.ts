@@ -61,7 +61,9 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -83,7 +85,9 @@ export class OSTinybird {
           parameters,
           data: z.object({ timestamp: z.number().int() }).merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -110,7 +114,9 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -137,7 +143,9 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -170,7 +178,9 @@ export class OSTinybird {
             ok: z.number().default(0),
           }),
           opts: {
-            revalidate: opts?.revalidate || DEFAULT_CACHE,
+            next: {
+              revalidate: opts?.revalidate || DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -206,7 +216,9 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(),
           }),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -228,7 +240,9 @@ export class OSTinybird {
           parameters,
           data: z.object({ cronTimestamp: z.number().int() }),
           opts: {
-            revalidate: MIN_CACHE,
+            next: {
+              revalidate: MIN_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -287,7 +301,9 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(), // REMINDER: maybe include Assertions.serialize here
           }),
           opts: {
-            revalidate: MAX_CACHE,
+            next: {
+              revalidate: MAX_CACHE,
+            },
           },
         })(props);
         return res.data;

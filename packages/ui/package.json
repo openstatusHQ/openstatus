@@ -15,7 +15,7 @@
     "@types/react": "18.2.64",
     "@types/react-dom": "18.2.21",
     "eslint": "8.50.0",
-    "typescript": "5.4.2"
+    "typescript": "5.4.5"
   },
   "dependencies": {
     "@hookform/resolvers": "3.3.1",
@@ -49,7 +49,7 @@
     "react-day-picker": "8.8.2",
     "react-hook-form": "7.47.0",
     "tailwind-merge": "1.14.0",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "peerDependencies": {
     "next-themes": "0.2.1",

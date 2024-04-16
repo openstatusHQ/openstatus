@@ -11,7 +11,7 @@
     "@openstatus/db": "workspace:*",
     "drizzle-orm": "0.30.7",
     "hono": "4.2.2",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@cloudflare/puppeteer": "0.0.6",
