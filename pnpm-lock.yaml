@@ -42,7 +42,7 @@ importers:
         version: 3.550.0
       '@hono/zod-validator':
         specifier: 0.2.1
-        version: 0.2.1(hono@4.2.2)(zod@3.22.2)
+        version: 0.2.1(hono@4.2.2)(zod@3.22.4)
       '@libsql/client':
         specifier: 0.6.0
         version: 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
@@ -54,7 +54,7 @@ importers:
         version: link:../../packages/utils
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.4.4)(zod@3.22.2)
+        version: 0.7.1(typescript@5.4.4)(zod@3.22.4)
       drizzle-orm:
         specifier: 0.30.7
         version: 0.30.7(@cloudflare/workers-types@4.20240403.0)(@libsql/client@0.6.0)
@@ -65,8 +65,8 @@ importers:
         specifier: 1.43.0
         version: 1.43.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -79,7 +79,7 @@ importers:
     dependencies:
       '@hono/zod-validator':
         specifier: 0.2.1
-        version: 0.2.1(hono@4.2.2)(zod@3.22.2)
+        version: 0.2.1(hono@4.2.2)(zod@3.22.4)
       '@libsql/client':
         specifier: 0.6.0
         version: 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
@@ -93,8 +93,8 @@ importers:
         specifier: 4.2.2
         version: 4.2.2
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@cloudflare/puppeteer':
         specifier: 0.0.6
@@ -119,7 +119,7 @@ importers:
         version: 1.0.0(hono@4.0.0)
       '@hono/zod-openapi':
         specifier: 0.8.3
-        version: 0.8.3(hono@4.0.0)(zod@3.22.2)
+        version: 0.8.3(hono@4.0.0)(zod@3.22.4)
       '@openstatus/analytics':
         specifier: workspace:^
         version: link:../../packages/analytics
@@ -158,7 +158,7 @@ importers:
         version: link:../../packages/utils
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
       '@unkey/api':
         specifier: 0.16.0
         version: 0.16.0
@@ -172,8 +172,8 @@ importers:
         specifier: 13.11.0
         version: 13.11.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -261,7 +261,7 @@ importers:
         version: 2.1.6
       '@t3-oss/env-nextjs':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       '@tailwindcss/container-queries':
         specifier: 0.1.1
         version: 0.1.1(tailwindcss@3.3.2)
@@ -401,8 +401,8 @@ importers:
         specifier: 1.0.7
         version: 1.0.7(tailwindcss@3.3.2)
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/eslint-config':
         specifier: workspace:*
@@ -457,10 +457,10 @@ importers:
         version: 1.3.0(@types/dlv@1.1.4)
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -497,7 +497,7 @@ importers:
         version: link:../tinybird
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       '@trpc/client':
         specifier: 10.45.1
         version: 10.45.1(@trpc/server@10.45.1)
@@ -517,8 +517,8 @@ importers:
         specifier: 1.13.3
         version: 1.13.3
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -542,8 +542,8 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
 
   packages/config/eslint:
     dependencies:
@@ -586,7 +586,7 @@ importers:
         version: 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       dotenv:
         specifier: 16.3.1
         version: 16.3.1
@@ -595,10 +595,10 @@ importers:
         version: 0.30.7(@libsql/client@0.6.0)(better-sqlite3@9.4.1)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.30.7)(zod@3.22.2)
+        version: 0.5.1(drizzle-orm@0.30.7)(zod@3.22.4)
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/assertions':
         specifier: workspace:*
@@ -647,7 +647,7 @@ importers:
         version: 0.0.9
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       react-email:
         specifier: 1.10.0
         version: 1.10.0
@@ -655,8 +655,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -718,13 +718,13 @@ importers:
         version: 0.0.7
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       resend:
         specifier: 1.1.0
         version: 1.1.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -777,7 +777,7 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.4.5)(zod@3.22.2)
+        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
       '@types/validator':
         specifier: 13.11.6
         version: 13.11.6
@@ -785,8 +785,8 @@ importers:
         specifier: 13.11.0
         version: 13.11.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -813,8 +813,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -854,8 +854,8 @@ importers:
         specifier: 0.3.6
         version: 0.3.6
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -879,8 +879,8 @@ importers:
         specifier: workspace:*
         version: link:../tinybird
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -993,8 +993,8 @@ importers:
         specifier: 1.14.0
         version: 1.14.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/eslint-config':
         specifier: workspace:*
@@ -1123,13 +1123,13 @@ packages:
     resolution: {integrity: sha512-TD+xbmsBLyYy/IxFimW/YL/9L2IEnM7/EoV9Aeh56U64Ify8o27HJcKjo38XY9Tcn0uOq1AX3thkKgvtWvwFQg==}
     dev: false
 
-  /@asteasolutions/zod-to-openapi@5.5.0(zod@3.22.2):
+  /@asteasolutions/zod-to-openapi@5.5.0(zod@3.22.4):
     resolution: {integrity: sha512-d5HwrvM6dOKr3XdeF+DmashGvfEc+1oiEfbscugsiwSTrFtuMa7ETpW9sTNnVgn+hJaz+PRxPQUYD7q9/5dUig==}
     peerDependencies:
       zod: ^3.20.2
     dependencies:
       openapi3-ts: 4.1.2
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@aws-crypto/crc32@3.0.0:
@@ -2183,7 +2183,7 @@ packages:
       ts-pattern: 4.3.0
       unified: 10.1.2
       yaml: 2.3.3
-      zod: 3.22.2
+      zod: 3.22.4
     transitivePeerDependencies:
       - '@effect-ts/otel-node'
       - esbuild
@@ -3294,37 +3294,37 @@ packages:
       toucan-js: 3.3.0
     dev: false
 
-  /@hono/zod-openapi@0.8.3(hono@4.0.0)(zod@3.22.2):
+  /@hono/zod-openapi@0.8.3(hono@4.0.0)(zod@3.22.4):
     resolution: {integrity: sha512-TwjSf63miIF3VBqNy4V6EOqZYdTQPeIQQ9Q2HjRWFYH9f2QtBFXziuqIg2Y76gNZ3WDal67NQXmbSErHiFR44g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=3.9.0'
       zod: 3.*
     dependencies:
-      '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.2)
-      '@hono/zod-validator': 0.1.9(hono@4.0.0)(zod@3.22.2)
+      '@asteasolutions/zod-to-openapi': 5.5.0(zod@3.22.4)
+      '@hono/zod-validator': 0.1.9(hono@4.0.0)(zod@3.22.4)
       hono: 4.0.0
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
-  /@hono/zod-validator@0.1.9(hono@4.0.0)(zod@3.22.2):
+  /@hono/zod-validator@0.1.9(hono@4.0.0)(zod@3.22.4):
     resolution: {integrity: sha512-qEG5xagKzyif283ldCKzp+aF9Aebclg0sfrgyRQQNAizmXpicZ3UGduST/Jp+a9bjt3mI+VyEXMftb4rogLxQA==}
     peerDependencies:
       hono: 3.*
       zod: ^3.19.1
     dependencies:
       hono: 4.0.0
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
-  /@hono/zod-validator@0.2.1(hono@4.2.2)(zod@3.22.2):
+  /@hono/zod-validator@0.2.1(hono@4.2.2)(zod@3.22.4):
     resolution: {integrity: sha512-HFoxln7Q6JsE64qz2WBS28SD33UB2alp3aRKmcWnNLDzEL1BLsWfbdX6e1HIiUprHYTIXf5y7ax8eYidKUwyaA==}
     peerDependencies:
       hono: '>=3.9.0'
       zod: ^3.19.1
     dependencies:
       hono: 4.2.2
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@hookform/resolvers@3.3.1(react-hook-form@7.47.0):
@@ -6353,7 +6353,7 @@ packages:
       '@swc/counter': 0.1.3
       tslib: 2.6.2
 
-  /@t3-oss/env-core@0.7.0(typescript@5.4.5)(zod@3.22.2):
+  /@t3-oss/env-core@0.7.0(typescript@5.4.5)(zod@3.22.4):
     resolution: {integrity: sha512-cgunN82CqgQOOyuMOK/bGtujX5/ooXQTwGMJVWI6mCowq6WE5EgRLOqF/DRcrElI0gSFGA9i9GrxzCnk73HZLQ==}
     peerDependencies:
       typescript: '>=4.7.2'
@@ -6363,10 +6363,10 @@ packages:
         optional: true
     dependencies:
       typescript: 5.4.5
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
-  /@t3-oss/env-core@0.7.1(typescript@5.4.4)(zod@3.22.2):
+  /@t3-oss/env-core@0.7.1(typescript@5.4.4)(zod@3.22.4):
     resolution: {integrity: sha512-3+SQt39OlmSaRLqYVFv8uRm1BpFepM5TIiMytRqO9cjH+wB77o6BIJdeyM5h5U4qLBMEzOJWCY4MBaU/rLwbYw==}
     peerDependencies:
       typescript: '>=4.7.2'
@@ -6376,10 +6376,10 @@ packages:
         optional: true
     dependencies:
       typescript: 5.4.4
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
-  /@t3-oss/env-core@0.7.1(typescript@5.4.5)(zod@3.22.2):
+  /@t3-oss/env-core@0.7.1(typescript@5.4.5)(zod@3.22.4):
     resolution: {integrity: sha512-3+SQt39OlmSaRLqYVFv8uRm1BpFepM5TIiMytRqO9cjH+wB77o6BIJdeyM5h5U4qLBMEzOJWCY4MBaU/rLwbYw==}
     peerDependencies:
       typescript: '>=4.7.2'
@@ -6389,10 +6389,10 @@ packages:
         optional: true
     dependencies:
       typescript: 5.4.5
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
-  /@t3-oss/env-nextjs@0.7.0(typescript@5.4.5)(zod@3.22.2):
+  /@t3-oss/env-nextjs@0.7.0(typescript@5.4.5)(zod@3.22.4):
     resolution: {integrity: sha512-rjQIt6P3tac2eRx4BNQLNaJ+AIb2P8wXw4uFvYbEekqMGShikkUALnX3hUn1twYiGVGHXRm6UbU+LqtjIktuGg==}
     peerDependencies:
       typescript: '>=4.7.2'
@@ -6401,9 +6401,9 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@t3-oss/env-core': 0.7.0(typescript@5.4.5)(zod@3.22.2)
+      '@t3-oss/env-core': 0.7.0(typescript@5.4.5)(zod@3.22.4)
       typescript: 5.4.5
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /@tailwindcss/container-queries@0.1.1(tailwindcss@3.3.2):
@@ -8504,7 +8504,7 @@ packages:
       json-diff: 0.9.0
       minimatch: 7.4.6
       semver: 7.5.4
-      zod: 3.22.2
+      zod: 3.22.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -8677,14 +8677,14 @@ packages:
       better-sqlite3: 9.4.1
     dev: false
 
-  /drizzle-zod@0.5.1(drizzle-orm@0.30.7)(zod@3.22.2):
+  /drizzle-zod@0.5.1(drizzle-orm@0.30.7)(zod@3.22.4):
     resolution: {integrity: sha512-C/8bvzUH/zSnVfwdSibOgFjLhtDtbKYmkbPbUCq46QZyZCH6kODIMSOgZ8R7rVjoI+tCj3k06MRJMDqsIeoS4A==}
     peerDependencies:
       drizzle-orm: '>=0.23.13'
       zod: '*'
     dependencies:
       drizzle-orm: 0.30.7(@libsql/client@0.6.0)(better-sqlite3@9.4.1)
-      zod: 3.22.2
+      zod: 3.22.4
     dev: false
 
   /duplexify@4.1.2:
@@ -11982,7 +11982,7 @@ packages:
       workerd: 1.20240403.0
       ws: 8.14.2(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       youch: 3.3.3
-      zod: 3.22.2
+      zod: 3.22.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -15553,12 +15553,8 @@ packages:
       stacktracey: 2.1.8
     dev: true
 
-  /zod@3.22.2:
-    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
-
   /zod@3.22.4:
     resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-    dev: false
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}

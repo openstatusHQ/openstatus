@@ -6,7 +6,7 @@
   "scripts": {},
   "dependencies": {
     "@openstatus/db": "workspace:*",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

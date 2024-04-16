@@ -20,7 +20,7 @@
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
-    "zod": "3.22.2",
+    "zod": "3.22.4",
     "next": "14.2.1"
   },
   "devDependencies": {
