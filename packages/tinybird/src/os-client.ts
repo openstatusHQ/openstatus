@@ -143,7 +143,9 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            x: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
