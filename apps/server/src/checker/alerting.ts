@@ -79,7 +79,7 @@ export const upsertMonitorStatus = async ({
   status: MonitorStatus;
   region: MonitorFlyRegion;
 }) => {
-  await db
+  const newData = await db
     .insert(schema.monitorStatusTable)
     .values({ status, region, monitorId: Number(monitorId) })
     .onConflictDoUpdate({
@@ -88,5 +88,8 @@ export const upsertMonitorStatus = async ({
         schema.monitorStatusTable.region,
       ],
       set: { status, updatedAt: new Date() },
-    });
+    })
+    .returning();
+  console.log(`📈 upsertMonitorStatus for ${monitorId} in region ${region}`);
+  console.log(`🤔 upsert monitor ${JSON.stringify(newData)}`);
 };
