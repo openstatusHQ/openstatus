@@ -171,7 +171,7 @@ export class OSTinybird {
     return async (
       props: z.infer<typeof parameters>,
       opts?: {
-        cache: RequestCache | undefined;
+        cache?: RequestCache | undefined;
         revalidate: number | undefined;
       }, // RETHINK: not the best way to handle it
     ) => {
