@@ -183,6 +183,13 @@
       "when": 1713095971713,
       "tag": "0025_strong_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1713384976187,
+      "tag": "0026_giant_absorbing_man",
+      "breakpoints": true
     }
   ]
 }

@@ -13,6 +13,7 @@
   "dependencies": {
     "@hono/sentry": "1.0.0",
     "@hono/zod-openapi": "0.8.3",
+    "@hono/zod-validator": "0.2.1",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
