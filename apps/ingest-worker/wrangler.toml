@@ -1,3 +1,10 @@
 name = "ingest-workers"
 compatibility_date = "2023-12-01"
 
+
+[env.dev]
+vars = { API_ENDPOINT = "http://localhost:8080/vitals" }
+
+
+[env.production]
+vars = { API_ENDPOINT = "https://vitals.openstatus.dev/vitals" }
