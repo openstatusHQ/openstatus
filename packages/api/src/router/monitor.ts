@@ -21,6 +21,7 @@ import {
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
+  selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/plans";
 
@@ -187,6 +188,36 @@ export const monitorRouter = createTRPCRouter({
         });
       }
       return parsedMonitor.data;
+    }),
+
+  getPublicMonitorById: publicProcedure
+    // REMINDER: if on status page, we should check if the monitor is associated with the page
+    // otherwise, using `/public` we don't need to check
+    .input(z.object({ id: z.number(), slug: z.string().optional() }))
+    .query(async (opts) => {
+      const _monitor = await opts.ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, opts.input.id),
+          isNull(monitor.deletedAt),
+          eq(monitor.public, true),
+        ),
+      });
+      if (!_monitor) return undefined;
+
+      if (opts.input.slug) {
+        const _page = await opts.ctx.db.query.page.findFirst({
+          where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
+          with: { monitorsToPages: true },
+        });
+
+        const hasPageRelation = _page?.monitorsToPages.find(
+          ({ monitorId }) => _monitor.id === monitorId,
+        );
+
+        if (!hasPageRelation) return undefined;
+      }
+
+      return selectPublicMonitorSchema.parse(_monitor);
     }),
 
   update: protectedProcedure

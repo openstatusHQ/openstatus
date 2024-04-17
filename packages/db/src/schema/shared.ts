@@ -14,7 +14,6 @@ import { workspacePlanSchema } from "./workspaces";
 export const selectPublicMonitorSchema = selectMonitorSchema.omit({
   body: true,
   headers: true,
-  regions: true,
   method: true,
 });
 
@@ -54,7 +53,13 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
 export const selectPublicStatusReportSchemaWithRelation =
   selectStatusReportSchema.extend({
     monitorsToStatusReports: z
-      .array(z.object({ monitor: selectPublicMonitorSchema }))
+      .array(
+        z.object({
+          monitorId: z.number(),
+          statusReportId: z.number(),
+          monitor: selectPublicMonitorSchema,
+        }),
+      )
       .default([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),
   });
@@ -63,3 +68,4 @@ export type StatusReportWithUpdates = z.infer<
   typeof selectStatusReportPageSchema
 >;
 export type PublicMonitor = z.infer<typeof selectPublicMonitorSchema>;
+export type PublicPage = z.infer<typeof selectPublicPageSchemaWithRelation>;

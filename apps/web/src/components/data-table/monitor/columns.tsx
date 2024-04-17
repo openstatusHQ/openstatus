@@ -11,6 +11,7 @@ import type {
 } from "@openstatus/tinybird";
 import { Tracker } from "@openstatus/tracker";
 import {
+  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -34,15 +35,18 @@ export const columns: ColumnDef<{
     accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
     header: "Name",
     cell: ({ row }) => {
-      const { active, status, name } = row.original.monitor;
+      const { active, status, name, public: _public } = row.original.monitor;
       return (
-        <Link
-          href={`./monitors/${row.original.monitor.id}/overview`}
-          className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
-        >
-          <StatusDotWithTooltip active={active} status={status} />
-          <span className="truncate group-hover:underline">{name}</span>
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`./monitors/${row.original.monitor.id}/overview`}
+            className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
+          >
+            <StatusDotWithTooltip active={active} status={status} />
+            <span className="truncate group-hover:underline">{name}</span>
+          </Link>
+          {_public ? <Badge variant="secondary">public</Badge> : null}
+        </div>
       );
     },
   },

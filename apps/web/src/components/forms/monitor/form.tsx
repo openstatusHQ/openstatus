@@ -17,7 +17,6 @@ import type {
 import { flyRegions, insertMonitorSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import {
   Tabs,
   TabsContent,
@@ -25,6 +24,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
@@ -82,6 +82,7 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
+      public: defaultValues?.public ?? false,
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
@@ -286,7 +287,7 @@ export function MonitorForm({
             </TabsContent>
             {defaultValues?.id ? (
               <TabsContent value="danger">
-                <SectionDanger monitorId={defaultValues.id} />
+                <SectionDanger monitorId={defaultValues.id} {...{ form }} />
               </TabsContent>
             ) : null}
           </Tabs>

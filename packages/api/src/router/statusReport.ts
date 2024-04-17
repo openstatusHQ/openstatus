@@ -393,7 +393,9 @@ export const statusReportRouter = createTRPCRouter({
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: true,
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
         },
       });
 

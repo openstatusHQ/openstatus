@@ -5,8 +5,8 @@ import { Button } from "@openstatus/ui";
 import { flyRegions } from "@openstatus/utils";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { ResponseDetails } from "@/components/monitor-dashboard/response-details";
 import { api } from "@/trpc/server";
-import { ResponseDetails } from "../_components/response-details";
 
 //
 

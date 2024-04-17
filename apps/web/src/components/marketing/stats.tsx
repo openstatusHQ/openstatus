@@ -18,7 +18,7 @@ export async function Stats() {
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
-            {numberFormatter(tbLastHourStats?.[0].count || 0)}
+            {numberFormatter(tbLastHourStats?.[0].count || 62000000)}
           </h3>
           <p className="text-muted-foreground font-light">
             Pings in the last hour
@@ -27,7 +27,7 @@ export async function Stats() {
         <div className="text-center">
           <h3 className="font-cal text-3xl">
             {/* {numberFormatter(totalActiveMonitors)} */}
-            1500+
+            2400+
           </h3>
           <p className="text-muted-foreground font-light">Active monitors</p>
         </div>

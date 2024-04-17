@@ -7,11 +7,11 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "5.4.2"
+    "typescript": "5.4.5"
   },
   "keywords": [],
   "author": "",

@@ -4,7 +4,7 @@ import {
   getCheckerDataById,
   regionFormatter,
   timestampFormatter,
-} from "@/app/play/checker/[id]/utils";
+} from "@/components/ping-response-analysis/utils";
 import { cn } from "@/lib/utils";
 import { BasicLayout } from "../_components/basic-layout";
 import {

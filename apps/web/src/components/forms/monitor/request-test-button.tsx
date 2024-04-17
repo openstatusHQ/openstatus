@@ -25,10 +25,10 @@ import {
 } from "@openstatus/ui";
 import { flyRegions, flyRegionsDict } from "@openstatus/utils";
 
-import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
-import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
+import { RegionInfo } from "@/components/ping-response-analysis/region-info";
+import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 
 interface Props {

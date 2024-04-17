@@ -61,7 +61,33 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+
+  endpointChartAllRegions(period: "7d" | "14d") {
+    const parameters = z.object({
+      monitorId: z.string(),
+    });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: `__ttl_${period}_chart_all_regions_get__${VERSION}`, // TODO: add pipe to @openstatus/tinybird
+          parameters,
+          data: z.object({ timestamp: z.number().int() }).merge(latencySchema),
+          opts: {
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -74,7 +100,13 @@ export class OSTinybird {
   endpointMetrics(period: "1h" | "1d" | "3d" | "7d" | "14d") {
     const parameters = z.object({ monitorId: z.string() });
 
-    return async (props: z.infer<typeof parameters>) => {
+    return async (
+      props: z.infer<typeof parameters>,
+      opts?: {
+        cache?: RequestCache | undefined;
+        revalidate: number | undefined;
+      }, // RETHINK: not the best way to handle it
+    ) => {
       try {
         const res = await this.tb.buildPipe({
           pipe: `__ttl_${period}_metrics_get__${VERSION}`,
@@ -88,7 +120,10 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            cache: opts?.cache,
+            next: {
+              revalidate: opts?.revalidate || DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -115,7 +150,9 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -133,7 +170,10 @@ export class OSTinybird {
 
     return async (
       props: z.infer<typeof parameters>,
-      opts?: { revalidate: number | undefined }, // RETHINK: not the best way to handle it
+      opts?: {
+        cache?: RequestCache | undefined;
+        revalidate: number | undefined;
+      }, // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -148,7 +188,10 @@ export class OSTinybird {
             ok: z.number().default(0),
           }),
           opts: {
-            revalidate: opts?.revalidate || DEFAULT_CACHE,
+            cache: opts?.cache,
+            next: {
+              revalidate: opts?.revalidate || DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -184,7 +227,9 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(),
           }),
           opts: {
-            revalidate: DEFAULT_CACHE,
+            next: {
+              revalidate: DEFAULT_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -206,7 +251,9 @@ export class OSTinybird {
           parameters,
           data: z.object({ cronTimestamp: z.number().int() }),
           opts: {
-            revalidate: MIN_CACHE,
+            next: {
+              revalidate: MIN_CACHE,
+            },
           },
         })(props);
         return res.data;
@@ -265,7 +312,9 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(), // REMINDER: maybe include Assertions.serialize here
           }),
           opts: {
-            revalidate: MAX_CACHE,
+            next: {
+              revalidate: MAX_CACHE,
+            },
           },
         })(props);
         return res.data;

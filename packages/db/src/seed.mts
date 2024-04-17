@@ -73,6 +73,7 @@ async function main() {
         url: "https://www.google.com",
         method: "GET",
         regions: "gru",
+        public: true,
       },
       {
         id: 3,
