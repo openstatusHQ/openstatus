@@ -10,6 +10,7 @@ import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
+import RefreshRoute from "../_components/refresh-route";
 
 // import { RefreshWidget } from "../_components/refresh-widget";
 
@@ -82,6 +83,7 @@ export default async function MonitorPage() {
     <>
       <DataTable columns={columns} data={monitorsWithData} tags={tags} />
       {isLimitReached ? <Limit /> : null}
+      <RefreshRoute />
       {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>
   );
