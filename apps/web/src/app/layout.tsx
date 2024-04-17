@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
-// @ts-expect-error
 import { OpenStatusProvider } from "@openstatus/next-monitoring";
 import { Toaster } from "@openstatus/ui";
 
@@ -43,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${calSans.variable}`}>
-        <OpenStatusProvider />
+        <OpenStatusProvider dsn="openstatus" />
 
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
