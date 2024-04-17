@@ -254,6 +254,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/next-monitoring':
+        specifier: openstatusHQ/rum-javascript
+        version: '@openstatus/rum@https://codeload.github.com/openstatusHQ/rum-javascript/tar.gz/5c82ba638a4276eae917730ae859a16405d38385'
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord
@@ -2576,6 +2579,10 @@ packages:
 
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
+
+  '@openstatus/rum@https://codeload.github.com/openstatusHQ/rum-javascript/tar.gz/5c82ba638a4276eae917730ae859a16405d38385':
+    resolution: {tarball: https://codeload.github.com/openstatusHQ/rum-javascript/tar.gz/5c82ba638a4276eae917730ae859a16405d38385}
+    version: 1.0.0
 
   '@opentelemetry/api-logs@0.39.1':
     resolution: {integrity: sha512-9BJ8lMcOzEN0lu+Qji801y707oFO4xT3db6cosPvl+k7ItUHKN5ofWqtSbM9gbt1H4JJ/4/2TVrqI9Rq7hNv6Q==}
@@ -10418,6 +10425,8 @@ snapshots:
       '@octokit/openapi-types': 18.1.1
 
   '@one-ini/wasm@0.1.1': {}
+
+  '@openstatus/rum@https://codeload.github.com/openstatusHQ/rum-javascript/tar.gz/5c82ba638a4276eae917730ae859a16405d38385': {}
 
   '@opentelemetry/api-logs@0.39.1':
     dependencies:
