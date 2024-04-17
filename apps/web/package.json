@@ -19,7 +19,7 @@
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
-    "@openstatus/next-monitoring": "openstatusHQ/rum-javascript",
+    "@openstatus/next-monitoring": "openstatusHQ/rum-javascript#d6fdb3c",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
