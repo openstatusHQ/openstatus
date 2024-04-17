@@ -102,7 +102,10 @@ export class OSTinybird {
 
     return async (
       props: z.infer<typeof parameters>,
-      opts?: { revalidate: number | undefined }, // RETHINK: not the best way to handle it
+      opts?: {
+        cache?: RequestCache | undefined;
+        revalidate: number | undefined;
+      }, // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -117,6 +120,7 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
+            cache: opts?.cache,
             next: {
               revalidate: opts?.revalidate || DEFAULT_CACHE,
             },
@@ -166,7 +170,10 @@ export class OSTinybird {
 
     return async (
       props: z.infer<typeof parameters>,
-      opts?: { revalidate: number | undefined }, // RETHINK: not the best way to handle it
+      opts?: {
+        cache: RequestCache | undefined;
+        revalidate: number | undefined;
+      }, // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -181,6 +188,7 @@ export class OSTinybird {
             ok: z.number().default(0),
           }),
           opts: {
+            cache: opts?.cache,
             next: {
               revalidate: opts?.revalidate || DEFAULT_CACHE,
             },

@@ -15,6 +15,8 @@ import { api } from "@/trpc/server";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
+export const dynamic = "force-dynamic";
+
 export default async function MonitorPage() {
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   const isLimitReached = await api.monitor.isMonitorLimitReached.query();
@@ -44,14 +46,14 @@ export default async function MonitorPage() {
         {
           monitorId: String(monitor.id),
         },
-        { revalidate: 0 },
+        { cache: "no-store", revalidate: 0 },
       );
 
       const data = await tb.endpointStatusPeriod("7d")(
         {
           monitorId: String(monitor.id),
         },
-        { revalidate: 0 },
+        { cache: "no-store", revalidate: 0 },
       );
 
       const [current] = metrics?.sort((a, b) =>
