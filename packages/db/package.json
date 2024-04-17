@@ -12,7 +12,6 @@
     "dev": "turso dev --db-file openstatus.db"
   },
   "dependencies": {
-    "@clickhouse/client-web": "1.0.1",
     "@libsql/client": "0.6.0",
     "@t3-oss/env-core": "0.7.0",
     "dotenv": "16.3.1",

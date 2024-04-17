@@ -15,9 +15,6 @@ export const env = createEnv({
     JITSU_WRITE_KEY: z.string().optional(),
     JITSU_HOST: z.string().optional(),
     SCREENSHOT_SERVICE_URL: z.string(),
-    CLICKHOUSE_URL: z.string().min(1),
-    CLICKHOUSE_USERNAME: z.string().min(1),
-    CLICKHOUSE_PASSWORD: z.string().min(1),
   },
 
   /**

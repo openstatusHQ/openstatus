@@ -615,9 +615,6 @@ importers:
 
   packages/db:
     dependencies:
-      '@clickhouse/client-web':
-        specifier: 1.0.1
-        version: 1.0.1
       '@libsql/client':
         specifier: 0.6.0
         version: 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
@@ -1490,14 +1487,8 @@ packages:
   '@clickhouse/client-common@0.3.0':
     resolution: {integrity: sha512-LcfJfyMglUTbGuDN/s6e/R3LwtbQXpv6juIJID+tVXxcGzPijhDB+XXQpqbprunqnm48vHmLfCB6/68Pgp5qvg==}
 
-  '@clickhouse/client-common@1.0.1':
-    resolution: {integrity: sha512-3L6e0foP6VOktScoi6XWMjJyOpKCWgLUYgPVxP2c7gm6Kotq+iRmmmXtXTSg7B7uozcLZycTtPfIw2d80SYsYw==}
-
   '@clickhouse/client-web@0.3.0':
     resolution: {integrity: sha512-zx/oJ2M+YIMTiTNdRAACpJGKqlJ47LE9Y4DzyZgki37q3QYoCCXOzGk5Jpq9MFFHwYW+9OMx9RIk80VvuSx4mw==}
-
-  '@clickhouse/client-web@1.0.1':
-    resolution: {integrity: sha512-gKmfOxJ3+6kFtlmQaBd0sOz8t8lAiJcBfR9sx1Cmk4M38T5xxza7ZWhyGs3O6I7nJkU60RuM1MY8Woct6vMtRg==}
 
   '@cloudflare/kv-asset-handler@0.3.1':
     resolution: {integrity: sha512-lKN2XCfKCmpKb86a1tl4GIwsJYDy9TGuwjhDELLmpKygQhw8X2xR4dusgpC5Tg7q1pB96Eb0rBo81kxSILQMwA==}
@@ -9486,15 +9477,9 @@ snapshots:
 
   '@clickhouse/client-common@0.3.0': {}
 
-  '@clickhouse/client-common@1.0.1': {}
-
   '@clickhouse/client-web@0.3.0':
     dependencies:
       '@clickhouse/client-common': 0.3.0
-
-  '@clickhouse/client-web@1.0.1':
-    dependencies:
-      '@clickhouse/client-common': 1.0.1
 
   '@cloudflare/kv-asset-handler@0.3.1':
     dependencies:
