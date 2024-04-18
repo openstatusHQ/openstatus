@@ -15,10 +15,6 @@ const nextConfig = {
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
-    staleTimes: {
-      dynamic: 30,
-      static: 180,
-    },
   },
   logging: {
     fetches: {
