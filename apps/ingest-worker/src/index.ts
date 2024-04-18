@@ -11,12 +11,13 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 const schema = z.object({
   dsn: z.string(),
-  event_name: z.string(),
+  name: z.string(),
   href: z.string(),
   id: z.string(),
   speed: z.string(),
   path: z.string(),
   value: z.number(),
+  screen: z.string(),
 });
 
 const chSchema = schema.extend({
@@ -27,18 +28,19 @@ const chSchema = schema.extend({
   device: z.string().default(""),
   region_code: z.string().default(""),
   timezone: z.string().default(""),
-  language: z.string(),
   os: z.string(),
-  page: z.string(),
+  path: z.string(),
   screen: z.string(),
+  event_name: z.string(),
 });
 
 app.get("/", (c) => {
   return c.text("Hello OpenStatus!");
 });
 
-app.post("/", zValidator("json", z.array(schema)), async (c) => {
-  const data = c.req.valid("json");
+app.post("/", async (c) => {
+  const rawText = await c.req.text();
+  const data = z.array(schema).parse(JSON.parse(rawText));
   const userAgent = c.req.header("user-agent") || "";
 
   const country = c.req.header("cf-ipcountry") || "";
@@ -51,6 +53,7 @@ app.post("/", zValidator("json", z.array(schema)), async (c) => {
   const payload = data.map((d) => {
     return chSchema.parse({
       ...d,
+      event_name: d.name,
       browser,
       country,
       city,

@@ -43,7 +43,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} ${calSans.variable}`}>
         <OpenStatusProvider dsn="openstatus" />
-
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
           <Toaster richColors />

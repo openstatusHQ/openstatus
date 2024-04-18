@@ -306,8 +306,8 @@ importers:
         specifier: 8.10.3
         version: 8.10.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@tibozaurus/next-monitoring':
-        specifier: 0.0.1
-        version: 0.0.1(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
+        specifier: 0.0.7
+        version: 0.0.7(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@tremor/react':
         specifier: 3.13.3
         version: 3.13.3(prop-types@15.8.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
@@ -3854,11 +3854,11 @@ packages:
   '@tanstack/virtual-core@3.0.0':
     resolution: {integrity: sha512-SYXOBTjJb05rXa2vl55TTwO40A6wKu0R5i1qQwhJYNDIqaIGF7D0HsLw+pJAyi2OvntlEIVusx3xtbbgSUi6zg==}
 
-  '@tibozaurus/next-monitoring@0.0.1':
-    resolution: {integrity: sha512-uNnjyI4oanollDsNya2ctMjbwhLLstVqOgTkpYclH9CtIbY6KPHOyger7hUmDLScqO9wd2jGn56LM4W86nsJCQ==}
+  '@tibozaurus/next-monitoring@0.0.7':
+    resolution: {integrity: sha512-jg5p2DV2lFQCa5Ks9bt7ZN+BK8Jd55IDWZ6u7CmGO8I2+dXWoqRggTvlKTpSshttkfFgJu4BszJT9PrkxXmJ6g==}
     peerDependencies:
-      next: ^14.0.0
-      react: ^18.2.0
+      next: '>=14.0.0'
+      react: '>=18.2.0'
 
   '@tootallnate/once@2.0.0':
     resolution: {integrity: sha512-XCuKFP5PS55gnMVu3dty8KPatLqUoy/ZYzDzAGCQ8JNFCkLXzmI7vNHCR+XpbZaMWQK/vQubr7PkYq8g470J/A==}
@@ -12024,7 +12024,7 @@ snapshots:
 
   '@tanstack/virtual-core@3.0.0': {}
 
-  '@tibozaurus/next-monitoring@0.0.1(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+  '@tibozaurus/next-monitoring@0.0.7(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
     dependencies:
       next: 14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
