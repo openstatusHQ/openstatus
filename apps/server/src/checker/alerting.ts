@@ -38,7 +38,7 @@ export const triggerNotifications = async ({
     .all();
   for (const notif of notifications) {
     console.log(
-      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider}`,
+      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
     const monitor = selectMonitorSchema.parse(notif.monitor);
     switch (notifType) {
