@@ -144,7 +144,7 @@ const createCronTask = async ({
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: "https://openstatus-checker.fly.dev/checker",
+      url: `https://openstatus-checker.fly.dev/checker?monitor_id=${row.id}`,
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
