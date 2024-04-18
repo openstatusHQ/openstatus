@@ -90,6 +90,7 @@ export const cron = async ({
       });
       allResult.push(response);
       if (periodicity === "30s") {
+        console.log("30s cron for", row.id, region, status);
         // we schedule another task in 30s
         const scheduledAt = timestamp + 30 * 1000;
         const response = createCronTask({
