@@ -90,6 +90,7 @@ export const cron = async ({
       });
       allResult.push(response);
       if (periodicity === "30s") {
+        console.log("30s cron for", row.id, region, status);
         // we schedule another task in 30s
         const scheduledAt = timestamp + 30 * 1000;
         const response = createCronTask({
@@ -144,7 +145,7 @@ const createCronTask = async ({
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: "https://openstatus-checker.fly.dev/checker",
+      url: `https://openstatus-checker.fly.dev/checker?monitor_id=${row.id}`,
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
