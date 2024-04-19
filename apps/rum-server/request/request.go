@@ -6,6 +6,7 @@ type WebVitalsRequest struct {
 	Href      string  `json:"href"`
 	ID        string  `json:"id"`
 	Path      string  `json:"path"`
+	Rating    string  `json:"rating"`
 	Speed     string  `json:"speed"`
 	Value     float64 `json:"value"`
 }
@@ -16,6 +17,7 @@ type CloudflareRequestProxy struct {
 	Href       string  `json:"href"`
 	ID         string  `json:"id"`
 	Path       string  `json:"path"`
+	Rating     string  `json:"rating"`
 	Speed      string  `json:"speed"`
 	Value      float64 `json:"value"`
 	Language   string  `json:"language"`

@@ -54,11 +54,11 @@ func main() {
 	v1 := router.Group("/v1")
 
 	router.GET("/health", func(c *gin.Context) {
-		err := chClient.Ping(c.Request.Context())
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
-			return
-		}
+		// err := chClient.Ping(c.Request.Context())
+		// if err != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{"message": "error"})
+		// 	return
+		// }
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
 	})
 	v1.POST("/vitals", func(c *gin.Context) {
@@ -102,7 +102,6 @@ func main() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-
 		// Check if dsn exists
 		_, err := turso.GetCurrentWorkspace(sqlClient, req.DSN)
 		if err != nil {
@@ -111,11 +110,10 @@ func main() {
 		}
 
 		value := fmt.Sprintf(`INSERT INTO cwv VALUES (
-			now('Etc/UTC'), '%s','%s', '%s', '%s','%s','%s','%s','%s','%s','%s','%s','%s', '%s','%s','%s','%s', %f
-		)`, req.Browser, req.City, req.Continent, req.Country, req.DSN, req.Device, req.EventName, req.Href, req.ID, req.Language, req.OS, req.Path, req.RegionCode, req.Screen, req.Speed, req.Timezone, req.Value)
+			now('Etc/UTC'), '%s','%s', '%s', '%s','%s','%s','%s','%s','%s', '%s','%s','%s','%s', '%s','%s','%s','%s', %f
+		)`, req.Browser, req.City, req.Continent, req.Country, req.DSN, req.Device, req.EventName, req.Href, req.ID, req.Language, req.OS, req.Path, req.Rating, req.RegionCode, req.Screen, req.Speed, req.Timezone, req.Value)
 		fmt.Println(value)
 		err = chClient.AsyncInsert(ctx, value, true)
-
 		if err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
