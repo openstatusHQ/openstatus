@@ -309,7 +309,7 @@ statusReportApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
   const workspaceId = Number(c.get("workspaceId"));
 
-  const { pages_id, monitors_id } = input;
+  const { pages_id, monitors_id, date } = input;
 
   if (monitors_id.length) {
     const monitors = (
@@ -370,7 +370,7 @@ statusReportApi.openapi(postRoute, async (c) => {
     .insert(statusReportUpdate)
     .values({
       ...input,
-      date: new Date(input.date),
+      date: date ? new Date(date) : new Date(),
       statusReportId: _newStatusReport.id,
     })
     .returning()
