@@ -10,6 +10,7 @@ import { isAnInvalidTestUrl } from "../utils";
 export const runtime = "edge";
 export const preferredRegion = "auto";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export function GET() {
   return NextResponse.json({ success: true });
