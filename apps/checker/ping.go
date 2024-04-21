@@ -100,7 +100,6 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	start := time.Now()
 
 	response, err := client.Do(req)
-	fmt.Println(response.StatusCode)
 	timing.TransferDone = time.Now().UTC().UnixMilli()
 	latency := time.Since(start).Milliseconds()
 	if err != nil {
@@ -129,7 +128,6 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-	fmt.Println(string(body))
 	if err != nil {
 		return PingData{
 			Latency:       latency,
