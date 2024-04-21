@@ -185,6 +185,9 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 	for key, value := range inputData.Headers {
 		req.Header.Set(key, value)
 	}
+	if inputData.Method != http.MethodGet {
+		req.Header.Set("Content-Type", "application/json")
+	}
 	timing := Timing{}
 
 	trace := &httptrace.ClientTrace{
