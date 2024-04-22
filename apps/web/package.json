@@ -22,7 +22,7 @@
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
-    "@tibozaurus/next-monitoring": "0.0.8",
+    "@openstatus/next-monitoring": "0.0.1",
     "@openstatus/plans": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
