@@ -255,8 +255,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/emails
       '@openstatus/next-monitoring':
-        specifier: 0.0.1
-        version: 0.0.1(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
+        specifier: 0.0.2
+        version: 0.0.2(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord
@@ -2583,8 +2583,8 @@ packages:
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
-  '@openstatus/next-monitoring@0.0.1':
-    resolution: {integrity: sha512-8mGXYXssUBquWuBqGqdjoq7Celw6MpyaYF6DcnekbhBiTyf/8Qt6zmg7IFASj5reCc14OWjw1gyMh1bMl7wydA==}
+  '@openstatus/next-monitoring@0.0.2':
+    resolution: {integrity: sha512-w5xuvAM2UfLPEIoGqhh9hgXF4ChHhbF6J+gDZz3vZOYHPmFfUpMxq597kJ0e/hxNC3rQ8bRbhOtpUNXD2Rnnug==}
     peerDependencies:
       next: '>=14.0.0'
       react: '>=18.2.0'
@@ -10449,7 +10449,7 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
-  '@openstatus/next-monitoring@0.0.1(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+  '@openstatus/next-monitoring@0.0.2(next@14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
     dependencies:
       next: 14.2.1(@babel/core@7.23.2)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
