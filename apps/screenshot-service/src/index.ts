@@ -97,28 +97,5 @@ app.post(
   },
 );
 
-app.get("/", async (c) => {
-  const browser = await playwright.chromium.launch({
-    headless: true, // set this to true
-  });
-  const page = await browser.newPage();
-
-  await page.goto("https://www.openstatus.dev", { waitUntil: "networkidle" });
-  const img = await page.screenshot();
-  const id = `test-$${Date.now()}.png`;
-
-  await S3.send(
-    new PutObjectCommand({
-      Body: img,
-      Bucket: "incident-screenshot",
-      Key: id,
-      ContentType: "image/png",
-    }),
-  );
-
-  return new Response(img, {
-    headers: { "Content-Type": "image/png" },
-  });
-});
 
 export default app;
