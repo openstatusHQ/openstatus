@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
@@ -40,7 +39,7 @@ export function MiddleCTA() {
       description="Sick of booking a demo to know more? Test your endpoint or check our public dashboard right away."
       actions={{
         primary: { label: "Public Dashboard", href: "/public/monitors/1" },
-        secondary: { label: "Speed Checker", href: "/play/check" },
+        secondary: { label: "Speed Checker", href: "/play/checker" },
       }}
     />
   );

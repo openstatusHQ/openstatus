@@ -104,7 +104,7 @@ export async function checkRegion(
           [key]: value,
         };
       }, {}),
-      body: opts?.body ? JSON.parse(opts.body) : undefined,
+      body: opts?.body ? opts.body : undefined,
     }),
     next: { revalidate: 0 },
   });
@@ -114,6 +114,7 @@ export async function checkRegion(
   const data = checkerSchema.safeParse(json);
 
   if (!data.success) {
+    console.log(json);
     console.error(
       `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
     );

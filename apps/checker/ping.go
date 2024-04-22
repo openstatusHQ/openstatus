@@ -61,19 +61,20 @@ type Response struct {
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
-
 	region := os.Getenv("FLY_REGION")
 	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return PingData{}, fmt.Errorf("unable to create req: %w", err)
 	}
-
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
 	for _, header := range inputData.Headers {
 		if header.Key != "" {
 			req.Header.Set(header.Key, header.Value)
 		}
+	}
+	if inputData.Method != http.MethodGet {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
 	timing := Timing{}
@@ -101,7 +102,6 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	response, err := client.Do(req)
 	timing.TransferDone = time.Now().UTC().UnixMilli()
 	latency := time.Since(start).Milliseconds()
-
 	if err != nil {
 		timingAsString, err2 := json.Marshal(timing)
 		if err2 != nil {
@@ -184,6 +184,9 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
 	for key, value := range inputData.Headers {
 		req.Header.Set(key, value)
+	}
+	if inputData.Method != http.MethodGet {
+		req.Header.Set("Content-Type", "application/json")
 	}
 	timing := Timing{}
 
