@@ -21,7 +21,7 @@ export default function Page() {
           </Link>
         </p>
       </div>
-      <OauthButtons />
+      <OauthButtons type={"sign-up"} />
       <TermsAndConditions />
     </Shell>
   );

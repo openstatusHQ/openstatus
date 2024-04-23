@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
-import { useSignIn } from "@clerk/nextjs";
+import { useSignIn, useSignUp } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/nextjs/dist/types/server";
 
 import { Button } from "@openstatus/ui";
@@ -11,25 +11,36 @@ import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast } from "@/lib/toast";
 
-export function OauthButtons() {
+export function OauthButtons({ type }: { type: "sign-in" | "sign-up" }) {
   const [isLoading, setIsLoading] = React.useState<OAuthStrategy | null>(null);
   const { signIn, isLoaded: signInLoaded } = useSignIn();
+  const { signUp, isLoaded: signUpLoaded } = useSignUp();
   const searchParams = useSearchParams();
 
   const oauthSignIn = async (provider: OAuthStrategy) => {
-    if (!signInLoaded) {
+    if (!signInLoaded || !signUpLoaded) {
       return null;
     }
     try {
       setIsLoading(provider);
 
       const redirectUrl = searchParams.get("redirect_url") || "/app";
-
-      await signIn.authenticateWithRedirect({
-        strategy: provider,
-        redirectUrl,
-        redirectUrlComplete: redirectUrl,
-      });
+      if (type === "sign-in") {
+        await signIn.authenticateWithRedirect({
+          strategy: provider,
+          redirectUrl,
+          redirectUrlComplete: redirectUrl,
+        });
+        return;
+      }
+      if (type === "sign-up") {
+        await signUp.authenticateWithRedirect({
+          strategy: provider,
+          redirectUrl,
+          redirectUrlComplete: redirectUrl,
+        });
+        return;
+      }
     } catch (err) {
       console.error(err);
       setIsLoading(null);
