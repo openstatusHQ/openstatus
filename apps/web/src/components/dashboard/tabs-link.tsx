@@ -4,28 +4,39 @@ import * as React from "react";
 import type { LinkProps } from "next/link";
 import Link from "next/link";
 
-import { Separator } from "@openstatus/ui";
-
 import { cn } from "@/lib/utils";
 
 export interface TabsContainerProps
-  extends React.HTMLAttributes<HTMLDivElement> {
-  hideSeparator?: boolean;
-}
+  extends React.HTMLAttributes<HTMLDivElement>,
+    Partial<TabsContextProps> {}
 
 export function TabsContainer({
   className,
+  direction = "horizontal",
+  position = "end",
   children,
-  hideSeparator = false,
 }: TabsContainerProps) {
   return (
-    <nav className={cn(className)}>
-      <div className="flex w-full items-center overflow-x-auto">
-        <ul className="flex flex-row">{children}</ul>
-      </div>
-      {/* TODO: move into border-b instead to allow overwrite via className `border-b-0`? */}
-      {hideSeparator ? null : <Separator />}
-    </nav>
+    <TabsContext.Provider value={{ direction, position }}>
+      <nav
+        className={cn(
+          "flex",
+          {
+            "items-center overflow-x-auto": direction === "horizontal",
+          },
+          className,
+        )}
+      >
+        <ul
+          className={cn("flex", {
+            "flex-row": direction === "horizontal",
+            "flex-col": direction === "vertical",
+          })}
+        >
+          {children}
+        </ul>
+      </nav>
+    </TabsContext.Provider>
   );
 }
 
@@ -43,18 +54,24 @@ export function TabsLink({
   disabled,
   ...props
 }: TabsLinkProps) {
+  const { direction, position } = useTabs();
   return (
     <li
-      className={cn("flex shrink-0 list-none border-b-2 border-transparent", {
+      className={cn("flex shrink-0 list-none border-transparent", {
         "border-primary": active,
         "pointer-events-none opacity-70": disabled,
+        "border-b-2": position === "end" && direction === "horizontal",
+        "border-l-2": position === "start" && direction === "vertical",
+        // ... missing t, r
       })}
     >
       <Link
         className={cn(
-          "text-muted-foreground hover:text-primary rounded-md px-4 pb-3 pt-2 text-sm font-medium",
+          "text-muted-foreground hover:text-primary rounded-md text-sm font-medium",
           {
             "text-primary": active,
+            "px-4 pb-3 pt-2": direction === "horizontal",
+            "px-4 py-2.5": direction === "vertical",
           },
           className,
         )}
@@ -65,3 +82,22 @@ export function TabsLink({
     </li>
   );
 }
+
+// --------------
+
+interface TabsContextProps {
+  direction: "horizontal" | "vertical";
+  position: "start" | "end";
+}
+
+const TabsContext = React.createContext<TabsContextProps | null>(null);
+
+const useTabs = () => {
+  const tabsContext = React.useContext(TabsContext);
+
+  if (!tabsContext) {
+    throw new Error("useTabs has to be used within <TabsContext.Provider>");
+  }
+
+  return tabsContext;
+};

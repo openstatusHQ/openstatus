@@ -40,6 +40,16 @@ export function DataTableToolbar<TData>({
             }))}
           />
         )}
+        {table.getColumn("public") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("public")}
+            title="Visibility"
+            options={[
+              { label: "Public", value: true },
+              { label: "Private", value: false },
+            ]}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

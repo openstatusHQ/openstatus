@@ -5,6 +5,7 @@ import type {
   ColumnDef,
   ColumnFiltersState,
   Table as TTable,
+  VisibilityState,
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -42,16 +43,24 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
   );
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({
+      public: false, // default is true
+    });
+
   const table = useReactTable({
     data,
     columns,
     state: {
       columnFilters,
+      columnVisibility,
     },
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getFilteredRowModel: getFilteredRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
+    // TODO: check if we can optimize it - because it gets bigger and bigger with every new filter
     // getFacetedUniqueValues: getFacetedUniqueValues(),
     // REMINDER: We cannot use the default getFacetedUniqueValues as it doesnt support Array of Objects
     getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
@@ -69,6 +78,14 @@ export function DataTable<TData, TValue>({
           }, 0);
           map.set(tag.name, tagsNumber);
         });
+      }
+      if (columnId === "public") {
+        const values = table
+          .getCoreRowModel()
+          .flatRows.map((row) => row.getValue(columnId)) as boolean[];
+        const publicValue = values.filter((v) => v === true).length;
+        map.set(true, publicValue);
+        map.set(false, values.length - publicValue);
       }
       return map;
     },
