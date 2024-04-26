@@ -275,7 +275,7 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       // had filter on some words we want to keep for us
       if (
-        ["api", "app", "www", "docs", "checker", "time"].includes(
+        ["api", "app", "www", "docs", "checker", "time", "help"].includes(
           opts.input.slug,
         )
       ) {
