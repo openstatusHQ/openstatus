@@ -11,7 +11,7 @@ export function AppTabs() {
 
   return (
     <div className="-mb-3">
-      <TabsContainer hideSeparator>
+      <TabsContainer>
         {pagesConfig.map(({ title, segment, href }) => {
           const active = segment === selectedSegment;
           return (
