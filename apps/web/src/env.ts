@@ -22,6 +22,9 @@ export const env = createEnv({
     GCP_PRIVATE_KEY: z.string(),
     CRON_SECRET: z.string(),
     EXTERNAL_API_URL: z.string().url(),
+    CLICKHOUSE_URL: z.string(),
+    CLICKHOUSE_USERNAME: z.string(),
+    CLICKHOUSE_PASSWORD: z.string(),
   },
   client: {
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: z.string().min(1),
@@ -62,6 +65,9 @@ export const env = createEnv({
     GCP_PRIVATE_KEY: process.env.GCP_PRIVATE_KEY,
     CRON_SECRET: process.env.CRON_SECRET,
     EXTERNAL_API_URL: process.env.EXTERNAL_API_URL,
+    CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
+    CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
+    CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
   },
   skipValidation: true,
 });

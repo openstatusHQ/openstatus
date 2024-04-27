@@ -1,4 +1,6 @@
-import { generateSlug } from "random-word-slugs";
+import { customAlphabet } from "nanoid";
+import { alphanumeric } from "nanoid-dictionary";
+import * as randomWordSlugs from "random-word-slugs";
 import * as z from "zod";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
@@ -40,7 +42,7 @@ export const webhookRouter = createTRPCRouter({
       let slug: string | undefined = undefined;
 
       while (!slug) {
-        slug = generateSlug(2);
+        slug = randomWordSlugs.generateSlug(2);
         const slugAlreadyExists = await opts.ctx.db
           .select()
           .from(workspace)
@@ -51,10 +53,12 @@ export const webhookRouter = createTRPCRouter({
           slug = undefined;
         }
       }
+      const lowercaseRandomString = customAlphabet(alphanumeric, 10);
 
+      const dsn = `os_rum_${lowercaseRandomString}`;
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ slug, name: "" })
+        .values({ slug, name: "", dsn })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db

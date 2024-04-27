@@ -12,10 +12,11 @@
     "dev": "turso dev --db-file openstatus.db"
   },
   "dependencies": {
+    "@clickhouse/client-web": "1.0.1",
     "@libsql/client": "0.6.0",
     "@t3-oss/env-core": "0.7.0",
     "dotenv": "16.3.1",
-    "drizzle-orm": "0.30.7",
+    "drizzle-orm": "0.30.9",
     "drizzle-zod": "0.5.1",
     "zod": "3.22.4"
   },
@@ -25,7 +26,7 @@
     "@types/node": "20.8.0",
     "better-sqlite3": "9.4.1",
     "bufferutil": "4.0.7",
-    "drizzle-kit": "0.20.14",
+    "drizzle-kit": "0.20.17",
     "encoding": "0.1.13",
     "typescript": "5.4.5",
     "utf-8-validate": "6.0.3"

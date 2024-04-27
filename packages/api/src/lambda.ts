@@ -1,4 +1,5 @@
 import { clerkRouter } from "./router/clerk/webhook";
+import { rumRouter } from "./router/rum";
 import { stripeRouter } from "./router/stripe";
 import { createTRPCRouter } from "./trpc";
 
@@ -6,8 +7,7 @@ import { createTRPCRouter } from "./trpc";
 export const lambdaRouter = createTRPCRouter({
   clerkRouter: clerkRouter,
   stripeRouter: stripeRouter,
-  // TODO: Add open api router
-  // See trpc-openapi
+  rumRouter: rumRouter,
 });
 
 export { stripe } from "./router/stripe/shared";
