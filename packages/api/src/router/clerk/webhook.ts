@@ -1,5 +1,3 @@
-import { customAlphabet } from "nanoid";
-import { alphanumeric } from "nanoid-dictionary";
 import * as randomWordSlugs from "random-word-slugs";
 import * as z from "zod";
 
@@ -53,12 +51,10 @@ export const webhookRouter = createTRPCRouter({
           slug = undefined;
         }
       }
-      const lowercaseRandomString = customAlphabet(alphanumeric, 10);
 
-      const dsn = `os_rum_${lowercaseRandomString}`;
       const workspaceResult = await opts.ctx.db
         .insert(workspace)
-        .values({ slug, name: "", dsn })
+        .values({ slug, name: "" })
         .returning({ id: workspace.id })
         .get();
       await opts.ctx.db
