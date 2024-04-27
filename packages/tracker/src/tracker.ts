@@ -162,8 +162,8 @@ export class Tracker {
       const status = incidents.length
         ? Status.Incident
         : isMissingData
-        ? Status.Unknown
-        : this.calculateUptimeStatus([props]);
+          ? Status.Unknown
+          : this.calculateUptimeStatus([props]);
 
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;

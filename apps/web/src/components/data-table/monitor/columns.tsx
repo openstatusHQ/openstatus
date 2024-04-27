@@ -61,8 +61,8 @@ export const columns: ColumnDef<{
       if (!Array.isArray(value)) return true;
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
-      return value.some(
-        (item) => row.original.tags?.some((tag) => tag.name === item),
+      return value.some((item) =>
+        row.original.tags?.some((tag) => tag.name === item),
       );
     },
   },
