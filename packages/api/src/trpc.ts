@@ -8,7 +8,7 @@ import { inferAsyncReturnType, initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { db, eq, schema } from "@openstatus/db";
+import { clickhouseClient, db, eq, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
 /**
@@ -40,6 +40,7 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     ...opts,
     db,
+    clickhouseClient,
   };
 };
 

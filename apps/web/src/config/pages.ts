@@ -177,6 +177,14 @@ export const pagesConfig = [
     children: notificationsPagesConfig,
   },
   {
+    title: "Real User Monitoring",
+    description: "Where you can see all the notifications.",
+    href: "/rum",
+    icon: "bell",
+    segment: "rum",
+    children: notificationsPagesConfig,
+  },
+  {
     title: "Settings",
     description: "Your workspace settings",
     href: "/settings/general",
