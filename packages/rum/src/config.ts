@@ -1,7 +1,7 @@
-type WebVitals = "CLS" | "FCP" | "FID" | "INP" | "LCP" | "TTFB";
+export type WebVitalEvents = "CLS" | "FCP" | "FID" | "INP" | "LCP" | "TTFB";
 
-type WebVitalsConfig = Record<
-  WebVitals,
+export type WebVitalsConfig = Record<
+  WebVitalEvents,
   {
     unit: string;
     label: string;
