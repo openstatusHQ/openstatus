@@ -33,6 +33,7 @@ import {
   Play,
   Plug,
   Puzzle,
+  Ratio,
   Search,
   SearchCheck,
   Siren,
@@ -104,6 +105,7 @@ export const Icons = {
   youtube: Youtube,
   "hour-glass": Hourglass,
   "candlestick-chart": CandlestickChart,
+  ratio: Ratio,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

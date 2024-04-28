@@ -12,10 +12,10 @@ export const RUMMetricCard = async ({
   });
   return (
     <Card>
-      <p className="text-tremor-default text-tremor-content dark:text-dark-tremor-content">
+      <p className="text-sm text-muted-foreground">
         {event}
       </p>
-      <p className="text-tremor-content-strong dark:text-dark-tremor-content-strong text-3xl font-semibold">
+      <p className="text-foreground text-3xl font-semibold">
         {data?.median || 0}
       </p>
     </Card>
