@@ -30,6 +30,7 @@
     "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@openstatus/rum": "workspace:*",
     "@sentry/integrations": "7.100.1",
     "@sentry/nextjs": "7.100.1",
     "@stripe/stripe-js": "2.1.6",

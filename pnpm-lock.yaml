@@ -272,6 +272,9 @@ importers:
       '@openstatus/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@openstatus/rum':
+        specifier: workspace:*
+        version: link:../../packages/rum
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../packages/tinybird
@@ -890,6 +893,19 @@ importers:
       tsup:
         specifier: 7.2.0
         version: 7.2.0(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5)
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
+
+  packages/rum:
+    dependencies:
+      zod:
+        specifier: 3.22.4
+        version: 3.22.4
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.4.5
         version: 5.4.5
