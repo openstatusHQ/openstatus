@@ -12,9 +12,7 @@ export const RUMMetricCard = async ({
   });
   return (
     <Card>
-      <p className="text-sm text-muted-foreground">
-        {event}
-      </p>
+      <p className="text-muted-foreground text-sm">{event}</p>
       <p className="text-foreground text-3xl font-semibold">
         {data?.median || 0}
       </p>

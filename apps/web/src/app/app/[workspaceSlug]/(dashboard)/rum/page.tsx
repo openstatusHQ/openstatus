@@ -1,12 +1,12 @@
 import * as React from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+
+import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { api } from "@/trpc/server";
-
 import { RUMMetricCard } from "./_components/rum-metric-card";
-import { Button } from "@openstatus/ui";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +19,14 @@ export default async function RUMPage() {
 
   if (workspace.dsn === null) {
     return (
-      <EmptyState 
+      <EmptyState
         icon="ratio"
         title="Real User Monitoring"
         description="The feature is currently in beta and will be released soon."
         action={
           <Button asChild>
-            <Link 
-              href="mailto:ping@openstatus.dev?subject=Real User Monitoring beta tester" 
+            <Link
+              href="mailto:ping@openstatus.dev?subject=Real User Monitoring beta tester"
               target="_blank"
             >
               Contact Us
