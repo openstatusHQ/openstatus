@@ -178,11 +178,10 @@ export const pagesConfig = [
   },
   {
     title: "Real User Monitoring",
-    description: "Where you can see all the notifications.",
+    description: "Get speed insights for your application.",
     href: "/rum",
-    icon: "bell",
+    icon: "ratio",
     segment: "rum",
-    children: notificationsPagesConfig,
   },
   {
     title: "Settings",
