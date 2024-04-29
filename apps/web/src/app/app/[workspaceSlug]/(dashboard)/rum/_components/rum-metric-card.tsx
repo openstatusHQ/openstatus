@@ -1,9 +1,17 @@
 import { Card } from "@tremor/react";
 
-import { webVitalsConfig } from "@openstatus/rum";
-import type { WebVitalEvents } from "@openstatus/rum";
+import { getColorByType, webVitalsConfig } from "@openstatus/rum";
+import type { WebVitalEvents, WebVitalsValues } from "@openstatus/rum";
 
 import { api } from "@/trpc/server";
+import { CategoryBar } from "./category-bar";
+
+function prepareWebVitalValues(values: WebVitalsValues) {
+  return values.map((value) => ({
+    ...value,
+    color: getColorByType(value.type),
+  }));
+}
 
 export const RUMMetricCard = async ({ event }: { event: WebVitalEvents }) => {
   const data = await api.rumRouter.GetEventMetricsForWorkspace.query({ event });
@@ -16,6 +24,10 @@ export const RUMMetricCard = async ({ event }: { event: WebVitalEvents }) => {
       <p className="text-foreground text-3xl font-semibold">
         {data?.median || 0}
       </p>
+      <CategoryBar
+        values={prepareWebVitalValues(eventConfig.values)}
+        marker={data?.median || 0}
+      />
     </Card>
   );
 };
