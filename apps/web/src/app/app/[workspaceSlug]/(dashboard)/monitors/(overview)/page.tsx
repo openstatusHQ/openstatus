@@ -1,5 +1,7 @@
 import * as React from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
@@ -17,9 +19,26 @@ const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const dynamic = "force-dynamic";
 
-export default async function MonitorPage() {
+/**
+ * allowed URL search params
+ */
+const searchParamsSchema = z.object({
+  tags: z
+    .string()
+    .transform((v) => v?.split(","))
+    .optional(),
+});
+
+export default async function MonitorPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const search = searchParamsSchema.safeParse(searchParams);
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   const isLimitReached = await api.monitor.isMonitorLimitReached.query();
+
+  if (!search.success) return notFound();
 
   if (monitors?.length === 0)
     return (
@@ -80,7 +99,14 @@ export default async function MonitorPage() {
 
   return (
     <>
-      <DataTable columns={columns} data={monitorsWithData} tags={tags} />
+      <DataTable
+        defaultColumnFilters={[{ id: "tags", value: search.data.tags }].filter(
+          (v) => v.value !== undefined,
+        )}
+        columns={columns}
+        data={monitorsWithData}
+        tags={tags}
+      />
       {isLimitReached ? <Limit /> : null}
       {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>

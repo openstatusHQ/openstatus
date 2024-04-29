@@ -33,16 +33,17 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   tags?: MonitorTag[];
+  defaultColumnFilters?: ColumnFiltersState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   tags,
+  defaultColumnFilters = [],
 }: DataTableProps<TData, TValue>) {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
+  const [columnFilters, setColumnFilters] =
+    React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
       public: false, // default is true
