@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { webVitalEvents } from "@openstatus/rum";
 import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
@@ -39,12 +40,9 @@ export default async function RUMPage() {
 
   return (
     <div className="grid  grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-      <RUMMetricCard event="CLS" />
-      <RUMMetricCard event="FCP" />
-      <RUMMetricCard event="FID" />
-      <RUMMetricCard event="INP" />
-      <RUMMetricCard event="LCP" />
-      <RUMMetricCard event="TTFB" />
+      {webVitalEvents.map((event) => (
+        <RUMMetricCard key={event} event={event} />
+      ))}
     </div>
   );
 }

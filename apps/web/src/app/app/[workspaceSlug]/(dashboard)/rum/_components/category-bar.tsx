@@ -2,8 +2,6 @@
 
 import React from "react";
 
-import type { WebVitalEvents } from "@openstatus/rum";
-import { webVitalsConfig } from "@openstatus/rum";
 import {
   Tooltip,
   TooltipContent,

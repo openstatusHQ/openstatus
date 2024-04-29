@@ -1,23 +1,13 @@
-export type WebVitalEvents = "CLS" | "FCP" | "FID" | "INP" | "LCP" | "TTFB";
+import type { WebVitalsConfig } from "./types";
 
-export type WebVitalsValueTypes = "good" | "needs-improvement" | "poor";
-
-export type WebVitalsValues = {
-  type: WebVitalsValueTypes;
-  label: string;
-  min: number;
-  max: number;
-}[];
-
-export type WebVitalsConfig = Record<
-  WebVitalEvents,
-  {
-    unit: string;
-    label: string;
-    description: string;
-    values: WebVitalsValues;
-  }
->;
+export const webVitalEvents = [
+  "CLS",
+  "FCP",
+  "FID",
+  "INP",
+  "LCP",
+  "TTFB",
+] as const;
 
 export const webVitalsConfig: WebVitalsConfig = {
   CLS: {

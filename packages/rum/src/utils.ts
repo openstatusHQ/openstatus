@@ -1,4 +1,4 @@
-import type { WebVitalsValueTypes } from "./config";
+import type { WebVitalsValueTypes } from "./types";
 
 export function getColorByType(type: WebVitalsValueTypes) {
   switch (type) {
