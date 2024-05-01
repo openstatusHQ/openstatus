@@ -7,13 +7,13 @@ import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { api } from "@/trpc/server";
+import { RouteTable } from "./_components/route-table";
 import { RUMMetricCard } from "./_components/rum-metric-card";
 
 export const dynamic = "force-dynamic";
 
 export default async function RUMPage() {
   const workspace = await api.workspace.getWorkspace.query();
-
   if (!workspace) {
     return notFound();
   }
@@ -39,13 +39,18 @@ export default async function RUMPage() {
   }
 
   return (
-    <div className="grid  grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-      {webVitalEvents
-        //  Remove FID from the list of events because it's deprecated by google
-        .filter((v) => v !== "FID")
-        .map((event) => (
-          <RUMMetricCard key={event} event={event} />
-        ))}
-    </div>
+    <>
+      <div className="grid  grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
+        {webVitalEvents
+          //  Remove FID from the list of events because it's deprecated by google
+          .filter((v) => v !== "FID")
+          .map((event) => (
+            <RUMMetricCard key={event} event={event} />
+          ))}
+      </div>
+      <div>
+        <RouteTable />
+      </div>
+    </>
   );
 }
