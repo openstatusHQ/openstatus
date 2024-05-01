@@ -23,9 +23,10 @@ export function MarketingFooter({ className }: Props) {
               <BrandName />
               <p className="text-muted-foreground mt-2 text-sm font-light">
                 We are on a mission to provide a reliable, easy and fast way to
-                monitor your APIs and websites.{" "}
+                monitor the performance of your APIs and websites.
+                <br />
                 <span className="underline decoration-dotted underline-offset-2">
-                  Let&apos;s end <code>us-east-1</code> privilege together.
+                  Speed Matters
                 </span>
               </p>
             </div>
