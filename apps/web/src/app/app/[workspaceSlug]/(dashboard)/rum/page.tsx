@@ -40,9 +40,12 @@ export default async function RUMPage() {
 
   return (
     <div className="grid  grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-      {webVitalEvents.map((event) => (
-        <RUMMetricCard key={event} event={event} />
-      ))}
+      {webVitalEvents
+        //  Remove FID from the list of events because it's deprecated by google
+        .filter((v) => v !== "FID")
+        .map((event) => (
+          <RUMMetricCard key={event} event={event} />
+        ))}
     </div>
   );
 }
