@@ -13,8 +13,6 @@ import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 
-// import { RefreshWidget } from "../_components/refresh-widget";
-
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const dynamic = "force-dynamic";
@@ -26,6 +24,16 @@ const searchParamsSchema = z.object({
   tags: z
     .string()
     .transform((v) => v?.split(","))
+    .optional(),
+  public: z
+    .string()
+    .transform((v) =>
+      v?.split(",").map((v) => {
+        if (v === "true") return true;
+        if (v === "false") return false;
+        return undefined;
+      }),
+    )
     .optional(),
 });
 
@@ -91,24 +99,18 @@ export default async function MonitorPage({
     }),
   );
 
-  // const lastCronTimestamp = monitorsWithData?.reduce((prev, acc) => {
-  //   const lastTimestamp = acc.metrics?.lastTimestamp || 0;
-  //   if (lastTimestamp > prev) return lastTimestamp;
-  //   return prev;
-  // }, 0);
-
   return (
     <>
       <DataTable
-        defaultColumnFilters={[{ id: "tags", value: search.data.tags }].filter(
-          (v) => v.value !== undefined,
-        )}
+        defaultColumnFilters={[
+          { id: "tags", value: search.data.tags },
+          { id: "public", value: search.data.public },
+        ].filter((v) => v.value !== undefined)}
         columns={columns}
         data={monitorsWithData}
         tags={tags}
       />
       {isLimitReached ? <Limit /> : null}
-      {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>
   );
 }
