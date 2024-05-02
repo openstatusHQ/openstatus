@@ -10,6 +10,7 @@ import {
   monitorsToStatusReport,
   page,
   pagesToStatusReports,
+  selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
   workspace,
@@ -70,7 +71,7 @@ export const pageRouter = createTRPCRouter({
   getPageById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page.findFirst({
+      const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
           eq(page.workspaceId, opts.ctx.workspace.id),
@@ -79,6 +80,7 @@ export const pageRouter = createTRPCRouter({
           monitorsToPages: { with: { monitor: true } },
         },
       });
+      return selectPageSchemaWithMonitorsRelation.parse(firstPage);
     }),
 
   update: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
@@ -146,12 +148,13 @@ export const pageRouter = createTRPCRouter({
         .run();
     }),
   getPagesByWorkspace: protectedProcedure.query(async (opts) => {
-    return opts.ctx.db.query.page.findMany({
+    const allPages = opts.ctx.db.query.page.findMany({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
         monitorsToPages: { with: { monitor: true } },
       },
     });
+    return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
   }),
 
   // public if we use trpc hooks to get the page from the url

@@ -35,6 +35,16 @@ export const selectPageSchemaWithRelation = selectPageSchema.extend({
   statusReports: z.array(selectStatusReportPageSchema),
 });
 
+export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
+  monitorsToPages: z.array(
+    z.object({
+      monitorId: z.number(),
+      pageId: z.number(),
+      monitor: selectMonitorSchema,
+    }),
+  ),
+});
+
 export const selectPublicPageSchemaWithRelation = selectPageSchema
   .extend({
     monitors: z.array(selectPublicMonitorSchema),
