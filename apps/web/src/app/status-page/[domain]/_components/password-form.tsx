@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -24,8 +24,9 @@ import { toast, toastAction } from "@/lib/toast";
 import { createProtectedCookieKey } from "../utils";
 import { handleValidatePassword } from "./actions";
 
-// TODO: share status page with hashed password as search param to add password to cookie
-// TODO: check password managers how they work, maybe we need type="password" with a classname to show the password to store it (do the same for setting?)
+// TODO: add 'hide/show' button to show the password
+// FIXME: we could do the `?authorize` thing in the server side (e.g. middleware) - but not
+// in the `layout.tsx` because we cannot access the search params there
 
 const schema = z.object({
   password: z.string(),
@@ -38,9 +39,22 @@ export function PasswordForm({ slug }: { slug: string }) {
     resolver: zodResolver(schema),
     defaultValues: { password: "" },
   });
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [_, handleChange] = useCookieState(createProtectedCookieKey(slug)); // what if we do not define the expires date?
+
+  useEffect(() => {
+    if (searchParams.has("authorize")) {
+      const authorize = searchParams.get("authorize");
+      if (!authorize) return;
+      form.setValue("password", authorize);
+    }
+    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
@@ -51,18 +65,15 @@ export function PasswordForm({ slug }: { slug: string }) {
 
         const res = await handleValidatePassword(formData);
 
-        if (res?.error) {
+        if (res?.error || res.data === undefined) {
           toast.error(res.error || "An error occurred. Please retry.");
-          return;
-        }
-
-        if (res.data === undefined) {
-          toast.error("An error occurred. Please retry.");
           return;
         }
 
         handleChange(res.data);
         toastAction("saved");
+
+        router.replace(pathname);
         router.refresh();
       } catch {
         toastAction("error");
@@ -83,7 +94,12 @@ export function PasswordForm({ slug }: { slug: string }) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input placeholder="top-secret" {...field} />
+                <Input
+                  placeholder="top-secret"
+                  type="password"
+                  disabled={loading}
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 Enter the password to access the status page.
@@ -92,8 +108,8 @@ export function PasswordForm({ slug }: { slug: string }) {
             </FormItem>
           )}
         />
-        <Button size="lg">
-          {!isPending ? "Confirm" : <LoadingAnimation />}
+        <Button size="lg" disabled={isPending || loading}>
+          {isPending || loading ? <LoadingAnimation /> : "Confirm"}
         </Button>
       </form>
     </Form>
