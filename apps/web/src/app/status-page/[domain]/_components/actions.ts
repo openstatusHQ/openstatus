@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { trackAnalytics } from "@openstatus/analytics";
-import { and, eq, sql } from "@openstatus/db";
+import { and, eq, or, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { sendEmail, SubscribeEmail } from "@openstatus/emails";
@@ -113,10 +113,15 @@ export async function handleValidatePassword(formData: FormData) {
     };
   }
 
+  const { slug, password } = validatedFields.data;
+
   const _page = await db
     .select()
     .from(page)
-    .where(eq(page.slug, validatedFields.data.slug))
+    .where(
+      // REMINDER: customDomain for pro users
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
+    )
     .get();
 
   if (!_page) {
@@ -125,7 +130,7 @@ export async function handleValidatePassword(formData: FormData) {
     };
   }
 
-  if (_page.password !== validatedFields.data.password) {
+  if (_page.password !== password) {
     return {
       error: "Invalid password",
     };
