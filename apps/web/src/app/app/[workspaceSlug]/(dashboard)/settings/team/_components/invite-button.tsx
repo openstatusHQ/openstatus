@@ -27,7 +27,6 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";
-import { wait } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 const schema = insertInvitationSchema.pick({ email: true });
