@@ -56,12 +56,12 @@ export async function GET(
         tw={`flex items-center justify-center rounded-md border px-3 py-1 text-sm ${
           theme === "dark" ? dark : light
         }`}
-        style={{ ...SIZE, color: "currentColor" }}
+        style={{ ...SIZE }}
       >
         {label}
         <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
       </div>
     ),
-    { ...SIZE, headers: { "Content-Type": "image/svg+xml" } },
+    { ...SIZE },
   );
 }
