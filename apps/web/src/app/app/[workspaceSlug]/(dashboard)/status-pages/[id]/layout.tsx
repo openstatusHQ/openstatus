@@ -31,7 +31,15 @@ export default async function Layout({
         description={page.description}
         actions={
           <Button variant="outline" asChild>
-            <Link target="_blank" href={`https://${page.slug}.openstatus.dev`}>
+            <Link
+              target="_blank"
+              href={
+                process.env.NODE_ENV === "development"
+                  ? `http://localhost:3000/status-page/${page.slug}`
+                  : // TODO: add custom domain support
+                    `https://${page.slug}.openstatus.dev`
+              }
+            >
               Visit
             </Link>
           </Button>

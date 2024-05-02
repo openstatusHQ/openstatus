@@ -25,6 +25,7 @@ import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionAdvanced } from "./section-advanced";
 import { SectionMonitor } from "./section-monitor";
+import { SectionVisibility } from "./section-visibility";
 
 interface Props {
   defaultSection?: string;
@@ -61,6 +62,8 @@ export function StatusPageForm({
           : defaultValues?.monitors ?? [],
       customDomain: defaultValues?.customDomain || "",
       icon: defaultValues?.icon || "",
+      password: defaultValues?.password || "",
+      passwordProtected: defaultValues?.passwordProtected || false,
     },
   });
   const pathname = usePathname();
@@ -123,6 +126,8 @@ export function StatusPageForm({
                 ?.location,
           },
         });
+        // otherwise, the form will stay dirty - keepValues is used to keep the current values in the form
+        form.reset({}, { keepValues: true });
         if (nextUrl) {
           router.push(nextUrl);
         }
@@ -174,12 +179,16 @@ export function StatusPageForm({
               ) : null}
             </TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
+            <TabsTrigger value="visibility">Visibility</TabsTrigger>
           </TabsList>
           <TabsContent value="monitors">
             <SectionMonitor form={form} monitors={allMonitors} />
           </TabsContent>
           <TabsContent value="advanced">
             <SectionAdvanced form={form} />
+          </TabsContent>
+          <TabsContent value="visibility">
+            <SectionVisibility form={form} />
           </TabsContent>
         </Tabs>
         <SaveButton

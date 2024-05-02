@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 import {
@@ -10,7 +11,8 @@ import { Shell } from "@/components/dashboard/shell";
 import { api } from "@/trpc/server";
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
-import { setPrefixUrl } from "./utils";
+import PasswordProtected from "./_components/password-protected";
+import { createProtectedCookieKey, setPrefixUrl } from "./utils";
 
 type Props = {
   params: { domain: string };
@@ -19,6 +21,7 @@ type Props = {
 
 export default async function StatusPageLayout({ children, params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
+
   if (!page) return notFound();
 
   const plan = page.workspacePlan;
@@ -43,6 +46,17 @@ export default async function StatusPageLayout({ children, params }: Props) {
     },
   ];
 
+  // TODO: move to middleware using NextResponse.rewrite keeping the path without using redirect
+  // and move the PasswordProtected into a page.tsx
+  if (page.passwordProtected) {
+    const cookie = cookies();
+    const protectedCookie = cookie.get(createProtectedCookieKey(params.domain));
+    const password = protectedCookie ? protectedCookie.value : undefined;
+    if (password !== page.password) {
+      return <PasswordProtected plan={plan} slug={params.domain} />;
+    }
+  }
+
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col space-y-6 p-4 md:p-8">
       <Header navigation={navigation} plan={plan} page={page} />
@@ -64,13 +78,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     icons: page?.icon,
     twitter: {
       ...twitterMetadata,
-      images: [`/api/og/page?slug=${page?.slug}`],
+      images: [
+        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
+      ],
       title: page?.title,
       description: page?.description,
     },
     openGraph: {
       ...ogMetadata,
-      images: [`/api/og/page?slug=${page?.slug}`],
+      images: [
+        `/api/og/page?slug=${page?.slug}&passwordProtected=${page?.passwordProtected}`,
+      ],
       title: page?.title,
       description: page?.description,
     },

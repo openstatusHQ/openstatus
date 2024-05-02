@@ -66,6 +66,26 @@ const PageSchema = z.object({
     .or(z.literal(""))
     .transform((val) => (val ? val : undefined))
     .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description:
+        "Make the page password protected. Used with the 'passwordProtected' property.",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
+    .nullish(),
+
   monitors: z
     .array(z.number())
     .openapi({
@@ -111,6 +131,24 @@ const CreatePageSchema = z.object({
       example: [1, 2],
     })
     .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description: "Make the page password protected",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
+    .nullish(),
 });
 
 const UpdatePageSchema = z.object({
@@ -154,6 +192,24 @@ const UpdatePageSchema = z.object({
       description: "The monitors of the page",
       example: [1, 2],
     })
+    .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description: "Make the page password protected",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
     .nullish(),
 });
 

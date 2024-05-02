@@ -18,17 +18,19 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
 
   const slug = searchParams.has("slug") ? searchParams.get("slug") : undefined;
+  const passwordProtected = searchParams.has("passwordProtected")
+    ? searchParams.get("passwordProtected") === "true" // FIXME: can we use Boolean("true") or Boolean("false")?
+    : undefined;
 
   const page = await api.page.getPageBySlug.query({ slug: slug || "" });
   const title = page ? page.title : TITLE;
   const description = page ? "" : DESCRIPTION;
 
+  // REMINDER: if password protected, we keep the status 'operational' by default, hiding the actual status
   const tracker = new Tracker({
-    incidents: page?.incidents,
-    statusReports: page?.statusReports,
+    incidents: passwordProtected ? undefined : page?.incidents,
+    statusReports: passwordProtected ? undefined : page?.statusReports,
   });
-
-  // const status = tracker.currentStatus;
 
   return new ImageResponse(
     (

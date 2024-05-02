@@ -8,3 +8,7 @@ export function setPrefixUrl(value: string, params: { domain: string }) {
   }
   return suffix;
 }
+
+export function createProtectedCookieKey(value: string) {
+  return `secured-${value}`;
+}
