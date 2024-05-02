@@ -56,6 +56,11 @@ export function PasswordForm({ slug }: { slug: string }) {
           return;
         }
 
+        if (res.data === undefined) {
+          toast.error("An error occurred. Please retry.");
+          return;
+        }
+
         handleChange(res.data);
         toastAction("saved");
         router.refresh();
