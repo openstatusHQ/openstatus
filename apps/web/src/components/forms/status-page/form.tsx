@@ -7,7 +7,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { insertPageSchema } from "@openstatus/db/src/schema";
-import type { InsertPage, Monitor } from "@openstatus/db/src/schema";
+import type {
+  InsertPage,
+  Monitor,
+  WorkspacePlan,
+} from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
 import {
@@ -39,6 +43,8 @@ interface Props {
    * on submit, allows to push a url
    */
   nextUrl?: string;
+  plan?: WorkspacePlan;
+  workspaceSlug: string;
 }
 
 export function StatusPageForm({
@@ -47,6 +53,8 @@ export function StatusPageForm({
   allMonitors,
   checkAllMonitors,
   nextUrl,
+  plan,
+  workspaceSlug,
 }: Props) {
   const form = useForm<InsertPage>({
     resolver: zodResolver(insertPageSchema),
@@ -188,7 +196,7 @@ export function StatusPageForm({
             <SectionAdvanced form={form} />
           </TabsContent>
           <TabsContent value="visibility">
-            <SectionVisibility form={form} />
+            <SectionVisibility {...{ form, plan, workspaceSlug }} />
           </TabsContent>
         </Tabs>
         <SaveButton

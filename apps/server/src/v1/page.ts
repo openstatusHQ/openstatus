@@ -456,6 +456,13 @@ pageApi.openapi(postRoute, async (c) => {
 
   const input = c.req.valid("json");
 
+  if (
+    workspacePlan.limits["password-protection"] === false &&
+    input?.passwordProtected === true
+  ) {
+    return c.json({ code: 403, message: "Forbidden" }, 403);
+  }
+
   const countSlug = (
     await db
       .select({ count: sql<number>`count(*)` })
@@ -543,6 +550,15 @@ pageApi.openapi(putRoute, async (c) => {
   const { id } = c.req.valid("param");
 
   if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
+
+  const workspacePlan = c.get("workspacePlan");
+
+  if (
+    workspacePlan.limits["password-protection"] === false &&
+    input?.passwordProtected === true
+  ) {
+    return c.json({ code: 403, message: "Forbidden" }, 403);
+  }
 
   const _page = await db
     .select()

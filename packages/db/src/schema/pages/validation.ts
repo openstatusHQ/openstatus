@@ -25,15 +25,12 @@ export const insertPageSchema = createInsertSchema(page, {
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
-  password: z.string().optional().default(""),
+  password: z.string().nullable().optional().default(""),
   monitors: z.array(z.number()).optional().default([]),
 });
 
 export const selectPageSchema = createSelectSchema(page).extend({
-  password: z
-    .preprocess((val) => String(val), z.string())
-    .optional()
-    .default(""),
+  password: z.string().optional().nullable().default(""),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

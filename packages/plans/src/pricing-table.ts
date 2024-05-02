@@ -42,7 +42,7 @@ export const pricingTableConfig: Record<
       },
       {
         value: "password-protection",
-        label: "Private pages",
+        label: "Password-protected",
       },
       {
         value: "white-label",
