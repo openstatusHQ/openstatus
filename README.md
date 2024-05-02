@@ -2,8 +2,7 @@
 
   <h3 align="center">OpenStatus</h3>
 
-  <p align="center">
-    The Open-Source website & API monitoring platform.
+  <p align="center">    The Open-Source synthetic and Real User Monitoring monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -20,9 +19,9 @@
 
 ## About OpenStatus 🏓
 
-OpenStatus is open-source synthetic monitoring platform with beautiful status
-page and incident management. We are building it publicly for everyone to see
-our progress. We believe great softwares are built this way.
+OpenStatus is open-source synthetic and real user monitoring platform with
+beautiful status page and incident management. We are building it publicly for
+everyone to see our progress. We believe great softwares are built this way.
 
 You can choose to host it yourself or use our hosted version at
 [openstatus.dev](https://www.openstatus.dev)
