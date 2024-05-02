@@ -27,7 +27,7 @@ export const rumRouter = createTRPCRouter({
           query: `
               select
                 event_name,
-                quantile(0.5)(value) as median
+                quantile(0.75)(value) as median
               from cwv
               where
                 dsn = '${opts.ctx.workspace.dsn}'
@@ -83,7 +83,7 @@ export const rumRouter = createTRPCRouter({
       const pageData = await opts.ctx.clickhouseClient.query({
         query: `
         select
-          quantile(0.5)(value) as value,
+          quantile(0.75)(value) as value,
           event_name
         from
             cwv
