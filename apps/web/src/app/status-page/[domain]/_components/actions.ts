@@ -8,7 +8,7 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { sendEmail, SubscribeEmail } from "@openstatus/emails";
 
-const schema = z.object({
+const subscribeSchema = z.object({
   email: z
     .string({
       invalid_type_error: "Invalid Email",
@@ -18,7 +18,7 @@ const schema = z.object({
 });
 
 export async function handleSubscribe(formData: FormData) {
-  const validatedFields = schema.safeParse({
+  const validatedFields = subscribeSchema.safeParse({
     email: formData.get("email"),
     slug: formData.get("slug"),
   });
@@ -91,4 +91,45 @@ export async function handleSubscribe(formData: FormData) {
     event: "Subscribe to Status Page",
     slug: pageData.slug,
   });
+}
+
+const passwordSchema = z.object({
+  password: z.string(),
+  slug: z.string(),
+});
+
+export async function handleValidatePassword(formData: FormData) {
+  const validatedFields = passwordSchema.safeParse({
+    password: formData.get("password"),
+    slug: formData.get("slug"),
+  });
+
+  console.log({ validatedFields });
+
+  if (!validatedFields.success) {
+    const fieldErrors = validatedFields.error.flatten().fieldErrors;
+    return {
+      error: fieldErrors?.password?.[0] || "Invalid form data",
+    };
+  }
+
+  const _page = await db
+    .select()
+    .from(page)
+    .where(eq(page.slug, validatedFields.data.slug))
+    .get();
+
+  if (!_page) {
+    return {
+      error: "Page not found",
+    };
+  }
+
+  if (_page.password !== validatedFields.data.password) {
+    return {
+      error: "Invalid password",
+    };
+  }
+
+  return { data: _page.password };
 }

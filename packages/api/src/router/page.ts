@@ -10,6 +10,7 @@ import {
   monitorsToStatusReport,
   page,
   pagesToStatusReports,
+  selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
   workspace,
@@ -29,13 +30,24 @@ export const pageRouter = createTRPCRouter({
       })
     ).length;
 
-    const limit = allPlans[opts.ctx.workspace.plan].limits["status-pages"];
+    const limit = allPlans[opts.ctx.workspace.plan].limits;
 
-    // the user has reached the limits
-    if (pageNumbers >= limit) {
+    // the user has reached the status page number limits
+    if (pageNumbers >= limit["status-pages"]) {
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "You reached your status-page limits.",
+      });
+    }
+
+    // the user is not eligible for password protection
+    if (
+      limit["password-protection"] === false &&
+      opts.input.passwordProtected === true
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Password protection is not available for your current plan.",
       });
     }
 
@@ -70,7 +82,7 @@ export const pageRouter = createTRPCRouter({
   getPageById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      return await opts.ctx.db.query.page.findFirst({
+      const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
           eq(page.workspaceId, opts.ctx.workspace.id),
@@ -79,11 +91,25 @@ export const pageRouter = createTRPCRouter({
           monitorsToPages: { with: { monitor: true } },
         },
       });
+      return selectPageSchemaWithMonitorsRelation.parse(firstPage);
     }),
 
   update: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
     const { monitors, ...pageInput } = opts.input;
     if (!pageInput.id) return;
+
+    const limit = allPlans[opts.ctx.workspace.plan].limits;
+
+    // the user is not eligible for password protection
+    if (
+      limit["password-protection"] === false &&
+      opts.input.passwordProtected === true
+    ) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Password protection is not available for your current plan.",
+      });
+    }
 
     const currentPage = await opts.ctx.db
       .update(page)
@@ -146,12 +172,13 @@ export const pageRouter = createTRPCRouter({
         .run();
     }),
   getPagesByWorkspace: protectedProcedure.query(async (opts) => {
-    return opts.ctx.db.query.page.findMany({
+    const allPages = await opts.ctx.db.query.page.findMany({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
         monitorsToPages: { with: { monitor: true } },
       },
     });
+    return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
   }),
 
   // public if we use trpc hooks to get the page from the url
