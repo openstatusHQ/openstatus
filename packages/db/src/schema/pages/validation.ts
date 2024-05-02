@@ -25,7 +25,7 @@ export const insertPageSchema = createInsertSchema(page, {
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
-  password: z.string().optional().default(""),
+  password: z.string().nullish().default(""),
   monitors: z.array(z.number()).optional().default([]),
 });
 
