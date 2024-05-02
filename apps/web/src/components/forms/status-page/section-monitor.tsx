@@ -25,7 +25,7 @@ export function SectionMonitor({ monitors, form }: Props) {
     <div className="grid w-full gap-4">
       <SectionHeader
         title="Connected Monitors"
-        description="Select the monitors you want to display on your status page. Inactve monitors will not be shown."
+        description="Select the monitors you want to display on your status page. Inactive monitors will not be shown."
       />
       <FormField
         control={form.control}

@@ -51,7 +51,6 @@ export function InviteButton({
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
-        wait(2000);
         api.invitation.create.mutate(data);
         toastAction("saved");
         router.refresh();
