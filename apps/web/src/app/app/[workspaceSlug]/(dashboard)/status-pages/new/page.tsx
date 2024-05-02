@@ -10,6 +10,7 @@ export default async function Page({
 }) {
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
   const isLimitReached = await api.page.isPageLimitReached.query();
+  const workspace = await api.workspace.getWorkspace.query();
 
   if (isLimitReached) return redirect("./");
 
@@ -19,6 +20,7 @@ export default async function Page({
       nextUrl="./" // back to the overview page
       defaultSection="monitors"
       workspaceSlug={params.workspaceSlug}
+      plan={workspace.plan}
     />
   );
 }

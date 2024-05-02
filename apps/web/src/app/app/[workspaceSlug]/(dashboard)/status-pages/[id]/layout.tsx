@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@openstatus/ui";
 
+import { getBaseUrl } from "@/app/status-page/[domain]/utils";
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { api } from "@/trpc/server";
@@ -33,12 +34,10 @@ export default async function Layout({
           <Button variant="outline" asChild>
             <Link
               target="_blank"
-              href={
-                process.env.NODE_ENV === "development"
-                  ? `http://localhost:3000/status-page/${page.slug}`
-                  : // TODO: add custom domain support
-                    `https://${page.slug}.openstatus.dev`
-              }
+              href={getBaseUrl({
+                slug: page.slug,
+                customDomain: page.customDomain,
+              })}
             >
               Visit
             </Link>

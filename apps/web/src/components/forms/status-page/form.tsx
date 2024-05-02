@@ -43,7 +43,7 @@ interface Props {
    * on submit, allows to push a url
    */
   nextUrl?: string;
-  plan?: WorkspacePlan;
+  plan: WorkspacePlan;
   workspaceSlug: string;
 }
 

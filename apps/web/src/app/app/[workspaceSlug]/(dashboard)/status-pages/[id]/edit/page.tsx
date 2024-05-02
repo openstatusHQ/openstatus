@@ -35,7 +35,7 @@ export default async function EditPage({
         monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
       }}
       defaultSection={search.success ? search.data.section : undefined}
-      plan={workspace?.plan}
+      plan={workspace.plan}
       workspaceSlug={params.workspaceSlug}
     />
   );

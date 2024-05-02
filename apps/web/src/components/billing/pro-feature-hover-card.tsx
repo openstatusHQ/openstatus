@@ -19,13 +19,13 @@ export function ProFeatureHoverCard({
   workspaceSlug,
 }: {
   children: React.ReactNode;
-  plan?: WorkspacePlan;
+  plan: WorkspacePlan;
   minRequiredPlan: WorkspacePlan;
   workspaceSlug: string;
 }) {
   console.log({ workspaceSlug, plan, minRequiredPlan });
   const [open, setOpen] = useState(false);
-  const shouldUpgrade = upgradePlan(plan || "free", minRequiredPlan);
+  const shouldUpgrade = upgradePlan(plan, minRequiredPlan);
 
   if (!shouldUpgrade) return children;
 

@@ -17,13 +17,14 @@ import {
   Input,
 } from "@openstatus/ui";
 
+import { getBaseUrl } from "@/app/status-page/[domain]/utils";
 import { ProFeatureHoverCard } from "@/components/billing/pro-feature-hover-card";
 import { CopyToClipboardButton } from "@/components/dashboard/copy-to-clipboard-button";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertPage>;
-  plan?: WorkspacePlan;
+  plan: WorkspacePlan;
   workspaceSlug: string;
 }
 
@@ -31,19 +32,13 @@ export function SectionVisibility({ form, plan, workspaceSlug }: Props) {
   const watchPasswordProtected = form.watch("passwordProtected");
   const watchPassword = form.watch("password");
 
-  const getBaseUrl = () => {
-    if (process.env.NODE_ENV === "development") {
-      return `http://localhost:3000/status-page/${form.getValues("slug")}`;
-    }
-    if (form.getValues("customDomain") !== "") {
-      return `https://${form.getValues("customDomain")}`;
-    }
-    return `https://${form.getValues("slug")}.openstatus.dev`;
-  };
+  const baseUrl = getBaseUrl({
+    slug: form.getValues("slug"),
+    customDomain: form.getValues("customDomain"),
+  });
+  const link = `${baseUrl}?authorize=${watchPassword}`;
 
-  const link = `${getBaseUrl()}?authorize=${watchPassword}`;
-
-  const hasFreePlan = !plan || plan === "free" ? true : false;
+  const hasFreePlan = plan === "free";
 
   return (
     <div className="grid w-full gap-4 md:grid-cols-2">
