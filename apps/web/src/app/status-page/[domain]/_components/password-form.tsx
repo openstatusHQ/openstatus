@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -10,12 +11,11 @@ import {
   Button,
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
-  Input,
+  InputWithAddons,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -40,6 +40,7 @@ export function PasswordForm({ slug }: { slug: string }) {
     defaultValues: { password: "" },
   });
   const [loading, setLoading] = useState(true);
+  const [inputType, setInputType] = useState<"password" | "text">("password");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -94,16 +95,28 @@ export function PasswordForm({ slug }: { slug: string }) {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input
+                <InputWithAddons
                   placeholder="top-secret"
-                  type="password"
+                  type={inputType}
                   disabled={loading}
+                  trailing={
+                    <button
+                      onClick={() =>
+                        setInputType((type) =>
+                          type === "password" ? "text" : "password",
+                        )
+                      }
+                    >
+                      {inputType === "password" ? (
+                        <Eye className="h-5 w-5" />
+                      ) : (
+                        <EyeOff className="h-5 w-5" />
+                      )}
+                    </button>
+                  }
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                Enter the password to access the status page.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
