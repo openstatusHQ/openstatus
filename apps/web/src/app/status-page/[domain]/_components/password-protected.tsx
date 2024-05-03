@@ -14,9 +14,16 @@ export default function PasswordProtected({
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col space-y-6 p-4 md:p-8">
       <main className="flex h-full w-full flex-1 flex-col justify-center">
-        <Shell className="mx-auto grid gap-6">
-          <h1 className="text-2xl font-semibold">Protected Page</h1>
-          <PasswordForm slug={slug} />
+        <Shell className="mx-auto grid max-w-xl gap-6">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-center text-3xl font-semibold tracking-tight">
+              Protected Page
+            </h1>
+            <p className="text-muted-foreground text-center text-sm">
+              Enter the password to access the status page.
+            </p>
+            <PasswordForm slug={slug} />
+          </div>
         </Shell>
       </main>
       <Footer plan={plan} />
