@@ -4,7 +4,6 @@ import type { DefaultSession } from "next-auth";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 
-import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { db } from "@openstatus/db";
 import {
   accounts,
@@ -12,7 +11,10 @@ import {
   users,
   verificationTokens,
 } from "@openstatus/db/src/schema";
-import { sendEmail, WelcomeEmail } from "@openstatus/emails";
+
+// FIXME: doesnt work in Edge Runtime - TODO: create an api for this
+// import { sendEmail, WelcomeEmail } from "@openstatus/emails";
+// import { analytics, trackAnalytics } from "@openstatus/analytics";
 
 import { api } from "@/trpc/server";
 
@@ -62,15 +64,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       await api.workspace.createWorkspace.mutate({ userId });
 
-      await sendEmail({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "Level up your website and API monitoring.",
-        to: [email],
-        react: WelcomeEmail(),
-      });
+      // await sendEmail({
+      //   from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+      //   subject: "Level up your website and API monitoring.",
+      //   to: [email],
+      //   react: WelcomeEmail(),
+      // });
 
-      await analytics.identify(userId, { email, userId });
-      await trackAnalytics({ event: "User Created", userId, email });
+      // await analytics.identify(userId, { email, userId });
+      // await trackAnalytics({ event: "User Created", userId, email });
     },
     async signIn(params) {
       if (params.isNewUser) return;
@@ -78,8 +80,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const { id: userId, email } = params.user;
 
-      await analytics.identify(userId, { userId, email });
-      await trackAnalytics({ event: "User Signed In" });
+      // await analytics.identify(userId, { userId, email });
+      // await trackAnalytics({ event: "User Signed In" });
     },
   },
   pages: {

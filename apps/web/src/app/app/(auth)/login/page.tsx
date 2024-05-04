@@ -4,6 +4,7 @@ import { z } from "zod";
 import { Button } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
+import { Icons } from "@/components/icons";
 import { signIn } from "@/lib/auth";
 
 /**
@@ -24,22 +25,35 @@ export default function Page({
   return (
     <Shell className="my-4 grid w-full max-w-xl gap-6 md:p-10">
       <div className="flex flex-col gap-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Log In</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">Sign In</h1>
         <p className="text-muted-foreground text-sm">
           Get started now. No credit card required.
         </p>
       </div>
-      <form
-        action={async () => {
-          "use server";
-          await signIn("github", { redirectTo });
-        }}
-        className="w-full"
-      >
-        <Button type="submit" className="w-full">
-          Signin with GitHub
-        </Button>
-      </form>
+      <div className="grid gap-3">
+        <form
+          action={async () => {
+            "use server";
+            await signIn("github", { redirectTo });
+          }}
+          className="w-full"
+        >
+          <Button type="submit" className="w-full">
+            Signin with GitHub <Icons.github className="ml-2 h-4 w-4" />
+          </Button>
+        </form>
+        <form
+          action={async () => {
+            "use server";
+            await signIn("google", { redirectTo });
+          }}
+          className="w-full"
+        >
+          <Button type="submit" className="w-full" variant="outline">
+            Signin with Google <Icons.google className="ml-2 h-4 w-4" />
+          </Button>
+        </form>
+      </div>
       <p className="text-muted-foreground px-8 text-center text-sm">
         By clicking continue, you agree to our{" "}
         <Link
