@@ -83,7 +83,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   pages: {
-    signIn: "/app/signin",
+    signIn: "/app/login",
     // newUser: "/app/onboarding", // TODO: rethink this as we still have the `slug` to use
   },
 });

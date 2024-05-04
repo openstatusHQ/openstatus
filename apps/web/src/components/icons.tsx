@@ -45,6 +45,7 @@ import {
   ToyBrick,
   Trash,
   TwitterIcon,
+  UserCircle,
   Users,
   Webhook,
   Youtube,
@@ -106,6 +107,7 @@ export const Icons = {
   "hour-glass": Hourglass,
   "candlestick-chart": CandlestickChart,
   ratio: Ratio,
+  user: UserCircle,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
