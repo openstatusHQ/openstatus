@@ -11,6 +11,12 @@ import { ZodError } from "zod";
 import { clickhouseClient, db, eq, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
+// TODO: create a package for this
+import {
+  auth,
+  DefaultSession as Session,
+} from "../../../apps/web/src/lib/auth";
+
 /**
  * 1. CONTEXT
  *
@@ -21,7 +27,7 @@ import type { User, Workspace } from "@openstatus/db/src/schema";
  *
  */
 type CreateContextOptions = {
-  auth: SignedInAuthObject | SignedOutAuthObject | null;
+  session: Session | null;
   workspace?: Workspace | null;
   user?: User | null;
   req?: NextRequest;
@@ -49,16 +55,16 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
  * process every request that goes through your tRPC endpoint
  * @link https://trpc.io/docs/context
  */
-export const createTRPCContext = (opts: {
+export const createTRPCContext = async (opts: {
   req: NextRequest;
   serverSideCall?: boolean;
 }) => {
-  const auth = !opts.serverSideCall ? getAuth(opts.req) : null;
+  const session = await auth();
   const workspace = null;
   const user = null;
 
   return createInnerTRPCContext({
-    auth,
+    session,
     workspace,
     user,
     req: opts.req,
@@ -115,7 +121,7 @@ export const publicProcedure = t.procedure;
  * procedure
  */
 const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
-  if (!ctx.auth?.userId) {
+  if (!ctx.session?.user?.id) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
 
@@ -124,7 +130,7 @@ const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
   //  * comparing the `user.tenantId` to clerk's `auth.userId`
   //  */
   const userAndWorkspace = await db.query.user.findFirst({
-    where: eq(schema.user.tenantId, ctx.auth.userId),
+    where: eq(schema.user.id, Number(ctx.session.user.id)),
     with: {
       usersToWorkspaces: {
         with: {
@@ -176,10 +182,6 @@ const enforceUserIsAuthed = t.middleware(async ({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      auth: {
-        ...ctx.auth,
-        userId: ctx.auth.userId,
-      },
       user,
       workspace,
     },
