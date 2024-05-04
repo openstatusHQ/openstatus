@@ -16,7 +16,7 @@ export function LoginButton({ className, ...props }: ButtonProps) {
       {session.status === "authenticated" ? (
         <Link href="/app">Dashboard</Link>
       ) : (
-        <Link href="/app/login">Log In</Link>
+        <Link href="/app/login">Sign In</Link>
       )}
     </Button>
   );
