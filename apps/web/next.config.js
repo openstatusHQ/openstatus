@@ -15,6 +15,8 @@ const nextConfig = {
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
+    // https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    missingSuspenseWithCSRBailout: false,
   },
   logging: {
     fetches: {
