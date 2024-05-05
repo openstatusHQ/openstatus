@@ -25,7 +25,7 @@
 
 ## About OpenStatus 🏓
 
-OpenStatus is open-source frontend monitoring plateform.
+OpenStatus is open-source frontend monitoring platform.
 
 - **Synthetic monitoring**: Monitor your website and APIs worldwide and receive
   notifications when they are down or slow.
