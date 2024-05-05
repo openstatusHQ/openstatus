@@ -99,7 +99,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const { id: userId, email } = params.user;
 
-      console.log("createUser", params);
       // we should create a workspace
       const alreadyExists = await db
         .select()
