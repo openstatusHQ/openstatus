@@ -15,7 +15,7 @@ const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 export async function create(ownerId: number) {
   const session = await auth();
 
-  if (!session?.user.id) return;
+  if (!session?.user?.id) return;
 
   const allowedWorkspaces = await db
     .select()

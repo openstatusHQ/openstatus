@@ -76,6 +76,8 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   getUserWorkspaces: protectedProcedure.query(async (opts) => {
+    console.log(opts.ctx.user);
+
     const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
       where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
       with: {
