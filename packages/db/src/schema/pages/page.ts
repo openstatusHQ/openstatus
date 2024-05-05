@@ -19,6 +19,12 @@ export const page = sqliteTable("page", {
   customDomain: text("custom_domain", { length: 256 }).notNull(),
   published: integer("published", { mode: "boolean" }).default(false),
 
+  // Password protecting the status page - no specific restriction on password
+  password: text("password", { length: 256 }),
+  passwordProtected: integer("password_protected", { mode: "boolean" }).default(
+    false,
+  ),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

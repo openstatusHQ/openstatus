@@ -42,7 +42,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} ${calSans.variable}`}>
-        <OpenStatusProvider dsn="openstatus" />
+        {/* Only include RUM in prod */}
+        {process.env.NODE_ENV === "production" && (
+          <OpenStatusProvider dsn="openstatus" />
+        )}
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
           <Toaster richColors />

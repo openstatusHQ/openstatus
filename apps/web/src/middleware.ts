@@ -90,10 +90,11 @@ export default authMiddleware({
     "/monitors/(.*)", // used when trying subdomain slug via status.documenso.com/monitors/123
     "/verify/(.*)", // used when trying subdomain slug via status.documenso.com/incidents
     "/public/(.*)",
+    "/badge", // used when trying subdomain slug via status.documenso.com/badge to get the badge
   ],
   ignoredRoutes: ["/api/og", "/discord", "/github", "/status-page/(.*)"], // FIXME: we should check the `publicRoutes`
   beforeAuth: before,
-  debug: false,
+  debug: true, // FIXME: status.revert.dev
   async afterAuth(auth, req) {
     // handle users who aren't authenticated
     if (!auth.userId && !auth.isPublicRoute) {

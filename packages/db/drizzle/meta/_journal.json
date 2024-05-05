@@ -190,6 +190,13 @@
       "when": 1713384976187,
       "tag": "0026_giant_absorbing_man",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1714586658374,
+      "tag": "0027_bizarre_bastion",
+      "breakpoints": true
     }
   ]
 }

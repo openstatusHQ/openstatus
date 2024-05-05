@@ -10,6 +10,7 @@ export type Limits = {
   "status-pages": number;
   "status-subscribers": boolean;
   "custom-domain": boolean;
+  "password-protection": boolean;
   "white-label": boolean;
   // alerts
   notifications: boolean;
