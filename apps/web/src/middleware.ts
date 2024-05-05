@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { db, eq } from "@openstatus/db";
-import {
-  users, // auth_user
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { auth } from "@/lib/auth";
 import { env } from "./env";
@@ -71,7 +67,7 @@ export default auth(async (req) => {
 
   if (!req.auth && pathname.startsWith("/app") && !isPublicAppPath) {
     return NextResponse.redirect(
-      new URL(`/app/login?redirectTo=${pathname}`, req.url),
+      new URL(`/app/login?redirectTo=${encodeURIComponent(pathname)}`, req.url),
     );
   }
 
@@ -83,9 +79,9 @@ export default auth(async (req) => {
       const allowedWorkspaces = await db
         .select()
         .from(usersToWorkspaces)
-        .innerJoin(users, eq(users.id, usersToWorkspaces.userId))
+        .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
         .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-        .where(eq(users.id, req.auth.user.id))
+        .where(eq(user.id, parseInt(req.auth.user.id)))
         .all();
 
       if (hasWorkspaceSlug) {

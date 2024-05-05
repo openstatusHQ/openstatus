@@ -1,15 +1,18 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import NextAuth from "next-auth";
 import type { DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 
+// import Credentials from "next-auth/providers/credentials";
+
 import { db } from "@openstatus/db";
 import {
-  accounts,
-  sessions,
-  users,
-  verificationTokens,
+  account,
+  session,
+  user,
+  verificationToken,
 } from "@openstatus/db/src/schema";
 
 // FIXME: doesnt work in Edge Runtime - TODO: create an api for this
@@ -18,37 +21,35 @@ import {
 
 import { api } from "@/trpc/server";
 
-// REMINDER: we can override the session type
-declare module "next-auth" {
-  /**
-   * Returned by `auth`, `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
-   */
-  interface Session {
-    user: {
-      workspaces: string;
-    } & DefaultSession["user"];
-  }
-}
+export type { DefaultSession };
 
-export { DefaultSession };
-
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: DrizzleAdapter(
+const adapter: Adapter = {
+  ...DrizzleAdapter(
     // @ts-expect-error some issues with types
     db,
     // REMINDER: default table names are prefixed with "auth_" for clerk migration
     {
-      usersTable: users,
-      accountsTable: accounts,
-      sessionsTable: sessions,
-      verificationTokensTable: verificationTokens,
+      usersTable: user,
+      accountsTable: account,
+      sessionsTable: session,
+      verificationTokensTable: verificationToken,
     },
   ),
+  // TODO: interface User should extend id?: number
+};
+
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  debug: true,
+  adapter,
   providers: [GitHub, Google],
   callbacks: {
+    async jwt(params) {
+      console.log(params);
+      return params.token;
+    },
     // async session(params) {
-    //   return
-    // }
+    //   return;
+    // },
     async signIn(params) {
       // if return false, the user is not eligible to sign in
       return true;
@@ -88,4 +89,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: "/app/login",
     // newUser: "/app/onboarding", // TODO: rethink this as we still have the `slug` to use
   },
+  // basePath: "/api/auth", // default is `/api/auth`
+  // secret: process.env.AUTH_SECRET, // default is `AUTH_SECRET`
 });

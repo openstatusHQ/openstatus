@@ -1,9 +1,4 @@
 import type { NextRequest } from "next/server";
-import type {
-  SignedInAuthObject,
-  SignedOutAuthObject,
-} from "@clerk/nextjs/api";
-import { getAuth } from "@clerk/nextjs/server";
 import { inferAsyncReturnType, initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
