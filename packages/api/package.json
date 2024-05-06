@@ -19,7 +19,7 @@
     "@trpc/server": "10.45.1",
     "nanoid": "5.0.7",
     "nanoid-dictionary": "5.0.0-beta.1",
-    "next": "14.2.1",
+    "next": "14.2.3",
     "random-word-slugs": "0.1.7",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
