@@ -128,7 +128,7 @@ export const config = {
     // "/node_modules/function-bind/**",
     // "**/node_modules/.pnpm/**/function-bind/**",
     // "../../packages/analytics/src/index.ts",
-    "**/node_modules/.pnpm/@jitsu**",
+    "**/node_modules/.pnpm/@jitsu*/**",
     "./src/lib/auth.ts",
   ],
 };
