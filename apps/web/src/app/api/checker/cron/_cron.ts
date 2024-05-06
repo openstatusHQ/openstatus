@@ -45,22 +45,15 @@ export const cron = async ({
     periodicity,
   );
 
-  console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
-  // const ctx = createTRPCContext({ req, serverSideCall: true });
-  // // FIXME: we should the proper type
-  // ctx.auth = { userId: "cron" } as any;
-  // const caller = edgeRouter.createCaller(ctx);
-
-  // const monitors = await caller.monitor.getMonitorsForPeriodicity({
-  //   periodicity: periodicity,
-  // });
   const result = await db
     .select()
     .from(monitor)
     .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
     .all();
+  console.log(`Start cron for ${periodicity}`);
+
   const monitors = z.array(selectMonitorSchema).parse(result);
   const allResult = [];
 
@@ -73,9 +66,6 @@ export const cron = async ({
       .where(eq(monitorStatusTable.monitorId, row.id))
       .all();
     const monitorStatus = z.array(selectMonitorStatusSchema).parse(result);
-    // const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
-    //   monitorId: row.id,
-    // });
 
     for (const region of selectedRegions) {
       const status =
@@ -90,7 +80,6 @@ export const cron = async ({
       });
       allResult.push(response);
       if (periodicity === "30s") {
-        console.log("30s cron for", row.id, region, status);
         // we schedule another task in 30s
         const scheduledAt = timestamp + 30 * 1000;
         const response = createCronTask({
@@ -105,9 +94,15 @@ export const cron = async ({
       }
     }
   }
-  await Promise.allSettled(allResult);
 
-  console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  console.log(
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+  );
 };
 // timestamp needs to be in ms
 const createCronTask = async ({
