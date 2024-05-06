@@ -60,7 +60,7 @@
     "luxon": "3.3.0",
     "micro": "10.0.1",
     "nanoid": "5.0.1",
-    "next": "14.2.1",
+    "next": "14.2.3",
     "next-auth": "5.0.0-beta.17",
     "next-contentlayer": "0.3.4",
     "next-plausible": "3.12.0",

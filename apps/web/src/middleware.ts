@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { analytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
@@ -112,5 +113,22 @@ export const config = {
     "/",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
+  ],
+  unstable_allowDynamic: [
+    // use a glob to allow anything in the function-bind 3rd party module
+    // "**/packages/analytics/src/**",
+    // // "@jitsu/js/**",
+    // "**/node_modules/@jitsu/**",
+    // "**/node_modules/**/@jitsu/**",
+    // "**/node_modules/@openstatus/analytics/**",
+    // "@openstatus/analytics/**",
+    // "@jitsu/js/dist/jitsu.es.js",
+    // "**/analytics/src/**",
+    // "**/node_modules/.pnpm/@jitsu/**",
+    // "/node_modules/function-bind/**",
+    // "**/node_modules/.pnpm/**/function-bind/**",
+    // "../../packages/analytics/src/index.ts",
+    "**/node_modules/.pnpm/@jitsu**",
+    "./src/lib/auth.ts",
   ],
 };
