@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { analytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
@@ -90,7 +89,9 @@ export default auth(async (req) => {
           ({ workspace }) => workspace.slug === workspaceSlug,
         );
         if (hasAccessToWorkspace) {
-          req.cookies.set("workspace-slug", workspaceSlug);
+          const response = NextResponse.next();
+          response.cookies.set("workspace-slug", workspaceSlug);
+          return response;
         } else {
           return NextResponse.redirect(new URL("/app", req.url));
         }
@@ -104,6 +105,13 @@ export default auth(async (req) => {
         }
       }
     }
+  }
+
+  // reset workspace slug cookie if no auth
+  if (!req.auth && req.cookies.has("workspace-slug")) {
+    const response = NextResponse.next();
+    response.cookies.delete("workspace-slug");
+    return response;
   }
 });
 
