@@ -18,7 +18,7 @@ export function TagBadgeWithTooltip({ tags }: { tags?: MonitorTag[] }) {
       {rest.length > 0 ? (
         <TooltipProvider>
           <Tooltip delayDuration={200}>
-            <TooltipTrigger asChild>
+            <TooltipTrigger>
               <Badge variant="secondary" className="border">
                 +{rest.length}
               </Badge>
