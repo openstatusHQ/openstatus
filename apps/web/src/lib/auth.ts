@@ -41,7 +41,7 @@ const adapter: Adapter = {
     },
   ),
   // TODO: interface User should extend id?: number
-  // @ts-expect-error
+  // @ts-expect-error some issues with types
   createUser: async (data) => {
     const { id, ...rest } = data;
     const newUser = await db
@@ -85,7 +85,7 @@ const adapter: Adapter = {
       .get();
     return newUser;
   },
-  // @ts-expect-error
+  // @ts-expect-error some issues with types
   getUser: async (id) => {
     return db
       .select({
