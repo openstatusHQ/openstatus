@@ -35,19 +35,19 @@ export default function UserPage() {
             disabled
           />
         </div>
-        <div className="flex flex-wrap items-end gap-2">
+        {/* <div className="flex flex-wrap items-end gap-2">
           <div className="grid items-center gap-1.5">
             <Label htmlFor="avatar">Image</Label>
             <Input id="avatar" type="file" className="w-56" disabled />
           </div>
           <Avatar className="h-10 w-10">
             <AvatarImage
-              src={session.data.user?.image || undefined}
+              src={session.data.user?.photoUrl || undefined}
               alt={`${session.data.user?.name}`}
             />
             <AvatarFallback></AvatarFallback>
           </Avatar>
-        </div>
+        </div> */}
       </div>
     </div>
   );

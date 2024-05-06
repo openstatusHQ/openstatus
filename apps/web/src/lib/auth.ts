@@ -6,6 +6,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import * as randomWordSlugs from "random-word-slugs";
 
+import { analytics, trackAnalytics } from "@openstatus/analytics";
 // import Credentials from "next-auth/providers/credentials";
 
 import { db, eq } from "@openstatus/db";
@@ -17,6 +18,7 @@ import {
   verificationToken,
   workspace,
 } from "@openstatus/db/src/schema";
+import { sendEmail, WelcomeEmail } from "@openstatus/emails";
 
 // FIXME: doesnt work in Edge Runtime - TODO: create an api for this
 // import { sendEmail, WelcomeEmail } from "@openstatus/emails";
@@ -42,21 +44,57 @@ const adapter: Adapter = {
   // @ts-expect-error
   createUser: async (data) => {
     const { id, ...rest } = data;
-    console.log(data);
-    return db
+    const newUser = await db
       .insert(user)
-      .values({ email: rest.email })
+      .values({ email: rest.email, photoUrl: rest.image, name: rest.name })
       .returning({
         id: user.id,
         email: user.email,
         emailVerified: user.emailVerified,
       })
       .get();
+
+    let slug: string | undefined = undefined;
+
+    while (!slug) {
+      slug = randomWordSlugs.generateSlug(2);
+      const slugAlreadyExists = await db
+        .select()
+        .from(workspace)
+        .where(eq(workspace.slug, slug))
+        .get();
+      if (slugAlreadyExists) {
+        console.log(`slug already exists: '${slug}'`);
+        slug = undefined;
+      }
+    }
+
+    const workspaceResult = await db
+      .insert(workspace)
+      .values({ slug, name: "" })
+      .returning({ id: workspace.id })
+      .get();
+    await db
+      .insert(usersToWorkspaces)
+      .values({
+        userId: Number(newUser.id),
+        workspaceId: workspaceResult.id,
+        role: "owner",
+      })
+      .returning()
+      .get();
+    return newUser;
   },
   // @ts-expect-error
   getUser: async (id) => {
     return db
-      .select({ id: user.id, email: user.email })
+      .select({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        photoUrl: user.photoUrl,
+      })
       .from(user)
       .where(eq(user.id, Number(id)))
       .get();
@@ -85,9 +123,52 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     //   return;
     // },
     async signIn(params) {
-      // Here we can update the user with it's provider data
-      // if return false, the user is not eligible to ign in
+      // we update the user info when we login
+
+      if (params.account?.provider === "google") {
+        if (!params.profile) {
+          return true;
+        }
+
+        if (Number.isNaN(Number(params.user.id))) {
+          return true;
+        }
+        const { given_name, family_name, picture } = params.profile;
+        await db
+          .update(user)
+          .set({
+            firstName: given_name,
+            lastName: family_name,
+            photoUrl: picture,
+          })
+          .where(eq(user.id, Number(params.user.id)))
+          .run();
+      }
+      if (params.account?.provider === "github") {
+        if (!params.profile) {
+          return true;
+        }
+        if (Number.isNaN(Number(params.user.id))) {
+          return true;
+        }
+
+        //  GitHub store  the avatar in avatar_url
+        const photoUrl = String(params.profile.avatar_url);
+        const { name } = params.profile;
+        await db
+          .update(user)
+          .set({
+            name,
+            photoUrl,
+          })
+          .where(eq(user.id, Number(params.user.id)))
+          .run();
+      }
+
       return true;
+    },
+    session: (params) => {
+      return params.session;
     },
   },
   events: {
@@ -97,59 +178,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         throw new Error("User id & email is required");
       }
 
-      const { id: userId, email } = params.user;
-
-      // we should create a workspace
-      const alreadyExists = await db
-        .select()
-        .from(usersToWorkspaces)
-        .where(eq(usersToWorkspaces.userId, Number(params.user.id)))
-        .get();
-
-      // if he has already access to workspace don't create
-      if (alreadyExists) return;
-
-      // guarantee the slug is unique accross our workspace entries
-      let slug: string | undefined = undefined;
-
-      while (!slug) {
-        slug = randomWordSlugs.generateSlug(2);
-        const slugAlreadyExists = await db
-          .select()
-          .from(workspace)
-          .where(eq(workspace.slug, slug))
-          .get();
-        if (slugAlreadyExists) {
-          console.log(`slug already exists: '${slug}'`);
-          slug = undefined;
-        }
+      // this means the user has already been created with clerk
+      if (params.user.tenantId) {
+        return;
       }
 
-      const workspaceResult = await db
-        .insert(workspace)
-        .values({ slug, name: "" })
-        .returning({ id: workspace.id })
-        .get();
-      await db
-        .insert(usersToWorkspaces)
-        .values({
-          userId: Number(params.user.id),
-          workspaceId: workspaceResult.id,
-          role: "owner",
-        })
-        .returning()
-        .get();
-      // await api.workspace.createWorkspace.mutate({ userId });
+      await sendEmail({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "Level up your website and API monitoring.",
+        to: [params.user.email],
+        react: WelcomeEmail(),
+      });
 
-      // await sendEmail({
-      //   from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-      //   subject: "Level up your website and API monitoring.",
-      //   to: [email],
-      //   react: WelcomeEmail(),
-      // });
+      const { id: userId, email } = params.user;
 
-      // await analytics.identify(userId, { email, userId });
-      // await trackAnalytics({ event: "User Created", userId, email });
+      await analytics.identify(userId, { email, userId });
+      await trackAnalytics({ event: "User Created", userId, email });
     },
 
     async signIn(params) {
@@ -158,8 +202,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const { id: userId, email } = params.user;
 
-      // await analytics.identify(userId, { userId, email });
-      // await trackAnalytics({ event: "User Signed In" });
+      await analytics.identify(userId, { userId, email });
+      await trackAnalytics({ event: "User Signed In" });
     },
   },
   pages: {
