@@ -82,7 +82,6 @@ Made with [Contrib.rocks](https://contrib.rocks)
 - [tinybird](http://tinybird.co/?ref=openstatus.dev)
 - [turso](http://turso.tech/)
 - [drizzle](https://orm.drizzle.team/)
-- [clerk](https://clerk.com/)
 - [Resend](https://resend.com/)
 
 ## Getting Started 🚀
@@ -133,8 +132,6 @@ Made with [Contrib.rocks](https://contrib.rocks)
   server health check
 - open [http://localhost:3002](http://localhost:3002) for the docs
 
-For [clerk](https://clerk.com), you will need to create a webhook endpoint. To
-access the link, you can use tunneling tools like
 [Tunnelmole](https://github.com/robbie-cahill/tunnelmole-client), an open source
 tunnelling tool or ngrok, a popular closed source tunnelling tool.
 
@@ -151,16 +148,6 @@ tunnelling tool or ngrok, a popular closed source tunnelling tool.
 ➜  ~ tmole 3000
 http://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
 https://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
-```
-
-Append `/api/webhook/clerk` to the HTTPs URL.
-
-### Using ngrok
-
-After login, append `/api/webhook/clerk` to the link you get after entering:
-
-```
-$ ngrok http 3000
 ```
 
 ### Videos

@@ -7,7 +7,6 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@clerk/nextjs": "4.29.9",
     "@openstatus/analytics": "workspace:*",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
