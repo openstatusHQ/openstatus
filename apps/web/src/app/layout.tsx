@@ -38,7 +38,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <html lang="en">
       <body className={`${inter.className} ${calSans.variable}`}>

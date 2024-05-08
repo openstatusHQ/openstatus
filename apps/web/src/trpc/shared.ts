@@ -10,7 +10,7 @@ const getBaseUrl = () => {
   return `http://localhost:3000`;
 };
 
-const lambdas = ["clerkRouter", "stripeRouter", "rumRouter"];
+const lambdas = ["stripeRouter", "rumRouter"];
 
 export const endingLink = (opts?: {
   headers?: HTTPHeaders | (() => HTTPHeaders);

@@ -46,6 +46,13 @@ export const settingsPagesConfig: Page[] = [
     icon: "sun",
     segment: "appearance",
   },
+  {
+    title: "User",
+    description: "Profile settings for the user.",
+    href: "/settings/user",
+    icon: "user",
+    segment: "user",
+  },
 ];
 
 export const monitorPagesConfig: Page[] = [

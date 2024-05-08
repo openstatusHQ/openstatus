@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { generateSlug } from "random-word-slugs";
+import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
 import { and, eq, sql } from "@openstatus/db";
@@ -18,6 +19,41 @@ import { Limits } from "@openstatus/plans";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const workspaceRouter = createTRPCRouter({
+  createWorkspace: protectedProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async (opts) => {
+      // guarantee the slug is unique accross our workspace entries
+      let slug: string | undefined = undefined;
+
+      while (!slug) {
+        slug = randomWordSlugs.generateSlug(2);
+        const slugAlreadyExists = await opts.ctx.db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.slug, slug))
+          .get();
+        if (slugAlreadyExists) {
+          console.log(`slug already exists: '${slug}'`);
+          slug = undefined;
+        }
+      }
+
+      const _workspace = await opts.ctx.db
+        .insert(workspace)
+        .values({ slug, name: "" })
+        .returning({ id: workspace.id })
+        .get();
+
+      await opts.ctx.db
+        .insert(usersToWorkspaces)
+        .values({
+          userId: opts.ctx.user.id,
+          workspaceId: _workspace.id,
+          role: "owner",
+        })
+        .returning()
+        .get();
+    }),
   getUserWithWorkspace: protectedProcedure.query(async (opts) => {
     return await opts.ctx.db.query.user.findMany({
       with: {
@@ -27,7 +63,7 @@ export const workspaceRouter = createTRPCRouter({
           },
         },
       },
-      where: eq(user.tenantId, opts.ctx.auth.userId),
+      where: eq(user.id, opts.ctx.user.id),
     });
   }),
 
@@ -40,6 +76,8 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   getUserWorkspaces: protectedProcedure.query(async (opts) => {
+    console.log(opts.ctx.user);
+
     const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
       where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
       with: {
@@ -145,18 +183,6 @@ export const workspaceRouter = createTRPCRouter({
         .update(workspace)
         .set({ plan: opts.input.plan })
         .where(eq(workspace.id, opts.ctx.workspace.id));
-    }),
-
-  createWorkspace: protectedProcedure
-    .input(z.object({ name: z.string() }))
-    .mutation(async (opts) => {
-      const slug = generateSlug(2);
-
-      return opts.ctx.db
-        .insert(workspace)
-        .values({ slug: slug, name: opts.input.name })
-        .returning()
-        .get();
     }),
 
   getCurrentWorkspaceNumbers: protectedProcedure.query(async (opts) => {

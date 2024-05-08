@@ -132,8 +132,10 @@ export const invitationRouter = createTRPCRouter({
         },
       });
 
+      if (!opts.ctx.user?.id) return "Missing user";
+
       const _user = await opts.ctx.db.query.user.findFirst({
-        where: eq(user.tenantId, opts.ctx.auth?.userId || ""),
+        where: eq(user.id, opts.ctx.user.id),
       });
 
       if (!_user) return "Invalid user";

@@ -197,6 +197,13 @@
       "when": 1714586658374,
       "tag": "0027_bizarre_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1715173356076,
+      "tag": "0028_thin_power_pack",
+      "breakpoints": true
     }
   ]
 }

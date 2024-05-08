@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { UserButton, useUser } from "@clerk/nextjs";
 import { allChangelogs } from "contentlayer/generated";
 import { ArrowUpRight } from "lucide-react";
 
@@ -11,6 +10,7 @@ import { Shell } from "@/components/dashboard/shell";
 import { useCookieState } from "@/hooks/use-cookie-state";
 import { AppTabs } from "./app-tabs";
 import { Breadcrumbs } from "./breadcrumbs";
+import { UserNav } from "./user-nav";
 
 const lastChangelog = allChangelogs
   .sort(
@@ -20,7 +20,6 @@ const lastChangelog = allChangelogs
   .pop();
 
 export function AppHeader() {
-  const { isLoaded, isSignedIn } = useUser();
   const [lastViewed, setLastViewed] = useCookieState(
     "last-viewed-changelog",
     new Date(0).toISOString(),
@@ -67,7 +66,7 @@ export function AppHeader() {
             <div className="relative">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="absolute inset-0">
-                {isLoaded && isSignedIn && <UserButton />}
+                <UserNav />
               </div>
             </div>
           </div>

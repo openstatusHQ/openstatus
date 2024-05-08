@@ -1,37 +1,10 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { authMiddleware, redirectToSignIn } from "@clerk/nextjs";
 
 import { db, eq } from "@openstatus/db";
-import {
-  monitor,
-  user,
-  usersToWorkspaces,
-  workspace,
-} from "@openstatus/db/src/schema";
+import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
+import { auth } from "@/lib/auth";
 import { env } from "./env";
-
-const before = (req: NextRequest) => {
-  const url = req.nextUrl.clone();
-
-  if (url.pathname.includes("api/trpc")) {
-    return NextResponse.next();
-  }
-
-  const host = req.headers.get("host");
-  const subdomain = getValidSubdomain(host);
-  if (subdomain) {
-    // Subdomain available, rewriting
-    console.log(
-      `>>> Rewriting: ${url.pathname} to /status-page/${subdomain}${url.pathname}`,
-    );
-    url.pathname = `/status-page/${subdomain}${url.pathname}`;
-    return NextResponse.rewrite(url);
-  }
-
-  return NextResponse.next();
-};
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
@@ -60,102 +33,86 @@ export const getValidSubdomain = (host?: string | null) => {
   return subdomain;
 };
 
-export default authMiddleware({
-  publicRoutes: [
-    "/",
-    "/play",
-    "/play/(.*)",
-    "/monitor/(.*)",
-    "/api/(.*)",
-    "/api/webhook/clerk",
-    "/api/checker/regions/(.*)",
-    "/api/checker/cron/10m",
-    "/blog",
-    "/blog/(.*)",
-    "/status",
-    "/status/(.*)",
-    "/changelog",
-    "/changelog/(.*)",
-    "/legal/(.*)",
-    "/about",
-    "/cal",
-    "/discord",
-    "/github",
-    "/pricing",
-    "/oss-friends",
-    "/status-page/(.*)",
-    "/incidents", // used when trying subdomain slug via status.documenso.com/incidents
-    "/incidents/(.*)", // used when trying subdomain slug via status.documenso.com/incidents/123
-    "/monitors", // used when trying subdomain slug via status.documenso.com/monitors
-    "/monitors/(.*)", // used when trying subdomain slug via status.documenso.com/monitors/123
-    "/verify/(.*)", // used when trying subdomain slug via status.documenso.com/incidents
-    "/public/(.*)",
-    "/badge", // used when trying subdomain slug via status.documenso.com/badge to get the badge
-  ],
-  ignoredRoutes: ["/api/og", "/discord", "/github", "/status-page/(.*)"], // FIXME: we should check the `publicRoutes`
-  beforeAuth: before,
-  debug: true, // FIXME: status.revert.dev
-  async afterAuth(auth, req) {
-    // handle users who aren't authenticated
-    if (!auth.userId && !auth.isPublicRoute) {
-      return redirectToSignIn({ returnBackUrl: req.url });
-    }
+const publicAppPaths = [
+  "/app/sign-in",
+  "/app/sign-up",
+  "/app/login",
+  "/app/invite",
+];
 
-    if (auth.userId) {
-      const pathname = req.nextUrl.pathname;
-      if (pathname.startsWith("/app") && !pathname.startsWith("/app/invite")) {
-        const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
-        const hasWorkspaceSlug = !!workspaceSlug && workspaceSlug.trim() !== "";
+// remove auth middleware if needed
+// export const middleware = () => NextResponse.next();
 
-        const allowedWorkspaces = await db
-          .select()
-          .from(usersToWorkspaces)
-          .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
-          .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-          .where(eq(user.tenantId, auth.userId))
-          .all();
+export default auth(async (req) => {
+  const url = req.nextUrl.clone();
 
-        // means, we are "not only on `/app` or `/app/`"
-        if (hasWorkspaceSlug) {
-          console.log(">>> Workspace slug", workspaceSlug);
-          const hasAccessToWorkspace = allowedWorkspaces.find(
-            ({ workspace }) => workspace.slug === workspaceSlug,
-          );
-          if (hasAccessToWorkspace) {
-            console.log(">>> Allowed! Attaching to cookie", workspaceSlug);
-            req.cookies.set("workspace-slug", workspaceSlug);
-          } else {
-            console.log(">>> Not allowed, redirecting to /app", workspaceSlug);
-            const appURL = new URL("/app", req.url);
-            return NextResponse.redirect(appURL);
-          }
+  if (url.pathname.includes("api/trpc")) {
+    return NextResponse.next();
+  }
+
+  const host = req.headers.get("host");
+  const subdomain = getValidSubdomain(host);
+
+  // Rewriting to status page!
+  if (subdomain) {
+    url.pathname = `/status-page/${subdomain}${url.pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  const pathname = req.nextUrl.pathname;
+
+  const isPublicAppPath = publicAppPaths.some((path) =>
+    pathname.startsWith(path),
+  );
+
+  if (!req.auth && pathname.startsWith("/app") && !isPublicAppPath) {
+    return NextResponse.redirect(
+      new URL(`/app/login?redirectTo=${encodeURIComponent(pathname)}`, req.url),
+    );
+  }
+
+  if (req.auth && req.auth.user?.id) {
+    if (pathname.startsWith("/app") && !isPublicAppPath) {
+      const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
+      const hasWorkspaceSlug = !!workspaceSlug && workspaceSlug.trim() !== "";
+
+      const allowedWorkspaces = await db
+        .select()
+        .from(usersToWorkspaces)
+        .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
+        .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
+        .where(eq(user.id, parseInt(req.auth.user.id)))
+        .all();
+
+      if (hasWorkspaceSlug) {
+        const hasAccessToWorkspace = allowedWorkspaces.find(
+          ({ workspace }) => workspace.slug === workspaceSlug,
+        );
+        if (hasAccessToWorkspace) {
+          const response = NextResponse.next();
+          response.cookies.set("workspace-slug", workspaceSlug);
+          return response;
         } else {
-          console.log(">>> No workspace slug available");
-          if (allowedWorkspaces.length > 0) {
-            const firstWorkspace = allowedWorkspaces[0].workspace;
-            const { id, slug } = firstWorkspace;
-            console.log(">>> Redirecting to first related workspace", slug);
-            const firstMonitor = await db
-              .select()
-              .from(monitor)
-              .where(eq(monitor.workspaceId, firstWorkspace.id))
-              .get();
-
-            if (!firstMonitor) {
-              console.log(`>>> Redirecting to onboarding`, slug);
-              const onboardingURL = new URL(`/app/${slug}/onboarding`, req.url);
-              return NextResponse.redirect(onboardingURL);
-            }
-
-            console.log(">>> Redirecting to workspace", slug);
-            const monitorURL = new URL(`/app/${slug}/monitors`, req.url);
-            return NextResponse.redirect(monitorURL);
-          }
-          console.log(">>> No action taken");
+          return NextResponse.redirect(new URL("/app", req.url));
+        }
+      } else {
+        if (allowedWorkspaces.length > 0) {
+          const firstWorkspace = allowedWorkspaces[0].workspace;
+          const { slug } = firstWorkspace;
+          return NextResponse.redirect(
+            new URL(`/app/${slug}/monitors`, req.url),
+          );
         }
       }
     }
-  },
+  }
+
+  // reset workspace slug cookie if no auth
+  if (!req.auth && req.cookies.has("workspace-slug")) {
+    const response = NextResponse.next();
+    response.cookies.delete("workspace-slug");
+    return response;
+  }
 });
 
 export const config = {
@@ -164,5 +121,21 @@ export const config = {
     "/",
     "/(api/webhook|api/trpc)(.*)",
     "/(!api/checker/:path*|!api/og|!api/ping)",
+  ],
+  unstable_allowDynamic: [
+    // use a glob to allow anything in the function-bind 3rd party module
+    // "**/packages/analytics/src/**",
+    // // "@jitsu/js/**",
+    // "**/node_modules/@jitsu/**",
+    // "**/node_modules/**/@jitsu/**",
+    // "**/node_modules/@openstatus/analytics/**",
+    // "@openstatus/analytics/**",
+    // "@jitsu/js/dist/jitsu.es.js",
+    // "**/analytics/src/**",
+    // "**/node_modules/.pnpm/@jitsu/**",
+    // "/node_modules/function-bind/**",
+    // "**/node_modules/.pnpm/**/function-bind/**",
+    // "../../packages/analytics/src/index.ts",
+    "**/node_modules/.pnpm/@jitsu*/**",
   ],
 };
