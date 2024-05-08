@@ -22,7 +22,6 @@ export const user = sqliteTable("user", {
   name: text("name"),
   email: text("email").default(""),
   emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
-  image: text("image"),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,

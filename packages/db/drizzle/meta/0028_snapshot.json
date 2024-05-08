@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "sqlite",
-  "id": "1f999b8c-8a23-4a3d-b587-0af3e61cc715",
+  "id": "715da58c-9c0f-42fe-920a-46f8c03c92ba",
   "prevId": "4488e03b-52ea-45eb-aac9-7d263c8f2e43",
   "tables": {
     "status_report_to_monitors": {
@@ -917,13 +917,6 @@
         "emailVerified": {
           "name": "emailVerified",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "image": {
-          "name": "image",
-          "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false

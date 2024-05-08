@@ -29,5 +29,4 @@ CREATE TABLE `verification_token` (
 );
 --> statement-breakpoint
 ALTER TABLE user ADD `name` text;--> statement-breakpoint
-ALTER TABLE user ADD `emailVerified` integer;--> statement-breakpoint
-ALTER TABLE user ADD `image` text;
+ALTER TABLE user ADD `emailVerified` integer;
