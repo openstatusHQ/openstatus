@@ -12,7 +12,7 @@ test("GET one status report update ", async () => {
   expect(res.status).toBe(200);
   expect(await res.json()).toMatchObject({
     status: "investigating",
-    message: "",
+    message: "Message",
     date: expect.stringMatching(iso8601Regex),
   });
 });
