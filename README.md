@@ -8,7 +8,7 @@
   </a>
   </p>
 
-  <p align="center">    The Open-Source frontend performance monitoring platform.
+  <p align="center">The Open-Source frontend performance monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
