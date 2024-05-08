@@ -32,7 +32,10 @@ export function UserNav() {
           <Avatar className="h-8 w-8">
             <AvatarImage
               src={session.data.user?.photoUrl || undefined}
-              alt={session.data.user?.name || ""}
+              alt={
+                session.data.user?.name ||
+                `${session.data.user?.firstName} ${session.data.user?.lastName}`
+              }
             />
             <AvatarFallback></AvatarFallback>
           </Avatar>
@@ -42,7 +45,8 @@ export function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="truncate text-sm font-medium leading-none">
-              {session.data.user?.name}
+              {session.data.user?.name ||
+                `${session.data.user?.firstName} ${session.data.user?.lastName}`}
             </p>
             <p className="text-muted-foreground truncate text-xs leading-none">
               {session.data.user?.email}
