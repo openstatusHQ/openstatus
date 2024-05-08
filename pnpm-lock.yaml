@@ -310,16 +310,16 @@ importers:
         version: 0.7.0(typescript@5.4.5)(zod@3.22.4)
       '@tailwindcss/container-queries':
         specifier: 0.1.1
-        version: 0.1.1(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
+        version: 0.1.1(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
       '@tailwindcss/typography':
         specifier: 0.5.10
-        version: 0.5.10(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
+        version: 0.5.10(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
       '@tanstack/react-table':
         specifier: 8.10.3
         version: 8.10.3(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@tremor/react':
         specifier: 3.13.3
-        version: 3.13.3(prop-types@15.8.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
+        version: 3.13.3(prop-types@15.8.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
       '@trpc/client':
         specifier: 10.45.1
         version: 10.45.1(@trpc/server@10.45.1)
@@ -451,7 +451,7 @@ importers:
         version: 1.14.0
       tailwindcss-animate:
         specifier: 1.0.7
-        version: 1.0.7(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
+        version: 1.0.7(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
       zod:
         specifier: 3.22.4
         version: 3.22.4
@@ -478,11 +478,11 @@ importers:
         specifier: 0.0.32
         version: 0.0.32
       autoprefixer:
-        specifier: 10.4.16
-        version: 10.4.16(postcss@8.4.31)
+        specifier: 10.4.19
+        version: 10.4.19(postcss@8.4.38)
       postcss:
-        specifier: 8.4.31
-        version: 8.4.31
+        specifier: 8.4.38
+        version: 8.4.38
       rehype-autolink-headings:
         specifier: 7.1.0
         version: 7.1.0
@@ -493,8 +493,8 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       tailwindcss:
-        specifier: 3.3.2
-        version: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+        specifier: 3.4.3
+        version: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -900,11 +900,11 @@ importers:
         specifier: 18.2.64
         version: 18.2.64
       tailwindcss:
-        specifier: 3.3.2
-        version: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+        specifier: 3.4.3
+        version: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
       tsup:
         specifier: 7.2.0
-        version: 7.2.0(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5)
+        version: 7.2.0(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5)
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -1118,7 +1118,7 @@ importers:
         version: 20.8.0
       tsup:
         specifier: 7.2.0
-        version: 7.2.0(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5)
+        version: 7.2.0(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5)
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -4399,8 +4399,8 @@ packages:
   asynckit@0.4.0:
     resolution: {integrity: sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==}
 
-  autoprefixer@10.4.16:
-    resolution: {integrity: sha512-7vd3UC6xKp0HLfua5IjZlcXvGAGy7cBAXTg2lyQ/8WpNhd6SiZ8Be+xm3FyBSYJx5GKcpRCzBh7RH4/0dnY+uQ==}
+  autoprefixer@10.4.19:
+    resolution: {integrity: sha512-BaENR2+zBZ8xXhM4pUaKUxlVdxZ0EZhjvbopwnXmxRUfqDmwSpC2lAi/QXvx7NRdPCo1WKEcEF6mV64si1z4Ew==}
     engines: {node: ^10 || ^12 || >=14}
     hasBin: true
     peerDependencies:
@@ -4467,11 +4467,6 @@ packages:
   braces@3.0.2:
     resolution: {integrity: sha512-b8um+L1RzM3WDSzvhm6gIz1yfTbBt6YTlcEKAvsmqCZZFw46z626lVj9j1yEPW33H5H+lBQpZMP1k8l+78Ha0A==}
     engines: {node: '>=8'}
-
-  browserslist@4.22.1:
-    resolution: {integrity: sha512-FEVc202+2iuClEhZhrWy6ZiAcRLvNMyYcxZ8raemul1DYVOVdFsbqckWLdsixQZCpJlwe77Z3UTalE7jsjnKfQ==}
-    engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
-    hasBin: true
 
   browserslist@4.23.0:
     resolution: {integrity: sha512-QW8HiM1shhT2GuzkvklfjcKDiWFXHOeFCIA/huJPwHsslwcydgk7X+z2zXpEijP98UCY7HbubZt5J2Zgvf0CaQ==}
@@ -4546,9 +4541,6 @@ packages:
   camelcase@7.0.1:
     resolution: {integrity: sha512-xlx1yCK2Oc1APsPXDL2LdlNP6+uu8OCDdhOBSVT279M/S+y75O30C2VuD8T2ogdePBBl7PfPF4504tnLgX3zfw==}
     engines: {node: '>=14.16'}
-
-  caniuse-lite@1.0.30001551:
-    resolution: {integrity: sha512-vtBAez47BoGMMzlbYhfXrMV1kvRF2WP/lqiMuDu1Sb4EE4LKEgjopFDSRtZfdVnslNRpOqV/woE+Xgrwj6VQlg==}
 
   caniuse-lite@1.0.30001612:
     resolution: {integrity: sha512-lFgnZ07UhaCcsSZgWW0K5j4e69dK1u/ltrL9lTUiFOwNHs12S3UMIEYgBV0Z6C6hRDev7iRnMzzYmKabYdXF9g==}
@@ -5221,9 +5213,6 @@ packages:
     resolution: {integrity: sha512-L9Qe08KWTlqYMVvMcTIvMAdl1cDUubzRNYL+WfA4bLDMHe4nemKkpmYzkznE1FwLKu0EEmy6obgQKzMJrg4x9Q==}
     engines: {node: '>=14'}
     hasBin: true
-
-  electron-to-chromium@1.4.563:
-    resolution: {integrity: sha512-dg5gj5qOgfZNkPNeyKBZQAQitIQ/xwfIDmEQJHCbXaD9ebTZxwJXUsDYcBlAvZGZLi+/354l35J1wkmP6CqYaw==}
 
   electron-to-chromium@1.4.750:
     resolution: {integrity: sha512-9ItEpeu15hW5m8jKdriL+BQrgwDTXEL9pn4SkillWFu73ZNNNQ2BKKLS+ZHv2vC9UkNhosAeyfxOf/5OSeTCPA==}
@@ -6286,8 +6275,8 @@ packages:
     resolution: {integrity: sha512-z6EbKajIpqGKU56y5KBUgy1dt1ihhQJgWzUlZHArA/+X2ad7Cb5iF+AK1EWVL/Bo7Rz9uurpqw6SiBCefUbCGA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jiti@1.20.0:
-    resolution: {integrity: sha512-3TV69ZbrvV6U5DfQimop50jE9Dl6J8O1ja1dvBbMba/sZ3YBEQqJ2VZRoQPVnhlzjNtU1vaXRZVrVjU4qtm8yA==}
+  jiti@1.21.0:
+    resolution: {integrity: sha512-gFqAIbuKyyso/3G2qhiO2OM6shY6EPP/R0+mkDbyspxKazh8BXDC5FiFsUjlczgdNz/vfra0da2y+aHrusLG/Q==}
     hasBin: true
 
   jju@1.4.0:
@@ -6849,6 +6838,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@3.3.7:
+    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
   nanoid@5.0.1:
     resolution: {integrity: sha512-vWeVtV5Cw68aML/QaZvqN/3QQXc6fBfIieAlu05m7FZW2Dgb+3f0xc0TTxuJW+7u30t7iSDTV/j3kVI0oJqIfQ==}
     engines: {node: ^18 || >=20}
@@ -6974,9 +6968,6 @@ packages:
   node-plop@0.26.3:
     resolution: {integrity: sha512-Cov028YhBZ5aB7MdMWJEmwyBig43aGL5WT4vdoB28Oitau1zZAcHUn8Sgfk9HM33TqhtLJ9PlM/O0Mv+QpV/4Q==}
     engines: {node: '>=8.9.4'}
-
-  node-releases@2.0.13:
-    resolution: {integrity: sha512-uYr7J37ae/ORWdZeQ1xxMJe3NtdmqMC/JZK+geofDrkLUApKRHPd18/TxtBOJ4A0/+uUIliorNrfYV6s1b02eQ==}
 
   node-releases@2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
@@ -7283,6 +7274,10 @@ packages:
 
   postcss@8.4.31:
     resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.4.38:
+    resolution: {integrity: sha512-Wglpdk03BSfXkHoQa3b/oulrotAkwrlLDRSOb9D0bN86FdRyE9lppSp33aHNPgBa0JKCoB+drFLZkQoRRYae5A==}
     engines: {node: ^10 || ^12 || >=14}
 
   preact-render-to-string@5.2.3:
@@ -7891,6 +7886,10 @@ packages:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
     engines: {node: '>=0.10.0'}
 
+  source-map-js@1.2.0:
+    resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
+    engines: {node: '>=0.10.0'}
+
   source-map-support@0.5.21:
     resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
 
@@ -8119,8 +8118,8 @@ packages:
     peerDependencies:
       postcss: ^8.0.9
 
-  tailwindcss@3.3.2:
-    resolution: {integrity: sha512-9jPkMiIBXvPc2KywkraqsUfbfj+dHDb+JPWtSJa9MLFdrPyazI7q6WX2sUrm7R9eVR7qqv3Pas7EvQFzxKnI6w==}
+  tailwindcss@3.4.3:
+    resolution: {integrity: sha512-U7sxQk/n397Bmx4JHbJx/iSOOv5G+II3f1kpLpY2QeUv5DcPdcTsYLlusZfq1NthHS1c1cZoyFmmkex1rzke0A==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -10128,9 +10127,9 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
-  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
+  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
     dependencies:
-      tailwindcss: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      tailwindcss: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
 
   '@hono/node-server@1.11.1': {}
 
@@ -12058,17 +12057,17 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  '@tailwindcss/container-queries@0.1.1(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
+  '@tailwindcss/container-queries@0.1.1(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
     dependencies:
-      tailwindcss: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      tailwindcss: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
 
-  '@tailwindcss/typography@0.5.10(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
+  '@tailwindcss/typography@0.5.10(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
     dependencies:
       lodash.castarray: 4.4.0
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      tailwindcss: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
 
   '@tanstack/query-core@4.36.1': {}
 
@@ -12100,11 +12099,11 @@ snapshots:
 
   '@tootallnate/quickjs-emscripten@0.23.0': {}
 
-  '@tremor/react@3.13.3(prop-types@15.8.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
+  '@tremor/react@3.13.3(prop-types@15.8.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))':
     dependencies:
       '@floating-ui/react': 0.19.2(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@headlessui/react': 1.7.18(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)))
       date-fns: 2.30.0
       react: 18.2.0
       react-day-picker: 8.10.0(date-fns@2.30.0)(react@18.2.0)
@@ -12658,14 +12657,14 @@ snapshots:
 
   asynckit@0.4.0: {}
 
-  autoprefixer@10.4.16(postcss@8.4.31):
+  autoprefixer@10.4.19(postcss@8.4.38):
     dependencies:
-      browserslist: 4.22.1
-      caniuse-lite: 1.0.30001551
+      browserslist: 4.23.0
+      caniuse-lite: 1.0.30001612
       fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.0.0
-      postcss: 8.4.31
+      postcss: 8.4.38
       postcss-value-parser: 4.2.0
 
   available-typed-arrays@1.0.5: {}
@@ -12723,13 +12722,6 @@ snapshots:
   braces@3.0.2:
     dependencies:
       fill-range: 7.0.1
-
-  browserslist@4.22.1:
-    dependencies:
-      caniuse-lite: 1.0.30001551
-      electron-to-chromium: 1.4.563
-      node-releases: 2.0.13
-      update-browserslist-db: 1.0.13(browserslist@4.22.1)
 
   browserslist@4.23.0:
     dependencies:
@@ -12801,8 +12793,6 @@ snapshots:
   camelcase@5.3.1: {}
 
   camelcase@7.0.1: {}
-
-  caniuse-lite@1.0.30001551: {}
 
   caniuse-lite@1.0.30001612: {}
 
@@ -13354,8 +13344,6 @@ snapshots:
       commander: 10.0.1
       minimatch: 9.0.1
       semver: 7.5.4
-
-  electron-to-chromium@1.4.563: {}
 
   electron-to-chromium@1.4.750: {}
 
@@ -14838,7 +14826,7 @@ snapshots:
       graceful-fs: 4.2.11
       picomatch: 2.3.1
 
-  jiti@1.20.0: {}
+  jiti@1.21.0: {}
 
   jju@1.4.0: {}
 
@@ -15700,6 +15688,8 @@ snapshots:
 
   nanoid@3.3.6: {}
 
+  nanoid@3.3.7: {}
+
   nanoid@5.0.1: {}
 
   nanoid@5.0.2: {}
@@ -15818,8 +15808,6 @@ snapshots:
       lodash.get: 4.4.2
       mkdirp: 0.5.6
       resolve: 1.22.8
-
-  node-releases@2.0.13: {}
 
   node-releases@2.0.14: {}
 
@@ -16088,9 +16076,9 @@ snapshots:
       read-cache: 1.0.0
       resolve: 1.22.8
 
-  postcss-import@15.1.0(postcss@8.4.31):
+  postcss-import@15.1.0(postcss@8.4.38):
     dependencies:
-      postcss: 8.4.31
+      postcss: 8.4.38
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
       resolve: 1.22.8
@@ -16100,10 +16088,10 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.4.21
 
-  postcss-js@4.0.1(postcss@8.4.31):
+  postcss-js@4.0.1(postcss@8.4.38):
     dependencies:
       camelcase-css: 2.0.1
-      postcss: 8.4.31
+      postcss: 8.4.38
 
   postcss-load-config@3.1.4(postcss@8.4.21)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
     dependencies:
@@ -16113,12 +16101,12 @@ snapshots:
       postcss: 8.4.21
       ts-node: 10.9.1(@types/node@20.8.0)(typescript@5.4.5)
 
-  postcss-load-config@4.0.1(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
+  postcss-load-config@4.0.1(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
     dependencies:
       lilconfig: 2.1.0
       yaml: 2.3.3
     optionalDependencies:
-      postcss: 8.4.31
+      postcss: 8.4.38
       ts-node: 10.9.1(@types/node@20.8.0)(typescript@5.4.5)
 
   postcss-nested@6.0.0(postcss@8.4.21):
@@ -16126,9 +16114,9 @@ snapshots:
       postcss: 8.4.21
       postcss-selector-parser: 6.0.13
 
-  postcss-nested@6.0.1(postcss@8.4.31):
+  postcss-nested@6.0.1(postcss@8.4.38):
     dependencies:
-      postcss: 8.4.31
+      postcss: 8.4.38
       postcss-selector-parser: 6.0.13
 
   postcss-selector-parser@6.0.10:
@@ -16154,6 +16142,12 @@ snapshots:
       nanoid: 3.3.6
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  postcss@8.4.38:
+    dependencies:
+      nanoid: 3.3.7
+      picocolors: 1.0.0
+      source-map-js: 1.2.0
 
   preact-render-to-string@5.2.3(preact@10.11.3):
     dependencies:
@@ -16833,6 +16827,8 @@ snapshots:
 
   source-map-js@1.0.2: {}
 
+  source-map-js@1.2.0: {}
+
   source-map-support@0.5.21:
     dependencies:
       buffer-from: 1.1.2
@@ -17002,7 +16998,7 @@ snapshots:
 
   sucrase@3.34.0:
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.3
+      '@jridgewell/gen-mapping': 0.3.5
       commander: 4.1.1
       glob: 7.1.6
       lines-and-columns: 1.2.4
@@ -17064,9 +17060,9 @@ snapshots:
 
   tailwind-merge@1.14.0: {}
 
-  tailwindcss-animate@1.0.7(tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))):
+  tailwindcss-animate@1.0.7(tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))):
     dependencies:
-      tailwindcss: 3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      tailwindcss: 3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
 
   tailwindcss@3.2.7(postcss@8.4.21)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
     dependencies:
@@ -17096,7 +17092,7 @@ snapshots:
     transitivePeerDependencies:
       - ts-node
 
-  tailwindcss@3.3.2(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
+  tailwindcss@3.4.3(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5)):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -17106,19 +17102,18 @@ snapshots:
       fast-glob: 3.3.1
       glob-parent: 6.0.2
       is-glob: 4.0.3
-      jiti: 1.20.0
+      jiti: 1.21.0
       lilconfig: 2.1.0
       micromatch: 4.0.5
       normalize-path: 3.0.0
       object-hash: 3.0.0
       picocolors: 1.0.0
-      postcss: 8.4.31
-      postcss-import: 15.1.0(postcss@8.4.31)
-      postcss-js: 4.0.1(postcss@8.4.31)
-      postcss-load-config: 4.0.1(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
-      postcss-nested: 6.0.1(postcss@8.4.31)
+      postcss: 8.4.38
+      postcss-import: 15.1.0(postcss@8.4.38)
+      postcss-js: 4.0.1(postcss@8.4.38)
+      postcss-load-config: 4.0.1(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      postcss-nested: 6.0.1(postcss@8.4.38)
       postcss-selector-parser: 6.0.13
-      postcss-value-parser: 4.2.0
       resolve: 1.22.8
       sucrase: 3.34.0
     transitivePeerDependencies:
@@ -17278,7 +17273,7 @@ snapshots:
 
   tslib@2.6.2: {}
 
-  tsup@7.2.0(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5):
+  tsup@7.2.0(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))(typescript@5.4.5):
     dependencies:
       bundle-require: 4.0.2(esbuild@0.18.20)
       cac: 6.7.14
@@ -17288,14 +17283,14 @@ snapshots:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.1(postcss@8.4.31)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
+      postcss-load-config: 4.0.1(postcss@8.4.38)(ts-node@10.9.1(@types/node@20.8.0)(typescript@5.4.5))
       resolve-from: 5.0.0
       rollup: 3.29.4
       source-map: 0.8.0-beta.0
       sucrase: 3.34.0
       tree-kill: 1.2.2
     optionalDependencies:
-      postcss: 8.4.31
+      postcss: 8.4.38
       typescript: 5.4.5
     transitivePeerDependencies:
       - supports-color
@@ -17513,12 +17508,6 @@ snapshots:
   universalify@2.0.0: {}
 
   unpipe@1.0.0: {}
-
-  update-browserslist-db@1.0.13(browserslist@4.22.1):
-    dependencies:
-      browserslist: 4.22.1
-      escalade: 3.1.1
-      picocolors: 1.0.0
 
   update-browserslist-db@1.0.13(browserslist@4.23.0):
     dependencies:
