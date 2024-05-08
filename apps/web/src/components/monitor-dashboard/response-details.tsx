@@ -60,7 +60,6 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
             <div>
               <pre
                 className="bg-muted text-wrap rounded-md p-4 text-sm"
-                // @ts-expect-error textWrap is not a valid prop even though it is
                 style={{ textWrap: "wrap" }}
               >
                 {message}
