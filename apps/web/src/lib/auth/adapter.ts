@@ -10,7 +10,7 @@ import {
   verificationToken,
 } from "@openstatus/db/src/schema";
 
-import { createUser, getUser } from "./helper";
+import { createUser, getUser } from "./helpers";
 
 export type { DefaultSession };
 

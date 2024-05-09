@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { z } from "zod";
 
-import { Button } from "@openstatus/ui";
+import { Button, Separator } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
+import DevModeContainer from "@/components/dev-mode-container";
 import { Icons } from "@/components/icons";
 import { signIn } from "@/lib/auth";
+import MagicLinkForm from "./_components/magic-link-form";
+
+const isDev = process.env.NODE_ENV === "development";
 
 /**
  * allowed URL search params
@@ -31,6 +35,12 @@ export default function Page({
         </p>
       </div>
       <div className="grid gap-3">
+        {isDev ? (
+          <DevModeContainer className="grid gap-3">
+            <MagicLinkForm />
+            <Separator />
+          </DevModeContainer>
+        ) : null}
         <form
           action={async () => {
             "use server";

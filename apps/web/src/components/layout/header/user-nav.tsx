@@ -37,7 +37,7 @@ export function UserNav() {
                 `${session.data.user?.firstName} ${session.data.user?.lastName}`
               }
             />
-            <AvatarFallback></AvatarFallback>
+            <AvatarFallback className="from-foreground to-muted via-muted-foreground bg-gradient-to-br opacity-70" />
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
