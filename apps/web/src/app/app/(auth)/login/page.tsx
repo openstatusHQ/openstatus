@@ -84,32 +84,3 @@ export default function Page({
     </Shell>
   );
 }
-
-// /**
-//  * @deprecated on production - only to be used in development mode
-//  */
-// function MagicLinkForm() {
-//   return (
-//     <form
-//       action={async (formData) => {
-//         "use server";
-//         try {
-//           await signIn("resend", formData);
-//         } catch (e) {
-//           // console.error(e);
-//         } finally {
-//           redirect("/app");
-//         }
-//       }}
-//       className="grid gap-2"
-//     >
-//       <div className="grid gap-1.5">
-//         <Label htmlFor="email">Email</Label>
-//         <Input id="email" name="email" type="email" />
-//       </div>
-//       <Button variant="secondary" className="w-full">
-//         Sign In
-//       </Button>
-//     </form>
-//   );
-// }
