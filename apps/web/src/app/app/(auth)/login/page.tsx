@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { z } from "zod";
 
-import { Button } from "@openstatus/ui";
+import { Button, Separator } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
+import DevModeContainer from "@/components/dev-mode-container";
 import { Icons } from "@/components/icons";
 import { signIn } from "@/lib/auth";
+import MagicLinkForm from "./_components/magic-link-form";
+
+const isDev = process.env.NODE_ENV === "development";
 
 /**
  * allowed URL search params
@@ -31,6 +35,12 @@ export default function Page({
         </p>
       </div>
       <div className="grid gap-3">
+        {isDev ? (
+          <DevModeContainer className="grid gap-3">
+            <MagicLinkForm />
+            <Separator />
+          </DevModeContainer>
+        ) : null}
         <form
           action={async () => {
             "use server";
@@ -74,3 +84,32 @@ export default function Page({
     </Shell>
   );
 }
+
+// /**
+//  * @deprecated on production - only to be used in development mode
+//  */
+// function MagicLinkForm() {
+//   return (
+//     <form
+//       action={async (formData) => {
+//         "use server";
+//         try {
+//           await signIn("resend", formData);
+//         } catch (e) {
+//           // console.error(e);
+//         } finally {
+//           redirect("/app");
+//         }
+//       }}
+//       className="grid gap-2"
+//     >
+//       <div className="grid gap-1.5">
+//         <Label htmlFor="email">Email</Label>
+//         <Input id="email" name="email" type="email" />
+//       </div>
+//       <Button variant="secondary" className="w-full">
+//         Sign In
+//       </Button>
+//     </form>
+//   );
+// }

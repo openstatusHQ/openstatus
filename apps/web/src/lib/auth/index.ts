@@ -1,36 +1,23 @@
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
-import GitHub from "next-auth/providers/github";
-import Google from "next-auth/providers/google";
 
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-// import Credentials from "next-auth/providers/credentials";
-
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 import { sendEmail, WelcomeEmail } from "@openstatus/emails";
 
 import { adapter } from "./adapter";
+import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 
 export type { DefaultSession };
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // debug: true,
   adapter,
-  providers: [
-    GitHub({ allowDangerousEmailAccountLinking: true }),
-    Google({
-      allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          // See https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest
-          prompt: "select_account",
-          // scope:
-          //   "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
-        },
-      },
-    }),
-  ],
+  providers:
+    process.env.NODE_ENV === "development"
+      ? [GitHubProvider, GoogleProvider, ResendProvider]
+      : [GitHubProvider, GoogleProvider],
   callbacks: {
     async signIn(params) {
       // We keep updating the user info when we loggin in
@@ -38,8 +25,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (params.account?.provider === "google") {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
-
-        console.log(params.profile);
 
         await db
           .update(user)
@@ -56,8 +41,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (params.account?.provider === "github") {
         if (!params.profile) return true;
         if (Number.isNaN(Number(params.user.id))) return true;
-
-        console.log(params.profile);
 
         await db
           .update(user)
