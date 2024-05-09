@@ -1,11 +1,7 @@
-import type { DefaultUser } from "next-auth";
+import type NextAuth from "next-auth";
 
-// FIXME: this is very wrong - no type `DefaultUser` exists
-// also doenst provide autocomplete and type safety-ness
+import type { User as DefaultUserSchema } from "@openstatus/db/src/schema";
 
 declare module "next-auth" {
-  interface User extends Omit<DefaultUser, "id"> {
-    id: number;
-    email: string;
-  }
+  interface User extends DefaultUserSchema {}
 }
