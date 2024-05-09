@@ -89,9 +89,13 @@ export default auth(async (req) => {
           ({ workspace }) => workspace.slug === workspaceSlug,
         );
         if (hasAccessToWorkspace) {
-          const response = NextResponse.next();
-          response.cookies.set("workspace-slug", workspaceSlug);
-          return response;
+          const workspaceCookie = req.cookies.get("workspace-slug")?.value;
+          const hasChanged = workspaceCookie !== workspaceSlug;
+          if (hasChanged) {
+            const response = NextResponse.redirect(url);
+            response.cookies.set("workspace-slug", workspaceSlug);
+            return response;
+          }
         } else {
           return NextResponse.redirect(new URL("/app", req.url));
         }

@@ -60,19 +60,16 @@ export function SelectWorkspace() {
         <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {workspaces.map((workspace) => (
-          <DropdownMenuItem
-            key={workspace.id}
-            onClick={() => {
-              if (workspace.slug !== active && typeof window !== "undefined") {
-                window.location.href = `/app/${workspace.slug}/monitors`;
-              }
-            }}
-            className="justify-between"
-          >
-            <span className="truncate">{workspace.slug}</span>
-            {active === workspace.slug ? (
-              <Check className="ml-2 h-4 w-4" />
-            ) : null}
+          <DropdownMenuItem key={workspace.id} asChild>
+            <a
+              href={`/app/${workspace.slug}/monitors`}
+              className="justify-between"
+            >
+              <span className="truncate">{workspace.slug}</span>
+              {active === workspace.slug ? (
+                <Check className="ml-2 h-4 w-4" />
+              ) : null}
+            </a>
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
