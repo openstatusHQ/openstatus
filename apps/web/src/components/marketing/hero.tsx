@@ -41,7 +41,7 @@ export function Hero() {
       <div className="my-4 grid gap-2 sm:grid-cols-2">
         <div className="text-center sm:block sm:text-right">
           <Button className="w-48 rounded-full sm:w-auto" asChild>
-            <Link href="/app/sign-up">Get Started</Link>
+            <Link href="/app/login">Get Started</Link>
           </Button>
         </div>
         <div className="text-center sm:block sm:text-left">

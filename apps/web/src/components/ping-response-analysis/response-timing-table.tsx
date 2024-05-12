@@ -15,7 +15,7 @@ import {
 
 import { timingDict } from "./config";
 import type { Timing } from "./utils";
-import { getTimingPhases, getTotalLatency } from "./utils";
+import { getTimingPhases, getTimingPhasesWidth } from "./utils";
 
 export function ResponseTimingTable({
   timing,
@@ -24,26 +24,29 @@ export function ResponseTimingTable({
   timing: Timing;
   hideInfo?: boolean;
 }) {
-  const total = getTotalLatency(timing);
   const timingPhases = getTimingPhases(timing);
+  const timingPhasesWidth = getTimingPhasesWidth(timing);
+
   return (
     <Table>
       <TableCaption className="mt-2">Response Timing</TableCaption>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-[120px] md:w-[150px]">Timing</TableHead>
-          <TableHead className="w-[120px] md:w-[150px]">Duration</TableHead>
+          <TableHead className="w-[72px] md:w-[150px]">Timing</TableHead>
+          <TableHead className="w-[100px] md:w-[150px]">Duration</TableHead>
           <TableHead />
         </TableRow>
       </TableHeader>
       <TableBody>
         {Object.entries(timingPhases).map(([key, value]) => {
-          const { short, long, description } =
-            timingDict[key as keyof typeof timingPhases];
+          const phase = key as keyof typeof timingPhases;
+          const { short, long, description } = timingDict[phase];
+          const { preWidth, width } = timingPhasesWidth[phase];
+
           return (
             <TableRow key={key}>
               <TableCell>
-                <div className="flex w-[80px] items-center justify-between gap-2">
+                <div className="flex w-[72px] items-center justify-between gap-2">
                   <p className="text-muted-foreground">{short}</p>
                   {!hideInfo ? (
                     <Popover>
@@ -63,11 +66,17 @@ export function ResponseTimingTable({
               <TableCell>
                 <code>{value}ms</code>
               </TableCell>
-              <TableCell>
+              <TableCell className="flex w-full">
+                <div
+                  style={{
+                    width: `${preWidth}%`,
+                    minWidth: "1px",
+                  }}
+                />
                 <div
                   className="bg-foreground h-3 rounded-md"
                   style={{
-                    width: `${(value / total) * 100}%`,
+                    width: `${width}%`,
                     minWidth: "1px",
                   }}
                 />

@@ -50,7 +50,7 @@ export function BottomCTA() {
     <InBetweenCTA
       description="Learn over time how your services are performing, and inform your users when there are issues."
       actions={{
-        primary: { label: "Start for Free", href: "/app/sign-up" },
+        primary: { label: "Start for Free", href: "/app/login" },
         secondary: { label: "Schedule a Demo", href: "/cal", target: "_blank" },
       }}
     />

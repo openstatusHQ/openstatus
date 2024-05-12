@@ -14,11 +14,13 @@ import type { Timing } from "./utils";
 export async function ResponseDetailTabs({
   timing,
   headers,
+  status,
   message,
   assertions,
 }: {
   timing: Timing | null;
   headers: Record<string, string> | null;
+  status: number | null;
   message?: string | null;
   assertions?: Assertion[] | null;
 }) {
@@ -43,9 +45,12 @@ export async function ResponseDetailTabs({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="headers">
-        {headers ? <ResponseHeaderTable headers={headers} /> : null}
+        {headers ? (
+          <ResponseHeaderTable headers={headers} status={status || 0} />
+        ) : null}
       </TabsContent>
       <TabsContent value="timing">
+        {/* TODO: show hideInfo={false} when in /play/checker page */}
         {timing ? <ResponseTimingTable timing={timing} hideInfo /> : null}
       </TabsContent>
       <TabsContent value="message">
