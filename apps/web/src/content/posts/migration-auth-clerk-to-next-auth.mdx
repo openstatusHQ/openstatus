@@ -1,0 +1,67 @@
+---
+title: Why we migrated from Clerk to Next Auth (Auth.js).
+description:
+  Discover the reasons behind our decision to migrate from Clerk to Next Auth
+  (Auth.js).
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-05-13
+image: /assets/posts/migration-auth-clerk-to-next-auth/title.png
+---
+
+We just migrated from Clerk to Next Auth (Auth.js) for our authentication. Let's
+dive into the reasons behind this decision.
+
+## Why did we wanted to migrate from Clerk to NextAuth (Auth.js)?
+
+First Clerk is an amazing product. But we are building an open-source project
+and it was painful to have to ask for our new contributors to create an account
+on Clerk. Then setup some social login and then route the webhook to their
+localhost.
+
+We really want to improve the DX of our contributors. We want to make it as easy
+to contribute to OpenStatus as possible.
+
+## Why did we started with Clerk ?
+
+When we started OpenStatus, we needed a way to authenticate users. We wanted to
+make it easy for users to sign up and log in to our platform.
+
+Clerk was a good choice for us because it provided a simple way to authenticate
+users.
+
+The documentation was clear, and the setup was straightforward. It was working
+flawlessly with nextjs app router.
+
+At the same time NextAuth was starting a transition to Auth.js. We didn't want
+to go with Next-auth v4 as it was probably near the end of its life. Also the
+docs for next-auth v4 were a bit confusing.
+
+With all these reasons, we decided to go with Clerk.
+
+## Why did we pick NextAuth (Auth.js) and not Lucia?
+
+First when we thought about migrating from Clerk, we thought about
+[Lucia](https://lucia-auth.com/). Lucia is an amazing authentication library
+that is gaining popularity built by [Pilcrow](https://pilcrowonpaper.com/).
+
+But we decided to go with NextAuth because it was more mature also it seemed
+more stable to us.
+
+<Tweet id="1785701672012107841" />
+
+We also both had some experience with NextAuth. It was a good choice for us as
+we did not have to learn a new library.
+
+## How did we migrate from Clerk to NextAuth (Auth.js)?
+
+We were scared of the migration at first. We thought it would be a long and
+hard. But the migration was quite simple. As we were already storing most of the
+user data in our database.
+
+## Conclusion
+
+We are happy with our decision to migrate from Clerk to NextAuth (Auth.js).
+Though we are going to miss some Clerk features, we are excited to see what
+NextAuth has in store for us.
