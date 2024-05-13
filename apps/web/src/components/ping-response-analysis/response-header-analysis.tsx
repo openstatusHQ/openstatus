@@ -7,6 +7,7 @@ import {
   parseCacheControlHeader,
   parseCfCacheStatus,
   parseCfRay,
+  parseFlyRequestId,
   parseXVercelCache,
   parseXVercelId,
 } from "@openstatus/header-analysis";
@@ -26,6 +27,7 @@ const allowedHeaders = [
   "X-Vercel-Cache",
   "X-Vercel-Id",
   "Location",
+  "Fly-Request-Id",
 ];
 
 export function ResponseHeaderAnalysis({
@@ -68,6 +70,8 @@ export function ResponseHeaderAnalysis({
               return <XVercelCache header={header} />;
             case "X-Vercel-Id":
               return <XVercelId header={header} />;
+            case "Fly-Request-Id":
+              return <FlyRequestId header={header} />;
             case "Location":
               return <Location header={header} status={status} />;
             default:
@@ -159,17 +163,17 @@ export function CfRay({ header }: { header: string }) {
         This header is a hashed value that encodes information about the data
         center and the visitor’s request. The data center the request hit is:
       </p>
-      {typeof value === "string" ? (
-        <p className="text-destructive">{value}</p>
+      {value.status === "failed" ? (
+        <p className="text-destructive">{value.error.message}</p>
       ) : (
         <div className="grid grid-cols-4 gap-3">
           <p className="sm:col-span-1">
             <code className="bg-muted rounded p-1 font-semibold">
-              {value.code}
+              {value.data.code}
             </code>
           </p>
           <p className="sm:col-span-3">
-            {value.location} {value.flag}
+            {value.data.location} {value.data.flag}
           </p>
         </div>
       )}
@@ -198,6 +202,33 @@ export function Location({
         </p>
         <p className="sm:col-span-3">{header}</p>
       </div>
+    </div>
+  );
+}
+
+export function FlyRequestId({ header }: { header: string }) {
+  const value = parseFlyRequestId(header);
+
+  return (
+    <div className="grid gap-4">
+      <p className="text-muted-foreground col-span-full text-sm">
+        This header is a hashed value that encodes information about the data
+        center and the visitor’s request. The data center the request hit is:
+      </p>
+      {value.status === "failed" ? (
+        <p className="text-destructive">{value.error.message}</p>
+      ) : (
+        <div className="grid grid-cols-4 gap-3">
+          <p className="sm:col-span-1">
+            <code className="bg-muted rounded p-1 font-semibold">
+              {value.data.code}
+            </code>
+          </p>
+          <p className="sm:col-span-3">
+            {value.data.location} {value.data.flag}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

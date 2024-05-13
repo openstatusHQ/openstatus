@@ -4,10 +4,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {},
-  "dependencies": {
-    "@openstatus/utils": "workspace:*",
-    "zod": "3.22.4"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "typescript": "5.4.5"
