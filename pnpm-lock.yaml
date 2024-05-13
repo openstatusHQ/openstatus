@@ -739,13 +739,6 @@ importers:
         version: 5.4.5
 
   packages/header-analysis:
-    dependencies:
-      '@openstatus/utils':
-        specifier: workspace:*
-        version: link:../utils
-      zod:
-        specifier: 3.22.4
-        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
