@@ -130,7 +130,7 @@ function XVercelCache({ header }: { header: string }) {
 }
 
 export function XVercelId({ header }: { header: string }) {
-  const values = parseXVercelId(header);
+  const value = parseXVercelId(header);
 
   return (
     <div className="grid gap-4">
@@ -139,16 +139,22 @@ export function XVercelId({ header }: { header: string }) {
         the region the function was executed in (for both Edge and Serverless):
       </p>
       <div className="grid grid-cols-4 gap-3">
-        {values.map(({ code, location, flag }) => (
-          <React.Fragment key={code}>
-            <p className="sm:col-span-1">
-              <code className="bg-muted rounded p-1 font-semibold">{code}</code>
-            </p>
-            <p className="sm:col-span-3">
-              {location} {flag}
-            </p>
-          </React.Fragment>
-        ))}
+        {value.status === "failed" ? (
+          <p className="text-destructive">{value.error.message}</p>
+        ) : (
+          value.data.map(({ code, location, flag }) => (
+            <React.Fragment key={code}>
+              <p className="sm:col-span-1">
+                <code className="bg-muted rounded p-1 font-semibold">
+                  {code}
+                </code>
+              </p>
+              <p className="sm:col-span-3">
+                {location} {flag}
+              </p>
+            </React.Fragment>
+          ))
+        )}
       </div>
     </div>
   );

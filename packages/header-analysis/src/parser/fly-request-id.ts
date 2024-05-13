@@ -5,7 +5,7 @@ export function parseFlyRequestId(header: string): ParserReturn<Region> {
   const regex = /\b([a-z]{3})\b/g;
   const arr = header.match(regex);
 
-  if (!arr || !Array.isArray(arr) || arr.length === 0) {
+  if (!arr || arr.length === 0) {
     return { status: "failed", error: new Error("Couldn't parse the header.") };
   }
 
