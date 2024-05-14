@@ -21,6 +21,19 @@
     },
     "test": {
       "cache": false
-    }
+    },
+    "dx": {
+      "cache": false,
+      "dependsOn": ["seed"]
+    },
+    "seed": {
+      "cache": false,
+      "dependsOn": ["migrate"]
+    },
+    "migrate": {
+      "cache": false,
+      "dependsOn": ["env"]
+    },
+    "env": {}
   }
 }

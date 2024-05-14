@@ -77,8 +77,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const { id: userId, email } = params.user;
 
-      await analytics.identify(userId, { email, userId });
-      await trackAnalytics({ event: "User Created", userId, email });
+      if (process.env.NODE_ENV !== "development") {
+        await analytics.identify(userId, { email, userId });
+        await trackAnalytics({ event: "User Created", userId, email });
+      }
     },
 
     async signIn(params) {
@@ -87,8 +89,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const { id: userId, email } = params.user;
 
-      await analytics.identify(userId, { userId, email });
-      await trackAnalytics({ event: "User Signed In" });
+      if (process.env.NODE_ENV !== "development") {
+        await analytics.identify(userId, { userId, email });
+        await trackAnalytics({ event: "User Signed In" });
+      }
     },
   },
   pages: {
