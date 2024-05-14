@@ -49,6 +49,7 @@ async function main() {
       },
     ])
     .run();
+
   await db
     .insert(monitor)
     .values([
@@ -110,9 +111,9 @@ async function main() {
     .values({
       id: 1,
       tenantId: "1",
-      firstName: "test",
-      lastName: "user",
-      email: "test@test.com",
+      firstName: "Speed",
+      lastName: "Matters",
+      email: "ping@openstatus.dev",
       photoUrl: "",
     })
     .run();

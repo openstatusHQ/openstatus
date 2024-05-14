@@ -80,10 +80,10 @@ test("All workspaces", async () => {
   expect(result).toMatchObject([
     {
       createdAt: expect.any(Date),
-      email: "test@test.com",
-      firstName: "test",
+      email: "ping@openstatus.dev",
+      firstName: "Speed",
       id: 1,
-      lastName: "user",
+      lastName: "Matters",
       photoUrl: "",
       tenantId: "1",
       updatedAt: expect.any(Date),

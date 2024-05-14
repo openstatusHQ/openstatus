@@ -58,3 +58,7 @@ openstatus-test.db-wal
 .idea
 
 .wrangler
+apps/web/.env.dev
+packages/db/.env.dev
+openstatus-dev.db-wal
+openstatus-dev.db-shm
