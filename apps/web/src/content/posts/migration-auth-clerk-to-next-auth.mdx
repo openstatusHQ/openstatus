@@ -1,0 +1,142 @@
+---
+title: Why we migrated from Clerk to NextAuth (Auth.js).
+description:
+  Discover the reasons behind our decision to migrate from Clerk to NextAuth.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-05-15
+image: /assets/posts/migration-auth-clerk-to-next-auth/title.png
+---
+
+We recently switched from [Clerk](https://clerk.com) to NextAuth
+([Auth.js](https://authjs.dev)) for our authentication. Now, let's explore the
+reasons for this decision.
+
+## Why did we migrate from Clerk to NextAuth (Auth.js)? 🤔
+
+First, Clerk is an amazing product. But we are building an open-source project
+and creating an account on Clerk, setting up social login, and routing the
+webhook to localhost was a pain for new contributors as it required a tunnel to
+`localhost:3000` via e.g. [ngrok](https://ngrok.com).
+
+Our goal is to improve the contributor experience (CX) for OpenStatus by
+speeding up the time to first line of code. _#TTFLOC_
+
+Our efforts have already simplified the process significantly. With SQLite and
+now NextAuth, we can seed the DB and login with an email (magic link gets
+printed in the console) within less than a minute.
+
+<Tweet id="1790147744964780230" />
+
+> Not gonna lie, we still have some more improvements to make, like adding a
+> better Tinybird setup, but saving it for later! ✍️
+
+## Why did we start with Clerk? 🧑‍💻
+
+When we started OpenStatus, we needed a way to authenticate users. We wanted to
+make it easy for users to sign up for our platform. Clerk was a good choice for
+us because it provided a simple way to authenticate users.
+
+The documentation is clear, the setup is straightforward, and it is working
+flawlessly with Next.js App Router.
+
+At the same time, NextAuth was starting a transition to Auth.js and while we
+wanted to use the latest tech and have chosen
+[drizzle](https://orm.drizzle.team) over [prisma](https://www.prisma.io), there
+was no proper adapter for it.
+
+Back then, Clerk was the perfect fit.
+
+## Why did we pick NextAuth (Auth.js) and not Lucia? 🔑
+
+First, when we thought about migrating from Clerk, we considered
+[Lucia](https://lucia-auth.com/). Lucia is an amazing authentication library
+that is gaining popularity built by [Pilcrow](https://pilcrowonpaper.com/).
+
+We were scared about the stability and direction of the project. When you
+implement authentication, you want to do it once and forget about it after.
+
+<Tweet id="1785701672012107841" />
+
+We decided to go with NextAuth because it was more mature, and it seemed more
+stable to us. Additionally, we both had some experience with NextAuth. It was a
+good choice for us as we did not have to learn a new library.
+
+## How did we migrate from Clerk to NextAuth (Auth.js)? 🚀
+
+We were scared of the migration at first. We thought it would be long and hard.
+But the migration was quite simple, as we were already storing most of the user
+data in our database.
+
+### What we already had in place
+
+Whenever a user signed up with Clerk, we stored the `user`'s data in our
+database. We had to store the `tenantId` from Clerk to be able to fetch map the
+user, and we additionally stored `email`, `name`, `photoUrl`, and SQLite created
+an additional primary key `id`.
+
+All the other information of the user's social account (Google, GitHub OAuth)
+was stored in Clerk.
+
+### Starting with NextAuth
+
+Whenever you start with NextAuth, you choose your DB/ORM adapter and create the
+tables you need:
+
+- `users`
+- `sessions`
+- `accounts`
+- `verificationTokens`
+
+With drizzle as our ORM, we followed the following steps from
+[here](https://authjs.dev/getting-started/adapters/drizzle), including using
+SQLite as schema.
+
+Now because we already had the `users` table, we extended it with the necessary
+fields or mappings in our
+[extended adapter](https://github.com/openstatusHQ/openstatus/blob/main/apps/web/src/lib/auth/adapter.ts)
+(e.g., we have kept the `photoUrl` field and did not use the `image` field from
+NextAuth to store the social image of the user). NextAuth allows you to override
+the adapter functions and that's what we did: we overrode the `getUser` and
+`createUser` functions to match our current user db schema.
+
+The other tables `sessions`, `accounts`, and `verificationTokens` were created
+as is.
+
+Now you might wonder: **How did we migrate the data?** We simply did not.
+
+While Clerk has all the information for the social `accounts` of every user, we
+are connecting the user to the account when they log in the next time with.
+NextAuth provides a
+[`allowDangerousEmailAccountLinking`](https://authjs.dev/reference/core/providers#allowdangerousemailaccountlinking)
+property that re-links the `user` to the `account` when they log in with the
+same email.
+
+> We still have some issue with types and NextAuth. We have an open issue
+> [#812](https://github.com/openstatusHQ/openstatus/issues/812) if you want to
+> help us 🤗.
+
+### Customizing the UI
+
+We have been using Clerk's UI for a long time and swapped it with custom
+components. But luckily our website is powered by
+[shadcn UI](https://ui.shadcn.com) and we could easily create the components.
+
+## Conclusion
+
+If you are building an open-source project, we recommend NextAuth. But if it's a
+closed-source SaaS project, Clerk is a good choice.
+
+We are happy with our decision to migrate from Clerk to NextAuth (Auth.js).
+While we will miss some Clerk features (analytics), we look forward to exploring
+what NextAuth offers us.
+
+If you have any questions about our migration, feel free to send us an email at
+[ping@openstatus.dev](mailto:ping@openstatus.dev).
+
+Our main PR for the migration is
+[#801](https://github.com/openstatusHQ/openstatus/pull/801) while we implemented
+the magic link for dev mode in
+[#806](https://github.com/openstatusHQ/openstatus/pull/806) and improved the
+types in [#807](https://github.com/openstatusHQ/openstatus/pull/807).
