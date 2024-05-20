@@ -71,6 +71,11 @@ export const invitationRouter = createTRPCRouter({
         .returning()
         .get();
 
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `,
+        );
+      }
       // TODO:
       await trackNewInvitation();
 
@@ -132,10 +137,10 @@ export const invitationRouter = createTRPCRouter({
         },
       });
 
-      if (!opts.ctx.user?.id) return "Missing user";
+      if (!opts.ctx.session?.user?.id) return "Missing user";
 
       const _user = await opts.ctx.db.query.user.findFirst({
-        where: eq(user.id, opts.ctx.user.id),
+        where: eq(user.id, Number(opts.ctx.session.user.id)),
       });
 
       if (!_user) return "Invalid user";

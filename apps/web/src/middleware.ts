@@ -33,12 +33,7 @@ export const getValidSubdomain = (host?: string | null) => {
   return subdomain;
 };
 
-const publicAppPaths = [
-  "/app/sign-in",
-  "/app/sign-up",
-  "/app/login",
-  "/app/invite",
-];
+const publicAppPaths = ["/app/sign-in", "/app/sign-up", "/app/login"];
 
 // remove auth middleware if needed
 // export const middleware = () => NextResponse.next();
