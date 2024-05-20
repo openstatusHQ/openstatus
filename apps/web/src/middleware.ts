@@ -33,7 +33,12 @@ export const getValidSubdomain = (host?: string | null) => {
   return subdomain;
 };
 
-const publicAppPaths = ["/app/sign-in", "/app/sign-up", "/app/login"];
+const publicAppPaths = [
+  "/app/sign-in",
+  "/app/sign-up",
+  "/app/login",
+  "/app/invite",
+];
 
 // remove auth middleware if needed
 // export const middleware = () => NextResponse.next();
@@ -60,9 +65,21 @@ export default auth(async (req) => {
     pathname.startsWith(path),
   );
 
+  if (!req.auth && pathname.startsWith("/app/invite")) {
+    return NextResponse.redirect(
+      new URL(
+        `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
+        req.url,
+      ),
+    );
+  }
+
   if (!req.auth && pathname.startsWith("/app") && !isPublicAppPath) {
     return NextResponse.redirect(
-      new URL(`/app/login?redirectTo=${encodeURIComponent(pathname)}`, req.url),
+      new URL(
+        `/app/login?redirectTo=${encodeURIComponent(req.nextUrl.href)}`,
+        req.url,
+      ),
     );
   }
 
