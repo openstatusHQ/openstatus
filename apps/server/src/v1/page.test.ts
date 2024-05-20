@@ -70,7 +70,7 @@ test("Update a page with monitors as object including order", async () => {
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
-    id: expect.any(Number),
+    id: 3,
   });
 });
 
