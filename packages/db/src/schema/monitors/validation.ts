@@ -11,7 +11,7 @@ import {
   monitorRegions,
   monitorStatus,
 } from "./constants";
-import { monitor } from "./monitor";
+import { monitor, monitorsToPages } from "./monitor";
 
 export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorMethodsSchema = z.enum(monitorMethods);
@@ -79,8 +79,11 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   headerAssertions: z.array(assertions.headerAssertion).optional(),
 });
 
+export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
+
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;
 export type Monitor = z.infer<typeof selectMonitorSchema>;
+export type MonitorToPage = z.infer<typeof selectMonitorToPageSchema>;
 export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;

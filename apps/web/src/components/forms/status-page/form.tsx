@@ -64,14 +64,14 @@ export function StatusPageForm({
       description: defaultValues?.description || "",
       workspaceId: defaultValues?.workspaceId || 0,
       id: defaultValues?.id || 0,
-      monitors:
-        checkAllMonitors && allMonitors
-          ? allMonitors.map(({ id }) => id)
-          : defaultValues?.monitors ?? [],
       customDomain: defaultValues?.customDomain || "",
       icon: defaultValues?.icon || "",
       password: defaultValues?.password || "",
       passwordProtected: defaultValues?.passwordProtected || false,
+      monitors:
+        checkAllMonitors && allMonitors
+          ? allMonitors.map(({ id }) => ({ monitorId: id, order: 0 }))
+          : defaultValues?.monitors ?? [],
     },
   });
   const pathname = usePathname();
