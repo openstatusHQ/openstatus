@@ -40,6 +40,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
     z.object({
       monitorId: z.number(),
       pageId: z.number(),
+      order: z.number().default(0).optional(),
       monitor: selectMonitorSchema,
     }),
   ),
