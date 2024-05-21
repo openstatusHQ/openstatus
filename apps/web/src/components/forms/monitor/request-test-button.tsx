@@ -133,6 +133,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
             <ResponseDetailTabs
               timing={check.data.timing}
               headers={check.data.headers}
+              status={check.data.status}
               assertions={deserialize(
                 JSON.stringify([
                   ...(statusAssertions || []),

@@ -43,7 +43,7 @@ export function Header({ navigation, plan, page }: Props) {
             </div>
           ) : null}
         </div>
-        <TabsContainer className="-mb-[12px] hidden sm:block">
+        <TabsContainer className="-mb-[14px] hidden sm:block">
           {navigation.map(({ label, href, disabled, segment }) => {
             const active = segment === selectedSegment;
             return (

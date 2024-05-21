@@ -260,6 +260,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/header-analysis':
+        specifier: workspace:*
+        version: link:../../packages/header-analysis
       '@openstatus/next-monitoring':
         specifier: 0.0.2
         version: 0.0.2(next@14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
@@ -731,6 +734,15 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
+
+  packages/header-analysis:
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
       typescript:
         specifier: 5.4.5
         version: 5.4.5
