@@ -26,7 +26,16 @@ export const insertPageSchema = createInsertSchema(page, {
   slug: slugSchema,
 }).extend({
   password: z.string().nullable().optional().default(""),
-  monitors: z.array(z.number()).optional().default([]),
+  monitors: z
+    .array(
+      z.object({
+        // REMINDER: has to be different from `id` in as the prop is already used by react-hook-form
+        monitorId: z.number(),
+        order: z.number().default(0).optional(),
+      }),
+    )
+    .optional()
+    .default([]),
 });
 
 export const selectPageSchema = createSelectSchema(page).extend({

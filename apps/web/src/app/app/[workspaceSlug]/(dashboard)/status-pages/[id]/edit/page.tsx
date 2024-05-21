@@ -32,7 +32,10 @@ export default async function EditPage({
       allMonitors={allMonitors}
       defaultValues={{
         ...page,
-        monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
+        monitors: page.monitorsToPages.map(({ monitorId, order }) => ({
+          monitorId,
+          order,
+        })),
       }}
       defaultSection={search.success ? search.data.section : undefined}
       plan={workspace.plan}

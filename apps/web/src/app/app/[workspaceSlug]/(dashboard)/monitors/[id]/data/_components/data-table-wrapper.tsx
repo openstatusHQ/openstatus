@@ -101,6 +101,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       <ResponseDetailTabs
         timing={first.timing}
         headers={first.headers}
+        status={first.statusCode}
         message={first.message}
         assertions={assertions.deserialize(first.assertions || "[]")}
       />

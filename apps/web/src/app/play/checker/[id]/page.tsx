@@ -47,7 +47,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
   const check =
     data.checks.find((i) => i.region === selectedRegion) || data.checks?.[0];
 
-  const { region, headers, timing } = check;
+  const { region, headers, timing, status } = check;
 
   return (
     <>
@@ -77,7 +77,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
               <RegionInfo check={check} />
             </div>
           </div>
-          <ResponseDetailTabs timing={timing} headers={headers} />
+          <ResponseDetailTabs {...{ timing, headers, status }} />
         </div>
         <Separator />
         <p className="text-muted-foreground text-sm">
@@ -85,7 +85,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
           <span className="text-foreground">1 day</span>. If you want to persist
           the data,{" "}
           <Link
-            href="/app/sign-in"
+            href="/app/login"
             className="text-foreground underline underline-offset-4 hover:no-underline"
           >
             login
