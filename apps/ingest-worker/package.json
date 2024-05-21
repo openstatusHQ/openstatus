@@ -2,11 +2,14 @@
   "name": "@openstatus/ingest-worker",
   "scripts": {
     "dev": "wrangler dev src/index.ts",
-    "deploy": "wrangler deploy --minify src/index.ts"
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "deploy:prod": "wrangler deploy --minify src/index.ts --env production"
   },
   "dependencies": {
-    "@clickhouse/client-web": "0.3.0",
     "@hono/zod-validator": "0.2.1",
+    "@libsql/client": "0.6.0",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/tinybird": "workspace:*",
     "detect-browser": "5.3.0",
     "hono": "4.1.4",
     "zod": "3.22.4"

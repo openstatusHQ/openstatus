@@ -37,12 +37,18 @@ importers:
 
   apps/ingest-worker:
     dependencies:
-      '@clickhouse/client-web':
-        specifier: 0.3.0
-        version: 0.3.0
       '@hono/zod-validator':
         specifier: 0.2.1
         version: 0.2.1(hono@4.1.4)(zod@3.22.4)
+      '@libsql/client':
+        specifier: 0.6.0
+        version: 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@openstatus/tinybird':
+        specifier: workspace:*
+        version: link:../../packages/tinybird
       detect-browser:
         specifier: 5.3.0
         version: 5.3.0
@@ -1519,14 +1525,8 @@ packages:
   '@chronark/zod-bird@0.3.6':
     resolution: {integrity: sha512-hE8kCGLJK5ncH8F7uPaqPiOOqo68vUI66nusg7HO5X9BcyN8lXfeQliu6Ou1kOSq95OYshf9nB2fk2+LEvF4ng==}
 
-  '@clickhouse/client-common@0.3.0':
-    resolution: {integrity: sha512-LcfJfyMglUTbGuDN/s6e/R3LwtbQXpv6juIJID+tVXxcGzPijhDB+XXQpqbprunqnm48vHmLfCB6/68Pgp5qvg==}
-
   '@clickhouse/client-common@1.0.1':
     resolution: {integrity: sha512-3L6e0foP6VOktScoi6XWMjJyOpKCWgLUYgPVxP2c7gm6Kotq+iRmmmXtXTSg7B7uozcLZycTtPfIw2d80SYsYw==}
-
-  '@clickhouse/client-web@0.3.0':
-    resolution: {integrity: sha512-zx/oJ2M+YIMTiTNdRAACpJGKqlJ47LE9Y4DzyZgki37q3QYoCCXOzGk5Jpq9MFFHwYW+9OMx9RIk80VvuSx4mw==}
 
   '@clickhouse/client-web@1.0.1':
     resolution: {integrity: sha512-gKmfOxJ3+6kFtlmQaBd0sOz8t8lAiJcBfR9sx1Cmk4M38T5xxza7ZWhyGs3O6I7nJkU60RuM1MY8Woct6vMtRg==}
@@ -9552,13 +9552,7 @@ snapshots:
     dependencies:
       zod: 3.22.4
 
-  '@clickhouse/client-common@0.3.0': {}
-
   '@clickhouse/client-common@1.0.1': {}
-
-  '@clickhouse/client-web@0.3.0':
-    dependencies:
-      '@clickhouse/client-common': 0.3.0
 
   '@clickhouse/client-web@1.0.1':
     dependencies:
