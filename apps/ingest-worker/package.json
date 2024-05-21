@@ -11,13 +11,14 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "detect-browser": "5.3.0",
-    "hono": "4.1.4",
+    "drizzle-orm": "0.30.10",
+    "hono": "4.3.9",
     "zod": "3.22.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.6.3",
-    "@cloudflare/workers-types": "4.20240405.0",
-    "typescript": "5.4.3",
-    "wrangler": "3.51.2"
+    "@biomejs/biome": "1.7.3",
+    "@cloudflare/workers-types": "4.20240512.0",
+    "typescript": "5.4.5",
+    "wrangler": "3.57.0"
   }
 }

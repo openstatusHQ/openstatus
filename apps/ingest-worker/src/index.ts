@@ -1,9 +1,10 @@
 import { browserName, detectOS } from "detect-browser";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { env } from "hono/adapter";
 import { z } from "zod";
 
-import { createDb, eq } from "@openstatus/db";
+import { createDb } from "@openstatus/db/src/cf";
 import { application } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 import { tbIngestWebVitals } from "@openstatus/tinybird/src/validation";

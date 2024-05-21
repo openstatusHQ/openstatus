@@ -1,4 +1,3 @@
-import type { Client } from "@libsql/client";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
@@ -11,7 +10,3 @@ const client = createClient({
 });
 
 export const db = drizzle(client, { schema });
-
-export const createDb = ({ client }: { client: Client }) => {
-  return drizzle(client, { schema });
-};

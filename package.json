@@ -22,7 +22,7 @@
     "turbo": "1.13.3",
     "typescript": "5.4.5"
   },
-  "packageManager": "pnpm@9.1.1",
+  "packageManager": "pnpm@9.1.2",
   "name": "openstatus",
   "workspaces": [
     "apps/*",
