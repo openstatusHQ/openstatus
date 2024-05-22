@@ -46,4 +46,16 @@ export async function trackNewNotification(
 
 export async function trackNewStatusReport() {}
 
-export async function trackNewInvitation() {}
+export async function trackNewInvitation(
+  user: User,
+  config: { emailTo: string; workspaceId: number },
+) {
+  await analytics.identify(user.id, {
+    userId: user.id,
+    email: user.email,
+  });
+  await trackAnalytics({
+    event: "Invitation Created",
+    ...config,
+  });
+}
