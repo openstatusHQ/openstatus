@@ -1,7 +1,5 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
+  "editor.codeActionsOnSave": {},
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",

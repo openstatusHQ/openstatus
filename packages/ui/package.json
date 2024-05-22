@@ -5,16 +5,15 @@
   "types": "./src/index.tsx",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint \"**/*.ts*\""
+    "lint": "biome lint \"**/*.ts*\""
   },
   "devDependencies": {
-    "@openstatus/eslint-config": "workspace:*",
+    "@biomejs/biome": "1.7.3",
     "@openstatus/tsconfig": "workspace:*",
     "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",
     "@types/react": "18.2.64",
     "@types/react-dom": "18.2.21",
-    "eslint": "8.50.0",
     "typescript": "5.4.5"
   },
   "dependencies": {

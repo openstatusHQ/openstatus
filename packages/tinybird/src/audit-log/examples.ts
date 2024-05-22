@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Tinybird } from "@chronark/zod-bird";
 
 import { AuditLog } from "./client";

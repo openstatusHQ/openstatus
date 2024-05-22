@@ -8,15 +8,12 @@
     "lint:turbo": "turbo run lint",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dx": "turbo run dx",
-    "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
     "tsc": "tsc",
     "test": "turbo run test"
   },
   "devDependencies": {
     "@biomejs/biome": "1.7.3",
-    "@openstatus/eslint-config": "workspace:*",
     "@turbo/gen": "1.13.3",
-    "eslint": "8.50.0",
     "turbo": "1.13.3",
     "typescript": "5.4.5"
   },
