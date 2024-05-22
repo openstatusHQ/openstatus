@@ -36,7 +36,7 @@ export function formatDuration(ms: number) {
 }
 
 export function notEmpty<TValue>(
-  value: TValue | null | undefined
+  value: TValue | null | undefined,
 ): value is TValue {
   return value !== null && value !== undefined;
 }
@@ -65,7 +65,7 @@ export function manipulateDate(
   date?: {
     from: Date | undefined;
     to?: Date | undefined;
-  } | null
+  } | null,
 ) {
   const isToDateMidnight = String(date?.to?.getTime()).endsWith("00000");
 
