@@ -15,10 +15,12 @@ import { createUser, getUser } from "./helpers";
 export type { DefaultSession };
 
 export const adapter: Adapter = {
-  // @ts-expect-error some issues with types
   ...DrizzleAdapter(db, {
+    // @ts-expect-error some issues with types
     usersTable: user,
+    // @ts-expect-error some issues with types
     accountsTable: account,
+    // @ts-expect-error some issues with types
     sessionsTable: session,
     verificationTokensTable: verificationToken,
   }),

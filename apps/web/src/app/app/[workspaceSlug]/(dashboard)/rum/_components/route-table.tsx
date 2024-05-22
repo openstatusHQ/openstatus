@@ -1,8 +1,6 @@
 import {
   Table,
-  TableBody,
   TableCaption,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -32,7 +30,6 @@ const RouteTable = async () => {
               <TableHead>TTFB</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>{/* TODO */}</TableBody>
         </Table>
       </div>
     </div>
