@@ -84,7 +84,7 @@ export const invitationRouter = createTRPCRouter({
 
       await trackNewInvitation(opts.ctx.user, {
         emailTo: email,
-        workspaceSlug: opts.ctx.workspace.slug,
+        workspaceId: opts.ctx.workspace.id,
       });
 
       return _invitation;
