@@ -13,6 +13,7 @@
   "dependencies": {
     "@hono/sentry": "1.0.0",
     "@hono/zod-openapi": "0.8.3",
+    "@hono/zod-validator": "0.2.1",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
@@ -30,7 +31,7 @@
     "hono": "4.0.0",
     "nanoid": "5.0.2",
     "validator": "13.11.0",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

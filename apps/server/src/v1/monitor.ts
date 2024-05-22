@@ -1,14 +1,14 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { trackAnalytics } from "@openstatus/analytics";
-import { db, eq, sql } from "@openstatus/db";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   flyRegions,
   monitor,
   monitorMethods,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema";
-import { Tinybird, getMonitorList } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
@@ -16,7 +16,7 @@ import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 import { isoDate } from "./utils";
 
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
 
 const ParamsSchema = z.object({
@@ -59,7 +59,7 @@ const MonitorSchema = z
           }
           return [];
         },
-        z.array(z.enum(flyRegions)),
+        z.array(z.enum(flyRegions))
       )
       .default([])
       .openapi({
@@ -99,7 +99,7 @@ const MonitorSchema = z
           }
           return [];
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).default([])
       )
       .nullish()
       .openapi({
@@ -110,6 +110,10 @@ const MonitorSchema = z
       .boolean()
       .default(false)
       .openapi({ description: "If the monitor is active" }),
+    public: z
+      .boolean()
+      .default(false)
+      .openapi({ description: "If the monitor is public" }),
   })
   .openapi({
     description: "The monitor",
@@ -146,6 +150,9 @@ const monitorInput = z
     active: z.boolean().default(false).openapi({
       description: "If the monitor is active",
     }),
+    public: z.boolean().default(false).openapi({
+      description: "If the monitor is public",
+    }),
     headers: z
       .preprocess(
         (val) => {
@@ -154,7 +161,7 @@ const monitorInput = z
           }
           return [];
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).default([])
       )
       .openapi({
         description: "The headers of your request",
@@ -325,7 +332,12 @@ monitorApi.openapi(postRoute, async (c) => {
     await db
       .select({ count: sql<number>`count(*)` })
       .from(monitor)
-      .where(eq(monitor.workspaceId, Number(workspaceId)))
+      .where(
+        and(
+          eq(monitor.workspaceId, Number(workspaceId)),
+          isNull(monitor.deletedAt)
+        )
+      )
       .all()
   )[0].count;
 
@@ -480,7 +492,11 @@ monitorApi.openapi(deleteRoute, async (c) => {
   if (workspaceId !== _monitor.workspaceId)
     return c.json({ code: 401, message: "Unauthorized" }, 401);
 
-  await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
+  await db
+    .update(monitor)
+    .set({ active: false, deletedAt: new Date() })
+    .where(eq(monitor.id, monitorId))
+    .run();
   return c.json({ message: "Deleted" });
 });
 
@@ -553,7 +569,7 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
-    `${monitorId}-daily-stats`,
+    `${monitorId}-daily-stats`
   );
   if (cache) {
     console.log("fetching from cache");
@@ -562,17 +578,15 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     });
   }
 
+  // FIXME: we should use the OSTinybird client
   console.log("fetching from tinybird");
-  const res = await getMonitorList(tb)({
+  const res = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitorId),
-    limit: 30,
-    //  return data in utc
-    timezone: "Etc/UTC",
   });
 
-  await redis.set(`${monitorId}-daily-stats`, res.data, { ex: 600 });
+  await redis.set(`${monitorId}-daily-stats`, res, { ex: 600 });
 
-  return c.json({ data: res.data });
+  return c.json({ data: res });
 });
 
 export { monitorApi };

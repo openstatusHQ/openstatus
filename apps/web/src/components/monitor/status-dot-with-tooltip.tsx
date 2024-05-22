@@ -1,4 +1,3 @@
-import type { Monitor } from "@openstatus/db/src/schema";
 import {
   Tooltip,
   TooltipContent,
@@ -6,10 +5,10 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import type { StatusDotProps } from "./status-dot";
 import { StatusDot } from "./status-dot";
 
-export interface StatusDotWithTooltipProps
-  extends Pick<Monitor, "active" | "status"> {}
+export interface StatusDotWithTooltipProps extends StatusDotProps {}
 
 export function StatusDotWithTooltip({
   status,

@@ -236,7 +236,6 @@ notificationApi.openapi(postRoute, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
   const workspacePlan = c.get("workspacePlan");
   const input = c.req.valid("json");
-  console.log(input);
   if (input.provider === "sms" && workspacePlan.title === "free") {
     return c.json({ code: 403, message: "Forbidden" }, 403);
   }

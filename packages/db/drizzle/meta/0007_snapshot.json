@@ -1,8 +1,6 @@
 {
-  "version": "5",
+  "version": "6",
   "dialect": "sqlite",
-  "id": "23bfc90d-3bb1-4077-81d8-8f2e874f9c62",
-  "prevId": "fee77e21-b52b-49c0-b109-5ccc37821935",
   "tables": {
     "incident": {
       "name": "incident",
@@ -57,11 +55,11 @@
         "incident_workspace_id_workspace_id_fk": {
           "name": "incident_workspace_id_workspace_id_fk",
           "tableFrom": "incident",
-          "tableTo": "workspace",
           "columnsFrom": ["workspace_id"],
+          "tableTo": "workspace",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -127,11 +125,11 @@
         "incident_update_incident_id_incident_id_fk": {
           "name": "incident_update_incident_id_incident_id_fk",
           "tableFrom": "incident_update",
-          "tableTo": "incident",
           "columnsFrom": ["incident_id"],
+          "tableTo": "incident",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -160,20 +158,20 @@
         "incidents_to_monitors_monitor_id_monitor_id_fk": {
           "name": "incidents_to_monitors_monitor_id_monitor_id_fk",
           "tableFrom": "incidents_to_monitors",
-          "tableTo": "monitor",
           "columnsFrom": ["monitor_id"],
+          "tableTo": "monitor",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "incidents_to_monitors_incident_id_incident_id_fk": {
           "name": "incidents_to_monitors_incident_id_incident_id_fk",
           "tableFrom": "incidents_to_monitors",
-          "tableTo": "incident",
           "columnsFrom": ["incident_id"],
+          "tableTo": "incident",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -250,11 +248,11 @@
         "integration_workspace_id_workspace_id_fk": {
           "name": "integration_workspace_id_workspace_id_fk",
           "tableFrom": "integration",
-          "tableTo": "workspace",
           "columnsFrom": ["workspace_id"],
+          "tableTo": "workspace",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -349,11 +347,11 @@
         "page_workspace_id_workspace_id_fk": {
           "name": "page_workspace_id_workspace_id_fk",
           "tableFrom": "page",
-          "tableTo": "workspace",
           "columnsFrom": ["workspace_id"],
+          "tableTo": "workspace",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {},
@@ -485,11 +483,11 @@
         "monitor_workspace_id_workspace_id_fk": {
           "name": "monitor_workspace_id_workspace_id_fk",
           "tableFrom": "monitor",
-          "tableTo": "workspace",
           "columnsFrom": ["workspace_id"],
+          "tableTo": "workspace",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -518,20 +516,20 @@
         "monitors_to_pages_monitor_id_monitor_id_fk": {
           "name": "monitors_to_pages_monitor_id_monitor_id_fk",
           "tableFrom": "monitors_to_pages",
-          "tableTo": "monitor",
           "columnsFrom": ["monitor_id"],
+          "tableTo": "monitor",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         },
         "monitors_to_pages_page_id_page_id_fk": {
           "name": "monitors_to_pages_page_id_page_id_fk",
           "tableFrom": "monitors_to_pages",
-          "tableTo": "page",
           "columnsFrom": ["page_id"],
+          "tableTo": "page",
           "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "cascade"
         }
       },
       "compositePrimaryKeys": {
@@ -641,20 +639,20 @@
         "users_to_workspaces_user_id_user_id_fk": {
           "name": "users_to_workspaces_user_id_user_id_fk",
           "tableFrom": "users_to_workspaces",
-          "tableTo": "user",
           "columnsFrom": ["user_id"],
+          "tableTo": "user",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         },
         "users_to_workspaces_workspace_id_workspace_id_fk": {
           "name": "users_to_workspaces_workspace_id_workspace_id_fk",
           "tableFrom": "users_to_workspaces",
-          "tableTo": "workspace",
           "columnsFrom": ["workspace_id"],
+          "tableTo": "workspace",
           "columnsTo": ["id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "onUpdate": "no action",
+          "onDelete": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -759,8 +757,9 @@
   },
   "enums": {},
   "_meta": {
-    "schemas": {},
     "tables": {},
     "columns": {}
-  }
+  },
+  "id": "23bfc90d-3bb1-4077-81d8-8f2e874f9c62",
+  "prevId": "fee77e21-b52b-49c0-b109-5ccc37821935"
 }

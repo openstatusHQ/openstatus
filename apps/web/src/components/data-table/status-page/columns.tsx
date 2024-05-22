@@ -6,11 +6,15 @@ import Link from "next/link";
 import * as z from "zod";
 
 import type { Page } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import {
+  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 
 import { DataTableRowActions } from "./data-table-row-actions";
-
-// TODO: add total number of monitors
 
 export const columns: ColumnDef<
   Page & { monitorsToPages: { monitor: { name: string } }[] }
@@ -47,21 +51,35 @@ export const columns: ColumnDef<
         .object({ monitor: z.object({ name: z.string() }) })
         .array()
         .parse(monitorsToPages);
-      const amount = 3;
+      const firstMonitors = monitors.splice(0, 2);
+      const lastMonitors = monitors;
       return (
         <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
-            {monitors.slice(0, amount).map(({ monitor: { name } }) => (
-              <Badge key={name} variant="outline">
+          <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+            {firstMonitors.map(({ monitor: { name } }, i) => (
+              <Badge key={i} variant="outline">
                 {name}
               </Badge>
             ))}
           </span>
-          <span className="font-medium">
-            {monitors.length > amount ? (
-              <span>+{monitors.length - amount}</span>
-            ) : null}
-          </span>
+          {lastMonitors.length > 0 ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <Badge variant="secondary" className="border">
+                    +{lastMonitors.length}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex gap-2">
+                  {lastMonitors.map(({ monitor: { name } }, i) => (
+                    <Badge key={i} variant="outline">
+                      {name}
+                    </Badge>
+                  ))}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </div>
       );
     },

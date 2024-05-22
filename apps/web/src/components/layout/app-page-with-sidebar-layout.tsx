@@ -24,7 +24,7 @@ export default function AppPageWithSidebarLayout({
       <Shell className="hidden max-h-[calc(100vh-8rem)] max-w-min shrink-0 lg:sticky lg:top-28 lg:block">
         <AppSidebar page={page} />
       </Shell>
-      <Shell className="relative flex-1 overflow-x-hidden">
+      <Shell className="relative flex-1 overflow-hidden">
         <div
           className={cn(
             "flex h-full flex-1 flex-col gap-6 md:gap-8",

@@ -1,16 +1,13 @@
-VERSION 0
-
-TOKEN "__ttl_1d_list_get__v0_endpoint_read_1695" READ
+VERSION 1
 
 NODE __ttl_1d_list_get__v0_0
 SQL >
 
     %
-    SELECT latency, monitorId, region, statusCode, timestamp, url, workspaceId, cronTimestamp
-    FROM __ttl_1d_mv__v0
+    SELECT latency, monitorId, error, region, statusCode, timestamp, url, workspaceId, cronTimestamp
+    FROM __ttl_1d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     ORDER BY cronTimestamp DESC
 
 

@@ -23,9 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/about",
     "/blog",
     "/changelog",
-    "/app/sign-in",
-    "/app/sign-up",
-    "/monitor/openstatus",
+    "/app/login",
   ].map((route) => ({
     url: addPathToBaseURL(route),
     lastModified: new Date(),

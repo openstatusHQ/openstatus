@@ -17,6 +17,7 @@ export default async function EditPage({
 }) {
   const id = Number(params.id);
   const page = await api.page.getPageById.query({ id });
+  const workspace = await api.workspace.getWorkspace.query();
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
 
   if (!page) {
@@ -31,9 +32,14 @@ export default async function EditPage({
       allMonitors={allMonitors}
       defaultValues={{
         ...page,
-        monitors: page.monitorsToPages.map(({ monitor }) => monitor.id),
+        monitors: page.monitorsToPages.map(({ monitorId, order }) => ({
+          monitorId,
+          order,
+        })),
       }}
       defaultSection={search.success ? search.data.section : undefined}
+      plan={workspace.plan}
+      workspaceSlug={params.workspaceSlug}
     />
   );
 }

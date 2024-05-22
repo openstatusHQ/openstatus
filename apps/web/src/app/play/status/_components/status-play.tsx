@@ -12,7 +12,6 @@ export default async function StatusPlay() {
   const data = await tb.endpointStatusPeriod("45d")(
     {
       monitorId: "1",
-      url: "https://www.openstatus.dev",
     },
     {
       revalidate: 600, // 10 minutes

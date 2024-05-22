@@ -1,6 +1,4 @@
-VERSION 0
-
-TOKEN "__ttl_1h_chart_get__v0_endpoint_read_3603" READ
+VERSION 1
 
 NODE __ttl_1h_chart_get_0
 SQL >
@@ -18,10 +16,9 @@ SQL >
         round(quantile(0.9)(latency)) as p90Latency,
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency
-    FROM __ttl_1h_mv__v0
+    FROM __ttl_1h_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC
 

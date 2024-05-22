@@ -18,6 +18,16 @@ import { DataTableStatusBadge } from "./data-table-status-badge";
 
 export const columns: ColumnDef<Ping>[] = [
   {
+    accessorKey: "error",
+    header: () => null,
+    cell: ({ row }) => {
+      if (row.original.error)
+        return <div className="h-2.5 w-2.5 rounded-full bg-rose-500" />;
+      return <div className="h-2.5 w-2.5 rounded-full bg-green-500" />;
+    },
+    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+  },
+  {
     accessorKey: "cronTimestamp",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Date" />
@@ -69,6 +79,14 @@ export const columns: ColumnDef<Ping>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Latency (ms)" />
     ),
+    filterFn: (row, id, value) => {
+      const { select, input } = value || {};
+      if (select === "min" && input)
+        return parseInt(row.getValue(id)) > parseInt(input);
+      if (select === "max" && input)
+        return parseInt(row.getValue(id)) < parseInt(input);
+      return true;
+    },
   },
   {
     accessorKey: "region",

@@ -2,8 +2,8 @@ import { Badge } from "@openstatus/ui";
 
 function getStyle(color: string) {
   return {
-    borderColor: `${color}20`,
-    backgroundColor: `${color}30`,
+    borderColor: `${color}10`,
+    backgroundColor: `${color}20`,
     color,
   };
 }

@@ -13,6 +13,7 @@ import { sendEmail } from "@openstatus/emails/emails/send";
 
 import type { Variables } from ".";
 import { ErrorSchema } from "./shared";
+import { isNumberArray } from "./utils";
 
 const pageApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -66,12 +67,41 @@ const PageSchema = z.object({
     .or(z.literal(""))
     .transform((val) => (val ? val : undefined))
     .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description:
+        "Make the page password protected. Used with the 'passwordProtected' property.",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
+    .nullish(),
+
   monitors: z
     .array(z.number())
     .openapi({
-      description: "The monitors of the page",
+      description: "The monitors of the page as an array of ids",
       example: [1, 2],
     })
+    .or(
+      z.array(z.object({ monitorId: z.number(), order: z.number() })).openapi({
+        description: "The monitor as object allowing to pass id and order",
+        example: [
+          { monitorId: 1, order: 0 },
+          { monitorId: 2, order: 1 },
+        ],
+      }),
+    )
     .optional(),
 });
 
@@ -107,9 +137,36 @@ const CreatePageSchema = z.object({
   monitors: z
     .array(z.number())
     .openapi({
-      description: "The monitors of the page",
+      description: "The monitors of the page as an array of ids",
       example: [1, 2],
     })
+    .or(
+      z.array(z.object({ monitorId: z.number(), order: z.number() })).openapi({
+        description: "The monitor as object allowing to pass id and order",
+        example: [
+          { monitorId: 1, order: 0 },
+          { monitorId: 2, order: 1 },
+        ],
+      }),
+    )
+    .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description: "Make the page password protected",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
     .nullish(),
 });
 
@@ -121,10 +178,13 @@ const UpdatePageSchema = z.object({
       example: "My Page",
     })
     .optional(),
-  description: z.string().openapi({
-    description: "The description of the page",
-    example: "My awesome status page",
-  }),
+  description: z
+    .string()
+    .openapi({
+      description: "The description of the page",
+      example: "My awesome status page",
+    })
+    .optional(),
   icon: z
     .string()
     .url()
@@ -151,9 +211,36 @@ const UpdatePageSchema = z.object({
   monitors: z
     .array(z.number())
     .openapi({
-      description: "The monitors of the page",
+      description: "The monitors of the page as an array of ids",
       example: [1, 2],
     })
+    .or(
+      z.array(z.object({ monitorId: z.number(), order: z.number() })).openapi({
+        description: "The monitor as object allowing to pass id and order",
+        example: [
+          { monitorId: 1, order: 0 },
+          { monitorId: 2, order: 1 },
+        ],
+      }),
+    )
+    .nullish(),
+
+  passwordProtected: z
+    .boolean()
+    .openapi({
+      description: "Make the page password protected",
+      example: true,
+    })
+    .default(false)
+    .optional(),
+
+  password: z
+    .string()
+    .openapi({
+      description: "Your password to protect the page from the publi",
+      example: "hidden-password",
+    })
+    .optional()
     .nullish(),
 });
 
@@ -240,7 +327,7 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
       token: token,
       page: page.title,
     }),
-    from: "OpenStatus <notification@openstatus.dev>",
+    from: "OpenStatus <notification@notifications.openstatus.dev>",
     to: [input.email],
     subject: "Verify your subscription",
   });
@@ -338,8 +425,7 @@ pageApi.openapi(getAllRoute, async (c) => {
   const result = await db
     .select()
     .from(page)
-    .where(and(eq(page.workspaceId, workspaceId)))
-    .get();
+    .where(and(eq(page.workspaceId, workspaceId)));
 
   if (!result) return c.json({ code: 404, message: "Not Found" }, 404);
   const data = z.array(PageSchema).parse(result);
@@ -401,6 +487,13 @@ pageApi.openapi(postRoute, async (c) => {
 
   const input = c.req.valid("json");
 
+  if (
+    workspacePlan.limits["password-protection"] === false &&
+    input?.passwordProtected === true
+  ) {
+    return c.json({ code: 403, message: "Forbidden" }, 403);
+  }
+
   const countSlug = (
     await db
       .select({ count: sql<number>`count(*)` })
@@ -413,13 +506,18 @@ pageApi.openapi(postRoute, async (c) => {
     return c.json({ code: 400, message: "Slug already taken" }, 400);
 
   const { monitors, ...rest } = input;
+
   if (monitors) {
+    const monitorIds = isNumberArray(monitors)
+      ? monitors
+      : monitors.map((m) => m.monitorId);
+
     const monitorsData = await db
       .select()
       .from(monitor)
       .where(
         and(
-          inArray(monitor.id, monitors),
+          inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, workspaceId),
         ),
       )
@@ -427,6 +525,7 @@ pageApi.openapi(postRoute, async (c) => {
     if (monitorsData.length !== monitors.length)
       return c.json({ code: 400, message: "Monitor not found" }, 400);
   }
+
   const newPage = await db
     .insert(page)
     .values({ workspaceId, ...rest })
@@ -434,10 +533,13 @@ pageApi.openapi(postRoute, async (c) => {
     .get();
 
   if (monitors) {
-    for (const monitorId of monitors) {
+    for (const monitor of monitors) {
+      const values =
+        typeof monitor === "number" ? { monitorId: monitor } : monitor;
+
       await db
         .insert(monitorsToPages)
-        .values({ pageId: newPage.id, monitorId })
+        .values({ pageId: newPage.id, ...values })
         .run();
     }
   }
@@ -489,6 +591,15 @@ pageApi.openapi(putRoute, async (c) => {
 
   if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
 
+  const workspacePlan = c.get("workspacePlan");
+
+  if (
+    workspacePlan.limits["password-protection"] === false &&
+    input?.passwordProtected === true
+  ) {
+    return c.json({ code: 403, message: "Forbidden" }, 403);
+  }
+
   const _page = await db
     .select()
     .from(page)
@@ -513,13 +624,20 @@ pageApi.openapi(putRoute, async (c) => {
       return c.json({ code: 400, message: "Slug already taken" }, 400);
   }
   const { monitors, ...rest } = input;
+
+  const monitorIds = monitors
+    ? isNumberArray(monitors)
+      ? monitors
+      : monitors.map((m) => m.monitorId)
+    : [];
+
   if (monitors) {
     const monitorsData = await db
       .select()
       .from(monitor)
       .where(
         and(
-          inArray(monitor.id, monitors),
+          inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, workspaceId),
         ),
       )
@@ -531,19 +649,47 @@ pageApi.openapi(putRoute, async (c) => {
   const newPage = await db
     .update(page)
     .set({ ...rest })
+    .where(eq(page.id, _page.id))
     .returning()
     .get();
 
   const data = PageSchema.parse(newPage);
 
+  const currentMonitorsToPages = await db
+    .select()
+    .from(monitorsToPages)
+    .where(eq(monitorsToPages.pageId, _page.id));
+
+  const removedMonitors = currentMonitorsToPages
+    .map(({ monitorId }) => monitorId)
+    .filter((x) => !monitorIds?.includes(x));
+
+  if (Boolean(removedMonitors.length)) {
+    await db
+      .delete(monitorsToPages)
+      .where(
+        and(
+          inArray(monitorsToPages.monitorId, removedMonitors),
+          eq(monitorsToPages.pageId, newPage.id),
+        ),
+      );
+  }
+
   if (monitors) {
-    for (const monitorId of monitors) {
+    for (const monitor of monitors) {
+      const values =
+        typeof monitor === "number" ? { monitorId: monitor } : monitor;
+
       await db
         .insert(monitorsToPages)
-        .values({ pageId: _page.id, monitorId })
-        .run();
+        .values({ pageId: newPage.id, ...values })
+        .onConflictDoUpdate({
+          target: [monitorsToPages.monitorId, monitorsToPages.pageId],
+          set: { order: sql.raw("excluded.`order`") },
+        });
     }
   }
+
   return c.json(data);
 });
 

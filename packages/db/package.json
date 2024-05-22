@@ -4,29 +4,33 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "generate": "drizzle-kit generate:sqlite",
-    "push": "drizzle-kit push:sqlite",
+    "generate": "drizzle-kit generate",
+    "push": "drizzle-kit push",
     "migrate": "bun src/migrate.mts",
     "studio": "drizzle-kit studio",
+    "env": "bun env.ts",
     "seed": "bun src/seed.mts",
-    "dev": "turso dev --db-file openstatus.db"
+    "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
-    "@libsql/client": "0.5.2",
+    "@clickhouse/client-web": "1.0.1",
+    "@libsql/client": "0.6.0",
     "@t3-oss/env-core": "0.7.0",
     "dotenv": "16.3.1",
-    "drizzle-orm": "0.29.3",
+    "drizzle-orm": "0.30.10",
     "drizzle-zod": "0.5.1",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
+    "@openstatus/assertions": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "better-sqlite3": "9.4.1",
+    "better-sqlite3": "10.0.0",
     "bufferutil": "4.0.7",
-    "drizzle-kit": "0.20.14",
+    "drizzle-kit": "0.21.2",
     "encoding": "0.1.13",
-    "typescript": "5.4.2",
+    "next-auth": "5.0.0-beta.17",
+    "typescript": "5.4.5",
     "utf-8-validate": "6.0.3"
   },
   "author": ""

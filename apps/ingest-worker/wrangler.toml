@@ -1,0 +1,9 @@
+name = "ingest-workers"
+compatibility_date = "2024-04-03"
+
+[env.dev.vars]
+API_ENDPOINT = "http://localhost:8080/vitals"
+
+
+[env.production.vars]
+API_ENDPOINT = "https://vitals.openstatus.dev/v1/proxy/cloudflare"

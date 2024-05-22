@@ -26,7 +26,7 @@ export const sendAlert = async ({
     },
     body: JSON.stringify({
       to: email,
-      from: "Notifications <ping@notifications.openstatus.dev>",
+      from: "Notifications <ping@openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is down 🚨`,
       html: `<p>Hi,<br><br>Your monitor ${monitor.name} is down. </p><p>URL : ${
@@ -43,6 +43,9 @@ export const sendAlert = async ({
     const data = await res.json();
     console.log(data);
     // return NextResponse.json(data);
+  }
+  if (!res.ok) {
+    console.log(`Error sending recovery email ${monitor.id}`);
   }
 };
 
@@ -82,5 +85,8 @@ export const sendRecovery = async ({
     const data = await res.json();
     console.log(data);
     // return NextResponse.json(data);
+  }
+  if (!res.ok) {
+    console.log(`Error sending recovery email ${monitor.id}`);
   }
 };

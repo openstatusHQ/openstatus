@@ -73,31 +73,41 @@
       "pages": ["introduction"]
     },
     {
-      "group": "Features",
+      "group": "Synthetic Monitoring",
       "pages": [
-        "features/incident",
-        "features/heartbeat",
-        "features/monitor",
+        "synthetic/overview",
         {
-          "group": "Notifications",
+          "group": "Features",
           "pages": [
-            "features/notification",
+            "synthetic/features/incident",
+            "synthetic/features/heartbeat",
+            "synthetic/features/monitor",
             {
-              "group": "Notification Channels",
+              "group": "Notifications",
               "pages": [
-                "features/notification/discord",
-                "features/notification/phone-call",
-                "features/notification/slack",
-                "features/notification/sms",
-                "features/notification/telegram"
+                "synthetic/features/notification",
+                {
+                  "group": "Notification Channels",
+                  "pages": [
+                    "synthetic/features/notification/discord",
+                    "synthetic/features/notification/phone-call",
+                    "synthetic/features/notification/slack",
+                    "synthetic/features/notification/sms",
+                    "synthetic/features/notification/telegram"
+                  ]
+                }
               ]
-            }
+            },
+            "synthetic/features/status-page",
+            "synthetic/features/status-report",
+            "synthetic/features/status-page-subscribers"
           ]
-        },
-        "features/status-page",
-        "features/status-report",
-        "features/status-page-subscribers"
+        }
       ]
+    },
+    {
+      "group": "Real User Monitoring",
+      "pages": ["rum/overview"]
     },
     {
       "group": "Developer Tools",

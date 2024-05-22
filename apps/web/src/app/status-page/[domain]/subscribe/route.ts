@@ -45,7 +45,7 @@ export async function POST(
       token: token,
       page: pageData.title,
     }),
-    from: "OpenStatus <notification@openstatus.dev>",
+    from: "OpenStatus <notification@notifications.openstatus.dev>",
     to: [result.email],
     subject: `Verify your subscription to ${pageData.title}`,
   });

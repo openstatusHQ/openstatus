@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
 import { api } from ".";
-import { iso8601Regex } from "./test-utils";
 
 test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {
@@ -22,6 +21,7 @@ test("GET one monitor", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   });
 });
 
@@ -43,6 +43,7 @@ test("GET all monitor", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   });
 });
 
@@ -57,6 +58,7 @@ test("Create a monitor", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: true,
   };
   const res = await api.request("/monitor", {
     method: "POST",
@@ -79,6 +81,7 @@ test("Create a monitor", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: true,
   });
 });
 
@@ -93,6 +96,7 @@ test("Create a monitor without auth key should return 401", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   };
   const res = await api.request("/monitor", {
     method: "POST",
@@ -115,6 +119,7 @@ test("Create a monitor with invalid data should return 403", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   };
   const res = await api.request("/monitor", {
     method: "POST",
@@ -145,6 +150,7 @@ test("Update a Monitor ", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: true,
   };
 
   const res = await api.request("/monitor/1", {
@@ -168,6 +174,7 @@ test("Update a Monitor ", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: true,
   });
 });
 
@@ -182,6 +189,7 @@ test("Update a monitor not in db should return 404", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   };
 
   const res = await api.request("/monitor/404", {
@@ -212,6 +220,7 @@ test("Update a monitor without auth key should return 401", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   };
   const res = await api.request("/monitor/2", {
     method: "PUT",
@@ -233,6 +242,7 @@ test("Update a monitor with invalid data should return 403", async () => {
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
     active: true,
+    public: false,
   };
   const res = await api.request("/monitor/2", {
     method: "PUT",

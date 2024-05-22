@@ -23,9 +23,10 @@ export function MarketingFooter({ className }: Props) {
               <BrandName />
               <p className="mt-2 font-light text-muted-foreground text-sm">
                 We are on a mission to provide a reliable, easy and fast way to
-                monitor your APIs and websites.{" "}
+                monitor the performance of your APIs and websites.
+                <br />
                 <span className="underline decoration-dotted underline-offset-2">
-                  Let&apos;s end <code>us-east-1</code> privilege together.
+                  Speed Matters
                 </span>
               </p>
             </div>
@@ -85,7 +86,7 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
 
   return (
     <Link
-      className="inline-flex items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
+      className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center underline underline-offset-4 hover:no-underline"
       href={href}
       {...externalProps}
     >

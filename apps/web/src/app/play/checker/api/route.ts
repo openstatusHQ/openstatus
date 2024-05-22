@@ -1,4 +1,4 @@
-import { setCheckerData } from "../[id]/utils";
+import { setCheckerData } from "@/components/ping-response-analysis/utils";
 
 export const runtime = "edge";
 

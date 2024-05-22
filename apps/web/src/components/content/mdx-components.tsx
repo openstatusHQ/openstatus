@@ -21,8 +21,8 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import { MetricsCard } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/_components/metrics-card";
-import type { MetricsCardProps } from "@/app/app/[workspaceSlug]/(dashboard)/monitors/[id]/_components/metrics-card";
+import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
+import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
 

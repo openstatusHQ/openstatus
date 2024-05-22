@@ -18,5 +18,5 @@
     "**/*.mjs",
     ".contentlayer/generated"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "env.ts"]
 }

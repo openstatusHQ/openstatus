@@ -80,7 +80,9 @@ export function PricingTable({
                     if (events?.[key]) {
                       return events[key]?.();
                     }
-                    return router.push(`/app/sign-up?plan=${key}`);
+                    // FIXME: how to properly handle `?redirectTo` with unknown workspaceSlug
+                    // to redirect user to `/app/[workspaceSlug]/settings/billing?plan=${key}`?
+                    return router.push(`/app/login?plan=${key}`);
                   }}
                   disabled={isCurrentPlan || isLoading}
                 >

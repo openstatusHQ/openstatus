@@ -9,6 +9,7 @@ import { Shell } from "@/components/dashboard/shell";
 
 export default function NotFound() {
   const router = useRouter();
+  // user should go back to dashboard
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">

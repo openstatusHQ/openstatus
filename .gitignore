@@ -48,7 +48,6 @@ openstatus.db-wal
 openstatus.db
 openstatus.db-shm
 
-
 packages/tinybird/.tinyb
 apps/web/tsconfig.tsbuildinfo
 openstatus-test.db
@@ -57,3 +56,9 @@ openstatus-test.db-wal
 
 #webstorm
 .idea
+
+.wrangler
+apps/web/.env.dev
+packages/db/.env.dev
+openstatus-dev.db-wal
+openstatus-dev.db-shm

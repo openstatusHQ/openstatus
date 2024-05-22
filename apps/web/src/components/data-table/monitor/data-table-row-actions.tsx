@@ -26,8 +26,8 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 

@@ -1,15 +1,9 @@
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { z } from "zod";
 
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@openstatus/ui";
+import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
 
-import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 
 const OSSFriendSchema = z.object({
@@ -29,29 +23,22 @@ const OpenSourceFriends = async () => {
       </h1>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {openSourceFriends.map((friend) => (
-          <Card key={friend.name} className="group flex flex-col">
-            <CardHeader className="flex-1">
-              <div className="flex items-center gap-2">
-                <CardTitle>
-                  <Link
-                    href={friend.href}
-                    target="_blank"
-                    className="group-hover:underline"
-                  >
-                    {friend.name}
-                  </Link>
-                </CardTitle>
-              </div>
-              <CardDescription>{friend.description}</CardDescription>
-            </CardHeader>
-            <CardFooter>
-              <div className="flex items-center gap-2.5">
-                <Link href={friend.href} target="_blank">
-                  <Icons.globe className="h-5 w-5 text-muted-foreground hover:text-foreground" />
-                </Link>
-              </div>
-            </CardFooter>
-          </Card>
+          <Link
+            key={friend.name}
+            href={friend.href}
+            target="_blank"
+            className="group flex w-full flex-1"
+          >
+            <Card className="flex w-full flex-col">
+              <CardHeader className="flex-1">
+                <CardTitle>{friend.name}</CardTitle>
+                <div className="flex flex-1 justify-between gap-3">
+                  <CardDescription>{friend.description}</CardDescription>
+                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 self-end" />
+                </div>
+              </CardHeader>
+            </Card>
+          </Link>
         ))}
       </div>
     </MarketingLayout>

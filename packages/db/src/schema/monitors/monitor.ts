@@ -41,12 +41,18 @@ export const monitor = sqliteTable("monitor", {
   method: text("method", { enum: monitorMethods }).default("GET"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
+  assertions: text("assertions"),
+
+  public: integer("public", { mode: "boolean" }).default(false),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
+
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
@@ -72,6 +78,7 @@ export const monitorsToPages = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    order: integer("order").default(0),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),

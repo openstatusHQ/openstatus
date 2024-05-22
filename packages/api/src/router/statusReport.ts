@@ -133,7 +133,7 @@ export const statusReportRouter = createTRPCRouter({
             subject: `New status update for ${pageInfo.title}`,
             html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${updatedValue.status}</p><p>${updatedValue.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
         `,
-            from: "Notification OpenStatus <notification@openstatus.dev>",
+            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
           });
         }
       }
@@ -393,7 +393,9 @@ export const statusReportRouter = createTRPCRouter({
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: true,
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
         },
       });
 

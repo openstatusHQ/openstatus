@@ -22,7 +22,7 @@ export async function StatusCheck({
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
-        <p className="font-semibold text-lg">{details.long}</p>
+        <h2 className="text-xl font-semibold">{details.long}</h2>
         <span className={cn("rounded-full border p-1.5", className)}>
           <StatusIcon variant={details.variant} />
         </span>

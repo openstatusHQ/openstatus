@@ -1,0 +1,1 @@
+ALTER TABLE monitor ADD `public` integer DEFAULT false;

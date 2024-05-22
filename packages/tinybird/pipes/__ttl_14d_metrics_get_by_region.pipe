@@ -1,6 +1,4 @@
-VERSION 0
-
-TOKEN "__ttl_14d_metrics_get_by_region_endpoint_read_0048" READ
+VERSION 1
 
 NODE __ttl_14d_metrics_get_by_region_0
 SQL >
@@ -14,12 +12,11 @@ SQL >
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency,
         count() as count,
-        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        count(if(error = 0, 1, NULL)) AS ok,
         max(cronTimestamp) AS lastTimestamp
-    FROM __ttl_14d_mv__v0
+    FROM __ttl_14d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         GROUP BY region
 
 

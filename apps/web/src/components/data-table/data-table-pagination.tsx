@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import type { Table } from "@tanstack/react-table";
 import {
   ChevronLeft,
@@ -15,6 +18,10 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
+
+// REMINDER: pageIndex pagination issue - jumping back to 0 after change
+
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
 }
@@ -22,9 +29,23 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
+  const updateSearchParams = useUpdateSearchParams();
+  const router = useRouter();
+
+  const updatePageSearchParams = (
+    values: Record<string, number | string | null>,
+  ) => {
+    const newSearchParams = updateSearchParams(values);
+    router.replace(`?${newSearchParams}`, { scroll: false });
+  };
+
   return (
     <div className="flex items-center justify-between px-2">
-      <div />
+      <div>
+        <p className="text-muted-foreground text-sm">
+          {table.getFilteredRowModel().rows.length} row(s) filtered
+        </p>
+      </div>
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
           <p className="font-medium text-sm">Rows per page</p>
@@ -32,6 +53,7 @@ export function DataTablePagination<TData>({
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
+              updatePageSearchParams({ pageSize: value });
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">
@@ -54,7 +76,9 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(0)}
+            onClick={() => {
+              table.setPageIndex(0);
+            }}
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Go to first page</span>
@@ -63,7 +87,9 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.previousPage()}
+            onClick={() => {
+              table.previousPage();
+            }}
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Go to previous page</span>
@@ -72,7 +98,9 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.nextPage()}
+            onClick={() => {
+              table.nextPage();
+            }}
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Go to next page</span>
@@ -81,7 +109,9 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            onClick={() => {
+              table.setPageIndex(table.getPageCount() - 1);
+            }}
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Go to last page</span>

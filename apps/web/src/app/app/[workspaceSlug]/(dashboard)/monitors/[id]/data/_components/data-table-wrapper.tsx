@@ -3,16 +3,21 @@
 
 "use client";
 
-import type { Row } from "@tanstack/react-table";
 import { Suspense, use } from "react";
+import type {
+  ColumnFiltersState,
+  PaginationState,
+  Row,
+} from "@tanstack/react-table";
 
+import * as assertions from "@openstatus/assertions";
 import type { OSTinybird } from "@openstatus/tinybird";
 
-import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
 import { CopyToClipboardButton } from "@/components/dashboard/copy-to-clipboard-button";
 import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { LoadingAnimation } from "@/components/loading-animation";
+import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { api } from "@/trpc/client";
 
 // EXAMPLE: get the type of the response of the endpoint
@@ -20,7 +25,7 @@ import { api } from "@/trpc/client";
 type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type
-type Monitor = {
+export type Monitor = {
   monitorId: string;
   url: string;
   latency: number;
@@ -29,15 +34,27 @@ type Monitor = {
   timestamp: number;
   workspaceId: string;
   cronTimestamp: number | null;
+  error: boolean;
+  assertions?: string | null;
 };
 
-export function DataTableWrapper({ data }: { data: Monitor[] }) {
+export function DataTableWrapper({
+  data,
+  filters,
+  pagination,
+}: {
+  data: Monitor[];
+  filters?: ColumnFiltersState;
+  pagination?: PaginationState;
+}) {
   return (
     <DataTable
       columns={columns}
       data={data}
       getRowCanExpand={() => true}
       renderSubComponent={renderSubComponent}
+      defaultColumnFilters={filters}
+      defaultPagination={pagination}
     />
   );
 }
@@ -63,7 +80,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       url: row.original.url,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    }),
+    })
   );
 
   if (!data || data.length === 0) return <p>Something went wrong</p>;
@@ -85,7 +102,9 @@ function Details({ row }: { row: Row<Monitor> }) {
       <ResponseDetailTabs
         timing={first.timing}
         headers={first.headers}
+        status={first.statusCode}
         message={first.message}
+        assertions={assertions.deserialize(first.assertions || "[]")}
       />
     </div>
   );
