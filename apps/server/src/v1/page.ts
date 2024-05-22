@@ -1,4 +1,4 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { and, eq, inArray, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -664,7 +664,7 @@ pageApi.openapi(putRoute, async (c) => {
     .map(({ monitorId }) => monitorId)
     .filter((x) => !monitorIds?.includes(x));
 
-  if (Boolean(removedMonitors.length)) {
+  if (removedMonitors.length) {
     await db
       .delete(monitorsToPages)
       .where(

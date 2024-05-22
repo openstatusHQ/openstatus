@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
 import { allChangelogs, allPosts } from "contentlayer/generated";
+import type { MetadataRoute } from "next";
 
 const addPathToBaseURL = (path: string) => `https://www.openstatus.dev${path}`;
 

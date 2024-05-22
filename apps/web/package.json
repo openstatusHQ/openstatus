@@ -22,7 +22,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
-    "@openstatus/next-monitoring": "0.0.2",
+    "@openstatus/next-monitoring": "0.0.4",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
@@ -89,7 +89,7 @@
     "zod": "3.22.4"
   },
   "devDependencies": {
-    "@openstatus/eslint-config": "workspace:*",
+    "@headlessui/tailwindcss": "0.2.0",
     "@openstatus/tsconfig": "workspace:*",
     "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",

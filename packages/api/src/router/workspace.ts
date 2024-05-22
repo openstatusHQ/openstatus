@@ -14,7 +14,7 @@ import {
   workspace,
   workspacePlanSchema,
 } from "@openstatus/db/src/schema";
-import { Limits } from "@openstatus/plans";
+import type { Limits } from "@openstatus/plans";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -166,12 +166,16 @@ export const workspaceRouter = createTRPCRouter({
       // TODO: Create subscription
       switch (opts.input.plan) {
         case "free": {
+          break;
         }
         case "starter": {
+          break;
         }
         case "team": {
+          break;
         }
         case "pro": {
+          break;
         }
         default: {
         }

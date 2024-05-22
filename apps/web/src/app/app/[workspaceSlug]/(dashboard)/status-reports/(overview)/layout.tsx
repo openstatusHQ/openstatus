@@ -1,16 +1,12 @@
-import * as React from "react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageLayout from "@/components/layout/app-page-layout";
 
-export default async function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function Layout({ children }: { children: ReactNode }) {
   return (
     <AppPageLayout withHelpCallout>
       <Header

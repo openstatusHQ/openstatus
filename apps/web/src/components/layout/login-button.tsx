@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 import type { ButtonProps } from "@openstatus/ui";
 import { Button } from "@openstatus/ui";

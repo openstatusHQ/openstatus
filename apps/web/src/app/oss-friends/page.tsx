@@ -1,16 +1,9 @@
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { z } from "zod";
 
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@openstatus/ui";
+import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
 
-import { Icons } from "@/components/icons";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 
 const OSSFriendSchema = z.object({
@@ -25,7 +18,7 @@ const OpenSourceFriends = async () => {
   const openSourceFriends = z.array(OSSFriendSchema).parse(data.data);
   return (
     <MarketingLayout>
-      <h1 className="text-foreground font-cal mb-5 text-4xl">
+      <h1 className="mb-5 font-cal text-4xl text-foreground">
         Our OpenSource Friends
       </h1>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -41,7 +34,7 @@ const OpenSourceFriends = async () => {
                 <CardTitle>{friend.name}</CardTitle>
                 <div className="flex flex-1 justify-between gap-3">
                   <CardDescription>{friend.description}</CardDescription>
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 self-end" />
+                  <ArrowUpRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                 </div>
               </CardHeader>
             </Card>

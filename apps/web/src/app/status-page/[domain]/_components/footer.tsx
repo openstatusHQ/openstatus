@@ -13,7 +13,7 @@ export function Footer({ plan }: Props) {
     <footer className="z-10 mx-auto flex w-full items-center justify-between">
       <div />
       {!isWhiteLabel ? (
-        <p className="text-muted-foreground text-center text-sm">
+        <p className="text-center text-muted-foreground text-sm">
           powered by{" "}
           <a
             href="https://www.openstatus.dev"

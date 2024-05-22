@@ -1,6 +1,6 @@
+import { allPosts } from "contentlayer/generated";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { allPosts } from "contentlayer/generated";
 
 import {
   defaultMetadata,
@@ -23,7 +23,7 @@ export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
-}): Promise<Metadata | void> {
+}): Promise<Metadata | undefined> {
   const post = allPosts.find((post) => post.slug === params.slug);
   if (!post) {
     return;
@@ -68,7 +68,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <BackButton href="/blog" />
-      <Shell className="sm:py-8 md:py-12">
+      <Shell className="md:py-12 sm:py-8">
         <Article post={post} />
       </Shell>
     </>

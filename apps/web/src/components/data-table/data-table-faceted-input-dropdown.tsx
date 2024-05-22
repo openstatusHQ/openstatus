@@ -1,4 +1,3 @@
-import * as React from "react";
 import type { Column } from "@tanstack/react-table";
 import { PlusCircle } from "lucide-react";
 
@@ -33,7 +32,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
   };
 
   return (
-    <div className="border-input ring-offset-background focus-within:ring-ring group flex h-8 items-center overflow-hidden rounded-md border border-dashed bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+    <div className="group flex h-8 items-center overflow-hidden rounded-md border border-input border-dashed bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
       <Select
         value={selectedValue?.select || ""}
         onValueChange={(value) => {
@@ -43,10 +42,10 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
           });
         }}
       >
-        <SelectTrigger className="focus:ring-offet-0 hover:bg-muted h-8 max-w-min space-x-2 rounded-none border-0 ring-offset-inherit focus:ring-0">
+        <SelectTrigger className="h-8 max-w-min space-x-2 rounded-none border-0 ring-offset-inherit hover:bg-muted focus:ring-0 focus:ring-offet-0">
           <SelectValue
             placeholder={
-              <div className="flex items-center text-xs font-medium">
+              <div className="flex items-center font-medium text-xs">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 {title}
               </div>
@@ -62,7 +61,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
                   value={String(option.value)}
                 >
                   {option.icon && (
-                    <option.icon className="text-muted-foreground mr-2 h-4 w-4" />
+                    <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                   )}
                   {option.label}
                 </SelectItem>
@@ -73,7 +72,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
       </Select>
       <Separator orientation="vertical" className="h-4" />
       <input
-        className="placeholder:text-muted-foreground bg-background w-24 rounded-md px-3 py-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-24 rounded-md bg-background px-3 py-2 disabled:cursor-not-allowed placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none"
         type="number"
         placeholder="4000"
         min={0}
@@ -81,11 +80,11 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
         onChange={(e) => {
           column?.setFilterValue({
             ...selectedValue,
-            input: parseInt(e.target.value),
+            input: Number.parseInt(e.target.value),
           });
         }}
       />
-      <div className="border-input bg-muted flex h-full items-center p-2 text-sm">
+      <div className="flex h-full items-center border-input bg-muted p-2 text-sm">
         ms
       </div>
     </div>

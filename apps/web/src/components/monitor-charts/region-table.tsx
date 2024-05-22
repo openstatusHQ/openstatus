@@ -61,19 +61,19 @@ export function RegionTable({
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatNumber(metrics?.p50Latency)}
-                  <span className="text-muted-foreground text-xs font-normal">
+                  <span className="font-normal text-muted-foreground text-xs">
                     ms
                   </span>
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatNumber(metrics?.p95Latency)}
-                  <span className="text-muted-foreground text-xs font-normal">
+                  <span className="font-normal text-muted-foreground text-xs">
                     ms
                   </span>
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatNumber(metrics?.p99Latency)}
-                  <span className="text-muted-foreground text-xs font-normal">
+                  <span className="font-normal text-muted-foreground text-xs">
                     ms
                   </span>
                 </TableCell>

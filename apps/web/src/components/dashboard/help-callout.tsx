@@ -11,7 +11,7 @@ export function HelpCallout() {
         Let us know at{" "}
         <a
           href="mailto:ping@openstatus.dev"
-          className="text-foreground font-medium underline hover:no-underline"
+          className="font-medium text-foreground underline hover:no-underline"
         >
           ping@openstatus.dev
         </a>{" "}
@@ -19,7 +19,8 @@ export function HelpCallout() {
         <a
           href="/discord"
           target="_blank"
-          className="text-foreground font-medium underline hover:no-underline"
+          className="font-medium text-foreground underline hover:no-underline"
+          rel="noreferrer"
         >
           Discord
         </a>

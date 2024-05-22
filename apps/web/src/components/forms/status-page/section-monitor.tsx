@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { CheckIcon, ChevronsUpDown, GripVertical } from "lucide-react";
+import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useFieldArray } from "react-hook-form";
 
@@ -57,7 +57,9 @@ export function SectionMonitor({ form, monitors }: Props) {
             className="w-[240px] justify-between"
           >
             {watchMonitors.length > 0
-              ? `${watchMonitors.length} monitor${watchMonitors.length > 1 ? "s" : ""} selected`
+              ? `${watchMonitors.length} monitor${
+                  watchMonitors.length > 1 ? "s" : ""
+                } selected`
               : "Select monitors..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -73,7 +75,7 @@ export function SectionMonitor({ form, monitors }: Props) {
                   value={String(monitor.id)}
                   onSelect={(currentValue) => {
                     const monitorIndex = watchMonitors.findIndex(
-                      (m) => m.monitorId === parseInt(currentValue),
+                      (m) => m.monitorId === Number.parseInt(currentValue),
                     );
                     if (monitorIndex !== -1) {
                       remove(monitorIndex);
@@ -134,7 +136,7 @@ export function SectionMonitor({ form, monitors }: Props) {
                       />{" "}
                       <span className="truncate">{monitor.name}</span>
                     </div>
-                    <div className="text-muted-foreground truncate">
+                    <div className="truncate text-muted-foreground">
                       {monitor?.url}
                     </div>
                     <SortableDragHandle

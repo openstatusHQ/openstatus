@@ -1,5 +1,5 @@
 import type { HomeStatsParams } from "@openstatus/tinybird";
-import { getHomeStats, Tinybird } from "@openstatus/tinybird";
+import { Tinybird, getHomeStats } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 

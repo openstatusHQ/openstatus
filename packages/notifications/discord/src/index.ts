@@ -48,7 +48,9 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
 }: {
   monitor: Monitor;
@@ -81,7 +83,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
       webhookUrl,
     );
     return true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 };

@@ -4,10 +4,10 @@ export const getSubdomain = (name: string, apexName: string) => {
 };
 
 export const getApexDomain = (url: string) => {
-  let domain;
+  let domain: string;
   try {
     domain = new URL(url).hostname;
-  } catch (e) {
+  } catch (_e) {
     return "";
   }
   const parts = domain.split(".");

@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { selectInvitationSchema } from "@openstatus/db/src/schema";
 import {

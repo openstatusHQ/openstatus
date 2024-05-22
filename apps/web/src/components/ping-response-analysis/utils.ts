@@ -135,6 +135,7 @@ export async function checkRegion(
         if (!key) return acc; // key === "" is an invalid header
 
         return {
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           ...acc,
           [key]: value,
         };

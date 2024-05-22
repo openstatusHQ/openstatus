@@ -1,7 +1,7 @@
 import "@openstatus/header-analysis";
 
-import React from "react";
 import { Info } from "lucide-react";
+import React from "react";
 
 import {
   parseCacheControlHeader,
@@ -46,7 +46,7 @@ export function ResponseHeaderAnalysis({
 
   return (
     <Dialog>
-      <DialogTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
+      <DialogTrigger className="text-muted-foreground data-[state=open]:text-foreground hover:text-foreground">
         <Info className="h-4 w-4" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
@@ -92,7 +92,7 @@ function CacheControl({ header }: { header: string }) {
         return (
           <React.Fragment key={name}>
             <p className="sm:col-span-1">
-              <code className="bg-muted rounded p-1 font-semibold">{name}</code>{" "}
+              <code className="rounded bg-muted p-1 font-semibold">{name}</code>{" "}
               {value !== undefined ? <code>({value})</code> : null}
             </p>
             <p className="sm:col-span-3">{description}</p>
@@ -109,7 +109,7 @@ function CfCacheStatus({ header }: { header: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-4">
       <p className="sm:col-span-1">
-        <code className="bg-muted rounded p-1 font-semibold">{value}</code>
+        <code className="rounded bg-muted p-1 font-semibold">{value}</code>
       </p>
       <p className="sm:col-span-3">{description}</p>
     </div>
@@ -122,7 +122,7 @@ function XVercelCache({ header }: { header: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-4">
       <p className="sm:col-span-1">
-        <code className="bg-muted rounded p-1 font-semibold">{value}</code>
+        <code className="rounded bg-muted p-1 font-semibold">{value}</code>
       </p>
       <p className="sm:col-span-3">{description}</p>
     </div>
@@ -134,7 +134,7 @@ export function XVercelId({ header }: { header: string }) {
 
   return (
     <div className="grid gap-4">
-      <p className="text-muted-foreground col-span-full text-sm">
+      <p className="col-span-full text-muted-foreground text-sm">
         This header contains a list of Edge regions your request hit, as well as
         the region the function was executed in (for both Edge and Serverless):
       </p>
@@ -145,7 +145,7 @@ export function XVercelId({ header }: { header: string }) {
           value.data.map(({ code, location, flag }) => (
             <React.Fragment key={code}>
               <p className="sm:col-span-1">
-                <code className="bg-muted rounded p-1 font-semibold">
+                <code className="rounded bg-muted p-1 font-semibold">
                   {code}
                 </code>
               </p>
@@ -165,7 +165,7 @@ export function CfRay({ header }: { header: string }) {
 
   return (
     <div className="grid gap-4">
-      <p className="text-muted-foreground col-span-full text-sm">
+      <p className="col-span-full text-muted-foreground text-sm">
         This header is a hashed value that encodes information about the data
         center and the visitor’s request. The data center the request hit is:
       </p>
@@ -174,7 +174,7 @@ export function CfRay({ header }: { header: string }) {
       ) : (
         <div className="grid grid-cols-4 gap-3">
           <p className="sm:col-span-1">
-            <code className="bg-muted rounded p-1 font-semibold">
+            <code className="rounded bg-muted p-1 font-semibold">
               {value.data.code}
             </code>
           </p>
@@ -196,7 +196,7 @@ export function Location({
 }) {
   return (
     <div className="grid gap-4">
-      <p className="text-muted-foreground col-span-full text-sm">
+      <p className="col-span-full text-muted-foreground text-sm">
         This header in HTTP responses is used to redirect the client to a new
         URL. It is often seen with status codes like <code>301</code> (Moved
         Permanently) and <code>302</code> (Found), guiding the client&apos;s
@@ -204,7 +204,7 @@ export function Location({
       </p>
       <div className="grid gap-4 sm:grid-cols-4">
         <p className="sm:col-span-1">
-          <code className="bg-muted rounded p-1 font-semibold">{status}</code>
+          <code className="rounded bg-muted p-1 font-semibold">{status}</code>
         </p>
         <p className="sm:col-span-3">{header}</p>
       </div>
@@ -217,7 +217,7 @@ export function FlyRequestId({ header }: { header: string }) {
 
   return (
     <div className="grid gap-4">
-      <p className="text-muted-foreground col-span-full text-sm">
+      <p className="col-span-full text-muted-foreground text-sm">
         This header is a hashed value that encodes information about the data
         center and the visitor’s request. The data center the request hit is:
       </p>
@@ -226,7 +226,7 @@ export function FlyRequestId({ header }: { header: string }) {
       ) : (
         <div className="grid grid-cols-4 gap-3">
           <p className="sm:col-span-1">
-            <code className="bg-muted rounded p-1 font-semibold">
+            <code className="rounded bg-muted p-1 font-semibold">
               {value.data.code}
             </code>
           </p>

@@ -53,9 +53,9 @@ export function SectionAssertions({ form }: Props) {
           <>
             Validate the response to ensure your service is working as expected.
             <br />
-            <span className="decoration-border underline underline-offset-4">
+            <span className="underline decoration-border underline-offset-4">
               By default, we check for a{" "}
-              <span className="text-foreground font-medium">
+              <span className="font-medium text-foreground">
                 <code>2xx</code> status code
               </span>
             </span>
@@ -66,7 +66,7 @@ export function SectionAssertions({ form }: Props) {
       <div className="flex flex-col gap-4">
         {statusAssertions.fields.map((f, i) => (
           <div key={f.id} className="grid grid-cols-12 items-center gap-4">
-            <p className="text-muted-foreground col-span-2 text-sm">
+            <p className="col-span-2 text-muted-foreground text-sm">
               Status Code
             </p>
             <div className="col-span-3" />
@@ -120,7 +120,7 @@ export function SectionAssertions({ form }: Props) {
         ))}
         {headerAssertions.fields.map((f, i) => (
           <div key={f.id} className="grid grid-cols-12 items-center gap-4">
-            <p className="text-muted-foreground col-span-2 text-sm">
+            <p className="col-span-2 text-muted-foreground text-sm">
               Response Header
             </p>
             <Input

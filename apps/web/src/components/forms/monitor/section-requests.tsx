@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Wand2, X } from "lucide-react";
+import * as React from "react";
 import { useFieldArray } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -53,7 +53,7 @@ export function SectionRequests({ form }: Props) {
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });

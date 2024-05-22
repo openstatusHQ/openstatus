@@ -59,7 +59,7 @@ export const pageRouter = createTRPCRouter({
       .returning()
       .get();
 
-    if (Boolean(monitorIds.length)) {
+    if (monitorIds.length) {
       // We should make sure the user has access to the monitors
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
@@ -165,7 +165,7 @@ export const pageRouter = createTRPCRouter({
       .map(({ monitorId }) => monitorId)
       .filter((x) => !monitorIds?.includes(x));
 
-    if (Boolean(removedMonitors.length)) {
+    if (removedMonitors.length) {
       await opts.ctx.db
         .delete(monitorsToPages)
         .where(
@@ -352,7 +352,7 @@ export const pageRouter = createTRPCRouter({
       const result = await opts.ctx.db.query.page.findMany({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
-      return result?.length > 0 ? false : true;
+      return !(result?.length > 0);
     }),
 
   addCustomDomain: protectedProcedure

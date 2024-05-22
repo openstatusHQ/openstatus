@@ -2,19 +2,19 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import {
-  Assertion,
+  type Assertion,
   HeaderAssertion,
-  serialize,
   StatusAssertion,
+  serialize,
 } from "@openstatus/assertions";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
   monitor,
-  monitorsToPages,
-  monitorsToStatusReport,
   monitorTag,
   monitorTagsToMonitors,
+  monitorsToPages,
+  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,

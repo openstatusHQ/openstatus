@@ -47,7 +47,7 @@ export async function verifyDomain(domain: string) {
     const verificationJson = await api.domain.verifyDomain.query({ domain });
 
     // domain was just verified
-    if (verificationJson && verificationJson.verified) {
+    if (verificationJson?.verified) {
       status = "Valid Configuration";
     }
   } else if (configJson.misconfigured) {

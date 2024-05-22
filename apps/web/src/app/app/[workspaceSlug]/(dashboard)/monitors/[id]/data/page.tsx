@@ -1,5 +1,5 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
+import * as React from "react";
 import * as z from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
@@ -29,7 +29,7 @@ const searchParamsSchema = z.object({
     .string()
     .optional()
     .transform((val) => {
-      return val?.split(",").map(parseInt);
+      return val?.split(",").map(Number.parseInt);
     }),
   error: z
     .string()

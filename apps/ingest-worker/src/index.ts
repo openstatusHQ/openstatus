@@ -72,7 +72,7 @@ app.post("/", async (c) => {
       const { API_ENDPOINT } = env(c);
       console.log();
 
-      console.log("  data :" + JSON.stringify(p));
+      console.log(`  data :${JSON.stringify(p)}`);
       const r = fetch(API_ENDPOINT, {
         method: "POST",
         headers: {
