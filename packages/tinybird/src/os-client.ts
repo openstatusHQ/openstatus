@@ -331,7 +331,7 @@ export class OSTinybird {
     };
   }
   ingestWebVitals(data: z.infer<typeof tbIngestWebVitalsArray>) {
-    this.tb.buildIngestEndpoint({
+    return this.tb.buildIngestEndpoint({
       datasource: "web_vitals__v0",
       event: tbIngestWebVitals,
     })(data);

@@ -34,7 +34,7 @@ const schema = z.object({
 });
 
 const schemaV1 = z.object({
-  event_name: z.literal("web-vitals"),
+  event_type: z.literal("web-vitals"),
   dsn: z.string(),
   href: z.string(),
   speed: z.string(),
@@ -154,18 +154,14 @@ app.post("/v1", async (c) => {
   const db = createDb({ client });
   const tb = new OSTinybird({ token: TINYBIRD_TOKEN });
   const insert = async () => {
-    const dsn = payload.map((p) => {
-      return p.dsn;
-    });
-    if (dsn.length > 1) {
-      return;
-    }
+    // console.log(payload);
 
+    // We only take the first payload but we should take all
     // Fetch db
     const r = await db
       .select()
       .from(application)
-      .where(eq(application.dsn, dsn[0]))
+      .where(eq(application.dsn, payload[0].dsn))
       .get();
     if (!r) {
       return;
