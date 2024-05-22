@@ -264,8 +264,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/header-analysis
       '@openstatus/next-monitoring':
-        specifier: 0.0.2
-        version: 0.0.2(next@14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
+        specifier: 0.0.4
+        version: 0.0.4(next@14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord
@@ -2681,8 +2681,8 @@ packages:
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
-  '@openstatus/next-monitoring@0.0.2':
-    resolution: {integrity: sha512-w5xuvAM2UfLPEIoGqhh9hgXF4ChHhbF6J+gDZz3vZOYHPmFfUpMxq597kJ0e/hxNC3rQ8bRbhOtpUNXD2Rnnug==}
+  '@openstatus/next-monitoring@0.0.4':
+    resolution: {integrity: sha512-/UXWRt6hKfgGtuqvO9umBgBHDMIgs/Pkrrlt/3SWPGywkW7N5j7GGSCBwMzjs4SthPWBQRL1++lERZvaGkgEyA==}
     peerDependencies:
       next: '>=14.0.0'
       react: '>=18.2.0'
@@ -6460,7 +6460,6 @@ packages:
 
   libsql@0.3.10:
     resolution: {integrity: sha512-/8YMTbwWFPmrDWY+YFK3kYqVPFkMgQre0DGmBaOmjogMdSe+7GHm1/q9AZ61AWkEub/vHmi+bA4tqIzVhKnqzg==}
-    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lie@3.1.1:
@@ -10597,7 +10596,7 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
-  '@openstatus/next-monitoring@0.0.2(next@14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
+  '@openstatus/next-monitoring@0.0.4(next@14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0)':
     dependencies:
       next: 14.2.3(@babel/core@7.24.4)(@opentelemetry/api@1.4.1)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
