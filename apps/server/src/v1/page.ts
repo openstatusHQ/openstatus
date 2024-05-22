@@ -100,7 +100,7 @@ const PageSchema = z.object({
           { monitorId: 1, order: 0 },
           { monitorId: 2, order: 1 },
         ],
-      }),
+      })
     )
     .optional(),
 });
@@ -147,7 +147,7 @@ const CreatePageSchema = z.object({
           { monitorId: 1, order: 0 },
           { monitorId: 2, order: 1 },
         ],
-      }),
+      })
     )
     .nullish(),
 
@@ -221,7 +221,7 @@ const UpdatePageSchema = z.object({
           { monitorId: 1, order: 0 },
           { monitorId: 2, order: 1 },
         ],
-      }),
+      })
     )
     .nullish(),
 
@@ -311,8 +311,8 @@ pageApi.openapi(postRouteSubscriber, async (c) => {
     .where(
       and(
         eq(pageSubscriber.email, input.email),
-        eq(pageSubscriber.pageId, pageId),
-      ),
+        eq(pageSubscriber.pageId, pageId)
+      )
     )
     .get();
   if (alreadySubscribed)
@@ -507,7 +507,7 @@ pageApi.openapi(postRoute, async (c) => {
 
   const { monitors, ...rest } = input;
 
-  if (monitors) {
+  if (monitors?.length) {
     const monitorIds = isNumberArray(monitors)
       ? monitors
       : monitors.map((m) => m.monitorId);
@@ -518,8 +518,8 @@ pageApi.openapi(postRoute, async (c) => {
       .where(
         and(
           inArray(monitor.id, monitorIds),
-          eq(monitor.workspaceId, workspaceId),
-        ),
+          eq(monitor.workspaceId, workspaceId)
+        )
       )
       .all();
     if (monitorsData.length !== monitors.length)
@@ -631,15 +631,15 @@ pageApi.openapi(putRoute, async (c) => {
       : monitors.map((m) => m.monitorId)
     : [];
 
-  if (monitors) {
+  if (monitors?.length) {
     const monitorsData = await db
       .select()
       .from(monitor)
       .where(
         and(
           inArray(monitor.id, monitorIds),
-          eq(monitor.workspaceId, workspaceId),
-        ),
+          eq(monitor.workspaceId, workspaceId)
+        )
       )
       .all();
     if (monitorsData.length !== monitors.length)
@@ -670,8 +670,8 @@ pageApi.openapi(putRoute, async (c) => {
       .where(
         and(
           inArray(monitorsToPages.monitorId, removedMonitors),
-          eq(monitorsToPages.pageId, newPage.id),
-        ),
+          eq(monitorsToPages.pageId, newPage.id)
+        )
       );
   }
 
