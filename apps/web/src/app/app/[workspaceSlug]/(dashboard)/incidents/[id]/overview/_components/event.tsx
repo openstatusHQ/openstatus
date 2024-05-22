@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import type * as React from "react";
 
 import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";

@@ -1,6 +1,5 @@
 import type { Column } from "@tanstack/react-table";
 import { PlusCircle } from "lucide-react";
-import type * as React from "react";
 
 import {
   Select,

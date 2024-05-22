@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import type * as React from "react";
 
 import { auth } from "@/lib/auth";
 
