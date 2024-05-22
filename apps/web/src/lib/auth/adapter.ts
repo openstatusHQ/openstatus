@@ -15,6 +15,7 @@ import { createUser, getUser } from "./helpers";
 export type { DefaultSession };
 
 export const adapter: Adapter = {
+  // @ts-expect-error some issues with types
   ...DrizzleAdapter(db, {
     usersTable: user,
     accountsTable: account,
