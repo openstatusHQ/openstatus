@@ -83,7 +83,9 @@ export function MonitorForm({
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
       public: defaultValues?.public ?? false,
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
   });
@@ -133,7 +135,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -153,7 +155,7 @@ export function MonitorForm({
         }
       }
 
-      const res = await fetch(`/api/checker/test`, {
+      const res = await fetch("/api/checker/test", {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",
@@ -172,12 +174,13 @@ export function MonitorForm({
         JSON.stringify([
           ...(statusAssertions || []),
           ...(headerAssertions || []),
-        ])
+        ]),
       );
 
       const data = (await res.json()) as RegionChecker;
 
       const _headers: Record<string, string> = {};
+      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       res.headers.forEach((value, key) => (_headers[key] = value));
 
       if (as.length > 0) {
@@ -207,7 +210,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT
+            ABORT_TIMEOUT,
           )}.`,
         };
       }

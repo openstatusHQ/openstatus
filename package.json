@@ -13,14 +13,14 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.6.2",
+    "@biomejs/biome": "1.7.3",
     "@openstatus/eslint-config": "workspace:*",
     "@turbo/gen": "1.13.3",
     "eslint": "8.50.0",
     "turbo": "1.13.3",
     "typescript": "5.4.5"
   },
-  "packageManager": "pnpm@9.1.0",
+  "packageManager": "pnpm@9.1.2",
   "name": "openstatus",
   "workspaces": [
     "apps/*",

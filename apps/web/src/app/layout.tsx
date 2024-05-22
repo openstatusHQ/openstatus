@@ -40,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} ${calSans.variable}`}>
+      <body className={`${inter.className}${calSans.variable}`}>
         {/* Only include RUM in prod */}
         {process.env.NODE_ENV === "production" && (
           <OpenStatusProvider dsn="openstatus" />

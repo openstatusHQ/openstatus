@@ -3,12 +3,12 @@
 
 "use client";
 
-import { Suspense, use } from "react";
 import type {
   ColumnFiltersState,
   PaginationState,
   Row,
 } from "@tanstack/react-table";
+import { Suspense, use } from "react";
 
 import * as assertions from "@openstatus/assertions";
 import type { OSTinybird } from "@openstatus/tinybird";
@@ -80,7 +80,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       url: row.original.url,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    })
+    }),
   );
 
   if (!data || data.length === 0) return <p>Something went wrong</p>;

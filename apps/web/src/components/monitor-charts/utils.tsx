@@ -14,7 +14,7 @@ import type { Period, Quantile } from "@/lib/monitor/utils";
 export function groupDataByTimestamp(
   data: ResponseGraph[],
   period: Period,
-  quantile: Quantile
+  quantile: Quantile,
 ) {
   let currentTimestamp = 0;
   const regions: Record<
@@ -47,7 +47,7 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<Region, string>> & { timestamp: string })[]
+    [] as (Partial<Record<Region, string>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code
@@ -64,7 +64,7 @@ export function groupDataByTimestamp(
  * @param period
  * @returns
  */
-export function renderTimestamp(timestamp: number, period: Period) {
+export function renderTimestamp(timestamp: number, _period: Period) {
   const date = new Date(timestamp);
   return format(date, "MMM d, HH:mm");
 }

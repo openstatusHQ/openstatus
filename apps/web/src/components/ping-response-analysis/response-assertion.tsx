@@ -29,6 +29,7 @@ export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
         {assertions.map((a, i) => {
           if (a.schema.type === "status") {
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <TableRow key={i}>
                 <TableCell className="text-muted-foreground">
                   Status Code
@@ -40,8 +41,10 @@ export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
                 <TableCell className="font-mono">{a.schema.target}</TableCell>
               </TableRow>
             );
-          } else if (a.schema.type === "header") {
+          }
+          if (a.schema.type === "header") {
             return (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <TableRow key={i}>
                 <TableCell className="text-muted-foreground">Header</TableCell>
                 <TableCell className="font-mono">{a.schema.key}</TableCell>

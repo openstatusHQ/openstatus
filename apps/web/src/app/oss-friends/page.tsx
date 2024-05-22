@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { z } from "zod";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
@@ -34,7 +34,7 @@ const OpenSourceFriends = async () => {
                 <CardTitle>{friend.name}</CardTitle>
                 <div className="flex flex-1 justify-between gap-3">
                   <CardDescription>{friend.description}</CardDescription>
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 self-end" />
+                  <ArrowUpRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                 </div>
               </CardHeader>
             </Card>

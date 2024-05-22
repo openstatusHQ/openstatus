@@ -57,13 +57,13 @@ export async function ResponseDetailTabs({
         {message ? (
           <div>
             <pre
-              className="bg-muted text-wrap rounded-md p-4 text-sm"
+              className="text-wrap rounded-md bg-muted p-4 text-sm"
               // @ts-expect-error some issues with types
               style={{ textWrap: "wrap" }}
             >
               {message}
             </pre>
-            <p className="text-muted-foreground mt-4 text-center text-sm">
+            <p className="mt-4 text-center text-muted-foreground text-sm">
               Response Message
             </p>
           </div>

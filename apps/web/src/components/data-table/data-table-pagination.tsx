@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import type { Table } from "@tanstack/react-table";
 import {
   ChevronLeft,
@@ -8,6 +7,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
   Button,

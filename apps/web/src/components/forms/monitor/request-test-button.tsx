@@ -83,7 +83,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
           onValueChange={(value: MonitorFlyRegion) => setValue(value)}
         >
           <SelectTrigger
-            className="border-accent flex-1 rounded-r-none focus:ring-0"
+            className="flex-1 rounded-r-none border-accent focus:ring-0"
             aria-label={value}
           >
             <SelectValue>{flag}</SelectValue>

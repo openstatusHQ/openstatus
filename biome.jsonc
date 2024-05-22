@@ -26,7 +26,8 @@
       "dist",
       ".wrangler",
       ".react-email",
-      ".contentlayer"
+      ".contentlayer",
+      "meta"
     ]
   },
   "formatter": {
@@ -41,7 +42,8 @@
       ".nuxt",
       ".wrangler",
       ".react-email",
-      ".contentlayer"
+      ".contentlayer",
+      "meta"
     ]
   },
   "organizeImports": {

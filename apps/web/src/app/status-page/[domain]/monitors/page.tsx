@@ -1,6 +1,6 @@
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
@@ -66,13 +66,13 @@ export default async function Page({
         <div className="grid gap-6">
           <p className="text-muted-foreground">
             Response time over the{" "}
-            <span className="text-foreground font-medium">last {period}</span>{" "}
+            <span className="font-medium text-foreground">last {period}</span>{" "}
             across{" "}
-            <span className="text-foreground font-medium">
+            <span className="font-medium text-foreground">
               all selected regions
             </span>{" "}
             within a{" "}
-            <span className="text-foreground font-medium">p95 quantile</span>.
+            <span className="font-medium text-foreground">p95 quantile</span>.
           </p>
           <ul className="grid gap-6">
             {monitorsWithData?.map(({ monitor, data }) => {
@@ -87,8 +87,8 @@ export default async function Page({
                 <li key={monitor.id} className="grid gap-2">
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                     <div className="w-full min-w-0">
-                      <p className="text-sm font-semibold">{monitor.name}</p>
-                      <p className="text-muted-foreground truncate text-sm">
+                      <p className="font-semibold text-sm">{monitor.name}</p>
+                      <p className="truncate text-muted-foreground text-sm">
                         {monitor.url}
                       </p>
                     </div>
@@ -109,7 +109,7 @@ export default async function Page({
           </ul>
         </div>
       ) : (
-        <p className="text-muted-foreground text-center text-sm font-light">
+        <p className="text-center font-light text-muted-foreground text-sm">
           No public monitor.
         </p>
       )}

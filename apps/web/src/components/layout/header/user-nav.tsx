@@ -1,6 +1,6 @@
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
 
 import {
   Avatar,
@@ -37,18 +37,18 @@ export function UserNav() {
                 `${session.data.user?.firstName} ${session.data.user?.lastName}`
               }
             />
-            <AvatarFallback className="from-foreground to-muted via-muted-foreground bg-gradient-to-br opacity-70" />
+            <AvatarFallback className="bg-gradient-to-br from-foreground via-muted-foreground to-muted opacity-70" />
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="truncate text-sm font-medium leading-none">
+            <p className="truncate font-medium text-sm leading-none">
               {session.data.user?.name ||
                 `${session.data.user?.firstName} ${session.data.user?.lastName}`}
             </p>
-            <p className="text-muted-foreground truncate text-xs leading-none">
+            <p className="truncate text-muted-foreground text-xs leading-none">
               {session.data.user?.email}
             </p>
           </div>

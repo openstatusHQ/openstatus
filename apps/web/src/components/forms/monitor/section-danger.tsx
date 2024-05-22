@@ -26,8 +26,8 @@ import {
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
-import { SectionHeader } from "../shared/section-header";
 import React from "react";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   monitorId: number;

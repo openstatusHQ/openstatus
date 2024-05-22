@@ -22,7 +22,7 @@ function jsonToCsv(jsonData: Record<string, unknown>[]): string {
   // Add data rows
   for (const row of jsonData) {
     const values = headers.map((header) => {
-      const escaped = ("" + row[header]).replace(/"/g, '\\"');
+      const escaped = `${row[header]}`.replace(/"/g, '\\"');
       return `"${escaped}"`;
     });
     csvRows.push(values.join(","));

@@ -1,6 +1,6 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 
 import {
   Card,
@@ -63,7 +63,7 @@ const ExternalStatusPage = async () => {
                   <CardDescription className={getClassname(status)}>
                     {status.status_description}
                   </CardDescription>
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 self-end" />
+                  <ArrowUpRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                 </div>
               </CardHeader>
             </Card>

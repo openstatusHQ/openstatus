@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   Activity,
   Clock,
@@ -7,6 +6,7 @@ import {
   Palette,
   PanelTop,
 } from "lucide-react";
+import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
 import type { CardProps } from "@/components/play/card";

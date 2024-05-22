@@ -1,4 +1,4 @@
-import * as React from "react";
+import type * as React from "react";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageLayout from "@/components/layout/app-page-layout";

@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import { subDays } from "date-fns";
+import { notFound } from "next/navigation";
 
 import { Separator } from "@openstatus/ui";
 
@@ -39,7 +39,7 @@ export default async function Page({ params }: Props) {
       <Separator />
       <div className="grid gap-6">
         <div>
-          <h2 className="text-xl font-semibold">Latest Incidents</h2>
+          <h2 className="font-semibold text-xl">Latest Incidents</h2>
           <p className="text-muted-foreground text-sm">
             Incidents of the last 7 days or that have not been resolved yet.
           </p>

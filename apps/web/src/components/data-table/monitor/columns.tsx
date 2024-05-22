@@ -54,7 +54,7 @@ export const columns: ColumnDef<{
     // REMINDER: visibility is handled within the `<DataTable />`
     accessorKey: "public",
     accessorFn: (row) => row.monitor.public,
-    filterFn: (row, id, value) => {
+    filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       return value.includes(row.original.monitor.public);
     },

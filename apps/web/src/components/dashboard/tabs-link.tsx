@@ -24,7 +24,7 @@ export function TabsContainer({
           {
             "items-center overflow-x-auto": direction === "horizontal",
           },
-          className
+          className,
         )}
       >
         <ul
@@ -67,13 +67,13 @@ export function TabsLink({
     >
       <Link
         className={cn(
-          "text-muted-foreground hover:text-primary rounded-md text-sm font-medium",
+          "rounded-md font-medium text-muted-foreground text-sm hover:text-primary",
           {
             "text-primary": active,
-            "px-4 pb-3 pt-2": direction === "horizontal",
+            "px-4 pt-2 pb-3": direction === "horizontal",
             "px-4 py-2.5": direction === "vertical",
           },
-          className
+          className,
         )}
         {...props}
       >

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { formatDistanceToNowStrict } from "date-fns";
+import Link from "next/link";
 
 import type { LatencyMetric, ResponseTimeMetrics } from "@openstatus/tinybird";
 
@@ -27,7 +27,7 @@ export function Metrics({
   if (!metrics) return null;
 
   const [current, last] = metrics.sort((a, b) =>
-    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
   );
 
   const isEmpty = current.count === 0;
@@ -44,7 +44,7 @@ export function Metrics({
 
   return (
     <div className="@container grid gap-6">
-      <div className="@xl:grid-cols-4 @3xl:grid-cols-5 @3xl:gap-6 grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5 @xl:grid-cols-4 @3xl:gap-6">
         <MetricsCard
           title="uptime"
           value={uptime * 100}
@@ -76,7 +76,7 @@ export function Metrics({
         <MetricsCard title="total pings" value={current.count} suffix="#" />
       </div>
       <div className="grid gap-4">
-        <div className="@xl:grid-cols-4 @3xl:grid-cols-5 @3xl:gap-6 grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5 @xl:grid-cols-4 @3xl:gap-6">
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];
@@ -109,7 +109,7 @@ export function Metrics({
               The monitor had {failures} failed ping(s). See more in the{" "}
               <Link
                 href={`./data?error=true&period=${period}`}
-                className=" underline underline-offset-4 hover:no-underline"
+                className="underline underline-offset-4 hover:no-underline"
               >
                 response logs
               </Link>

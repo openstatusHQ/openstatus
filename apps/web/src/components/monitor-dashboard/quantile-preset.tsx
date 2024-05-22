@@ -1,8 +1,6 @@
 "use client";
 
-import * as React from "react";
 import { HelpCircle } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import {

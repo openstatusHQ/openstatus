@@ -51,17 +51,15 @@ export async function GET(
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
 
   return new ImageResponse(
-    (
-      <div
-        tw={`flex items-center justify-center rounded-md border px-3 py-1 text-sm ${
-          theme === "dark" ? dark : light
-        }`}
-        style={{ ...SIZE }}
-      >
-        {label}
-        <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
-      </div>
-    ),
+    <div
+      tw={`flex items-center justify-center rounded-md border px-3 py-1 text-sm ${
+        theme === "dark" ? dark : light
+      }`}
+      style={{ ...SIZE }}
+    >
+      {label}
+      <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
+    </div>,
     { ...SIZE },
   );
 }

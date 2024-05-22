@@ -13,9 +13,9 @@ export function VisibleIconWithTooltip({ visible }: { visible: boolean }) {
       <Tooltip delayDuration={200}>
         <TooltipTrigger>
           {visible ? (
-            <Eye className="text-muted-foreground hover:text-foreground h-4 w-4" />
+            <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           ) : (
-            <EyeOff className="text-muted-foreground hover:text-foreground h-4 w-4" />
+            <EyeOff className="h-4 w-4 text-muted-foreground hover:text-foreground" />
           )}
         </TooltipTrigger>
         <TooltipContent side="top">

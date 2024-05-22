@@ -86,7 +86,7 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
 
   return (
     <Link
-      className="text-muted-foreground hover:text-foreground inline-flex w-fit items-center underline underline-offset-4 hover:no-underline"
+      className="inline-flex w-fit items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
       href={href}
       {...externalProps}
     >

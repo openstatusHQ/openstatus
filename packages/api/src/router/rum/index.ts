@@ -45,7 +45,7 @@ export const rumRouter = createTRPCRouter({
         }
         const d = schema.parse(result);
         return d.length > 0 ? d[0] : null;
-      } catch (e) {
+      } catch (_e) {
         return null;
       }
     }),
@@ -105,7 +105,9 @@ export const rumRouter = createTRPCRouter({
       );
       const d = schema.parse(result);
       const r = d.reduce((acc, curr) => {
+        // biome-ignore lint: <explanation>
         acc = {
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           ...acc,
           [`${String(curr.event_name).toLowerCase()}Value`]: curr.value,
         };

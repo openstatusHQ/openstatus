@@ -54,7 +54,8 @@ app.post(
     const env = c.env;
     const db = createDrizzleClient(env);
 
-    const sessionId = await getRandomSession(c.env.MYBROWSER);
+    const sessionId = await getRandomSession(env.MYBROWSER);
+    // biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
     let browser;
     if (sessionId) {
       try {
@@ -112,6 +113,7 @@ const getRandomSession = async (
 
   const sessionId = sessionsIds[Math.floor(Math.random() * sessionsIds.length)];
 
+  // biome-ignore lint/style/noNonNullAssertion: <explanation>
   return sessionId!;
 };
 export default app;

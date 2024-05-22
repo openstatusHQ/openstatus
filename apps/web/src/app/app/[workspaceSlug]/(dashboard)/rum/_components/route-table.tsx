@@ -16,9 +16,9 @@ const RouteTable = async () => {
     return null;
   }
   return (
-    <div className="  ">
-      <h2 className="text-lg font-semibold">Page Performance</h2>
-      <div className=" ">
+    <div className="">
+      <h2 className="font-semibold text-lg">Page Performance</h2>
+      <div className="">
         <Table>
           <TableCaption>An overview of your page performance.</TableCaption>
           <TableHeader>
@@ -36,7 +36,7 @@ const RouteTable = async () => {
             {data.map((page) => {
               return (
                 <TableRow key={`${page.href}`}>
-                  <TableCell className="w-2  max-w-6 truncate font-medium">
+                  <TableCell className="w-2 max-w-6 truncate font-medium">
                     {page.href}
                   </TableCell>
                   <TableCell>{page.total_event}</TableCell>

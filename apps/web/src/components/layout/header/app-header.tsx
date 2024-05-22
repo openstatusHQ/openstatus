@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { allChangelogs } from "contentlayer/generated";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
@@ -16,14 +15,14 @@ import { UserNav } from "./user-nav";
 const lastChangelog = allChangelogs
   .sort(
     (a, b) =>
-      new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
+      new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
   )
   .pop();
 
 export function AppHeader() {
   const [lastViewed, setLastViewed] = useCookieState(
     "last-viewed-changelog",
-    new Date(0).toISOString()
+    new Date(0).toISOString(),
   );
 
   const show =
@@ -50,7 +49,7 @@ export function AppHeader() {
                   >
                     Changelog
                     {show ? (
-                      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-green-500" />
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500" />
                     ) : null}
                   </Link>
                 </Button>

@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
 import { format, getTimezoneOffset, utcToZonedTime } from "date-fns-tz";
+import { headers } from "next/headers";
 
 export function getRequestHeaderTimezone() {
   const headersList = headers();
@@ -79,11 +79,10 @@ export function getClosestTimezone(defaultTimezone?: string) {
           timezone: curr,
           minDifference: timeDifferences[curr as keyof typeof timeDifferences],
         };
-      } else {
-        return prev;
       }
+      return prev;
     },
-    { timezone: "UTC", minDifference: Infinity }
+    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY },
   );
 
   return closestTimezone.timezone as keyof typeof timeDifferences;

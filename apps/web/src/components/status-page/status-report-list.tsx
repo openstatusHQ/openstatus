@@ -23,14 +23,14 @@ export const StatusReportList = ({
     return statusReports.filter((report) => {
       if (filter.open && report.status !== "resolved") return true;
       return report.statusReportUpdates.some(
-        (update) => update.date.getTime() > filter?.date?.getTime()
+        (update) => update.date.getTime() > filter?.date?.getTime(),
       );
     });
   }
 
   const reports = getFilteredReports().sort((a, b) => {
-    if (a.updatedAt == undefined) return 1;
-    if (b.updatedAt == undefined) return -1;
+    if (a.updatedAt === undefined) return 1;
+    if (b.updatedAt === undefined) return -1;
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
@@ -64,7 +64,7 @@ export const StatusReportList = ({
 
 function EmptyState() {
   return (
-    <p className="text-muted-foreground text-center text-sm font-light">
+    <p className="text-center font-light text-muted-foreground text-sm">
       No incident reported.
     </p>
   );

@@ -1,10 +1,10 @@
 "use client";
 
-import { Fragment } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { Fragment } from "react";
 
 import type {
   PublicMonitor,
@@ -38,7 +38,7 @@ function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
   const params = useParams<{ domain: string }>();
   return (
     <div className="flex items-center gap-2">
-      <h3 className="text-2xl font-semibold">{report.title}</h3>
+      <h3 className="font-semibold text-2xl">{report.title}</h3>
       <Button
         variant="ghost"
         size="icon"
@@ -92,7 +92,7 @@ function StatusReportUpdates({ report }: { report: StatusReportWithUpdates }) {
           <Fragment key={update.id}>
             <div className="flex items-center gap-2 md:col-span-1 md:flex-col md:items-start md:gap-1">
               <p className="font-medium capitalize">{update.status}</p>
-              <p className="text-muted-foreground font-mono text-sm md:text-xs">
+              <p className="font-mono text-muted-foreground text-sm md:text-xs">
                 {format(update.date, "LLL dd, y HH:mm")}
               </p>
             </div>

@@ -59,7 +59,7 @@ const MonitorSchema = z
           }
           return [];
         },
-        z.array(z.enum(flyRegions))
+        z.array(z.enum(flyRegions)),
       )
       .default([])
       .openapi({
@@ -99,7 +99,7 @@ const MonitorSchema = z
           }
           return [];
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([])
+        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
       .nullish()
       .openapi({
@@ -161,7 +161,7 @@ const monitorInput = z
           }
           return [];
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([])
+        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
       .openapi({
         description: "The headers of your request",
@@ -335,8 +335,8 @@ monitorApi.openapi(postRoute, async (c) => {
       .where(
         and(
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .all()
   )[0].count;
@@ -569,7 +569,7 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
-    `${monitorId}-daily-stats`
+    `${monitorId}-daily-stats`,
   );
   if (cache) {
     console.log("fetching from cache");
