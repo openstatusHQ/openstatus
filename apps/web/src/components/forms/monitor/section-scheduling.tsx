@@ -110,6 +110,7 @@ export function SectionScheduling({ form, plan }: Props) {
                           <FormControl className="h-full">
                             <CheckboxLabel
                               id={item}
+                              name="region"
                               checked={field.value?.includes(item)}
                               onCheckedChange={(checked) => {
                                 return checked
@@ -119,8 +120,8 @@ export function SectionScheduling({ form, plan }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item,
-                                      ),
+                                        (value) => value !== item
+                                      )
                                     );
                               }}
                             >

@@ -79,6 +79,7 @@ export function SectionStatusPage({ form, pages }: Props) {
                           <FormControl className="h-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name="page"
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked
@@ -88,8 +89,8 @@ export function SectionStatusPage({ form, pages }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >

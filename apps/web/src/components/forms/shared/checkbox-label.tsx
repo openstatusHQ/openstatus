@@ -10,6 +10,7 @@ interface Props {
   checked?: boolean;
   onCheckedChange(checked: boolean): void;
   className?: string;
+  name: string;
 }
 
 export function CheckboxLabel({
@@ -18,20 +19,22 @@ export function CheckboxLabel({
   checked,
   onCheckedChange,
   className,
+  name,
 }: Props) {
   return (
     <div className="relative h-full">
       <Checkbox
-        id={id}
+        id={`${name}-${id}`}
+        name={name}
         className="peer sr-only"
         checked={checked}
         onCheckedChange={onCheckedChange}
       />
       <Label
-        htmlFor={id}
+        htmlFor={`${name}-${id}`}
         className={cn(
           "flex h-full items-center gap-1 rounded-md border border-border bg-popover p-4 pr-10 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
-          className,
+          className
         )}
       >
         {children}

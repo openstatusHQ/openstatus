@@ -76,6 +76,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                           <FormControl className="h-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name={"notification"}
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked
@@ -85,8 +86,8 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >
