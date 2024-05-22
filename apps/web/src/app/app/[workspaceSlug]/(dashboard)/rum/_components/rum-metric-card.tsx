@@ -18,7 +18,7 @@ export const RUMMetricCard = async ({ event }: { event: WebVitalEvents }) => {
   const eventConfig = webVitalsConfig[event];
   return (
     <Card>
-      <p className="text-muted-foreground text-sm">
+      {/* <p className="text-muted-foreground text-sm">
         {eventConfig.label} ({event})
       </p>
       <p className="text-foreground text-3xl font-semibold">
@@ -27,7 +27,7 @@ export const RUMMetricCard = async ({ event }: { event: WebVitalEvents }) => {
       <CategoryBar
         values={prepareWebVitalValues(eventConfig.values)}
         marker={data?.median || 0}
-      />
+      /> */}
     </Card>
   );
 };
