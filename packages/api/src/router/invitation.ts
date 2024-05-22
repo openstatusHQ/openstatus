@@ -82,8 +82,10 @@ export const invitationRouter = createTRPCRouter({
         });
       }
 
-      // TODO:
-      await trackNewInvitation();
+      await trackNewInvitation(opts.ctx.user, {
+        emailTo: email,
+        workspaceSlug: opts.ctx.workspace.slug,
+      });
 
       return _invitation;
     }),
