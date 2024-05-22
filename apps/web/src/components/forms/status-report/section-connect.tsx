@@ -52,8 +52,10 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                           <FormControl className="w-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name="page"
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
+                                console.log(field, item.id, checked);
                                 return checked
                                   ? field.onChange([
                                       ...(field.value || []),
@@ -61,8 +63,8 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >
@@ -107,8 +109,10 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                           <FormControl className="w-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name="monitor"
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
+                                console.log(field, item.id, checked);
                                 return checked
                                   ? field.onChange([
                                       ...(field.value || []),
@@ -116,8 +120,8 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >
