@@ -64,7 +64,7 @@ export function groupDataByTimestamp(
  * @param period
  * @returns
  */
-export function renderTimestamp(timestamp: number, period: Period) {
+export function renderTimestamp(timestamp: number, _period: Period) {
   const date = new Date(timestamp);
   return format(date, "MMM d, HH:mm");
 }

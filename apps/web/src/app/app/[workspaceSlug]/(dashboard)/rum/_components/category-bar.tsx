@@ -59,36 +59,38 @@ export function CategoryBar({ values, marker }: CategoryBarProps) {
   return (
     <div className="relative w-full">
       <div className="relative mb-1 flex w-full">
-        <div className="text-muted-foreground absolute bottom-0 left-0 flex items-center text-xs">
+        <div className="absolute bottom-0 left-0 flex items-center text-muted-foreground text-xs">
           0
         </div>
         {valuesWithPercentage.slice(0, values.length - 1).map((value, i) => {
           const width = `${(value.percentage * 100).toFixed(2)}%`;
           return (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               key={i}
               className="flex items-center justify-end"
               style={{ width }}
             >
-              <span className="text-muted-foreground left-1/2 translate-x-1/2 text-xs">
+              <span className="left-1/2 translate-x-1/2 text-muted-foreground text-xs">
                 {value.max}
               </span>
             </div>
           );
         })}
         {/* REMINDER: could be a thing - only display if maxValue !== Infinity */}
-        <div className="text-muted-foreground absolute bottom-0 right-0 flex items-center text-xs">
+        <div className="absolute right-0 bottom-0 flex items-center text-muted-foreground text-xs">
           {getMaxValue()}
         </div>
       </div>
       <div className="flex h-3 w-full overflow-hidden rounded-full">
         {valuesWithPercentage.map((value, i) => {
           const width = `${(value.percentage * 100).toFixed(2)}%`;
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           return <div key={i} className={cn(value.color)} style={{ width }} />;
         })}
       </div>
       <div
-        className="absolute -bottom-0.5 right-1/2 w-5 -translate-x-1/2"
+        className="-bottom-0.5 -translate-x-1/2 absolute right-1/2 w-5"
         style={{ left: `${(marker / getMaxValue()) * 100}%` }}
       >
         <TooltipProvider>
@@ -96,7 +98,7 @@ export function CategoryBar({ values, marker }: CategoryBarProps) {
             <TooltipTrigger asChild>
               <div
                 className={cn(
-                  "ring-border mx-auto h-4 w-1 rounded-full ring-2",
+                  "mx-auto h-4 w-1 rounded-full ring-2 ring-border",
                   getMarkerColor(),
                 )}
               />

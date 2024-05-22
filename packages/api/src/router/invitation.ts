@@ -60,7 +60,7 @@ export const invitationRouter = createTRPCRouter({
         body: JSON.stringify({
           to: email,
           from: "Maximilian Kaske <max@openstatus.dev>",
-          subject: `You have been invited to join OpenStatus.dev`,
+          subject: "You have been invited to join OpenStatus.dev",
           html: `<p>Click here to join the workspace: <a href='https://openstatus.dev/app/invite?token=${token}'>accept invitation</a></p>`,
         }),
       });

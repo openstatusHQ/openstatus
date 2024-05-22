@@ -2,8 +2,8 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Command as CommandPrimitive, useCommandState } from "cmdk";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Ping } from "@openstatus/tinybird";
 import {
@@ -52,6 +52,7 @@ export function InputSearch({
       events.reduce(
         (prev, curr) => {
           return {
+            // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
             ...prev,
             status: [...new Set([curr.statusCode, ...(prev.status || [])])],
             region: [...new Set([curr.region, ...(prev.region || [])])],
@@ -104,11 +105,11 @@ export function InputSearch({
           setCurrentWord(word);
         }}
         placeholder={`${events.length} total logs found...`}
-        className="border-input ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex-1 rounded-md border bg-transparent px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-offset-2"
+        className="flex-1 rounded-md border border-input bg-transparent px-3 py-2 text-sm outline-none ring-offset-background placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2"
       />
       <div className="relative mt-2">
         {open ? (
-          <div className="bg-popover text-popover-foreground animate-in absolute top-0 z-10 w-full rounded-md border shadow-md outline-none">
+          <div className="absolute top-0 z-10 w-full animate-in rounded-md border bg-popover text-popover-foreground shadow-md outline-none">
             <CommandGroup className="max-h-64 overflow-auto">
               {Object.keys(search).map((key) => {
                 if (
@@ -144,7 +145,7 @@ export function InputSearch({
                       className="group"
                     >
                       {key}
-                      <span className="text-muted-foreground/90 ml-1 hidden truncate group-aria-[selected=true]:block">
+                      <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
                         {search[key as SearchKey]
                           .map((str) => `[${str}]`)
                           .join(" ")}

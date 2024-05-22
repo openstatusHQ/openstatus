@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   AlertDialog,
@@ -64,6 +64,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
           </AlertDialogHeader>
           <div>
             <button
+              type="button"
               className="group inline-flex items-center p-2"
               onClick={() => {
                 copyToClipboard(String(rawKey));

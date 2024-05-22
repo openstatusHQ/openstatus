@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -183,7 +183,7 @@ export function NotificationForm({
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Alerts</p>
+            <p className="font-semibold text-sm leading-none">Alerts</p>
             <p className="text-muted-foreground text-sm">
               Select the notification channels you want to be informed.
             </p>
@@ -275,6 +275,7 @@ export function NotificationForm({
                           href={providerMetaData.setupDocLink}
                           target="_blank"
                           className="underline hover:no-underline"
+                          rel="noreferrer"
                         >
                           How to setup your {toCapitalize(watchProvider)}{" "}
                           webhook

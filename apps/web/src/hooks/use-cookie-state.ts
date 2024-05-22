@@ -15,6 +15,7 @@ export function useCookieState(name: string, defaultValue?: string) {
     [name],
   );
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (document) {
       const cookie = document.cookie

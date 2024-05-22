@@ -1,5 +1,5 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
+import * as React from "react";
 import * as z from "zod";
 
 import { flyRegions } from "@openstatus/db/src/schema";
@@ -99,10 +99,10 @@ export default async function Page({
 
   return (
     <div className="relative flex w-full flex-col gap-6">
-      <Shell className="bg-background/80 sticky top-2 z-10 flex items-center justify-between gap-2 backdrop-blur-sm">
+      <Shell className="sticky top-2 z-10 flex items-center justify-between gap-2 bg-background/80 backdrop-blur-sm">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">{monitor.name}</p>
-          <p className="text-muted-foreground truncate text-base">
+          <p className="font-semibold text-sm">{monitor.name}</p>
+          <p className="truncate text-base text-muted-foreground">
             {monitor.url}
           </p>
         </div>

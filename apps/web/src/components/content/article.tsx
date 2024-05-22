@@ -1,6 +1,6 @@
+import type { Post } from "contentlayer/generated";
 import Image from "next/image";
 import Link from "next/link";
-import type { Post } from "contentlayer/generated";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@openstatus/ui";
 
@@ -18,8 +18,8 @@ export function Article({ post }: { post: Post }) {
   return (
     <article className="relative mx-auto flex max-w-prose flex-col gap-8">
       <div className="grid w-full gap-3">
-        <h1 className="font-cal mb-5 text-3xl">{post.title}</h1>
-        <div className="border-border relative h-64 w-full overflow-hidden rounded-lg border">
+        <h1 className="mb-5 font-cal text-3xl">{post.title}</h1>
+        <div className="relative h-64 w-full overflow-hidden rounded-lg border border-border">
           <Image
             src={post.image}
             fill={true}
@@ -32,17 +32,17 @@ export function Article({ post }: { post: Post }) {
             <AvatarImage src={post.author.avatar} />
             <AvatarFallback>{getNameInitials(post.author.name)}</AvatarFallback>
           </Avatar>
-          <div className="text-muted-foreground text-sm font-light">
+          <div className="font-light text-muted-foreground text-sm">
             <Link
               href={post.author.url ?? "#"}
               target="_blank"
-              className="text-foreground cursor-pointer font-medium hover:underline"
+              className="cursor-pointer font-medium text-foreground hover:underline"
             >
               {post.author.name}
             </Link>
             <p>
               {formatDate(new Date(post.publishedAt))}
-              <span className="text-muted-foreground/70 mx-1">&bull;</span>
+              <span className="mx-1 text-muted-foreground/70">&bull;</span>
               {post.readingTime}
             </p>
           </div>

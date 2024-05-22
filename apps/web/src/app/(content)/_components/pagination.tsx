@@ -1,10 +1,11 @@
-import Link from "next/link";
 import type { Changelog } from "contentlayer/generated";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
 export function Pagination({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   prev,
   next,
 }: {
@@ -31,7 +32,7 @@ export function Pagination({
           <Button asChild variant="link">
             <Link href={`/changelog/${next.slug}`} className="group">
               <span className="truncate">{next.title}</span>
-              <ChevronRight className="text-muted-foreground group-hover:text-foreground ml-2 h-4 w-4" />
+              <ChevronRight className="ml-2 h-4 w-4 text-muted-foreground group-hover:text-foreground" />
             </Link>
           </Button>
         </div>

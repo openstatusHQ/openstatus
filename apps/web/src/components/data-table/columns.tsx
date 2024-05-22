@@ -61,7 +61,7 @@ export const columns: ColumnDef<Ping>[] = [
               <DataTableStatusBadge {...{ statusCode }} />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-muted-foreground max-w-xs sm:max-w-sm">
+              <p className="max-w-xs text-muted-foreground sm:max-w-sm">
                 {message}
               </p>
             </TooltipContent>
@@ -82,9 +82,9 @@ export const columns: ColumnDef<Ping>[] = [
     filterFn: (row, id, value) => {
       const { select, input } = value || {};
       if (select === "min" && input)
-        return parseInt(row.getValue(id)) > parseInt(input);
+        return Number.parseInt(row.getValue(id)) > Number.parseInt(input);
       if (select === "max" && input)
-        return parseInt(row.getValue(id)) < parseInt(input);
+        return Number.parseInt(row.getValue(id)) < Number.parseInt(input);
       return true;
     },
   },

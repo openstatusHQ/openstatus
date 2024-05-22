@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import { MenuIcon } from "lucide-react";
+import { usePathname, useSelectedLayoutSegment } from "next/navigation";
+import * as React from "react";
 
 import {
   Button,
@@ -29,6 +29,7 @@ export function Menu({ navigation }: Props) {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   React.useEffect(() => {
     setOpen(false);
   }, [pathname]);

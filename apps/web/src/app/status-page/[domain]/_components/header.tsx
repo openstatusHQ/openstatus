@@ -32,7 +32,7 @@ export function Header({ navigation, plan, page }: Props) {
       <Shell className="flex items-center justify-between gap-4 px-3 py-3 md:px-6 md:py-3">
         <div className="relative sm:w-[100px]">
           {page?.icon ? (
-            <div className="bg-muted border-border flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border">
+            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-border bg-muted">
               <Image
                 height={36}
                 width={36}

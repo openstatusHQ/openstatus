@@ -20,7 +20,7 @@ export default function MagicLinkForm() {
         try {
           await signInWithResendAction(formData);
           toast.success("Check your terminal for the magic link.");
-        } catch (e) {
+        } catch (_e) {
           toastAction("error");
         }
       }}

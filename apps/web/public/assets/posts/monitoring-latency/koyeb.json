@@ -1,21 +1,7 @@
 {
-  "regions": [
-    "ams",
-    "iad",
-    "hkg",
-    "jnb",
-    "syd",
-    "gru"
-  ],
+  "regions": ["ams", "iad", "hkg", "jnb", "syd", "gru"],
   "data": {
-    "regions": [
-      "ams",
-      "gru",
-      "hkg",
-      "iad",
-      "jnb",
-      "syd"
-    ],
+    "regions": ["ams", "gru", "hkg", "iad", "jnb", "syd"],
     "data": [
       {
         "timestamp": "Feb 4, 00:00",

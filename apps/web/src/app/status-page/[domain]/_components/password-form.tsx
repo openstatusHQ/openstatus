@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -47,6 +47,7 @@ export function PasswordForm({ slug }: { slug: string }) {
   const [isPending, startTransition] = useTransition();
   const [_, handleChange] = useCookieState(createProtectedCookieKey(slug)); // what if we do not define the expires date?
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (searchParams.has("authorize")) {
       const authorize = searchParams.get("authorize");
@@ -54,7 +55,6 @@ export function PasswordForm({ slug }: { slug: string }) {
       form.setValue("password", authorize);
     }
     setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSubmit(data: Schema) {
@@ -100,6 +100,7 @@ export function PasswordForm({ slug }: { slug: string }) {
                   type={inputType}
                   disabled={loading}
                   trailing={
+                    // biome-ignore lint/a11y/useButtonType: <explanation>
                     <button
                       onClick={() =>
                         setInputType((type) =>

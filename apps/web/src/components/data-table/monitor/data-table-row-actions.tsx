@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -62,6 +62,7 @@ export function DataTableRowActions<TData>({
   async function onToggleActive() {
     startTransition(async () => {
       try {
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         const { jobType, ...rest } = monitor;
         if (!monitor.id) return;
         await api.monitor.toggleMonitorActive.mutate({
@@ -80,7 +81,7 @@ export function DataTableRowActions<TData>({
       const { url, body, method, headers } = monitor;
 
       try {
-        const res = await fetch(`/api/checker/test`, {
+        const res = await fetch("/api/checker/test", {
           method: "POST",
           headers: new Headers({
             "Content-Type": "application/json",
@@ -106,7 +107,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+            className="h-8 w-8 p-0 data-[state=open]:bg-accent"
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />

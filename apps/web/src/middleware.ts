@@ -10,17 +10,18 @@ export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
   if (!host && typeof window !== "undefined") {
     // On client side, get the host from window
+    // biome-ignore lint: to fix later
     host = window.location.host;
   }
   // we should improve here for custom vercel deploy page
-  if (host && host.includes(".") && !host.includes(".vercel.app")) {
+  if (host?.includes(".") && !host.includes(".vercel.app")) {
     const candidate = host.split(".")[0];
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
       subdomain = candidate;
     }
   }
-  if (host && host.includes("ngrok-free.app")) {
+  if (host?.includes("ngrok-free.app")) {
     return null;
   }
   // In case the host is a custom domain
@@ -83,7 +84,7 @@ export default auth(async (req) => {
     );
   }
 
-  if (req.auth && req.auth.user?.id) {
+  if (req.auth?.user?.id) {
     if (pathname.startsWith("/app") && !isPublicAppPath) {
       const workspaceSlug = req.nextUrl.pathname.split("/")?.[2];
       const hasWorkspaceSlug = !!workspaceSlug && workspaceSlug.trim() !== "";
@@ -93,7 +94,7 @@ export default auth(async (req) => {
         .from(usersToWorkspaces)
         .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
         .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-        .where(eq(user.id, parseInt(req.auth.user.id)))
+        .where(eq(user.id, Number.parseInt(req.auth.user.id)))
         .all();
 
       if (hasWorkspaceSlug) {

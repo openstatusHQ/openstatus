@@ -1,7 +1,7 @@
-import type { Metadata } from "next";
-import Link from "next/link";
 import { allPosts } from "contentlayer/generated";
 import { Rss } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
@@ -39,7 +39,7 @@ export default async function Post() {
         description="All the latest articles and news from OpenStatus."
         actions={
           <Button variant="outline" size="icon" asChild>
-            <a href="/blog/feed.xml" target="_blank">
+            <a href="/blog/feed.xml" target="_blank" rel="noreferrer">
               <Rss className="h-4 w-4" />
               <span className="sr-only">RSS feed</span>
             </a>

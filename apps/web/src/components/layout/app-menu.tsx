@@ -1,12 +1,12 @@
 "use client";
 
-import * as React from "react";
+import { ChevronsUpDown } from "lucide-react";
 import {
   usePathname,
   useSearchParams,
   useSelectedLayoutSegment,
 } from "next/navigation";
-import { ChevronsUpDown } from "lucide-react";
+import * as React from "react";
 
 import {
   Collapsible,
@@ -19,13 +19,8 @@ import { AppSidebar } from "./app-sidebar";
 
 export function AppMenu({ page }: { page?: Page }) {
   const [open, setOpen] = React.useState(false);
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const selectedSegment = useSelectedLayoutSegment();
 
-  React.useEffect(() => {
-    setOpen(false);
-  }, [pathname, searchParams]); // remove searchParams if not needed
+  const selectedSegment = useSelectedLayoutSegment();
 
   if (!page) return null;
 
@@ -36,10 +31,10 @@ export function AppMenu({ page }: { page?: Page }) {
   return (
     <Collapsible open={open} onOpenChange={(value) => setOpen(value)}>
       <CollapsibleTrigger className="flex w-full items-center justify-between">
-        <span className="text-foreground font-medium">
+        <span className="font-medium text-foreground">
           {activeChild?.title}
         </span>
-        <span className="focus-visible:ring-ring hover:bg-accent hover:text-accent-foreground inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-md font-medium text-sm transition-colors disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           <ChevronsUpDown className="h-4 w-4" />
         </span>
       </CollapsibleTrigger>

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/header/app-header";
@@ -22,8 +22,8 @@ export default function Page() {
           <Shell className="relative flex flex-1 flex-col items-center justify-center">
             <div className="grid gap-4">
               <div className="text-center">
-                <p className="font-cal mb-1 text-3xl">Creating Workspace</p>
-                <p className="text-muted-foreground mb-5 text-xl">
+                <p className="mb-1 font-cal text-3xl">Creating Workspace</p>
+                <p className="mb-5 text-muted-foreground text-xl">
                   Should be done in a second.
                 </p>
                 <p className="text-muted-foreground">
@@ -32,6 +32,7 @@ export default function Page() {
                     href="https://openstatus.dev/discord"
                     target="_blank"
                     className="text-foreground underline underline-offset-4 hover:no-underline"
+                    rel="noreferrer"
                   >
                     Discord
                   </a>{" "}

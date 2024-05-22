@@ -1,8 +1,7 @@
-import * as React from "react";
-import { notFound } from "next/navigation";
-
 import { AppHeader } from "@/components/layout/header/app-header";
 import { api } from "@/trpc/server";
+import { notFound } from "next/navigation";
+import type { ReactNode } from "react";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
 
 // TODO: make the container min-h-screen and the footer below!
@@ -10,7 +9,7 @@ export default async function AppLayout({
   children,
   params,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   params: { workspaceSlug: string };
 }) {
   const { workspaceSlug } = params;

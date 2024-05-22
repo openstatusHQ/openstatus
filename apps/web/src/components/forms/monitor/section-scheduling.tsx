@@ -46,7 +46,7 @@ export function SectionScheduling({ form, plan }: Props) {
         title="Schedule and Regions"
         description="Customize the period of time and the regions where your endpoint will be monitored."
       />
-      <div className="grid sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid md:grid-cols-3 sm:grid-cols-2">
         <FormField
           control={form.control}
           name="periodicity"
@@ -87,6 +87,7 @@ export function SectionScheduling({ form, plan }: Props) {
       <FormField
         control={form.control}
         name="regions"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>
@@ -96,7 +97,7 @@ export function SectionScheduling({ form, plan }: Props) {
                   Select the regions you want to monitor your endpoint from.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
                 {flyRegions.map((item) => (
                   <FormField
                     key={item}

@@ -3,12 +3,12 @@
 
 "use client";
 
-import { Suspense, use } from "react";
 import type {
   ColumnFiltersState,
   PaginationState,
   Row,
 } from "@tanstack/react-table";
+import { Suspense, use } from "react";
 
 import * as assertions from "@openstatus/assertions";
 import type { OSTinybird } from "@openstatus/tinybird";
@@ -21,6 +21,7 @@ import { ResponseDetailTabs } from "@/components/ping-response-analysis/response
 import { api } from "@/trpc/client";
 
 // EXAMPLE: get the type of the response of the endpoint
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type
@@ -95,7 +96,7 @@ function Details({ row }: { row: Row<Monitor> }) {
 
   return (
     <div className="relative">
-      <div className="absolute right-0 top-1">
+      <div className="absolute top-1 right-0">
         <CopyToClipboardButton text={url.toString()} tooltipText="Copy link" />
       </div>
       <ResponseDetailTabs

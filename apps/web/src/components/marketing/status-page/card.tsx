@@ -21,7 +21,10 @@ export function StatusPageCard() {
       <CardContent dir="rows">
         <TrackerExample />
         <CardFeatureContainer dir="cols">
-          {features?.map((feature, i) => <CardFeature key={i} {...feature} />)}
+          {features?.map((feature, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            <CardFeature key={i} {...feature} />
+          ))}
         </CardFeatureContainer>
       </CardContent>
     </CardContainer>

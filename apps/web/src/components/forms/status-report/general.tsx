@@ -74,7 +74,7 @@ export function General({ form }: Props) {
                         <FormControl>
                           <RadioGroupItem value={value} className="sr-only" />
                         </FormControl>
-                        <div className="border-border text-muted-foreground flex w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-sm">
+                        <div className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-center text-muted-foreground text-sm">
                           <Icon className="mr-2 h-4 w-4 shrink-0" />
                           <span className="truncate">{label}</span>
                         </div>
