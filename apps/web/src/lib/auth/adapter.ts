@@ -1,5 +1,4 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { DefaultSession } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 
 import { db } from "@openstatus/db";
@@ -12,8 +11,6 @@ import {
 
 import { createUser, getUser } from "./helpers";
 
-export type { DefaultSession };
-
 export const adapter: Adapter = {
   ...DrizzleAdapter(
     // @ts-expect-error some issues with types
@@ -23,7 +20,7 @@ export const adapter: Adapter = {
       accountsTable: account,
       sessionsTable: session,
       verificationTokensTable: verificationToken,
-    },
+    }
   ),
   // @ts-expect-error some issues with types
   createUser: async (data) => {
