@@ -1,15 +1,12 @@
 import { browserName, detectOS } from "detect-browser";
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { env } from "hono/adapter";
 import { z } from "zod";
 
-import { createDb } from "@openstatus/db/src/cf";
-import { application } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 import { tbIngestWebVitals } from "@openstatus/tinybird/src/validation";
 
-import { buildLibsqlClient } from "./db";
+import { getDevice } from "./utils";
 
 type Bindings = {
   API_ENDPOINT: string;
@@ -129,11 +126,12 @@ app.post("/v1", async (c) => {
   const timezone = c.req.raw.cf?.timezone || "";
   const browser = browserName(userAgent) || "";
   const continent = c.req.raw.cf?.continent || "";
-
   const os = detectOS(userAgent) || "";
   const payload = data.map((d) => {
+    const device = getDevice(d.screen, os);
     return tbIngestWebVitals.parse({
       ...d,
+      device,
       ...d.data,
       browser,
       country,
@@ -145,27 +143,27 @@ app.post("/v1", async (c) => {
     });
   });
 
-  const { DATABASE_URL, DATABASE_AUTH_TOKEN, TINYBIRD_TOKEN } = env(c);
-  const client = buildLibsqlClient({
-    url: DATABASE_URL,
-    token: DATABASE_AUTH_TOKEN,
-  });
+  const { TINYBIRD_TOKEN } = env(c);
+  // const client = buildLibsqlClient({
+  //   url: DATABASE_URL,
+  //   token: DATABASE_AUTH_TOKEN,
+  // });
 
-  const db = createDb({ client });
+  // const db = createDb({ client });
   const tb = new OSTinybird({ token: TINYBIRD_TOKEN });
   const insert = async () => {
     // console.log(payload);
 
     // We only take the first payload but we should take all
-    // Fetch db
-    const r = await db
-      .select()
-      .from(application)
-      .where(eq(application.dsn, payload[0].dsn))
-      .get();
-    if (!r) {
-      return;
-    }
+    // // Fetch db
+    // const r = await db
+    //   .select()
+    //   .from(application)
+    //   .where(eq(application.dsn, payload[0].dsn))
+    //   .get();
+    // if (!r) {
+    //   return;
+    // }
 
     // Ingest In TB
     await tb.ingestWebVitals(payload);
