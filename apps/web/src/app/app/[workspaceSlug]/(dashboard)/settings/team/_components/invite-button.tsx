@@ -52,6 +52,7 @@ export function InviteButton({
       try {
         api.invitation.create.mutate(data);
         toastAction("saved");
+        // FIXME: not working
         router.refresh();
       } catch {
         toastAction("error");
