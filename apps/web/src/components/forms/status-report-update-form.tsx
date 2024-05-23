@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 
 import type { InsertStatusReportUpdate } from "@openstatus/db/src/schema";
@@ -34,19 +34,19 @@ import { Preview } from "@/components/content/preview";
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { statusDict } from "@/data/incidents-dictionary";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface Props {
   defaultValues?: InsertStatusReportUpdate;
   statusReportId: number;
-  nextUrl?: string;
+  onSubmit?: () => void;
 }
 
 export function StatusReportUpdateForm({
   defaultValues,
   statusReportId,
-  nextUrl,
+  onSubmit,
 }: Props) {
   const form = useForm<InsertStatusReportUpdate>({
     resolver: zodResolver(insertStatusReportUpdateSchema),
@@ -60,9 +60,8 @@ export function StatusReportUpdateForm({
   });
   const router = useRouter();
   const [isPending, startTransition] = React.useTransition();
-  const { toast } = useToastAction();
 
-  const onSubmit = ({ ...props }: InsertStatusReportUpdate) => {
+  const handleSubmit = ({ ...props }: InsertStatusReportUpdate) => {
     startTransition(async () => {
       try {
         if (defaultValues) {
@@ -70,13 +69,11 @@ export function StatusReportUpdateForm({
         } else {
           await api.statusReport.createStatusReportUpdate.mutate({ ...props });
         }
-        toast("saved");
-        if (nextUrl) {
-          router.push(nextUrl);
-        }
+        toastAction("saved");
+        onSubmit?.();
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   };
@@ -86,13 +83,13 @@ export function StatusReportUpdateForm({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          form.handleSubmit(onSubmit)(e);
+          form.handleSubmit(handleSubmit)(e);
         }}
         className="grid w-full gap-6"
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Inform</p>
+            <p className="font-semibold text-sm leading-none">Inform</p>
             <p className="text-muted-foreground text-sm">
               Keep your users informed about what just happened.
             </p>
@@ -125,7 +122,7 @@ export function StatusReportUpdateForm({
                                 className="sr-only"
                               />
                             </FormControl>
-                            <div className="border-border text-muted-foreground flex w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-sm">
+                            <div className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-center text-muted-foreground text-sm">
                               <Icon className="mr-2 h-4 w-4 shrink-0" />
                               <span className="truncate">{label}</span>
                             </div>

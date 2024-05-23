@@ -1,3 +1,7 @@
+"use client";
+
+import { allFAQs } from "contentlayer/generated";
+
 import {
   Accordion,
   AccordionContent,
@@ -5,49 +9,38 @@ import {
   AccordionTrigger,
 } from "@openstatus/ui";
 
-import { Shell } from "@/components/dashboard/shell";
-
-// REMINDER: we can create a contentlayer document and the faq into it
-const faqsConfig: Record<"q" | "a", string>[] = [
-  {
-    q: "What are the limits?",
-    a: "You will start with a free plan by default which includes a total of <strong>3 monitors</strong> and <strong>1 status</strong> page as well as cron jobs of either <code>10m</code>, <code>30m</code> or <code>1h</code>.<br />Learn more about our <a href='/pricing'>pricing</a>.",
-  },
-  {
-    q: "Who are we?",
-    a: "We are <a href='https://twitter.com/thibaultleouay' target='_blank'>Thibault</a> and <a href='https://twitter.com/mxkaske' target='_blank'>Max</a>.",
-  },
-  {
-    q: "How does it work?",
-    a: "We ping your endpoints from multiple regions to calculate uptime. We display the status on your status page.",
-  },
-  {
-    q: "What regions do we support?",
-    a: "We support one region for each continent to allow multi-regions monitoring.",
-  },
-  {
-    q: "How can I help?",
-    a: "You can star our project on <a href='https://github.com/openstatusHQ/openstatus'>GitHub</a>, or contribute to it. Or you can also become a <strong>Pro</strong> user.",
-  },
-];
+import { Mdx } from "../content/mdx";
+import {
+  CardContainer,
+  CardDescription,
+  CardHeader,
+  CardIcon,
+  CardTitle,
+} from "./card";
 
 export function FAQs() {
+  const faqs = allFAQs.sort((a, b) => a.order - b.order);
   return (
-    <Shell className="grid gap-1">
-      <h2 className="text-foreground font-cal text-center text-2xl">FAQ</h2>
-      <Accordion type="single" collapsible className="w-full">
-        {faqsConfig.map(({ q, a }, i) => (
-          <AccordionItem key={i} value={`item-${i}`}>
-            <AccordionTrigger>{q}</AccordionTrigger>
-            <AccordionContent>
-              <div
-                className="prose dark:prose-invert prose-sm"
-                dangerouslySetInnerHTML={{ __html: a }}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </Shell>
+    <CardContainer>
+      <CardHeader>
+        <CardIcon icon="message-circle" />
+        <CardTitle>FAQs</CardTitle>
+        <CardDescription>
+          What you want to know about OpenStatus.
+        </CardDescription>
+      </CardHeader>
+      <div>
+        <Accordion type="single" collapsible className="w-full">
+          {faqs.map((faq, i) => (
+            <AccordionItem key={faq._id} value={`item-${i}`}>
+              <AccordionTrigger>{faq.title}</AccordionTrigger>
+              <AccordionContent>
+                <Mdx code={faq.body.code} />
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    </CardContainer>
   );
 }

@@ -4,14 +4,14 @@ import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 export function HelpCallout() {
   return (
-    <Alert className="max-w-xl">
+    <Alert className="max-w-md">
       <HelpCircle className="h-4 w-4" />
       <AlertTitle className="">Need help?</AlertTitle>
       <AlertDescription className="text-muted-foreground">
         Let us know at{" "}
         <a
           href="mailto:ping@openstatus.dev"
-          className="text-foreground font-medium underline hover:no-underline"
+          className="font-medium text-foreground underline hover:no-underline"
         >
           ping@openstatus.dev
         </a>{" "}
@@ -19,7 +19,8 @@ export function HelpCallout() {
         <a
           href="/discord"
           target="_blank"
-          className="text-foreground font-medium underline hover:no-underline"
+          className="font-medium text-foreground underline hover:no-underline"
+          rel="noreferrer"
         >
           Discord
         </a>

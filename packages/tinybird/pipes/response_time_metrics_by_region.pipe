@@ -1,0 +1,24 @@
+VERSION 0
+
+NODE response_time_metrics_region__v0_0
+SQL >
+
+    %
+    SELECT
+        region,
+        round(avg(latency)) as avgLatency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.9)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency
+    --     max(latency) as maxLatency,
+    --     min(latency) as minLatency
+    FROM materialized_view_ping_response_45d_ttl__v7
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        AND timestamp
+        >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24) }} HOUR, 3))
+    GROUP BY region
+
+

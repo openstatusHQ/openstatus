@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 import { Button } from "@openstatus/ui";
 
@@ -30,7 +30,7 @@ export function CustomerPortalButton({ workspaceSlug }: Props) {
   return (
     <Button
       size="sm"
-      variant="outline"
+      variant="secondary"
       onClick={getUserCustomerPortal}
       disabled={isPending}
     >

@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { SessionProvider } from "next-auth/react";
 
 import { PHProvider } from "@/providers/posthog";
 
@@ -8,11 +8,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    // <Suspense>
-    //     <PostHogPageview />
-    //   </Suspense>
     <PHProvider>
-      <ClerkProvider>{children}</ClerkProvider>
+      <SessionProvider>{children}</SessionProvider>
     </PHProvider>
   );
 }

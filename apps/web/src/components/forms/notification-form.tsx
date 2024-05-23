@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -35,7 +35,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { toCapitalize } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
@@ -101,16 +101,17 @@ interface Props {
   defaultValues?: InsertNotification;
   onSubmit?: () => void;
   workspacePlan: WorkspacePlan;
+  nextUrl?: string;
 }
 
 export function NotificationForm({
   defaultValues,
   onSubmit: onExternalSubmit,
   workspacePlan,
+  nextUrl,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
-  const { toast } = useToastAction();
   const router = useRouter();
   const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
@@ -130,6 +131,10 @@ export function NotificationForm({
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
+        if (data === "") {
+          form.setError("data", { message: "This field is required" });
+          return;
+        }
         if (defaultValues) {
           await api.notification.update.mutate({
             provider,
@@ -143,10 +148,13 @@ export function NotificationForm({
             ...rest,
           });
         }
+        if (nextUrl) {
+          router.push(nextUrl);
+        }
         router.refresh();
-        toast("saved");
+        toastAction("saved");
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         onExternalSubmit?.();
       }
@@ -159,9 +167,9 @@ export function NotificationForm({
     startTestTransition(async () => {
       const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
       if (isSuccessfull) {
-        toast("test-success");
+        toastAction("test-success");
       } else {
-        toast("test-error");
+        toastAction("test-error");
       }
     });
   }
@@ -171,10 +179,11 @@ export function NotificationForm({
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="grid w-full gap-6"
+        id="notification-form" // we use a form id to connect the submit button to the form (as we also have the form nested inside of `MonitorForm`)
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Alerts</p>
+            <p className="font-semibold text-sm leading-none">Alerts</p>
             <p className="text-muted-foreground text-sm">
               Select the notification channels you want to be informed.
             </p>
@@ -266,6 +275,7 @@ export function NotificationForm({
                           href={providerMetaData.setupDocLink}
                           target="_blank"
                           className="underline hover:no-underline"
+                          rel="noreferrer"
                         >
                           How to setup your {toCapitalize(watchProvider)}{" "}
                           webhook
@@ -296,7 +306,12 @@ export function NotificationForm({
               )}
             </Button>
           )}
-          <Button className="w-full sm:w-auto" size="lg" disabled={isPending}>
+          <Button
+            form="notification-form"
+            className="w-full sm:w-auto"
+            size="lg"
+            disabled={isPending}
+          >
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

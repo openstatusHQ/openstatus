@@ -1,0 +1,25 @@
+name: Checker CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*.*.*'
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  ci:
+    name: Continuous Integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.22.0'
+      - name: Run test
+        run: go test -timeout 30s -race -count=1 ./...
+        working-directory: apps/checker

@@ -82,6 +82,9 @@ export const monitorsToStatusReport = sqliteTable(
     statusReportId: integer("status_report_id")
       .notNull()
       .references(() => statusReport.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.statusReportId),
@@ -111,6 +114,9 @@ export const pagesToStatusReports = sqliteTable(
     statusReportId: integer("status_report_id")
       .notNull()
       .references(() => statusReport.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
   },
   (t) => ({
     pk: primaryKey(t.pageId, t.statusReportId),

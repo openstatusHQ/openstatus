@@ -33,6 +33,9 @@ export const notificationsToMonitors = sqliteTable(
     notificationId: integer("notification_id")
       .notNull()
       .references(() => notification.id, { onDelete: "cascade" }),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.notificationId),

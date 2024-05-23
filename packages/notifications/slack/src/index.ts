@@ -1,5 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
   try {
     await fetch(webhookUrl, {
@@ -12,17 +13,15 @@ const postToWebhook = async (body: any, webhookUrl: string) => {
   }
 };
 
-export const sendSlackMessage = async ({
+export const sendAlert = async ({
   monitor,
   notification,
-  region,
   statusCode,
   message,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
-  region: string;
   message?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
@@ -37,13 +36,60 @@ export const sendSlackMessage = async ({
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Your monitor <${
-                monitor.url
-              }/|${name}> is down in ${region} with ${
+              text: `Your monitor <${monitor.url}/|${name}> with ${
                 statusCode
                   ? `status code ${statusCode}`
                   : `error message ${message}`
               } 🚨  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+            },
+            accessory: {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Open Monitor",
+                emoji: true,
+              },
+              value: `monitor_url_${monitor.url}`,
+              url: monitor.url,
+            },
+          },
+        ],
+      },
+      webhookUrl,
+    );
+  } catch (err) {
+    console.log(err);
+    // Do something
+  }
+};
+
+export const sendRecovery = async ({
+  monitor,
+  notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  message,
+}: {
+  monitor: Monitor;
+  notification: Notification;
+  statusCode?: number;
+  message?: string;
+}) => {
+  const notificationData = JSON.parse(notification.data);
+  const { slack: webhookUrl } = notificationData; // webhook url
+  const { name } = monitor;
+
+  try {
+    await postToWebhook(
+      {
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `Your monitor <${monitor.url}/|${name}> is up again
+              🚀  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
             },
             accessory: {
               type: "button",
@@ -83,7 +129,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
       webhookUrl,
     );
     return true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 };

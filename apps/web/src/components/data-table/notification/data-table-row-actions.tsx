@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import {
@@ -25,7 +25,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -37,23 +37,21 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const notification = selectNotificationSchema.parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
-      console.log({ notification });
       try {
         if (!notification.id) return;
         await api.notification.deleteNotification.mutate({
           id: notification.id,
         });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -64,14 +62,14 @@ export function DataTableRowActions<TData>({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+            className="h-8 w-8 p-0 data-[state=open]:bg-accent"
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <Link href={`./notifications/edit?id=${notification.id}`}>
+          <Link href={`./notifications/${notification.id}/edit`}>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </Link>
           <AlertDialogTrigger asChild>

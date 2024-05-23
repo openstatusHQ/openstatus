@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   AlertDialog,
@@ -17,14 +17,13 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { revoke } from "./actions";
 
 export function RevokeButton({ keyId }: { keyId: string }) {
   const [open, setOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
   const router = useRouter();
-  const { toast } = useToastAction();
 
   async function onRevoke() {
     startTransition(async () => {
@@ -32,9 +31,9 @@ export function RevokeButton({ keyId }: { keyId: string }) {
         await revoke(keyId);
         router.refresh();
         setOpen(false);
-        toast("deleted");
+        toastAction("deleted");
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

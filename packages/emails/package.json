@@ -18,13 +18,13 @@
     "@t3-oss/env-core": "0.7.0",
     "react-email": "1.10.0",
     "resend": "2.0.0",
-    "zod": "3.22.2"
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "@types/react": "18.2.24",
+    "@types/react": "18.2.64",
     "react": "18.2.0",
-    "typescript": "5.2.2"
+    "typescript": "5.4.5"
   }
 }

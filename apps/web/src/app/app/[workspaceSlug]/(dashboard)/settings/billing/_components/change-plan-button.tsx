@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { TRPCClientError } from "@trpc/client";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 
 import { workspacePlans } from "@openstatus/db/src/schema";
 import type { Workspace, WorkspacePlan } from "@openstatus/db/src/schema";
@@ -15,10 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  toast,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { toast } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 export function ChangePlanButton({ workspace }: { workspace: Workspace }) {
@@ -32,10 +32,7 @@ export function ChangePlanButton({ workspace }: { workspace: Workspace }) {
         await api.workspace.changePlan.mutate({ plan });
       } catch (e) {
         if (e instanceof TRPCClientError) {
-          toast({
-            description: e.message,
-            variant: "destructive",
-          });
+          toast.error(e.message);
         }
       } finally {
         setOpen(false);

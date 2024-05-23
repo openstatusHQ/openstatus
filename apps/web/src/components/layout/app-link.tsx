@@ -1,9 +1,8 @@
 "use client";
 
+import { cva } from "class-variance-authority";
 import Link from "next/link";
 import type { LinkProps } from "next/link";
-import { useSelectedLayoutSegment } from "next/navigation";
-import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import type { ValidIcon } from "../icons";
@@ -15,8 +14,8 @@ const linkVariants = cva(
     variants: {
       variant: {
         default: "hover:bg-muted/50 hover:text-foreground border-transparent",
-        active: "bg-muted/50 border-border text-foreground",
-        disabled: "pointer-events-none opacity-60",
+        active: "bg-muted/50 border-border text-foreground font-medium",
+        disabled: "pointer-events-none opacity-60 border-transparent",
       },
     },
     defaultVariants: {
@@ -27,9 +26,9 @@ const linkVariants = cva(
 
 interface AppLinkProps extends LinkProps {
   label: string;
-  segment?: string | null;
   icon?: ValidIcon;
   className?: string;
+  active?: boolean;
   disabled?: boolean;
 }
 
@@ -39,14 +38,12 @@ export function AppLink({
   icon,
   disabled,
   className,
-  segment,
+  active,
   ...props
 }: AppLinkProps) {
-  const selectedSegment = useSelectedLayoutSegment();
   const Icon = icon && Icons[icon];
 
-  const isActive = segment === selectedSegment;
-  const variant = disabled ? "disabled" : isActive ? "active" : "default";
+  const variant = disabled ? "disabled" : active ? "active" : "default";
 
   return (
     <Link

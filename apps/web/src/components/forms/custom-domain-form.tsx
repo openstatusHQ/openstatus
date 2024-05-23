@@ -1,8 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
@@ -20,7 +20,7 @@ import {
 } from "@openstatus/ui";
 
 import { useDomainStatus } from "@/hooks/use-domain-status";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
@@ -42,7 +42,6 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToastAction();
   const domainStatus = useDomainStatus(defaultValues?.customDomain);
   const { status } = domainStatus || {};
 
@@ -76,10 +75,10 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
             domain: defaultValues.customDomain,
           });
         }
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

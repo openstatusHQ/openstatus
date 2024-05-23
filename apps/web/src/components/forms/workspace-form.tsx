@@ -1,12 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-import { insertWorkspaceSchema } from "@openstatus/db/src/schema";
 import {
   Button,
   Form,
@@ -19,7 +18,7 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { LoadingAnimation } from "../loading-animation";
 
@@ -36,16 +35,15 @@ export function WorkspaceForm({ defaultValues }: { defaultValues: Schema }) {
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToastAction();
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
         await api.workspace.updateWorkspace.mutate(data);
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

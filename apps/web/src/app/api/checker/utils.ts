@@ -1,22 +1,10 @@
-import type {
-  Monitor,
-  Notification,
-  NotificationProvider,
-} from "@openstatus/db/src/schema";
-import { sendDiscordMessage } from "@openstatus/notification-discord";
-import { send as sendEmail } from "@openstatus/notification-emails";
-import { sendSlackMessage } from "@openstatus/notification-slack";
+export const isAnInvalidTestUrl = (rawUrl: string) => {
+  const url = new URL(rawUrl);
+  const isSelfHostName = url.hostname
+    .split(".")
+    .slice(-2) // ex: any.sub.openstatus.dev
+    .join(".")
+    .includes("openstatus.dev"); // ex: openstatus.dev:80
 
-// type sendNotificationType = ({
-//   monitor,
-//   notification,
-// }: {
-//   monitor: Monitor;
-//   notification: Notification;
-// }) => Promise<void>;
-
-// export const providerToFunction = {
-//   email: sendEmail,
-//   slack: sendSlackMessage,
-//   discord: sendDiscordMessage,
-// } satisfies Record<NotificationProvider, sendNotificationType>;
+  return isSelfHostName && url.pathname.startsWith("/api/checker/");
+};

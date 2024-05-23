@@ -1,13 +1,7 @@
-import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
 import { Header } from "@/components/dashboard/header";
-import { IncidentList } from "@/components/status-page/incident-list";
+import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
 
 type Props = {
@@ -22,13 +16,16 @@ export default async function Page({ params }: Props) {
   if (!page) return notFound();
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <Header
         title={page.title}
         description={page.description}
         className="text-left"
       />
-      <IncidentList incidents={page.statusReports} monitors={page.monitors} />
+      <StatusReportList
+        statusReports={page.statusReports}
+        monitors={page.monitors}
+      />
     </div>
   );
 }

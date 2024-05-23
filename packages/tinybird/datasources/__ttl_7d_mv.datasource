@@ -1,0 +1,17 @@
+# Data Source created from Pipe '__ttl_7d__v0'
+VERSION 0
+
+SCHEMA >
+    `time` DateTime,
+    `latency` Int64,
+    `monitorId` String,
+    `region` LowCardinality(String),
+    `statusCode` Nullable(Int16),
+    `url` String,
+    `workspaceId` String,
+    `cronTimestamp` Int64
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(7)"

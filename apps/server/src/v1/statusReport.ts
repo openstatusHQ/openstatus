@@ -1,21 +1,21 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
   page,
-  pagesToStatusReports,
   pageSubscriber,
+  pagesToStatusReports,
   statusReport,
   statusReportStatus,
   statusReportUpdate,
-  workspacePlans,
 } from "@openstatus/db/src/schema";
-import { sendEmail, sendEmailHtml } from "@openstatus/emails/emails/send";
+import { sendEmailHtml } from "@openstatus/emails/emails/send";
 import { allPlans } from "@openstatus/plans";
 
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
 import { statusUpdateSchema } from "./statusReportUpdate";
+import { isoDate } from "./utils";
 
 const statusReportApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -37,8 +37,8 @@ const createStatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z.string().openapi({
-    description: "The date of the update in ISO 8601 format",
+  date: isoDate.openapi({
+    description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({
     description: "The message of the update",
@@ -100,7 +100,7 @@ statusReportApi.openapi(getAllRoute, async (c) => {
     where: eq(statusReport.workspaceId, workspaceId),
   });
 
-  if (!_statusReports) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReports) return c.json({ code: 404, message: "Not Found" }, 404);
 
   const data = z.array(statusReportExtendedSchema).parse(
     _statusReports.map((statusReport) => ({
@@ -113,7 +113,7 @@ statusReportApi.openapi(getAllRoute, async (c) => {
     })),
   );
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const getRoute = createRoute({
@@ -159,7 +159,7 @@ statusReportApi.openapi(getRoute, async (c) => {
     ),
   });
 
-  if (!_statusUpdate) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusUpdate) return c.json({ code: 404, message: "Not Found" }, 404);
   const data = statusReportExtendedSchema.parse({
     ..._statusUpdate,
     status_report_updates: _statusUpdate.statusReportUpdates.map(
@@ -167,7 +167,7 @@ statusReportApi.openapi(getRoute, async (c) => {
     ),
   });
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const postRoute = createRoute({
@@ -218,9 +218,23 @@ statusReportApi.openapi(postRoute, async (c) => {
     .returning()
     .get();
 
-  const data = statusReportExtendedSchema.parse(_newStatusReport);
+  const _statusReportHistory = await db
+    .insert(statusReportUpdate)
+    .values({
+      status: input.status,
+      date: new Date(),
+      message: "",
+      statusReportId: _newStatusReport.id,
+    })
+    .returning()
+    .get();
 
-  return c.jsonT(data);
+  const data = statusReportExtendedSchema.parse({
+    ..._newStatusReport,
+    status_report_updates: [_statusReportHistory.id],
+  });
+
+  return c.json(data);
 });
 
 const deleteRoute = createRoute({
@@ -266,16 +280,16 @@ statusReportApi.openapi(deleteRoute, async (c) => {
     .where(eq(statusReport.id, statusReportId))
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_statusReport) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _statusReport.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   await db
     .delete(statusReport)
     .where(eq(statusReport.id, statusReportId))
     .run();
-  return c.jsonT({ message: "Deleted" });
+  return c.json({ message: "Deleted" });
 });
 
 const postRouteUpdate = createRoute({
@@ -320,18 +334,21 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
   const workspaceId = Number(c.get("workspaceId"));
 
   const statusReportId = Number(id);
-  const _statusReport = await db
-    .select()
-    .from(statusReport)
+
+  const _updatedStatusReport = await db
+    .update(statusReport)
+    .set({ status: input.status })
     .where(
       and(
         eq(statusReport.id, statusReportId),
         eq(statusReport.workspaceId, workspaceId),
       ),
     )
+    .returning()
     .get();
 
-  if (!_statusReport) return c.jsonT({ code: 401, message: "Not authorized" });
+  if (!_updatedStatusReport)
+    return c.json({ code: 404, message: "Not Found" }, 404);
 
   const _statusReportUpdate = await db
     .insert(statusReportUpdate)
@@ -375,13 +392,13 @@ statusReportApi.openapi(postRouteUpdate, async (c) => {
         subject: `New status update for ${pageInfo.title}`,
         html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
         `,
-        from: "Notification OpenStatus <notification@openstatus.dev>",
+        from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
       });
     }
   }
   const data = statusUpdateSchema.parse(_statusReportUpdate);
 
-  return c.jsonT({
+  return c.json({
     ...data,
   });
 });

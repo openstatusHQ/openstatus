@@ -1,19 +1,44 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
+import * as React from "react";
 import * as z from "zod";
 
-import { columns } from "@/components/data-table/columns";
-import { DataTable } from "@/components/data-table/data-table";
-import { getResponseListData } from "@/lib/tb";
+import { OSTinybird } from "@openstatus/tinybird";
+
+import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
+import { env } from "@/env";
+import { periods } from "@/lib/monitor/utils";
 import { api } from "@/trpc/server";
-import { DatePickerPreset } from "../_components/date-picker-preset";
-import { getDateByPeriod, periods } from "../utils";
+import { DataTableWrapper } from "./_components/data-table-wrapper";
+import { DownloadCSVButton } from "./_components/download-csv-button";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 /**
  * allowed URL search params
  */
 const searchParamsSchema = z.object({
   period: z.enum(periods).optional().default("1h"),
+  // improve coersion + array + ...
+  region: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",");
+    }),
+  statusCode: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",").map(Number.parseInt);
+    }),
+  error: z
+    .string()
+    .optional()
+    .transform((val) => {
+      return val?.split(",").map((v) => v === "true");
+    }),
+  pageSize: z.coerce.number().optional().default(10),
+  pageIndex: z.coerce.number().optional().default(0),
 });
 
 export default async function Page({
@@ -31,25 +56,39 @@ export default async function Page({
   });
 
   if (!monitor || !search.success) {
-    return notFound();
+    return notFound(); // maybe not if search.success is false, add a toast message
   }
 
-  const date = getDateByPeriod(search.data.period);
+  const allowedPeriods = ["1h", "1d", "3d", "7d"] as const;
+  const period = allowedPeriods.find((i) => i === search.data.period) || "1d";
 
-  const data = await getResponseListData({
-    monitorId: id,
-    fromDate: date.from.getTime(),
-    toDate: date.to.getTime(),
-  });
+  const data = await tb.endpointList(period)({ monitorId: id });
 
   if (!data) return null;
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        <DatePickerPreset period={search.data.period} />
+      <div className="flex flex-row items-center justify-between gap-4">
+        <DatePickerPreset defaultValue={period} values={allowedPeriods} />
+        {/* <DownloadCSVButton
+          data={data}
+          filename={`${format(new Date(), "yyyy-mm-dd")}-${period}-${
+            monitor.name
+          }`}
+        /> */}
       </div>
-      <DataTable columns={columns} data={data} />
+      <DataTableWrapper
+        data={data}
+        filters={[
+          { id: "statusCode", value: search.data.statusCode },
+          { id: "region", value: search.data.region },
+          { id: "error", value: search.data.error },
+        ].filter((v) => v.value !== undefined)}
+        pagination={{
+          pageIndex: search.data.pageIndex,
+          pageSize: search.data.pageSize,
+        }}
+      />
     </div>
   );
 }

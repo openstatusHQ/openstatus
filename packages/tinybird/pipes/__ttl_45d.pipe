@@ -1,0 +1,20 @@
+VERSION 1
+
+NODE __ttl_45d_0
+SQL >
+
+    SELECT
+        toStartOfDay(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        monitorId,
+        region,
+        statusCode,
+        url,
+        workspaceId,
+        cronTimestamp
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE __ttl_45d_mv__v1
+
+

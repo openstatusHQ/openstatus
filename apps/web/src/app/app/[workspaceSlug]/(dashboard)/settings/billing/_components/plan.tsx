@@ -1,12 +1,10 @@
 "use client";
 
-import { useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 import type { Workspace, WorkspacePlan } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui";
 
-import { LoadingAnimation } from "@/components/loading-animation";
 import { PricingTable } from "@/components/marketing/pricing/pricing-table";
 import { getStripe } from "@/lib/stripe/client";
 import { api } from "@/trpc/client";
@@ -42,33 +40,16 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
   };
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-6">
-        <div>
-          <Button
-            onClick={getUserCustomerPortal}
-            variant="outline"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <LoadingAnimation variant="inverse" />
-            ) : (
-              "Customer Portal"
-            )}
-          </Button>
-        </div>
-        <PricingTable
-          currentPlan={workspace.plan}
-          isLoading={isPending}
-          events={{
-            // REMINDER: redirecting to customer portal as a fallback because the free plan has no price
-            free: getUserCustomerPortal,
-            starter: () => getCheckoutSession("starter"),
-            pro: () => getCheckoutSession("pro"),
-            team: () => getCheckoutSession("team"),
-          }}
-        />
-      </div>
-    </div>
+    <PricingTable
+      currentPlan={workspace.plan}
+      isLoading={isPending}
+      events={{
+        // REMINDER: redirecting to customer portal as a fallback because the free plan has no price
+        free: getUserCustomerPortal,
+        starter: () => getCheckoutSession("starter"),
+        pro: () => getCheckoutSession("pro"),
+        team: () => getCheckoutSession("team"),
+      }}
+    />
   );
 };

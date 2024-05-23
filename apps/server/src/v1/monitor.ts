@@ -1,20 +1,22 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
-import { db, eq, sql } from "@openstatus/db";
+import { trackAnalytics } from "@openstatus/analytics";
+import { and, db, eq, isNull, sql } from "@openstatus/db";
 import {
   flyRegions,
   monitor,
   monitorMethods,
   monitorPeriodicity,
 } from "@openstatus/db/src/schema";
-import { getMonitorList, Tinybird } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "../env";
 import type { Variables } from "./index";
 import { ErrorSchema } from "./shared";
+import { isoDate } from "./utils";
 
-const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
 
 const ParamsSchema = z.object({
@@ -54,16 +56,15 @@ const MonitorSchema = z
         (val) => {
           if (String(val).length > 0) {
             return String(val).split(",");
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.enum(flyRegions)),
       )
       .default([])
       .openapi({
         example: ["ams"],
-        description: "The regions to use",
+        description: "Where we should monitor it",
       }),
     name: z
       .string()
@@ -78,12 +79,13 @@ const MonitorSchema = z
         example: "Documenso website",
         description: "The description of your monitor",
       })
-      .nullable(),
+      .nullish(),
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
         return String(val);
       }, z.string())
+      .nullish()
       .default("")
       .openapi({
         example: "Hello World",
@@ -94,12 +96,12 @@ const MonitorSchema = z
         (val) => {
           if (String(val).length > 0) {
             return JSON.parse(String(val));
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
+      .nullish()
       .openapi({
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],
@@ -108,6 +110,10 @@ const MonitorSchema = z
       .boolean()
       .default(false)
       .openapi({ description: "If the monitor is active" }),
+    public: z
+      .boolean()
+      .default(false)
+      .openapi({ description: "If the monitor is public" }),
   })
   .openapi({
     description: "The monitor",
@@ -126,7 +132,7 @@ const monitorInput = z
     }),
     regions: regionInput.openapi({
       example: "ams",
-      description: "The regions to use",
+      description: "The regions where we should monitor your endpoint",
     }),
     name: z.string().openapi({
       example: "Documenso",
@@ -139,19 +145,21 @@ const monitorInput = z
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z.string().openapi({
       example: "Hello World",
-      description: "The body",
+      description: "The body of your request",
     }),
     active: z.boolean().default(false).openapi({
       description: "If the monitor is active",
     }),
+    public: z.boolean().default(false).openapi({
+      description: "If the monitor is public",
+    }),
     headers: z
       .preprocess(
         (val) => {
-          if (!!val) {
+          if (val) {
             return val;
-          } else {
-            return [];
           }
+          return [];
         },
         z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
@@ -208,11 +216,11 @@ monitorApi.openapi(getAllRoute, async (c) => {
     .where(eq(monitor.workspaceId, workspaceId))
     .all();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   const data = z.array(MonitorSchema).parse(_monitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const getRoute = createRoute({
@@ -262,14 +270,14 @@ monitorApi.openapi(getRoute, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const data = MonitorSchema.parse(_monitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const postRoute = createRoute({
@@ -321,13 +329,22 @@ monitorApi.openapi(postRoute, async (c) => {
   const input = c.req.valid("json");
 
   const count = (
-    await db.select({ count: sql<number>`count(*)` }).from(monitor)
+    await db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(
+        and(
+          eq(monitor.workspaceId, Number(workspaceId)),
+          isNull(monitor.deletedAt),
+        ),
+      )
+      .all()
   )[0].count;
 
   if (count >= workspacePlan.limits.monitors)
-    return c.jsonT({ code: 403, message: "Forbidden" });
+    return c.json({ code: 403, message: "Forbidden" }, 403);
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
-    return c.jsonT({ code: 403, message: "Forbidden" });
+    return c.json({ code: 403, message: "Forbidden" }, 403);
 
   const { headers, ...rest } = input;
   const _newMonitor = await db
@@ -342,7 +359,16 @@ monitorApi.openapi(postRoute, async (c) => {
 
   const data = MonitorSchema.parse(_newMonitor);
 
-  return c.jsonT(data);
+  if (env.JITSU_WRITE_KEY) {
+    trackAnalytics({
+      event: "Monitor Created",
+      url: input.url,
+      periodicity: input.periodicity,
+      api: true,
+      workspaceId: String(workspaceId),
+    });
+  }
+  return c.json(data);
 });
 
 const putRoute = createRoute({
@@ -387,10 +413,10 @@ monitorApi.openapi(putRoute, async (c) => {
   const workspacePlan = c.get("workspacePlan");
   const { id } = c.req.valid("param");
 
-  if (!id) return c.jsonT({ code: 400, message: "Bad Request" });
+  if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
 
   if (!workspacePlan.limits.periodicity.includes(input.periodicity))
-    return c.jsonT({ code: 403, message: "Forbidden" });
+    return c.json({ code: 403, message: "Forbidden" }, 403);
 
   const _monitor = await db
     .select()
@@ -398,10 +424,10 @@ monitorApi.openapi(putRoute, async (c) => {
     .where(eq(monitor.id, Number(id)))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const { headers, ...rest } = input;
   const _newMonitor = await db
@@ -415,7 +441,7 @@ monitorApi.openapi(putRoute, async (c) => {
 
   const data = MonitorSchema.parse(_newMonitor);
 
-  return c.jsonT(data);
+  return c.json(data);
 });
 
 const deleteRoute = createRoute({
@@ -461,13 +487,17 @@ monitorApi.openapi(deleteRoute, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
-  await db.delete(monitor).where(eq(monitor.id, monitorId)).run();
-  return c.jsonT({ message: "Deleted" });
+  await db
+    .update(monitor)
+    .set({ active: false, deletedAt: new Date() })
+    .where(eq(monitor.id, monitorId))
+    .run();
+  return c.json({ message: "Deleted" });
 });
 
 const dailyStatsSchema = z.object({
@@ -478,8 +508,7 @@ const dailyStatsSchema = z.object({
     .number()
     .int()
     .openapi({ description: "The total number of request" }),
-  avgLatency: z.number().int().openapi({ description: "The average latency" }),
-  day: z.string().openapi({ description: "the date of the event" }),
+  day: isoDate,
 });
 
 const dailyStatsSchemaArray = z
@@ -534,33 +563,30 @@ monitorApi.openapi(getMonitorStats, async (c) => {
     .where(eq(monitor.id, monitorId))
     .get();
 
-  if (!_monitor) return c.jsonT({ code: 404, message: "Not Found" });
+  if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
 
   if (workspaceId !== _monitor.workspaceId)
-    return c.jsonT({ code: 401, message: "Unauthorized" });
+    return c.json({ code: 401, message: "Unauthorized" }, 401);
 
   const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
     `${monitorId}-daily-stats`,
   );
-
   if (cache) {
     console.log("fetching from cache");
-    return c.jsonT({
+    return c.json({
       data: cache,
     });
   }
 
+  // FIXME: we should use the OSTinybird client
   console.log("fetching from tinybird");
-  const res = await getMonitorList(tb)({
+  const res = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitorId),
-    limit: 30,
-    //  return data in utc
-    timezone: "Etc/UTC",
   });
 
-  await redis.set(`${monitorId}-daily-stats`, res.data, { ex: 600 });
+  await redis.set(`${monitorId}-daily-stats`, res, { ex: 600 });
 
-  return c.jsonT({ data: res.data });
+  return c.json({ data: res });
 });
 
 export { monitorApi };

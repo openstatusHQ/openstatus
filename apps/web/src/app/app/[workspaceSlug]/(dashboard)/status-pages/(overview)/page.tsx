@@ -1,5 +1,5 @@
-import * as React from "react";
 import Link from "next/link";
+import * as React from "react";
 
 import { Button } from "@openstatus/ui";
 
@@ -30,7 +30,7 @@ export default async function MonitorPage() {
   return (
     <>
       <DataTable columns={columns} data={pages} />
-      <div className="mt-3">{isLimitReached ? <Limit /> : null}</div>
+      {isLimitReached ? <Limit /> : null}
     </>
   );
 }

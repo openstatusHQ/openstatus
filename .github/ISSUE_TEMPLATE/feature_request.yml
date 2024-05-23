@@ -1,7 +1,7 @@
 name: "💡 Feature Request"
-description: Describe a new feature or capability you would like to see in OpenStatus' offering.
-labels:
-  - "enhancement"
+description:
+  Describe a new feature or capability you would like to see in OpenStatus'
+  offering.
 body:
   - type: markdown
     attributes:
@@ -9,24 +9,14 @@ body:
         ## Welcome 👋🏻
 
         Thank you for taking the time to write up a feature request. Please fill out the information below to be able to help you faster. If you have a question or need general help, please join our [Discord community](https://www.openstatus.dev/discord).
-  - type: checkboxes
-    attributes:
-      label: Preliminary Checks
-      description: Please make sure that you verify each checkbox and follow the instructions for them.
-      options:
-        - label: |
-            I have reviewed https://docs.openstatus.dev/ for existing features that would solve my problem
-          required: true
-        - label: |
-            I have searched for existing feature requests: https://github.com/openstatusHQ/openstatus/issues
-          required: true
-        - label: |
-            This issue is not a question, general help request, or anything other than a feature request directly related to OpenStatus. Please ask questions in our Discord community: https://discord.com/invite/dHD4JtSfsn.
-          required: true
   - type: textarea
     attributes:
       label: Description
-      description: Describe the feature or capability you would like to see in OpenStatus' offering.
-      placeholder: Make sure it's unique, describe your use case, and explain the problem and proposed solution.
+      description:
+        Describe the feature or capability you would like to see in OpenStatus'
+        offering.
+      placeholder:
+        Make sure it's unique, describe your use case, and explain the problem
+        and proposed solution.
     validations:
       required: true

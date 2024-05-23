@@ -1,9 +1,12 @@
 import { notFound } from "next/navigation";
 
+import { Badge } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
-import { Navbar } from "@/components/dashboard/navbar";
+import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
+import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
-import { PauseButton } from "./_components/pause-button";
 
 export default async function Layout({
   children,
@@ -22,33 +25,42 @@ export default async function Layout({
     return notFound();
   }
 
-  const navigation = [
-    {
-      label: "Overview",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/overview`,
-      segment: "overview",
-    },
-    {
-      label: "Requests Log",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/data`,
-      segment: "data",
-    },
-    {
-      label: "Settings",
-      href: `/app/${params.workspaceSlug}/monitors/${id}/edit`,
-      segment: "edit",
-    },
-  ];
-
   return (
-    <div className="grid grid-cols-1 gap-6 md:gap-8">
+    <AppPageWithSidebarLayout id="monitors">
       <Header
         title={monitor.name}
-        description={monitor.url}
-        actions={<PauseButton monitor={monitor} />}
+        description={
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <StatusDotWithTooltip
+              active={monitor.active}
+              status={monitor.status}
+            />
+            {monitor.monitorTagsToMonitors.length > 0 ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <TagBadgeWithTooltip
+                  tags={monitor.monitorTagsToMonitors.map(
+                    ({ monitorTag }) => monitorTag,
+                  )}
+                />
+              </>
+            ) : null}
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <span className="text-sm">
+              every <code>{monitor.periodicity}</code>
+            </span>
+            {monitor.public ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <Badge variant="secondary">public</Badge>
+              </>
+            ) : null}
+          </div>
+        }
       />
-      <Navbar className="col-span-full" navigation={navigation} />
       {children}
-    </div>
+    </AppPageWithSidebarLayout>
   );
 }

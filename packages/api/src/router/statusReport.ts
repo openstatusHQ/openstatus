@@ -6,8 +6,8 @@ import {
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   pageSubscriber,
+  pagesToStatusReports,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -37,7 +37,7 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (Boolean(monitors.length)) {
+      if (monitors.length > 0) {
         await opts.ctx.db
           .insert(monitorsToStatusReport)
           .values(
@@ -50,7 +50,7 @@ export const statusReportRouter = createTRPCRouter({
           .get();
       }
 
-      if (Boolean(pages.length)) {
+      if (pages.length > 0) {
         await opts.ctx.db
           .insert(pagesToStatusReports)
           .values(
@@ -131,9 +131,9 @@ export const statusReportRouter = createTRPCRouter({
           await sendEmailHtml({
             to: subscribersEmails,
             subject: `New status update for ${pageInfo.title}`,
-            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${updatedValue.status}</p><p>${updatedValue.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
         `,
-            from: "Notification OpenStatus <notification@openstatus.dev>",
+            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
           });
         }
       }
@@ -146,8 +146,6 @@ export const statusReportRouter = createTRPCRouter({
       const { monitors, pages, ...statusReportInput } = opts.input;
 
       if (!statusReportInput.id) return;
-
-      console.log({ pages });
 
       const { title, status } = statusReportInput;
 
@@ -178,7 +176,7 @@ export const statusReportRouter = createTRPCRouter({
             .includes(x),
       );
 
-      if (Boolean(addedMonitors.length)) {
+      if (addedMonitors.length) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
           statusReportId: currentStatusReport.id,
@@ -191,7 +189,7 @@ export const statusReportRouter = createTRPCRouter({
         .map(({ monitorId }) => monitorId)
         .filter((x) => !monitors?.includes(x));
 
-      if (Boolean(removedMonitors.length)) {
+      if (removedMonitors.length) {
         await opts.ctx.db
           .delete(monitorsToStatusReport)
           .where(
@@ -214,7 +212,7 @@ export const statusReportRouter = createTRPCRouter({
           !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
       );
 
-      if (Boolean(addedPages.length)) {
+      if (addedPages.length) {
         const values = addedPages.map((pageId) => ({
           pageId,
           statusReportId: currentStatusReport.id,
@@ -227,14 +225,7 @@ export const statusReportRouter = createTRPCRouter({
         .map(({ pageId }) => pageId)
         .filter((x) => !pages?.includes(x));
 
-      console.log({
-        currentPagesToStatusReports,
-        removedPages,
-        pages,
-        addedPages,
-      });
-
-      if (Boolean(removedPages.length)) {
+      if (removedPages.length) {
         await opts.ctx.db
           .delete(pagesToStatusReports)
           .where(
@@ -402,7 +393,9 @@ export const statusReportRouter = createTRPCRouter({
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: true,
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
         },
       });
 

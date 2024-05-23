@@ -3,7 +3,9 @@ name: Tests
 on:
   push:
     branches:
-      - "*"
+      - "main"
+  pull_request:
+    branches: [main]
 
 jobs:
   tests:
@@ -12,15 +14,17 @@ jobs:
     timeout-minutes: 15
     services:
       sqld:
-        image: ghcr.io/libsql/sqld:latest
+        image: ghcr.io/tursodatabase/libsql-server:v0.23.3
         ports:
           - 8080:8080
+        # env:
+        #   SQLD_HTTP_AUTH: "basic:token"
 
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
       DATABASE_URL: http://127.0.0.1:8080
-      DATABASE_AUTH_TOKEN: "hello"
+      DATABASE_AUTH_TOKEN: "basic:token"
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3

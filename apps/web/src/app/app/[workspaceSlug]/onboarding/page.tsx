@@ -5,9 +5,11 @@ import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/monitor-form";
-import { StatusPageForm } from "@/components/forms/status-page-form";
+import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
+
+// FIXME: uses legact MonitorForm and StatusPageForm
 
 export default async function Onboarding({
   params,
@@ -62,6 +64,8 @@ export default async function Onboarding({
             <StatusPageForm
               {...{ workspaceSlug, allMonitors }}
               nextUrl={`/app/${workspaceSlug}/status-pages`}
+              defaultSection="monitors"
+              plan="free" // user is on free plan by default
               checkAllMonitors
             />
           </div>

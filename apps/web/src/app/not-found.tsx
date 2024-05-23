@@ -9,6 +9,7 @@ import { Shell } from "@/components/dashboard/shell";
 
 export default function NotFound() {
   const router = useRouter();
+  // user should go back to dashboard
 
   return (
     <main className="flex min-h-screen w-full flex-col space-y-6 p-4 md:p-8">
@@ -17,7 +18,7 @@ export default function NotFound() {
           <Shell>
             <div className="flex flex-col gap-4 p-6 sm:p-12">
               <div className="flex flex-col gap-2">
-                <p className="text-muted-foreground font-medium sm:text-lg">
+                <p className="font-medium text-muted-foreground sm:text-lg">
                   404 Page not found
                 </p>
                 <h2 className="font-cal text-2xl sm:text-3xl">

@@ -53,7 +53,13 @@ export const webhookRouter = createTRPCRouter({
       });
     }
     const plan = getPlanFromPriceId(subscription.items.data[0].price.id);
-
+    if (!plan) {
+      console.error("Invalid plan");
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid plan",
+      });
+    }
     await opts.ctx.db
       .update(workspace)
       .set({

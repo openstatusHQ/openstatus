@@ -4,32 +4,36 @@ const { withContentlayer } = require("next-contentlayer");
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  transpilePackages: [
-    "@openstatus/ui",
-    "@openstatus/api",
-    "@react-email/components",
-    "@react-email/render",
-    "@react-email/html",
-  ],
-
+  transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
-    serverActions: true,
     serverComponentsExternalPackages: [
       "libsql",
       "@react-email/components",
       "@react-email/render",
+      "@google-cloud/tasks",
+      // "@libsql/client",
+      // "better-sqlite3"
     ],
-    logging: {
-      level: "verbose",
+    optimizePackageImports: ["@tremor/react"],
+    // FIXME: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    // TODO: https://nextjs.org/docs/app/api-reference/functions/use-search-params#static-rendering
+    // TODO: https://nextjs.org/docs/messages/deopted-into-client-rendering
+    missingSuspenseWithCSRBailout: false,
+  },
+  logging: {
+    fetches: {
       fullUrl: true,
     },
-    optimizePackageImports: ["@tremor/react"],
   },
   images: {
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**.public.blob.vercel-storage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "screenshot.openstat.us",
       },
     ],
   },

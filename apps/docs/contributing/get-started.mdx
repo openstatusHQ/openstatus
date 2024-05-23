@@ -1,0 +1,67 @@
+---
+title: Get Started
+---
+
+## Setup
+
+1. Clone the repository and open the created directory
+
+   ```sh
+   git clone https://github.com/openstatushq/openstatus.git
+   cd openstatus
+   ```
+
+2. Install dependencies
+
+   ```sh
+   pnpm install
+   ```
+
+3. Database setup
+
+We are using Turso for the database to make it work locally you need to install
+it and run it.
+
+If you are on a mac install it with [Homebrew](https://brew.sh/)
+
+```sh
+brew tap chiselstrike/tap
+brew install turso
+```
+
+then run it locally with
+
+```sh
+turso dev --db-file openstatus.db
+```
+
+Here is the official Turso
+[installation guide](https://docs.turso.tech/reference/turso-cli)
+
+4. Run the database migration
+
+In the `packages/db` folder run
+
+```sh
+pnpm migrate
+```
+
+5. Set up your .env file
+
+from `apps/web` and `packages/db` you will find .env.example. Please create your
+own.
+
+6. Start the web app locally
+
+```sh
+pnpm dev
+```
+
+> 💡 If you are getting this error -
+> `ERROR  run failed: error preparing engine: Invalid persistent task configuration: You have 15 persistent tasks but`turbo`is configured for concurrency of 10. Set --concurrency to at least 16`
+> Then `cd` into web directory and then start the web app
+>
+> ```sh
+>  cd apps/web
+>  pnpm dev
+> ```

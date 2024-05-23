@@ -1,6 +1,6 @@
 import { expect, mock, test } from "bun:test";
 
-import { triggerAlerting } from "./alerting";
+import { triggerNotifications } from "./alerting";
 
 test.todo("should send email notification", async () => {
   const fn = mock(() => {});
@@ -11,6 +11,10 @@ test.todo("should send email notification", async () => {
       },
     };
   });
-  await triggerAlerting({ monitorId: "1", region: "ams", statusCode: 400 });
+  await triggerNotifications({
+    monitorId: "1",
+    statusCode: 400,
+    notifType: "alert",
+  });
   expect(fn).toHaveBeenCalled();
 });

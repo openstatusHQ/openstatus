@@ -1,7 +1,6 @@
 import { Shell } from "@/components/dashboard/shell";
 import { getHomeStatsData } from "@/lib/tb";
 import { numberFormatter } from "@/lib/utils";
-import { api } from "@/trpc/server";
 
 export async function Stats() {
   const tbTotalStats = await getHomeStatsData({});
@@ -15,22 +14,22 @@ export async function Stats() {
           <h3 className="font-cal text-3xl">
             {numberFormatter(tbTotalStats?.[0].count || 0)}
           </h3>
-          <p className="text-muted-foreground font-light">Total pings</p>
+          <p className="font-light text-muted-foreground">Total pings</p>
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
-            {numberFormatter(tbLastHourStats?.[0].count || 0)}
+            {numberFormatter(tbLastHourStats?.[0].count || 62000000)}
           </h3>
-          <p className="text-muted-foreground font-light">
+          <p className="font-light text-muted-foreground">
             Pings in the last hour
           </p>
         </div>
         <div className="text-center">
           <h3 className="font-cal text-3xl">
             {/* {numberFormatter(totalActiveMonitors)} */}
-            1500+
+            2400+
           </h3>
-          <p className="text-muted-foreground font-light">Active monitors</p>
+          <p className="font-light text-muted-foreground">Active monitors</p>
         </div>
       </div>
     </Shell>

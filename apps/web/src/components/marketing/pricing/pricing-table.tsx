@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment } from "react";
-import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Fragment } from "react";
 
 import type { WorkspacePlan } from "@openstatus/plans";
 import {
@@ -56,19 +56,19 @@ export function PricingTable({
               <TableHead
                 key={key}
                 className={cn(
-                  "text-foreground h-auto px-3 py-3 align-bottom",
+                  "h-auto px-3 py-3 align-bottom text-foreground",
                   key === "team" ? "bg-muted/30" : "bg-background",
                 )}
               >
-                <p className="font-cal sticky top-0 mb-2 text-2xl">
+                <p className="sticky top-0 mb-2 font-cal text-2xl">
                   {plan.title}
                 </p>
-                <p className="text-muted-foreground mb-2 text-sm font-normal">
+                <p className="mb-2 font-normal text-muted-foreground text-sm">
                   {plan.description}
                 </p>
                 <p className="mb-2 text-right">
                   <span className="font-cal text-xl">{plan.price}€</span>{" "}
-                  <span className="text-muted-foreground text-sm font-light">
+                  <span className="font-light text-muted-foreground text-sm">
                     /month
                   </span>
                 </p>
@@ -80,7 +80,9 @@ export function PricingTable({
                     if (events?.[key]) {
                       return events[key]?.();
                     }
-                    return router.push(`/app/sign-up?plan=${key}`);
+                    // FIXME: how to properly handle `?redirectTo` with unknown workspaceSlug
+                    // to redirect user to `/app/[workspaceSlug]/settings/billing?plan=${key}`?
+                    return router.push(`/app/login?plan=${key}`);
                   }}
                   disabled={isCurrentPlan || isLoading}
                 >
@@ -101,9 +103,9 @@ export function PricingTable({
       </TableHeader>
       <TableBody>
         {Object.entries(pricingTableConfig).map(
-          ([key, { label, features }], i) => {
+          ([key, { label, features }], _i) => {
             return (
-              <Fragment key={i}>
+              <Fragment key={key}>
                 <TableRow className="bg-muted/50">
                   <TableCell
                     colSpan={selectedPlans.length + 1}
@@ -112,47 +114,47 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value, badge }, i) => {
+                {features.map(({ label, value, badge }, _i) => {
                   return (
-                    <TableRow key={i}>
+                    <TableRow key={key}>
                       <TableCell className="gap-1">
                         {label}{" "}
                         {badge ? (
                           <Badge variant="secondary">{badge}</Badge>
                         ) : null}
                       </TableCell>
-                      {selectedPlans.map((plan, i) => {
+                      {selectedPlans.map((plan, _i) => {
                         const limitValue = plan.limits[value];
                         function renderContent() {
                           if (typeof limitValue === "boolean") {
                             if (limitValue) {
                               return (
-                                <Check className="text-foreground h-4 w-4" />
-                              );
-                            } else {
-                              return (
-                                <span className="text-muted-foreground/50">
-                                  &#8208;
-                                </span>
+                                <Check className="h-4 w-4 text-foreground" />
                               );
                             }
-                          } else if (typeof limitValue === "number") {
+                            return (
+                              <span className="text-muted-foreground/50">
+                                &#8208;
+                              </span>
+                            );
+                          }
+                          if (typeof limitValue === "number") {
                             return (
                               <span className="font-mono">{limitValue}</span>
                             );
-                          } else if (
+                          }
+                          if (
                             Array.isArray(limitValue) &&
                             limitValue.length > 0
                           ) {
                             return limitValue[0];
-                          } else {
-                            return limitValue;
                           }
+                          return limitValue;
                         }
 
                         return (
                           <TableCell
-                            key={i}
+                            key={key}
                             className={cn(
                               "p-3",
                               plan.key === "team" && "bg-muted/30",

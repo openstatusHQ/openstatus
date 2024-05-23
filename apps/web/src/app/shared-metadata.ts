@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const TITLE = "OpenStatus";
 export const DESCRIPTION =
-  "A better way to monitor your services. Don't let your down time ruin your day.";
+  "A better way to monitor your services. Don't let your downtime ruin your day.";
 
 export const defaultMetadata: Metadata = {
   title: {
@@ -17,12 +17,12 @@ export const twitterMetadata: Metadata["twitter"] = {
   title: TITLE,
   description: DESCRIPTION,
   card: "summary_large_image",
-  images: [`/api/og`],
+  images: ["/api/og"],
 };
 
 export const ogMetadata: Metadata["openGraph"] = {
   title: TITLE,
   description: DESCRIPTION,
   type: "website",
-  images: [`/api/og`],
+  images: ["/api/og"],
 };

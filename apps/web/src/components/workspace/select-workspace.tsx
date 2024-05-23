@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import * as React from "react";
 
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
@@ -43,30 +43,33 @@ export function SelectWorkspace() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           className="flex w-full items-center justify-between"
         >
-          {active ? <span>{active}</span> : <Skeleton className="h-5 w-full" />}
+          {active ? (
+            <span className="truncate">{active}</span>
+          ) : (
+            <Skeleton className="h-5 w-full" />
+          )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[var(--radix-dropdown-menu-trigger-width)]">
+      <DropdownMenuContent
+        style={{ width: "var(--radix-dropdown-menu-trigger-width)" }}
+      >
         <DropdownMenuLabel>Workspaces</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {workspaces.map((workspace) => (
-          <DropdownMenuItem
-            key={workspace.id}
-            onClick={() => {
-              if (workspace.slug !== active && typeof window !== "undefined") {
-                window.location.href = `/app/${workspace.slug}/monitors`;
-              }
-            }}
-            className="justify-between"
-          >
-            {workspace.slug}
-            {active === workspace.slug ? (
-              <Check className="ml-2 h-4 w-4" />
-            ) : null}
+          <DropdownMenuItem key={workspace.id} asChild>
+            <a
+              href={`/app/${workspace.slug}/monitors`}
+              className="justify-between"
+            >
+              <span className="truncate">{workspace.slug}</span>
+              {active === workspace.slug ? (
+                <Check className="ml-2 h-4 w-4" />
+              ) : null}
+            </a>
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />

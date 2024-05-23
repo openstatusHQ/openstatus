@@ -1,3 +1,7 @@
+import Link from "next/link";
+
+import { Button } from "@openstatus/ui";
+
 import { cardConfig } from "@/config/features";
 import {
   CardContainer,
@@ -21,7 +25,15 @@ export function MonitoringCard() {
       <CardContent>
         <Globe />
         <CardFeatureContainer>
-          {features?.map((feature, i) => <CardFeature key={i} {...feature} />)}
+          {features?.map((feature, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+            <CardFeature key={i} {...feature} />
+          ))}
+          <div className="order-first text-center md:order-none">
+            <Button asChild variant="outline" className="rounded-full">
+              <Link href="/play/checker">Playground</Link>
+            </Button>
+          </div>
         </CardFeatureContainer>
       </CardContent>
     </CardContainer>

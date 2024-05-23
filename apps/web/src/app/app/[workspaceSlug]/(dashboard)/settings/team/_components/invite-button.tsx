@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
@@ -26,8 +26,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
-import { wait } from "@/lib/utils";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 const schema = insertInvitationSchema.pick({ email: true });
@@ -47,17 +46,15 @@ export function InviteButton({
   });
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const { toast } = useToastAction();
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
-        wait(2000);
         api.invitation.create.mutate(data);
-        toast("saved");
+        toastAction("saved");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       } finally {
         setOpen(false);
       }

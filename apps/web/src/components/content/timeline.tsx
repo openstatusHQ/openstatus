@@ -7,16 +7,25 @@ interface TimelineProps {
   title: string;
   description: string;
   children?: React.ReactNode;
+  actions?: React.ReactNode;
 }
 
-export function Timeline({ title, description, children }: TimelineProps) {
+export function Timeline({
+  title,
+  description,
+  children,
+  actions,
+}: TimelineProps) {
   return (
     <div className="grid gap-8">
       <div className="grid gap-4 md:grid-cols-5 md:gap-8">
         <div className="md:col-span-1" />
-        <div className="grid gap-4 md:col-span-4">
-          <h1 className="text-foreground font-cal text-4xl">{title}</h1>
-          <p className="text-muted-foreground">{description}</p>
+        <div className="flex items-end justify-between gap-3 md:col-span-4">
+          <div className="grid gap-4">
+            <h1 className="font-cal text-4xl text-foreground">{title}</h1>
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+          <div>{actions}</div>
         </div>
       </div>
       {children}
@@ -43,7 +52,7 @@ function Article({
     <article className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
       <div className="relative row-span-2">
         <div className="sticky top-2">
-          <time className="text-muted-foreground order-2 font-mono text-sm md:order-1 md:col-span-1">
+          <time className="order-2 font-mono text-muted-foreground text-sm md:order-1 md:col-span-1">
             {formatDate(new Date(publishedAt))}
           </time>
         </div>
@@ -54,12 +63,12 @@ function Article({
             src={imageSrc}
             fill={true}
             alt={title}
-            className="border-border rounded-md border object-cover"
+            className="rounded-md border border-border object-cover"
           />
         </Link>
       </div>
       <div className="order-3 grid grid-cols-1 gap-4 md:col-span-4 md:col-start-2">
-        <h2 className="text-foreground font-cal text-2xl">{title}</h2>
+        <h2 className="font-cal text-2xl text-foreground">{title}</h2>
         {children}
       </div>
     </article>

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 
 import { Button } from "@openstatus/ui";
 
+import { getBaseUrl } from "@/app/status-page/[domain]/utils";
 import { Header } from "@/components/dashboard/header";
-import { Navbar } from "@/components/dashboard/navbar";
+import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { api } from "@/trpc/server";
 
 export default async function Layout({
@@ -24,39 +25,26 @@ export default async function Layout({
     return notFound();
   }
 
-  const navigation = [
-    {
-      label: "Settings",
-      href: `/app/${params.workspaceSlug}/status-pages/${id}/edit`,
-      segment: "edit",
-    },
-    {
-      label: "Domain",
-      href: `/app/${params.workspaceSlug}/status-pages/${id}/domain`,
-      segment: "domain",
-    },
-    {
-      label: "Subscribers",
-      href: `/app/${params.workspaceSlug}/status-pages/${id}/subscribers`,
-      segment: "subscribers",
-    },
-  ];
-
   return (
-    <div className="grid grid-cols-1 gap-6 md:gap-8">
+    <AppPageWithSidebarLayout id="status-pages">
       <Header
         title={page.title}
         description={page.description}
         actions={
           <Button variant="outline" asChild>
-            <Link target="_blank" href={`https://${page.slug}.openstatus.dev`}>
+            <Link
+              target="_blank"
+              href={getBaseUrl({
+                slug: page.slug,
+                customDomain: page.customDomain,
+              })}
+            >
               Visit
             </Link>
           </Button>
         }
       />
-      <Navbar className="col-span-full" navigation={navigation} />
       {children}
-    </div>
+    </AppPageWithSidebarLayout>
   );
 }

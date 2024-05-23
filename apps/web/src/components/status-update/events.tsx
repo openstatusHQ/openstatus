@@ -1,17 +1,17 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { format } from "date-fns";
+import * as React from "react";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
 
-import { DeleteStatusReportUpdateButtonIcon } from "@/app/app/[workspaceSlug]/(dashboard)/status-reports/_components/delete-status-update";
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
 import { useProcessor } from "@/hooks/use-preprocessor";
 import { cn } from "@/lib/utils";
+import { DeleteStatusReportUpdateButtonIcon } from "./delete-status-update";
+import { EditStatusReportUpdateIconButton } from "./edit-status-update";
 
 export function Events({
   statusReportUpdates,
@@ -23,20 +23,17 @@ export function Events({
   collabsible?: boolean;
 }) {
   const [open, toggle] = React.useReducer((open) => !open, false);
-  const router = useRouter();
 
-  // TODO: make it simpler..
   const sortedArray = statusReportUpdates.sort((a, b) => {
-    const orderA = statusDict[a.status].order;
-    const orderB = statusDict[b.status].order;
-    return orderB - orderA;
+    return b.date.getTime() - a.date.getTime();
   });
+
   const slicedArray =
     open || !collabsible
       ? sortedArray
       : sortedArray.length > 0
-      ? [sortedArray[0]]
-      : [];
+        ? [sortedArray[0]]
+        : [];
   //
 
   return (
@@ -48,37 +45,31 @@ export function Events({
           <div
             key={update.id}
             className={cn(
-              "group relative -m-2 flex gap-4 border border-transparent p-2",
-              editable && "hover:bg-accent/40 hover:rounded-lg",
+              "group -m-2 relative flex gap-4 border border-transparent p-2",
+              editable && "hover:rounded-lg hover:bg-accent/40",
             )}
           >
             <div className="relative">
-              <div className="bg-background border-border rounded-full border p-2">
+              <div className="rounded-full border border-border bg-background p-2">
                 <StatusIcon className="h-4 w-4" />
               </div>
               {i !== sortedArray.length - 1 ? (
-                <div className="bg-muted absolute inset-x-0 mx-auto h-full w-[2px]" />
+                <div className="absolute inset-x-0 mx-auto h-full w-[2px] bg-muted" />
               ) : null}
             </div>
             <div className="mt-1 grid flex-1">
               {editable ? (
-                <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex group-active:flex">
-                  <Button
-                    size="icon"
-                    variant="outline"
-                    className="h-7 w-7 p-0"
-                    onClick={() => {
-                      router.push(`./update/edit?statusUpdate=${update.id}`);
-                    }}
-                  >
-                    <Icons.pencil className="h-4 w-4" />
-                  </Button>
+                <div className="absolute top-2 right-2 hidden gap-2 group-active:flex group-hover:flex">
+                  <EditStatusReportUpdateIconButton
+                    statusReportId={update.statusReportId}
+                    statusReportUpdate={update}
+                  />
                   <DeleteStatusReportUpdateButtonIcon id={update.id} />
                 </div>
               ) : undefined}
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-muted-foreground mt-px text-xs">
+                <p className="font-medium text-sm">{label}</p>
+                <p className="mt-px text-muted-foreground text-xs">
                   <code>
                     {format(new Date(update.date), "LLL dd, y HH:mm")}
                   </code>
@@ -108,11 +99,11 @@ function EventMessage({
   message: string;
   className?: string;
 }) {
-  const Component = useProcessor(message);
+  const Component = useProcessor(message); // FIXME: make it work with markdown without hook!
   return (
     <div
       className={cn(
-        "prose dark:prose-invert prose-sm prose-headings:font-cal overflow-hidden text-ellipsis", // fixes very long words
+        "prose dark:prose-invert prose-sm overflow-hidden text-ellipsis prose-headings:font-cal", // fixes very long words
         className,
       )}
     >

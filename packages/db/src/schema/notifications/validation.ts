@@ -26,3 +26,18 @@ export const insertNotificationSchema = createInsertSchema(notification).extend(
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = z.infer<typeof selectNotificationSchema>;
 export type NotificationProvider = z.infer<typeof notificationProviderSchema>;
+
+export const NotificationDataSchema = z.union([
+  z.object({
+    sms: z.string(),
+  }),
+  z.object({
+    email: z.string().email(),
+  }),
+  z.object({
+    slack: z.string(),
+  }),
+  z.object({
+    discord: z.string(),
+  }),
+]);

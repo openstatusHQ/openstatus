@@ -3,24 +3,23 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
+    "lint": "biome lint .",
+    "format": "pnpm biome format . --write && pnpm biome check . --apply-unsafe ",
+    "lint:turbo": "turbo run lint",
+    "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
+    "dx": "turbo run dx",
     "tsc": "tsc",
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@ianvs/prettier-plugin-sort-imports": "4.1.0",
-    "@openstatus/eslint-config": "workspace:*",
-    "@turbo/gen": "1.10.12",
-    "eslint": "8.50.0",
-    "prettier": "3.0.3",
-    "prettier-plugin-tailwindcss": "0.5.4",
-    "turbo": "1.10.12",
-    "typescript": "5.2.2"
+    "@biomejs/biome": "1.7.3",
+    "@turbo/gen": "1.13.3",
+    "@types/node": "20.8.0",
+    "knip": "^5.16.0",
+    "turbo": "1.13.3",
+    "typescript": "5.4.5"
   },
-  "packageManager": "pnpm@8.7.6",
+  "packageManager": "pnpm@9.1.2",
   "name": "openstatus",
   "workspaces": [
     "apps/*",

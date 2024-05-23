@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
+import { OpenStatusProvider } from "@openstatus/next-monitoring";
 import { Toaster } from "@openstatus/ui";
 
 import {
@@ -37,13 +38,21 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // If you want to develop locally without Clerk,  Comment the provider below
   return (
     <html lang="en">
-      <body className={`${inter.className} ${calSans.variable}`}>
+      <body
+        className={`${
+          inter.className
+          // biome-ignore lint/nursery/useSortedClasses: <explanation>
+        } ${calSans.variable}`}
+      >
+        {/* Only include RUM in prod */}
+        {process.env.NODE_ENV === "production" && (
+          <OpenStatusProvider dsn="openstatus" />
+        )}
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
-          <Toaster />
+          <Toaster richColors />
           <TailwindIndicator />
         </ThemeProvider>
       </body>

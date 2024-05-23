@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+export const maxDuration = 25; // to trick and not using the same function as the other ping route
+
 export async function GET() {
   return NextResponse.json({ ping: "pong" }, { status: 200 });
 }

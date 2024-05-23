@@ -106,6 +106,118 @@
       "when": 1702227904130,
       "tag": "0014_adorable_skaar",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1705856545397,
+      "tag": "0015_bent_sister_grimm",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1706111184826,
+      "tag": "0016_certain_praxagora",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1707411900987,
+      "tag": "0017_loose_maggott",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1707770189561,
+      "tag": "0018_neat_orphan",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1707899175705,
+      "tag": "0019_dashing_malcolm_colcord",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1707905605592,
+      "tag": "0020_flat_bedlam",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "5",
+      "when": 1710677383007,
+      "tag": "0021_reflective_nico_minoru",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "5",
+      "when": 1711307113089,
+      "tag": "0022_chunky_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1712311348272,
+      "tag": "0023_dry_blink",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1712354121499,
+      "tag": "0024_young_proudstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1713095971713,
+      "tag": "0025_strong_thunderball",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1713384976187,
+      "tag": "0026_giant_absorbing_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1714586658374,
+      "tag": "0027_bizarre_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1715173356076,
+      "tag": "0028_thin_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1716215342026,
+      "tag": "0029_regular_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1716364430118,
+      "tag": "0030_elite_barracuda",
+      "breakpoints": true
     }
   ]
 }

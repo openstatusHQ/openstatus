@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   AlertDialog,
@@ -14,7 +14,7 @@ import {
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { copyToClipboard } from "@/lib/utils";
 import { create } from "./actions";
 import { SubmitButton } from "./submit-button";
@@ -23,7 +23,6 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
   const [rawKey, setRawKey] = React.useState<string | undefined>();
   const router = useRouter();
   const [hasCopied, setHasCopied] = React.useState(false);
-  const { toast } = useToastAction();
 
   React.useEffect(() => {
     if (hasCopied) {
@@ -36,11 +35,12 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
   async function onCreate() {
     try {
       const res = await create(ownerId);
-      if (res.result) {
+      if (!res) toastAction("error");
+      if (res?.result) {
         setRawKey(res.result.key);
       }
     } catch {
-      toast("error");
+      toastAction("error");
     }
   }
 
@@ -64,6 +64,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
           </AlertDialogHeader>
           <div>
             <button
+              type="button"
               className="group inline-flex items-center p-2"
               onClick={() => {
                 copyToClipboard(String(rawKey));

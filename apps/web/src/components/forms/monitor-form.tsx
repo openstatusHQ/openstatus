@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import type {
@@ -64,7 +64,9 @@ import { flyRegionsDict } from "@openstatus/utils";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 import type { Writeable } from "@/types/utils";
@@ -103,7 +105,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -116,7 +118,6 @@ export function MonitorForm({
   const [isTestPending, startTestTransition] = React.useTransition();
   const [pingFailed, setPingFailed] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
-  const { toast } = useToastAction();
   const watchMethod = form.watch("method");
 
   const { fields, append, remove } = useFieldArray({
@@ -135,9 +136,9 @@ export function MonitorForm({
         router.push(nextUrl);
       }
       router.refresh();
-      toast("saved");
-    } catch (error) {
-      toast("error");
+      toastAction("saved");
+    } catch (_error) {
+      toastAction("error");
     }
   };
 
@@ -158,7 +159,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -177,14 +178,15 @@ export function MonitorForm({
 
   const pingEndpoint = async () => {
     const { url, body, method, headers } = form.getValues();
-    const res = await fetch(`/api/checker/test`, {
+    const res = await fetch("/api/checker/test", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
       }),
       body: JSON.stringify({ url, body, method, headers }),
     });
-    return res.ok;
+    const data = (await res.json()) as RegionChecker;
+    return data;
   };
 
   const sendTestPing = () => {
@@ -193,16 +195,20 @@ export function MonitorForm({
     }
     const { url } = form.getValues();
     if (!url) {
-      toast("test-warning-empty-url");
+      toastAction("test-warning-empty-url");
       return;
     }
 
     startTestTransition(async () => {
-      const isSuccessful = await pingEndpoint();
-      if (isSuccessful) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+      try {
+        const data = await pingEndpoint();
+        if (data.status >= 200 && data.status < 300) {
+          toastAction("test-success");
+        } else {
+          toastAction("test-error");
+        }
+      } catch {
+        toastAction("error");
       }
     });
   };
@@ -222,7 +228,7 @@ export function MonitorForm({
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="my-1.5 flex flex-col gap-2">
-              <p className="text-sm font-semibold leading-none">
+              <p className="font-semibold text-sm leading-none">
                 Endpoint Check
               </p>
               <p className="text-muted-foreground text-sm">
@@ -278,7 +284,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       Custom Request
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -417,7 +423,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       More Configurations
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -602,7 +608,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">Alerts</p>
+                    <p className="font-semibold text-sm leading-none">Alerts</p>
                     <p className="text-muted-foreground text-sm">
                       How do you want to get informed if things break?
                     </p>

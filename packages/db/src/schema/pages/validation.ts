@@ -6,7 +6,7 @@ import { page } from "./page";
 const slugSchema = z
   .string()
   .regex(
-    new RegExp("^[A-Za-z0-9-]+$"),
+    /^[A-Za-z0-9-]+$/,
     "Only use digits (0-9), hyphen (-) or characters (A-Z, a-z).",
   )
   .min(3)
@@ -15,7 +15,7 @@ const slugSchema = z
 const customDomainSchema = z
   .string()
   .regex(
-    new RegExp("^(?!https?://|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$"),
+    /^(?!https?:\/\/|www.)([a-zA-Z0-9]+(.[a-zA-Z0-9]+)+.*)$/,
     "Should not start with http://, https:// or www.",
   )
   .or(z.enum([""]));
@@ -25,10 +25,22 @@ export const insertPageSchema = createInsertSchema(page, {
   icon: z.string().optional(),
   slug: slugSchema,
 }).extend({
-  monitors: z.array(z.number()).optional().default([]),
+  password: z.string().nullable().optional().default(""),
+  monitors: z
+    .array(
+      z.object({
+        // REMINDER: has to be different from `id` in as the prop is already used by react-hook-form
+        monitorId: z.number(),
+        order: z.number().default(0).optional(),
+      }),
+    )
+    .optional()
+    .default([]),
 });
 
-export const selectPageSchema = createSelectSchema(page);
+export const selectPageSchema = createSelectSchema(page).extend({
+  password: z.string().optional().nullable().default(""),
+});
 
 export type InsertPage = z.infer<typeof insertPageSchema>;
 export type Page = z.infer<typeof selectPageSchema>;

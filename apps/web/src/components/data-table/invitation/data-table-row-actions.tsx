@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { selectInvitationSchema } from "@openstatus/db/src/schema";
 import {
@@ -19,7 +19,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -31,7 +31,6 @@ export function DataTableRowActions<TData>({
 }: DataTableRowActionsProps<TData>) {
   const invitation = selectInvitationSchema.parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -40,11 +39,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!invitation.id) return;
         await api.invitation.delete.mutate({ id: invitation.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }

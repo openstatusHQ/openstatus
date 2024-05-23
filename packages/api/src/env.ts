@@ -7,6 +7,7 @@ export const env = createEnv({
     PROJECT_ID_VERCEL: z.string(),
     TEAM_ID_VERCEL: z.string(),
     VERCEL_AUTH_BEARER_TOKEN: z.string(),
+    TINY_BIRD_API_KEY: z.string(),
   },
 
   runtimeEnv: {
@@ -14,6 +15,7 @@ export const env = createEnv({
     PROJECT_ID_VERCEL: process.env.PROJECT_ID_VERCEL,
     TEAM_ID_VERCEL: process.env.TEAM_ID_VERCEL,
     VERCEL_AUTH_BEARER_TOKEN: process.env.VERCEL_AUTH_BEARER_TOKEN,
+    TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });

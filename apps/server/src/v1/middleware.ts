@@ -1,11 +1,11 @@
 import { verifyKey } from "@unkey/api";
-import type { Context, Env, Next } from "hono";
+import type { Context, Next } from "hono";
 
 import type { Variables } from "./index";
 import { getLimitByWorkspaceId } from "./utils";
 
 export async function middleware(
-  c: Context<{ Variables: Variables }, "/*", {}>,
+  c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
   const key = c.req.header("x-openstatus-key");
@@ -19,7 +19,7 @@ export async function middleware(
 
     if (!result.ownerId) return c.text("Unauthorized", 401);
 
-    const plan = await getLimitByWorkspaceId(parseInt(result.ownerId));
+    const plan = await getLimitByWorkspaceId(Number.parseInt(result.ownerId));
 
     c.set("workspacePlan", plan);
     c.set("workspaceId", `${result.ownerId}`);

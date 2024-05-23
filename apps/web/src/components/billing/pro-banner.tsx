@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ArrowRight, Rocket, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowRight, Rocket, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@openstatus/ui";
 
@@ -43,9 +43,9 @@ export function ProBanner() {
   if (hidden) return null;
 
   return (
-    <div className="border-border grid gap-2 rounded-md border p-2">
+    <div className="grid gap-2 rounded-md border border-border p-2">
       <div className="flex items-center justify-between">
-        <p className="inline-flex items-center text-sm font-medium">
+        <p className="inline-flex items-center font-medium text-sm">
           OpenStatus Pro <Rocket className="ml-2 h-4 w-4" />
         </p>
         <Button variant="ghost" size="icon" onClick={onClick}>

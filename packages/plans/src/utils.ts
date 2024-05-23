@@ -10,3 +10,7 @@ export function getLimit<T extends keyof Limits>(
 ) {
   return allPlans[plan].limits[limit];
 }
+
+export function getLimits(plan: WorkspacePlan) {
+  return allPlans[plan].limits;
+}

@@ -6,7 +6,7 @@ export function EnterpricePlan() {
       <div className="flex-1">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="font-cal mb-2 text-xl">Enterprise</p>
+            <p className="mb-2 font-cal text-xl">Enterprise</p>
             <p className="text-muted-foreground">
               Dedicated support and needs for your company.
             </p>
@@ -18,7 +18,11 @@ export function EnterpricePlan() {
       </div>
       <div>
         <Button asChild>
-          <a href="https://cal.com/team/openstatus/30min" target="_blank">
+          <a
+            href="https://cal.com/team/openstatus/30min"
+            target="_blank"
+            rel="noreferrer"
+          >
             Schedule call
           </a>
         </Button>

@@ -1,10 +1,11 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
+import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
@@ -26,7 +27,8 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { useToastAction } from "@/hooks/use-toast-action";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -36,9 +38,10 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const monitor = selectMonitorSchema.parse(row.original);
+  const { monitor } = z
+    .object({ monitor: selectMonitorSchema })
+    .parse(row.original);
   const router = useRouter();
-  const { toast } = useToastAction();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
 
@@ -47,11 +50,11 @@ export function DataTableRowActions<TData>({
       try {
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
-        toast("deleted");
+        toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -59,16 +62,16 @@ export function DataTableRowActions<TData>({
   async function onToggleActive() {
     startTransition(async () => {
       try {
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         const { jobType, ...rest } = monitor;
         if (!monitor.id) return;
-        await api.monitor.update.mutate({
-          ...rest,
-          active: !monitor.active,
+        await api.monitor.toggleMonitorActive.mutate({
+          id: monitor.id,
         });
-        toast("success");
+        toastAction("success");
         router.refresh();
       } catch {
-        toast("error");
+        toastAction("error");
       }
     });
   }
@@ -76,17 +79,24 @@ export function DataTableRowActions<TData>({
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
-      const res = await fetch(`/api/checker/test`, {
-        method: "POST",
-        headers: new Headers({
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({ url, body, method, headers }),
-      });
-      if (res.ok) {
-        toast("test-success");
-      } else {
-        toast("test-error");
+
+      try {
+        const res = await fetch("/api/checker/test", {
+          method: "POST",
+          headers: new Headers({
+            "Content-Type": "application/json",
+          }),
+          body: JSON.stringify({ url, body, method, headers }),
+        });
+        const data = (await res.json()) as RegionChecker;
+
+        if (data.status >= 200 && data.status < 300) {
+          toastAction("test-success");
+        } else {
+          toastAction("test-error");
+        }
+      } catch {
+        toastAction("error");
       }
     });
   }
@@ -97,7 +107,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+            className="h-8 w-8 p-0 data-[state=open]:bg-accent"
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />

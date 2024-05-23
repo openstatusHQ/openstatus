@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
 /**
@@ -14,6 +15,7 @@ module.exports = {
     // our vercel integration
     "../../packages/integrations/**/*.{ts,tsx}",
     "../../packages/ui/**/*.{ts,tsx}",
+    "../../packages/tracker/**/*.{ts,tsx}",
     "./node_modules/@openstatus/react/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
@@ -131,8 +133,8 @@ module.exports = {
         /* */
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
         /* Tremor */
         "tremor-small": "0.375rem",
@@ -215,6 +217,7 @@ module.exports = {
   /* */
   plugins: [
     require("tailwindcss-animate"),
+    require("@tailwindcss/container-queries"),
     require("@tailwindcss/typography"),
     require("@headlessui/tailwindcss"),
   ],

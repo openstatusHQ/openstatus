@@ -1,60 +1,96 @@
-import * as z from "zod";
+import {
+  Activity,
+  Clock,
+  FileCode,
+  Gauge,
+  Palette,
+  PanelTop,
+} from "lucide-react";
+import type { Metadata } from "next";
 
-import { Label } from "@openstatus/ui";
+import { BackButton } from "@/components/layout/back-button";
+import type { CardProps } from "@/components/play/card";
+import { Card } from "@/components/play/card";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "../shared-metadata";
 
-import { Tracker } from "@/components/tracker";
-import { getHomeMonitorListData } from "@/lib/tb";
-import { convertTimezoneToGMT, getRequestHeaderTimezone } from "@/lib/timezone";
-import { TimezoneCombobox } from "./_components/timezone-combobox";
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Free Tools ",
+  openGraph: {
+    ...ogMetadata,
+    title: "Free Tools",
+    url: "https://www.openstatus.dev/play",
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: "Free Tools",
+  },
+};
 
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  timezone: z.string().optional(),
-});
-
-export default async function PlayPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  const requestTimezone = getRequestHeaderTimezone();
-
-  const timezone = search.success ? search.data.timezone : undefined;
-
-  const gmt = convertTimezoneToGMT(timezone);
-
-  const data = await getHomeMonitorListData({ timezone: gmt });
-
+export default async function PlayPage() {
   return (
-    <div className="relative grid gap-4">
-      <div className="mx-auto grid gap-4 text-center">
-        <p className="font-cal mb-1 text-3xl">Status</p>
-        <p className="text-muted-foreground text-lg font-light">
-          Build your own within seconds.
-        </p>
+    <>
+      <BackButton href="/" />
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
+        {playgrounds.map((play, i) => {
+          const isFirst = i === 0;
+          return (
+            <Card
+              key={play.href}
+              className={isFirst ? "sm:col-span-2" : undefined}
+              {...play}
+            />
+          );
+        })}
       </div>
-      <div className="mx-auto w-full max-w-md">
-        {data && (
-          <Tracker
-            data={data}
-            id={1}
-            name="Ping"
-            url="https://www.openstatus.dev/api/ping"
-            context="play"
-          />
-        )}
-      </div>
-      <div className="mt-6 flex justify-start">
-        <div className="grid items-center gap-1">
-          <Label className="text-muted-foreground text-xs">Timezone</Label>
-          <TimezoneCombobox
-            defaultValue={timezone || requestTimezone || undefined}
-          />
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
+
+const playgrounds: CardProps[] = [
+  {
+    href: "/play/checker",
+    title: "Speed Checker",
+    description:
+      "Get speed insights for your api, website from multiple regions. No account needed.",
+    icon: Gauge,
+    variant: "primary",
+  },
+  {
+    href: "/public/monitors/1",
+    title: "Public Dashboard",
+    description: "Get a demo of wha data we collect for your monitor.",
+    icon: Activity,
+  },
+  {
+    href: "/play/status",
+    title: "Status Page",
+    description: "Get a status page for your website or api.",
+    icon: PanelTop,
+  },
+  {
+    href: "https://astro.openstat.us",
+    title: "Custom Astro Status Page",
+    description:
+      "Grab your API key and create a custom status page with our Astro starter.",
+    icon: Palette,
+  },
+  {
+    href: "https://time.openstatus.dev",
+    title: "Shadcn UI Time Picker",
+    description:
+      "The missing time picker for your next project. Supports 12 hour and 24 hour formats. Fully accessible.",
+    icon: Clock,
+  },
+  {
+    href: "https://openstat.us",
+    title: "All Status Codes",
+    description:
+      "Use the endpoint to return the desired error code for testing purposes.",
+    icon: FileCode,
+  },
+];
