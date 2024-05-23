@@ -21,6 +21,6 @@ function getCacheDescription(key: string): string {
     case "DYNAMIC":
       return "This resource is not cached by default and there are no explicit settings configured to cache it. You will see this frequently when Cloudflare is handling a POST request. This request will always go to the origin.";
     default:
-      return "";
+      return "-";
   }
 }

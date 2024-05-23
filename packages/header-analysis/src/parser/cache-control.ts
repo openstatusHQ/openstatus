@@ -61,6 +61,6 @@ function getDirectiveDescription(key: string): string {
     case "stale-if-error":
       return "Allows a cache to serve stale responses if the origin server is unavailable or returns an error.";
     default:
-      return "";
+      return "-";
   }
 }
