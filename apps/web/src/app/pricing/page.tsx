@@ -5,7 +5,7 @@ import { Shell } from "@/components/dashboard/shell";
 import { MarketingLayout } from "@/components/layout/marketing-layout";
 import { FAQs } from "@/components/marketing/faqs";
 import { EnterpricePlan } from "@/components/marketing/pricing/enterprice-plan";
-import { PricingWrapper } from "@/components/marketing/pricing/pricing-wrapper";
+import { PricingWrapperSuspense } from "@/components/marketing/pricing/pricing-wrapper";
 import {
   defaultMetadata,
   ogMetadata,
@@ -37,7 +37,7 @@ export default function PricingPage() {
               All plans. Start free today, upgrade later.
             </p>
           </div>
-          <PricingWrapper />
+          <PricingWrapperSuspense />
           <p className="text-muted-foreground text-sm">
             Learn more about the{" "}
             <Link
