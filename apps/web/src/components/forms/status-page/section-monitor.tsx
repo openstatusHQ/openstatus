@@ -39,9 +39,6 @@ export function SectionMonitor({ form, monitors }: Props) {
   });
   const watchMonitors = form.watch("monitors");
 
-  console.log("fields", fields.length);
-  console.log("monitors", monitors);
-
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
