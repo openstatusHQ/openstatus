@@ -19,35 +19,20 @@ export const workspace = sqliteTable(
     paidUntil: integer("paid_until", { mode: "timestamp" }),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
 
     dsn: text("dsn"), // should be removed soon
   },
   (t) => ({
     unique: unique().on(t.id, t.dsn),
-  }),
+  })
 );
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
   pages: many(page),
 }));
-
-export const application = sqliteTable("application", {
-  id: integer("id").primaryKey(),
-  name: text("name"), // friendly name for the project
-  dsn: text("dsn").unique(), // dsn for the source
-
-  workspaceId: integer("workspace_id").references(() => workspace.id),
-
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-});
