@@ -1,11 +1,7 @@
 "use client";
 
 import { ChevronsUpDown } from "lucide-react";
-import {
-  usePathname,
-  useSearchParams,
-  useSelectedLayoutSegment,
-} from "next/navigation";
+import { useSelectedLayoutSegment } from "next/navigation";
 import * as React from "react";
 
 import {

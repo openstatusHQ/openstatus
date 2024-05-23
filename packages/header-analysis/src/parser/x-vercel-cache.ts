@@ -21,6 +21,6 @@ function getCacheDescription(key: string): string {
     case "REVLIDATED":
       return "The response was served from the origin server and the cache was refreshed due to an authorization from the user in the incoming request.";
     default:
-      return "";
+      return "-";
   }
 }
