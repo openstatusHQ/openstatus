@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import type { User } from "@clerk/nextjs/dist/types/server";
+import type { User } from "next-auth";
 import type { CaptureOptions, Properties } from "posthog-js";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
@@ -53,6 +53,5 @@ export function trackEvent({
 }
 
 export function identifyUser({ user }: { user: User }) {
-  // REMINDER: similar to how we retrieve the email address on first login (take the first one)
-  posthog.identify(user.id, { email: user.emailAddresses?.[0].emailAddress });
+  posthog.identify(user.id, { email: user.email });
 }

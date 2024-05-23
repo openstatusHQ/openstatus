@@ -1,6 +1,6 @@
 import { SessionProvider } from "next-auth/react";
 
-import { PHProvider } from "@/providers/posthog";
+import { PHProvider, PostHogPageview } from "@/providers/posthog";
 
 export default function AuthLayout({
   children, // will be a page or nested layout
@@ -9,6 +9,7 @@ export default function AuthLayout({
 }) {
   return (
     <PHProvider>
+      <PostHogPageview />
       <SessionProvider>{children}</SessionProvider>
     </PHProvider>
   );
