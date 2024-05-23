@@ -3,6 +3,9 @@ import { z } from "zod";
 
 import { flyRegions } from "@openstatus/utils";
 
+import type { tbIngestWebVitalsArray } from "./validation";
+import { tbIngestWebVitals } from "./validation";
+
 const isProd = process.env.NODE_ENV === "production";
 
 const DEV_CACHE = 3_600; // 1h
@@ -326,6 +329,12 @@ export class OSTinybird {
         console.error(e);
       }
     };
+  }
+  ingestWebVitals(data: z.infer<typeof tbIngestWebVitalsArray>) {
+    return this.tb.buildIngestEndpoint({
+      datasource: "web_vitals__v0",
+      event: tbIngestWebVitals,
+    })(data);
   }
 }
 

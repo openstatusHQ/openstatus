@@ -1,8 +1,6 @@
 import {
   Table,
-  TableBody,
   TableCaption,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -32,33 +30,6 @@ const RouteTable = async () => {
               <TableHead>TTFB</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {data.map((page) => {
-              return (
-                <TableRow key={`${page.href}`}>
-                  <TableCell className="w-2 max-w-6 truncate font-medium">
-                    {page.href}
-                  </TableCell>
-                  <TableCell>{page.total_event}</TableCell>
-                  <TableCell className="">
-                    {page.clsValue?.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.fcpValue ? (page.fcpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.inpValue ? (page.inpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.lcpValue ? (page.lcpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.ttfbValue ? (page.ttfbValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
         </Table>
       </div>
     </div>

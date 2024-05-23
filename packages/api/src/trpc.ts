@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { clickhouseClient, db, eq, schema } from "@openstatus/db";
+import { db, eq, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
 // TODO: create a package for this
@@ -41,7 +41,6 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     ...opts,
     db,
-    clickhouseClient,
   };
 };
 

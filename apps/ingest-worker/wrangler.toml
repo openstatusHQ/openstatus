@@ -1,5 +1,7 @@
 name = "ingest-workers"
 compatibility_date = "2024-04-03"
+node_compat = true
+
 
 [env.dev.vars]
 API_ENDPOINT = "http://localhost:8080/vitals"
