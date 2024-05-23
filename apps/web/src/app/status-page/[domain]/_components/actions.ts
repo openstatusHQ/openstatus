@@ -3,7 +3,7 @@
 import { z } from "zod";
 
 import { trackAnalytics } from "@openstatus/analytics";
-import { and, eq, or, sql } from "@openstatus/db";
+import { and, eq, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
@@ -37,7 +37,7 @@ export async function handleSubscribe(formData: FormData) {
     .from(page)
     .where(
       // REMINDER: customDomain for pro users
-      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`
     )
     .get();
 
@@ -53,8 +53,8 @@ export async function handleSubscribe(formData: FormData) {
     .where(
       and(
         eq(pageSubscriber.email, validatedFields.data.email),
-        eq(pageSubscriber.pageId, pageData.id),
-      ),
+        eq(pageSubscriber.pageId, pageData.id)
+      )
     )
     .get();
 
@@ -104,8 +104,6 @@ export async function handleValidatePassword(formData: FormData) {
     slug: formData.get("slug"),
   });
 
-  console.log({ validatedFields });
-
   if (!validatedFields.success) {
     const fieldErrors = validatedFields.error.flatten().fieldErrors;
     return {
@@ -120,7 +118,7 @@ export async function handleValidatePassword(formData: FormData) {
     .from(page)
     .where(
       // REMINDER: customDomain for pro users
-      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`
     )
     .get();
 

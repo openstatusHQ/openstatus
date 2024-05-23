@@ -21,7 +21,7 @@ const RouteTable = async () => {
           <TableCaption>An overview of your page performance.</TableCaption>
           <TableHeader>
             <TableRow className="sticky top-0">
-              <TableHead className="max-w-6 w-4">Page</TableHead>
+              <TableHead className="w-4 max-w-6">Page</TableHead>
               <TableHead>Total Events</TableHead>
               <TableHead>CLS</TableHead>
               <TableHead>FCP</TableHead>
