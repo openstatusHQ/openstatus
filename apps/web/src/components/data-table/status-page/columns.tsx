@@ -1,8 +1,8 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import Link from "next/link";
-import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
 import type { Page } from "@openstatus/db/src/schema";
@@ -55,8 +55,9 @@ export const columns: ColumnDef<
       const lastMonitors = monitors;
       return (
         <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {firstMonitors.map(({ monitor: { name } }, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <Badge key={i} variant="outline">
                 {name}
               </Badge>
@@ -72,6 +73,7 @@ export const columns: ColumnDef<
                 </TooltipTrigger>
                 <TooltipContent side="top" className="flex gap-2">
                   {lastMonitors.map(({ monitor: { name } }, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                     <Badge key={i} variant="outline">
                       {name}
                     </Badge>
@@ -95,7 +97,7 @@ export const columns: ColumnDef<
         <Image
           src={row.getValue("icon")}
           alt=""
-          className="border-border rounded-sm border"
+          className="rounded-sm border border-border"
           width={20}
           height={20}
         />

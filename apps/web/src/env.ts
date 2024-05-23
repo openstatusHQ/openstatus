@@ -1,8 +1,8 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-import "@openstatus/db/env.mjs";
 import "@openstatus/analytics/env";
+import "@openstatus/db/env.mjs";
 
 export const env = createEnv({
   server: {

@@ -1,5 +1,4 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import type { DefaultSession } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 
 import { db } from "@openstatus/db";
@@ -11,8 +10,6 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createUser, getUser } from "./helpers";
-
-export type { DefaultSession };
 
 export const adapter: Adapter = {
   ...DrizzleAdapter(db, {

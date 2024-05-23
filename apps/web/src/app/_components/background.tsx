@@ -1,22 +1,16 @@
 "use client";
-
-import React from "react";
-
 import useMouseMove from "@/hooks/use-mouse-move";
+import type { ReactNode } from "react";
 
-export default function Background({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Background({ children }: { children: ReactNode }) {
   // --x and --y will be updated based on mouse position
   useMouseMove();
   return (
     <>
-      <div className="fixed left-0 top-0 -z-50">
-        <div className="sticky left-0 top-0 h-screen w-screen overflow-hidden">
-          <div className="bg-muted-foreground/20 absolute inset-0 z-[-1]" />
-          <div className="bg-gradient-radial from-muted-foreground/50 absolute left-[--x] top-[--y] z-[-1] h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full from-0% to-transparent to-90% blur-md" />
+      <div className="-z-50 fixed top-0 left-0">
+        <div className="sticky top-0 left-0 h-screen w-screen overflow-hidden">
+          <div className="absolute inset-0 z-[-1] bg-muted-foreground/20" />
+          <div className="-translate-x-1/2 -translate-y-1/2 absolute top-[--y] left-[--x] z-[-1] h-56 w-56 rounded-full bg-gradient-radial from-0% from-muted-foreground/50 to-90% to-transparent blur-md" />
           <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
             <defs>
               <pattern

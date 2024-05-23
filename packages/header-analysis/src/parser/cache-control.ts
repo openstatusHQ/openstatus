@@ -12,11 +12,14 @@ export function parseCacheControlHeader(header: string): CacheControlInfo[] {
 
   const cacheControlInfo: CacheControlInfo[] = [];
 
+  // biome-ignore lint/complexity/noForEach: <explanation>
   cacheControlDirectives.forEach((directive) => {
     const parts = directive.split("=");
 
     const name = parts[0].trim();
-    const value = !isNaN(Number(parts[1])) ? Number(parts[1]) : undefined;
+    const value = !Number.isNaN(Number(parts[1]))
+      ? Number(parts[1])
+      : undefined;
     const description = getDirectiveDescription(name);
 
     cacheControlInfo.push({ description, name, value, directive });

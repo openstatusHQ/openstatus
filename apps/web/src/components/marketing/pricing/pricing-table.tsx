@@ -1,8 +1,8 @@
 "use client";
 
-import { Fragment } from "react";
-import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Fragment } from "react";
 
 import type { WorkspacePlan } from "@openstatus/plans";
 import {
@@ -56,19 +56,19 @@ export function PricingTable({
               <TableHead
                 key={key}
                 className={cn(
-                  "text-foreground h-auto px-3 py-3 align-bottom",
+                  "h-auto px-3 py-3 align-bottom text-foreground",
                   key === "team" ? "bg-muted/30" : "bg-background",
                 )}
               >
-                <p className="font-cal sticky top-0 mb-2 text-2xl">
+                <p className="sticky top-0 mb-2 font-cal text-2xl">
                   {plan.title}
                 </p>
-                <p className="text-muted-foreground mb-2 text-sm font-normal">
+                <p className="mb-2 font-normal text-muted-foreground text-sm">
                   {plan.description}
                 </p>
                 <p className="mb-2 text-right">
                   <span className="font-cal text-xl">{plan.price}€</span>{" "}
-                  <span className="text-muted-foreground text-sm font-light">
+                  <span className="font-light text-muted-foreground text-sm">
                     /month
                   </span>
                 </p>
@@ -114,7 +114,7 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value, badge }, i) => {
+                {features.map(({ label, value, badge }, _i) => {
                   return (
                     <TableRow key={key}>
                       <TableCell className="gap-1">
@@ -123,13 +123,13 @@ export function PricingTable({
                           <Badge variant="secondary">{badge}</Badge>
                         ) : null}
                       </TableCell>
-                      {selectedPlans.map((plan, i) => {
+                      {selectedPlans.map((plan, _i) => {
                         const limitValue = plan.limits[value];
                         function renderContent() {
                           if (typeof limitValue === "boolean") {
                             if (limitValue) {
                               return (
-                                <Check className="text-foreground h-4 w-4" />
+                                <Check className="h-4 w-4 text-foreground" />
                               );
                             }
                             return (

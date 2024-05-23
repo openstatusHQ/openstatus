@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { CustomTooltipProps, EventProps } from "@tremor/react";
+import type { CustomTooltipProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 
 import { dataFormatter } from "./utils";
@@ -13,13 +12,6 @@ export interface SimpleChartProps {
 
 // TODO: allow click to open `./details` intercepting route
 export function SimpleChart({ data, region }: SimpleChartProps) {
-  const [value, setValue] = useState<EventProps>(null);
-
-  // useEffect(() => {
-  //   // console.log(value);
-  //   // const href = `./details?monitorId=${ping.monitorId}&cronTimestamp=${ping.cronTimestamp}&region=${ping.region}`;
-  // }, [value]);
-
   return (
     <LineChart
       data={data}
@@ -49,19 +41,20 @@ const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
   if (!data) return null;
 
   return (
-    <div className="rounded-tremor-default text-tremor-default dark:text-dark-tremor-default bg-tremor-background dark:bg-dark-tremor-background shadow-tremor-dropdown border-tremor-border dark:border-dark-tremor-border border p-2">
+    <div className="rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown dark:border-dark-tremor-border dark:bg-dark-tremor-background dark:text-dark-tremor-default">
       <div className="flex flex-col gap-3">
         {[data].map((category, idx) => {
           return (
+            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <div key={idx} className="flex flex-1 gap-2">
               <div
-                className={`flex w-1 flex-col bg-${category.color}-500 rounded`}
+                className={`bg- flex w-1 flex-col${category.color}-500 rounded`}
               />
               <div className="flex flex-col gap-1">
                 <p className="text-tremor-content dark:text-dark-tremor-content">
                   {label}
                 </p>
-                <p className="text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis font-mono font-medium">
+                <p className="font-medium font-mono text-tremor-content-emphasis dark:text-dark-tremor-content-emphasis">
                   {dataFormatter(category.value as number)}
                 </p>
               </div>

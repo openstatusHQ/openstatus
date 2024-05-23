@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
 import { allChangelogs } from "contentlayer/generated";
 import { Rss } from "lucide-react";
+import type { Metadata } from "next";
 
 import { Button } from "@openstatus/ui";
 
@@ -39,7 +39,7 @@ export default async function Changelog() {
         description="All the latest features, fixes and work to OpenStatus."
         actions={
           <Button variant="outline" size="icon" asChild>
-            <a href="/changelog/feed.xml" target="_blank">
+            <a href="/changelog/feed.xml" target="_blank" rel="noreferrer">
               <Rss className="h-4 w-4" />
               <span className="sr-only">RSS feed</span>
             </a>

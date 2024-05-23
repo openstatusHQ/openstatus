@@ -22,7 +22,7 @@ export async function create(ownerId: number) {
     .from(usersToWorkspaces)
     .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
     .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-    .where(eq(user.id, parseInt(session.user.id)))
+    .where(eq(user.id, Number.parseInt(session.user.id)))
     .all();
 
   const allowedIds = allowedWorkspaces.map((i) => i.workspace.id);

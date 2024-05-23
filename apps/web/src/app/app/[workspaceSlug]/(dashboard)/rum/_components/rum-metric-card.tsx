@@ -21,7 +21,7 @@ export const RUMMetricCard = async ({ event }: { event: WebVitalEvents }) => {
       {/* <p className="text-muted-foreground text-sm">
         {eventConfig.label} ({event})
       </p>
-      <p className="text-foreground text-3xl font-semibold">
+      <p className="font-semibold text-3xl text-foreground">
         {data?.median.toFixed(2) || 0}
       </p>
       <CategoryBar

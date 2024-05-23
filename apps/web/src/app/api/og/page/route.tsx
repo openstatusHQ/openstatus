@@ -6,7 +6,7 @@ import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
 import { api } from "@/trpc/server";
 import { BasicLayout } from "../_components/basic-layout";
 import { StatusCheck } from "../_components/status-check";
-import { calSemiBold, interLight, interRegular, SIZE } from "../utils";
+import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
 export const runtime = "edge";
 
@@ -33,11 +33,9 @@ export async function GET(req: Request) {
   });
 
   return new ImageResponse(
-    (
-      <BasicLayout title={title} description={description} tw="py-24 px-24">
-        <StatusCheck tracker={tracker} />
-      </BasicLayout>
-    ),
+    <BasicLayout title={title} description={description} tw="py-24 px-24">
+      <StatusCheck tracker={tracker} />
+    </BasicLayout>,
     {
       ...SIZE,
       fonts: [

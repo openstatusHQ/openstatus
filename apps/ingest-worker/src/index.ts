@@ -95,7 +95,6 @@ app.post("/", async (c) => {
     const res = [];
     for (const p of payload) {
       const { API_ENDPOINT } = env(c);
-      console.log();
 
       const r = fetch(API_ENDPOINT, {
         method: "POST",

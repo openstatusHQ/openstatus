@@ -48,7 +48,8 @@ export function ProFeatureHoverCard({
           <a
             href={`/app/${workspaceSlug}/settings/billing`}
             target="_blank"
-            className="text-foreground inline-flex items-center font-medium underline underline-offset-4 hover:no-underline"
+            className="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
+            rel="noreferrer"
           >
             Upgrade now
           </a>

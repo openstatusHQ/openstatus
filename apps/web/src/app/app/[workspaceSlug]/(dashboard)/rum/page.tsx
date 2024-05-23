@@ -1,6 +1,6 @@
-import * as React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import * as React from "react";
 
 import { webVitalEvents } from "@openstatus/rum";
 import { Button } from "@openstatus/ui";
@@ -40,7 +40,7 @@ export default async function RUMPage() {
 
   return (
     <>
-      <div className="grid  grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
         {webVitalEvents
           //  Remove FID from the list of events because it's deprecated by google
           .filter((v) => v !== "FID")

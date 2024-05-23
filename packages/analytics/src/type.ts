@@ -20,4 +20,5 @@ export type AnalyticsEvents =
   | { event: "User Signed In" }
   | { event: "User Vercel Beta" }
   | { event: "Notification Created"; provider: string }
-  | { event: "Subscribe to Status Page"; slug: string };
+  | { event: "Subscribe to Status Page"; slug: string }
+  | { event: "Invitation Created"; emailTo: string; workspaceId: number };

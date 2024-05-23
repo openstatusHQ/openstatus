@@ -1,6 +1,6 @@
+import * as Sentry from "@sentry/nextjs";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import * as Sentry from "@sentry/nextjs";
 
 import { cron, isAuthorizedDomain } from "../_cron";
 

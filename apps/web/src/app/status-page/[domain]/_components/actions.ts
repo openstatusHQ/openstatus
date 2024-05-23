@@ -6,7 +6,7 @@ import { trackAnalytics } from "@openstatus/analytics";
 import { and, eq, or, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { sendEmail, SubscribeEmail } from "@openstatus/emails";
+import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
 const subscribeSchema = z.object({
   email: z
@@ -74,7 +74,7 @@ export async function handleSubscribe(formData: FormData) {
     }),
     from: "OpenStatus <notification@notifications.openstatus.dev>",
     to: [validatedFields.data.email],
-    subject: "Verify your subscription to " + pageData.title,
+    subject: `Verify your subscription to ${pageData.title}`,
   });
 
   await db

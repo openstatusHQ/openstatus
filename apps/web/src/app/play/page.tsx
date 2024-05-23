@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import {
   Activity,
   Clock,
@@ -7,6 +6,7 @@ import {
   Palette,
   PanelTop,
 } from "lucide-react";
+import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
 import type { CardProps } from "@/components/play/card";
@@ -35,12 +35,12 @@ export default async function PlayPage() {
   return (
     <>
       <BackButton href="/" />
-      <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
         {playgrounds.map((play, i) => {
           const isFirst = i === 0;
           return (
             <Card
-              key={i}
+              key={play.href}
               className={isFirst ? "sm:col-span-2" : undefined}
               {...play}
             />

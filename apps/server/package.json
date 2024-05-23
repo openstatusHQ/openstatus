@@ -7,12 +7,11 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "bun test",
-    "lint": "eslint \"**/*.ts*\""
+    "test": "bun test"
   },
   "dependencies": {
-    "@hono/sentry": "1.0.0",
-    "@hono/zod-openapi": "0.8.3",
+    "@hono/sentry": "1.1.0",
+    "@hono/zod-openapi": "0.13.0",
     "@hono/zod-validator": "0.2.1",
     "@openstatus/analytics": "workspace:^",
     "@openstatus/db": "workspace:*",
@@ -37,7 +36,6 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/validator": "13.11.6",
     "bun-types": "1.0.11",
-    "dotenv": "16.3.1",
-    "eslint": "8.50.0"
+    "dotenv": "16.3.1"
   }
 }

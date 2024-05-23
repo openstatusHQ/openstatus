@@ -1,5 +1,5 @@
+import { TRPCError, type inferAsyncReturnType, initTRPC } from "@trpc/server";
 import type { NextRequest } from "next/server";
-import { inferAsyncReturnType, initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -8,8 +8,8 @@ import type { User, Workspace } from "@openstatus/db/src/schema";
 
 // TODO: create a package for this
 import {
+  type DefaultSession as Session,
   auth,
-  DefaultSession as Session,
 } from "../../../apps/web/src/lib/auth";
 
 /**

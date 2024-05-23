@@ -42,7 +42,7 @@ export function SectionLimits({ form }: Props) {
           <FormItem>
             <FormLabel>Degraded limit</FormLabel>
             <Select
-              onValueChange={(value) => field.onChange(parseInt(value))}
+              onValueChange={(value) => field.onChange(Number.parseInt(value))}
               defaultValue={String(field.value)}
             >
               <FormControl>
@@ -73,7 +73,7 @@ export function SectionLimits({ form }: Props) {
           <FormItem>
             <FormLabel>Failed limit</FormLabel>
             <Select
-              onValueChange={(value) => field.onChange(parseInt(value))}
+              onValueChange={(value) => field.onChange(Number.parseInt(value))}
               defaultValue={String(field.value)}
             >
               <FormControl>

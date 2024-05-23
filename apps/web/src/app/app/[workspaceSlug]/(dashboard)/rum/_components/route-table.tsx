@@ -14,9 +14,9 @@ const RouteTable = async () => {
     return null;
   }
   return (
-    <div className="  ">
-      <h2 className="text-lg font-semibold">Page Performance</h2>
-      <div className=" ">
+    <div className="">
+      <h2 className="font-semibold text-lg">Page Performance</h2>
+      <div className="">
         <Table>
           <TableCaption>An overview of your page performance.</TableCaption>
           <TableHeader>

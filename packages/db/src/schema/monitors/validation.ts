@@ -21,7 +21,8 @@ export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 // TODO: shared function
-function stringToArrayProcess<T>(string: T) {}
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+function stringToArrayProcess<T>(_string: T) {}
 
 const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {

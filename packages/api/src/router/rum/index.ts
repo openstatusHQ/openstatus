@@ -19,7 +19,7 @@ export const rumRouter = createTRPCRouter({
     .input(
       z.object({
         event: event,
-      }),
+      })
     )
     .query((opts) => {
       // FIXME: Use tb pipe instead

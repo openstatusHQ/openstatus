@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { allChangelogs } from "contentlayer/generated";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 import { Button, Skeleton } from "@openstatus/ui";
 
@@ -32,7 +32,7 @@ export function AppHeader() {
 
   return (
     // TODO: discuss amount of top-3 and top-6
-    <header className="border-border sticky top-2 z-50 w-full">
+    <header className="sticky top-2 z-50 w-full border-border">
       <Shell className="bg-background/70 px-3 py-3 backdrop-blur-lg md:px-6 md:py-3">
         <div className="flex w-full items-center justify-between">
           <Breadcrumbs />
@@ -49,7 +49,7 @@ export function AppHeader() {
                   >
                     Changelog
                     {show ? (
-                      <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-green-500" />
+                      <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500" />
                     ) : null}
                   </Link>
                 </Button>

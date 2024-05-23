@@ -32,7 +32,7 @@ export default function PricingPage() {
       <div className="grid w-full gap-6">
         <Shell className="grid w-full gap-8">
           <div className="grid gap-3 text-center">
-            <h1 className="text-foreground font-cal text-4xl">Pricing</h1>
+            <h1 className="font-cal text-4xl text-foreground">Pricing</h1>
             <p className="text-muted-foreground">
               All plans. Start free today, upgrade later.
             </p>

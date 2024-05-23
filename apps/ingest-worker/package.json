@@ -6,9 +6,6 @@
     "deploy:prod": "wrangler deploy --minify src/index.ts --env production"
   },
   "dependencies": {
-    "@hono/zod-validator": "0.2.1",
-    "@libsql/client": "0.6.0",
-    "@openstatus/db": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "detect-browser": "5.3.0",
     "drizzle-orm": "0.30.10",

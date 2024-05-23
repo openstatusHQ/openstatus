@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { fontFamily } = require("tailwindcss/defaultTheme");
 
 /**
@@ -132,8 +133,8 @@ module.exports = {
         /* */
       },
       borderRadius: {
-        lg: `var(--radius)`,
-        md: `calc(var(--radius) - 2px)`,
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
         /* Tremor */
         "tremor-small": "0.375rem",

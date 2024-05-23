@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 
 import {
@@ -128,7 +128,7 @@ export function StatusReportForm({
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="my-1.5 flex flex-col gap-2">
-            <p className="text-sm font-semibold leading-none">Inform</p>
+            <p className="font-semibold text-sm leading-none">Inform</p>
             <p className="text-muted-foreground text-sm">
               Keep your users informed about what just happened.
             </p>
@@ -175,7 +175,7 @@ export function StatusReportForm({
                                 className="sr-only"
                               />
                             </FormControl>
-                            <div className="border-border text-muted-foreground flex w-full items-center justify-center rounded-lg border px-3 py-2 text-center text-sm">
+                            <div className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-center text-muted-foreground text-sm">
                               <Icon className="mr-2 h-4 w-4 shrink-0" />
                               <span className="truncate">{label}</span>
                             </div>
@@ -242,9 +242,9 @@ export function StatusReportForm({
                                         ? "bg-green-500"
                                         : "bg-red-500",
                                     )}
-                                  ></span>
+                                  />
                                 </div>
-                                <p className="text-muted-foreground truncate text-sm">
+                                <p className="truncate text-muted-foreground text-sm">
                                   {item.description}
                                 </p>
                               </div>
@@ -304,7 +304,7 @@ export function StatusReportForm({
                                     {item.title}
                                   </FormLabel>
                                 </div>
-                                <p className="text-muted-foreground truncate text-sm">
+                                <p className="truncate text-muted-foreground text-sm">
                                   {item.description}
                                 </p>
                               </div>
@@ -328,7 +328,7 @@ export function StatusReportForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       Status Update
                     </p>
                     <p className="text-muted-foreground text-sm">
