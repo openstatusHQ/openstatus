@@ -5,7 +5,7 @@ import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
 import { OpenStatusProvider } from "@openstatus/next-monitoring";
-import { Toaster } from "@openstatus/ui";
+import { Toaster } from "@/components/ui/sonner";
 
 import {
   defaultMetadata,
