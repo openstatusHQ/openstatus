@@ -112,7 +112,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      }, // RETHINK: not the best way to handle it
+      } // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -171,7 +171,7 @@ export class OSTinybird {
 
   endpointStatusPeriod(
     period: "7d" | "45d",
-    timezone: "UTC" = "UTC", // "EST" | "PST" | "CET"
+    timezone: "UTC" = "UTC" // "EST" | "PST" | "CET"
   ) {
     const parameters = z.object({ monitorId: z.string() });
 
@@ -180,7 +180,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      }, // RETHINK: not the best way to handle it
+      } // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -335,6 +335,64 @@ export class OSTinybird {
       datasource: "web_vitals__v0",
       event: tbIngestWebVitals,
     })(data);
+  }
+
+  applicationRUMMetrics() {
+    const parameters = z.object({ dsn: z.string() });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: "rum_total_query",
+          parameters,
+          data: z.object({
+            cls: z.number(),
+            fcp: z.number(),
+            fid: z.number(),
+            lcp: z.number(),
+            ttfb: z.number(),
+          }),
+          opts: {
+            next: {
+              revalidate: MIN_CACHE,
+            },
+          },
+        })(props);
+        return res.data[0];
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+  applicationRUMMetricsPerPage() {
+    const parameters = z.object({ dsn: z.string() });
+
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: "rum_page_query",
+          parameters,
+          data: z.object({
+            href: z.string().url(),
+            path: z.string(),
+            totalSession: z.number(),
+            cls: z.number(),
+            fcp: z.number(),
+            fid: z.number(),
+            lcp: z.number(),
+            ttfb: z.number(),
+          }),
+          opts: {
+            next: {
+              revalidate: MIN_CACHE,
+            },
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
   }
 }
 

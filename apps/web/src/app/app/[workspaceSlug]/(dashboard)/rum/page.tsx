@@ -8,17 +8,14 @@ import { Button } from "@openstatus/ui";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { api } from "@/trpc/server";
 import { RouteTable } from "./_components/route-table";
-import { RUMMetricCard } from "./_components/rum-metric-card";
+import { RUMMetricCards } from "./_components/rum-metric-card";
 
 export const dynamic = "force-dynamic";
 
 export default async function RUMPage() {
-  const workspace = await api.workspace.getWorkspace.query();
-  if (!workspace) {
-    return notFound();
-  }
+  const applications = await api.workspace.getApplicationWorkspaces.query();
 
-  if (workspace.dsn === null) {
+  if (applications.length === 0) {
     return (
       <EmptyState
         icon="ratio"
@@ -37,19 +34,18 @@ export default async function RUMPage() {
       />
     );
   }
-
+  //  ATM We can only have access to one application
   return (
     <>
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
-        {webVitalEvents
+      <RUMMetricCards dsn={applications[0].dsn || ""} />
+      {/* {webVitalEvents
           //  Remove FID from the list of events because it's deprecated by google
           .filter((v) => v !== "FID")
           .map((event) => (
             <RUMMetricCard key={event} event={event} />
-          ))}
-      </div>
+          ))} */}
       <div>
-        <RouteTable />
+        <RouteTable dsn={applications[0].dsn || ""} />
       </div>
     </>
   );
