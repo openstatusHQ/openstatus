@@ -4,7 +4,7 @@ import { z } from "zod";
 import { flyRegions } from "@openstatus/utils";
 
 import type { tbIngestWebVitalsArray } from "./validation";
-import { tbIngestWebVitals } from "./validation";
+import { responseRumPageQuery, tbIngestWebVitals } from "./validation";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -43,7 +43,7 @@ export class OSTinybird {
   // FIXME: use Tinybird instead with super(args) maybe
   // how about passing here the `opts: {revalidate}` to access it within the functions?
   constructor(private args: { token: string; baseUrl?: string | undefined }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "development") {
       this.tb = new NoopTinybird();
     } else {
       this.tb = new Tinybird(args);
@@ -372,16 +372,7 @@ export class OSTinybird {
         const res = await this.tb.buildPipe({
           pipe: "rum_page_query",
           parameters,
-          data: z.object({
-            href: z.string().url(),
-            path: z.string(),
-            totalSession: z.number(),
-            cls: z.number(),
-            fcp: z.number(),
-            fid: z.number(),
-            lcp: z.number(),
-            ttfb: z.number(),
-          }),
+          data: responseRumPageQuery,
           opts: {
             next: {
               revalidate: MIN_CACHE,

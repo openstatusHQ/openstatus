@@ -24,6 +24,17 @@ export const tbIngestWebVitals = z.object({
   timestamp: z.number().int(),
 });
 
+export const responseRumPageQuery = z.object({
+  href: z.string().url(),
+  path: z.string(),
+  totalSession: z.number(),
+  cls: z.number(),
+  fcp: z.number(),
+  fid: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
+});
+
 export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
 /**
  * Values for the datasource ping_response

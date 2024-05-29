@@ -6,6 +6,7 @@ import type { WebVitalEvents, WebVitalsValues } from "@openstatus/rum";
 import { api } from "@/trpc/server";
 import { CategoryBar } from "./category-bar";
 import { date } from "zod";
+import { latencyFormatter } from "@/components/ping-response-analysis/utils";
 
 function prepareWebVitalValues(values: WebVitalsValues) {
   return values.map((value) => ({
@@ -28,7 +29,7 @@ const RUMCard = async ({
         {eventConfig.label} ({event})
       </p>
       <p className="font-semibold text-3xl text-foreground">
-        {value.toFixed(2) || 0}
+        {event !== "CLS" ? value.toFixed(0) : value.toFixed(2) || 0}
       </p>
       <CategoryBar
         values={prepareWebVitalValues(eventConfig.values)}
@@ -43,7 +44,7 @@ export const RUMMetricCards = async ({ dsn }: { dsn: string }) => {
     dsn: dsn,
   });
   return (
-    <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-2 lg:grid-cols-4 md:grid-cols-2">
       <RUMCard event="CLS" value={data?.cls || 0} />
       <RUMCard event="FCP" value={data?.fcp || 0} />
       <RUMCard event="LCP" value={data?.lcp || 0} />
