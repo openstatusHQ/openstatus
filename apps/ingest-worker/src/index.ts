@@ -119,6 +119,7 @@ app.post("/v1", async (c) => {
   const data = z.array(schemaV1).parse(JSON.parse(rawText));
   const userAgent = c.req.header("user-agent") || "";
 
+  const timestamp = Date.now();
   const country = c.req.header("cf-ipcountry") || "";
   const city = c.req.raw.cf?.city || "";
   const region_code = c.req.raw.cf?.regionCode || "";
@@ -130,6 +131,7 @@ app.post("/v1", async (c) => {
     const device = getDevice(d.screen, os);
     return tbIngestWebVitals.parse({
       ...d,
+      timestamp,
       device,
       ...d.data,
       browser,

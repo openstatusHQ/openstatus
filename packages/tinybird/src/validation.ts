@@ -21,6 +21,7 @@ export const tbIngestWebVitals = z.object({
   region_code: z.string().default(""),
   timezone: z.string().default(""),
   os: z.string(),
+  timestamp: z.number().int(),
 });
 
 export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
