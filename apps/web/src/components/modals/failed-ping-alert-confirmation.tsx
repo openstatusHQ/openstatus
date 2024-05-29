@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 import type { InsertMonitor } from "@openstatus/db/src/schema";

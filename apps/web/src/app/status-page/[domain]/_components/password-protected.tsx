@@ -2,7 +2,7 @@ import type { WorkspacePlan } from "@openstatus/plans";
 
 import { Shell } from "@/components/dashboard/shell";
 import { Footer } from "../_components/footer";
-import { PasswordForm } from "../_components/password-form";
+import { PasswordFormSuspense } from "../_components/password-form";
 
 export default function PasswordProtected({
   slug,
@@ -22,7 +22,7 @@ export default function PasswordProtected({
             <p className="text-center text-muted-foreground text-sm">
               Enter the password to access the status page.
             </p>
-            <PasswordForm slug={slug} />
+            <PasswordFormSuspense slug={slug} />
           </div>
         </Shell>
       </main>
