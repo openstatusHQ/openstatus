@@ -9,11 +9,24 @@ import { EmptyState } from "@/components/dashboard/empty-state";
 import { api } from "@/trpc/server";
 import { RouteTable } from "./_components/route-table";
 import { RUMMetricCards } from "./_components/rum-metric-card";
+import { Redis } from "@upstash/redis";
+import { auth } from "@/lib/auth";
+import { RequestButton } from "./_components/request-button/request-button";
 
 export const dynamic = "force-dynamic";
 
+const redis = Redis.fromEnv();
+
 export default async function RUMPage() {
   const applications = await api.workspace.getApplicationWorkspaces.query();
+
+  const session = await auth();
+  if (!session?.user) return null;
+
+  const accessRequested = await redis.sismember(
+    "rum_access_requested",
+    session.user.email
+  );
 
   if (applications.length === 0) {
     return (
@@ -21,16 +34,7 @@ export default async function RUMPage() {
         icon="ratio"
         title="Real User Monitoring"
         description="The feature is currently in beta and will be released soon."
-        action={
-          <Button asChild>
-            <Link
-              href="mailto:ping@openstatus.dev?subject=Real User Monitoring beta tester"
-              target="_blank"
-            >
-              Contact Us
-            </Link>
-          </Button>
-        }
+        action={<RequestButton hasRequestAccess={accessRequested} />}
       />
     );
   }
