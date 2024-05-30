@@ -8,6 +8,7 @@ import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
+import { identifyUser } from "@/providers/posthog";
 
 export type { DefaultSession };
 
@@ -80,6 +81,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (process.env.NODE_ENV !== "development") {
         await analytics.identify(userId, { email, userId });
         await trackAnalytics({ event: "User Created", userId, email });
+        await identifyUser({ user: params.user });
       }
     },
 
@@ -91,6 +93,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       if (process.env.NODE_ENV !== "development") {
         await analytics.identify(userId, { userId, email });
+        await identifyUser({ user: params.user });
         await trackAnalytics({ event: "User Signed In" });
       }
     },
