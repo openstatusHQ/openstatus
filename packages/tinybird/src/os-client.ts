@@ -43,7 +43,7 @@ export class OSTinybird {
   // FIXME: use Tinybird instead with super(args) maybe
   // how about passing here the `opts: {revalidate}` to access it within the functions?
   constructor(private args: { token: string; baseUrl?: string | undefined }) {
-    if (process.env.NODE_ENV !== "development") {
+    if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
       this.tb = new Tinybird(args);
