@@ -45,7 +45,8 @@ export function getDevice(screen: string, os: string) {
       return "laptop";
     }
     return "desktop";
-  } else if (MOBILE_OS.includes(os)) {
+  }
+  if (MOBILE_OS.includes(os)) {
     if (os === "Amazon OS" || +width > MOBILE_SCREEN_WIDTH) {
       return "tablet";
     }
@@ -54,11 +55,12 @@ export function getDevice(screen: string, os: string) {
 
   if (+width >= DESKTOP_SCREEN_WIDTH) {
     return "desktop";
-  } else if (+width >= LAPTOP_SCREEN_WIDTH) {
-    return "laptop";
-  } else if (+width >= MOBILE_SCREEN_WIDTH) {
-    return "tablet";
-  } else {
-    return "mobile";
   }
+  if (+width >= LAPTOP_SCREEN_WIDTH) {
+    return "laptop";
+  }
+  if (+width >= MOBILE_SCREEN_WIDTH) {
+    return "tablet";
+  }
+  return "mobile";
 }

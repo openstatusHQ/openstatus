@@ -5,9 +5,11 @@ import { z } from "zod";
 
 import { and, eq, sql } from "@openstatus/db";
 import {
+  application,
   monitor,
   notification,
   page,
+  selectApplicationSchema,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
@@ -75,6 +77,14 @@ export const workspaceRouter = createTRPCRouter({
     return selectWorkspaceSchema.parse(result);
   }),
 
+  getApplicationWorkspaces: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.application.findMany({
+      where: eq(application.workspaceId, opts.ctx.workspace.id),
+    });
+
+    return selectApplicationSchema.array().parse(result);
+  }),
+
   getUserWorkspaces: protectedProcedure.query(async (opts) => {
     const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
       where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
@@ -114,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -131,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -144,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
