@@ -33,6 +33,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "screenshot.openstat.us",
       },
+      {
+        protocol: "https",
+        hostname: "www.openstatus.dev",
+      },
     ],
   },
 };
