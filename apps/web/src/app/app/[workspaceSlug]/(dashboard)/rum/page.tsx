@@ -1,9 +1,4 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
 import * as React from "react";
-
-import { webVitalEvents } from "@openstatus/rum";
-import { Button } from "@openstatus/ui";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { api } from "@/trpc/server";

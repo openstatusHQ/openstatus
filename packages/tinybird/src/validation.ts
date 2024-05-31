@@ -30,7 +30,8 @@ export const responseRumPageQuery = z.object({
   totalSession: z.number(),
   cls: z.number(),
   fcp: z.number(),
-  fid: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
   lcp: z.number(),
   ttfb: z.number(),
 });

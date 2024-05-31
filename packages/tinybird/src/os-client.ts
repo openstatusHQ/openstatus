@@ -43,7 +43,7 @@ export class OSTinybird {
   // FIXME: use Tinybird instead with super(args) maybe
   // how about passing here the `opts: {revalidate}` to access it within the functions?
   constructor(private args: { token: string; baseUrl?: string | undefined }) {
-    if (process.env.NODE_ENV === "development") {
+    if (process.env.NODE_ENV !== "development") {
       this.tb = new NoopTinybird();
     } else {
       this.tb = new Tinybird(args);
@@ -338,7 +338,10 @@ export class OSTinybird {
   }
 
   applicationRUMMetrics() {
-    const parameters = z.object({ dsn: z.string() });
+    const parameters = z.object({
+      dsn: z.string(),
+      period: z.enum(["24h", "7d", "30d"]),
+    });
 
     return async (props: z.infer<typeof parameters>) => {
       try {
@@ -348,8 +351,9 @@ export class OSTinybird {
           data: z.object({
             cls: z.number(),
             fcp: z.number(),
-            fid: z.number(),
+            // fid: z.number(),
             lcp: z.number(),
+            inp: z.number(),
             ttfb: z.number(),
           }),
           opts: {
@@ -365,8 +369,10 @@ export class OSTinybird {
     };
   }
   applicationRUMMetricsPerPage() {
-    const parameters = z.object({ dsn: z.string() });
-
+    const parameters = z.object({
+      dsn: z.string(),
+      period: z.enum(["24h", "7d", "30d"]),
+    });
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
@@ -380,6 +386,60 @@ export class OSTinybird {
           },
         })(props);
         return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+  applicationSessionMetricsPerPath() {
+    const parameters = z.object({
+      dsn: z.string(),
+      period: z.enum(["24h", "7d", "30d"]),
+    });
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: "rum_total_query_per_path",
+          parameters,
+          data: responseRumPageQuery,
+          opts: {
+            next: {
+              revalidate: MIN_CACHE,
+            },
+          },
+        })(props);
+        return res.data;
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+  applicationRUMMetricsForPath() {
+    const parameters = z.object({
+      dsn: z.string(),
+      path: z.string(),
+      period: z.enum(["24h", "7d", "30d"]),
+    });
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: "rum_total_query_per_path",
+          parameters,
+          data: z.object({
+            cls: z.number(),
+            fcp: z.number(),
+            // fid: z.number(),
+            lcp: z.number(),
+            inp: z.number(),
+            ttfb: z.number(),
+          }),
+          opts: {
+            next: {
+              revalidate: MIN_CACHE,
+            },
+          },
+        })(props);
+        return res.data[0];
       } catch (e) {
         console.error(e);
       }
