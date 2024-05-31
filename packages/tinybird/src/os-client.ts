@@ -4,7 +4,11 @@ import { z } from "zod";
 import { flyRegions } from "@openstatus/utils";
 
 import type { tbIngestWebVitalsArray } from "./validation";
-import { responseRumPageQuery, tbIngestWebVitals } from "./validation";
+import {
+  responseRumPageQuery,
+  sessionRumPageQuery,
+  tbIngestWebVitals,
+} from "./validation";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -395,13 +399,14 @@ export class OSTinybird {
     const parameters = z.object({
       dsn: z.string(),
       period: z.enum(["24h", "7d", "30d"]),
+      path: z.string(),
     });
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: "rum_total_query_per_path",
+          pipe: "rum_page_query_per_path",
           parameters,
-          data: responseRumPageQuery,
+          data: sessionRumPageQuery,
           opts: {
             next: {
               revalidate: MIN_CACHE,

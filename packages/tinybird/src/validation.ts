@@ -25,9 +25,18 @@ export const tbIngestWebVitals = z.object({
 });
 
 export const responseRumPageQuery = z.object({
-  href: z.string().url(),
   path: z.string(),
   totalSession: z.number(),
+  cls: z.number(),
+  fcp: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
+});
+
+export const sessionRumPageQuery = z.object({
+  session_id: z.string(),
   cls: z.number(),
   fcp: z.number(),
   // fid: z.number(),

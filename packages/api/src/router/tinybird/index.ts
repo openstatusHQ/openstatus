@@ -57,4 +57,15 @@ export const tinybirdRouter = createTRPCRouter({
     .query(async (opts) => {
       return await tb.applicationRUMMetricsForPath()(opts.input);
     }),
+  sessionRumMetricsForPath: protectedProcedure
+    .input(
+      z.object({
+        dsn: z.string(),
+        path: z.string(),
+        period: z.enum(["24h", "7d", "30d"]),
+      })
+    )
+    .query(async (opts) => {
+      return await tb.applicationSessionMetricsPerPath()(opts.input);
+    }),
 });

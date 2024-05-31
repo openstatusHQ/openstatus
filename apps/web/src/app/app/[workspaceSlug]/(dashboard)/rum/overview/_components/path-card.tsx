@@ -1,24 +1,27 @@
-import { api } from "@/trpc/client";
+import { api } from "@/trpc/server";
 import { useSearchParams } from "next/navigation";
 import { use } from "react";
-import { RUMCard } from "../../_components/rum-metric-card";
+import { RUMCard } from "../../_components/rum-card";
 
-export const PathCard = ({ dsn }: { dsn: string }) => {
-  const searchParams = useSearchParams();
-
-  const path = searchParams.get("path");
-
+export const PathCard = async ({
+  dsn,
+  path,
+}: {
+  dsn: string;
+  path: string;
+}) => {
   if (!path) {
     return null;
   }
-  const data = use(
-    api.tinybird.rumMetricsForPath.query({
-      dsn,
-      path,
-      period: "24h",
-    })
-  );
 
+  const data = await api.tinybird.rumMetricsForPath.query({
+    dsn,
+    path,
+    period: "24h",
+  });
+  if (!data) {
+    return null;
+  }
   return (
     <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
       <RUMCard event="CLS" value={data?.cls || 0} />
