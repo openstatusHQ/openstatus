@@ -3,29 +3,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
-import type { responseRumPageQuery } from "@openstatus/tinybird/src/validation";
+import type { sessionRumPageQuery } from "@openstatus/tinybird/src/validation";
 import type { z } from "zod";
 
-export const columns: ColumnDef<z.infer<typeof responseRumPageQuery>>[] = [
+export const columns: ColumnDef<z.infer<typeof sessionRumPageQuery>>[] = [
   {
-    accessorKey: "path",
-    header: "Page",
+    accessorKey: "session",
+    header: "Session",
     cell: ({ row }) => {
-      return (
-        <Link
-          href={`./rum/overview?path=${encodeURIComponent(row.original.path)}`}
-          className="w-8 max-w-8 hover:underline"
-        >
-          <span className="truncate">{row.getValue("path")}</span>
-        </Link>
-      );
-    },
-  },
-  {
-    accessorKey: "totalSession",
-    header: "Total Session",
-    cell: ({ row }) => {
-      return <>{row.original.totalSession}</>;
+      return <>{row.original.session_id}</>;
     },
   },
   {

@@ -1,14 +1,27 @@
-import { getColorByType } from "@openstatus/rum";
-import type { WebVitalsValues } from "@openstatus/rum";
-
 import { api } from "@/trpc/server";
-import { RUMCard } from "./rum-card";
+import { useSearchParams } from "next/navigation";
+import { use } from "react";
+import { RUMCard } from "../../_components/rum-card";
 
-export const RUMMetricCards = async ({ dsn }: { dsn: string }) => {
-  const data = await api.tinybird.totalRumMetricsForApplication.query({
-    dsn: dsn,
+export const PathCard = async ({
+  dsn,
+  path,
+}: {
+  dsn: string;
+  path: string;
+}) => {
+  if (!path) {
+    return null;
+  }
+
+  const data = await api.tinybird.rumMetricsForPath.query({
+    dsn,
+    path,
     period: "24h",
   });
+  if (!data) {
+    return null;
+  }
   return (
     <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
       <RUMCard event="CLS" value={data?.cls || 0} />
