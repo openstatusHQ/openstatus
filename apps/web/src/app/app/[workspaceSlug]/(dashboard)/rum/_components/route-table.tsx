@@ -9,7 +9,6 @@ const RouteTable = async ({ dsn }: { dsn: string }) => {
   if (!data) {
     return null;
   }
-  console.log(data.length);
   return (
     <div className="">
       <DataTableWrapper data={data} />

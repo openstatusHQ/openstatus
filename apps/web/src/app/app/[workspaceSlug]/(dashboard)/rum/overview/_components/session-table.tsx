@@ -10,7 +10,6 @@ const SessionTable = async ({ dsn, path }: { dsn: string; path: string }) => {
     path: path,
   });
 
-  console.log(data);
   if (!data) {
     return null;
   }
