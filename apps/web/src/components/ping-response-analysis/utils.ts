@@ -10,7 +10,7 @@ export function latencyFormatter(value: number) {
 }
 
 export function timestampFormatter(timestamp: number) {
-  return new Date(timestamp).toLocaleString(); // TODO: properly format the date
+  return new Date(timestamp).toUTCString(); // GMT format
 }
 
 export function regionFormatter(
@@ -33,6 +33,41 @@ export function getTimingPhases(timing: Timing) {
   const tls = timing.tlsHandshakeDone - timing.tlsHandshakeStart;
   const ttfb = timing.firstByteDone - timing.firstByteStart;
   const transfer = timing.transferDone - timing.transferStart;
+
+  return {
+    dns,
+    connection,
+    tls,
+    ttfb,
+    transfer,
+  };
+}
+
+export function getTimingPhasesWidth(timing: Timing) {
+  const total = getTotalLatency(timing);
+  const phases = getTimingPhases(timing);
+
+  const dns = { preWidth: 0, width: (phases.dns / total) * 100 };
+
+  const connection = {
+    preWidth: dns.preWidth + dns.width,
+    width: (phases.connection / total) * 100,
+  };
+
+  const tls = {
+    preWidth: connection.preWidth + connection.width,
+    width: (phases.tls / total) * 100,
+  };
+
+  const ttfb = {
+    preWidth: tls.preWidth + tls.width,
+    width: (phases.ttfb / total) * 100,
+  };
+
+  const transfer = {
+    preWidth: ttfb.preWidth + ttfb.width,
+    width: (phases.transfer / total) * 100,
+  };
 
   return {
     dns,
@@ -100,6 +135,7 @@ export async function checkRegion(
         if (!key) return acc; // key === "" is an invalid header
 
         return {
+          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
           ...acc,
           [key]: value,
         };

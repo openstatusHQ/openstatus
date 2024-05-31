@@ -1,6 +1,6 @@
+import { allChangelogs } from "contentlayer/generated";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { allChangelogs } from "contentlayer/generated";
 
 import { Separator } from "@openstatus/ui";
 
@@ -9,7 +9,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { Changelog } from "@/components/content/changelog";
+import { ChangelogCard } from "@/components/content/changelog";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
 import { Pagination } from "../../_components/pagination";
@@ -26,7 +26,7 @@ export async function generateMetadata({
   params,
 }: {
   params: { slug: string };
-}): Promise<Metadata | void> {
+}): Promise<Metadata | undefined> {
   const post = allChangelogs.find((post) => post.slug === params.slug);
   if (!post) {
     return;
@@ -92,8 +92,8 @@ export default function ChangelogPage({
   return (
     <>
       <BackButton href="/changelog" />
-      <Shell className="flex flex-col gap-8 sm:py-8 md:gap-12 md:py-12">
-        <Changelog post={post} />
+      <Shell className="flex flex-col gap-8 md:gap-12 md:py-12 sm:py-8">
+        <ChangelogCard post={post} />
         <Separator className="mx-auto max-w-prose" />
         <Pagination {...{ next, prev }} />
       </Shell>

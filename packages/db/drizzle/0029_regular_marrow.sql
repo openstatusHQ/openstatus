@@ -1,0 +1,1 @@
+ALTER TABLE `monitors_to_pages` ADD `order` integer DEFAULT 0;

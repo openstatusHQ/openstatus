@@ -22,7 +22,7 @@ export async function StatusCheck({
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-semibold">{details.long}</h2>
+        <h2 className="font-semibold text-xl">{details.long}</h2>
         <span className={cn("rounded-full border p-1.5", className)}>
           <StatusIcon variant={details.variant} />
         </span>
@@ -38,13 +38,13 @@ export async function StatusCheck({
 export function StatusIcon({ variant }: { variant: StatusVariant }) {
   if (variant === "incident") {
     const AlertTriangleIcon = Icons["alert-triangle"];
-    return <AlertTriangleIcon className="text-background h-5 w-5" />;
+    return <AlertTriangleIcon className="h-5 w-5 text-background" />;
   }
   if (variant === "degraded") {
-    return <Icons.minus className="text-background h-5 w-5" />;
+    return <Icons.minus className="h-5 w-5 text-background" />;
   }
   if (variant === "down") {
-    return <Icons.minus className="text-background h-5 w-5" />;
+    return <Icons.minus className="h-5 w-5 text-background" />;
   }
-  return <Icons.check className="text-background h-5 w-5" />;
+  return <Icons.check className="h-5 w-5 text-background" />;
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 
 import * as assertions from "@openstatus/assertions";
@@ -74,7 +74,7 @@ export function MonitorForm({
       id: defaultValues?.id || 0,
       regions:
         defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -83,7 +83,9 @@ export function MonitorForm({
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
       public: defaultValues?.public ?? false,
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
   });
@@ -106,7 +108,7 @@ export function MonitorForm({
       form.reset(undefined, { keepValues: true });
       router.refresh();
       toastAction("saved");
-    } catch (error) {
+    } catch (_error) {
       toastAction("error");
     }
   };
@@ -133,7 +135,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -153,7 +155,7 @@ export function MonitorForm({
         }
       }
 
-      const res = await fetch(`/api/checker/test`, {
+      const res = await fetch("/api/checker/test", {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",
@@ -178,6 +180,7 @@ export function MonitorForm({
       const data = (await res.json()) as RegionChecker;
 
       const _headers: Record<string, string> = {};
+      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       res.headers.forEach((value, key) => (_headers[key] = value));
 
       if (as.length > 0) {

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { Check, ChevronsUpDown, Edit2 } from "lucide-react";
+import * as React from "react";
 
 import type { MonitorTag } from "@openstatus/db/src/schema";
 import {
@@ -135,7 +135,7 @@ export function TagsMultiBox({
             variant="outline"
             role="combobox"
             aria-expanded={openCombobox}
-            className="text-foreground h-auto w-full justify-between"
+            className="h-auto w-full justify-between text-foreground"
           >
             <span className="flex flex-wrap gap-2 truncate">
               {values.length > 0

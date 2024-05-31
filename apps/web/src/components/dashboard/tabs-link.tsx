@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
+import { cn } from "@/lib/utils";
 import type { LinkProps } from "next/link";
 import Link from "next/link";
-
-import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
+import React from "react";
 
 export interface TabsContainerProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -41,7 +41,7 @@ export function TabsContainer({
 }
 
 export interface TabsLinkProps extends LinkProps {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   active?: boolean;
   disabled?: boolean;
@@ -67,10 +67,10 @@ export function TabsLink({
     >
       <Link
         className={cn(
-          "text-muted-foreground hover:text-primary rounded-md text-sm font-medium",
+          "rounded-md font-medium text-muted-foreground text-sm hover:text-primary",
           {
             "text-primary": active,
-            "px-4 pb-3 pt-2": direction === "horizontal",
+            "px-4 pt-2 pb-3": direction === "horizontal",
             "px-4 py-2.5": direction === "vertical",
           },
           className,

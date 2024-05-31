@@ -1,28 +1,28 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs";
 import { Unkey } from "@unkey/api";
 
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
+import { auth } from "@/lib/auth";
 
 const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
 // REMINDER: server actions should have middlewares to do auth checks
 
 export async function create(ownerId: number) {
-  const _user = await currentUser();
+  const session = await auth();
 
-  if (!_user) return;
+  if (!session?.user?.id) return;
 
   const allowedWorkspaces = await db
     .select()
     .from(usersToWorkspaces)
     .innerJoin(user, eq(user.id, usersToWorkspaces.userId))
     .innerJoin(workspace, eq(workspace.id, usersToWorkspaces.workspaceId))
-    .where(eq(user.tenantId, _user.id))
+    .where(eq(user.id, Number.parseInt(session.user.id)))
     .all();
 
   const allowedIds = allowedWorkspaces.map((i) => i.workspace.id);

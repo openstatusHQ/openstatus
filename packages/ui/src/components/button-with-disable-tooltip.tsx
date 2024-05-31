@@ -33,7 +33,7 @@ export const ButtonWithDisableTooltip = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span tabIndex={0}>{ButtonComponent}</span>
+            <span>{ButtonComponent}</span>
           </TooltipTrigger>
           <TooltipContent>{tooltip}</TooltipContent>
         </Tooltip>

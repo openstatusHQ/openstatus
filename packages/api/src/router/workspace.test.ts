@@ -6,10 +6,11 @@ import { createInnerTRPCContext } from "../trpc";
 test("Get Test Workspace", async () => {
   const ctx = createInnerTRPCContext({
     req: undefined,
-    // @ts-expect-error
-    auth: {
-      userId: "1",
-      sessionId: "1",
+    // @ts-expect-error some issues with types
+    session: {
+      user: {
+        id: "1",
+      },
     },
     //@ts-expect-error
     workspace: {
@@ -37,10 +38,11 @@ test("Get Test Workspace", async () => {
 test("by default we get the first workspace", async () => {
   const ctx = createInnerTRPCContext({
     req: undefined,
-    // @ts-expect-error
-    auth: {
-      userId: "1",
-      sessionId: "1",
+    // @ts-expect-error some issues with types
+    session: {
+      user: {
+        id: "1",
+      },
     },
     workspace: undefined,
   });
@@ -65,10 +67,11 @@ test("by default we get the first workspace", async () => {
 test("All workspaces", async () => {
   const ctx = createInnerTRPCContext({
     req: undefined,
-    // @ts-expect-error
-    auth: {
-      userId: "1",
-      sessionId: "1",
+    // @ts-expect-error some issues with types
+    session: {
+      user: {
+        id: "1",
+      },
     },
   });
 
@@ -77,10 +80,10 @@ test("All workspaces", async () => {
   expect(result).toMatchObject([
     {
       createdAt: expect.any(Date),
-      email: "test@test.com",
-      firstName: "test",
+      email: "ping@openstatus.dev",
+      firstName: "Speed",
       id: 1,
-      lastName: "user",
+      lastName: "Matters",
       photoUrl: "",
       tenantId: "1",
       updatedAt: expect.any(Date),

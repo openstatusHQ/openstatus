@@ -10,7 +10,7 @@ import {
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
-import { getPriceIdForPlan, PLANS } from "./utils";
+import { PLANS, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -35,7 +35,7 @@ export const stripeRouter = createTRPCRouter({
       const currentUser = opts.ctx.db
         .select()
         .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .where(eq(user.id, opts.ctx.user.id))
         .as("currentUser");
       const userHasAccess = await opts.ctx.db
         .select()
@@ -97,7 +97,7 @@ export const stripeRouter = createTRPCRouter({
       const currentUser = opts.ctx.db
         .select()
         .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .where(eq(user.id, opts.ctx.user.id))
         .as("currentUser");
       const userHasAccess = await opts.ctx.db
         .select()
@@ -112,7 +112,7 @@ export const stripeRouter = createTRPCRouter({
         const currentUser = await opts.ctx.db
           .select()
           .from(user)
-          .where(eq(user.tenantId, opts.ctx.auth.userId))
+          .where(eq(user.id, opts.ctx.user.id))
           .get();
         const customerData: {
           metadata: { workspaceId: string };

@@ -78,6 +78,7 @@ export const monitorsToPages = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    order: integer("order").default(0),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),

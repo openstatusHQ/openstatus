@@ -8,8 +8,9 @@ export function getColorByType(type: WebVitalsValueTypes) {
       return "bg-yellow-500";
     case "poor":
       return "bg-rose-500";
-    default:
+    default: {
       const _check: never = type;
       return _check;
+    }
   }
 }

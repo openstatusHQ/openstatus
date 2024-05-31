@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import { api } from ".";
 
-test.only("Create a notification", async () => {
+test("Create a notification", async () => {
   const data = {
     name: "OpenStatus",
     provider: "email",

@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
+import Image from "next/image";
+import Link from "next/link";
 
 import type { Incident } from "@openstatus/db/src/schema";
 
@@ -35,7 +35,7 @@ export const columns: ColumnDef<Incident>[] = [
       const date = startedAt ? formatDateTime(startedAt) : "-";
       return (
         <div className="flex gap-2">
-          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="max-w-[150px] truncate text-muted-foreground lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {date}
           </span>
           {incidentScreenshotUrl ? (
@@ -64,7 +64,7 @@ export const columns: ColumnDef<Incident>[] = [
       const date = acknowledgedAt ? formatDateTime(acknowledgedAt) : "-";
       return (
         <div className="flex">
-          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="max-w-[150px] truncate text-muted-foreground lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {date}
           </span>
         </div>
@@ -79,7 +79,7 @@ export const columns: ColumnDef<Incident>[] = [
       const date = resolvedAt ? formatDateTime(resolvedAt) : "-";
       return (
         <div className="flex gap-2">
-          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="max-w-[150px] truncate text-muted-foreground lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {date}
           </span>
           {recoveryScreenshotUrl ? (
@@ -115,7 +115,7 @@ export const columns: ColumnDef<Incident>[] = [
       );
       return (
         <div className="flex">
-          <span className="text-muted-foreground max-w-[150px] truncate sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
+          <span className="max-w-[150px] truncate text-muted-foreground lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
             {duration}
           </span>
         </div>

@@ -10,7 +10,7 @@ export const userRouter = createTRPCRouter({
     const currentUser = await opts.ctx.db
       .select()
       .from(user)
-      .where(eq(user.tenantId, opts.ctx.auth.userId))
+      .where(eq(user.id, opts.ctx.user.id))
       .get();
     return currentUser;
   }),

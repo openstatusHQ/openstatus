@@ -1,11 +1,10 @@
-import * as React from "react";
-import { format } from "date-fns";
-
 import type { ValidIcon } from "@/components/icons";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import type { ReactNode } from "react";
 
-export function TimelineContainer({ children }: { children: React.ReactNode }) {
+export function TimelineContainer({ children }: { children: ReactNode }) {
   return (
     // first:md:order-2 does not work
     <div className="mx-auto flex max-w-md flex-col justify-center gap-3 md:order-2">
@@ -25,24 +24,24 @@ export function TimelineEvent({
 }) {
   const Icon = Icons[icon.name];
   return (
-    <div className="group relative -m-2 flex gap-4 border border-transparent p-2">
+    <div className="group -m-2 relative flex gap-4 border border-transparent p-2">
       <div className="relative">
         <div
           className={cn(
-            "bg-background rounded-full border p-2",
+            "rounded-full border bg-background p-2",
             icon.borderColor,
           )}
         >
           <Icon className={cn("h-4 w-4", icon.textColor)} />
         </div>
         {!isLast ? (
-          <div className="bg-muted absolute inset-x-0 mx-auto h-full w-[2px]" />
+          <div className="absolute inset-x-0 mx-auto h-full w-[2px] bg-muted" />
         ) : null}
       </div>
       <div className="mt-1 flex flex-1 flex-col gap-1">
         <div className="flex items-center justify-between gap-4">
-          <p className="text-sm font-semibold">{label}</p>
-          <p className="text-muted-foreground mt-px text-right text-[10px]">
+          <p className="font-semibold text-sm">{label}</p>
+          <p className="mt-px text-right text-[10px] text-muted-foreground">
             <code>{format(new Date(date), "LLL dd, y HH:mm:ss")}</code>
           </p>
         </div>
@@ -56,7 +55,11 @@ export function Timeline() {
   return (
     <TimelineContainer>
       {timeline.map((event, i) => (
-        <TimelineEvent key={i} isLast={i === timeline.length - 1} {...event} />
+        <TimelineEvent
+          key={event.message}
+          isLast={i === timeline.length - 1}
+          {...event}
+        />
       ))}
     </TimelineContainer>
   );

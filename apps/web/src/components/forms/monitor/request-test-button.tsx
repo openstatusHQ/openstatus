@@ -1,5 +1,5 @@
-import React from "react";
 import { Send } from "lucide-react";
+import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import { deserialize } from "@openstatus/assertions";
@@ -77,13 +77,13 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
 
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
-      <div className="ring-offset-background focus-within:ring-ring group flex h-10 items-center rounded-md bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+      <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <Select
           value={value}
           onValueChange={(value: MonitorFlyRegion) => setValue(value)}
         >
           <SelectTrigger
-            className="border-accent flex-1 rounded-r-none focus:ring-0"
+            className="flex-1 rounded-r-none border-accent focus:ring-0"
             aria-label={value}
           >
             <SelectValue>{flag}</SelectValue>
@@ -133,6 +133,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
             <ResponseDetailTabs
               timing={check.data.timing}
               headers={check.data.headers}
+              status={check.data.status}
               assertions={deserialize(
                 JSON.stringify([
                   ...(statusAssertions || []),

@@ -1,5 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
   try {
     await fetch(webhookUrl, {
@@ -65,7 +66,9 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
 }: {
   monitor: Monitor;
@@ -126,7 +129,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
       webhookUrl,
     );
     return true;
-  } catch (err) {
+  } catch (_err) {
     return false;
   }
 };

@@ -1,4 +1,4 @@
-import * as React from "react";
+import type { ReactNode } from "react";
 
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/header/app-header";
@@ -10,7 +10,7 @@ export default async function AppLayout({
   children,
 }: {
   params: { workspaceSlug: string };
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const { workspaceSlug } = params;
   return (

@@ -23,6 +23,7 @@ export function CopyToClipboardButton({ copyValue, className }: Props) {
   }, [hasCopied]);
   return (
     <button
+      type="button"
       onClick={() => {
         copyToClipboard(copyValue);
         setHasCopied(true);

@@ -2,14 +2,14 @@ import { z } from "zod";
 
 import type { Assertion } from "./types";
 import {
-  base,
   HeaderAssertion,
-  headerAssertion,
   JsonBodyAssertion,
-  jsonBodyAssertion,
   StatusAssertion,
-  statusAssertion,
   TextBodyAssertion,
+  base,
+  headerAssertion,
+  jsonBodyAssertion,
+  statusAssertion,
   textBodyAssertion,
 } from "./v1";
 

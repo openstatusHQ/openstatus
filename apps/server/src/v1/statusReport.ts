@@ -1,11 +1,11 @@
-import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { and, asc, db, eq, isNotNull } from "@openstatus/db";
 import {
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   pageSubscriber,
+  pagesToStatusReports,
   statusReport,
   statusReportStatus,
   statusReportUpdate,

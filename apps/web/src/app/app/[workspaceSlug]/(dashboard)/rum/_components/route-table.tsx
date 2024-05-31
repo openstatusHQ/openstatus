@@ -1,66 +1,17 @@
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui";
-
 import { api } from "@/trpc/server";
+import { DataTableWrapper } from "./data-table-wrapper";
 
-const RouteTable = async () => {
-  const data = await api.rumRouter.GetAggregatedPerPage.query();
+const RouteTable = async ({ dsn }: { dsn: string }) => {
+  const data = await api.tinybird.rumMetricsForApplicationPerPage.query({
+    dsn: dsn,
+    period: "24h",
+  });
   if (!data) {
     return null;
   }
   return (
-    <div className="  ">
-      <h2 className="text-lg font-semibold">Page Performance</h2>
-      <div className=" ">
-        <Table>
-          <TableCaption>An overview of your page performance.</TableCaption>
-          <TableHeader>
-            <TableRow className="sticky top-0">
-              <TableHead className="max-w-6 w-4">Page</TableHead>
-              <TableHead>Total Events</TableHead>
-              <TableHead>CLS</TableHead>
-              <TableHead>FCP</TableHead>
-              <TableHead>INP</TableHead>
-              <TableHead>LCP</TableHead>
-              <TableHead>TTFB</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((page) => {
-              return (
-                <TableRow key={`${page.href}`}>
-                  <TableCell className="max-w-6  w-2 truncate font-medium">
-                    {page.href}
-                  </TableCell>
-                  <TableCell>{page.total_event}</TableCell>
-                  <TableCell className="">
-                    {page.clsValue?.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.fcpValue ? (page.fcpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.inpValue ? (page.inpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.lcpValue ? (page.lcpValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                  <TableCell className="">
-                    {page.ttfbValue ? (page.ttfbValue / 1000).toFixed(2) : "-"}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="">
+      <DataTableWrapper data={data} />
     </div>
   );
 };

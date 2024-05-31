@@ -24,6 +24,8 @@ export const pageRouter = createTRPCRouter({
   create: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
     const { monitors, workspaceId, id, ...pageProps } = opts.input;
 
+    const monitorIds = monitors?.map((item) => item.monitorId) || [];
+
     const pageNumbers = (
       await opts.ctx.db.query.page.findMany({
         where: eq(page.workspaceId, opts.ctx.workspace.id),
@@ -57,19 +59,27 @@ export const pageRouter = createTRPCRouter({
       .returning()
       .get();
 
-    if (Boolean(monitors.length)) {
+    if (monitorIds.length) {
       // We should make sure the user has access to the monitors
       const allMonitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
-          inArray(monitor.id, monitors),
+          inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
       });
 
-      const values = allMonitors.map((monitor) => ({
-        monitorId: monitor.id,
+      if (allMonitors.length !== monitorIds.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to all the monitors.",
+        });
+      }
+
+      const values = monitors.map(({ monitorId }, index) => ({
         pageId: newPage.id,
+        order: index,
+        monitorId,
       }));
 
       await opts.ctx.db.insert(monitorsToPages).values(values).run();
@@ -85,10 +95,13 @@ export const pageRouter = createTRPCRouter({
       const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
+          eq(page.workspaceId, opts.ctx.workspace.id)
         ),
         with: {
-          monitorsToPages: { with: { monitor: true } },
+          monitorsToPages: {
+            with: { monitor: true },
+            orderBy: (monitorsToPages, { asc }) => [asc(monitorsToPages.order)],
+          },
         },
       });
       return selectPageSchemaWithMonitorsRelation.parse(firstPage);
@@ -97,6 +110,8 @@ export const pageRouter = createTRPCRouter({
   update: protectedProcedure.input(insertPageSchema).mutation(async (opts) => {
     const { monitors, ...pageInput } = opts.input;
     if (!pageInput.id) return;
+
+    const monitorIds = monitors?.map((item) => item.monitorId) || [];
 
     const limit = allPlans[opts.ctx.workspace.plan].limits;
 
@@ -117,12 +132,31 @@ export const pageRouter = createTRPCRouter({
       .where(
         and(
           eq(page.id, pageInput.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
+          eq(page.workspaceId, opts.ctx.workspace.id)
+        )
       )
       .returning()
       .get();
 
+    if (monitorIds.length) {
+      // We should make sure the user has access to the monitors
+      const allMonitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          inArray(monitor.id, monitorIds),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt)
+        ),
+      });
+
+      if (allMonitors.length !== monitorIds.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to all the monitors.",
+        });
+      }
+    }
+
+    // TODO: check for monitor order!
     const currentMonitorsToPages = await opts.ctx.db
       .select()
       .from(monitorsToPages)
@@ -131,31 +165,33 @@ export const pageRouter = createTRPCRouter({
 
     const removedMonitors = currentMonitorsToPages
       .map(({ monitorId }) => monitorId)
-      .filter((x) => !monitors?.includes(x));
+      .filter((x) => !monitorIds?.includes(x));
 
-    if (Boolean(removedMonitors.length)) {
+    if (removedMonitors.length) {
       await opts.ctx.db
         .delete(monitorsToPages)
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, currentPage.id),
-          ),
+            eq(monitorsToPages.pageId, currentPage.id)
+          )
         );
     }
 
-    const addedMonitors = monitors.filter(
-      (x) =>
-        !currentMonitorsToPages.map(({ monitorId }) => monitorId)?.includes(x),
-    );
+    const values = monitors.map(({ monitorId }, index) => ({
+      pageId: currentPage.id,
+      order: index,
+      monitorId,
+    }));
 
-    if (Boolean(addedMonitors.length)) {
-      const values = addedMonitors.map((monitorId) => ({
-        pageId: currentPage.id,
-        monitorId,
-      }));
-
-      await opts.ctx.db.insert(monitorsToPages).values(values).run();
+    if (values.length) {
+      await opts.ctx.db
+        .insert(monitorsToPages)
+        .values(values)
+        .onConflictDoUpdate({
+          target: [monitorsToPages.monitorId, monitorsToPages.pageId],
+          set: { order: sql.raw("excluded.`order`") },
+        });
     }
   }),
   delete: protectedProcedure
@@ -166,8 +202,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             eq(page.id, opts.input.id),
-            eq(page.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(page.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -209,12 +245,12 @@ export const pageRouter = createTRPCRouter({
         .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
         .where(
           // make sur only active monitors are returned!
-          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true)),
+          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true))
         )
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId
       );
 
       const monitorsToStatusReportResult =
@@ -233,15 +269,15 @@ export const pageRouter = createTRPCRouter({
         .all();
 
       const monitorStatusReportIds = monitorsToStatusReportResult.map(
-        ({ statusReportId }) => statusReportId,
+        ({ statusReportId }) => statusReportId
       );
 
       const pageStatusReportIds = statusReportsToPagesResult.map(
-        ({ statusReportId }) => statusReportId,
+        ({ statusReportId }) => statusReportId
       );
 
       const statusReportIds = Array.from(
-        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
+        new Set([...monitorStatusReportIds, ...pageStatusReportIds])
       );
 
       const statusReports =
@@ -268,8 +304,8 @@ export const pageRouter = createTRPCRouter({
                 and(
                   inArray(monitor.id, monitorsId),
                   eq(monitor.active, true),
-                  isNull(monitor.deletedAt),
-                ), // REMINDER: this is hardcoded
+                  isNull(monitor.deletedAt)
+                ) // REMINDER: this is hardcoded
               )
               .all()
           : [];
@@ -282,15 +318,24 @@ export const pageRouter = createTRPCRouter({
               .where(
                 inArray(
                   incidentTable.monitorId,
-                  monitors.map((m) => m.id),
-                ),
+                  monitors.map((m) => m.id)
+                )
               )
               .all()
           : [];
 
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
-        monitors,
+        // TODO: improve performance and move into SQLite query
+        monitors: monitors.sort((a, b) => {
+          const aIndex =
+            monitorsToPagesResult.find((m) => m.monitor?.id === a.id)
+              ?.monitors_to_pages.order || 0;
+          const bIndex =
+            monitorsToPagesResult.find((m) => m.monitor?.id === b.id)
+              ?.monitors_to_pages.order || 0;
+          return aIndex - bIndex;
+        }),
         incidents,
         statusReports,
         workspacePlan: workspaceResult?.plan,
@@ -303,7 +348,7 @@ export const pageRouter = createTRPCRouter({
       // had filter on some words we want to keep for us
       if (
         ["api", "app", "www", "docs", "checker", "time", "help"].includes(
-          opts.input.slug,
+          opts.input.slug
         )
       ) {
         return false;
@@ -311,12 +356,12 @@ export const pageRouter = createTRPCRouter({
       const result = await opts.ctx.db.query.page.findMany({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
-      return result?.length > 0 ? false : true;
+      return !(result?.length > 0);
     }),
 
   addCustomDomain: protectedProcedure
     .input(
-      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
+      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() })
     )
     .mutation(async (opts) => {
       // TODO Add some check ?

@@ -18,6 +18,7 @@ export type AnalyticsEvents =
     }
   | { event: "User Upgraded"; email: string }
   | { event: "User Signed In" }
-  | { event: "User Vercel Beta" }
+  | { event: "User RUM Beta Requested"; email: string }
   | { event: "Notification Created"; provider: string }
-  | { event: "Subscribe to Status Page"; slug: string };
+  | { event: "Subscribe to Status Page"; slug: string }
+  | { event: "Invitation Created"; emailTo: string; workspaceId: number };

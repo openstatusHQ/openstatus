@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { X } from "lucide-react";
+import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertPage, WorkspacePlan } from "@openstatus/db/src/schema";

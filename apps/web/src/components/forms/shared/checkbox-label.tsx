@@ -10,6 +10,7 @@ interface Props {
   checked?: boolean;
   onCheckedChange(checked: boolean): void;
   className?: string;
+  name: string;
 }
 
 export function CheckboxLabel({
@@ -18,25 +19,27 @@ export function CheckboxLabel({
   checked,
   onCheckedChange,
   className,
+  name,
 }: Props) {
   return (
     <div className="relative h-full">
       <Checkbox
-        id={id}
+        id={`${name}-${id}`}
+        name={name}
         className="peer sr-only"
         checked={checked}
         onCheckedChange={onCheckedChange}
       />
       <Label
-        htmlFor={id}
+        htmlFor={`${name}-${id}`}
         className={cn(
-          "border-border bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary flex h-full items-center gap-1 rounded-md border p-4 pr-10",
-          className,
+          "flex h-full items-center gap-1 rounded-md border border-border bg-popover p-4 pr-10 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
+          className
         )}
       >
         {children}
       </Label>
-      <div className="absolute inset-y-0 right-4 hidden items-center peer-data-[state=checked]:flex [&:has([data-state=checked])]:flex">
+      <div className="absolute inset-y-0 right-4 hidden items-center [&:has([data-state=checked])]:flex peer-data-[state=checked]:flex">
         <CheckCircle2 className="h-4 w-4" />
       </div>
     </div>

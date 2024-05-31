@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import type {
   ColumnDef,
   ColumnFiltersState,
@@ -14,6 +13,7 @@ import {
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import * as React from "react";
 import { z } from "zod";
 
 import { selectMonitorTagSchema } from "@openstatus/db/src/schema";
@@ -64,21 +64,23 @@ export function DataTable<TData, TValue>({
     // TODO: check if we can optimize it - because it gets bigger and bigger with every new filter
     // getFacetedUniqueValues: getFacetedUniqueValues(),
     // REMINDER: We cannot use the default getFacetedUniqueValues as it doesnt support Array of Objects
-    getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
+    getFacetedUniqueValues: (_table: TTable<TData>, columnId: string) => () => {
       const map = new Map();
       if (columnId === "tags") {
-        tags?.forEach((tag) => {
-          const tagsNumber = data.reduce((prev, curr) => {
-            const values = z
-              .object({ tags: z.array(selectMonitorTagSchema) })
-              .safeParse(curr);
-            if (!values.success) return prev;
-            if (values.data.tags?.find((t) => t.name === tag.name))
-              return prev + 1;
-            return prev;
-          }, 0);
-          map.set(tag.name, tagsNumber);
-        });
+        if (tags) {
+          for (const tag of tags) {
+            const tagsNumber = data.reduce((prev, curr) => {
+              const values = z
+                .object({ tags: z.array(selectMonitorTagSchema) })
+                .safeParse(curr);
+              if (!values.success) return prev;
+              if (values.data.tags?.find((t) => t.name === tag.name))
+                return prev + 1;
+              return prev;
+            }, 0);
+            map.set(tag.name, tagsNumber);
+          }
+        }
       }
       if (columnId === "public") {
         const values = table

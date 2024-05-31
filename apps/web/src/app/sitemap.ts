@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
 import { allChangelogs, allPosts } from "contentlayer/generated";
+import type { MetadataRoute } from "next";
 
 const addPathToBaseURL = (path: string) => `https://www.openstatus.dev${path}`;
 
@@ -23,9 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/about",
     "/blog",
     "/changelog",
-    "/app/sign-in",
-    "/app/sign-up",
-    "/monitor/openstatus",
+    "/app/login",
   ].map((route) => ({
     url: addPathToBaseURL(route),
     lastModified: new Date(),

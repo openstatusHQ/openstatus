@@ -20,13 +20,14 @@ export function formatDateTime(date: Date) {
 }
 
 export function formatDuration(ms: number) {
-  if (ms < 0) ms = -ms;
+  let v = ms;
+  if (ms < 0) v = -ms;
   const time = {
-    day: Math.floor(ms / 86400000),
-    hour: Math.floor(ms / 3600000) % 24,
-    min: Math.floor(ms / 60000) % 60,
-    sec: Math.floor(ms / 1000) % 60,
-    ms: Math.floor(ms) % 1000,
+    day: Math.floor(v / 86400000),
+    hour: Math.floor(v / 3600000) % 24,
+    min: Math.floor(v / 60000) % 60,
+    sec: Math.floor(v / 1000) % 60,
+    ms: Math.floor(v) % 1000,
   };
   return Object.entries(time)
     .filter((val) => val[1] !== 0)

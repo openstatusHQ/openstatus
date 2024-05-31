@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -16,6 +16,7 @@ import {
   FormLabel,
   FormMessage,
   InputWithAddons,
+  Skeleton,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -34,7 +35,11 @@ const schema = z.object({
 
 type Schema = z.infer<typeof schema>;
 
-export function PasswordForm({ slug }: { slug: string }) {
+interface PasswordFormProps {
+  slug: string;
+}
+
+export function PasswordForm({ slug }: PasswordFormProps) {
   const form = useForm<Schema>({
     resolver: zodResolver(schema),
     defaultValues: { password: "" },
@@ -47,6 +52,7 @@ export function PasswordForm({ slug }: { slug: string }) {
   const [isPending, startTransition] = useTransition();
   const [_, handleChange] = useCookieState(createProtectedCookieKey(slug)); // what if we do not define the expires date?
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (searchParams.has("authorize")) {
       const authorize = searchParams.get("authorize");
@@ -54,7 +60,6 @@ export function PasswordForm({ slug }: { slug: string }) {
       form.setValue("password", authorize);
     }
     setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function onSubmit(data: Schema) {
@@ -100,6 +105,7 @@ export function PasswordForm({ slug }: { slug: string }) {
                   type={inputType}
                   disabled={loading}
                   trailing={
+                    // biome-ignore lint/a11y/useButtonType: <explanation>
                     <button
                       onClick={() =>
                         setInputType((type) =>
@@ -126,5 +132,21 @@ export function PasswordForm({ slug }: { slug: string }) {
         </Button>
       </form>
     </Form>
+  );
+}
+
+export function PasswordFormSuspense(props: PasswordFormProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="grid w-full gap-4">
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-8 w-full" />
+        </div>
+      }
+    >
+      <PasswordForm {...props} />
+    </Suspense>
   );
 }

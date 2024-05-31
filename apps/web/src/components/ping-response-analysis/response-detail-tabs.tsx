@@ -14,11 +14,13 @@ import type { Timing } from "./utils";
 export async function ResponseDetailTabs({
   timing,
   headers,
+  status,
   message,
   assertions,
 }: {
   timing: Timing | null;
   headers: Record<string, string> | null;
+  status: number | null;
   message?: string | null;
   assertions?: Assertion[] | null;
 }) {
@@ -43,22 +45,25 @@ export async function ResponseDetailTabs({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="headers">
-        {headers ? <ResponseHeaderTable headers={headers} /> : null}
+        {headers ? (
+          <ResponseHeaderTable headers={headers} status={status || 0} />
+        ) : null}
       </TabsContent>
       <TabsContent value="timing">
+        {/* TODO: show hideInfo={false} when in /play/checker page */}
         {timing ? <ResponseTimingTable timing={timing} hideInfo /> : null}
       </TabsContent>
       <TabsContent value="message">
         {message ? (
           <div>
             <pre
-              className="bg-muted text-wrap rounded-md p-4 text-sm"
-              // @ts-expect-error textWrap is not a valid prop even though it is
+              className="text-wrap rounded-md bg-muted p-4 text-sm"
+              // @ts-expect-error some issues with types
               style={{ textWrap: "wrap" }}
             >
               {message}
             </pre>
-            <p className="text-muted-foreground mt-4 text-center text-sm">
+            <p className="mt-4 text-center text-muted-foreground text-sm">
               Response Message
             </p>
           </div>

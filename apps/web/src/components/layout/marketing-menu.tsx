@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useSearchParams } from "next/navigation";
 import { Menu } from "lucide-react";
+import { usePathname } from "next/navigation";
+import * as React from "react";
 
 import {
   Button,
@@ -22,11 +22,10 @@ import { SocialIconButton } from "./social-icon-button";
 export function MarketingMenu() {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   React.useEffect(() => {
     setOpen(false);
-  }, [pathname, searchParams]); // remove searchParams if not needed
+  }, []); // remove searchParams if not needed
 
   return (
     <Sheet open={open} onOpenChange={(value) => setOpen(value)}>
@@ -46,6 +45,7 @@ export function MarketingMenu() {
         </SheetHeader>
         <div className="flex flex-1 flex-col justify-between gap-4">
           <ul className="grid gap-1">
+            {/* biome-ignore lint/correctness/noUnusedVariables: <explanation> */}
             {marketingPagesConfig.map(({ href, title, segment }) => {
               const isExternal = href.startsWith("http");
               const externalProps = isExternal ? { target: "_blank" } : {};
@@ -64,8 +64,8 @@ export function MarketingMenu() {
           </ul>
           <div className="flex justify-between gap-2">
             <ul className="flex flex-wrap gap-2">
-              {socialsConfig.map((props, i) => (
-                <li key={i}>
+              {socialsConfig.map((props, _i) => (
+                <li key={props.title}>
                   <SocialIconButton {...props} />
                 </li>
               ))}
