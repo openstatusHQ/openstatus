@@ -53,6 +53,7 @@ app.post(
       body: JSON.stringify(data),
     });
     if (!isValid) {
+
       console.error("Unauthorized");
       return c.text("Unauthorized", 401);
     }
