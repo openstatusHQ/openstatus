@@ -267,7 +267,7 @@ const triggerScreenshot = async ({
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Basic ${env.CRON_SECRET}`,
+      "api-key": `Basic ${env.CRON_SECRET}`,
     },
     body: {
       url: data.url,
