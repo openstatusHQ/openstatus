@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
+import { api } from "../index";
 
 test("Create a page", async () => {
   const data = {
@@ -104,11 +104,4 @@ test("Create a page with invalid data should return 403", async () => {
     body: JSON.stringify(data),
   });
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });

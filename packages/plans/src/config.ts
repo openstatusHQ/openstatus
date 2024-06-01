@@ -6,7 +6,7 @@ import type { Limits } from "./types";
 export const allPlans: Record<
   WorkspacePlan,
   {
-    title: string;
+    title: "Hobby" | "Starter" | "Growth" | "Pro";
     description: string;
     price: number;
     limits: Limits;

@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 
-import { toCapitalize } from "@/lib/utils";
 import { SectionHeader } from "../shared/section-header";
 import { getProviderMetaData } from "./config";
 
@@ -68,16 +67,17 @@ export function General({ form, plan }: Props) {
                 </FormControl>
                 <SelectContent>
                   {notificationProvider.map((provider) => {
-                    const isIncluded =
-                      getProviderMetaData(provider).plans?.includes(plan);
+                    const providerData = getProviderMetaData(provider);
+                    const enabled = providerData.plans?.includes(plan);
+
                     return (
                       <SelectItem
                         key={provider}
                         value={provider}
                         className="capitalize"
-                        disabled={!isIncluded}
+                        disabled={!enabled}
                       >
-                        {provider}
+                        {providerData.label}
                       </SelectItem>
                     );
                   })}
@@ -110,10 +110,7 @@ export function General({ form, plan }: Props) {
             name="data"
             render={({ field }) => (
               <FormItem className="sm:col-span-full">
-                {/* make the first letter capital */}
-                <div className="flex items-center justify-between">
-                  <FormLabel>{toCapitalize(watchProvider)}</FormLabel>
-                </div>
+                <FormLabel>{providerMetaData.label}</FormLabel>
                 <FormControl>
                   <Input
                     type={providerMetaData.dataType}
@@ -123,7 +120,7 @@ export function General({ form, plan }: Props) {
                   />
                 </FormControl>
                 <FormDescription className="flex items-center justify-between">
-                  The data required.
+                  The data is required.
                   {providerMetaData.setupDocLink && (
                     <a
                       href={providerMetaData.setupDocLink}
@@ -131,7 +128,7 @@ export function General({ form, plan }: Props) {
                       className="underline hover:no-underline"
                       rel="noreferrer"
                     >
-                      How to setup your {toCapitalize(watchProvider)} webhook
+                      How to setup your {providerMetaData.label} webhook
                     </a>
                   )}
                 </FormDescription>

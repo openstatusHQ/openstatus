@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
+import { api } from "../index";
+import { iso8601Regex } from "../test-utils";
 
 test("Create a notification", async () => {
   const data = {
