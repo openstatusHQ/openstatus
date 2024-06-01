@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents/incident";
+import { Receiver } from "@upstash/qstash";
 
 import { env } from "./env";
 
@@ -16,6 +17,11 @@ const S3 = new S3Client({
     accessKeyId: env.R2_ACCESS_KEY,
     secretAccessKey: env.R2_SECRET_KEY,
   },
+});
+
+const receiver = new Receiver({
+  currentSigningKey: env.QSTASH_SIGNING_SECRET,
+  nextSigningKey: env.QSTASH_NEXT_SIGNING_SECRET,
 });
 
 const app = new Hono();
@@ -35,13 +41,22 @@ app.post(
     })
   ),
   async (c) => {
-    const auth = c.req.header("api-key");
-    if (auth !== `Basic ${env.HEADER_TOKEN}`) {
+    const signature = c.req.header("Upstash-Signature");
+    // if (auth !== `Basic ${env.HEADER_TOKEN}`) {
+    //   console.error("Unauthorized");
+    //   return c.text("Unauthorized", 401);
+    // }
+
+    const data = c.req.valid("json");
+    const isValid = receiver.verify({
+      signature: signature || "",
+      body: JSON.stringify(data),
+    });
+    if (!isValid) {
+
       console.error("Unauthorized");
       return c.text("Unauthorized", 401);
     }
-
-    const data = c.req.valid("json");
 
     const browser = await playwright.chromium.launch({
       headless: true, // set this to true
