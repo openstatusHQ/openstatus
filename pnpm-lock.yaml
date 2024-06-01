@@ -190,6 +190,9 @@ importers:
       '@unkey/api':
         specifier: 0.16.0
         version: 0.16.0
+      '@upstash/qstash':
+        specifier: 2.1.8
+        version: 2.1.8
       hono:
         specifier: 4.0.0
         version: 4.0.0
