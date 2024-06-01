@@ -15,6 +15,8 @@ const nextConfig = {
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
+    // FIXME: https://nextjs.org/docs/messages/missing-suspense-with-csr-bailout
+    missingSuspenseWithCSRBailout: false,
   },
   logging: {
     fetches: {
@@ -30,6 +32,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "screenshot.openstat.us",
+      },
+      {
+        protocol: "https",
+        hostname: "www.openstatus.dev",
       },
     ],
   },

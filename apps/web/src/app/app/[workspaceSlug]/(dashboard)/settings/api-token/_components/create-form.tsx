@@ -71,7 +71,7 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
                 setHasCopied(true);
               }}
             >
-              <span className="font-mono">{rawKey}</span>
+              <span className="ph-no-capture font-mono">{rawKey}</span>
               {!hasCopied ? (
                 <Icons.copy className="ml-2 hidden h-4 w-4 group-hover:block" />
               ) : (

@@ -21,6 +21,28 @@ export const tbIngestWebVitals = z.object({
   region_code: z.string().default(""),
   timezone: z.string().default(""),
   os: z.string(),
+  timestamp: z.number().int(),
+});
+
+export const responseRumPageQuery = z.object({
+  path: z.string(),
+  totalSession: z.number(),
+  cls: z.number(),
+  fcp: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
+});
+
+export const sessionRumPageQuery = z.object({
+  session_id: z.string(),
+  cls: z.number(),
+  fcp: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
 });
 
 export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
