@@ -21,6 +21,7 @@
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/error": "workspace:*",
     "@openstatus/header-analysis": "workspace:*",
     "@openstatus/next-monitoring": "0.0.4",
     "@openstatus/notification-discord": "workspace:*",

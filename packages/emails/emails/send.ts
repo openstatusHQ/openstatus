@@ -1,3 +1,4 @@
+import type React from "react";
 import { Resend } from "resend";
 
 import { env } from "../env";
@@ -5,7 +6,7 @@ import { env } from "../env";
 export const resend = new Resend(env.RESEND_API_KEY);
 
 export interface Emails {
-  react: JSX.Element;
+  react: React.JSX.Element;
   subject: string;
   to: string[];
   from: string;

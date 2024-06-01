@@ -11,6 +11,7 @@
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/error": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@t3-oss/env-core": "0.7.0",

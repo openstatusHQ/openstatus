@@ -37,7 +37,7 @@ export async function handleSubscribe(formData: FormData) {
     .from(page)
     .where(
       // REMINDER: customDomain for pro users
-      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
     )
     .get();
 
@@ -53,8 +53,8 @@ export async function handleSubscribe(formData: FormData) {
     .where(
       and(
         eq(pageSubscriber.email, validatedFields.data.email),
-        eq(pageSubscriber.pageId, pageData.id)
-      )
+        eq(pageSubscriber.pageId, pageData.id),
+      ),
     )
     .get();
 
@@ -118,7 +118,7 @@ export async function handleValidatePassword(formData: FormData) {
     .from(page)
     .where(
       // REMINDER: customDomain for pro users
-      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`
+      sql`lower(${page.slug}) = ${slug} OR  lower(${page.customDomain}) = ${slug}`,
     )
     .get();
 

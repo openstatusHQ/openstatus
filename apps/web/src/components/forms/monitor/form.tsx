@@ -91,22 +91,26 @@ export function MonitorForm({
   });
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, setPending] = React.useState(false);
   const [pingFailed, setPingFailed] = React.useState(false);
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
+    if (defaultValues) {
+      await api.monitor.update.mutate(props);
+    } else {
+      await api.monitor.create.mutate(props);
+    }
+    if (nextUrl) {
+      router.push(nextUrl);
+    }
+    // to reset the `isDirty` state of them form while keeping the values for optimistic UI
+    form.reset(undefined, { keepValues: true });
+    router.refresh();
+  };
+
+  const handleForceDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
-      if (defaultValues) {
-        await api.monitor.update.mutate(props);
-      } else {
-        await api.monitor.create.mutate(props);
-      }
-      if (nextUrl) {
-        router.push(nextUrl);
-      }
-      // to reset the `isDirty` state of them form while keeping the values for optimistic UI
-      form.reset(undefined, { keepValues: true });
-      router.refresh();
+      handleDataUpdateOrInsertion(props);
       toastAction("saved");
     } catch (_error) {
       toastAction("error");
@@ -114,19 +118,28 @@ export function MonitorForm({
   };
 
   const onSubmit = ({ ...props }: InsertMonitor) => {
-    startTransition(async () => {
-      try {
+    toast.promise(
+      async () => {
+        setPending(true);
         const { error } = await pingEndpoint();
         if (error) {
           setPingFailed(true);
-          toast.error(error);
-          return;
+          throw new Error(error);
         }
         await handleDataUpdateOrInsertion(props);
-      } catch {
-        toastAction("error");
-      }
-    });
+      },
+      {
+        loading: "Checking the endpoint before saving...",
+        success: () => "Endpoint is working fine. Saved!",
+        error: (error: Error) => {
+          if (error instanceof Error) return error.message;
+          return "Endpoint is not working.";
+        },
+        finally: () => {
+          setPending(false);
+        },
+      },
+    );
   };
 
   const validateJSON = (value?: string) => {
@@ -307,7 +320,7 @@ export function MonitorForm({
       <FailedPingAlertConfirmation
         monitor={form.getValues()}
         {...{ pingFailed, setPingFailed }}
-        onConfirm={handleDataUpdateOrInsertion}
+        onConfirm={handleForceDataUpdateOrInsertion}
       />
     </>
   );

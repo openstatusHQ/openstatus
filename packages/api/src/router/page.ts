@@ -65,7 +65,7 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt)
+          isNull(monitor.deletedAt),
         ),
       });
 
@@ -95,7 +95,7 @@ export const pageRouter = createTRPCRouter({
       const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id)
+          eq(page.workspaceId, opts.ctx.workspace.id),
         ),
         with: {
           monitorsToPages: {
@@ -132,8 +132,8 @@ export const pageRouter = createTRPCRouter({
       .where(
         and(
           eq(page.id, pageInput.id),
-          eq(page.workspaceId, opts.ctx.workspace.id)
-        )
+          eq(page.workspaceId, opts.ctx.workspace.id),
+        ),
       )
       .returning()
       .get();
@@ -144,7 +144,7 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt)
+          isNull(monitor.deletedAt),
         ),
       });
 
@@ -173,8 +173,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, currentPage.id)
-          )
+            eq(monitorsToPages.pageId, currentPage.id),
+          ),
         );
     }
 
@@ -202,8 +202,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             eq(page.id, opts.input.id),
-            eq(page.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(page.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -245,12 +245,12 @@ export const pageRouter = createTRPCRouter({
         .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
         .where(
           // make sur only active monitors are returned!
-          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true))
+          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true)),
         )
         .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
       const monitorsToStatusReportResult =
@@ -269,15 +269,15 @@ export const pageRouter = createTRPCRouter({
         .all();
 
       const monitorStatusReportIds = monitorsToStatusReportResult.map(
-        ({ statusReportId }) => statusReportId
+        ({ statusReportId }) => statusReportId,
       );
 
       const pageStatusReportIds = statusReportsToPagesResult.map(
-        ({ statusReportId }) => statusReportId
+        ({ statusReportId }) => statusReportId,
       );
 
       const statusReportIds = Array.from(
-        new Set([...monitorStatusReportIds, ...pageStatusReportIds])
+        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
       );
 
       const statusReports =
@@ -304,8 +304,8 @@ export const pageRouter = createTRPCRouter({
                 and(
                   inArray(monitor.id, monitorsId),
                   eq(monitor.active, true),
-                  isNull(monitor.deletedAt)
-                ) // REMINDER: this is hardcoded
+                  isNull(monitor.deletedAt),
+                ), // REMINDER: this is hardcoded
               )
               .all()
           : [];
@@ -318,8 +318,8 @@ export const pageRouter = createTRPCRouter({
               .where(
                 inArray(
                   incidentTable.monitorId,
-                  monitors.map((m) => m.id)
-                )
+                  monitors.map((m) => m.id),
+                ),
               )
               .all()
           : [];
@@ -348,7 +348,7 @@ export const pageRouter = createTRPCRouter({
       // had filter on some words we want to keep for us
       if (
         ["api", "app", "www", "docs", "checker", "time", "help"].includes(
-          opts.input.slug
+          opts.input.slug,
         )
       ) {
         return false;
@@ -361,7 +361,7 @@ export const pageRouter = createTRPCRouter({
 
   addCustomDomain: protectedProcedure
     .input(
-      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() })
+      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
     )
     .mutation(async (opts) => {
       // TODO Add some check ?
