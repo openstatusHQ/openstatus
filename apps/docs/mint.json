@@ -107,7 +107,7 @@
     },
     {
       "group": "Real User Monitoring",
-      "pages": ["rum/overview"]
+      "pages": ["rum/overview", "rum/get-started"]
     },
     {
       "group": "Developer Tools",
