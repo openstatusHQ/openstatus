@@ -31,17 +31,14 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
   return api.openapi(getAllRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
 
-    await db
-      .select()
-      .from(statusReport)
-      .where(eq(statusReport.workspaceId, Number(workspaceId)))
-      .all();
-
-    const _statusReports = await db
-      .select()
-      .from(statusReport)
-      .where(eq(statusReport.workspaceId, Number(workspaceId)))
-      .all();
+    const _statusReports = await db.query.statusReport.findMany({
+      with: {
+        statusReportUpdates: true,
+        monitorsToStatusReports: true,
+        pagesToStatusReports: true,
+      },
+      where: eq(statusReport.workspaceId, Number(workspaceId)),
+    });
 
     if (!_statusReports) {
       throw new HTTPException(404, { message: "Not Found" });
@@ -50,10 +47,9 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
     const data = z.array(StatusReportSchema).parse(
       _statusReports.map((r) => ({
         ...r,
-        // FIXME: add missing fields
-        statusReportUpdateIds: [],
-        pageIds: [],
-        monitorIds: [],
+        statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
+        pageIds: r.pagesToStatusReports.map((p) => p.pageId),
+        monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
       }))
     );
 

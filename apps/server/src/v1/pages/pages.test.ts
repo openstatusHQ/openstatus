@@ -72,8 +72,6 @@ test("Update a page with monitors as object including order", async () => {
 
   const json = await res.json();
 
-  console.log(JSON.stringify(json, null, 2));
-
   expect(res.status).toBe(200);
 
   expect(json).toMatchObject({
