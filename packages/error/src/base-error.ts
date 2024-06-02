@@ -3,9 +3,9 @@ import type { ErrorCode } from "./error-code";
 type ErrorContext = Record<string, unknown>;
 
 export abstract class BaseError<
-  TContext extends ErrorContext = ErrorContext,
+  TContext extends ErrorContext = ErrorContext
 > extends Error {
-  public abstract readonly name: string; // TODO: still don't know what this is for - but it seems to be useful
+  public abstract readonly name: string;
   /**
    * A distinct code for the error type used to differentiate between different types of errors.
    * Used to build the URL for the error documentation.
@@ -35,7 +35,7 @@ export abstract class BaseError<
     return `${this.name}(${this.code}): ${
       this.message
     } - caused by ${this.cause?.toString()} - with context ${JSON.stringify(
-      this.context,
+      this.context
     )}`;
   }
 
