@@ -16,9 +16,12 @@ test("Create a notification", async () => {
     },
     body: JSON.stringify(data),
   });
+
+  const json = await res.json();
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: expect.any(Number),
     provider: "email",
     payload: { email: "ping@openstatus.dev" },

@@ -10,4 +10,30 @@ export const openApiErrorResponses = {
       },
     },
   },
+  401: {
+    description:
+      "The client must authenticate itself to get the requested response.",
+    content: {
+      "application/json": {
+        schema: createErrorSchema("UNAUTHORIZED"),
+      },
+    },
+  },
+  403: {
+    description:
+      "The client does not have the necessary permissions to access the resource.",
+    content: {
+      "application/json": {
+        schema: createErrorSchema("FORBIDDEN"),
+      },
+    },
+  },
+  404: {
+    description: "The server can't find the requested resource.",
+    content: {
+      "application/json": {
+        schema: createErrorSchema("NOT_FOUND"),
+      },
+    },
+  },
 };

@@ -15,7 +15,7 @@ import { HTTPException } from "hono/http-exception";
 
 const postRoute = createRoute({
   method: "post",
-  tags: ["page"],
+  tags: ["notification"],
   description: "Create a notification",
   path: "/",
   request: {
