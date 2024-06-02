@@ -17,7 +17,7 @@ export function Bubble() {
   const [formVisible, setFormVisible] = useState(false);
 
   return (
-    <div className="fixed right-4 bottom-4 z-50 bg-background">
+    <div className="fixed right-4 bottom-4 z-50 rounded-full bg-background">
       <Popover
         open={open}
         onOpenChange={(value) => {
