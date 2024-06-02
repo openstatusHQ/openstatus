@@ -5,8 +5,11 @@ import { registerGetPage } from "./get";
 import { registerGetAllPages } from "./get_all";
 import { registerPutPage } from "./put";
 import { registerPostPage } from "./post";
+import { handleZodError } from "../../libs/errors";
 
-export const pagesApi = new OpenAPIHono<{ Variables: Variables }>();
+export const pagesApi = new OpenAPIHono<{ Variables: Variables }>({
+  defaultHook: handleZodError,
+});
 
 registerGetPage(pagesApi);
 registerGetAllPages(pagesApi);

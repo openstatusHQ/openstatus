@@ -13,7 +13,6 @@ import { ZodError, z } from "zod";
 export function handleError(err: Error, c: Context): Response {
   if (err instanceof ZodError) {
     const error = SchemaError.fromZod(err, c);
-    console.log(error.toString());
     return c.json<ErrorSchema>(
       {
         code: "BAD_REQUEST",
@@ -34,7 +33,6 @@ export function handleError(err: Error, c: Context): Response {
       { status: err.status }
     );
   }
-  console.error(err.message, c);
   return c.json<ErrorSchema>(
     {
       code: "INTERNAL_SERVER_ERROR",
@@ -46,6 +44,30 @@ export function handleError(err: Error, c: Context): Response {
   );
 }
 
+export function handleZodError(
+  result:
+    | {
+        success: true;
+        data: unknown;
+      }
+    | {
+        success: false;
+        error: ZodError;
+      },
+  c: Context
+) {
+  if (!result.success) {
+    const error = SchemaError.fromZod(result.error, c);
+    return c.json<z.infer<ReturnType<typeof createErrorSchema>>>(
+      {
+        code: "BAD_REQUEST",
+        docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
+        message: error.message,
+      },
+      { status: 400 }
+    );
+  }
+}
 export type ErrorSchema = z.infer<ReturnType<typeof createErrorSchema>>;
 
 export function createErrorSchema(code: ErrorCode) {

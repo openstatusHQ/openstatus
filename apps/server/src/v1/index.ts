@@ -12,7 +12,7 @@ import { pagesApi } from "./pages";
 import { pageSubscribersApi } from "./pageSubscribers";
 import { statusReportsApi } from "./statusReports";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
-import { handleError } from "../libs/errors";
+import { handleError, handleZodError } from "../libs/errors";
 
 export type Variables = {
   workspaceId: string;
@@ -24,7 +24,9 @@ export type Variables = {
   };
 };
 
-export const api = new OpenAPIHono<{ Variables: Variables }>();
+export const api = new OpenAPIHono<{ Variables: Variables }>({
+  defaultHook: handleZodError,
+});
 
 api.onError(handleError);
 
@@ -43,6 +45,10 @@ api.doc("/openapi", {
  */
 api.use("/*", middleware);
 api.use("/*", logger());
+
+/**
+ * Routes
+ */
 api.route("/incident", incidentsApi);
 api.route("/monitor", monitorsApi);
 api.route("/notification", notificationsApi);

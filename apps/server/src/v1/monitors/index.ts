@@ -7,8 +7,11 @@ import { registerPutMonitor } from "./put";
 import { registerDeleteMonitor } from "./delete";
 import { registerGetMonitorSummary } from "./summary/get";
 import { registerPostMonitor } from "./post";
+import { handleZodError } from "../../libs/errors";
 
-const monitorsApi = new OpenAPIHono<{ Variables: Variables }>();
+const monitorsApi = new OpenAPIHono<{ Variables: Variables }>({
+  defaultHook: handleZodError,
+});
 
 registerGetAllMonitors(monitorsApi);
 registerGetMonitor(monitorsApi);
