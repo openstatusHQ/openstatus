@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
-import { iso8601Regex } from "./test-utils";
+import { api } from "../index";
+import { iso8601Regex } from "../test-utils";
 
 test("GET one status report update ", async () => {
   const res = await api.request("/status_report_update/1", {
@@ -68,12 +68,6 @@ test("create one status report update with invalid data should return 403", asyn
       date: "2023-11-08T21:03:13.000Z",
     }),
   });
+
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });

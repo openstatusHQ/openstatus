@@ -6,7 +6,7 @@ import { getLimitByWorkspaceId } from "./utils";
 
 export async function middleware(
   c: Context<{ Variables: Variables }, "/*">,
-  next: Next,
+  next: Next
 ) {
   const key = c.req.header("x-openstatus-key");
   if (!key) return c.text("Unauthorized", 401);
@@ -14,9 +14,7 @@ export async function middleware(
     const { error, result } = await verifyKey(key);
 
     if (error) return c.text("Internal Server Error", 500);
-
     if (!result.valid) return c.text("Unauthorized", 401);
-
     if (!result.ownerId) return c.text("Unauthorized", 401);
 
     const plan = await getLimitByWorkspaceId(Number.parseInt(result.ownerId));

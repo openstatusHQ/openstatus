@@ -34,8 +34,9 @@ test("Update an incident", async () => {
       acknowledgedAt: "2023-11-08T21:03:13.000Z",
     }),
   });
+  const json = await res.json();
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     acknowledgedAt: expect.stringMatching(iso8601Regex),
     monitorId: 1,
     id: 2,

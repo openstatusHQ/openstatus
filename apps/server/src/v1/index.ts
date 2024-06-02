@@ -9,8 +9,9 @@ import { middleware } from "./middleware";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pagesApi } from "./pages";
+import { pageSubscribersApi } from "./pageSubscribers";
 import { statusReportsApi } from "./statusReports";
-import { statusReportUpdateApi } from "./statusReportUpdate";
+import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { handleError } from "../libs/errors";
 
 export type Variables = {
@@ -46,5 +47,6 @@ api.route("/incident", incidentsApi);
 api.route("/monitor", monitorsApi);
 api.route("/notification", notificationsApi);
 api.route("/page", pagesApi);
+api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
-api.route("/status_report_update", statusReportUpdateApi);
+api.route("/status_report_update", statusReportUpdatesApi);

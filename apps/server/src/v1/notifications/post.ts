@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, db, eq, inArray, isNotNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
 import {
   NotificationDataSchema,
   monitor,
@@ -61,8 +61,8 @@ export function registerPostNotification(api: typeof notificationsApi) {
           and(
             inArray(monitor.id, monitors),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNotNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 

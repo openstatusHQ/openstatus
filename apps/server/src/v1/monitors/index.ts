@@ -6,6 +6,7 @@ import { registerGetMonitor } from "./get";
 import { registerPutMonitor } from "./put";
 import { registerDeleteMonitor } from "./delete";
 import { registerGetMonitorSummary } from "./summary/get";
+import { registerPostMonitor } from "./post";
 
 const monitorsApi = new OpenAPIHono<{ Variables: Variables }>();
 
@@ -14,5 +15,6 @@ registerGetMonitor(monitorsApi);
 registerPutMonitor(monitorsApi);
 registerDeleteMonitor(monitorsApi);
 registerGetMonitorSummary(monitorsApi);
+registerPostMonitor(monitorsApi);
 
 export { monitorsApi };

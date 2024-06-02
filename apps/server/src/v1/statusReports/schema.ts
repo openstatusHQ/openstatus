@@ -39,12 +39,39 @@ export const StatusReportSchema = z.object({
   status: statusReportStatusSchema.openapi({
     description: "The current status of the report",
   }),
-  status_report_updates: z
+  // REMINDER: extended only on POST requests
+  // date: isoDate.openapi({
+  //   description: "The date of the report in ISO8601 format",
+  // }),
+  // message: z.string().openapi({
+  //   description: "The message of the current status of incident",
+  // }),
+  statusReportUpdateIds: z
     .array(z.number())
+    .optional()
+    .nullable()
+    .default([])
     .openapi({
       description: "The ids of the status report updates",
+    }),
+  monitorIds: z
+    .array(z.number())
+    .optional()
+    .nullable()
+    .default([])
+    .openapi({
+      description: "id of monitors this report needs to refer",
     })
-    .default([]),
+    .nullable(),
+  pageIds: z
+    .array(z.number())
+    .optional()
+    .nullable()
+    .default([])
+    .openapi({
+      description: "id of status pages this report needs to refer",
+    })
+    .nullable(),
 });
 
 export type StatusReportSchema = z.infer<typeof StatusReportSchema>;

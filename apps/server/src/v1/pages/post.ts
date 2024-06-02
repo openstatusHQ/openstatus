@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 
@@ -95,8 +95,8 @@ export function registerPostPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNotNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 

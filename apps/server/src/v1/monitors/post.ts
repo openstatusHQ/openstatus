@@ -38,8 +38,8 @@ const postRoute = createRoute({
   },
 });
 
-export function registerPostMonitor(app: typeof monitorsApi) {
-  return app.openapi(postRoute, async (c) => {
+export function registerPostMonitor(api: typeof monitorsApi) {
+  return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
     const workspacePlan = c.get("workspacePlan");
     const input = c.req.valid("json");
@@ -51,8 +51,8 @@ export function registerPostMonitor(app: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all()
     )[0].count;

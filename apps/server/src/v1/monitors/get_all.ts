@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, db, eq, isNotNull } from "@openstatus/db";
+import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import type { monitorsApi } from "./index";
@@ -37,8 +37,8 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNotNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .all();
 

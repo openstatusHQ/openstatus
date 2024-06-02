@@ -41,9 +41,12 @@ test("Create a page with monitors", async () => {
     },
     body: JSON.stringify(data),
   });
+
+  const json = await res.json();
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: expect.any(Number),
     title: "OpenStatus",
     description: "OpenStatus website",
@@ -67,9 +70,13 @@ test("Update a page with monitors as object including order", async () => {
     body: JSON.stringify(data),
   });
 
+  const json = await res.json();
+
+  console.log(JSON.stringify(json, null, 2));
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: 3,
   });
 });

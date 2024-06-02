@@ -9,9 +9,10 @@ test("GET one monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
-  expect(res.status).toBe(200);
+  const json = await res.json();
 
-  expect(await res.json()).toMatchObject({
+  expect(res.status).toBe(200);
+  expect(json).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
@@ -32,9 +33,10 @@ test("GET all monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
-  const body = (await res.json()) as MonitorSchema[];
+  const json = (await res.json()) as MonitorSchema[];
+
   expect(res.status).toBe(200);
-  expect(body[0]).toMatchObject({
+  expect(json[0]).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
@@ -62,6 +64,7 @@ test("Create a monitor", async () => {
     active: true,
     public: true,
   };
+
   const res = await api.request("/monitor", {
     method: "POST",
     headers: {
@@ -70,20 +73,12 @@ test("Create a monitor", async () => {
     },
     body: JSON.stringify(data),
   });
+
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
     id: expect.any(Number),
-    periodicity: "10m",
-    url: "https://www.openstatus.dev",
-    regions: ["ams", "gru"],
-    name: "OpenStatus",
-    description: "OpenStatus website",
-    method: "POST",
-    body: '{"hello":"world"}',
-    headers: [{ key: "key", value: "value" }],
-    active: true,
-    public: true,
+    ...data,
   });
 });
 

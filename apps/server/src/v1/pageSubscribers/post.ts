@@ -5,9 +5,9 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
 import { sendEmail } from "@openstatus/emails/emails/send";
-import { PageSubscriberSchema, ParamsSchema } from "../schema";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import type { pagesApi } from "../index";
+import { PageSubscriberSchema, ParamsSchema } from "./schema";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { pageSubscribersApi } from "./index";
 import { HTTPException } from "hono/http-exception";
 
 const postRouteSubscriber = createRoute({
@@ -39,7 +39,7 @@ const postRouteSubscriber = createRoute({
   },
 });
 
-export function registerPostPageSubscriber(api: typeof pagesApi) {
+export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
   return api.openapi(postRouteSubscriber, async (c) => {
     const workspaceId = c.get("workspaceId");
     const input = c.req.valid("json");
@@ -49,7 +49,7 @@ export function registerPostPageSubscriber(api: typeof pagesApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
       )
       .get();
 
@@ -63,8 +63,8 @@ export function registerPostPageSubscriber(api: typeof pagesApi) {
       .where(
         and(
           eq(pageSubscriber.email, input.email),
-          eq(pageSubscriber.pageId, Number(id)),
-        ),
+          eq(pageSubscriber.pageId, Number(id))
+        )
       )
       .get();
 

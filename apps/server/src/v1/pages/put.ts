@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 import { PageSchema, ParamsSchema } from "./schema";
@@ -20,7 +20,8 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: PageSchema.omit({ id: true }),
+          // REMINDER: allow only partial updates
+          schema: PageSchema.omit({ id: true }).partial(),
         },
       },
     },
@@ -58,7 +59,7 @@ export function registerPutPage(api: typeof pagesApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
       )
       .get();
 
@@ -66,7 +67,7 @@ export function registerPutPage(api: typeof pagesApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    if (input.slug) {
+    if (input.slug && _page.slug !== input.slug) {
       const countSlug = (
         await db
           .select({ count: sql<number>`count(*)` })
@@ -97,10 +98,11 @@ export function registerPutPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNotNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
+
       if (monitorsData.length !== monitors.length) {
         throw new HTTPException(400, {
           message: "Not Found - Wrong monitor configuration",
@@ -130,8 +132,8 @@ export function registerPutPage(api: typeof pagesApi) {
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, newPage.id),
-          ),
+            eq(monitorsToPages.pageId, newPage.id)
+          )
         );
     }
 

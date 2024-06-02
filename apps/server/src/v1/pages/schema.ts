@@ -81,16 +81,9 @@ export const PageSchema = z.object({
           { monitorId: 1, order: 0 },
           { monitorId: 2, order: 1 },
         ],
-      }),
+      })
     )
     .optional(),
 });
 
-export const PageSubscriberSchema = z.object({
-  email: z.string().email().openapi({
-    description: "The email of the subscriber",
-  }),
-});
-
 export type PageSchema = z.infer<typeof PageSchema>;
-export type PageSubscriberSchema = z.infer<typeof PageSubscriberSchema>;

@@ -29,30 +29,48 @@ const getRoute = createRoute({
   },
 });
 
-export function registerGetStatusReport(api: typeof statusReportsApi) {
+export function regsiterGetStatusReport(api: typeof statusReportsApi) {
   return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id } = c.req.valid("param");
 
-    const _statusReport = await db.query.statusReport.findFirst({
+    const _statusUpdate = await db.query.statusReport.findFirst({
       with: {
         statusReportUpdates: true,
+        monitorsToStatusReports: true,
+        pagesToStatusReports: true,
       },
       where: and(
         eq(statusReport.workspaceId, Number(workspaceId)),
-        eq(statusReport.id, Number(id)),
+        eq(statusReport.id, Number(id))
       ),
     });
 
-    if (!_statusReport) {
+    if (!_statusUpdate) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
+    const {
+      statusReportUpdates,
+      monitorsToStatusReports,
+      pagesToStatusReports,
+    } = _statusUpdate;
+
+    // most recent report information
+    const { message, date } =
+      statusReportUpdates[statusReportUpdates.length - 1];
+
     const data = StatusReportSchema.parse({
-      ..._statusReport,
-      status_report_updates: _statusReport.statusReportUpdates.map(
-        (update) => update.id,
-      ),
+      ..._statusUpdate,
+      message,
+      date,
+      monitorIds: monitorsToStatusReports.length
+        ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
+        : null,
+      pageIds: pagesToStatusReports.length
+        ? pagesToStatusReports.map((page) => page.pageId)
+        : null,
+      statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });
 
     return c.json(data);

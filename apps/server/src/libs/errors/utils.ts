@@ -13,13 +13,14 @@ import { ZodError, z } from "zod";
 export function handleError(err: Error, c: Context): Response {
   if (err instanceof ZodError) {
     const error = SchemaError.fromZod(err, c);
+    console.log(error.toString());
     return c.json<ErrorSchema>(
       {
         code: "BAD_REQUEST",
         message: error.message,
         docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
   if (err instanceof HTTPException) {
@@ -30,9 +31,10 @@ export function handleError(err: Error, c: Context): Response {
         message: err.message,
         docs: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
       },
-      { status: err.status },
+      { status: err.status }
     );
   }
+  console.error(err.message, c);
   return c.json<ErrorSchema>(
     {
       code: "INTERNAL_SERVER_ERROR",
@@ -40,7 +42,7 @@ export function handleError(err: Error, c: Context): Response {
       docs: "https://docs.openstatus.dev/api-references/errors/code/INTERNAL_SERVER_ERROR",
     },
 
-    { status: 500 },
+    { status: 500 }
   );
 }
 
