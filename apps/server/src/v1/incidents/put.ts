@@ -50,9 +50,8 @@ const putRoute = createRoute({
 export function registerPutIncident(app: typeof incidentsApi) {
   return app.openapi(putRoute, async (c) => {
     const inputValues = c.req.valid("json");
-    const workspaceId = Number(c.get("workspaceId"));
+    const workspaceId = c.get("workspaceId");
     const { id } = c.req.valid("param");
-    if (!id) return c.json({ code: 400, message: "Bad Request" }, 400);
 
     const _incident = await db
       .select()
@@ -60,8 +59,8 @@ export function registerPutIncident(app: typeof incidentsApi) {
       .where(
         and(
           eq(incidentTable.id, Number(id)),
-          eq(incidentTable.workspaceId, workspaceId),
-        ),
+          eq(incidentTable.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
@@ -69,7 +68,7 @@ export function registerPutIncident(app: typeof incidentsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    if (workspaceId !== _incident.workspaceId) {
+    if (Number(workspaceId) !== _incident.workspaceId) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 

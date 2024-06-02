@@ -5,6 +5,7 @@ import { PageSchema } from "./schema";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
+import { HTTPException } from "hono/http-exception";
 
 const getAllRoute = createRoute({
   method: "get",
@@ -34,8 +35,9 @@ export function registerGetAllPages(api: typeof pagesApi) {
       .where(eq(page.workspaceId, Number(workspaceId)));
 
     if (!_pages) {
-      return c.json({ code: 404, message: "Not Found" }, 404);
+      throw new HTTPException(404, { message: "Not Found" });
     }
+
     const data = z.array(PageSchema).parse(_pages);
 
     return c.json(data);

@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
-import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   NotificationDataSchema,
   monitor,
@@ -48,7 +48,21 @@ export function registerPostNotification(api: typeof notificationsApi) {
     const input = c.req.valid("json");
 
     if (input.provider === "sms" && workspacePlan.title === "Hobby") {
-      throw new HTTPException(403, { message: "Forbidden" });
+      throw new HTTPException(403, { message: "Upgrade for SMS" });
+    }
+
+    const count = (
+      await db
+        .select({ count: sql<number>`count(*)` })
+        .from(notification)
+        .where(eq(notification.workspaceId, Number(workspaceId)))
+        .all()
+    )[0].count;
+
+    if (count >= workspacePlan.limits["notification-channels"]) {
+      throw new HTTPException(403, {
+        message: "Upgrade for more notification channels",
+      });
     }
 
     const { payload, monitors, ...rest } = input;

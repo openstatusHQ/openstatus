@@ -54,7 +54,7 @@ export function registerPostPage(api: typeof pagesApi) {
 
     if (count >= workspacePlan.limits["status-pages"]) {
       throw new HTTPException(403, {
-        message: "Forbidden - Upgrade for more pages",
+        message: "Upgrade for more status pages",
       });
     }
 
@@ -63,7 +63,7 @@ export function registerPostPage(api: typeof pagesApi) {
       input?.passwordProtected === true
     ) {
       throw new HTTPException(403, {
-        message: "Forbidden - Upgrade for password protection",
+        message: "Upgrade for password protection",
       });
     }
 
@@ -76,8 +76,8 @@ export function registerPostPage(api: typeof pagesApi) {
     )[0].count;
 
     if (countSlug > 0) {
-      throw new HTTPException(400, {
-        message: "Forbidden - Slug already taken",
+      throw new HTTPException(409, {
+        message: "Slug has to be unique and has already been taken",
       });
     }
 

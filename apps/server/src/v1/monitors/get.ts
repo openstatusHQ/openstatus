@@ -6,6 +6,7 @@ import { monitor } from "@openstatus/db/src/schema";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { HTTPException } from "hono/http-exception";
 
 const getRoute = createRoute({
   method: "get",
@@ -45,7 +46,9 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       )
       .get();
 
-    if (!_monitor) return c.json({ code: 404, message: "Not Found" }, 404);
+    if (!_monitor) {
+      throw new HTTPException(404, { message: "Not Found" });
+    }
 
     const data = MonitorSchema.parse(_monitor);
 

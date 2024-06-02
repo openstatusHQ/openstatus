@@ -36,6 +36,15 @@ export const openApiErrorResponses = {
       },
     },
   },
+  409: {
+    description:
+      "The request could not be completed due to a conflict mainly due to unique constraints.",
+    content: {
+      "application/json": {
+        schema: createErrorSchema("CONFLICT").openapi("ErrConflict"),
+      },
+    },
+  },
   500: {
     description:
       "The server has encountered a situation it doesn't know how to handle.",

@@ -59,9 +59,10 @@ export function registerPostMonitor(api: typeof monitorsApi) {
 
     if (count >= workspacePlan.limits.monitors) {
       throw new HTTPException(403, {
-        message: "Forbidden - Plan limit reached",
+        message: "Upgrade for more monitors",
       });
     }
+
     if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
@@ -78,8 +79,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       .returning()
       .get();
 
-    const data = MonitorSchema.parse(_newMonitor);
-
     if (env.JITSU_WRITE_KEY) {
       trackAnalytics({
         event: "Monitor Created",
@@ -89,6 +88,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         workspaceId: String(workspaceId),
       });
     }
+
+    const data = MonitorSchema.parse(_newMonitor);
 
     return c.json(data);
   });
