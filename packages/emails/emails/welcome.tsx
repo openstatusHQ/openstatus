@@ -4,7 +4,7 @@ const WelcomeEmail = () => {
   return (
     <Html>
       <Head>
-        <title>Level up your website and API monitoring.</title>
+        <title>Welcome to OpenStatus</title>
         <Preview>Take the most of your OpenStatus monitoring</Preview>
         <Body>
           Hey 👋
@@ -26,7 +26,9 @@ const WelcomeEmail = () => {
           </a>{" "}
           to manage your monitors
           <br />- Integrate your status within your application with our{" "}
-          <a href="https://docs.openstatus.dev/packages/status-widget">API</a>{" "}
+          <a href="https://docs.openstatus.dev/packages/status-widget">
+            API
+          </a>{" "}
           and{" "}
           <a href="https://docs.openstatus.dev/packages/react">React Widget</a>
           <br />- Build your own status page with our{" "}
@@ -38,7 +40,8 @@ const WelcomeEmail = () => {
           that you can easily host on CloudFlare
           <br />
           <br />
-          If you have any questions, just let me know.
+          If you have any questions, just let me know, or book a call with me{" "}
+          <a href="https://cal.com/team/openstatus/30min">here</a>.
           <br />
           Thank you,
           <br />
@@ -47,7 +50,8 @@ const WelcomeEmail = () => {
           <br />
           <br />⭐ Star us on{" "}
           <Link href="https://github.com/openstatushq/openstatus">GitHub</Link>
-          <br />🚀 Visit our website{" "}
+          <br />
+          🚀 Visit our website{" "}
           <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
       </Head>

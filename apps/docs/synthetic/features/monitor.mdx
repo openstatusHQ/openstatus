@@ -8,6 +8,10 @@ description: "How to create your first monitor with OpenStatus.dev"
 A monitor is a job that runs periodically and checks the status of a service. It
 can be a website, an API, or anything else that can be checked automatically.
 
+If the check fails, a <a href="/synthetic/features/notification">notification</a> is triggered and an <a href="/synthetic/features/incident">incident</a> is created.
+
+<Info>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Info>
+
 ## Configure your monitor 🛠
 
 Your endpoint check requires:
@@ -25,6 +29,7 @@ returned, and the **timing metrics** of your endpoint.
   />
 </Frame>
 
+
 ### HTTP Request 📤
 
 Customize the request sent to your endpoint.
@@ -37,6 +42,8 @@ Add custom key-value **HTTP Headers** to your request.
 > OpenStatus automatically set the `"User-Agent": "OpenStatus/1.0"` header to
 > your request. This header is used to identify the request as a ping request
 > and can be exluded from your analytics.
+
+
 
 If you select the `POST` method, you can add a custom **HTTP Body** to your
 request.

@@ -80,7 +80,6 @@
           "group": "Features",
           "pages": [
             "synthetic/features/incident",
-            "synthetic/features/heartbeat",
             "synthetic/features/monitor",
             {
               "group": "Notifications",
@@ -124,6 +123,10 @@
         "contributing/get-started",
         "contributing/setup-env"
       ]
+    },
+    {
+      "group": "Help",
+      "pages": ["help/support"]
     },
     {
       "group": "API Documentation",
