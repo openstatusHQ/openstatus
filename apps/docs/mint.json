@@ -131,14 +131,6 @@
       "pages": [
         "api-reference/auth",
         {
-          "group": "Incident",
-          "pages": [
-            "api-reference/incident/get-incident-id",
-            "api-reference/incident/get-incident",
-            "api-reference/incident/put-incident-id"
-          ]
-        },
-        {
           "group": "Monitor",
           "pages": [
             "api-reference/monitor/get-monitor-id",
@@ -146,14 +138,6 @@
             "api-reference/monitor/delete-monitor-id",
             "api-reference/monitor/post-monitor",
             "api-reference/monitor/put-monitor-id"
-          ]
-        },
-        {
-          "group": "Notification",
-          "pages": [
-            "api-reference/notification/get-notification",
-            "api-reference/notification/get-notification-id",
-            "api-reference/notification/post-notification"
           ]
         },
         {
@@ -177,10 +161,26 @@
           ]
         },
         {
-          "group": "Status Report Udpate",
+          "group": "Status Report Update",
           "pages": [
             "api-reference/status_report_update/get-status_report_update-id",
             "api-reference/status_report_update/post-status_report_update"
+          ]
+        },
+        {
+          "group": "Notification",
+          "pages": [
+            "api-reference/notification/get-notification",
+            "api-reference/notification/get-notification-id",
+            "api-reference/notification/post-notification"
+          ]
+        },
+        {
+          "group": "Incident",
+          "pages": [
+            "api-reference/incident/get-incident-id",
+            "api-reference/incident/get-incident",
+            "api-reference/incident/put-incident-id"
           ]
         },
         {
