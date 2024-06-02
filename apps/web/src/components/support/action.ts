@@ -25,7 +25,7 @@ function isString(s: unknown): s is string {
 }
 
 const client = new PlainClient({
-  apiKey: env.PLAIN_API_KEY,
+  apiKey: env.PLAIN_API_KEY || "",
 });
 
 export async function handlePlainSupport(values: FormValues) {
