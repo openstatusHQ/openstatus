@@ -33,7 +33,7 @@ export function TabsTrigger({
   return (
     <ShadcnTabsTrigger
       className={cn(
-        "text-muted-foreground hover:text-primary data-[state=active]:border-b-primary data-[state=active]:text-foreground relative rounded-none border-b-4 border-b-transparent bg-transparent px-4 pb-3 pt-2 shadow-none transition-none data-[state=active]:bg-transparent data-[state=active]:shadow-none",
+        "relative rounded-none border-b-4 border-b-transparent bg-transparent px-4 pt-2 pb-3 text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground hover:text-primary data-[state=active]:shadow-none",
         className,
       )}
       {...props}

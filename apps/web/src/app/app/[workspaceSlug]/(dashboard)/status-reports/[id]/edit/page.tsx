@@ -7,7 +7,7 @@ export default async function EditPage({
   params: { workspaceSlug: string; id: string };
 }) {
   const statusUpdate = await api.statusReport.getStatusReportById.query({
-    id: parseInt(params.id),
+    id: Number.parseInt(params.id),
   });
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();

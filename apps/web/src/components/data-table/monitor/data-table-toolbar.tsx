@@ -21,7 +21,7 @@ export function DataTableToolbar<TData>({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-1 items-center gap-2">
+      <div className="flex flex-1 flex-wrap items-center gap-2">
         <Input
           placeholder="Filter names..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -38,6 +38,16 @@ export function DataTableToolbar<TData>({
               label: tag.name,
               value: tag.name,
             }))}
+          />
+        )}
+        {table.getColumn("public") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("public")}
+            title="Visibility"
+            options={[
+              { label: "Public", value: true },
+              { label: "Private", value: false },
+            ]}
           />
         )}
         {isFiltered && (

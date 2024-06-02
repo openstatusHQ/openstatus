@@ -1,5 +1,5 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
+import * as React from "react";
 import * as z from "zod";
 
 import { flyRegions } from "@openstatus/db/src/schema";
@@ -7,16 +7,19 @@ import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
+import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
+import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
+import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
+import { Metrics } from "@/components/monitor-dashboard/metrics";
 import { env } from "@/env";
+import {
+  getMinutesByInterval,
+  intervals,
+  periods,
+  quantiles,
+} from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
-import { ButtonReset } from "../_components/button-reset";
-import { DatePickerPreset } from "../_components/date-picker-preset";
-import { Metrics } from "../_components/metrics";
-import { getMinutesByInterval, intervals, periods, quantiles } from "../utils";
-import { CombinedChartWrapper } from "./_components/combined-chart-wrapper";
-
-// import { groupDataByTimestamp } from "./_components/utils";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -73,20 +76,15 @@ export default async function Page({
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const metrics = await tb.endpointMetrics(period)({
-    monitorId: id,
-    url: monitor.url,
-  });
+  const metrics = await tb.endpointMetrics(period)({ monitorId: id });
 
   const data = await tb.endpointChart(period)({
     monitorId: id,
-    url: monitor.url,
     interval: minutes,
   });
 
   const metricsByRegion = await tb.endpointMetricsByRegion(period)({
     monitorId: id,
-    url: monitor.url,
   });
 
   if (!data || !metrics || !metricsByRegion) return null;
@@ -112,7 +110,7 @@ export default async function Page({
         <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
       </div>
-      <Metrics metrics={metrics} period={period} />
+      <Metrics metrics={metrics} period={period} showErrorLink />
       <Separator className="my-8" />
       <CombinedChartWrapper
         data={data}

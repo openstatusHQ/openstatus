@@ -24,56 +24,22 @@ it and run it.
 
 If you are on a mac install it with [Homebrew](https://brew.sh/)
 
-```sh
-brew tap chiselstrike/tap
-brew install turso
-```
-
-then run it locally with
-
-```sh
-turso dev --db-file openstatus.db
-```
 
 Here is the official Turso
 [installation guide](https://docs.turso.tech/reference/turso-cli)
 
-4. Run the database migration
+4. Install Bun
+All the up to date information are on the official [Bun website](https://bun.sh/)
 
-In the `packages/db` folder run
-
-```sh
-pnpm migrate
-```
-
-5. Set up your .env file
-
-from `apps/web` and `packages/db` you will find .env.example. Please create your
-own.
-
-6. Start the web app locally
+4. Set up the dev environment
 
 ```sh
-pnpm dev
+   pnpm dx
+```
+5. Start the development server
+
+```sh
+   pnpm dev:web
 ```
 
-> 💡 If you are getting this error -
-> `ERROR  run failed: error preparing engine: Invalid persistent task configuration: You have 15 persistent tasks but`turbo`is configured for concurrency of 10. Set --concurrency to at least 16`
-> Then `cd` into web directory and then start the web app
->
-> ```sh
->  cd apps/web
->  pnpm dev
-> ```
-
-7. Clerk Authentication
-
-For authentication we are using [Clerk](https://clerk.dev/), you will need to
-create an account and get your API keys. If you want to work on the backend and
-or authenfied page
-
-After creating an account on clerk you will need to set up a tunnel with ngrok
-or svix to your local server.
-
-Otherwise you can send a post request to the `/api/webhook/clerk` endpoint with
-the following body you will find on clerk
+6. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)

@@ -1,0 +1,20 @@
+VERSION 1
+
+NODE __ttl_7d_count_utc_get_0
+SQL >
+
+    %
+    SELECT time as day, countMerge(count) as count, countMerge(ok) as ok
+    FROM __ttl_7d_count_utc_mv__v1
+    WHERE
+        monitorId = {{ String(monitorId, '4') }}
+    GROUP BY day
+    ORDER BY day DESC
+    WITH FILL
+    FROM
+        toStartOfDay(toStartOfDay(toTimeZone(now(), 'UTC')))
+        TO toStartOfDay(
+            date_sub(DAY, 7, now())
+        ) STEP INTERVAL -1 DAY
+
+

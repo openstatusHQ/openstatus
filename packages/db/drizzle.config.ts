@@ -13,4 +13,5 @@ export default {
   },
   driver: "turso",
   strict: true,
+  dialect: "sqlite",
 } satisfies Config;

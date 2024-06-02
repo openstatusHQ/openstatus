@@ -1,7 +1,7 @@
 "use client";
 
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
 
 import type { ButtonProps } from "@openstatus/ui";
 import { Button } from "@openstatus/ui";
@@ -9,14 +9,14 @@ import { Button } from "@openstatus/ui";
 import { cn } from "@/lib/utils";
 
 export function LoginButton({ className, ...props }: ButtonProps) {
-  const { isSignedIn } = useUser();
+  const session = useSession();
 
   return (
     <Button asChild className={cn("rounded-full", className)} {...props}>
-      {isSignedIn ? (
+      {session.status === "authenticated" ? (
         <Link href="/app">Dashboard</Link>
       ) : (
-        <Link href="/app/sign-up">Sign Up</Link>
+        <Link href="/app/login">Sign In</Link>
       )}
     </Button>
   );

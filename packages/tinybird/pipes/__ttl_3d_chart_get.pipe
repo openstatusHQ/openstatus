@@ -1,6 +1,4 @@
-VERSION 0
-
-TOKEN "__ttl_3d_chart_get_endpoint_read_5551" READ
+VERSION 1
 
 NODE __ttl_3d_chart_get_0
 SQL >
@@ -21,7 +19,6 @@ SQL >
     FROM __ttl_3d_mv__v0
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     GROUP BY h, region
     ORDER BY h DESC
 

@@ -15,7 +15,7 @@ export function Mdx({ code, className }: MdxProps) {
     // FIXME: weird behaviour when `prose-headings:font-cal` and on mouse movement font gets bigger
     <div
       className={cn(
-        "prose-headings:font-cal prose-headings:font-normal prose prose-slate dark:prose-invert prose-pre:border prose-pre:border-border prose-pre:rounded-lg prose-img:rounded-lg prose-img:border prose-img:border-border",
+        "prose prose-slate dark:prose-invert prose-img:rounded-lg prose-pre:rounded-lg prose-img:border prose-pre:border prose-img:border-border prose-pre:border-border prose-headings:font-cal prose-headings:font-normal",
         className,
       )}
     >

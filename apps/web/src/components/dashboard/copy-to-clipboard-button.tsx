@@ -11,14 +11,16 @@ import {
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { copyToClipboard } from "@/lib/utils";
+import { cn, copyToClipboard } from "@/lib/utils";
 
 export function CopyToClipboardButton({
   text,
   tooltipText,
+  className,
 }: {
   text: string;
   tooltipText: string;
+  className?: string;
 }) {
   const [hasCopied, setHasCopied] = React.useState(false);
 
@@ -35,9 +37,10 @@ export function CopyToClipboardButton({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
+            type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className={cn("h-7 w-7", className)}
             onClick={() => {
               copyToClipboard(text);
               setHasCopied(true);

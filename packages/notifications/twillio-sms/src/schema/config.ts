@@ -2,5 +2,5 @@ import isMobilephone from "validator/lib/isMobilePhone";
 import { z } from "zod";
 
 export const SmsConfigurationSchema = z.object({
-  phoneNumber: z.string().refine(isMobilephone),
+  sms: z.string().refine(isMobilephone),
 });

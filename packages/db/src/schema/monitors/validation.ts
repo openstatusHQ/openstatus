@@ -1,6 +1,8 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import * as assertions from "@openstatus/assertions";
+
 import {
   flyRegions,
   monitorJobTypes,
@@ -9,7 +11,7 @@ import {
   monitorRegions,
   monitorStatus,
 } from "./constants";
-import { monitor } from "./monitor";
+import { monitor, monitorsToPages } from "./monitor";
 
 export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorMethodsSchema = z.enum(monitorMethods);
@@ -19,7 +21,8 @@ export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 // TODO: shared function
-function stringToArrayProcess<T>(string: T) {}
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
+function stringToArrayProcess<T>(_string: T) {}
 
 const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {
@@ -73,10 +76,15 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   pages: z.array(z.number()).optional().default([]),
   body: z.string().default("").optional(),
   tags: z.array(z.number()).optional().default([]),
+  statusAssertions: z.array(assertions.statusAssertion).optional(),
+  headerAssertions: z.array(assertions.headerAssertion).optional(),
 });
+
+export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
 
 export type InsertMonitor = z.infer<typeof insertMonitorSchema>;
 export type Monitor = z.infer<typeof selectMonitorSchema>;
+export type MonitorToPage = z.infer<typeof selectMonitorToPageSchema>;
 export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;

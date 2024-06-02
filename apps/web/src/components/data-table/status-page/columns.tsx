@@ -1,16 +1,21 @@
 "use client";
 
+import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import Link from "next/link";
-import type { ColumnDef } from "@tanstack/react-table";
 import * as z from "zod";
 
 import type { Page } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import {
+  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 
 import { DataTableRowActions } from "./data-table-row-actions";
-
-// TODO: add total number of monitors
+import { Check } from "lucide-react";
 
 export const columns: ColumnDef<
   Page & { monitorsToPages: { monitor: { name: string } }[] }
@@ -47,21 +52,37 @@ export const columns: ColumnDef<
         .object({ monitor: z.object({ name: z.string() }) })
         .array()
         .parse(monitorsToPages);
-      const amount = 3;
+      const firstMonitors = monitors.splice(0, 2);
+      const lastMonitors = monitors;
       return (
         <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
-            {monitors.slice(0, amount).map(({ monitor: { name } }, i) => (
+          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
+            {firstMonitors.map(({ monitor: { name } }, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
               <Badge key={i} variant="outline">
                 {name}
               </Badge>
             ))}
           </span>
-          <span className="font-medium">
-            {monitors.length > amount ? (
-              <span>+{monitors.length - amount}</span>
-            ) : null}
-          </span>
+          {lastMonitors.length > 0 ? (
+            <TooltipProvider>
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger>
+                  <Badge variant="secondary" className="border">
+                    +{lastMonitors.length}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex gap-2">
+                  {lastMonitors.map(({ monitor: { name } }, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    <Badge key={i} variant="outline">
+                      {name}
+                    </Badge>
+                  ))}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ) : null}
         </div>
       );
     },
@@ -71,17 +92,28 @@ export const columns: ColumnDef<
     header: "Favicon",
     cell: ({ row }) => {
       if (!row.getValue("icon")) {
-        return <span className="text-muted-foreground">-</span>;
+        return <span className="text-muted-foreground/50">-</span>;
       }
       return (
         <Image
           src={row.getValue("icon")}
           alt=""
-          className="border-border rounded-sm border"
+          className="rounded-sm border border-border"
           width={20}
           height={20}
         />
       );
+    },
+  },
+  {
+    accessorKey: "passwordProtected",
+    header: "Protected",
+    cell: ({ row }) => {
+      const passwordProtected = Boolean(row.getValue("passwordProtected"));
+      if (passwordProtected) {
+        return <Check className="h-4 w-4 text-foreground" />;
+      }
+      return <span className="text-muted-foreground/50">-</span>;
     },
   },
   // {

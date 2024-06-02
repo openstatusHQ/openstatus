@@ -1,17 +1,14 @@
-VERSION 0
-
-TOKEN "__ttl_1h_list_get__v0_endpoint_read_0371" READ
+VERSION 1
 
 NODE __ttl_1h_list_get__v0_0
 SQL >
 
     %
     -- FIXME: `timestamp` is missing on 1h, 3d, 7d, 45d mv!
-    SELECT latency, monitorId, region, statusCode, url, workspaceId, cronTimestamp, timestamp
-    FROM __ttl_1h_mv__v0
+    SELECT latency, monitorId, error, region, statusCode, url, workspaceId, cronTimestamp, timestamp
+    FROM __ttl_1h_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
     ORDER BY cronTimestamp DESC
 
 

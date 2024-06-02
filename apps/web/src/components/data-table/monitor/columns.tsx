@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNowStrict } from "date-fns";
+import Link from "next/link";
 
 import type { Incident, Monitor, MonitorTag } from "@openstatus/db/src/schema";
 import type {
@@ -19,7 +19,7 @@ import {
 } from "@openstatus/ui";
 
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
-import { TagBadge } from "@/components/monitor/tag-badge";
+import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { Bar } from "@/components/tracker/tracker";
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -35,16 +35,28 @@ export const columns: ColumnDef<{
     accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
     header: "Name",
     cell: ({ row }) => {
-      const { active, status, name } = row.original.monitor;
+      const { active, status, name, public: _public } = row.original.monitor;
       return (
-        <Link
-          href={`./monitors/${row.original.monitor.id}/overview`}
-          className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
-        >
-          <StatusDotWithTooltip active={active} status={status} />
-          <span className="truncate group-hover:underline">{name}</span>
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`./monitors/${row.original.monitor.id}/overview`}
+            className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
+          >
+            <StatusDotWithTooltip active={active} status={status} />
+            <span className="truncate group-hover:underline">{name}</span>
+          </Link>
+          {_public ? <Badge variant="secondary">public</Badge> : null}
+        </div>
       );
+    },
+  },
+  {
+    // REMINDER: visibility is handled within the `<DataTable />`
+    accessorKey: "public",
+    accessorFn: (row) => row.monitor.public,
+    filterFn: (row, _id, value) => {
+      if (!Array.isArray(value)) return true;
+      return value.includes(row.original.monitor.public);
     },
   },
   {
@@ -52,21 +64,14 @@ export const columns: ColumnDef<{
     header: "Tags",
     cell: ({ row }) => {
       const { tags } = row.original;
-      const [first, second, ...rest] = tags || [];
-      return (
-        <div className="flex gap-2">
-          {first ? <TagBadge {...first} /> : null}
-          {second ? <TagBadge {...second} /> : null}
-          {rest.length > 0 ? <TagsTooltip tags={rest || []} /> : null}
-        </div>
-      );
+      return <TagBadgeWithTooltip tags={tags} />;
     },
-    filterFn: (row, id, value) => {
+    filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
-      return value.some(
-        (item) => row.original.tags?.some((tag) => tag.name === item),
+      return value.some((item) =>
+        row.original.tags?.some((tag) => tag.name === item),
       );
     },
   },
@@ -99,7 +104,7 @@ export const columns: ColumnDef<{
           addSuffix: true,
         });
         return (
-          <div className="text-muted-foreground flex max-w-[84px] sm:max-w-none">
+          <div className="flex max-w-[84px] text-muted-foreground sm:max-w-none">
             <span className="truncate">{distance}</span>
           </div>
         );
@@ -117,7 +122,7 @@ export const columns: ColumnDef<{
       if (!count || !ok)
         return <span className="text-muted-foreground">-</span>;
       const rounded = Math.round((ok / count) * 10_000) / 100;
-      return <Number value={rounded} suffix="%" />;
+      return <DisplayNumber value={rounded} suffix="%" />;
     },
   },
   {
@@ -127,7 +132,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p50Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -138,7 +143,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p95Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -154,23 +159,6 @@ export const columns: ColumnDef<{
   },
 ];
 
-function TagsTooltip({ tags }: { tags: MonitorTag[] }) {
-  return (
-    <TooltipProvider>
-      <Tooltip delayDuration={200}>
-        <TooltipTrigger>
-          <Badge variant="secondary">+{tags.length}</Badge>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="flex gap-2">
-          {tags.map((tag) => (
-            <TagBadge key={tag.id} {...tag} />
-          ))}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
 function HeaderTooltip({ label, content }: { label: string; content: string }) {
   return (
     <TooltipProvider>
@@ -184,11 +172,11 @@ function HeaderTooltip({ label, content }: { label: string; content: string }) {
   );
 }
 
-function Number({ value, suffix }: { value: number; suffix: string }) {
+function DisplayNumber({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span className="font-mono">
       {new Intl.NumberFormat("us").format(value).toString()}
-      <span className="text-muted-foreground text-xs font-normal">
+      <span className="font-normal text-muted-foreground text-xs">
         {suffix}
       </span>
     </span>

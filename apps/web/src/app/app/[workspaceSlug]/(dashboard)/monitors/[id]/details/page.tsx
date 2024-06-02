@@ -5,8 +5,8 @@ import { Button } from "@openstatus/ui";
 import { flyRegions } from "@openstatus/utils";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { ResponseDetails } from "@/components/monitor-dashboard/response-details";
 import { api } from "@/trpc/server";
-import { ResponseDetails } from "../_components/response-details";
 
 //
 
@@ -21,6 +21,7 @@ const searchParamsSchema = z.object({
 });
 
 export default async function Details({
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   params,
   searchParams,
 }: {
@@ -33,10 +34,10 @@ export default async function Details({
 
   try {
     await api.monitor.getMonitorById.query({
-      id: parseInt(search.data.monitorId),
+      id: Number.parseInt(search.data.monitorId),
     });
     return <ResponseDetails {...search.data} />;
-  } catch (e) {
+  } catch (_e) {
     return <PageEmptyState />;
   }
 }

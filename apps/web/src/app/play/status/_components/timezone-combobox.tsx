@@ -1,8 +1,8 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   Button,
@@ -49,7 +49,7 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
               ? timezones.find((timezone) => timezone.value === value)?.label
               : "Select timezone..."}
             {defaultValue?.toLowerCase() === currentTimezone?.toLowerCase() ? (
-              <span className="text-muted-foreground ml-1 text-xs font-light">
+              <span className="ml-1 font-light text-muted-foreground text-xs">
                 (default)
               </span>
             ) : null}

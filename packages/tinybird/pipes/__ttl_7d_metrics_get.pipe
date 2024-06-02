@@ -1,4 +1,4 @@
-VERSION 0
+VERSION 1
 
 NODE __ttl_7d_metrics_get_0
 SQL >
@@ -11,12 +11,11 @@ SQL >
         round(quantile(0.95)(latency)) as p95Latency,
         round(quantile(0.99)(latency)) as p99Latency,
         count() as count,
-        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        count(if(error = 0, 1, NULL)) AS ok,
         max(cronTimestamp) AS lastTimestamp
-    FROM __ttl_7d_mv__v0
+    FROM __ttl_7d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND time >= toDateTime64(now() - INTERVAL 7 DAY, 3)
     UNION ALL
     SELECT
@@ -26,12 +25,11 @@ SQL >
         round(quantile(0.95)(latency)) AS p95Latency,
         round(quantile(0.99)(latency)) AS p99Latency,
         count() as count,
-        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        count(if(error = 0, 1, NULL)) AS ok,
         NULL as lastTimestamp  -- no need to query the `lastTimestamp` as not relevant
-    FROM __ttl_14d_mv__v0
+    FROM __ttl_14d_mv__v1
     WHERE
         monitorId = {{ String(monitorId, '1') }}
-        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
         AND time >= toDateTime64(now() - INTERVAL 14 DAY, 3)
         AND time < toDateTime64(now() - INTERVAL 7 DAY, 3)
 

@@ -37,7 +37,7 @@ export const cardConfig = {
         icon: "globe",
         catchline: "Latency Monitoring.",
         description:
-          "Monitor the latency of your endpoints from all over the world. We currently support all the continents.",
+          "Monitor the latency of your endpoints from all over the world. We support all the continents.",
       },
       {
         icon: "play",
@@ -50,7 +50,7 @@ export const cardConfig = {
         catchline: "Cron Monitoring.",
         badge: "Coming soon",
         description:
-          "Never let a cron job fail you. Get notified when a jobs did not run successfully.",
+          "Never let a cron job fail you. Get notified when a job did not run successfully.",
       },
     ],
   },
@@ -86,7 +86,7 @@ export const cardConfig = {
         icon: "sparkles",
         catchline: "Connect.",
         description:
-          "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionnable.",
+          "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionable.",
         badge: "Coming soon",
       },
       {

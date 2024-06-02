@@ -1,22 +1,31 @@
-FROM golang:1.21 AS builder
+FROM golang:1.22-alpine as builder
 
-WORKDIR /go/src/github.com/openstatushq/openstatus/apps/checker
+WORKDIR /go/src/app
 
-COPY go.mod .
-COPY go.sum .
+RUN apk add --no-cache tzdata
+ENV TZ=UTC
 
+ENV CGO_ENABLED=0
+ENV GOOS=linux
+ENV GOARCH=amd64
+
+COPY go.* .
 RUN go mod download
 
 COPY . .
+RUN go build -trimpath -ldflags "-s -w" -o checker ./cmd
 
-ARG VERSION
+FROM scratch
 
-RUN go build -o openstatus-checker ./cmd
+WORKDIR /opt/bin
 
-FROM golang:1.21
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-COPY --from=builder /go/src/github.com/openstatushq/openstatus/apps/checker/openstatus-checker /usr/local/bin/openstatus-checker
-#  Set gin to release mode
+COPY --from=builder /go/src/app/checker /opt/bin/checker
+
+ENV TZ=UTC
+ENV USER=1000
 ENV GIN_MODE=release
 
-CMD ["/usr/local/bin/openstatus-checker"]
+CMD [ "/opt/bin/checker" ]

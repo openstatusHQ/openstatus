@@ -73,31 +73,41 @@
       "pages": ["introduction"]
     },
     {
-      "group": "Features",
+      "group": "Synthetic Monitoring",
       "pages": [
-        "features/incident",
-        "features/heartbeat",
-        "features/monitor",
+        "synthetic/overview",
         {
-          "group": "Notifications",
+          "group": "Features",
           "pages": [
-            "features/notification",
+            "synthetic/features/incident",
+            "synthetic/features/heartbeat",
+            "synthetic/features/monitor",
             {
-              "group": "Notification Channels",
+              "group": "Notifications",
               "pages": [
-                "features/notification/discord",
-                "features/notification/phone-call",
-                "features/notification/slack",
-                "features/notification/sms",
-                "features/notification/telegram"
+                "synthetic/features/notification",
+                {
+                  "group": "Notification Channels",
+                  "pages": [
+                    "synthetic/features/notification/discord",
+                    "synthetic/features/notification/phone-call",
+                    "synthetic/features/notification/slack",
+                    "synthetic/features/notification/sms",
+                    "synthetic/features/notification/telegram"
+                  ]
+                }
               ]
-            }
+            },
+            "synthetic/features/status-page",
+            "synthetic/features/status-report",
+            "synthetic/features/status-page-subscribers"
           ]
-        },
-        "features/status-page",
-        "features/status-report",
-        "features/status-page-subscribers"
+        }
       ]
+    },
+    {
+      "group": "Real User Monitoring",
+      "pages": ["rum/overview", "rum/get-started"]
     },
     {
       "group": "Developer Tools",
@@ -112,8 +122,7 @@
       "pages": [
         "contributing/requirements",
         "contributing/get-started",
-        "contributing/setup-env",
-        "contributing/setup"
+        "contributing/setup-env"
       ]
     },
     {
@@ -124,26 +133,26 @@
         {
           "group": "Incident",
           "pages": [
-            "api-reference/incident/get-incident:id",
+            "api-reference/incident/get-incident-id",
             "api-reference/incident/get-incident",
-            "api-reference/incident/put-incident:id"
+            "api-reference/incident/put-incident-id"
           ]
         },
         {
           "group": "Monitor",
           "pages": [
-            "api-reference/monitor/get-monitor:id",
+            "api-reference/monitor/get-monitor-id",
             "api-reference/monitor/get-monitor",
-            "api-reference/monitor/delete-monitor:id",
+            "api-reference/monitor/delete-monitor-id",
             "api-reference/monitor/post-monitor",
-            "api-reference/monitor/put-monitor:id"
+            "api-reference/monitor/put-monitor-id"
           ]
         },
         {
           "group": "Notification",
           "pages": [
             "api-reference/notification/get-notification",
-            "api-reference/notification/get-notification:id",
+            "api-reference/notification/get-notification-id",
             "api-reference/notification/post-notification"
           ]
         },
@@ -151,26 +160,26 @@
           "group": "Page",
           "pages": [
             "api-reference/page/get-page",
-            "api-reference/page/get-page:id",
+            "api-reference/page/get-page-id",
             "api-reference/page/post-page",
-            "api-reference/page/put-page:id",
-            "api-reference/page/post-page:id/update"
+            "api-reference/page/put-page-id",
+            "api-reference/page/post-page-id/update"
           ]
         },
         {
           "group": "Status Report",
           "pages": [
-            "api-reference/status_report/get-status_report:id",
+            "api-reference/status_report/get-status_report-id",
             "api-reference/status_report/get-status_report",
-            "api-reference/status_report/delete-status_report:id",
+            "api-reference/status_report/delete-status_report-id",
             "api-reference/status_report/post-status_report",
-            "api-reference/status_report/post-status_report:id/update"
+            "api-reference/status_report/post-status_report-id/update"
           ]
         },
         {
           "group": "Status Report Udpate",
           "pages": [
-            "api-reference/status_report_update/get-status_report_update:id",
+            "api-reference/status_report_update/get-status_report_update-id",
             "api-reference/status_report_update/post-status_report_update"
           ]
         },

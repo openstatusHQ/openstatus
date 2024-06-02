@@ -1,0 +1,23 @@
+VERSION 1
+
+DESCRIPTION >
+	TODO: descripe what it is for!
+
+
+NODE __ttl_45d_count_utc_0
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(time, 'UTC')) AS time,
+        monitorId,
+        countState() AS count,
+        countState(if(error = 0, 1, NULL)) AS ok
+    FROM __ttl_45d_mv__v1
+    GROUP BY
+        time,
+        monitorId
+
+TYPE materialized
+DATASOURCE __ttl_45d_count_utc_mv__v1
+
+

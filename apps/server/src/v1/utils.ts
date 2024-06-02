@@ -34,3 +34,12 @@ export async function getLimitByWorkspaceId(id: number) {
   const { plan } = await getWorkspace(id);
   return allPlans[plan];
 }
+
+export function isNumberArray<T>(
+  monitors: number[] | T[],
+): monitors is number[] {
+  return (
+    Array.isArray(monitors) &&
+    monitors.every((item) => typeof item === "number")
+  );
+}

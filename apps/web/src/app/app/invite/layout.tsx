@@ -1,13 +1,8 @@
-import * as React from "react";
-
 import { Shell } from "@/components/dashboard/shell";
 import { AppHeader } from "@/components/layout/header/app-header";
+import type { ReactNode } from "react";
 
-export default async function AppLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4 lg:p-8">
       <AppHeader />

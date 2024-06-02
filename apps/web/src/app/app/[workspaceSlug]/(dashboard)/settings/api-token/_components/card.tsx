@@ -38,14 +38,14 @@ export async function ApiKeys({ ownerId }: { ownerId: number }) {
         }
       >
         {key ? (
-          <dl className="[&_dt]:text-muted-foreground grid gap-2 [&>*]:text-sm [&_dt]:font-light">
+          <dl className="grid gap-2 [&_dt]:font-light [&>*]:text-sm [&_dt]:text-muted-foreground">
             <div className="flex min-w-0 items-center justify-between gap-3">
               <dt>Token</dt>
               <dd className="font-mono">{key.start}...</dd>
             </div>
             <div className="flex min-w-0 items-center justify-between gap-3">
               <dt>Created At</dt>
-              <dd>{formatDate(new Date(key.createdAt!))}</dd>
+              <dd>{key.createdAt && formatDate(new Date(key.createdAt))}</dd>
             </div>
           </dl>
         ) : null}

@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { createClient } from "@libsql/client";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
@@ -48,6 +49,7 @@ async function main() {
       },
     ])
     .run();
+
   await db
     .insert(monitor)
     .values([
@@ -72,6 +74,7 @@ async function main() {
         url: "https://www.google.com",
         method: "GET",
         regions: "gru",
+        public: true,
       },
       {
         id: 3,
@@ -108,9 +111,9 @@ async function main() {
     .values({
       id: 1,
       tenantId: "1",
-      firstName: "test",
-      lastName: "user",
-      email: "test@test.com",
+      firstName: "Speed",
+      lastName: "Matters",
+      email: "ping@openstatus.dev",
       photoUrl: "",
     })
     .run();
@@ -147,6 +150,17 @@ async function main() {
     .run();
 
   await db
+    .insert(statusReportUpdate)
+    .values({
+      id: 1,
+      statusReportId: 1,
+      status: "investigating",
+      message: "",
+      date: new Date(),
+    })
+    .run();
+
+  await db
     .insert(statusReport)
     .values({
       id: 2,
@@ -154,6 +168,17 @@ async function main() {
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(statusReportUpdate)
+    .values({
+      id: 2,
+      statusReportId: 2,
+      status: "investigating",
+      message: "",
+      date: new Date(),
     })
     .run();
 
@@ -178,12 +203,17 @@ async function main() {
       startedAt: new Date(Date.now() + 1000),
     })
     .run();
+  // on status update
+  await db
+    .update(statusReport)
+    .set({ status: "monitoring" })
+    .where(eq(statusReport.id, 1));
   await db
     .insert(statusReportUpdate)
     .values({
-      id: 1,
+      id: 3,
       statusReportId: 1,
-      status: "investigating",
+      status: "monitoring",
       message: "test",
       date: new Date(),
     })

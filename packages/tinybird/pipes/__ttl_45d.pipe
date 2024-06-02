@@ -1,4 +1,4 @@
-VERSION 0
+VERSION 1
 
 NODE __ttl_45d_0
 SQL >
@@ -12,9 +12,9 @@ SQL >
         url,
         workspaceId,
         cronTimestamp
-    FROM ping_response__v7
+    FROM ping_response__v8
 
 TYPE materialized
-DATASOURCE __ttl_45d_mv__v0
+DATASOURCE __ttl_45d_mv__v1
 
 

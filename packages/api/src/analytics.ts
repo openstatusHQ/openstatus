@@ -1,5 +1,5 @@
 import { analytics, trackAnalytics } from "@openstatus/analytics";
-import { User } from "@openstatus/db/src/schema";
+import type { User } from "@openstatus/db/src/schema";
 
 export async function trackNewPage(user: User, config: { slug: string }) {
   await analytics.identify(user.id, {
@@ -46,4 +46,16 @@ export async function trackNewNotification(
 
 export async function trackNewStatusReport() {}
 
-export async function trackNewInvitation() {}
+export async function trackNewInvitation(
+  user: User,
+  config: { emailTo: string; workspaceId: number },
+) {
+  await analytics.identify(user.id, {
+    userId: user.id,
+    email: user.email,
+  });
+  await trackAnalytics({
+    event: "Invitation Created",
+    ...config,
+  });
+}

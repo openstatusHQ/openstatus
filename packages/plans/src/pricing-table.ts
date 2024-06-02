@@ -41,6 +41,10 @@ export const pricingTableConfig: Record<
         label: "Custom domain",
       },
       {
+        value: "password-protection",
+        label: "Password-protected",
+      },
+      {
         value: "white-label",
         label: "White Label",
       },

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { format } from "date-fns";
+import * as React from "react";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
 import { Button } from "@openstatus/ui";
@@ -32,8 +32,8 @@ export function Events({
     open || !collabsible
       ? sortedArray
       : sortedArray.length > 0
-      ? [sortedArray[0]]
-      : [];
+        ? [sortedArray[0]]
+        : [];
   //
 
   return (
@@ -45,21 +45,21 @@ export function Events({
           <div
             key={update.id}
             className={cn(
-              "group relative -m-2 flex gap-4 border border-transparent p-2",
-              editable && "hover:bg-accent/40 hover:rounded-lg",
+              "group -m-2 relative flex gap-4 border border-transparent p-2",
+              editable && "hover:rounded-lg hover:bg-accent/40",
             )}
           >
             <div className="relative">
-              <div className="bg-background border-border rounded-full border p-2">
+              <div className="rounded-full border border-border bg-background p-2">
                 <StatusIcon className="h-4 w-4" />
               </div>
               {i !== sortedArray.length - 1 ? (
-                <div className="bg-muted absolute inset-x-0 mx-auto h-full w-[2px]" />
+                <div className="absolute inset-x-0 mx-auto h-full w-[2px] bg-muted" />
               ) : null}
             </div>
             <div className="mt-1 grid flex-1">
               {editable ? (
-                <div className="absolute right-2 top-2 hidden gap-2 group-hover:flex group-active:flex">
+                <div className="absolute top-2 right-2 hidden gap-2 group-active:flex group-hover:flex">
                   <EditStatusReportUpdateIconButton
                     statusReportId={update.statusReportId}
                     statusReportUpdate={update}
@@ -68,8 +68,8 @@ export function Events({
                 </div>
               ) : undefined}
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium">{label}</p>
-                <p className="text-muted-foreground mt-px text-xs">
+                <p className="font-medium text-sm">{label}</p>
+                <p className="mt-px text-muted-foreground text-xs">
                   <code>
                     {format(new Date(update.date), "LLL dd, y HH:mm")}
                   </code>
@@ -103,7 +103,7 @@ function EventMessage({
   return (
     <div
       className={cn(
-        "prose dark:prose-invert prose-sm prose-headings:font-cal overflow-hidden text-ellipsis", // fixes very long words
+        "prose dark:prose-invert prose-sm overflow-hidden text-ellipsis prose-headings:font-cal", // fixes very long words
         className,
       )}
     >

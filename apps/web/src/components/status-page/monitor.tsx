@@ -23,7 +23,6 @@ export const Monitor = async ({
 }) => {
   const data = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitor.id),
-    url: monitor.url,
   });
 
   // TODO: we could handle the `statusReports` here instead of passing it down to the tracker

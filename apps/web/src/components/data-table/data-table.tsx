@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
 import type {
   ColumnDef,
   ColumnFiltersState,
   ExpandedState,
+  PaginationState,
   Row,
   SortingState,
 } from "@tanstack/react-table";
@@ -17,6 +17,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import * as React from "react";
 
 import {
   Table,
@@ -36,6 +37,8 @@ interface DataTableProps<TData, TValue> {
   renderSubComponent(props: { row: Row<TData> }): React.ReactElement;
   getRowCanExpand(row: Row<TData>): boolean;
   autoResetExpanded?: boolean;
+  defaultColumnFilters?: ColumnFiltersState;
+  defaultPagination?: PaginationState;
 }
 
 export function DataTable<TData, TValue>({
@@ -44,17 +47,21 @@ export function DataTable<TData, TValue>({
   renderSubComponent,
   getRowCanExpand,
   autoResetExpanded,
+  defaultColumnFilters = [],
+  defaultPagination = { pageIndex: 0, pageSize: 10 },
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
+  const [columnFilters, setColumnFilters] =
+    React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
+  const [pagination, setPagination] =
+    React.useState<PaginationState>(defaultPagination);
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
@@ -68,6 +75,7 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
       expanded,
+      pagination,
     },
   });
 

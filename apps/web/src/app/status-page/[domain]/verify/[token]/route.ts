@@ -2,7 +2,7 @@ import { and, db, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: { domain: string; token: string } },
 ) {
   const pageId = await db

@@ -20,7 +20,7 @@ export const sendAlert = async ({
   const { name } = monitor;
 
   const body = new FormData();
-  body.set("To", notificationData.phoneNumber);
+  body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
   body.set(
     "Body",
@@ -51,7 +51,9 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
 }: {
   monitor: Monitor;
@@ -65,7 +67,7 @@ export const sendRecovery = async ({
   const { name } = monitor;
 
   const body = new FormData();
-  body.set("To", notificationData.phoneNumber);
+  body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
   body.set("Body", `Your monitor ${name} / ${monitor.url} is up again`);
 

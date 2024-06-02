@@ -11,13 +11,16 @@ import {
 } from "./validation";
 
 // REMINDER:
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
   datasource: "ping_response__v6",
   event: tbIngestPingResponse,
 });
 
+/**
+ * @deprecated but still used in server - please use OSTinybird.endpointStatusPeriod
+ */
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
     pipe: "status_timezone__v1",
@@ -25,29 +28,15 @@ export function getMonitorList(tb: Tinybird) {
     data: tbBuildMonitorList,
     opts: {
       // cache: "no-store",
-      revalidate: 600, // 10 min cache
+      next: {
+        revalidate: 600, // 10 min cache
+      },
     },
   });
 }
 
 /**
- * That pipe is used in the homepage to show the status while having cached data
- * FYI We had 3TB of processed data during August. We will be able to reduce it signifcantly.
- * The cache is only applied on the homepage.
- */
-export function getHomeMonitorList(tb: Tinybird) {
-  return tb.buildPipe({
-    pipe: "status_timezone__v1",
-    parameters: tbParameterMonitorList,
-    data: tbBuildMonitorList,
-    opts: {
-      revalidate: 600, // 10 minutes cache
-    },
-  });
-}
-
-/**
- * Homepage stats used for our marketing page.
+ * Homepage stats used for our marketing page
  */
 export function getHomeStats(tb: Tinybird) {
   return tb.buildPipe({
@@ -55,7 +44,9 @@ export function getHomeStats(tb: Tinybird) {
     parameters: tbParameterHomeStats,
     data: tbBuildHomeStats,
     opts: {
-      revalidate: 86400, // 60 * 60 * 24 = 86400s = 1d
+      next: {
+        revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
+      },
     },
   });
 }

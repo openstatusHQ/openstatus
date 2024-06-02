@@ -13,12 +13,15 @@ import {
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
 import { BackButton } from "@/components/layout/back-button";
-import { CopyLinkButton } from "./_components/copy-link-button";
-import { MultiRegionTabs } from "./_components/multi-region-tabs";
-import { RegionInfo } from "./_components/region-info";
-import { ResponseDetailTabs } from "./_components/response-detail-tabs";
-import { SelectRegion } from "./_components/select-region";
-import { getCheckerDataById, timestampFormatter } from "./utils";
+import { CopyLinkButton } from "@/components/ping-response-analysis/copy-link-button";
+import { MultiRegionTabs } from "@/components/ping-response-analysis/multi-region-tabs";
+import { RegionInfo } from "@/components/ping-response-analysis/region-info";
+import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import { SelectRegion } from "@/components/ping-response-analysis/select-region";
+import {
+  getCheckerDataById,
+  timestampFormatter,
+} from "@/components/ping-response-analysis/utils";
 
 /**
  * allowed URL search params
@@ -44,18 +47,18 @@ export default async function CheckPage({ params, searchParams }: Props) {
   const check =
     data.checks.find((i) => i.region === selectedRegion) || data.checks?.[0];
 
-  const { region, headers, timing } = check;
+  const { region, headers, timing, status } = check;
 
   return (
     <>
       <BackButton href="/play/checker" />
       <Shell className="flex flex-col gap-8">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-3xl font-semibold">
-              <span className="truncate">{data.url}</span>
+        <div className="flex justify-between gap-4">
+          <div className="flex max-w-[calc(100%-50px)] flex-col gap-1">
+            <h1 className="truncate text-wrap font-semibold text-lg md:text-3xl sm:text-xl">
+              {data.url}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {timestampFormatter(data.time)}
             </p>
           </div>
@@ -74,7 +77,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
               <RegionInfo check={check} />
             </div>
           </div>
-          <ResponseDetailTabs timing={timing} headers={headers} />
+          <ResponseDetailTabs {...{ timing, headers, status }} />
         </div>
         <Separator />
         <p className="text-muted-foreground text-sm">
@@ -82,7 +85,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
           <span className="text-foreground">1 day</span>. If you want to persist
           the data,{" "}
           <Link
-            href="/app/sign-in"
+            href="/app/login"
             className="text-foreground underline underline-offset-4 hover:no-underline"
           >
             login

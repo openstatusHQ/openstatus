@@ -16,7 +16,7 @@ export default async function Page({ params }: Props) {
   if (!page) return notFound();
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <Header
         title={page.title}
         description={page.description}

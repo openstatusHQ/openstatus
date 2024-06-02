@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   AlertDialog,
@@ -45,7 +45,7 @@ export function DeleteStatusReportUpdateButtonIcon({ id }: { id: number }) {
         <Button
           size="icon"
           variant="outline"
-          className="border-destructive/50 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
+          className="border-destructive/50 text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
         >
           <Icons.trash className="h-4 w-4" />
         </Button>
