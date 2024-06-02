@@ -183,6 +183,16 @@
             "api-reference/status_report_update/post-status_report_update"
           ]
         },
+        {
+          "group": "Errors",
+          "pages": [
+            "api-reference/errors/code/BAD_REQUEST",
+            "api-reference/errors/code/UNAUTHORIZED",
+            "api-reference/errors/code/FORBIDDEN",
+            "api-reference/errors/code/NOT_FOUND",
+            "api-reference/errors/code/INTERNAL_SERVER_ERROR"
+          ]
+        },
         "api-reference/checker"
       ]
     }
