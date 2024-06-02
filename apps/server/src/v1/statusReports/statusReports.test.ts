@@ -13,7 +13,7 @@ test("GET one status report", async () => {
     id: 1,
     title: "Test Status Report",
     status: "monitoring",
-    statusReportUpdateIds: [1, 3],
+    statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
     monitorIds: null,
     pageIds: [1],
   });
@@ -32,7 +32,7 @@ test("Get all status report", async () => {
         id: 1,
         title: "Test Status Report",
         status: "monitoring",
-        statusReportUpdateIds: [1, 3],
+        statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
         monitorIds: [],
         pageIds: [1],
       },
@@ -40,7 +40,7 @@ test("Get all status report", async () => {
         id: 2,
         title: "Test Status Report",
         status: "investigating",
-        statusReportUpdateIds: [2],
+        statusReportUpdateIds: expect.arrayContaining([2]), // depending on the order of the updates
         monitorIds: [1, 2],
         pageIds: [1],
       },
