@@ -12,14 +12,12 @@ import {
 
 import { ContactForm } from "./contact-form";
 
-// @/components/ui/popover
-
 export function Bubble() {
   const [open, setOpen] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
 
   return (
-    <div className="bg-background fixed bottom-4 right-4 z-50">
+    <div className="fixed right-4 bottom-4 z-50 bg-background">
       <Popover
         open={open}
         onOpenChange={(value) => {
@@ -42,17 +40,17 @@ export function Bubble() {
         >
           {!formVisible ? (
             <div className="space-y-2">
-              <p className="text-foreground font-medium">Need help?</p>
+              <p className="font-medium text-foreground">Need help?</p>
               <p className="text-muted-foreground text-sm">
                 How do you want to contact us?
               </p>
               <Button variant="ghost" className="w-full" asChild>
-                <a target="_blank" href="/docs">
+                <a target="_blank" rel="noreferrer" href="/docs">
                   Documentation
                 </a>
               </Button>
               <Button variant="ghost" className="w-full" asChild>
-                <a target="_blank" href="/discord">
+                <a target="_blank" rel="noreferrer" href="/discord">
                   Join Discord
                 </a>
               </Button>
@@ -65,7 +63,7 @@ export function Bubble() {
               </Button>
             </div>
           ) : (
-            <ContactForm />
+            <ContactForm onSubmit={() => setOpen(false)} />
           )}
         </PopoverContent>
       </Popover>

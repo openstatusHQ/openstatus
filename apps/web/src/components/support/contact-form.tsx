@@ -24,8 +24,10 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "../loading-animation";
+import { handlePlainSupport } from "./action";
+import { toast } from "@/lib/toast";
 
-const types = [
+export const types = [
   {
     label: "Report a bug",
     value: "bug" as const,
@@ -48,27 +50,25 @@ const types = [
   },
 ];
 
-function getPriority(type: FormValues["type"], isBlocking: boolean) {
-  if (type === "security") return 0;
-  if (type === "bug" && isBlocking) return 1;
-  return 2;
-}
-
-const FormSchema = z.object({
-  name: z.string().nonempty(),
+export const FormSchema = z.object({
+  name: z.string().min(1),
   type: z.enum(["bug", "demo", "feature", "security", "question"]),
   email: z.string().email(),
-  message: z.string().nonempty(),
-  blocker: z.boolean().optional(),
+  message: z.string().min(1),
+  blocker: z.boolean().optional().default(false),
 });
 
-type FormValues = z.infer<typeof FormSchema>;
+export type FormValues = z.infer<typeof FormSchema>;
 
 interface ContactFormProps {
   defaultValues?: FormValues;
+  onSubmit?: () => void;
 }
 
-export function ContactForm({ defaultValues }: ContactFormProps) {
+export function ContactForm({
+  defaultValues,
+  onSubmit: handleSubmit,
+}: ContactFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues,
@@ -77,8 +77,16 @@ export function ContactForm({ defaultValues }: ContactFormProps) {
 
   async function onSubmit(data: FormValues) {
     startTransition(async () => {
-      console.log(data);
-      // toast message
+      const result = await handlePlainSupport(data);
+      if (result.error) {
+        console.error(result.error);
+        toast.error("Something went wrong. Please try again.");
+      } else {
+        handleSubmit?.();
+        toast.success(
+          "Your message has been sent! We will get back to you soon.",
+        );
+      }
     });
   }
 
@@ -87,34 +95,32 @@ export function ContactForm({ defaultValues }: ContactFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Max" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="max@openstatus.dev" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Name</FormLabel>
+              <FormControl>
+                <Input placeholder="Max" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="max@openstatus.dev" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="type"
