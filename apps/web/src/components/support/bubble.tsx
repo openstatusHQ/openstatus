@@ -11,17 +11,18 @@ import {
 } from "@openstatus/ui";
 
 import { ContactForm } from "./contact-form";
+import { useSession } from "next-auth/react";
 
 export function Bubble() {
   const [open, setOpen] = useState(false);
   const [formVisible, setFormVisible] = useState(false);
+  const session = useSession();
 
   return (
     <div className="fixed right-4 bottom-4 z-50 rounded-full bg-background">
       <Popover
         open={open}
         onOpenChange={(value) => {
-          // TODO: improve as if you do it quickly, it will still be visible and jump
           if (formVisible && !value) {
             setTimeout(() => setFormVisible(false), 300); // reset form after popover closes
           }
@@ -76,7 +77,15 @@ export function Bubble() {
               </Button>
             </div>
           ) : (
-            <ContactForm onSubmit={() => setOpen(false)} />
+            <ContactForm
+              defaultValues={{
+                name:
+                  session?.data?.user?.name ||
+                  `${session?.data?.user?.firstName} ${session?.data?.user?.lastName}`,
+                email: session?.data?.user?.email ?? undefined,
+              }}
+              onSubmit={() => setOpen(false)}
+            />
           )}
         </PopoverContent>
       </Popover>

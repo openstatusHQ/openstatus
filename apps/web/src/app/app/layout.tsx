@@ -12,8 +12,10 @@ export default function AuthLayout({
   return (
     <PHProvider>
       <PostHogPageview />
-      <SessionProvider>{children}</SessionProvider>
-      <Bubble />
+      <SessionProvider>
+        {children}
+        <Bubble />
+      </SessionProvider>
     </PHProvider>
   );
 }

@@ -61,7 +61,7 @@ export const FormSchema = z.object({
 export type FormValues = z.infer<typeof FormSchema>;
 
 interface ContactFormProps {
-  defaultValues?: FormValues;
+  defaultValues?: Partial<FormValues>;
   onSubmit?: () => void;
 }
 
