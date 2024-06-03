@@ -23,6 +23,7 @@ export const env = createEnv({
     CLICKHOUSE_URL: z.string(),
     CLICKHOUSE_USERNAME: z.string(),
     CLICKHOUSE_PASSWORD: z.string(),
+    PLAIN_API_KEY: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
@@ -55,6 +56,7 @@ export const env = createEnv({
     CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
     CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
+    PLAIN_API_KEY: process.env.PLAIN_API_KEY,
   },
   skipValidation: true,
 });
