@@ -33,6 +33,10 @@ export const types = [
     value: "bug" as const,
   },
   {
+    label: "Book a demo",
+    value: "demo" as const,
+  },
+  {
     label: "Suggest a feature",
     value: "feature" as const,
   },
