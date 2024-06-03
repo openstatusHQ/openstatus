@@ -160,7 +160,7 @@
           ]
         },
         {
-          "group": "Page",
+          "group": "Status Page",
           "pages": [
             "api-reference/page/get-page",
             "api-reference/page/get-page-id",
