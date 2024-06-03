@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { and, eq } from "@openstatus/db";
 import {
+  NotificationDataSchema,
   insertNotificationSchema,
   notification,
   selectNotificationSchema,
@@ -11,12 +12,13 @@ import { getLimit } from "@openstatus/plans";
 
 import { trackNewNotification } from "../analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { SchemaError } from "@openstatus/error";
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
-      const { ...data } = opts.input;
+      const { ...props } = opts.input;
 
       const notificationLimit = getLimit(
         opts.ctx.workspace.plan,
@@ -37,9 +39,18 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
+      const _data = NotificationDataSchema.safeParse(JSON.parse(props.data));
+
+      if (!_data.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: SchemaError.fromZod(_data.error, props).message,
+        });
+      }
+
       const _notification = await opts.ctx.db
         .insert(notification)
-        .values({ ...data, workspaceId: opts.ctx.workspace.id })
+        .values({ ...props, workspaceId: opts.ctx.workspace.id })
         .returning()
         .get();
 
@@ -55,10 +66,20 @@ export const notificationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
-      const { ...data } = opts.input;
+      const { ...props } = opts.input;
+
+      const _data = NotificationDataSchema.safeParse(JSON.parse(props.data));
+
+      if (!_data.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: SchemaError.fromZod(_data.error, props).message,
+        });
+      }
+
       return await opts.ctx.db
         .update(notification)
-        .set({ ...data, updatedAt: new Date() })
+        .set({ ...props, updatedAt: new Date() })
         .where(
           and(
             eq(notification.id, opts.input.id),

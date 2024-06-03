@@ -7,9 +7,11 @@ import { checkerRoute } from "./checker";
 import { env } from "./env";
 import { publicRoute } from "./public";
 import { api } from "./v1";
+import { handleError } from "./libs/errors";
 
 const app = new Hono({ strict: false });
 app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
+app.onError(handleError);
 
 /**
  * Public Routes

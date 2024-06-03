@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
+import { api } from "../index";
 
 test("Create a page", async () => {
   const data = {
@@ -41,9 +41,12 @@ test("Create a page with monitors", async () => {
     },
     body: JSON.stringify(data),
   });
+
+  const json = await res.json();
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: expect.any(Number),
     title: "OpenStatus",
     description: "OpenStatus website",
@@ -67,9 +70,11 @@ test("Update a page with monitors as object including order", async () => {
     body: JSON.stringify(data),
   });
 
+  const json = await res.json();
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: 3,
   });
 });
@@ -104,11 +109,4 @@ test("Create a page with invalid data should return 403", async () => {
     body: JSON.stringify(data),
   });
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });

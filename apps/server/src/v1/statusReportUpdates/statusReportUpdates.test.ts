@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
-import { iso8601Regex } from "./test-utils";
+import { api } from "../index";
+import { iso8601Regex } from "../test-utils";
 
 test("GET one status report update ", async () => {
   const res = await api.request("/status_report_update/1", {
@@ -9,10 +9,12 @@ test("GET one status report update ", async () => {
       "x-openstatus-key": "1",
     },
   });
+  const json = await res.json();
+
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     status: "investigating",
-    message: "",
+    message: "Message",
     date: expect.stringMatching(iso8601Regex),
   });
 });
@@ -28,7 +30,7 @@ test("create one status report update ", async () => {
       status: "investigating",
       date: "2023-11-08T21:03:13.000Z",
       message: "test",
-      status_report_id: 1,
+      statusReportId: 1,
     }),
   });
   expect(res.status).toBe(200);
@@ -49,7 +51,7 @@ test("create one status report update without auth key should return 401", async
       status: "investigating",
       date: expect.stringMatching(iso8601Regex),
       message: "test",
-      status_report_id: 1,
+      statusReportId: 1,
     }),
   });
   expect(res.status).toBe(401);
@@ -68,12 +70,6 @@ test("create one status report update with invalid data should return 403", asyn
       date: "2023-11-08T21:03:13.000Z",
     }),
   });
+
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });

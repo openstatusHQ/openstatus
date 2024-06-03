@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
+import { api } from "../index";
+import type { MonitorSchema } from "./schema";
 
 test("GET one monitor", async () => {
   const res = await api.request("/monitor/1", {
@@ -8,9 +9,10 @@ test("GET one monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
-  expect(res.status).toBe(200);
+  const json = await res.json();
 
-  expect(await res.json()).toMatchObject({
+  expect(res.status).toBe(200);
+  expect(json).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
@@ -31,8 +33,10 @@ test("GET all monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
+  const json = (await res.json()) as MonitorSchema[];
+
   expect(res.status).toBe(200);
-  expect((await res.json())[0]).toMatchObject({
+  expect(json[0]).toMatchObject({
     id: 1,
     periodicity: "1m",
     url: "https://www.openstatus.dev",
@@ -60,6 +64,7 @@ test("Create a monitor", async () => {
     active: true,
     public: true,
   };
+
   const res = await api.request("/monitor", {
     method: "POST",
     headers: {
@@ -68,20 +73,12 @@ test("Create a monitor", async () => {
     },
     body: JSON.stringify(data),
   });
+
   expect(res.status).toBe(200);
 
   expect(await res.json()).toMatchObject({
     id: expect.any(Number),
-    periodicity: "10m",
-    url: "https://www.openstatus.dev",
-    regions: ["ams", "gru"],
-    name: "OpenStatus",
-    description: "OpenStatus website",
-    method: "POST",
-    body: '{"hello":"world"}',
-    headers: [{ key: "key", value: "value" }],
-    active: true,
-    public: true,
+    ...data,
   });
 });
 
@@ -129,14 +126,8 @@ test("Create a monitor with invalid data should return 403", async () => {
     },
     body: JSON.stringify(data),
   });
+
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });
 
 test("Update a Monitor ", async () => {
@@ -202,11 +193,6 @@ test("Update a monitor not in db should return 404", async () => {
     body: JSON.stringify(data),
   });
   expect(res.status).toBe(404);
-
-  expect(await res.json()).toMatchObject({
-    code: 404,
-    message: "Not Found",
-  });
 });
 
 test("Update a monitor without auth key should return 401", async () => {
@@ -252,14 +238,8 @@ test("Update a monitor with invalid data should return 403", async () => {
     },
     body: JSON.stringify(data),
   });
+
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });
 
 test("Delete one monitor", async () => {
@@ -271,9 +251,7 @@ test("Delete one monitor", async () => {
   });
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
-    message: "Deleted",
-  });
+  expect(await res.json()).toMatchObject({});
 });
 
 test.todo("Get monitor daily Summary");

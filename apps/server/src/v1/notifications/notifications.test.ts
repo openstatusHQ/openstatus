@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
-import { iso8601Regex } from "./test-utils";
+import { api } from "../index";
 
 test("Create a notification", async () => {
   const data = {
@@ -17,9 +16,12 @@ test("Create a notification", async () => {
     },
     body: JSON.stringify(data),
   });
+
+  const json = await res.json();
+
   expect(res.status).toBe(200);
 
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     id: expect.any(Number),
     provider: "email",
     payload: { email: "ping@openstatus.dev" },

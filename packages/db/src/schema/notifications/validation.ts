@@ -27,17 +27,17 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 export type Notification = z.infer<typeof selectNotificationSchema>;
 export type NotificationProvider = z.infer<typeof notificationProviderSchema>;
 
+const phoneRegex = new RegExp(
+  /^([+]?[\s0-9]+)?(\d{3}|[(]?[0-9]+[)])?([-]?[\s]?[0-9])+$/,
+);
+
+export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
+export const emailSchema = z.string().email();
+export const urlSchema = z.string().url();
+
 export const NotificationDataSchema = z.union([
-  z.object({
-    sms: z.string(),
-  }),
-  z.object({
-    email: z.string().email(),
-  }),
-  z.object({
-    slack: z.string(),
-  }),
-  z.object({
-    discord: z.string(),
-  }),
+  z.object({ sms: phoneSchema }),
+  z.object({ email: emailSchema }),
+  z.object({ slack: urlSchema }),
+  z.object({ discord: urlSchema }),
 ]);

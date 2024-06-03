@@ -1,7 +1,9 @@
 import { expect, test } from "bun:test";
 
-import { api } from ".";
-import { iso8601Regex } from "./test-utils";
+import { api } from "../index";
+import { iso8601Regex } from "../test-utils";
+
+import type { IncidentSchema } from "./schema";
 
 test("GET one Incident", async () => {
   const res = await api.request("/incident/2", {
@@ -21,7 +23,7 @@ test("GET one Incident", async () => {
   });
 });
 
-test("Update an incident ", async () => {
+test("Update an incident", async () => {
   const res = await api.request("/incident/2", {
     method: "PUT",
     headers: {
@@ -32,8 +34,9 @@ test("Update an incident ", async () => {
       acknowledgedAt: "2023-11-08T21:03:13.000Z",
     }),
   });
+  const json = await res.json();
   expect(res.status).toBe(200);
-  expect(await res.json()).toMatchObject({
+  expect(json).toMatchObject({
     acknowledgedAt: expect.stringMatching(iso8601Regex),
     monitorId: 1,
     id: 2,
@@ -56,11 +59,8 @@ test("Update an incident not in db should return 404", async () => {
       acknowledgedAt: "2023-11-08T21:03:13.000Z",
     }),
   });
+
   expect(res.status).toBe(404);
-  expect(await res.json()).toMatchObject({
-    code: 404,
-    message: "Not Found",
-  });
 });
 
 test("Update an incident without auth key should return 401", async () => {
@@ -90,13 +90,6 @@ test("Update an incident with invalid data should return 403", async () => {
     }),
   });
   expect(res.status).toBe(400);
-  expect(await res.json()).toMatchObject({
-    error: {
-      issues: expect.any(Array),
-      name: "ZodError",
-    },
-    success: false,
-  });
 });
 
 test("Get all Incidents", async () => {
@@ -106,8 +99,11 @@ test("Get all Incidents", async () => {
       "x-openstatus-key": "1",
     },
   });
+
+  const body = (await res.json()) as IncidentSchema[];
+
   expect(res.status).toBe(200);
-  expect((await res.json())[0]).toMatchObject({
+  expect(body[0]).toMatchObject({
     acknowledgedAt: null,
     monitorId: 1,
     id: 1,

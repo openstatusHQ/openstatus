@@ -9,9 +9,11 @@ import {
   incidentTable,
   monitor,
   monitorsToPages,
+  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
+  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
   user,
@@ -155,7 +157,7 @@ async function main() {
       id: 1,
       statusReportId: 1,
       status: "investigating",
-      message: "",
+      message: "Message",
       date: new Date(),
     })
     .run();
@@ -177,10 +179,32 @@ async function main() {
       id: 2,
       statusReportId: 2,
       status: "investigating",
-      message: "",
+      message: "Message",
       date: new Date(),
     })
     .run();
+
+  await db.insert(monitorsToStatusReport).values([
+    {
+      monitorId: 1,
+      statusReportId: 2,
+    },
+    {
+      monitorId: 2,
+      statusReportId: 2,
+    },
+  ]);
+
+  await db.insert(pagesToStatusReports).values([
+    {
+      pageId: 1,
+      statusReportId: 2,
+    },
+    {
+      pageId: 1,
+      statusReportId: 1,
+    },
+  ]);
 
   await db
     .insert(incidentTable)
