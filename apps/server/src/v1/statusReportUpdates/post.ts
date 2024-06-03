@@ -108,6 +108,7 @@ export function registerPostStatusReportUpdate(
         const subscribersEmails = subscribers.map(
           (subscriber) => subscriber.email
         );
+
         // TODO: verify if we leak any email data here
         await sendEmailHtml({
           to: subscribersEmails,

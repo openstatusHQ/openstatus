@@ -18,7 +18,8 @@ const postRouteUpdate = createRoute({
   method: "post",
   tags: ["status_report"],
   path: "/:id/update",
-  description: "Create an status report update",
+  description:
+    "Create an status report update. Deprecated, please use /status-report-updates instead.",
   request: {
     params: ParamsSchema,
     body: {
@@ -111,6 +112,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         });
       }
     }
+
     const data = StatusReportUpdateSchema.parse(_statusReportUpdate);
 
     return c.json(data);

@@ -10,8 +10,7 @@
     "studio": "drizzle-kit studio",
     "env": "bun env.ts",
     "seed": "bun src/seed.mts",
-    "dev": "turso dev --db-file ../../openstatus-dev.db",
-    "reset": "rm ../../openstatus.db"
+    "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
     "@clickhouse/client-web": "1.0.1",

@@ -1,10 +1,11 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, asc, db, eq, inArray, isNull } from "@openstatus/db";
+import { and, asc, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorsToStatusReport,
   page,
+  pageSubscriber,
   pagesToStatusReports,
   statusReport,
   statusReportUpdate,
@@ -15,6 +16,7 @@ import { StatusReportSchema } from "./schema";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { HTTPException } from "hono/http-exception";
 import { isoDate } from "../utils";
+import { sendEmailHtml } from "@openstatus/emails";
 
 const postRoute = createRoute({
   method: "post",
@@ -26,7 +28,10 @@ const postRoute = createRoute({
       description: "The status report to create",
       content: {
         "application/json": {
-          schema: StatusReportSchema.omit({ id: true }).extend({
+          schema: StatusReportSchema.omit({
+            id: true,
+            statusReportUpdateIds: true,
+          }).extend({
             date: isoDate.optional().openapi({
               description: "The date of the report in ISO8601 format",
             }),
@@ -55,6 +60,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspaceId");
+    const workspacePlan = c.get("workspacePlan");
 
     const { pageIds, monitorIds, date, ...rest } = input;
 
@@ -96,7 +102,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
     const _newStatusReport = await db
       .insert(statusReport)
       .values({
-        ...input,
+        ...rest,
         workspaceId: Number(workspaceId),
       })
       .returning()
@@ -140,7 +146,43 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .returning();
     }
 
-    // FIXME: send email!
+    if (workspacePlan.title !== "Hobby") {
+      const allPages = await db
+        .select()
+        .from(pagesToStatusReports)
+        .where(
+          eq(pagesToStatusReports.statusReportId, Number(_newStatusReport.id))
+        )
+        .all();
+      for (const currentPage of allPages) {
+        const subscribers = await db
+          .select()
+          .from(pageSubscriber)
+          .where(
+            and(
+              eq(pageSubscriber.pageId, currentPage.pageId),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
+          )
+          .all();
+        const pageInfo = await db
+          .select()
+          .from(page)
+          .where(eq(page.id, currentPage.pageId))
+          .get();
+        if (!pageInfo) continue;
+        const subscribersEmails = subscribers.map(
+          (subscriber) => subscriber.email
+        );
+        await sendEmailHtml({
+          to: subscribersEmails,
+          subject: `New status update for ${pageInfo.title}`,
+          html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+        `,
+          from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+        });
+      }
+    }
 
     const data = StatusReportSchema.parse({
       ..._newStatusReport,
