@@ -42,6 +42,7 @@
     "@tailwindcss/container-queries": "0.1.1",
     "@tailwindcss/typography": "0.5.10",
     "@tanstack/react-table": "8.10.3",
+    "@team-plain/typescript-sdk": "4.2.3",
     "@tremor/react": "3.13.3",
     "@trpc/client": "10.45.1",
     "@trpc/next": "10.45.1",

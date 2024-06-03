@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents/incident";
+import { Receiver } from "@upstash/qstash";
 
 import { env } from "./env";
 
@@ -18,10 +19,15 @@ const S3 = new S3Client({
   },
 });
 
+const receiver = new Receiver({
+  currentSigningKey: env.QSTASH_SIGNING_SECRET,
+  nextSigningKey: env.QSTASH_NEXT_SIGNING_SECRET,
+});
+
 const app = new Hono();
 
 app.get("/ping", (c) =>
-  c.json({ ping: "pong", region: process.env.FLY_REGION }, 200),
+  c.json({ ping: "pong", region: process.env.FLY_REGION }, 200)
 );
 
 app.post(
@@ -32,16 +38,25 @@ app.post(
       url: z.string().url(),
       incidentId: z.number(),
       kind: z.enum(["incident", "recovery"]),
-    }),
+    })
   ),
   async (c) => {
-    const auth = c.req.header("Authorization");
-    if (auth !== `Basic ${env.HEADER_TOKEN}`) {
+    const signature = c.req.header("Upstash-Signature");
+    // if (auth !== `Basic ${env.HEADER_TOKEN}`) {
+    //   console.error("Unauthorized");
+    //   return c.text("Unauthorized", 401);
+    // }
+
+    const data = c.req.valid("json");
+    const isValid = receiver.verify({
+      signature: signature || "",
+      body: JSON.stringify(data),
+    });
+    if (!isValid) {
+
       console.error("Unauthorized");
       return c.text("Unauthorized", 401);
     }
-
-    const data = c.req.valid("json");
 
     const browser = await playwright.chromium.launch({
       headless: true, // set this to true
@@ -60,7 +75,7 @@ app.post(
           Bucket: "incident-screenshot",
           Key: id,
           ContentType: "image/png",
-        }),
+        })
       );
 
       if (data.kind === "incident") {
@@ -94,7 +109,7 @@ app.post(
     }
 
     return c.text("Screenshot saved");
-  },
+  }
 );
 
 export default app;

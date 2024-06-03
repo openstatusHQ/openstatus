@@ -3,11 +3,15 @@ title: Overview
 description: "How does OpenStatus' synthetic monitoring work?"
 ---
 
-With our synthetic monitoring, you can monitor the availability and performance of
-your website or API from various global locations.
+With synthetic monitoring, you can simulated requests to monitor the availability and performance of
+your website or API from various locations around the world.
 
-We will monitor your website or API on a regular schedule and record the
+We will make a request to your website or API on a regular schedule and record the
 responses.
+
+We will alert you if your website or API is down, slow or does not return the expected response.
+
+You can create monitors in our dashboard, with the <a href="/api-reference/monitor/post-monitor">API</a> or with <a href="/packages/terraform">Terraform</a>.
 
 ## Locations 🌍
 
@@ -22,9 +26,13 @@ We currently support 6 regions:
 
 ## Status Page 📃
 
-You can create a status page to display the availability and performance of your
-monitor to your users.
+Status page are a great way to communicate with your users when your website or API is down.
+
+You can create a status page to display the availability and the performance of your
+monitors to your users.
 
 ## Alerting 🚨
 
-You can configure alerts to be notified when your monitor is down or slow.
+Don't wait for your users to tell you that your website or API is down.
+
+You can configure alerts to be notified when your monitor is down or slow, or does not return the expected response.

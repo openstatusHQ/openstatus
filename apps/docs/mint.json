@@ -80,7 +80,6 @@
           "group": "Features",
           "pages": [
             "synthetic/features/incident",
-            "synthetic/features/heartbeat",
             "synthetic/features/monitor",
             {
               "group": "Notifications",
@@ -107,7 +106,7 @@
     },
     {
       "group": "Real User Monitoring",
-      "pages": ["rum/overview"]
+      "pages": ["rum/overview", "rum/get-started"]
     },
     {
       "group": "Developer Tools",
@@ -126,6 +125,10 @@
       ]
     },
     {
+      "group": "Help",
+      "pages": ["help/support"]
+    },
+    {
       "group": "API Documentation",
       "icon": "code",
       "pages": [
@@ -141,7 +144,7 @@
           ]
         },
         {
-          "group": "Page",
+          "group": "Status Page",
           "pages": [
             "api-reference/page/get-page",
             "api-reference/page/get-page-id",
@@ -190,6 +193,7 @@
             "api-reference/errors/code/UNAUTHORIZED",
             "api-reference/errors/code/FORBIDDEN",
             "api-reference/errors/code/NOT_FOUND",
+            "api-reference/errors/code/CONFLICT",
             "api-reference/errors/code/INTERNAL_SERVER_ERROR"
           ]
         },
