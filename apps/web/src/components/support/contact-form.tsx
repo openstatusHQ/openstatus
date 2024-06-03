@@ -33,10 +33,6 @@ export const types = [
     value: "bug" as const,
   },
   {
-    label: "Book a demo",
-    value: "demo" as const,
-  },
-  {
     label: "Suggest a feature",
     value: "feature" as const,
   },
@@ -84,7 +80,7 @@ export function ContactForm({
       } else {
         handleSubmit?.();
         toast.success(
-          "Your message has been sent! We will get back to you soon.",
+          "Your message has been sent! We will get back to you soon."
         );
       }
     });

@@ -42,11 +42,24 @@ export function Bubble() {
             <div className="space-y-2">
               <p className="font-medium text-foreground">Need help?</p>
               <p className="text-muted-foreground text-sm">
-                How do you want to contact us?
+                We are here to help you with any questions you may have.
               </p>
               <Button variant="ghost" className="w-full" asChild>
-                <a target="_blank" rel="noreferrer" href="/docs">
-                  Documentation
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://cal.com/team/openstatus/30min"
+                >
+                  Book a call
+                </a>
+              </Button>
+              <Button variant="ghost" className="w-full" asChild>
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.openstatus.dev"
+                >
+                  Browse documentation
                 </a>
               </Button>
               <Button variant="ghost" className="w-full" asChild>
