@@ -11,7 +11,7 @@
     "env": "bun env.ts",
     "seed": "bun src/seed.mts",
     "dev": "turso dev --db-file ../../openstatus-dev.db",
-    "reset": "rm ./openstatus.db"
+    "reset": "rm ../../openstatus.db"
   },
   "dependencies": {
     "@clickhouse/client-web": "1.0.1",
@@ -34,5 +34,5 @@
     "typescript": "5.4.5",
     "utf-8-validate": "6.0.3"
   },
-  "author": ""
+  "author": "OpenStatus"
 }
