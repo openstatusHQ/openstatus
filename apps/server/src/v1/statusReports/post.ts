@@ -21,7 +21,7 @@ import { sendEmailHtml } from "@openstatus/emails";
 const postRoute = createRoute({
   method: "post",
   tags: ["status_report"],
-  description: "Create an status report",
+  description: "Create a Status Report",
   path: "/",
   request: {
     body: {

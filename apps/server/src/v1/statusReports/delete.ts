@@ -11,7 +11,7 @@ import { HTTPException } from "hono/http-exception";
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["status_report"],
-  description: "Delete an status report",
+  description: "Delete a Status Report",
   path: "/:id",
   request: {
     params: ParamsSchema,
