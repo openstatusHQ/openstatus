@@ -71,7 +71,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       await sendEmail({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-        subject: "Level up your website and API monitoring.",
+        subject: "Welcome to OpenStatus.",
         to: [params.user.email],
         react: WelcomeEmail(),
       });
