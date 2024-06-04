@@ -5,6 +5,7 @@ import {
   Book,
   Bot,
   Calendar,
+  Camera,
   CandlestickChart,
   Check,
   Clock,
@@ -108,6 +109,7 @@ export const Icons = {
   "candlestick-chart": CandlestickChart,
   ratio: Ratio,
   user: UserCircle,
+  camera: Camera,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

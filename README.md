@@ -8,7 +8,7 @@
   </a>
   </p>
 
-  <p align="center">The Open-Source frontend performance monitoring platform.
+  <p align="center">The Open-Source performance monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -25,7 +25,7 @@
 
 ## About OpenStatus 🏓
 
-OpenStatus is open-source frontend monitoring platform.
+OpenStatus is open-source performance monitoring platform.
 
 - **Synthetic monitoring**: Monitor your website and APIs worldwide and receive
   notifications when they are down or slow.

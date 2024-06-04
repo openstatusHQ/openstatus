@@ -27,15 +27,14 @@ export function Hero() {
         <h1
           className={cn(
             "font-cal text-4xl text-foreground md:text-6xl",
-            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent",
+            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
           )}
         >
           A better way to monitor your services.
         </h1>
         <p className="mx-auto max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl">
-          Monitor your API and website from 6 continents, detect some
-          performance issues and receive notifications before your users are
-          affected.
+          Monitor your API and website globally, identify performance issues,
+          downtime and receive alerts before your users are affected.
         </p>
       </div>
       <div className="my-4 grid gap-2 sm:grid-cols-2">
