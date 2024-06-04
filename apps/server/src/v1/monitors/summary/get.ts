@@ -33,7 +33,7 @@ const dailyStatsSchemaArray = z
 const getMonitorStats = createRoute({
   method: "get",
   tags: ["monitor"],
-  description: "Get monitor daily summary",
+  description: "Get a monitor daily summary",
   path: "/:id/summary",
   request: {
     params: ParamsSchema,

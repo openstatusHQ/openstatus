@@ -11,7 +11,7 @@ import { HTTPException } from "hono/http-exception";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["status_report"],
-  description: "Get all status reports",
+  description: "Get all Status Reports",
   path: "/",
   request: {},
   responses: {

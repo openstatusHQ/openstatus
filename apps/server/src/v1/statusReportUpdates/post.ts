@@ -18,6 +18,7 @@ import { HTTPException } from "hono/http-exception";
 const createStatusUpdate = createRoute({
   method: "post",
   tags: ["status_report_update"],
+  description: "Create a Status Report Update",
   path: "/",
   request: {
     body: {
