@@ -6,14 +6,12 @@ export function EnterpricePlan() {
       <div className="flex-1">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="mb-2 font-cal text-xl">Enterprise</p>
+            <p className="mb-2 font-cal text-xl">Custom</p>
             <p className="text-muted-foreground">
-              Dedicated support and needs for your company.
+              Want more regions? Want to host it on your own server? Want
+              something else? We can help you with that.
             </p>
           </div>
-          <p className="shrink-0">
-            <span className="font-cal text-2xl">Lets talk</span>
-          </p>
         </div>
       </div>
       <div>
@@ -23,7 +21,7 @@ export function EnterpricePlan() {
             target="_blank"
             rel="noreferrer"
           >
-            Schedule call
+            Talk to us
           </a>
         </Button>
       </div>

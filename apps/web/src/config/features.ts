@@ -84,9 +84,9 @@ export const cardConfig = {
     features: [
       {
         icon: "sparkles",
-        catchline: "Connect.",
+        catchline: "Reduce fagitue.",
         description:
-          "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionable.",
+          "Reduce your alerts fatigue with automatic noise reduction.",
         badge: "Coming soon",
       },
       {

@@ -29,7 +29,7 @@ export function TimelineEvent({
         <div
           className={cn(
             "rounded-full border bg-background p-2",
-            icon.borderColor,
+            icon.borderColor
           )}
         >
           <Icon className={cn("h-4 w-4", icon.textColor)} />
@@ -88,11 +88,11 @@ const timeline = [
     },
   },
   {
-    label: "Grafana alert",
+    label: "Screenshot captured",
     date: new Date("03.12.2023, 19:14:55"),
     message: "3 incoming notifications from Grafana.",
     icon: {
-      name: "webhook",
+      name: "camera",
       textColor: "text-amber-500",
       borderColor: "border-amber-500/40",
     },
