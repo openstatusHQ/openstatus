@@ -15,6 +15,7 @@ type Props = {
 };
 
 export const revalidate = 600;
+export const maxDuration = 120;
 
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
