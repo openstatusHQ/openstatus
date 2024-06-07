@@ -62,7 +62,7 @@ export const cardConfig = {
         icon: "puzzle",
         catchline: "Build trust",
         description:
-          "Showcase your reliability to your users, and reduce the numbers of customers service tickets.",
+          "Showcase your reliability to your users, and reduce the number of customer service tickets.",
       },
       {
         icon: "globe",
@@ -84,7 +84,7 @@ export const cardConfig = {
     features: [
       {
         icon: "sparkles",
-        catchline: "Reduce fagitue.",
+        catchline: "Reduce fatigue.",
         description:
           "Reduce your alerts fatigue with automatic noise reduction.",
         badge: "Coming soon",
