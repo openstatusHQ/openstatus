@@ -6,10 +6,10 @@ import {
   notificationsToMonitors,
   page,
 } from "@openstatus/db/src/schema";
-import { NotificationSchema } from "./schema";
+import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { notificationsApi } from "./index";
-import { HTTPException } from "hono/http-exception";
+import { NotificationSchema } from "./schema";
 
 const getAllRoute = createRoute({
   method: "get",

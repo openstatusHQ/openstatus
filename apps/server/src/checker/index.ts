@@ -1,6 +1,6 @@
+import { Client } from "@upstash/qstash";
 import { Hono } from "hono";
 import { z } from "zod";
-import { Client } from "@upstash/qstash";
 
 import { and, db, eq, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
@@ -59,8 +59,8 @@ checkerRoute.post("/updateStatus", async (c) => {
       and(
         eq(incidentTable.monitorId, Number(monitorId)),
         isNull(incidentTable.resolvedAt),
-        isNull(incidentTable.acknowledgedAt)
-      )
+        isNull(incidentTable.acknowledgedAt),
+      ),
     )
     .get();
 
@@ -100,7 +100,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`
+        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`,
       );
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       // 4 of 6 monitor need to fail to trigger an alerting
@@ -114,8 +114,8 @@ checkerRoute.post("/updateStatus", async (c) => {
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
               isNull(incidentTable.acknowledgedAt),
-              eq(incidentTable.startedAt, new Date(cronTimestamp))
-            )
+              eq(incidentTable.startedAt, new Date(cronTimestamp)),
+            ),
           )
           .get();
 
@@ -192,7 +192,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`
+        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`,
       );
       //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       //   // 4 of 6 monitor need to fail to trigger an alerting
@@ -204,8 +204,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt)
-            )
+              isNull(incidentTable.acknowledgedAt),
+            ),
           )
           .get();
         if (incident) {

@@ -4,11 +4,18 @@ import { trackAnalytics } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import type { monitorsApi } from "./index";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { MonitorSchema } from "./schema";
-import { env } from "../../env";
 import { HTTPException } from "hono/http-exception";
+import { serialize } from "../../../../../packages/assertions/src";
+import type { Assertion } from "../../../../../packages/assertions/src/types";
+import {
+  HeaderAssertion,
+  StatusAssertion,
+  TextBodyAssertion,
+} from "../../../../../packages/assertions/src/v1";
+import { env } from "../../env";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { monitorsApi } from "./index";
+import { MonitorSchema } from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -51,8 +58,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all()
     )[0].count;
@@ -67,7 +74,23 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
-    const { headers, regions, ...rest } = input;
+    const { headers, regions, assertions, ...rest } = input;
+
+    const assert: Assertion[] = [];
+    if (assertions) {
+      for (const a of assertions) {
+        if (a.type === "header") {
+          assert.push(new HeaderAssertion({ ...a, version: "v1" }));
+        }
+        if (a.type === "textBody") {
+          assert.push(new TextBodyAssertion({ ...a, version: "v1" }));
+        }
+        if (a.type === "status") {
+          assert.push(new StatusAssertion({ ...a, version: "v1" }));
+        }
+      }
+    }
+
     const _newMonitor = await db
       .insert(monitor)
       .values({
@@ -75,6 +98,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         workspaceId: Number(workspaceId),
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
       .returning()
       .get();

@@ -1,11 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
+import { handleZodError } from "../../libs/errors";
 import type { Variables } from "../index";
-import { registerGetAllStatusReports } from "./get_all";
 import { registerDeleteStatusReport } from "./delete";
 import { regsiterGetStatusReport } from "./get";
+import { registerGetAllStatusReports } from "./get_all";
 import { registerPostStatusReport } from "./post";
-import { handleZodError } from "../../libs/errors";
 import { registerStatusReportUpdateRoutes } from "./update/post";
 
 export const statusReportsApi = new OpenAPIHono<{ Variables: Variables }>({

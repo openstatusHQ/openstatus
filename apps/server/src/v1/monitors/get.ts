@@ -3,10 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { HTTPException } from "hono/http-exception";
 
 const getRoute = createRoute({
   method: "get",
@@ -41,8 +41,8 @@ export function registerGetMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .get();
 

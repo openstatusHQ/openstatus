@@ -8,7 +8,7 @@ export const isoDate = z.preprocess((val) => {
 }, z.string());
 
 export function isNumberArray<T>(
-  monitors: number[] | T[]
+  monitors: number[] | T[],
 ): monitors is number[] {
   return (
     Array.isArray(monitors) &&

@@ -81,7 +81,7 @@ export const PageSchema = z.object({
           { monitorId: 1, order: 0 },
           { monitorId: 2, order: 1 },
         ],
-      })
+      }),
     )
     .optional(),
 });
