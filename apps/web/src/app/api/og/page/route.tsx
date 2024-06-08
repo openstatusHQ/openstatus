@@ -12,7 +12,7 @@ export const runtime = "edge";
 
 export async function GET(req: Request) {
   const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
-    [interRegular, interLight, calSemiBold],
+    [interRegular, interLight, calSemiBold]
   );
 
   const { searchParams } = new URL(req.url);
@@ -30,12 +30,15 @@ export async function GET(req: Request) {
   const tracker = new Tracker({
     incidents: passwordProtected ? undefined : page?.incidents,
     statusReports: passwordProtected ? undefined : page?.statusReports,
+    maintenances: passwordProtected ? undefined : page?.maintenances,
   });
 
   return new ImageResponse(
-    <BasicLayout title={title} description={description} tw="py-24 px-24">
-      <StatusCheck tracker={tracker} />
-    </BasicLayout>,
+    (
+      <BasicLayout title={title} description={description} tw="py-24 px-24">
+        <StatusCheck tracker={tracker} />
+      </BasicLayout>
+    ),
     {
       ...SIZE,
       fonts: [
@@ -58,6 +61,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    },
+    }
   );
 }

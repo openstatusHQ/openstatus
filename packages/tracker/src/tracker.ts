@@ -88,8 +88,8 @@ export class Tracker {
     return this.maintenances.some((maintenance) => {
       const now = new Date();
       return (
-        maintenance.from.getTime() <= now.getTime() &&
-        maintenance.to.getTime() >= now.getTime()
+        new Date(maintenance.from).getTime() <= now.getTime() &&
+        new Date(maintenance.to).getTime() >= now.getTime()
       );
     });
   }
