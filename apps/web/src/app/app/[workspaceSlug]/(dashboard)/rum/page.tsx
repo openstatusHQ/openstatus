@@ -14,8 +14,8 @@ const redis = Redis.fromEnv();
 
 export default async function RUMPage() {
   const applications = await api.workspace.getApplicationWorkspaces.query();
-
   const session = await auth();
+
   if (!session?.user) return null;
 
   const accessRequested = await redis.sismember(

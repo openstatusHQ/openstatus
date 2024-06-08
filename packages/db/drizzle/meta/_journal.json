@@ -218,6 +218,13 @@
       "when": 1716364430118,
       "tag": "0030_elite_barracuda",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1717837961923,
+      "tag": "0031_lowly_gabe_jones",
+      "breakpoints": true
     }
   ]
 }

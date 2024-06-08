@@ -12,7 +12,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
   return (
     <AppPageLayout withHelpCallout>
       <Header
-        title="Pages"
+        title="Status Pages"
         description="Overview of all your pages."
         actions={
           <ButtonWithDisableTooltip

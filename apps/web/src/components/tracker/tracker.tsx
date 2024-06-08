@@ -8,6 +8,7 @@ import * as React from "react";
 
 import type {
   Incident,
+  Maintenance,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -50,6 +51,7 @@ interface TrackerProps {
   description?: string;
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
   incidents?: Incident[];
+  maintenances?: Maintenance[];
 }
 
 export function Tracker({
@@ -58,8 +60,14 @@ export function Tracker({
   description,
   reports,
   incidents,
+  maintenances,
 }: TrackerProps) {
-  const tracker = new OSTracker({ data, statusReports: reports, incidents });
+  const tracker = new OSTracker({
+    data,
+    statusReports: reports,
+    incidents,
+    maintenances,
+  });
   const uptime = tracker.totalUptime;
   const isMissing = tracker.isDataMissing;
 
@@ -142,7 +150,7 @@ export const Bar = ({
               <div
                 className={cn(
                   rootClassName,
-                  "h-auto w-1 flex-none rounded-full",
+                  "h-auto w-1 flex-none rounded-full"
                 )}
               />
               <div className="grid flex-1 gap-1">
@@ -237,7 +245,7 @@ export function DowntimeText({
       Down for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false },
+        { format: ["days", "hours", "minutes", "seconds"], zero: false }
       )}
     </p>
   );

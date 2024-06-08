@@ -21,7 +21,7 @@ export default async function IncidentPage({
   if (!report) return notFound();
 
   const affectedMonitors = report.monitorsToStatusReports.map(
-    ({ monitor }) => monitor,
+    ({ monitor }) => monitor
   );
 
   return (
@@ -32,6 +32,7 @@ export default async function IncidentPage({
           <StatusReportDescription
             report={report}
             monitors={affectedMonitors}
+            className="mt-2"
           />
         }
         actions={<CopyLinkButton />}

@@ -34,31 +34,29 @@ export const StatusReportList = ({
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
-  return (
-    <>
-      {reports?.length > 0 ? (
-        <div className="grid gap-8">
-          {reports.map((report, i) => {
-            const affectedMonitors = report.monitorsToStatusReports
-              .map(({ monitorId }) => {
-                const monitor = monitors.find(({ id }) => monitorId === id);
-                return monitor || undefined;
-              })
-              .filter(notEmpty);
-            const isLast = reports.length - 1 === i;
+  if (!reports.length) {
+    return <EmptyState />;
+  }
 
-            return (
-              <div key={report.id} className="grid gap-6">
-                <StatusReport monitors={affectedMonitors} report={report} />
-                {!isLast ? <Separator /> : null}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <EmptyState />
-      )}
-    </>
+  return (
+    <div className="grid gap-8">
+      {reports.map((report, i) => {
+        const affectedMonitors = report.monitorsToStatusReports
+          .map(({ monitorId }) => {
+            const monitor = monitors.find(({ id }) => monitorId === id);
+            return monitor || undefined;
+          })
+          .filter(notEmpty);
+        const isLast = reports.length - 1 === i;
+
+        return (
+          <div key={report.id} className="grid gap-6">
+            <StatusReport monitors={affectedMonitors} report={report} />
+            {!isLast ? <Separator /> : null}
+          </div>
+        );
+      })}
+    </div>
   );
 };
 

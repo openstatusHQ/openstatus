@@ -43,7 +43,7 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
   const timestamp = Date.now();
@@ -57,6 +57,12 @@ export const cron = async ({
 
   const monitors = z.array(selectMonitorSchema).parse(result);
   const allResult = [];
+
+  /**
+   * Check if monitor is connected to an active maintenance
+   * Check if monitor is connected to the status page of the active maintenance
+   * - it's because the user can remove the monitor from the status page after having added it to the maintenance
+   */
 
   for (const row of monitors) {
     const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
@@ -102,7 +108,7 @@ export const cron = async ({
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 };
 // timestamp needs to be in ms

@@ -1,5 +1,6 @@
 import type {
   Incident,
+  Maintenance,
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -16,6 +17,7 @@ type StatusReports = (StatusReport & {
   statusReportUpdates?: StatusReportUpdate[];
 })[];
 type Incidents = Incident[];
+type Maintenances = Maintenance[];
 
 /**
  * Tracker Class is supposed to handle the data and calculate from a single monitor.
@@ -27,15 +29,18 @@ export class Tracker {
   private data: Monitors = [];
   private statusReports: StatusReports = [];
   private incidents: Incidents = [];
+  private maintenances: Maintenances = [];
 
   constructor(arg: {
     data?: Monitors;
     statusReports?: StatusReports;
     incidents?: Incidents;
+    maintenances?: Maintenance[];
   }) {
     this.data = arg.data || []; // TODO: use another Class to handle a single Day
     this.statusReports = arg.statusReports || [];
     this.incidents = arg.incidents || [];
+    this.maintenances = arg.maintenances || [];
   }
 
   private calculateUptime(data: { ok: number; count: number }[]) {
@@ -51,7 +56,7 @@ export class Tracker {
         prev.count += curr.count;
         return prev;
       },
-      { count: 0, ok: 0 },
+      { count: 0, ok: 0 }
     );
   }
 
@@ -75,8 +80,18 @@ export class Tracker {
   private isOngoingReport() {
     const resolved: StatusReport["status"][] = ["monitoring", "resolved"];
     return this.statusReports.some(
-      (report) => !resolved.includes(report.status),
+      (report) => !resolved.includes(report.status)
     );
+  }
+
+  private isOngoingMaintenance() {
+    return this.maintenances.some((maintenance) => {
+      const now = new Date();
+      return (
+        maintenance.from.getTime() <= now.getTime() &&
+        maintenance.to.getTime() >= now.getTime()
+      );
+    });
   }
 
   get totalUptime(): number {
@@ -84,6 +99,7 @@ export class Tracker {
   }
 
   get currentStatus(): Status {
+    if (this.isOngoingMaintenance()) return Status.UnderMaintenance;
     if (this.isOngoingReport()) return Status.DegradedPerformance;
     if (this.isOngoingIncident()) return Status.Incident;
     return this.calculateUptimeStatus(this.data);
@@ -136,7 +152,7 @@ export class Tracker {
   private getStatusReportsByDay(props: Monitor): StatusReports {
     const statusReports = this.statusReports?.filter((report) => {
       const firstStatusReportUpdate = report?.statusReportUpdates?.sort(
-        (a, b) => a.date.getTime() - b.date.getTime(),
+        (a, b) => a.date.getTime() - b.date.getTime()
       )?.[0];
 
       if (!firstStatusReportUpdate) return false;
@@ -147,6 +163,18 @@ export class Tracker {
     return statusReports;
   }
 
+  private getMaintenancesByDay(day: Date): Maintenances {
+    const maintenances = this.maintenances.filter((maintenance) => {
+      const eod = endOfDay(day);
+      const sod = startOfDay(day);
+      return (
+        maintenance.from.getTime() <= eod.getTime() &&
+        maintenance.to.getTime() >= sod.getTime()
+      );
+    });
+    return maintenances;
+  }
+
   // TODO: it would be great to create a class to handle a single day
   // FIXME: will be always generated on each tracker.days call - needs to be in the constructor?
   get days() {
@@ -155,15 +183,18 @@ export class Tracker {
       const blacklist = isInBlacklist(day);
       const incidents = this.getIncidentsByDay(day);
       const statusReports = this.getStatusReportsByDay(props);
+      const maintenances = this.getMaintenancesByDay(day);
 
       const isMissingData = props.count === 0;
 
       // FIXME:
-      const status = incidents.length
+      const status = maintenances.length
+        ? Status.UnderMaintenance
+        : incidents.length
         ? Status.Incident
         : isMissingData
-          ? Status.Unknown
-          : this.calculateUptimeStatus([props]);
+        ? Status.Unknown
+        : this.calculateUptimeStatus([props]);
 
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;
@@ -173,6 +204,7 @@ export class Tracker {
         blacklist,
         incidents,
         statusReports,
+        maintenances,
         status,
         variant,
         label: isMissingData ? "Missing" : label,

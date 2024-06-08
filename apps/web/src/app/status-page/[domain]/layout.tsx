@@ -33,6 +33,12 @@ export default async function StatusPageLayout({ children, params }: Props) {
       href: setPrefixUrl("/", params),
     },
     {
+      label: "Maintenances",
+      segment: "maintenances",
+      href: setPrefixUrl("/maintenances", params),
+      disabled: page.maintenances.length === 0,
+    },
+    {
       label: "Incidents",
       segment: "incidents",
       href: setPrefixUrl("/incidents", params),

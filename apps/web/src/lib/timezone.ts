@@ -38,6 +38,18 @@ export function getServerTimezoneFormat() {
   return format(new Date(), "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
 }
 
+export function formatDate(date: Date) {
+  return format(date, "LLL dd, y", { timeZone: "UTC" });
+}
+
+export function formatDateTime(date: Date) {
+  return format(date, "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
+}
+
+export function formatTime(date: Date) {
+  return format(date, "HH:mm:ss zzz", { timeZone: "UTC" });
+}
+
 /**
  * All supported browser / node timezones
  */
@@ -82,7 +94,7 @@ export function getClosestTimezone(defaultTimezone?: string) {
       }
       return prev;
     },
-    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY },
+    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY }
   );
 
   return closestTimezone.timezone as keyof typeof timeDifferences;

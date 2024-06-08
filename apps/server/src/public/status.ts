@@ -55,6 +55,7 @@ status.get("/:slug", async (c) => {
     return item.status_report;
   });
 
+  // TODO: add maintenances
   const tracker = new Tracker({ incidents: ongoingIncidents, statusReports });
 
   const status = tracker.currentStatus;
@@ -73,8 +74,8 @@ async function getStatusPageData(pageId: number) {
       and(
         eq(monitorsToPages.monitorId, monitor.id),
         eq(monitor.active, true),
-        eq(monitorsToPages.pageId, pageId),
-      ),
+        eq(monitorsToPages.pageId, pageId)
+      )
     )
 
     .all();
@@ -94,7 +95,7 @@ async function getStatusPageData(pageId: number) {
     .from(monitorsToStatusReport)
     .innerJoin(
       statusReport,
-      eq(monitorsToStatusReport.statusReportId, statusReport.id),
+      eq(monitorsToStatusReport.statusReportId, statusReport.id)
     )
     .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
     .all();
@@ -106,8 +107,8 @@ async function getStatusPageData(pageId: number) {
       statusReport,
       and(
         eq(pagesToStatusReports.statusReportId, statusReport.id),
-        eq(pagesToStatusReports.pageId, pageId),
-      ),
+        eq(pagesToStatusReports.pageId, pageId)
+      )
     )
     .all();
 
@@ -117,10 +118,12 @@ async function getStatusPageData(pageId: number) {
     .where(
       and(
         isNull(incidentTable.resolvedAt),
-        inArray(incidentTable.monitorId, monitorIds),
-      ),
+        inArray(incidentTable.monitorId, monitorIds)
+      )
     )
     .all();
+
+  // TODO: query ongoingMaintenancesQuery
 
   const [monitorStatusReportData, pageStatusReportData, ongoingIncidents] =
     await Promise.all([
