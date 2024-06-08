@@ -17,7 +17,7 @@ export default async function MaintenancePage({
   if (maintenances?.length === 0)
     return (
       <EmptyState
-        icon="message-circle"
+        icon="hammer"
         title="No maintenances"
         description="Add a maintenance to your status page."
         action={

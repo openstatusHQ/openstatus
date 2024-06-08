@@ -6,7 +6,7 @@ import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 export function MaintenanceBanner(props: Maintenance) {
   return (
-    <Alert className="border-blue-100 bg-blue-50">
+    <Alert className="border-blue-500/20 bg-blue-500/10">
       <Hammer className="h-4 w-4" />
       <AlertTitle>{props.title}</AlertTitle>
       <AlertDescription>{props.message}</AlertDescription>
