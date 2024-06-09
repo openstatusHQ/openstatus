@@ -3,9 +3,10 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
+  maintenance,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
@@ -48,21 +49,45 @@ export const cron = async ({
 
   const timestamp = Date.now();
 
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
-    .all();
-  console.log(`Start cron for ${periodicity}`);
-
-  const monitors = z.array(selectMonitorSchema).parse(result);
-  const allResult = [];
-
   /**
    * Check if monitor is connected to an active maintenance
    * Check if monitor is connected to the status page of the active maintenance
    * - it's because the user can remove the monitor from the status page after having added it to the maintenance
    */
+
+  const activeMaintenances = await db.query.maintenance.findMany({
+    where: and(
+      lte(maintenance.from, new Date()),
+      gte(maintenance.to, new Date())
+    ),
+    with: { maintenancesToMonitors: true },
+  });
+
+  const monitorsInMaintenance = activeMaintenances.reduce<Set<number>>(
+    (prev, curr) => {
+      const monitors = curr.maintenancesToMonitors.map((m) => m.monitorId);
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      monitors.forEach((m) => prev.add(m));
+      return prev;
+    },
+    new Set()
+  );
+
+  const result = await db
+    .select()
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        notInArray(monitor.id, Array.from(monitorsInMaintenance))
+      )
+    )
+    .all();
+  console.log(`Start cron for ${periodicity}`);
+
+  const monitors = z.array(selectMonitorSchema).parse(result);
+  const allResult = [];
 
   for (const row of monitors) {
     const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
