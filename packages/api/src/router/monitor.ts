@@ -450,7 +450,6 @@ export const monitorRouter = createTRPCRouter({
       .parse(monitors);
   }),
 
-  // FIXME: remove if not needed!!
   getMonitorsByPageId: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
