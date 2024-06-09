@@ -71,7 +71,7 @@ export const cron = async ({
     .from(monitor)
     .where(
       and(
-        eq(monitor.periodicity, "10m"),
+        eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
         notInArray(monitor.id, currentMaintenanceMonitors)
       )
