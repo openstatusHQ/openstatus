@@ -53,7 +53,6 @@ export function Menu({ navigation }: Props) {
         <ul className="grid gap-1">
           {navigation.map(({ href, label, segment, disabled }) => {
             const active = segment === selectedSegment;
-            if (disabled) return null;
             return (
               <li key={href} className="w-full">
                 <AppLink {...{ href, label, active, disabled }} />

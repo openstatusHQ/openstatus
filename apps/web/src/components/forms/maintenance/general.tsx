@@ -17,6 +17,7 @@ import {
 } from "@openstatus/ui";
 
 import { SectionHeader } from "../shared/section-header";
+import { format } from "date-fns";
 
 interface Props {
   form: UseFormReturn<InsertMaintenance>;
@@ -101,7 +102,11 @@ export function General({ form }: Props) {
             )}
           />
           <FormDescription className="sm:-mt-2 col-span-full">
-            The date and time when the incident took place.
+            The period{" "}
+            <span className="font-medium">
+              in local time {format(new Date(), "z")}
+            </span>{" "}
+            when the maintenance takes place.
           </FormDescription>
         </div>
       </div>

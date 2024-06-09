@@ -10,6 +10,7 @@ import {
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
+  maintenancesToMonitors,
   monitor,
   monitorTag,
   monitorTagsToMonitors,
@@ -18,6 +19,7 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
@@ -167,6 +169,10 @@ export const monitorRouter = createTRPCRouter({
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
+          maintenancesToMonitors: {
+            with: { maintenance: true },
+            where: eq(maintenancesToMonitors.monitorId, opts.input.id),
+          },
         },
       });
 
@@ -177,8 +183,16 @@ export const monitorRouter = createTRPCRouter({
               monitorTag: selectMonitorTagSchema,
             })
             .array(),
+          maintenance: z.boolean().default(false).optional(),
         })
-        .safeParse(_monitor);
+        .safeParse({
+          ..._monitor,
+          maintenance: _monitor?.maintenancesToMonitors.some(
+            (item) =>
+              item.maintenance.from.getTime() <= Date.now() &&
+              item.maintenance.to.getTime() >= Date.now()
+          ),
+        });
 
       if (!parsedMonitor.success) {
         throw new TRPCError({

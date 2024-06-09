@@ -29,14 +29,6 @@ export const maintenance = sqliteTable("maintenance", {
   ),
 });
 
-export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  maintenancesToMonitors: many(maintenancesToMonitors),
-  workspace: one(workspace, {
-    fields: [maintenance.workspaceId],
-    references: [workspace.id],
-  }),
-}));
-
 export const maintenancesToMonitors = sqliteTable(
   "maintenance_to_monitor",
   {
@@ -62,9 +54,21 @@ export const maintenancesToMonitorsRelations = relations(
       fields: [maintenancesToMonitors.monitorId],
       references: [monitor.id],
     }),
-    page: one(maintenance, {
+    maintenance: one(maintenance, {
       fields: [maintenancesToMonitors.maintenanceId],
       references: [maintenance.id],
     }),
   })
 );
+
+export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
+  maintenancesToMonitors: many(maintenancesToMonitors),
+  page: one(page, {
+    fields: [maintenance.pageId],
+    references: [page.id],
+  }),
+  workspace: one(workspace, {
+    fields: [maintenance.workspaceId],
+    references: [workspace.id],
+  }),
+}));
