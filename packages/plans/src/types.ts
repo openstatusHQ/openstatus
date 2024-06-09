@@ -8,6 +8,7 @@ export type Limits = {
   "data-retention": string;
   // status pages
   "status-pages": number;
+  maintenance: boolean;
   "status-subscribers": boolean;
   "custom-domain": boolean;
   "password-protection": boolean;

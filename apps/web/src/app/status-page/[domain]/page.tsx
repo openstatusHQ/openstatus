@@ -8,6 +8,7 @@ import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
+import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 
 type Props = {
   params: { domain: string };
@@ -21,6 +22,12 @@ export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 
+  const currentMaintenances = page.maintenances.filter(
+    (maintenance) =>
+      maintenance.to.getTime() > Date.now() &&
+      maintenance.from.getTime() < Date.now()
+  );
+
   return (
     <div className="mx-auto flex w-full flex-col gap-8">
       <Header
@@ -31,18 +38,28 @@ export default async function Page({ params }: Props) {
       <StatusCheck
         statusReports={page.statusReports}
         incidents={page.incidents}
+        maintenances={page.maintenances}
       />
+      {currentMaintenances.length ? (
+        <div className="grid w-full gap-3">
+          {currentMaintenances.map((maintenance) => (
+            <MaintenanceBanner key={maintenance.id} {...maintenance} />
+          ))}
+        </div>
+      ) : null}
       <MonitorList
         monitors={page.monitors}
         statusReports={page.statusReports}
         incidents={page.incidents}
+        maintenances={page.maintenances}
       />
       <Separator />
       <div className="grid gap-6">
         <div>
-          <h2 className="font-semibold text-xl">Latest Incidents</h2>
+          <h2 className="font-semibold text-xl">Last updates</h2>
           <p className="text-muted-foreground text-sm">
-            Incidents of the last 7 days or that have not been resolved yet.
+            Reports of the last 7 days or incidents that have not been resolved
+            yet.
           </p>
         </div>
         <StatusReportList

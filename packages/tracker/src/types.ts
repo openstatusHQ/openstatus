@@ -6,12 +6,19 @@ export enum Status {
   DegradedPerformance = "degraded_performance",
   PartialOutage = "partial_outage",
   MajorOutage = "major_outage",
-  UnderMaintenance = "under_maintenance", // not used
+  UnderMaintenance = "under_maintenance",
   Unknown = "unknown",
   Incident = "incident",
 }
 
-export type StatusVariant = "up" | "degraded" | "down" | "empty" | "incident";
+// TODO: duplicate to `Status` enum above
+export type StatusVariant =
+  | "up"
+  | "degraded"
+  | "down"
+  | "empty"
+  | "incident"
+  | "maintenance";
 
 export type StatusDetails = {
   long: string;

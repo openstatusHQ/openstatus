@@ -1,4 +1,8 @@
-import type { Incident, StatusReport } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Maintenance,
+  StatusReport,
+} from "@openstatus/db/src/schema";
 import type { StatusVariant } from "@openstatus/tracker";
 import { Tracker } from "@openstatus/tracker";
 
@@ -9,11 +13,13 @@ import { Icons } from "../icons";
 export async function StatusCheck({
   statusReports,
   incidents,
+  maintenances,
 }: {
   statusReports: StatusReport[];
   incidents: Incident[];
+  maintenances: Maintenance[];
 }) {
-  const tracker = new Tracker({ statusReports, incidents });
+  const tracker = new Tracker({ statusReports, incidents, maintenances });
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
@@ -39,6 +45,9 @@ export function StatusIcon({ variant }: { variant: StatusVariant }) {
   if (variant === "incident") {
     const AlertTriangleIcon = Icons["alert-triangle"];
     return <AlertTriangleIcon className="h-5 w-5 text-background" />;
+  }
+  if (variant === "maintenance") {
+    return <Icons.hammer className="h-5 w-5 text-background" />;
   }
   if (variant === "degraded") {
     return <Icons.minus className="h-5 w-5 text-background" />;

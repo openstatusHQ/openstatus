@@ -8,6 +8,10 @@ import {
   selectStatusReportUpdateSchema,
 } from "./status_reports";
 import { workspacePlanSchema } from "./workspaces";
+import {
+  maintenancesToMonitors,
+  selectMaintenanceSchema,
+} from "./maintenances";
 
 // TODO: create a 'public-status' schema with all the different types and validations
 
@@ -25,10 +29,23 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
         monitorId: z.number(),
         statusReportId: z.number(),
         monitor: selectPublicMonitorSchema,
-      }),
+      })
     )
     .default([]),
 });
+
+export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
+  maintenancesToMonitors: z
+    .array(
+      z.object({
+        monitorId: z.number(),
+        maintenanceId: z.number(),
+      })
+    )
+    .default([]),
+});
+// TODO: it would be nice to automatically add the monitor relation here
+// .refine((data) => ({ monitors: data.maintenancesToMonitors.map((m) => m.monitorId) }));
 
 export const selectPageSchemaWithRelation = selectPageSchema.extend({
   monitors: z.array(selectMonitorSchema),
@@ -42,7 +59,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       pageId: z.number(),
       order: z.number().default(0).optional(),
       monitor: selectMonitorSchema,
-    }),
+    })
   ),
 });
 
@@ -51,6 +68,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
     monitors: z.array(selectPublicMonitorSchema),
     statusReports: z.array(selectStatusReportPageSchema),
     incidents: z.array(selectIncidentSchema),
+    maintenances: z.array(selectMaintenancePageSchema),
     workspacePlan: workspacePlanSchema
       .nullable()
       .default("free")
@@ -69,7 +87,7 @@ export const selectPublicStatusReportSchemaWithRelation =
           monitorId: z.number(),
           statusReportId: z.number(),
           monitor: selectPublicMonitorSchema,
-        }),
+        })
       )
       .default([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),
