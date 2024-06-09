@@ -3,10 +3,11 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
+import { and, db, eq, gte, inArray, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   maintenance,
+  maintenancesToMonitors,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
@@ -55,35 +56,41 @@ export const cron = async ({
    * - it's because the user can remove the monitor from the status page after having added it to the maintenance
    */
 
-  const activeMaintenances = await db.query.maintenance.findMany({
-    where: and(
-      lte(maintenance.from, new Date()),
-      gte(maintenance.to, new Date())
-    ),
-    with: { maintenancesToMonitors: true },
-  });
+  // const activeMaintenances = await db.query.maintenance.findMany({
+  //   where: and(
+  //     lte(maintenance.from, new Date()),
+  //     gte(maintenance.to, new Date())
+  //   ),
+  //   with: { maintenancesToMonitors: true },
+  // });
 
-  const monitorsInMaintenance = activeMaintenances.reduce<Set<number>>(
-    (prev, curr) => {
-      const monitors = curr.maintenancesToMonitors.map((m) => m.monitorId);
-      // biome-ignore lint/complexity/noForEach: <explanation>
-      monitors.forEach((m) => prev.add(m));
-      return prev;
-    },
-    new Set()
-  );
+  const currentMainteance = db
+    .select({ id: maintenance.id })
+    .from(maintenance)
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
+    )
+    .as("currentMainteance");
+
+  const currentMainteanceMonitors = db
+    .select({ monitorId: maintenancesToMonitors.monitorId })
+    .from(maintenancesToMonitors)
+    .innerJoin(
+      currentMainteance,
+      inArray(maintenancesToMonitors.maintenanceId, currentMainteance)
+    )
+    .as("currentMainteanceMonitors");
 
   const result = await db
     .select()
     .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        notInArray(monitor.id, Array.from(monitorsInMaintenance))
-      )
+    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
+    .leftJoin(
+      currentMainteanceMonitors,
+      notInArray(monitor.id, currentMainteanceMonitors)
     )
     .all();
+
   console.log(`Start cron for ${periodicity}`);
 
   const monitors = z.array(selectMonitorSchema).parse(result);
