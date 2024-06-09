@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, inArray } from "@openstatus/db";
+import { and, eq, gte, inArray, lte } from "@openstatus/db";
 import {
   insertMaintenanceSchema,
   maintenance,
@@ -67,6 +67,19 @@ export const maintenanceRouter = createTRPCRouter({
       .all();
     return _maintenances;
   }),
+  getLast7DaysByWorkspace: protectedProcedure.query(async (opts) => {
+    const _maintenances = await opts.ctx.db.query.maintenance.findMany({
+      where: and(
+        eq(maintenance.workspaceId, opts.ctx.workspace.id),
+        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+      ),
+      with: { maintenancesToMonitors: true },
+    });
+    return _maintenances.map((m) => ({
+      ...m,
+      monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
+    }));
+  }),
   getByPage: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
@@ -83,6 +96,20 @@ export const maintenanceRouter = createTRPCRouter({
       // TODO:
       return _maintenances;
     }),
+  getActiveByWorkspace: protectedProcedure.query(async (opts) => {
+    const _maintenances = await opts.ctx.db
+      .select()
+      .from(maintenance)
+      .where(
+        and(
+          eq(maintenance.workspaceId, opts.ctx.workspace.id),
+          gte(maintenance.to, new Date()),
+          lte(maintenance.from, new Date())
+        )
+      )
+      .all();
+    return _maintenances;
+  }),
   update: protectedProcedure
     .input(insertMaintenanceSchema)
     .mutation(async (opts) => {

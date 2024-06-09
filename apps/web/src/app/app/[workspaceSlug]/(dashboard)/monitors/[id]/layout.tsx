@@ -36,13 +36,14 @@ export default async function Layout({
             <StatusDotWithTooltip
               active={monitor.active}
               status={monitor.status}
+              maintenance={monitor.maintenance}
             />
             {monitor.monitorTagsToMonitors.length > 0 ? (
               <>
                 <span className="text-muted-foreground/50 text-xs">•</span>
                 <TagBadgeWithTooltip
                   tags={monitor.monitorTagsToMonitors.map(
-                    ({ monitorTag }) => monitorTag,
+                    ({ monitorTag }) => monitorTag
                   )}
                 />
               </>
