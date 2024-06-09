@@ -46,7 +46,6 @@ export function Header({ navigation, plan, page }: Props) {
         <TabsContainer className="-mb-[14px] hidden sm:block">
           {navigation.map(({ label, href, disabled, segment }) => {
             const active = segment === selectedSegment;
-            if (disabled) return null;
             return (
               <TabsLink key={segment} {...{ active, href, label, disabled }}>
                 {label}
