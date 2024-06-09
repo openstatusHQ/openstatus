@@ -63,6 +63,10 @@ export const maintenancesToMonitorsRelations = relations(
 
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
   maintenancesToMonitors: many(maintenancesToMonitors),
+  page: one(page, {
+    fields: [maintenance.pageId],
+    references: [page.id],
+  }),
   workspace: one(workspace, {
     fields: [maintenance.workspaceId],
     references: [workspace.id],

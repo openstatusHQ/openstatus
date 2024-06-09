@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import * as z from "zod";
 
-import type { Page } from "@openstatus/db/src/schema";
+import type { Maintenance, Page } from "@openstatus/db/src/schema";
 import {
   Badge,
   Tooltip,
@@ -18,7 +18,10 @@ import { DataTableRowActions } from "./data-table-row-actions";
 import { Check } from "lucide-react";
 
 export const columns: ColumnDef<
-  Page & { monitorsToPages: { monitor: { name: string } }[] }
+  Page & {
+    monitorsToPages: { monitor: { name: string } }[];
+    maintenancesToPages: Maintenance[]; // we get only the active maintenances!
+  }
 >[] = [
   {
     accessorKey: "title",
@@ -32,6 +35,9 @@ export const columns: ColumnDef<
           <span className="max-w-[125px] truncate group-hover:underline">
             {row.getValue("title")}
           </span>
+          {row.original.maintenancesToPages.length > 0 ? (
+            <Badge>Maintenance</Badge>
+          ) : null}
         </Link>
       );
     },

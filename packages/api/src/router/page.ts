@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, inArray, isNull, or, sql } from "@openstatus/db";
+import { and, eq, gte, inArray, isNull, lte, or, sql } from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -213,6 +213,12 @@ export const pageRouter = createTRPCRouter({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),
       with: {
         monitorsToPages: { with: { monitor: true } },
+        maintenancesToPages: {
+          where: and(
+            lte(maintenance.from, new Date()),
+            gte(maintenance.to, new Date())
+          ),
+        },
       },
     });
     return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
