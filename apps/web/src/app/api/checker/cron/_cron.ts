@@ -3,7 +3,7 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq, gte, inArray, lte, notInArray } from "@openstatus/db";
+import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   maintenance,
@@ -50,44 +50,31 @@ export const cron = async ({
 
   const timestamp = Date.now();
 
-  /**
-   * Check if monitor is connected to an active maintenance
-   * Check if monitor is connected to the status page of the active maintenance
-   * - it's because the user can remove the monitor from the status page after having added it to the maintenance
-   */
-
-  // const activeMaintenances = await db.query.maintenance.findMany({
-  //   where: and(
-  //     lte(maintenance.from, new Date()),
-  //     gte(maintenance.to, new Date())
-  //   ),
-  //   with: { maintenancesToMonitors: true },
-  // });
-
-  const currentMainteance = db
+  const currentMaintenance = db
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
       and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
     )
-    .as("currentMainteance");
+    .as("currentMaintenance");
 
-  const currentMainteanceMonitors = db
-    .select({ monitorId: maintenancesToMonitors.monitorId })
+  const currentMaintenanceMonitors = db
+    .select({ id: maintenancesToMonitors.monitorId })
     .from(maintenancesToMonitors)
     .innerJoin(
-      currentMainteance,
-      inArray(maintenancesToMonitors.maintenanceId, currentMainteance)
-    )
-    .as("currentMainteanceMonitors");
+      currentMaintenance,
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
+    );
 
   const result = await db
     .select()
     .from(monitor)
-    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
-    .leftJoin(
-      currentMainteanceMonitors,
-      notInArray(monitor.id, currentMainteanceMonitors)
+    .where(
+      and(
+        eq(monitor.periodicity, "10m"),
+        eq(monitor.active, true),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
     )
     .all();
 
