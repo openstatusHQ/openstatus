@@ -17,6 +17,7 @@ import type {
 import { Tracker } from "@openstatus/tracker";
 import {
   Badge,
+  Checkbox,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -29,6 +30,7 @@ import { Bar } from "@/components/tracker/tracker";
 import { isActiveMaintenance } from "@/lib/maintenances/utils";
 
 import { DataTableRowActions } from "./data-table-row-actions";
+import { Radio, View } from "lucide-react";
 
 export const columns: ColumnDef<{
   monitor: Monitor;
@@ -39,37 +41,90 @@ export const columns: ColumnDef<{
   tags?: MonitorTag[];
 }>[] = [
   {
-    accessorKey: "name",
-    accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
-    header: "Name",
+    id: "id",
+    accessorKey: "id",
+    accessorFn: (row) => row.monitor.id,
+  },
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+  },
+  {
+    accessorKey: "active",
+    accessorFn: (row) => row.monitor.active,
+    header: () => (
+      <div className="mx-auto w-4">
+        <Radio className="h-4 w-4" />
+      </div>
+    ),
     cell: ({ row }) => {
-      const { active, status, name, public: _public } = row.original.monitor;
+      const { active, status } = row.original.monitor;
       const maintenance = isActiveMaintenance(row.original.maintenances);
       return (
-        <div className="flex gap-2">
-          <Link
-            href={`./monitors/${row.original.monitor.id}/overview`}
-            className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
-          >
-            <StatusDotWithTooltip
-              active={active}
-              status={status}
-              maintenance={maintenance}
-            />
-            <span className="truncate group-hover:underline">{name}</span>
-          </Link>
-          {_public ? <Badge variant="secondary">public</Badge> : null}
+        <div className="flex items-center justify-center">
+          <StatusDotWithTooltip
+            active={active}
+            status={status}
+            maintenance={maintenance}
+          />
         </div>
       );
     },
   },
   {
-    // REMINDER: visibility is handled within the `<DataTable />`
     accessorKey: "public",
     accessorFn: (row) => row.monitor.public,
+    header: () => (
+      <div className="mx-auto w-4">
+        <View className="h-4 w-4" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const { public: _public } = row.original.monitor;
+      return (
+        <div className="flex items-center justify-center">{/* TODO: */}</div>
+      );
+    },
     filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       return value.includes(row.original.monitor.public);
+    },
+  },
+  {
+    accessorKey: "name",
+    accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
+    header: "Name",
+    cell: ({ row }) => {
+      const { name, public: _public } = row.original.monitor;
+      return (
+        <div className="flex gap-2">
+          <Link
+            href={`./monitors/${row.original.monitor.id}/overview`}
+            className="group flex max-w-full items-center gap-2"
+          >
+            <span className="truncate group-hover:underline">{name}</span>
+          </Link>
+          {_public ? <Badge variant="secondary">public</Badge> : null}
+        </div>
+      );
     },
   },
   {

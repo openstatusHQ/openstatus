@@ -9,7 +9,7 @@ export default function AppPageLayout({
 }: {
   children: React.ReactNode;
   className?: string;
-  withHelpCallout?: boolean;
+  withHelpCallout?: boolean; // TODO: remove as we have the `Bubble` component for support
 }) {
   return (
     <Shell className="relative flex flex-1 flex-col overflow-x-hidden">

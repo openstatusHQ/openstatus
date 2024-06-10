@@ -10,7 +10,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
   const isLimitReached = await api.monitor.isMonitorLimitReached.query();
 
   return (
-    <AppPageLayout withHelpCallout>
+    <AppPageLayout>
       <Header
         title="Monitors"
         description="Overview of all your monitors."
