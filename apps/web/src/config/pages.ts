@@ -101,6 +101,13 @@ export const statusPagesPagesConfig: Page[] = [
     icon: "users",
     segment: "subscribers",
   },
+  {
+    title: "Maintenance",
+    description: "Where you can see all the maintenance.",
+    href: "/status-pages/[id]/maintenances",
+    icon: "hammer",
+    segment: "maintenances",
+  },
 ];
 
 const incidentPagesConfig: Page[] = [
@@ -240,7 +247,7 @@ export const marketingPagesConfig = [
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig,
+  currentPage: readonly Page[] = pagesConfig
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);

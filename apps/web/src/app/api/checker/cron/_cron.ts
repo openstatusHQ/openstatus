@@ -3,9 +3,11 @@ import type { google } from "@google-cloud/tasks/build/protos/protos";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
+  maintenance,
+  maintenancesToMonitors,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
@@ -43,23 +45,46 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
   const timestamp = Date.now();
 
+  const currentMaintenance = db
+    .select({ id: maintenance.id })
+    .from(maintenance)
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
+    )
+    .as("currentMaintenance");
+
+  const currentMaintenanceMonitors = db
+    .select({ id: maintenancesToMonitors.monitorId })
+    .from(maintenancesToMonitors)
+    .innerJoin(
+      currentMaintenance,
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
+    );
+
   const result = await db
     .select()
     .from(monitor)
-    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
+    )
     .all();
+
   console.log(`Start cron for ${periodicity}`);
 
   const monitors = z.array(selectMonitorSchema).parse(result);
   const allResult = [];
 
   for (const row of monitors) {
-    const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
+    const selectedRegions = row.regions.length > 0 ? row.regions : ["auto"];
 
     const result = await db
       .select()
@@ -102,7 +127,7 @@ export const cron = async ({
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 };
 // timestamp needs to be in ms

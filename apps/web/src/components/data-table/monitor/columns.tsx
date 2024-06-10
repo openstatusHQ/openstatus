@@ -4,7 +4,12 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNowStrict } from "date-fns";
 import Link from "next/link";
 
-import type { Incident, Monitor, MonitorTag } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Maintenance,
+  Monitor,
+  MonitorTag,
+} from "@openstatus/db/src/schema";
 import type {
   Monitor as MonitorTracker,
   ResponseTimeMetrics,
@@ -21,6 +26,8 @@ import {
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { Bar } from "@/components/tracker/tracker";
+import { isActiveMaintenance } from "@/lib/maintenances/utils";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<{
@@ -28,6 +35,7 @@ export const columns: ColumnDef<{
   metrics?: ResponseTimeMetrics;
   data?: MonitorTracker[];
   incidents?: Incident[];
+  maintenances?: Maintenance[];
   tags?: MonitorTag[];
 }>[] = [
   {
@@ -36,13 +44,18 @@ export const columns: ColumnDef<{
     header: "Name",
     cell: ({ row }) => {
       const { active, status, name, public: _public } = row.original.monitor;
+      const maintenance = isActiveMaintenance(row.original.maintenances);
       return (
         <div className="flex gap-2">
           <Link
             href={`./monitors/${row.original.monitor.id}/overview`}
             className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
           >
-            <StatusDotWithTooltip active={active} status={status} />
+            <StatusDotWithTooltip
+              active={active}
+              status={status}
+              maintenance={maintenance}
+            />
             <span className="truncate group-hover:underline">{name}</span>
           </Link>
           {_public ? <Badge variant="secondary">public</Badge> : null}
@@ -71,7 +84,7 @@ export const columns: ColumnDef<{
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
       return value.some((item) =>
-        row.original.tags?.some((tag) => tag.name === item),
+        row.original.tags?.some((tag) => tag.name === item)
       );
     },
   },
@@ -84,6 +97,7 @@ export const columns: ColumnDef<{
       const tracker = new Tracker({
         data: row.original.data?.slice(0, 7).reverse(),
         incidents: row.original.incidents,
+        maintenances: row.original.maintenances,
       });
       return (
         <div className="flex w-24 gap-1">

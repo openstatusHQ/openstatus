@@ -2,10 +2,6 @@ import * as React from "react";
 
 import { PathCard } from "./_components/path-card";
 import { api } from "@/trpc/server";
-import { Suspense } from "react";
-import { Skeleton } from "@openstatus/ui/src/components/skeleton";
-import Loading from "../loading";
-import { auth } from "@/lib/auth";
 import { SessionTable } from "./_components/session-table";
 import { z } from "zod";
 
@@ -18,22 +14,18 @@ export default async function RUMPage({
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const session = await auth();
-  if (!session?.user) {
-    return <Loading />;
-  }
+  const search = searchParamsSchema.safeParse(searchParams);
 
-  const data = searchParamsSchema.parse(searchParams);
   const applications = await api.workspace.getApplicationWorkspaces.query();
-  if (applications.length === 0 || !applications[0].dsn) {
-    return null;
-  }
+  const dsn = applications?.[0]?.dsn;
+
+  if (!search.success || !dsn) return null;
 
   return (
     <>
-      <PathCard dsn={applications[0].dsn} path={data.path} />
+      <PathCard dsn={dsn} path={search.data.path} />
       <div>
-        <SessionTable dsn={applications[0].dsn} path={data.path} />
+        <SessionTable dsn={dsn} path={search.data.path} />
       </div>
     </>
   );

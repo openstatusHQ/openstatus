@@ -15,6 +15,7 @@ import { Badge, Button } from "@openstatus/ui";
 import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
 import { StatusBadge } from "../status-update/status-badge";
 import { ProcessMessage } from "./process-message";
+import { cn } from "@/lib/utils";
 
 function StatusReport({
   report,
@@ -38,7 +39,7 @@ function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
   const params = useParams<{ domain: string }>();
   return (
     <div className="flex items-center gap-2">
-      <h3 className="font-semibold text-2xl">{report.title}</h3>
+      <h3 className="font-semibold text-xl">{report.title}</h3>
       <Button
         variant="ghost"
         size="icon"
@@ -56,14 +57,16 @@ function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
 function StatusReportDescription({
   report,
   monitors,
+  className,
 }: {
   report: StatusReportWithUpdates;
   monitors: PublicMonitor[];
+  className?: string;
 }) {
   const firstReport =
     report.statusReportUpdates[report.statusReportUpdates.length - 1];
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
       <p className="text-muted-foreground">
         {format(firstReport.date || new Date(), "LLL dd, y HH:mm")}
       </p>

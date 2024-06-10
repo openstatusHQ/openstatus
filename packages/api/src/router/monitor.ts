@@ -10,6 +10,7 @@ import {
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   insertMonitorSchema,
+  maintenancesToMonitors,
   monitor,
   monitorTag,
   monitorTagsToMonitors,
@@ -18,6 +19,7 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
@@ -167,6 +169,10 @@ export const monitorRouter = createTRPCRouter({
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
+          maintenancesToMonitors: {
+            with: { maintenance: true },
+            where: eq(maintenancesToMonitors.monitorId, opts.input.id),
+          },
         },
       });
 
@@ -177,11 +183,18 @@ export const monitorRouter = createTRPCRouter({
               monitorTag: selectMonitorTagSchema,
             })
             .array(),
+          maintenance: z.boolean().default(false).optional(),
         })
-        .safeParse(_monitor);
+        .safeParse({
+          ..._monitor,
+          maintenance: _monitor?.maintenancesToMonitors.some(
+            (item) =>
+              item.maintenance.from.getTime() <= Date.now() &&
+              item.maintenance.to.getTime() >= Date.now()
+          ),
+        });
 
       if (!parsedMonitor.success) {
-        console.log(parsedMonitor.error);
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "You are not allowed to access the monitor.",
@@ -450,6 +463,48 @@ export const monitorRouter = createTRPCRouter({
       )
       .parse(monitors);
   }),
+
+  getMonitorsByPageId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const _page = await opts.ctx.db.query.page.findFirst({
+        where: and(
+          eq(page.id, opts.input.id),
+          eq(page.workspaceId, opts.ctx.workspace.id)
+        ),
+      });
+
+      if (!_page) return undefined;
+
+      const monitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt)
+        ),
+        with: {
+          monitorTagsToMonitors: { with: { monitorTag: true } },
+          monitorsToPages: {
+            where: eq(monitorsToPages.pageId, _page.id),
+          },
+        },
+      });
+
+      return z
+        .array(
+          selectMonitorSchema.extend({
+            monitorTagsToMonitors: z
+              .array(z.object({ monitorTag: selectMonitorTagSchema }))
+              .default([]),
+          })
+        )
+        .parse(
+          monitors.filter((monitor) =>
+            monitor.monitorsToPages
+              .map(({ pageId }) => pageId)
+              .includes(_page.id)
+          )
+        );
+    }),
 
   toggleMonitorActive: protectedProcedure
     .input(z.object({ id: z.number() }))

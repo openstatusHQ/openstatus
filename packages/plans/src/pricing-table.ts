@@ -33,6 +33,10 @@ export const pricingTableConfig: Record<
         label: "Number of status pages",
       },
       {
+        value: "maintenance",
+        label: "Maintenance status",
+      },
+      {
         value: "status-subscribers",
         label: "Subscribers",
       },

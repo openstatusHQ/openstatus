@@ -31,7 +31,7 @@ const searchParamsSchema = z.object({
         if (v === "true") return true;
         if (v === "false") return false;
         return undefined;
-      }),
+      })
     )
     .optional(),
 });
@@ -61,8 +61,9 @@ export default async function MonitorPage({
       />
     );
 
-  const _incidents = await api.incident.getIncidentsByWorkspace.query();
+  const _incidents = await api.incident.getIncidentsByWorkspace.query(); // TODO: filter by last 7 days
   const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
+  const _maintenances = await api.maintenance.getLast7DaysByWorkspace.query();
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
@@ -72,30 +73,34 @@ export default async function MonitorPage({
         {
           monitorId: String(monitor.id),
         },
-        { cache: "no-store", revalidate: 0 },
+        { cache: "no-store", revalidate: 0 }
       );
 
       const data = await tb.endpointStatusPeriod("7d")(
         {
           monitorId: String(monitor.id),
         },
-        { cache: "no-store", revalidate: 0 },
+        { cache: "no-store", revalidate: 0 }
       );
 
       const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id,
+        (incident) => incident.monitorId === monitor.id
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag,
+        ({ monitorTag }) => monitorTag
       );
 
-      return { monitor, metrics: current, data, incidents, tags };
-    }),
+      const maintenances = _maintenances.filter((maintenance) =>
+        maintenance.monitors.includes(monitor.id)
+      );
+
+      return { monitor, metrics: current, data, incidents, maintenances, tags };
+    })
   );
 
   return (

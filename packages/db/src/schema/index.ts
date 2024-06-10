@@ -12,3 +12,4 @@ export * from "./invitations";
 export * from "./incidents";
 export * from "./monitor_tags";
 export * from "./applications";
+export * from "./maintenances";

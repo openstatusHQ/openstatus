@@ -30,6 +30,6 @@ export const statusDictionary: Record<
   },
   under_maintenance: {
     label: "Under Maintenance",
-    color: "bg-gray-500",
+    color: "bg-blue-500",
   },
 } as const;
