@@ -84,7 +84,7 @@ export const cron = async ({
   const allResult = [];
 
   for (const row of monitors) {
-    const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
+    const selectedRegions = row.regions.length > 0 ? row.regions : ["auto"];
 
     const result = await db
       .select()
