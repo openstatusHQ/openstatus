@@ -205,6 +205,9 @@ importers:
       nanoid:
         specifier: 5.0.2
         version: 5.0.2
+      percentile:
+        specifier: ^1.6.0
+        version: 1.6.0
       validator:
         specifier: 13.11.0
         version: 13.11.0
@@ -6840,6 +6843,9 @@ packages:
 
   peberminta@0.9.0:
     resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
+
+  percentile@1.6.0:
+    resolution: {integrity: sha512-8vSyjdzwxGDHHwH+cSGch3A9Uj2On3UpgOWxWXMKwUvoAbnujx6DaqmV1duWXNiH/oEWpyVd6nSQccix6DM3Ng==}
 
   periscopic@3.1.0:
     resolution: {integrity: sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw==}
@@ -15178,6 +15184,8 @@ snapshots:
   peberminta@0.8.0: {}
 
   peberminta@0.9.0: {}
+
+  percentile@1.6.0: {}
 
   periscopic@3.1.0:
     dependencies:

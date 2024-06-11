@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MonitorSchema } from "../monitors/schema";
+import { min } from "@openstatus/db";
 
 export const CheckSchema = MonitorSchema.pick({
   url: true,
@@ -61,6 +62,19 @@ export const TimingSchema = z.object({
     .openapi({ description: "Transfer timestamp end time in UTC " }),
 });
 
+export const AggregatedResponseSchema = z
+  .object({
+    p50: z.number().openapi({ description: "The 50th percentile" }),
+    p75: z.number().openapi({ description: "The 75th percentile" }),
+    p95: z.number().openapi({ description: "The 95th percentile" }),
+    p99: z.number().openapi({ description: "The 99th percentile" }),
+    min: z.number().openapi({ description: "The minimum value" }),
+    max: z.number().openapi({ description: "The maximum value" }),
+  })
+  .openapi({
+    description: "The aggregated data of the check",
+  });
+
 export const ResponseSchema = z.object({
   timeStamp: z
     .number()
@@ -80,6 +94,31 @@ export const ResponseSchema = z.object({
   timing: TimingSchema.openapi({
     description: "The timing metrics of the response",
   }),
+  aggregated: z
+    .object({
+      dns: AggregatedResponseSchema.openapi({
+        description: "The aggregated DNS timing of the check",
+      }),
+      connection: AggregatedResponseSchema.openapi({
+        description: "The aggregated connection timing of the check",
+      }),
+      tls: AggregatedResponseSchema.openapi({
+        description: "The aggregated tls timing of the check",
+      }),
+      firstByte: AggregatedResponseSchema.openapi({
+        description: "The aggregated first byte timing of the check",
+      }),
+      transfer: AggregatedResponseSchema.openapi({
+        description: "The aggregated transfer timing of the check",
+      }),
+      latency: AggregatedResponseSchema.openapi({
+        description: "The aggregated latency timing of the check",
+      }),
+    })
+    .optional()
+    .openapi({
+      description: "The aggregated data dns timing of the check",
+    }),
   region: z.string().openapi({ description: "The region where the check ran" }),
 });
 

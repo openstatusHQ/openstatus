@@ -2,10 +2,16 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { checkAPI } from "./index";
-import { CheckPostResponseSchema, CheckSchema, ResponseSchema } from "./schema";
+import {
+  AggregatedResponseSchema,
+  CheckPostResponseSchema,
+  CheckSchema,
+  ResponseSchema,
+} from "./schema";
 import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import { env } from "../../env";
+import percentile from "percentile";
 
 const postRoute = createRoute({
   method: "post",
@@ -41,7 +47,7 @@ export function registerPostCheck(api: typeof checkAPI) {
     const workspaceId = c.get("workspaceId");
     const input = c.req.valid("json");
 
-    const { headers, regions, runCount, ...rest } = data;
+    const { headers, regions, runCount, aggregated, ...rest } = data;
 
     const newCheck = await db
       .insert(check)
@@ -88,22 +94,129 @@ export function registerPostCheck(api: typeof checkAPI) {
       result.push(...allResults);
     }
 
-    const allTimings = result
-      .filter((r) => r.status === "fulfilled")
+    const fulfilledRequest = result
+      .filter((r) => r.status === "fulfilled" && r.value)
       .map((r) => {
-        if (r.status === "fulfilled") {
-          const data = ResponseSchema.parse(r.value.json());
-          return data.timing;
-        }
+        // WHY TS? WHY?
+        if (r.status !== "fulfilled") throw new Error("No value");
+        return ResponseSchema.parse(r.value.json());
+      });
+    let aggregatedResponse = null;
+    if (aggregated) {
+      // This is ugly
+      const dnsArray = fulfilledRequest.map(
+        (r) => r.timing.dnsDone - r.timing.dnsStart
+      );
+      const connectArray = fulfilledRequest.map(
+        (r) => r.timing.connectDone - r.timing.connectStart
+      );
+      const tlsArray = fulfilledRequest.map(
+        (r) => r.timing.tlsHandshakeDone - r.timing.tlsHandshakeStart
+      );
+      const firstArray = fulfilledRequest.map(
+        (r) => r.timing.firstByteDone - r.timing.firstByteStart
+      );
+      const transferArray = fulfilledRequest.map(
+        (r) => r.timing.transferDone - r.timing.transferStart
+      );
+      const latencyArray = fulfilledRequest.map((r) => r.latency);
+
+      const dnsPercentile = percentile([50, 75, 95, 99], dnsArray) as number[];
+      const connectPercentile = percentile(
+        [50, 75, 95, 99],
+        connectArray
+      ) as number[];
+      const tlsPercentile = percentile([50, 75, 95, 99], tlsArray) as number[];
+      const firstPercentile = percentile(
+        [50, 75, 95, 99],
+        firstArray
+      ) as number[];
+
+      const transferPercentile = percentile(
+        [50, 75, 95, 99],
+        transferArray
+      ) as number[];
+      const latencyPercentile = percentile(
+        [50, 75, 95, 99],
+        latencyArray
+      ) as number[];
+
+      const aggregate = z.object({
+        dms: AggregatedResponseSchema,
+        connect: AggregatedResponseSchema,
+        tls: AggregatedResponseSchema,
+        firstByte: AggregatedResponseSchema,
+        transfert: AggregatedResponseSchema,
+        latency: AggregatedResponseSchema,
+      });
+      const aggregatedDNS = AggregatedResponseSchema.parse({
+        p50: dnsPercentile[0],
+        p75: dnsPercentile[1],
+        p95: dnsPercentile[2],
+        p99: dnsPercentile[3],
+        min: Math.min(...dnsArray),
+        max: Math.max(...dnsArray),
+      });
+      const aggregatedConnect = AggregatedResponseSchema.parse({
+        p50: connectPercentile[0],
+        p75: connectPercentile[1],
+        p95: connectPercentile[2],
+        p99: connectPercentile[3],
+        min: Math.min(...connectArray),
+        max: Math.max(...connectArray),
+      });
+      const aggregatedTls = AggregatedResponseSchema.parse({
+        p50: tlsPercentile[0],
+        p75: tlsPercentile[1],
+        p95: tlsPercentile[2],
+        p99: tlsPercentile[3],
+        min: Math.min(...tlsArray),
+        max: Math.max(...tlsArray),
+      });
+      const aggregatedFirst = AggregatedResponseSchema.parse({
+        p50: firstPercentile[0],
+        p75: firstPercentile[1],
+        p95: firstPercentile[2],
+        p99: firstPercentile[3],
+        min: Math.min(...firstArray),
+        max: Math.max(...firstArray),
+      });
+      const aggregatedTransfer = AggregatedResponseSchema.parse({
+        p50: transferPercentile[0],
+        p75: transferPercentile[1],
+        p95: transferPercentile[2],
+        p99: transferPercentile[3],
+        min: Math.min(...transferArray),
+        max: Math.max(...transferArray),
       });
 
-    const lastResponse = ResponseSchema.parse(
-      result.filter((r) => r.status === "fulfilled")?.pop()
-    );
+      const aggregatedLatency = AggregatedResponseSchema.parse({
+        p50: latencyPercentile[0],
+        p75: latencyPercentile[1],
+        p95: latencyPercentile[2],
+        p99: latencyPercentile[3],
+        min: Math.min(...latencyArray),
+        max: Math.max(...latencyArray),
+      });
+
+      aggregatedResponse = aggregate.parse({
+        dns: aggregatedDNS,
+        connection: aggregatedConnect,
+        tls: aggregatedTls,
+        firstByte: aggregatedFirst,
+        transfer: aggregatedTransfer,
+        latency: aggregatedLatency,
+      });
+    }
+    const allTimings = fulfilledRequest.map((r) => r.timing);
+
+    const lastResponse = fulfilledRequest[fulfilledRequest.length - 1];
+
     const responseResult = CheckPostResponseSchema.parse({
       id: newCheck.id,
       timing: allTimings,
       response: lastResponse,
+      aggregated: aggregatedResponse,
     });
 
     return c.json(responseResult);

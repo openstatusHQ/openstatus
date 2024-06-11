@@ -31,6 +31,7 @@
     "@upstash/qstash": "2.1.8",
     "hono": "4.0.0",
     "nanoid": "5.0.2",
+    "percentile": "^1.6.0",
     "validator": "13.11.0",
     "zod": "3.22.4"
   },
