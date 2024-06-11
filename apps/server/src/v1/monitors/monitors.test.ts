@@ -68,7 +68,7 @@ test("Create a monitor", async () => {
       {
         type: "status",
         compare: "eq",
-        target: "200",
+        target: 200,
       },
       { type: "header", compare: "not_eq", key: "key", target: "value" },
     ],
@@ -107,7 +107,7 @@ test("Create a monitor with Assertion ", async () => {
       {
         type: "status",
         compare: "eq",
-        target: "200",
+        target: 200,
       },
       { type: "header", compare: "not_eq", key: "key", target: "value" },
     ],
