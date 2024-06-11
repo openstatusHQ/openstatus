@@ -73,6 +73,6 @@ func TestSendEvent(t *testing.T) {
 
 		err := client.SendEvent(ctx, "event", "test")
 		require.NoError(t, err)
-		require.Equal(t, "https://api.tinybird.co/v0/events?name=ping_response__v8", url)
+		require.Equal(t, "https://api.tinybird.co/v0/events?name=test", url)
 	})
 }
