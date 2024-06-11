@@ -225,7 +225,6 @@ export function DataTableFloatingActions<TData>({
               </SelectGroup>
             </SelectContent>
           </Select>
-          {/* TODO: only update on close! not on every change */}
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={isPending && method === "tag"}
@@ -233,7 +232,8 @@ export function DataTableFloatingActions<TData>({
             >
               <Button variant="outline">Tags</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            <DropdownMenuContent>
+              {/* TODO: make it look like DataTableFacetedFilter */}
               {tags?.map((tag) => (
                 <DropdownMenuCheckboxItem
                   key={tag.id}
@@ -251,8 +251,13 @@ export function DataTableFloatingActions<TData>({
                       action: value ? "add" : "remove",
                     });
                   }}
+                  className="flex items-center justify-between gap-3"
                 >
-                  {tag.name}
+                  <span>{tag.name}</span>
+                  <span
+                    style={{ backgroundColor: tag.color }}
+                    className="h-2 w-2 rounded-full"
+                  />
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
