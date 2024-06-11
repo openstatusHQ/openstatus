@@ -22,7 +22,9 @@ import {
   DropdownMenuTrigger,
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
   Separator,
@@ -82,6 +84,25 @@ export function DataTableFloatingActions<TData>({
           ids: rows.map((row) => row.getValue("id")),
           ...props,
         });
+        toast.success("Monitor(s) updated");
+        router.refresh();
+      } catch (error) {
+        console.error(error);
+        toastAction("error");
+      }
+    });
+  }
+
+  function handleTagUpdates(props: {
+    tagId: number;
+    action: "add" | "remove";
+  }) {
+    startTransition(async () => {
+      try {
+        await api.monitor.updateMonitorsTag.mutate({
+          ids: rows.map((row) => row.getValue("id")),
+          ...props,
+        });
         router.refresh();
         toast.success("Monitor(s) updated");
       } catch (error) {
@@ -107,6 +128,18 @@ export function DataTableFloatingActions<TData>({
       }
     });
   }
+
+  // TODO: make it smarter! Its ugly as hell
+  const statusValue = rows.every((row) => row.getValue("active") === true)
+    ? "true"
+    : rows.every((row) => row.getValue("active") === false)
+    ? "false"
+    : undefined;
+  const visibilityValue = rows.every((row) => row.getValue("public") === true)
+    ? "true"
+    : rows.every((row) => row.getValue("public") === false)
+    ? "false"
+    : undefined;
 
   return (
     <Portal.Root>
@@ -169,6 +202,8 @@ export function DataTableFloatingActions<TData>({
             </AlertDialogContent>
           </AlertDialog>
           <Select
+            disabled={isPending && method === "active"}
+            value={statusValue}
             onValueChange={(value) => {
               setMethod("active");
               handleUpdates({ active: value === "true" });
@@ -176,25 +211,41 @@ export function DataTableFloatingActions<TData>({
           >
             <SelectTrigger className="h-9 w-[120px]">
               <SelectValue placeholder="Status" />
-              {isPending && method === "active" && <LoadingAnimation />}
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="true">Active</SelectItem>
-              <SelectItem value="false">Inactive</SelectItem>
+              <SelectGroup>
+                <SelectLabel>Status</SelectLabel>
+                <SelectItem value="true">Active</SelectItem>
+                <SelectItem value="false">Inactive</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
-          {/* <Button variant="outline" disabled>
-            Tags
-          </Button> */}
+          {/* TODO: only update on close! not on every change */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger
+              disabled={isPending && method === "tag"}
+              asChild
+            >
               <Button variant="outline">Tags</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
               {tags?.map((tag) => (
                 <DropdownMenuCheckboxItem
                   key={tag.id}
-                  checked={"indeterminate"}
+                  checked={rows.every((row) => {
+                    const _tags = row.getValue("tags");
+                    if (Array.isArray(_tags)) {
+                      return _tags.map(({ id }) => id)?.includes(tag.id);
+                    }
+                    return false;
+                  })}
+                  onCheckedChange={(value) => {
+                    setMethod("tag");
+                    handleTagUpdates({
+                      tagId: tag.id,
+                      action: value ? "add" : "remove",
+                    });
+                  }}
                 >
                   {tag.name}
                 </DropdownMenuCheckboxItem>
@@ -202,6 +253,8 @@ export function DataTableFloatingActions<TData>({
             </DropdownMenuContent>
           </DropdownMenu>
           <Select
+            disabled={isPending && method === "public"}
+            value={visibilityValue}
             onValueChange={(value) => {
               setMethod("public");
               handleUpdates({ public: value === "true" });
@@ -209,11 +262,13 @@ export function DataTableFloatingActions<TData>({
           >
             <SelectTrigger className="h-9 w-[120px]">
               <SelectValue placeholder="Visibility" />
-              {isPending && method === "public" && <LoadingAnimation />}
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="true">Public</SelectItem>
-              <SelectItem value="false">Private</SelectItem>
+              <SelectGroup>
+                <SelectLabel>Visibility</SelectLabel>
+                <SelectItem value="true">Public</SelectItem>
+                <SelectItem value="false">Private</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
         </div>

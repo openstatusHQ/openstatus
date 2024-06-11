@@ -423,7 +423,62 @@ export const monitorRouter = createTRPCRouter({
             isNull(monitor.deletedAt)
           )
         );
-      console.log(_monitors);
+    }),
+
+  updateMonitorsTag: protectedProcedure
+    .input(
+      z.object({
+        ids: z.number().array(),
+        tagId: z.number(),
+        action: z.enum(["add", "remove"]),
+      })
+    )
+    .mutation(async (opts) => {
+      const _monitorTag = await opts.ctx.db.query.monitorTag.findFirst({
+        where: and(
+          eq(monitorTag.workspaceId, opts.ctx.workspace.id),
+          eq(monitorTag.id, opts.input.tagId)
+        ),
+      });
+
+      const _monitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          inArray(monitor.id, opts.input.ids)
+        ),
+      });
+
+      if (!_monitorTag || _monitors.length !== opts.input.ids.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid tag",
+        });
+      }
+
+      if (opts.input.action === "add") {
+        await opts.ctx.db
+          .insert(monitorTagsToMonitors)
+          .values(
+            opts.input.ids.map((id) => ({
+              monitorId: id,
+              monitorTagId: opts.input.tagId,
+            }))
+          )
+          .onConflictDoNothing()
+          .run();
+      }
+
+      if (opts.input.action === "remove") {
+        await opts.ctx.db
+          .delete(monitorTagsToMonitors)
+          .where(
+            and(
+              inArray(monitorTagsToMonitors.monitorId, opts.input.ids),
+              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId)
+            )
+          )
+          .run();
+      }
     }),
 
   delete: protectedProcedure
