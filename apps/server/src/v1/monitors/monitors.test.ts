@@ -64,6 +64,14 @@ test("Create a monitor", async () => {
     headers: [{ key: "key", value: "value" }],
     active: true,
     public: true,
+    assertions: [
+      {
+        type: "status",
+        compare: "eq",
+        target: "200",
+      },
+      { type: "header", compare: "not_eq", key: "key", target: "value" },
+    ],
   };
 
   const res = await api.request("/monitor", {
@@ -83,13 +91,13 @@ test("Create a monitor", async () => {
   });
 });
 
-test.only("Create a monitor with Assertion ", async () => {
+test("Create a monitor with Assertion ", async () => {
   const data = {
     periodicity: "10m",
     url: "https://www.openstatus.dev",
     name: "OpenStatus",
     description: "OpenStatus website",
-    regions: ["ams", "gru"],
+    regions: ["ams", "gru", "iad"],
     method: "POST",
     body: '{"hello":"world"}',
     headers: [{ key: "key", value: "value" }],
@@ -101,7 +109,7 @@ test.only("Create a monitor with Assertion ", async () => {
         compare: "eq",
         target: "200",
       },
-      { type: "headers", compare: "not_eq", key: "key", target: "value" },
+      { type: "header", compare: "not_eq", key: "key", target: "value" },
     ],
   };
   const res = await api.request("/monitor", {
