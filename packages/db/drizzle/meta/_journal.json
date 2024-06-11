@@ -225,6 +225,13 @@
       "when": 1717837961923,
       "tag": "0031_lowly_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1718027484219,
+      "tag": "0032_hot_swordsman",
+      "breakpoints": true
     }
   ]
 }
