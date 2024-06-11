@@ -71,25 +71,27 @@ export function DataTableFloatingActions<TData>({
 
   const rows = table.getFilteredSelectedRowModel().rows;
 
-  console.log({ table, rows });
-
   if (table.getFilteredSelectedRowModel().rows.length === 0) {
     return null;
   }
 
   function handleUpdates(props: Partial<Pick<Monitor, "active" | "public">>) {
     startTransition(async () => {
-      try {
-        await api.monitor.updateMonitors.mutate({
-          ids: rows.map((row) => row.getValue("id")),
-          ...props,
-        });
-        toast.success("Monitor(s) updated");
-        router.refresh();
-      } catch (error) {
-        console.error(error);
-        toastAction("error");
-      }
+      toast.promise(
+        async () => {
+          await api.monitor.updateMonitors.mutate({
+            ids: rows.map((row) => row.getValue("id")),
+            ...props,
+          });
+          router.refresh();
+        },
+        {
+          loading: "Updating monitor(s)",
+          success: "Monitor(s) updated!",
+          error: "Something went wrong!",
+          finally: () => {},
+        }
+      );
     });
   }
 
@@ -98,17 +100,21 @@ export function DataTableFloatingActions<TData>({
     action: "add" | "remove";
   }) {
     startTransition(async () => {
-      try {
-        await api.monitor.updateMonitorsTag.mutate({
-          ids: rows.map((row) => row.getValue("id")),
-          ...props,
-        });
-        router.refresh();
-        toast.success("Monitor(s) updated");
-      } catch (error) {
-        console.error(error);
-        toastAction("error");
-      }
+      toast.promise(
+        async () => {
+          await api.monitor.updateMonitorsTag.mutate({
+            ids: rows.map((row) => row.getValue("id")),
+            ...props,
+          });
+          router.refresh();
+        },
+        {
+          loading: "Updating monitor(s)",
+          success: "Monitor(s) updated!",
+          error: "Something went wrong!",
+          finally: () => {},
+        }
+      );
     });
   }
 
@@ -119,7 +125,6 @@ export function DataTableFloatingActions<TData>({
           ids: rows.map((row) => row.getValue("id")),
         });
         setAlertOpen(false);
-        toast.success("Monitor(s) deleted");
         table.toggleAllRowsSelected(false);
         router.refresh();
       } catch (error) {
