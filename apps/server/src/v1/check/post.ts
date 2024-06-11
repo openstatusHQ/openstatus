@@ -93,14 +93,17 @@ export function registerPostCheck(api: typeof checkAPI) {
       const allResults = await Promise.allSettled(currentFetch);
       result.push(...allResults);
     }
+    console.log(result);
+    const filteredResult = result.filter((r) => r.status === "fulfilled");
+    const fulfilledRequest = [];
+    for await (const r of filteredResult) {
+      if (r.status !== "fulfilled") throw new Error("No value");
 
-    const fulfilledRequest = result
-      .filter((r) => r.status === "fulfilled" && r.value)
-      .map((r) => {
-        // WHY TS? WHY?
-        if (r.status !== "fulfilled") throw new Error("No value");
-        return ResponseSchema.parse(r.value.json());
-      });
+      const json = await r.value.json();
+      console.log(ResponseSchema.safeParse(json));
+      fulfilledRequest.push(ResponseSchema.parse(json));
+    }
+
     let aggregatedResponse = null;
     if (aggregated) {
       // This is ugly
@@ -211,10 +214,9 @@ export function registerPostCheck(api: typeof checkAPI) {
     const allTimings = fulfilledRequest.map((r) => r.timing);
 
     const lastResponse = fulfilledRequest[fulfilledRequest.length - 1];
-
     const responseResult = CheckPostResponseSchema.parse({
       id: newCheck.id,
-      timing: allTimings,
+      raw: allTimings,
       response: lastResponse,
       aggregated: aggregatedResponse,
     });

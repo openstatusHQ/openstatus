@@ -13,6 +13,7 @@ import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { statusReportsApi } from "./statusReports";
+import { checkAPI } from "./check";
 
 export type Variables = {
   workspaceId: string;
@@ -56,3 +57,4 @@ api.route("/page", pagesApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
+api.route("/check", checkAPI);

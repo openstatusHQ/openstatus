@@ -8,7 +8,6 @@ export const CheckSchema = MonitorSchema.pick({
   headers: true,
   method: true,
   regions: true,
-  assertions: true,
 })
   .extend({
     runCount: z
@@ -76,7 +75,7 @@ export const AggregatedResponseSchema = z
   });
 
 export const ResponseSchema = z.object({
-  timeStamp: z
+  timestamp: z
     .number()
     .openapi({ description: "The timestamp of the response in UTC" }),
   status: z
