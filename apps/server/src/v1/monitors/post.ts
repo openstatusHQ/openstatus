@@ -49,8 +49,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
     const workspacePlan = c.get("workspacePlan");
-    const input = c.req.valid("json");
 
+    const input = c.req.valid("json");
     const count = (
       await db
         .select({ count: sql<number>`count(*)` })
@@ -58,8 +58,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all()
     )[0].count;
@@ -90,7 +90,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         }
       }
     }
-
     const _newMonitor = await db
       .insert(monitor)
       .values({
@@ -102,7 +101,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       })
       .returning()
       .get();
-
     if (env.JITSU_WRITE_KEY) {
       trackAnalytics({
         event: "Monitor Created",

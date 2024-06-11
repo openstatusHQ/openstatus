@@ -162,9 +162,29 @@ export const MonitorSchema = z
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],
       }),
-    assertions: z.array(assertion).nullish().openapi({
-      description: "The assertions to run",
-    }),
+    assertions: z
+      .preprocess((val) => {
+        try {
+          if (Array.isArray(val)) return val;
+          if (String(val).length > 0) {
+            return JSON.parse(String(val));
+          }
+          return [];
+        } catch (e) {
+          throw new ZodError([
+            {
+              code: "custom",
+              path: ["assertions"],
+              message: e instanceof Error ? e.message : "Invalid value",
+            },
+          ]);
+        }
+      }, z.array(assertion))
+      .nullish()
+      .default([])
+      .openapi({
+        description: "The assertions to run",
+      }),
     active: z
       .boolean()
       .default(false)
