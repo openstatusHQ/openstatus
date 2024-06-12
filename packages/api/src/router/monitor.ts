@@ -542,8 +542,6 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
-      console.log(opts.input.ids);
-
       await opts.ctx.db
         .update(monitor)
         .set({ deletedAt: new Date(), active: false })

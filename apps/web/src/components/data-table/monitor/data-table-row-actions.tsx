@@ -59,7 +59,8 @@ export function DataTableRowActions<TData>({
     });
   }
 
-  // TODO: improve (similar to the one in the edit form - also include toast.promise + better error message!)
+  // FIXME: the test doenst take the assertions into account!
+  // FIXME: improve (similar to the one in the edit form - also include toast.promise + better error message!)
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
@@ -104,7 +105,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
+          {/* <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem> */}
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
