@@ -29,7 +29,7 @@ export function Bubble() {
           setOpen(value);
         }}
       >
-        <PopoverTrigger className="rounded-full border p-2 shadow">
+        <PopoverTrigger className="rounded-full border p-2 shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
           <MessageCircle className="h-6 w-6" />
         </PopoverTrigger>
         <PopoverContent
