@@ -8,6 +8,8 @@ import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-toolt
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
 
+export const revalidate = 0; // revalidate the data at most every hour
+
 export default async function Layout({
   children,
   params,
