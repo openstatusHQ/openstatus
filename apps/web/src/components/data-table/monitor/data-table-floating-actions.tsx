@@ -16,10 +16,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
   Button,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Select,
   SelectContent,
   SelectGroup,
@@ -35,9 +40,10 @@ import {
 import { api } from "@/trpc/client";
 import { useRouter } from "next/navigation";
 import { toast, toastAction } from "@/lib/toast";
-import { X } from "lucide-react";
+import { Check, Minus, X } from "lucide-react";
 import { Kbd } from "@/components/kbd";
 import { LoadingAnimation } from "@/components/loading-animation";
+import { cn } from "@/lib/utils";
 
 interface DataTableFloatingActions<TData> {
   table: Table<TData>;
@@ -55,6 +61,7 @@ export function DataTableFloatingActions<TData>({
   const [method, setMethod] = useState<
     "delete" | "active" | "public" | "tag" | null
   >(null);
+  const rows = table.getFilteredSelectedRowModel().rows;
 
   // clear selection on escape key
   useEffect(() => {
@@ -67,8 +74,6 @@ export function DataTableFloatingActions<TData>({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [table]);
-
-  const rows = table.getFilteredSelectedRowModel().rows;
 
   if (table.getFilteredSelectedRowModel().rows.length === 0) {
     return null;
@@ -85,7 +90,7 @@ export function DataTableFloatingActions<TData>({
           router.refresh();
         },
         {
-          loading: "Updating monitor(s)",
+          loading: "Updating monitor(s)...",
           success: "Monitor(s) updated!",
           error: "Something went wrong!",
           finally: () => {},
@@ -108,8 +113,14 @@ export function DataTableFloatingActions<TData>({
           router.refresh();
         },
         {
-          loading: "Updating monitor(s)",
-          success: "Monitor(s) updated!",
+          loading:
+            props.action === "add"
+              ? "Adding tag to monitor(s)..."
+              : "Removing tag from monitor(s)...",
+          success:
+            props.action === "add"
+              ? "Tag added to monitor(s)!"
+              : "Tag removed from monitor(s)",
           error: "Something went wrong!",
           finally: () => {},
         }
@@ -147,9 +158,20 @@ export function DataTableFloatingActions<TData>({
     ? "false"
     : undefined;
 
-  const tagsValue =
+  const everyTagValue =
     tags?.filter((tag) => {
       return rows.every((row) => {
+        const _tags = row.getValue("tags");
+        if (Array.isArray(_tags)) {
+          return _tags.map(({ id }) => id)?.includes(tag.id);
+        }
+        return false;
+      });
+    }) || [];
+
+  const someTagValue =
+    tags?.filter((tag) => {
+      return rows.some((row) => {
         const _tags = row.getValue("tags");
         if (Array.isArray(_tags)) {
           return _tags.map(({ id }) => id)?.includes(tag.id);
@@ -236,16 +258,13 @@ export function DataTableFloatingActions<TData>({
               </SelectGroup>
             </SelectContent>
           </Select>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              disabled={isPending && method === "tag"}
-              asChild
-            >
+          <Popover>
+            <PopoverTrigger disabled={isPending && method === "tag"} asChild>
               <Button variant="outline" className="flex items-center gap-2">
                 <span>Tags</span>
-                {tagsValue.length ? (
+                {everyTagValue.length ? (
                   <div className="flex relative overflow-hidden">
-                    {tagsValue.map((tag) => (
+                    {everyTagValue.map((tag) => (
                       <div
                         key={tag.id}
                         style={{ backgroundColor: tag.color }}
@@ -255,31 +274,64 @@ export function DataTableFloatingActions<TData>({
                   </div>
                 ) : null}
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="max-h-[120px]">
-              {/* TODO: make it look like DataTableFacetedFilter Checkbox */}
-              {tags?.map((tag) => (
-                <DropdownMenuCheckboxItem
-                  key={tag.id}
-                  checked={tagsValue.map(({ id }) => id).includes(tag.id)}
-                  onCheckedChange={(value) => {
-                    setMethod("tag");
-                    handleTagUpdates({
-                      tagId: tag.id,
-                      action: value ? "add" : "remove",
-                    });
-                  }}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <span>{tag.name}</span>
-                  <span
-                    style={{ backgroundColor: tag.color }}
-                    className="h-2.5 w-2.5 rounded-full"
-                  />
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder={"Tags"} />
+                <CommandList>
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  <CommandGroup>
+                    {tags?.map((tag) => {
+                      const isSelected = everyTagValue
+                        .map((tag) => tag.id)
+                        ?.includes(tag.id);
+                      const isIndeterminated = !isSelected
+                        ? someTagValue.map((tag) => tag.id)?.includes(tag.id)
+                        : false;
+                      return (
+                        <CommandItem
+                          key={String(tag.name)}
+                          onSelect={() => {
+                            setMethod("tag");
+                            handleTagUpdates({
+                              tagId: tag.id,
+                              action:
+                                !isSelected || isIndeterminated
+                                  ? "add"
+                                  : "remove",
+                            });
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                              {
+                                "bg-primary text-primary-foreground":
+                                  isSelected,
+                                "text-muted-foreground": isIndeterminated,
+                                "opacity-50 [&_svg]:invisible":
+                                  !isSelected && !isIndeterminated,
+                              }
+                            )}
+                          >
+                            <Check className={cn("h-4 w-4")} />
+                          </div>
+                          <div className="flex w-full items-center justify-between">
+                            <span>{tag.name}</span>
+                            <div
+                              key={tag.id}
+                              style={{ backgroundColor: tag.color }}
+                              className="h-2.5 w-2.5 rounded-full"
+                            />
+                          </div>
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <Select
             disabled={isPending && method === "public"}
             value={visibilityValue}
