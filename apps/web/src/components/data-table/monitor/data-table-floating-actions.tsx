@@ -27,7 +27,6 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-  Separator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -134,22 +133,35 @@ export function DataTableFloatingActions<TData>({
     });
   }
 
-  // TODO: make it smarter! Its ugly as hell
+  // TODO: can we make it smarter! Its ugly as hell
+
   const statusValue = rows.every((row) => row.getValue("active") === true)
     ? "true"
     : rows.every((row) => row.getValue("active") === false)
     ? "false"
     : undefined;
+
   const visibilityValue = rows.every((row) => row.getValue("public") === true)
     ? "true"
     : rows.every((row) => row.getValue("public") === false)
     ? "false"
     : undefined;
 
+  const tagsValue =
+    tags?.filter((tag) => {
+      return rows.every((row) => {
+        const _tags = row.getValue("tags");
+        if (Array.isArray(_tags)) {
+          return _tags.map(({ id }) => id)?.includes(tag.id);
+        }
+        return false;
+      });
+    }) || [];
+
   return (
     <Portal.Root>
       <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-fit px-4">
-        <div className="flex items-center gap-2 rounded-md border bg-background px-4 py-2 shadow">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-4 py-2 shadow">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -172,12 +184,11 @@ export function DataTableFloatingActions<TData>({
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <Separator orientation="vertical" className="mx-1 h-5" />
           <AlertDialog
             open={alertOpen}
             onOpenChange={(value) => setAlertOpen(value)}
           >
-            <AlertDialogTrigger>
+            <AlertDialogTrigger asChild>
               <Button variant="destructive">Delete</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -214,7 +225,7 @@ export function DataTableFloatingActions<TData>({
               handleUpdates({ active: value === "true" });
             }}
           >
-            <SelectTrigger className="h-9 w-[120px]">
+            <SelectTrigger className="h-9 max-w-fit">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -230,20 +241,27 @@ export function DataTableFloatingActions<TData>({
               disabled={isPending && method === "tag"}
               asChild
             >
-              <Button variant="outline">Tags</Button>
+              <Button variant="outline" className="flex items-center gap-2">
+                <span>Tags</span>
+                {tagsValue.length ? (
+                  <div className="flex relative overflow-hidden">
+                    {tagsValue.map((tag) => (
+                      <div
+                        key={tag.id}
+                        style={{ backgroundColor: tag.color }}
+                        className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              {/* TODO: make it look like DataTableFacetedFilter */}
+            <DropdownMenuContent className="max-h-[120px]">
+              {/* TODO: make it look like DataTableFacetedFilter Checkbox */}
               {tags?.map((tag) => (
                 <DropdownMenuCheckboxItem
                   key={tag.id}
-                  checked={rows.every((row) => {
-                    const _tags = row.getValue("tags");
-                    if (Array.isArray(_tags)) {
-                      return _tags.map(({ id }) => id)?.includes(tag.id);
-                    }
-                    return false;
-                  })}
+                  checked={tagsValue.map(({ id }) => id).includes(tag.id)}
                   onCheckedChange={(value) => {
                     setMethod("tag");
                     handleTagUpdates({
@@ -256,7 +274,7 @@ export function DataTableFloatingActions<TData>({
                   <span>{tag.name}</span>
                   <span
                     style={{ backgroundColor: tag.color }}
-                    className="h-2 w-2 rounded-full"
+                    className="h-2.5 w-2.5 rounded-full"
                   />
                 </DropdownMenuCheckboxItem>
               ))}
@@ -270,7 +288,7 @@ export function DataTableFloatingActions<TData>({
               handleUpdates({ public: value === "true" });
             }}
           >
-            <SelectTrigger className="h-9 w-[120px]">
+            <SelectTrigger className="h-9 max-w-fit">
               <SelectValue placeholder="Visibility" />
             </SelectTrigger>
             <SelectContent>
