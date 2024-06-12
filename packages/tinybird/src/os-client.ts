@@ -72,9 +72,10 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            next: {
-              revalidate: DEFAULT_CACHE,
-            },
+            cache: "no-store",
+            // next: {
+            //   revalidate: DEFAULT_CACHE,
+            // },
           },
         })(props);
         return res.data;
@@ -96,9 +97,10 @@ export class OSTinybird {
           parameters,
           data: z.object({ timestamp: z.number().int() }).merge(latencySchema),
           opts: {
-            next: {
-              revalidate: DEFAULT_CACHE,
-            },
+            cache: "no-store",
+            // next: {
+            //   revalidate: DEFAULT_CACHE,
+            // },
           },
         })(props);
         return res.data;
@@ -161,9 +163,10 @@ export class OSTinybird {
             })
             .merge(latencySchema),
           opts: {
-            next: {
-              revalidate: DEFAULT_CACHE,
-            },
+            cache: "no-store",
+            // next: {
+            //   revalidate: DEFAULT_CACHE,
+            // },
           },
         })(props);
         return res.data;
@@ -238,9 +241,10 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(),
           }),
           opts: {
-            next: {
-              revalidate: DEFAULT_CACHE,
-            },
+            cache: "no-store",
+            // next: {
+            //   revalidate: DEFAULT_CACHE,
+            // },
           },
         })(props);
         return res.data;
@@ -323,9 +327,10 @@ export class OSTinybird {
             assertions: z.string().nullable().optional(), // REMINDER: maybe include Assertions.serialize here
           }),
           opts: {
-            next: {
-              revalidate: MAX_CACHE,
-            },
+            cache: "no-store",
+            // next: {
+            //   revalidate: MAX_CACHE,
+            // },
           },
         })(props);
         return res.data;
