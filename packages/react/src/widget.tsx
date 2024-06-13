@@ -51,7 +51,7 @@ export async function StatusWidget({ slug, href }: StatusWidgetProps) {
         ) : null}
         <span
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
-          className={`relative inline-flex h-2 w-2 rounded-full${color}`}
+          className={`relative inline-flex h-2 w-2 rounded-full ${color}`}
         />
       </span>
     </a>
