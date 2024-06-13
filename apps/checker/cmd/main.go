@@ -260,8 +260,12 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
+
 			r.Region = flyRegion
+
 			res = r
+			res.RequestId = req.RequestId
+			res.WorkspaceId = req.WorkspaceId
 			if err := tinybirdClient.SendEvent(ctx, res, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}

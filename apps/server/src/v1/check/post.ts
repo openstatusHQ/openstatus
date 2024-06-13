@@ -45,7 +45,7 @@ const postRoute = createRoute({
 export function registerPostCheck(api: typeof checkAPI) {
   return api.openapi(postRoute, async (c) => {
     const data = c.req.valid("json");
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = Number(c.get("workspaceId"));
     const input = c.req.valid("json");
 
     const { headers, regions, runCount, aggregated, ...rest } = data;
@@ -72,7 +72,7 @@ export function registerPostCheck(api: typeof checkAPI) {
           },
           method: "POST",
           body: JSON.stringify({
-            checkId: newCheck.id,
+            requestId: newCheck.id,
             workspaceId: workspaceId,
             url: input.url,
             method: input.method,
@@ -195,7 +195,7 @@ export function registerPostCheck(api: typeof checkAPI) {
 
       aggregatedResponse = AggregatedResult.parse({
         dns: aggregatedDNS,
-        connection: aggregatedConnect,
+        connect: aggregatedConnect,
         tls: aggregatedTls,
         firstByte: aggregatedFirst,
         transfer: aggregatedTransfer,
