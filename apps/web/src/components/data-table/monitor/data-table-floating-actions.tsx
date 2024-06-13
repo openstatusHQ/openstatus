@@ -211,7 +211,12 @@ export function DataTableFloatingActions<TData>({
             onOpenChange={(value) => setAlertOpen(value)}
           >
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">Delete</Button>
+              <Button
+                variant="outline"
+                className="border-destructive text-destructive hover:bg-destructive hover:text-background"
+              >
+                Delete
+              </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
