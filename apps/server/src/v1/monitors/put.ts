@@ -7,6 +7,8 @@ import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
+import { getAssertions } from "./utils";
+import { serialize } from "../../../../../packages/assertions/src/serializing";
 
 const putRoute = createRoute({
   method: "put",
@@ -62,7 +64,9 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
-    const { headers, regions, ...rest } = input;
+    const { headers, regions, assertions, ...rest } = input;
+
+    const assert = assertions ? getAssertions(assertions) : [];
 
     const _newMonitor = await db
       .update(monitor)
@@ -70,6 +74,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         ...rest,
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
       .returning()
       .get();

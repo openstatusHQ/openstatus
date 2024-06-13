@@ -49,15 +49,15 @@ type Timing struct {
 }
 
 type Response struct {
-	Status    int               `json:"status,omitempty"`
-	Latency   int64             `json:"latency"`
-	Body      string            `json:"body,omitempty"`
-	Headers   map[string]string `json:"headers,omitempty"`
-	Timestamp int64             `json:"timestamp"`
-	Timing    Timing            `json:"timing"`
-	Error     string            `json:"error,omitempty"`
-	Tags      []string          `json:"tags,omitempty"`
-	Region    string            `json:"region"`
+	Status  int               `json:"status,omitempty"`
+	Latency int64             `json:"latency"`
+	Body    string            `json:"body,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Time    int64             `json:"time"`
+	Timing  Timing            `json:"timing"`
+	Error   string            `json:"error,omitempty"`
+	Tags    []string          `json:"tags,omitempty"`
+	Region  string            `json:"region"`
 }
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
@@ -218,10 +218,10 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
 			return Response{
-				Latency:   latency,
-				Timing:    timing,
-				Timestamp: start.UTC().UnixMilli(),
-				Error:     fmt.Sprintf("Timeout after %d ms", latency),
+				Latency: latency,
+				Timing:  timing,
+				Time:    start.UTC().UnixMilli(),
+				Error:   fmt.Sprintf("Timeout after %d ms", latency),
 			}, nil
 		}
 
@@ -236,10 +236,10 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 	}
 
 	return Response{
-		Timestamp: start.UTC().UnixMilli(),
-		Status:    res.StatusCode,
-		Headers:   headers,
-		Timing:    timing,
-		Latency:   latency,
+		Time:    start.UTC().UnixMilli(),
+		Status:  res.StatusCode,
+		Headers: headers,
+		Timing:  timing,
+		Latency: latency,
 	}, nil
 }

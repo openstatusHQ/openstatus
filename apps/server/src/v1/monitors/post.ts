@@ -16,6 +16,7 @@ import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
+import { getAssertions } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -76,20 +77,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
 
     const { headers, regions, assertions, ...rest } = input;
 
-    const assert: Assertion[] = [];
-    if (assertions) {
-      for (const a of assertions) {
-        if (a.type === "header") {
-          assert.push(new HeaderAssertion({ ...a, version: "v1" }));
-        }
-        if (a.type === "textBody") {
-          assert.push(new TextBodyAssertion({ ...a, version: "v1" }));
-        }
-        if (a.type === "status") {
-          assert.push(new StatusAssertion({ ...a, version: "v1" }));
-        }
-      }
-    }
+    const assert = assertions ? getAssertions(assertions) : [];
+
     const _newMonitor = await db
       .insert(monitor)
       .values({
