@@ -8,6 +8,7 @@ import { user, workspace } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
+import { getPlanFromPriceId } from "./utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -51,10 +52,18 @@ export const webhookRouter = createTRPCRouter({
         message: "Workspace not found",
       });
     }
+    const plan = getPlanFromPriceId(subscription.items.data[0].price.id);
+    if (!plan) {
+      console.error("Invalid plan");
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid plan",
+      });
+    }
     await opts.ctx.db
       .update(workspace)
       .set({
-        plan: "pro",
+        plan: plan.plan,
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
@@ -91,7 +100,7 @@ export const webhookRouter = createTRPCRouter({
       .update(workspace)
       .set({
         subscriptionId: null,
-        plan: "FREE",
+        plan: "free",
         paidUntil: null,
       })
       .where(eq(workspace.stripeId, customerId))

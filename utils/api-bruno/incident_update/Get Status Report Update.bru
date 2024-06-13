@@ -1,0 +1,19 @@
+meta {
+  name: Get Status Report Update
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/v1/status_report_update/{{updateId}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: api-keu
+}
+
+vars:pre-request {
+  updateId: 32
+}

@@ -1,0 +1,28 @@
+VERSION 0
+
+NODE response_graph_0
+SQL >
+
+    %
+    SELECT
+        region,
+        toStartOfInterval(
+            toDateTime(cronTimestamp / 1000),
+            INTERVAL {{ Int64(interval, 30) }} MINUTE
+        ) as h,
+        toUnixTimestamp64Milli(toDateTime64(h, 3)) as timestamp,
+        round(avg(latency)) as avgLatency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.9)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency
+    FROM ping_response__v7
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        {% if defined(fromDate) %} AND timestamp >= {{ Int64(fromDate) }} {% end %}
+        {% if defined(toDate) %} AND timestamp <= {{ Int64(toDate) }} {% end %}
+    GROUP BY h, region
+    ORDER BY h DESC
+
+

@@ -1,12 +1,15 @@
-import * as React from "react";
 import Link from "next/link";
+import * as React from "react";
+
+// Hottake: you don't need a features page if you have a changelog page
+// Except for SEO
 
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+} from "@openstatus/ui";
 
 export function BrandName() {
   return (
@@ -14,7 +17,7 @@ export function BrandName() {
       <ContextMenuTrigger>
         <Link
           href="/"
-          className="font-cal text-muted-foreground hover:text-foreground"
+          className="font-cal text-lg text-muted-foreground hover:text-foreground"
         >
           OpenStatus
         </Link>

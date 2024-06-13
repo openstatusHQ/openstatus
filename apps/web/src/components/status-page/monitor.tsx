@@ -1,29 +1,44 @@
 import type { z } from "zod";
 
-import type { selectMonitorSchema } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Maintenance,
+  PublicMonitor,
+  selectPublicStatusReportSchemaWithRelation,
+} from "@openstatus/db/src/schema";
+import { OSTinybird } from "@openstatus/tinybird";
 
-import { getMonitorListData } from "@/lib/tb";
-import { Tracker } from "../tracker";
+import { Tracker } from "@/components/tracker/tracker";
+import { env } from "@/env";
+
+const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const Monitor = async ({
   monitor,
+  statusReports,
+  incidents,
+  maintenances,
 }: {
-  monitor: z.infer<typeof selectMonitorSchema>;
+  monitor: PublicMonitor;
+  statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
+  incidents: Incident[];
+  maintenances: Maintenance[];
 }) => {
-  const data = await getMonitorListData({
+  const data = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitor.id),
-    groupBy: "day",
   });
+
+  // TODO: we could handle the `statusReports` here instead of passing it down to the tracker
+
   if (!data) return <div>Something went wrong</div>;
+
   return (
     <Tracker
       data={data}
-      id={monitor.id}
-      name={monitor.name}
-      url={monitor.url}
-      description={monitor.description}
-      context="status-page"
-      maxSize={40}
+      reports={statusReports}
+      incidents={incidents}
+      maintenances={maintenances}
+      {...monitor}
     />
   );
 };

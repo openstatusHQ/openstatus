@@ -1,0 +1,60 @@
+# fly.toml app configuration file generated for openstatus-api on 2023-09-13T17:29:05+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "openstatus-api"
+primary_region = "ams"
+
+
+[build]
+  dockerfile = "./Dockerfile"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+
+  processes = ["app"]
+[http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500
+
+[deploy]
+  strategy = "canary"
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "15s"
+  method = "GET"
+  timeout = "5s"
+  path = "/ping"
+
+
+
+# [checks]
+#   [checks.name_of_your_http_check]
+#     port = 3000
+#     type = "http"
+#     interval = "15s"
+#     timeout = "10s"
+#     grace_period = "30s"
+#     method = "get"
+#     path = "/ping"
+
+# [[services.http_checks]]
+#   interval = 10000
+#   grace_period = "5s"
+#   method = "get"
+#   path = "/ping"
+#   protocol = "https"
+#   timeout = 2000
+#   tls_skip_verify = false

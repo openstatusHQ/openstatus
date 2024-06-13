@@ -1,10 +1,8 @@
-import * as React from "react";
-import type { Column } from "@tanstack/react-table";
-import { Check, PlusCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Badge,
+  Button,
   Command,
   CommandEmpty,
   CommandGroup,
@@ -12,13 +10,15 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
+  Separator,
+} from "@openstatus/ui";
+import type { Column } from "@tanstack/react-table";
+import { Check, PlusCircle } from "lucide-react";
+
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 
 interface DataTableFacetedFilter<TData, TValue> {
@@ -26,7 +26,7 @@ interface DataTableFacetedFilter<TData, TValue> {
   title?: string;
   options: {
     label: string;
-    value: string;
+    value: string | number | boolean;
     icon?: React.ComponentType<{ className?: string }>;
   }[];
 }
@@ -36,8 +36,20 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: DataTableFacetedFilter<TData, TValue>) {
+  const router = useRouter();
+  const updateSearchParams = useUpdateSearchParams();
+
   const facets = column?.getFacetedUniqueValues();
-  const selectedValues = new Set(column?.getFilterValue() as string[]);
+  const selectedValues = new Set(
+    column?.getFilterValue() as (string | number | boolean)[],
+  );
+
+  const updatePageSearchParams = (
+    values: Record<string, number | string | null>,
+  ) => {
+    const newSearchParams = updateSearchParams(values);
+    router.replace(`?${newSearchParams}`, { scroll: false });
+  };
 
   return (
     <Popover>
@@ -68,7 +80,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                     .map((option) => (
                       <Badge
                         variant="secondary"
-                        key={option.value}
+                        key={String(option.value)}
                         className="rounded-sm px-1 font-normal"
                       >
                         {option.label}
@@ -90,7 +102,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 const isSelected = selectedValues.has(option.value);
                 return (
                   <CommandItem
-                    key={option.value}
+                    key={String(option.value)}
                     onSelect={() => {
                       if (isSelected) {
                         selectedValues.delete(option.value);
@@ -101,11 +113,19 @@ export function DataTableFacetedFilter<TData, TValue>({
                       column?.setFilterValue(
                         filterValues.length ? filterValues : undefined,
                       );
+
+                      // update search params
+                      const key = column?.id;
+                      if (key) {
+                        updatePageSearchParams({
+                          [key]: filterValues?.join(",") || null,
+                        });
+                      }
                     }}
                   >
                     <div
                       className={cn(
-                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
@@ -114,14 +134,14 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Check className={cn("h-4 w-4")} />
                     </div>
                     {option.icon && (
-                      <option.icon className="text-muted-foreground mr-2 h-4 w-4" />
+                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                     )}
                     <span>{option.label}</span>
-                    {facets?.get(option.value) && (
+                    {facets?.get(option.value) ? (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.value)}
                       </span>
-                    )}
+                    ) : null}
                   </CommandItem>
                 );
               })}

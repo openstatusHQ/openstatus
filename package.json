@@ -3,33 +3,28 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "lint:strict": "eslint --max-warnings=0 apps/**/*.{ts,tsx}",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "format:check": "prettier -c \"**/*.{ts,tsx,md}\"",
-    "tsc": "tsc"
-  },
-  "pnpm": {
-    "overrides": {
-      "@opentelemetry/api": "1.4.1",
-      "@opentelemetry/core": "1.13.0",
-      "@opentelemetry/exporter-trace-otlp-grpc": "0.39.1",
-      "@opentelemetry/resources": "1.13.0",
-      "@opentelemetry/sdk-trace-base": "1.13.0",
-      "@opentelemetry/sdk-trace-node": "1.13.0",
-      "@opentelemetry/semantic-conventions": "1.13.0"
-    }
+    "lint": "biome lint .",
+    "format": "pnpm biome format . --write && pnpm biome check . --apply-unsafe ",
+    "lint:turbo": "turbo run lint",
+    "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
+    "dx": "turbo run dx",
+    "tsc": "tsc",
+    "test": "turbo run test"
   },
   "devDependencies": {
-    "@turbo/gen": "1.10.9",
-    "eslint": "8.43.0",
-    "@openstatus/eslint-config": "workspace:*",
-    "@ianvs/prettier-plugin-sort-imports": "4.1.0",
-    "prettier-plugin-tailwindcss": "0.4.1",
-    "prettier": "3.0.0",
-    "turbo": "1.10.12",
-    "typescript": "5.1.6"
+    "@biomejs/biome": "1.7.3",
+    "@turbo/gen": "1.13.3",
+    "@types/node": "20.8.0",
+    "knip": "^5.16.0",
+    "turbo": "1.13.3",
+    "typescript": "5.4.5"
   },
-  "packageManager": "pnpm@8.6.10",
-  "name": "openstatus"
+  "packageManager": "pnpm@9.1.4",
+  "name": "openstatus",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "packages/config/*",
+    "packages/notifications/*"
+  ]
 }

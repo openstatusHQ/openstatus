@@ -1,12 +1,12 @@
 ---
 title: Why we migrated from PlanetScale to Turso.
+image: /assets/posts/example-latency.png
 description:
   Discover the reasons behind our decision to use Turso as our main database.
 author:
   name: Thibault Le Ouay Ducasse
   url: https://twitter.com/thibaultleouay
 publishedAt: 2023-08-20
-image: /assets/posts/migration-planetscale-to-turso/latency.png
 ---
 
 ## What are we building ? 🏗️
@@ -72,9 +72,22 @@ I was playing with this [Vercel tool](https://edge-data-latency.vercel.app/) to
 determine the most suitable database for our users. Among the options, Turso
 proved to be the fastest.
 
-![Turso latency](/assets/posts/migration-planetscale-to-turso/turso-latency.png)
+<Image
+  alt="Turso latency"
+  src="/assets/posts/migration-planetscale-to-turso/turso-latency.png"
+  width={650}
+  height={575}
+/>
+
 Turso is around `60ms` for 5 serial queries globally.
-![PlanetScale latency](/assets/posts/migration-planetscale-to-turso/planetscale-latency.png)
+
+<Image
+  alt="PlanetScale latency"
+  src="/assets/posts/migration-planetscale-to-turso/planetscale-latency.png"
+  width={650}
+  height={575}
+/>
+
 While PlanetScale is around `450ms` for 5 serial queries in a different region.
 
 We considered using read replicas from PlanetScale, but I was also interested in
@@ -103,7 +116,7 @@ what we can achieve with Turso: seamless local development.
 
 ## How the migration went. 🚀
 
-### SQLite has less a less powerful type system than MySQL. 📦
+### SQLite has a less powerful type system than MySQL. 📦
 
 The migration process from MySQL to SQLite requires some changes. SQLite has
 fewer data types compared to MySQL. For example, DateTime doesn't exist in
@@ -208,3 +221,6 @@ P.S. We are building OpenStatus in public, follow
 [me](https://www.twitter.com/thibaultleouay) or
 [Max](https://www.twitter.com/mxkaske) on Twitter/X if you want sneak peaks of
 the upcoming features - it's fun to watch! 🍿
+
+P.P.S: OpenStatus is open-source, you can browse our code on
+[GitHub](https://github.com/openstatusHQ/openstatus) and give us a star ⭐️

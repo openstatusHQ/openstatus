@@ -1,6 +1,6 @@
 import type { ValidIcon } from "@/components/icons";
 
-type Social = {
+export type Social = {
   title: string;
   href: string;
   icon: ValidIcon;
@@ -17,5 +17,19 @@ export const socialsConfig: Social[] = [
     href: "/github",
     icon: "github",
   },
-  // add cal.com
+  {
+    title: "Twitter",
+    href: "/twitter",
+    icon: "twitter",
+  },
+  {
+    title: "LinkedIn",
+    href: "/linkedin",
+    icon: "linkedin",
+  },
+  // {
+  //   title: "YouTube",
+  //   href: "/youtube",
+  //   icon: "youtube",
+  // },
 ];

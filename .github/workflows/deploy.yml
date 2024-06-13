@@ -1,0 +1,17 @@
+name: Fly Deploy
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run:
+          flyctl deploy --config apps/server/fly.toml
+          --dockerfile  apps/server/Dockerfile --remote-only --wait-timeout=500
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

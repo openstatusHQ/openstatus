@@ -1,35 +1,14 @@
-import type {
-  MonitorListParams,
-  ResponseListParams,
-} from "@openstatus/tinybird";
-import {
-  getMonitorList,
-  getResponseList,
-  Tinybird,
-} from "@openstatus/tinybird";
+import type { HomeStatsParams } from "@openstatus/tinybird";
+import { Tinybird, getHomeStats } from "@openstatus/tinybird";
 
 import { env } from "@/env";
 
+// @depreciated in favor to use the OSTinybird client directly
 const tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
 
-// TODO: add security layer
-export async function getResponseListData(
-  props: Partial<
-    Pick<ResponseListParams, "region" | "cronTimestamp" | "limit" | "monitorId">
-  >,
-) {
+export async function getHomeStatsData(props: Partial<HomeStatsParams>) {
   try {
-    const res = await getResponseList(tb)(props);
-    return res.data;
-  } catch (e) {
-    console.error(e);
-  }
-  return;
-}
-
-export async function getMonitorListData(props: Partial<MonitorListParams>) {
-  try {
-    const res = await getMonitorList(tb)(props);
+    const res = await getHomeStats(tb)(props);
     return res.data;
   } catch (e) {
     console.error(e);

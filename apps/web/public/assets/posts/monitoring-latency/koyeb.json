@@ -1,0 +1,2884 @@
+{
+  "regions": ["ams", "iad", "hkg", "jnb", "syd", "gru"],
+  "data": {
+    "regions": ["ams", "gru", "hkg", "iad", "jnb", "syd"],
+    "data": [
+      {
+        "timestamp": "Feb 4, 00:00",
+        "ams": 142,
+        "iad": 173,
+        "syd": 786,
+        "jnb": 900,
+        "gru": 640,
+        "hkg": 369
+      },
+      {
+        "timestamp": "Feb 4, 01:00",
+        "ams": 136,
+        "iad": 426,
+        "syd": 770,
+        "jnb": 841,
+        "gru": 732,
+        "hkg": 375
+      },
+      {
+        "timestamp": "Feb 4, 02:00",
+        "hkg": 351,
+        "ams": 131,
+        "iad": 170,
+        "jnb": 880,
+        "syd": 698,
+        "gru": 678
+      },
+      {
+        "timestamp": "Feb 4, 03:00",
+        "hkg": 371,
+        "jnb": 897,
+        "syd": 793,
+        "ams": 145,
+        "iad": 170,
+        "gru": 668
+      },
+      {
+        "timestamp": "Feb 4, 04:00",
+        "hkg": 369,
+        "gru": 693,
+        "syd": 668,
+        "jnb": 834,
+        "ams": 138,
+        "iad": 172
+      },
+      {
+        "timestamp": "Feb 4, 05:00",
+        "gru": 630,
+        "syd": 665,
+        "jnb": 951,
+        "ams": 145,
+        "iad": 174,
+        "hkg": 375
+      },
+      {
+        "timestamp": "Feb 4, 06:00",
+        "jnb": 842,
+        "syd": 687,
+        "ams": 161,
+        "iad": 170,
+        "gru": 644,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 4, 07:00",
+        "hkg": 381,
+        "jnb": 846,
+        "syd": 590,
+        "ams": 145,
+        "iad": 169,
+        "gru": 604
+      },
+      {
+        "timestamp": "Feb 4, 08:00",
+        "hkg": 358,
+        "gru": 696,
+        "syd": 693,
+        "jnb": 923,
+        "ams": 148,
+        "iad": 166
+      },
+      {
+        "timestamp": "Feb 4, 09:00",
+        "hkg": 380,
+        "iad": 168,
+        "ams": 164,
+        "jnb": 911,
+        "syd": 697,
+        "gru": 665
+      },
+      {
+        "timestamp": "Feb 4, 10:00",
+        "hkg": 376,
+        "gru": 662,
+        "jnb": 903,
+        "syd": 812,
+        "iad": 166,
+        "ams": 146
+      },
+      {
+        "timestamp": "Feb 4, 11:00",
+        "gru": 681,
+        "syd": 749,
+        "jnb": 884,
+        "ams": 138,
+        "iad": 170,
+        "hkg": 364
+      },
+      {
+        "timestamp": "Feb 4, 12:00",
+        "gru": 644,
+        "iad": 168,
+        "ams": 144,
+        "syd": 675,
+        "jnb": 1045,
+        "hkg": 371
+      },
+      {
+        "timestamp": "Feb 4, 13:00",
+        "syd": 676,
+        "jnb": 866,
+        "ams": 165,
+        "iad": 167,
+        "gru": 667,
+        "hkg": 381
+      },
+      {
+        "timestamp": "Feb 4, 14:00",
+        "hkg": 381,
+        "gru": 677,
+        "ams": 154,
+        "iad": 185,
+        "jnb": 876,
+        "syd": 791
+      },
+      {
+        "timestamp": "Feb 4, 15:00",
+        "hkg": 377,
+        "iad": 164,
+        "ams": 166,
+        "syd": 659,
+        "jnb": 895,
+        "gru": 662
+      },
+      {
+        "timestamp": "Feb 4, 16:00",
+        "ams": 153,
+        "iad": 166,
+        "syd": 744,
+        "jnb": 864,
+        "gru": 662,
+        "hkg": 410
+      },
+      {
+        "timestamp": "Feb 4, 17:00",
+        "jnb": 886,
+        "syd": 614,
+        "ams": 159,
+        "iad": 175,
+        "gru": 705,
+        "hkg": 376
+      },
+      {
+        "timestamp": "Feb 4, 18:00",
+        "gru": 662,
+        "jnb": 938,
+        "syd": 731,
+        "ams": 155,
+        "iad": 174,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 4, 19:00",
+        "syd": 674,
+        "jnb": 991,
+        "iad": 182,
+        "ams": 186,
+        "gru": 677,
+        "hkg": 350
+      },
+      {
+        "timestamp": "Feb 4, 20:00",
+        "ams": 175,
+        "iad": 166,
+        "syd": 690,
+        "jnb": 816,
+        "gru": 694,
+        "hkg": 374
+      },
+      {
+        "timestamp": "Feb 4, 21:00",
+        "hkg": 722,
+        "syd": 620,
+        "jnb": 817,
+        "iad": 174,
+        "ams": 161,
+        "gru": 670
+      },
+      {
+        "timestamp": "Feb 4, 22:00",
+        "hkg": 381,
+        "gru": 730,
+        "iad": 172,
+        "ams": 170,
+        "syd": 682,
+        "jnb": 892
+      },
+      {
+        "timestamp": "Feb 4, 23:00",
+        "jnb": 940,
+        "syd": 743,
+        "iad": 174,
+        "ams": 162,
+        "gru": 681,
+        "hkg": 374
+      },
+      {
+        "timestamp": "Feb 5, 00:00",
+        "gru": 670,
+        "jnb": 890,
+        "syd": 665,
+        "ams": 162,
+        "iad": 483,
+        "hkg": 396
+      },
+      {
+        "timestamp": "Feb 5, 01:00",
+        "gru": 647,
+        "iad": 168,
+        "ams": 162,
+        "syd": 644,
+        "jnb": 833,
+        "hkg": 377
+      },
+      {
+        "timestamp": "Feb 5, 02:00",
+        "syd": 666,
+        "jnb": 905,
+        "iad": 178,
+        "ams": 146,
+        "gru": 735,
+        "hkg": 384
+      },
+      {
+        "timestamp": "Feb 5, 03:00",
+        "gru": 724,
+        "ams": 131,
+        "iad": 167,
+        "jnb": 846,
+        "syd": 647,
+        "hkg": 372
+      },
+      {
+        "timestamp": "Feb 5, 04:00",
+        "gru": 653,
+        "jnb": 835,
+        "syd": 714,
+        "iad": 169,
+        "ams": 138,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 5, 05:00",
+        "ams": 146,
+        "iad": 167,
+        "jnb": 936,
+        "syd": 762,
+        "gru": 638,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 5, 06:00",
+        "hkg": 370,
+        "jnb": 942,
+        "syd": 722,
+        "ams": 145,
+        "iad": 164,
+        "gru": 677
+      },
+      {
+        "timestamp": "Feb 5, 07:00",
+        "hkg": 381,
+        "gru": 692,
+        "syd": 566,
+        "jnb": 894,
+        "iad": 166,
+        "ams": 152
+      },
+      {
+        "timestamp": "Feb 5, 08:00",
+        "jnb": 6466,
+        "syd": 612,
+        "ams": 148,
+        "iad": 160,
+        "gru": 632,
+        "hkg": 436
+      },
+      {
+        "timestamp": "Feb 5, 09:00",
+        "ams": 152,
+        "iad": 164,
+        "syd": 715,
+        "jnb": 988,
+        "gru": 677,
+        "hkg": 476
+      },
+      {
+        "timestamp": "Feb 5, 10:00",
+        "hkg": 388,
+        "syd": 621,
+        "jnb": 929,
+        "ams": 137,
+        "iad": 177,
+        "gru": 668
+      },
+      {
+        "timestamp": "Feb 5, 11:00",
+        "hkg": 410,
+        "gru": 712,
+        "jnb": 902,
+        "syd": 756,
+        "iad": 626,
+        "ams": 170
+      },
+      {
+        "timestamp": "Feb 5, 12:00",
+        "hkg": 386,
+        "gru": 716,
+        "ams": 179,
+        "iad": 162,
+        "jnb": 1020,
+        "syd": 748
+      },
+      {
+        "timestamp": "Feb 5, 13:00",
+        "hkg": 369,
+        "iad": 178,
+        "ams": 172,
+        "jnb": 930,
+        "syd": 747,
+        "gru": 648
+      },
+      {
+        "timestamp": "Feb 5, 14:00",
+        "hkg": 380,
+        "gru": 754,
+        "jnb": 949,
+        "syd": 650,
+        "iad": 178,
+        "ams": 159
+      },
+      {
+        "timestamp": "Feb 5, 15:00",
+        "gru": 698,
+        "syd": 628,
+        "jnb": 875,
+        "ams": 162,
+        "iad": 180,
+        "hkg": 390
+      },
+      {
+        "timestamp": "Feb 5, 16:00",
+        "syd": 660,
+        "jnb": 882,
+        "iad": 181,
+        "ams": 155,
+        "gru": 631,
+        "hkg": 388
+      },
+      {
+        "timestamp": "Feb 5, 17:00",
+        "hkg": 366,
+        "syd": 707,
+        "jnb": 851,
+        "iad": 180,
+        "ams": 181,
+        "gru": 688
+      },
+      {
+        "timestamp": "Feb 5, 18:00",
+        "hkg": 362,
+        "gru": 686,
+        "jnb": 871,
+        "syd": 717,
+        "iad": 181,
+        "ams": 177
+      },
+      {
+        "timestamp": "Feb 5, 19:00",
+        "gru": 638,
+        "ams": 180,
+        "iad": 181,
+        "jnb": 912,
+        "syd": 614,
+        "hkg": 353
+      },
+      {
+        "timestamp": "Feb 5, 20:00",
+        "ams": 148,
+        "iad": 180,
+        "syd": 664,
+        "jnb": 808,
+        "gru": 714,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 5, 21:00",
+        "ams": 189,
+        "iad": 179,
+        "jnb": 866,
+        "syd": 627,
+        "gru": 731,
+        "hkg": 376
+      },
+      {
+        "timestamp": "Feb 5, 22:00",
+        "gru": 725,
+        "syd": 723,
+        "jnb": 859,
+        "ams": 159,
+        "iad": 236,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 5, 23:00",
+        "iad": 177,
+        "ams": 141,
+        "syd": 674,
+        "jnb": 841,
+        "gru": 643,
+        "hkg": 367
+      },
+      {
+        "timestamp": "Feb 6, 00:00",
+        "hkg": 372,
+        "iad": 172,
+        "ams": 137,
+        "jnb": 937,
+        "syd": 806,
+        "gru": 704
+      },
+      {
+        "timestamp": "Feb 6, 01:00",
+        "hkg": 363,
+        "jnb": 885,
+        "syd": 612,
+        "ams": 154,
+        "iad": 171,
+        "gru": 675
+      },
+      {
+        "timestamp": "Feb 6, 02:00",
+        "gru": 700,
+        "jnb": 873,
+        "syd": 751,
+        "ams": 171,
+        "iad": 178,
+        "hkg": 347
+      },
+      {
+        "timestamp": "Feb 6, 03:00",
+        "iad": 184,
+        "ams": 141,
+        "jnb": 945,
+        "syd": 748,
+        "gru": 731,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 6, 04:00",
+        "hkg": 385,
+        "iad": 167,
+        "ams": 149,
+        "syd": 612,
+        "jnb": 910,
+        "gru": 774
+      },
+      {
+        "timestamp": "Feb 6, 05:00",
+        "hkg": 532,
+        "iad": 163,
+        "ams": 163,
+        "jnb": 927,
+        "syd": 638,
+        "gru": 694
+      },
+      {
+        "timestamp": "Feb 6, 06:00",
+        "hkg": 378,
+        "gru": 676,
+        "iad": 166,
+        "ams": 159,
+        "syd": 670,
+        "jnb": 1006
+      },
+      {
+        "timestamp": "Feb 6, 07:00",
+        "hkg": 341,
+        "ams": 155,
+        "iad": 157,
+        "syd": 779,
+        "jnb": 1624,
+        "gru": 670
+      },
+      {
+        "timestamp": "Feb 6, 08:00",
+        "hkg": 371,
+        "gru": 659,
+        "ams": 145,
+        "iad": 218,
+        "jnb": 1467,
+        "syd": 615
+      },
+      {
+        "timestamp": "Feb 6, 09:00",
+        "hkg": 365,
+        "gru": 681,
+        "jnb": 1459,
+        "syd": 690,
+        "ams": 162,
+        "iad": 167
+      },
+      {
+        "timestamp": "Feb 6, 10:00",
+        "hkg": 368,
+        "syd": 658,
+        "jnb": 1406,
+        "ams": 141,
+        "iad": 167,
+        "gru": 674
+      },
+      {
+        "timestamp": "Feb 6, 11:00",
+        "hkg": 382,
+        "syd": 792,
+        "jnb": 1345,
+        "ams": 156,
+        "iad": 162,
+        "gru": 650
+      },
+      {
+        "timestamp": "Feb 6, 12:00",
+        "hkg": 376,
+        "gru": 692,
+        "jnb": 1471,
+        "syd": 708,
+        "ams": 202,
+        "iad": 166
+      },
+      {
+        "timestamp": "Feb 6, 13:00",
+        "hkg": 378,
+        "gru": 700,
+        "syd": 709,
+        "jnb": 1482,
+        "ams": 154,
+        "iad": 170
+      },
+      {
+        "timestamp": "Feb 6, 14:00",
+        "gru": 662,
+        "jnb": 1530,
+        "syd": 724,
+        "ams": 146,
+        "iad": 167,
+        "hkg": 411
+      },
+      {
+        "timestamp": "Feb 6, 15:00",
+        "iad": 181,
+        "ams": 156,
+        "jnb": 1548,
+        "syd": 728,
+        "gru": 774,
+        "hkg": 382
+      },
+      {
+        "timestamp": "Feb 6, 16:00",
+        "gru": 663,
+        "syd": 734,
+        "jnb": 1468,
+        "iad": 168,
+        "ams": 194,
+        "hkg": 367
+      },
+      {
+        "timestamp": "Feb 6, 17:00",
+        "gru": 713,
+        "ams": 161,
+        "iad": 167,
+        "syd": 704,
+        "jnb": 1370,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 6, 18:00",
+        "hkg": 356,
+        "gru": 725,
+        "ams": 173,
+        "iad": 170,
+        "jnb": 1609,
+        "syd": 667
+      },
+      {
+        "timestamp": "Feb 6, 19:00",
+        "hkg": 352,
+        "jnb": 1512,
+        "syd": 659,
+        "iad": 180,
+        "ams": 176,
+        "gru": 669
+      },
+      {
+        "timestamp": "Feb 6, 20:00",
+        "gru": 635,
+        "jnb": 1492,
+        "syd": 823,
+        "iad": 178,
+        "ams": 195,
+        "hkg": 377
+      },
+      {
+        "timestamp": "Feb 6, 21:00",
+        "gru": 718,
+        "syd": 704,
+        "jnb": 1405,
+        "iad": 174,
+        "ams": 196,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 6, 22:00",
+        "jnb": 1460,
+        "syd": 710,
+        "iad": 177,
+        "ams": 162,
+        "gru": 663,
+        "hkg": 372
+      },
+      {
+        "timestamp": "Feb 6, 23:00",
+        "hkg": 372,
+        "ams": 139,
+        "iad": 180,
+        "jnb": 1466,
+        "syd": 696,
+        "gru": 653
+      },
+      {
+        "timestamp": "Feb 7, 00:00",
+        "hkg": 367,
+        "gru": 728,
+        "ams": 163,
+        "iad": 174,
+        "syd": 852,
+        "jnb": 1600
+      },
+      {
+        "timestamp": "Feb 7, 01:00",
+        "hkg": 384,
+        "jnb": 1302,
+        "syd": 544,
+        "iad": 168,
+        "ams": 178,
+        "gru": 782
+      },
+      {
+        "timestamp": "Feb 7, 02:00",
+        "hkg": 370,
+        "gru": 642,
+        "jnb": 1403,
+        "syd": 694,
+        "ams": 159,
+        "iad": 178
+      },
+      {
+        "timestamp": "Feb 7, 03:00",
+        "gru": 708,
+        "syd": 652,
+        "jnb": 1346,
+        "iad": 172,
+        "ams": 138,
+        "hkg": 377
+      },
+      {
+        "timestamp": "Feb 7, 04:00",
+        "iad": 181,
+        "ams": 159,
+        "syd": 786,
+        "jnb": 1361,
+        "gru": 688,
+        "hkg": 386
+      },
+      {
+        "timestamp": "Feb 7, 05:00",
+        "hkg": 370,
+        "jnb": 1382,
+        "syd": 614,
+        "iad": 165,
+        "ams": 138,
+        "gru": 618
+      },
+      {
+        "timestamp": "Feb 7, 06:00",
+        "hkg": 376,
+        "ams": 166,
+        "iad": 170,
+        "jnb": 1540,
+        "syd": 704,
+        "gru": 676
+      },
+      {
+        "timestamp": "Feb 7, 07:00",
+        "hkg": 365,
+        "gru": 653,
+        "iad": 168,
+        "ams": 137,
+        "syd": 648,
+        "jnb": 1192
+      },
+      {
+        "timestamp": "Feb 7, 08:00",
+        "gru": 684,
+        "syd": 744,
+        "jnb": 1561,
+        "iad": 208,
+        "ams": 177,
+        "hkg": 359
+      },
+      {
+        "timestamp": "Feb 7, 09:00",
+        "gru": 691,
+        "iad": 177,
+        "ams": 188,
+        "jnb": 3767,
+        "syd": 663,
+        "hkg": 387
+      },
+      {
+        "timestamp": "Feb 7, 10:00",
+        "jnb": 927,
+        "syd": 701,
+        "ams": 165,
+        "iad": 166,
+        "gru": 705,
+        "hkg": 376
+      },
+      {
+        "timestamp": "Feb 7, 11:00",
+        "gru": 649,
+        "syd": 639,
+        "jnb": 927,
+        "iad": 168,
+        "ams": 203,
+        "hkg": 357
+      },
+      {
+        "timestamp": "Feb 7, 12:00",
+        "hkg": 370,
+        "gru": 691,
+        "iad": 171,
+        "ams": 174,
+        "syd": 761,
+        "jnb": 1248
+      },
+      {
+        "timestamp": "Feb 7, 13:00",
+        "hkg": 375,
+        "syd": 769,
+        "jnb": 954,
+        "ams": 156,
+        "iad": 176,
+        "gru": 732
+      },
+      {
+        "timestamp": "Feb 7, 14:00",
+        "hkg": 380,
+        "iad": 167,
+        "ams": 151,
+        "syd": 748,
+        "jnb": 918,
+        "gru": 700
+      },
+      {
+        "timestamp": "Feb 7, 15:00",
+        "gru": 742,
+        "ams": 138,
+        "iad": 196,
+        "syd": 684,
+        "jnb": 886,
+        "hkg": 392
+      },
+      {
+        "timestamp": "Feb 7, 16:00",
+        "syd": 635,
+        "jnb": 948,
+        "ams": 166,
+        "iad": 182,
+        "gru": 698,
+        "hkg": 377
+      },
+      {
+        "timestamp": "Feb 7, 17:00",
+        "iad": 197,
+        "ams": 172,
+        "jnb": 899,
+        "syd": 692,
+        "gru": 658,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 7, 18:00",
+        "gru": 710,
+        "ams": 163,
+        "iad": 196,
+        "jnb": 880,
+        "syd": 595,
+        "hkg": 364
+      },
+      {
+        "timestamp": "Feb 7, 19:00",
+        "syd": 968,
+        "jnb": 870,
+        "iad": 184,
+        "ams": 160,
+        "gru": 697,
+        "hkg": 368
+      },
+      {
+        "timestamp": "Feb 7, 20:00",
+        "gru": 692,
+        "iad": 180,
+        "ams": 180,
+        "syd": 686,
+        "jnb": 915,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 7, 21:00",
+        "hkg": 348,
+        "gru": 740,
+        "syd": 660,
+        "jnb": 930,
+        "ams": 155,
+        "iad": 182
+      },
+      {
+        "timestamp": "Feb 7, 22:00",
+        "hkg": 362,
+        "gru": 727,
+        "iad": 201,
+        "ams": 251,
+        "syd": 752,
+        "jnb": 854
+      },
+      {
+        "timestamp": "Feb 7, 23:00",
+        "hkg": 456,
+        "ams": 171,
+        "iad": 173,
+        "jnb": 931,
+        "syd": 749,
+        "gru": 752
+      },
+      {
+        "timestamp": "Feb 8, 00:00",
+        "hkg": 346,
+        "syd": 787,
+        "jnb": 907,
+        "ams": 148,
+        "iad": 187,
+        "gru": 691
+      },
+      {
+        "timestamp": "Feb 8, 01:00",
+        "hkg": 357,
+        "ams": 132,
+        "iad": 178,
+        "jnb": 880,
+        "syd": 755,
+        "gru": 686
+      },
+      {
+        "timestamp": "Feb 8, 02:00",
+        "iad": 169,
+        "ams": 199,
+        "jnb": 898,
+        "syd": 839,
+        "gru": 676,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 8, 03:00",
+        "gru": 663,
+        "ams": 184,
+        "iad": 172,
+        "syd": 744,
+        "jnb": 809,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 8, 04:00",
+        "ams": 176,
+        "iad": 170,
+        "syd": 648,
+        "jnb": 894,
+        "gru": 724,
+        "hkg": 344
+      },
+      {
+        "timestamp": "Feb 8, 05:00",
+        "gru": 735,
+        "syd": 649,
+        "jnb": 885,
+        "iad": 168,
+        "ams": 132,
+        "hkg": 365
+      },
+      {
+        "timestamp": "Feb 8, 06:00",
+        "gru": 682,
+        "ams": 137,
+        "iad": 170,
+        "syd": 671,
+        "jnb": 744,
+        "hkg": 348
+      },
+      {
+        "timestamp": "Feb 8, 07:00",
+        "hkg": 351,
+        "gru": 733,
+        "iad": 170,
+        "ams": 158,
+        "jnb": 857,
+        "syd": 740
+      },
+      {
+        "timestamp": "Feb 8, 08:00",
+        "hkg": 364,
+        "jnb": 920,
+        "syd": 716,
+        "iad": 168,
+        "ams": 167,
+        "gru": 686
+      },
+      {
+        "timestamp": "Feb 8, 09:00",
+        "gru": 649,
+        "jnb": 831,
+        "syd": 684,
+        "ams": 151,
+        "iad": 174,
+        "hkg": 355
+      },
+      {
+        "timestamp": "Feb 8, 10:00",
+        "syd": 692,
+        "jnb": 849,
+        "ams": 204,
+        "iad": 171,
+        "gru": 766,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 8, 11:00",
+        "hkg": 354,
+        "syd": 681,
+        "jnb": 934,
+        "ams": 198,
+        "iad": 176,
+        "gru": 700
+      },
+      {
+        "timestamp": "Feb 8, 12:00",
+        "hkg": 365,
+        "gru": 687,
+        "jnb": 1001,
+        "syd": 715,
+        "ams": 172,
+        "iad": 177
+      },
+      {
+        "timestamp": "Feb 8, 13:00",
+        "hkg": 350,
+        "iad": 176,
+        "ams": 186,
+        "syd": 519,
+        "jnb": 909,
+        "gru": 704
+      },
+      {
+        "timestamp": "Feb 8, 14:00",
+        "hkg": 372,
+        "gru": 659,
+        "iad": 182,
+        "ams": 169,
+        "jnb": 858,
+        "syd": 849
+      },
+      {
+        "timestamp": "Feb 8, 15:00",
+        "hkg": 364,
+        "gru": 681,
+        "jnb": 922,
+        "syd": 687,
+        "iad": 184,
+        "ams": 186
+      },
+      {
+        "timestamp": "Feb 8, 16:00",
+        "gru": 716,
+        "syd": 622,
+        "jnb": 902,
+        "iad": 177,
+        "ams": 163,
+        "hkg": 356
+      },
+      {
+        "timestamp": "Feb 8, 17:00",
+        "gru": 709,
+        "syd": 671,
+        "jnb": 877,
+        "iad": 184,
+        "ams": 171,
+        "hkg": 394
+      },
+      {
+        "timestamp": "Feb 8, 18:00",
+        "hkg": 364,
+        "gru": 686,
+        "syd": 641,
+        "jnb": 891,
+        "ams": 170,
+        "iad": 188
+      },
+      {
+        "timestamp": "Feb 8, 19:00",
+        "hkg": 351,
+        "syd": 740,
+        "jnb": 906,
+        "ams": 155,
+        "iad": 188,
+        "gru": 684
+      },
+      {
+        "timestamp": "Feb 8, 20:00",
+        "jnb": 838,
+        "syd": 668,
+        "ams": 154,
+        "iad": 167,
+        "gru": 660,
+        "hkg": 369
+      },
+      {
+        "timestamp": "Feb 8, 21:00",
+        "gru": 684,
+        "syd": 599,
+        "jnb": 908,
+        "iad": 192,
+        "ams": 160,
+        "hkg": 357
+      },
+      {
+        "timestamp": "Feb 8, 22:00",
+        "iad": 186,
+        "ams": 160,
+        "jnb": 880,
+        "syd": 661,
+        "gru": 683,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 8, 23:00",
+        "jnb": 870,
+        "syd": 777,
+        "iad": 187,
+        "ams": 177,
+        "gru": 806,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 9, 00:00",
+        "gru": 683,
+        "syd": 674,
+        "jnb": 861,
+        "iad": 171,
+        "ams": 161,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 9, 01:00",
+        "gru": 720,
+        "syd": 634,
+        "jnb": 840,
+        "ams": 138,
+        "iad": 176,
+        "hkg": 338
+      },
+      {
+        "timestamp": "Feb 9, 02:00",
+        "jnb": 812,
+        "syd": 723,
+        "ams": 433,
+        "iad": 186,
+        "gru": 669,
+        "hkg": 347
+      },
+      {
+        "timestamp": "Feb 9, 03:00",
+        "hkg": 361,
+        "gru": 676,
+        "syd": 718,
+        "jnb": 774,
+        "ams": 140,
+        "iad": 171
+      },
+      {
+        "timestamp": "Feb 9, 04:00",
+        "hkg": 360,
+        "jnb": 908,
+        "syd": 716,
+        "ams": 146,
+        "iad": 167,
+        "gru": 620
+      },
+      {
+        "timestamp": "Feb 9, 05:00",
+        "syd": 626,
+        "jnb": 932,
+        "iad": 168,
+        "ams": 176,
+        "gru": 644,
+        "hkg": 373
+      },
+      {
+        "timestamp": "Feb 9, 06:00",
+        "gru": 727,
+        "jnb": 827,
+        "syd": 744,
+        "iad": 170,
+        "ams": 148,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 9, 07:00",
+        "gru": 676,
+        "iad": 168,
+        "ams": 170,
+        "jnb": 900,
+        "syd": 640,
+        "hkg": 368
+      },
+      {
+        "timestamp": "Feb 9, 08:00",
+        "syd": 755,
+        "jnb": 866,
+        "iad": 161,
+        "ams": 149,
+        "gru": 683,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 9, 09:00",
+        "syd": 692,
+        "jnb": 883,
+        "iad": 173,
+        "ams": 150,
+        "gru": 670,
+        "hkg": 368
+      },
+      {
+        "timestamp": "Feb 9, 10:00",
+        "hkg": 359,
+        "jnb": 882,
+        "syd": 4936,
+        "iad": 170,
+        "ams": 165,
+        "gru": 701
+      },
+      {
+        "timestamp": "Feb 9, 11:00",
+        "hkg": 350,
+        "gru": 728,
+        "jnb": 869,
+        "syd": 628,
+        "iad": 168,
+        "ams": 171
+      },
+      {
+        "timestamp": "Feb 9, 12:00",
+        "hkg": 366,
+        "gru": 686,
+        "ams": 171,
+        "iad": 171,
+        "syd": 725,
+        "jnb": 1057
+      },
+      {
+        "timestamp": "Feb 9, 13:00",
+        "hkg": 361,
+        "iad": 172,
+        "ams": 190,
+        "jnb": 904,
+        "syd": 785,
+        "gru": 696
+      },
+      {
+        "timestamp": "Feb 9, 14:00",
+        "iad": 165,
+        "ams": 207,
+        "syd": 692,
+        "jnb": 868,
+        "gru": 668,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 9, 15:00",
+        "syd": 742,
+        "jnb": 838,
+        "iad": 180,
+        "ams": 172,
+        "gru": 684,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 9, 16:00",
+        "gru": 685,
+        "jnb": 5243,
+        "syd": 712,
+        "iad": 185,
+        "ams": 158,
+        "hkg": 384
+      },
+      {
+        "timestamp": "Feb 9, 17:00",
+        "ams": 174,
+        "iad": 192,
+        "syd": 9398,
+        "jnb": 886,
+        "gru": 687,
+        "hkg": 348
+      },
+      {
+        "timestamp": "Feb 9, 18:00",
+        "gru": 706,
+        "syd": 677,
+        "jnb": 878,
+        "ams": 156,
+        "iad": 177,
+        "hkg": 346
+      },
+      {
+        "timestamp": "Feb 9, 19:00",
+        "hkg": 361,
+        "gru": 696,
+        "jnb": 920,
+        "syd": 564,
+        "iad": 174,
+        "ams": 218
+      },
+      {
+        "timestamp": "Feb 9, 20:00",
+        "hkg": 365,
+        "jnb": 860,
+        "syd": 673,
+        "ams": 148,
+        "iad": 174,
+        "gru": 763
+      },
+      {
+        "timestamp": "Feb 9, 21:00",
+        "gru": 746,
+        "iad": 181,
+        "ams": 166,
+        "syd": 666,
+        "jnb": 842,
+        "hkg": 377
+      },
+      {
+        "timestamp": "Feb 9, 22:00",
+        "syd": 696,
+        "jnb": 911,
+        "iad": 184,
+        "ams": 155,
+        "gru": 730,
+        "hkg": 345
+      },
+      {
+        "timestamp": "Feb 9, 23:00",
+        "hkg": 341,
+        "jnb": 777,
+        "syd": 700,
+        "ams": 163,
+        "iad": 176,
+        "gru": 717
+      },
+      {
+        "timestamp": "Feb 10, 00:00",
+        "hkg": 360,
+        "iad": 172,
+        "ams": 133,
+        "jnb": 877,
+        "syd": 691,
+        "gru": 673
+      },
+      {
+        "timestamp": "Feb 10, 01:00",
+        "hkg": 359,
+        "syd": 707,
+        "jnb": 866,
+        "iad": 177,
+        "ams": 181,
+        "gru": 717
+      },
+      {
+        "timestamp": "Feb 10, 02:00",
+        "hkg": 367,
+        "gru": 734,
+        "syd": 641,
+        "jnb": 887,
+        "iad": 176,
+        "ams": 170
+      },
+      {
+        "timestamp": "Feb 10, 03:00",
+        "hkg": 346,
+        "jnb": 915,
+        "syd": 740,
+        "ams": 142,
+        "iad": 180,
+        "gru": 732
+      },
+      {
+        "timestamp": "Feb 10, 04:00",
+        "jnb": 822,
+        "syd": 595,
+        "iad": 160,
+        "ams": 142,
+        "gru": 674,
+        "hkg": 342
+      },
+      {
+        "timestamp": "Feb 10, 05:00",
+        "gru": 689,
+        "ams": 142,
+        "iad": 222,
+        "jnb": 830,
+        "syd": 725,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 10, 06:00",
+        "hkg": 356,
+        "gru": 678,
+        "syd": 4115,
+        "jnb": 774,
+        "iad": 160,
+        "ams": 142
+      },
+      {
+        "timestamp": "Feb 10, 07:00",
+        "hkg": 344,
+        "jnb": 850,
+        "syd": 569,
+        "ams": 135,
+        "iad": 163,
+        "gru": 702
+      },
+      {
+        "timestamp": "Feb 10, 08:00",
+        "hkg": 392,
+        "iad": 171,
+        "ams": 166,
+        "jnb": 772,
+        "syd": 667,
+        "gru": 683
+      },
+      {
+        "timestamp": "Feb 10, 09:00",
+        "hkg": 397,
+        "syd": 767,
+        "jnb": 854,
+        "ams": 146,
+        "iad": 165,
+        "gru": 694
+      },
+      {
+        "timestamp": "Feb 10, 10:00",
+        "hkg": 351,
+        "gru": 676,
+        "ams": 169,
+        "iad": 159,
+        "syd": 733,
+        "jnb": 847
+      },
+      {
+        "timestamp": "Feb 10, 11:00",
+        "hkg": 350,
+        "jnb": 830,
+        "syd": 602,
+        "iad": 163,
+        "ams": 160,
+        "gru": 663
+      },
+      {
+        "timestamp": "Feb 10, 12:00",
+        "hkg": 360,
+        "gru": 658,
+        "jnb": 959,
+        "syd": 731,
+        "ams": 144,
+        "iad": 165
+      },
+      {
+        "timestamp": "Feb 10, 13:00",
+        "gru": 692,
+        "iad": 160,
+        "ams": 167,
+        "jnb": 954,
+        "syd": 741,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 10, 14:00",
+        "jnb": 920,
+        "syd": 648,
+        "iad": 162,
+        "ams": 174,
+        "gru": 661,
+        "hkg": 350
+      },
+      {
+        "timestamp": "Feb 10, 15:00",
+        "hkg": 362,
+        "gru": 698,
+        "jnb": 849,
+        "syd": 662,
+        "ams": 169,
+        "iad": 171
+      },
+      {
+        "timestamp": "Feb 10, 16:00",
+        "hkg": 340,
+        "gru": 677,
+        "iad": 172,
+        "ams": 197,
+        "jnb": 836,
+        "syd": 625
+      },
+      {
+        "timestamp": "Feb 10, 17:00",
+        "hkg": 358,
+        "gru": 806,
+        "syd": 794,
+        "jnb": 839,
+        "iad": 172,
+        "ams": 197
+      },
+      {
+        "timestamp": "Feb 10, 18:00",
+        "gru": 682,
+        "iad": 168,
+        "ams": 197,
+        "syd": 582,
+        "jnb": 879,
+        "hkg": 344
+      },
+      {
+        "timestamp": "Feb 10, 19:00",
+        "ams": 147,
+        "iad": 166,
+        "jnb": 838,
+        "syd": 720,
+        "gru": 698,
+        "hkg": 345
+      },
+      {
+        "timestamp": "Feb 10, 20:00",
+        "gru": 677,
+        "jnb": 882,
+        "syd": 647,
+        "iad": 168,
+        "ams": 146,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 10, 21:00",
+        "ams": 157,
+        "iad": 169,
+        "jnb": 883,
+        "syd": 713,
+        "gru": 830,
+        "hkg": 345
+      },
+      {
+        "timestamp": "Feb 10, 22:00",
+        "hkg": 349,
+        "jnb": 774,
+        "syd": 674,
+        "ams": 142,
+        "iad": 160,
+        "gru": 718
+      },
+      {
+        "timestamp": "Feb 10, 23:00",
+        "hkg": 351,
+        "gru": 656,
+        "syd": 752,
+        "jnb": 925,
+        "iad": 172,
+        "ams": 156
+      },
+      {
+        "timestamp": "Feb 11, 00:00",
+        "hkg": 324,
+        "gru": 710,
+        "ams": 135,
+        "iad": 180,
+        "syd": 584,
+        "jnb": 828
+      },
+      {
+        "timestamp": "Feb 11, 01:00",
+        "hkg": 349,
+        "jnb": 789,
+        "syd": 683,
+        "ams": 142,
+        "iad": 161,
+        "gru": 631
+      },
+      {
+        "timestamp": "Feb 11, 02:00",
+        "hkg": 356,
+        "gru": 662,
+        "syd": 644,
+        "jnb": 740,
+        "ams": 178,
+        "iad": 165
+      },
+      {
+        "timestamp": "Feb 11, 03:00",
+        "gru": 634,
+        "iad": 169,
+        "ams": 201,
+        "syd": 721,
+        "jnb": 784,
+        "hkg": 355
+      },
+      {
+        "timestamp": "Feb 11, 04:00",
+        "iad": 164,
+        "ams": 133,
+        "jnb": 840,
+        "syd": 665,
+        "gru": 712,
+        "hkg": 341
+      },
+      {
+        "timestamp": "Feb 11, 05:00",
+        "gru": 696,
+        "iad": 170,
+        "ams": 140,
+        "syd": 792,
+        "jnb": 873,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 11, 06:00",
+        "iad": 167,
+        "ams": 142,
+        "jnb": 905,
+        "syd": 684,
+        "gru": 749,
+        "hkg": 339
+      },
+      {
+        "timestamp": "Feb 11, 07:00",
+        "hkg": 355,
+        "jnb": 872,
+        "syd": 640,
+        "ams": 187,
+        "iad": 169,
+        "gru": 711
+      },
+      {
+        "timestamp": "Feb 11, 08:00",
+        "hkg": 344,
+        "gru": 652,
+        "syd": 709,
+        "jnb": 844,
+        "ams": 179,
+        "iad": 160
+      },
+      {
+        "timestamp": "Feb 11, 09:00",
+        "hkg": 374,
+        "syd": 657,
+        "jnb": 865,
+        "iad": 166,
+        "ams": 143,
+        "gru": 710
+      },
+      {
+        "timestamp": "Feb 11, 10:00",
+        "gru": 760,
+        "syd": 783,
+        "jnb": 811,
+        "iad": 165,
+        "ams": 198,
+        "hkg": 342
+      },
+      {
+        "timestamp": "Feb 11, 11:00",
+        "ams": 194,
+        "iad": 168,
+        "syd": 714,
+        "jnb": 933,
+        "gru": 689,
+        "hkg": 346
+      },
+      {
+        "timestamp": "Feb 11, 12:00",
+        "hkg": 352,
+        "ams": 280,
+        "iad": 166,
+        "jnb": 922,
+        "syd": 649,
+        "gru": 666
+      },
+      {
+        "timestamp": "Feb 11, 13:00",
+        "hkg": 357,
+        "gru": 684,
+        "syd": 665,
+        "jnb": 890,
+        "ams": 166,
+        "iad": 166
+      },
+      {
+        "timestamp": "Feb 11, 14:00",
+        "hkg": 360,
+        "ams": 176,
+        "iad": 167,
+        "jnb": 812,
+        "syd": 3391,
+        "gru": 656
+      },
+      {
+        "timestamp": "Feb 11, 15:00",
+        "hkg": 352,
+        "gru": 730,
+        "jnb": 786,
+        "syd": 671,
+        "iad": 169,
+        "ams": 180
+      },
+      {
+        "timestamp": "Feb 11, 16:00",
+        "gru": 730,
+        "syd": 728,
+        "jnb": 861,
+        "iad": 174,
+        "ams": 218,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 11, 17:00",
+        "hkg": 342,
+        "gru": 701,
+        "syd": 8049,
+        "jnb": 868,
+        "iad": 177,
+        "ams": 168
+      },
+      {
+        "timestamp": "Feb 11, 18:00",
+        "hkg": 376,
+        "jnb": 1115,
+        "syd": 784,
+        "iad": 173,
+        "ams": 236,
+        "gru": 683
+      },
+      {
+        "timestamp": "Feb 11, 19:00",
+        "iad": 176,
+        "ams": 208,
+        "syd": 680,
+        "jnb": 1540,
+        "gru": 716,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 11, 20:00",
+        "gru": 684,
+        "iad": 170,
+        "ams": 162,
+        "jnb": 1553,
+        "syd": 774,
+        "hkg": 345
+      },
+      {
+        "timestamp": "Feb 11, 21:00",
+        "hkg": 344,
+        "gru": 714,
+        "syd": 590,
+        "jnb": 1320,
+        "iad": 176,
+        "ams": 154
+      },
+      {
+        "timestamp": "Feb 11, 22:00",
+        "hkg": 345,
+        "jnb": 1380,
+        "syd": 702,
+        "iad": 178,
+        "ams": 229,
+        "gru": 685
+      },
+      {
+        "timestamp": "Feb 11, 23:00",
+        "hkg": 345,
+        "gru": 691,
+        "jnb": 1521,
+        "syd": 684,
+        "ams": 206,
+        "iad": 166
+      },
+      {
+        "timestamp": "Feb 12, 00:00",
+        "hkg": 360,
+        "syd": 615,
+        "jnb": 1498,
+        "ams": 174,
+        "iad": 173,
+        "gru": 691
+      },
+      {
+        "timestamp": "Feb 12, 01:00",
+        "hkg": 330,
+        "gru": 722,
+        "syd": 586,
+        "jnb": 1478,
+        "iad": 168,
+        "ams": 148
+      },
+      {
+        "timestamp": "Feb 12, 02:00",
+        "gru": 680,
+        "jnb": 1466,
+        "syd": 832,
+        "iad": 167,
+        "ams": 137,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 12, 03:00",
+        "ams": 182,
+        "iad": 169,
+        "jnb": 1548,
+        "syd": 636,
+        "gru": 728,
+        "hkg": 376
+      },
+      {
+        "timestamp": "Feb 12, 04:00",
+        "hkg": 350,
+        "gru": 681,
+        "ams": 216,
+        "iad": 161,
+        "jnb": 1223,
+        "syd": 664
+      },
+      {
+        "timestamp": "Feb 12, 05:00",
+        "hkg": 348,
+        "syd": 693,
+        "jnb": 7838,
+        "ams": 184,
+        "iad": 161,
+        "gru": 714
+      },
+      {
+        "timestamp": "Feb 12, 06:00",
+        "jnb": 2068,
+        "syd": 800,
+        "ams": 3691,
+        "iad": 166,
+        "gru": 655,
+        "hkg": 339
+      },
+      {
+        "timestamp": "Feb 12, 07:00",
+        "gru": 656,
+        "iad": 158,
+        "ams": 191,
+        "jnb": 824,
+        "syd": 727,
+        "hkg": 359
+      },
+      {
+        "timestamp": "Feb 12, 08:00",
+        "syd": 770,
+        "jnb": 814,
+        "iad": 164,
+        "ams": 166,
+        "gru": 687,
+        "hkg": 336
+      },
+      {
+        "timestamp": "Feb 12, 09:00",
+        "gru": 675,
+        "jnb": 852,
+        "syd": 673,
+        "ams": 177,
+        "iad": 165,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 12, 10:00",
+        "gru": 728,
+        "iad": 163,
+        "ams": 175,
+        "jnb": 826,
+        "syd": 678,
+        "hkg": 359
+      },
+      {
+        "timestamp": "Feb 12, 11:00",
+        "hkg": 384,
+        "gru": 699,
+        "ams": 176,
+        "iad": 180,
+        "syd": 622,
+        "jnb": 877
+      },
+      {
+        "timestamp": "Feb 12, 12:00",
+        "hkg": 345,
+        "syd": 724,
+        "jnb": 1046,
+        "ams": 200,
+        "iad": 170,
+        "gru": 670
+      },
+      {
+        "timestamp": "Feb 12, 13:00",
+        "hkg": 356,
+        "syd": 630,
+        "jnb": 962,
+        "ams": 212,
+        "iad": 170,
+        "gru": 675
+      },
+      {
+        "timestamp": "Feb 12, 14:00",
+        "hkg": 360,
+        "gru": 678,
+        "syd": 672,
+        "jnb": 901,
+        "iad": 167,
+        "ams": 284
+      },
+      {
+        "timestamp": "Feb 12, 15:00",
+        "gru": 710,
+        "jnb": 865,
+        "syd": 630,
+        "ams": 241,
+        "iad": 177,
+        "hkg": 409
+      },
+      {
+        "timestamp": "Feb 12, 16:00",
+        "ams": 199,
+        "iad": 164,
+        "jnb": 880,
+        "syd": 609,
+        "gru": 683,
+        "hkg": 400
+      },
+      {
+        "timestamp": "Feb 12, 17:00",
+        "ams": 187,
+        "iad": 178,
+        "syd": 712,
+        "jnb": 1004,
+        "gru": 730,
+        "hkg": 378
+      },
+      {
+        "timestamp": "Feb 12, 18:00",
+        "syd": 589,
+        "jnb": 863,
+        "iad": 170,
+        "ams": 194,
+        "gru": 686,
+        "hkg": 348
+      },
+      {
+        "timestamp": "Feb 12, 19:00",
+        "gru": 696,
+        "jnb": 973,
+        "syd": 676,
+        "ams": 185,
+        "iad": 184,
+        "hkg": 367
+      },
+      {
+        "timestamp": "Feb 12, 20:00",
+        "hkg": 369,
+        "gru": 686,
+        "ams": 192,
+        "iad": 178,
+        "jnb": 957,
+        "syd": 725
+      },
+      {
+        "timestamp": "Feb 12, 21:00",
+        "hkg": 386,
+        "jnb": 955,
+        "syd": 698,
+        "iad": 173,
+        "ams": 185,
+        "gru": 710
+      },
+      {
+        "timestamp": "Feb 12, 22:00",
+        "gru": 666,
+        "syd": 672,
+        "jnb": 794,
+        "ams": 178,
+        "iad": 172,
+        "hkg": 340
+      },
+      {
+        "timestamp": "Feb 12, 23:00",
+        "jnb": 840,
+        "syd": 754,
+        "iad": 168,
+        "ams": 153,
+        "gru": 643,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 13, 00:00",
+        "hkg": 352,
+        "iad": 166,
+        "ams": 179,
+        "jnb": 879,
+        "syd": 730,
+        "gru": 653
+      },
+      {
+        "timestamp": "Feb 13, 01:00",
+        "gru": 740,
+        "syd": 691,
+        "jnb": 828,
+        "ams": 165,
+        "iad": 169,
+        "hkg": 345
+      },
+      {
+        "timestamp": "Feb 13, 02:00",
+        "gru": 720,
+        "iad": 164,
+        "ams": 130,
+        "syd": 623,
+        "jnb": 867,
+        "hkg": 344
+      },
+      {
+        "timestamp": "Feb 13, 03:00",
+        "jnb": 894,
+        "syd": 811,
+        "ams": 148,
+        "iad": 172,
+        "gru": 652,
+        "hkg": 351
+      },
+      {
+        "timestamp": "Feb 13, 04:00",
+        "gru": 778,
+        "ams": 182,
+        "iad": 172,
+        "jnb": 904,
+        "syd": 734,
+        "hkg": 362
+      },
+      {
+        "timestamp": "Feb 13, 05:00",
+        "hkg": 398,
+        "gru": 751,
+        "jnb": 868,
+        "syd": 636,
+        "iad": 163,
+        "ams": 166
+      },
+      {
+        "timestamp": "Feb 13, 06:00",
+        "hkg": 365,
+        "jnb": 886,
+        "syd": 632,
+        "ams": 174,
+        "iad": 174,
+        "gru": 713
+      },
+      {
+        "timestamp": "Feb 13, 07:00",
+        "jnb": 854,
+        "syd": 752,
+        "ams": 166,
+        "iad": 164,
+        "gru": 676,
+        "hkg": 376
+      },
+      {
+        "timestamp": "Feb 13, 08:00",
+        "gru": 608,
+        "ams": 138,
+        "iad": 150,
+        "jnb": 778,
+        "syd": 667,
+        "hkg": 350
+      },
+      {
+        "timestamp": "Feb 13, 09:00",
+        "hkg": 368,
+        "syd": 743,
+        "jnb": 892,
+        "ams": 207,
+        "iad": 168,
+        "gru": 643
+      },
+      {
+        "timestamp": "Feb 13, 10:00",
+        "hkg": 372,
+        "iad": 164,
+        "ams": 184,
+        "syd": 646,
+        "jnb": 828,
+        "gru": 680
+      },
+      {
+        "timestamp": "Feb 13, 11:00",
+        "hkg": 354,
+        "gru": 731,
+        "ams": 183,
+        "iad": 441,
+        "jnb": 858,
+        "syd": 638
+      },
+      {
+        "timestamp": "Feb 13, 12:00",
+        "hkg": 362,
+        "ams": 168,
+        "iad": 164,
+        "jnb": 973,
+        "syd": 687,
+        "gru": 654
+      },
+      {
+        "timestamp": "Feb 13, 13:00",
+        "hkg": 357,
+        "gru": 706,
+        "jnb": 976,
+        "syd": 731,
+        "iad": 162,
+        "ams": 146
+      },
+      {
+        "timestamp": "Feb 13, 14:00",
+        "gru": 681,
+        "jnb": 887,
+        "syd": 752,
+        "ams": 179,
+        "iad": 162,
+        "hkg": 356
+      },
+      {
+        "timestamp": "Feb 13, 15:00",
+        "syd": 694,
+        "jnb": 808,
+        "iad": 177,
+        "ams": 530,
+        "gru": 666,
+        "hkg": 369
+      },
+      {
+        "timestamp": "Feb 13, 16:00",
+        "hkg": 375,
+        "gru": 702,
+        "iad": 191,
+        "ams": 156,
+        "jnb": 798,
+        "syd": 665
+      },
+      {
+        "timestamp": "Feb 13, 17:00",
+        "hkg": 354,
+        "ams": 201,
+        "iad": 182,
+        "syd": 640,
+        "jnb": 817,
+        "gru": 700
+      },
+      {
+        "timestamp": "Feb 13, 18:00",
+        "ams": 155,
+        "iad": 190,
+        "jnb": 815,
+        "syd": 651,
+        "gru": 691,
+        "hkg": 350
+      },
+      {
+        "timestamp": "Feb 13, 19:00",
+        "jnb": 872,
+        "syd": 651,
+        "ams": 169,
+        "iad": 177,
+        "gru": 708,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 13, 20:00",
+        "gru": 696,
+        "syd": 604,
+        "jnb": 948,
+        "ams": 168,
+        "iad": 186,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 13, 21:00",
+        "iad": 180,
+        "ams": 148,
+        "jnb": 924,
+        "syd": 793,
+        "gru": 681,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 13, 22:00",
+        "gru": 695,
+        "iad": 168,
+        "ams": 166,
+        "syd": 726,
+        "jnb": 1160,
+        "hkg": 344
+      },
+      {
+        "timestamp": "Feb 13, 23:00",
+        "hkg": 325,
+        "gru": 660,
+        "iad": 171,
+        "ams": 135,
+        "syd": 717,
+        "jnb": 823
+      },
+      {
+        "timestamp": "Feb 14, 00:00",
+        "hkg": 343,
+        "iad": 167,
+        "ams": 125,
+        "jnb": 838,
+        "syd": 671,
+        "gru": 696
+      },
+      {
+        "timestamp": "Feb 14, 01:00",
+        "hkg": 351,
+        "gru": 770,
+        "iad": 173,
+        "ams": 137,
+        "syd": 768,
+        "jnb": 898
+      },
+      {
+        "timestamp": "Feb 14, 02:00",
+        "hkg": 350,
+        "iad": 171,
+        "ams": 119,
+        "jnb": 784,
+        "syd": 720,
+        "gru": 637
+      },
+      {
+        "timestamp": "Feb 14, 03:00",
+        "hkg": 348,
+        "jnb": 679,
+        "syd": 716,
+        "iad": 164,
+        "ams": 133,
+        "gru": 683
+      },
+      {
+        "timestamp": "Feb 14, 04:00",
+        "syd": 823,
+        "jnb": 803,
+        "iad": 169,
+        "ams": 126,
+        "gru": 688,
+        "hkg": 362
+      },
+      {
+        "timestamp": "Feb 14, 05:00",
+        "gru": 660,
+        "jnb": 790,
+        "syd": 654,
+        "ams": 126,
+        "iad": 168,
+        "hkg": 334
+      },
+      {
+        "timestamp": "Feb 14, 06:00",
+        "ams": 127,
+        "iad": 163,
+        "syd": 653,
+        "jnb": 860,
+        "gru": 682,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 14, 07:00",
+        "gru": 644,
+        "ams": 120,
+        "iad": 163,
+        "syd": 730,
+        "jnb": 833,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 14, 08:00",
+        "hkg": 348,
+        "gru": 700,
+        "ams": 128,
+        "iad": 165,
+        "jnb": 872,
+        "syd": 687
+      },
+      {
+        "timestamp": "Feb 14, 09:00",
+        "iad": 165,
+        "ams": 141,
+        "jnb": 841,
+        "syd": 645,
+        "gru": 675,
+        "hkg": 348
+      },
+      {
+        "timestamp": "Feb 14, 10:00",
+        "hkg": 354,
+        "gru": 703,
+        "iad": 162,
+        "ams": 151,
+        "jnb": 1348,
+        "syd": 730
+      },
+      {
+        "timestamp": "Feb 14, 11:00",
+        "hkg": 350,
+        "gru": 708,
+        "jnb": 1546,
+        "syd": 680,
+        "iad": 166,
+        "ams": 140
+      },
+      {
+        "timestamp": "Feb 14, 12:00",
+        "hkg": 361,
+        "syd": 630,
+        "jnb": 1355,
+        "iad": 170,
+        "ams": 156,
+        "gru": 682
+      },
+      {
+        "timestamp": "Feb 14, 13:00",
+        "jnb": 1374,
+        "syd": 673,
+        "ams": 135,
+        "iad": 168,
+        "gru": 684,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 14, 14:00",
+        "gru": 700,
+        "syd": 641,
+        "jnb": 1362,
+        "ams": 150,
+        "iad": 170,
+        "hkg": 369
+      },
+      {
+        "timestamp": "Feb 14, 15:00",
+        "ams": 128,
+        "iad": 172,
+        "syd": 6737,
+        "jnb": 1423,
+        "gru": 690,
+        "hkg": 369
+      },
+      {
+        "timestamp": "Feb 14, 16:00",
+        "gru": 744,
+        "ams": 148,
+        "iad": 170,
+        "jnb": 1438,
+        "syd": 5441,
+        "hkg": 361
+      },
+      {
+        "timestamp": "Feb 14, 17:00",
+        "hkg": 340,
+        "ams": 156,
+        "iad": 171,
+        "jnb": 1440,
+        "syd": 821,
+        "gru": 660
+      },
+      {
+        "timestamp": "Feb 14, 18:00",
+        "hkg": 365,
+        "gru": 697,
+        "ams": 158,
+        "iad": 172,
+        "syd": 639,
+        "jnb": 1550
+      },
+      {
+        "timestamp": "Feb 14, 19:00",
+        "hkg": 350,
+        "gru": 693,
+        "syd": 595,
+        "jnb": 1537,
+        "ams": 165,
+        "iad": 170
+      },
+      {
+        "timestamp": "Feb 14, 20:00",
+        "gru": 643,
+        "syd": 749,
+        "jnb": 1497,
+        "iad": 176,
+        "ams": 165,
+        "hkg": 364
+      },
+      {
+        "timestamp": "Feb 14, 21:00",
+        "jnb": 1487,
+        "syd": 632,
+        "ams": 200,
+        "iad": 185,
+        "gru": 683,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 14, 22:00",
+        "hkg": 336,
+        "syd": 779,
+        "jnb": 1302,
+        "ams": 223,
+        "iad": 178,
+        "gru": 716
+      },
+      {
+        "timestamp": "Feb 14, 23:00",
+        "hkg": 347,
+        "gru": 746,
+        "syd": 673,
+        "jnb": 1548,
+        "ams": 166,
+        "iad": 166
+      },
+      {
+        "timestamp": "Feb 15, 00:00",
+        "hkg": 335,
+        "ams": 159,
+        "iad": 172,
+        "jnb": 953,
+        "syd": 704,
+        "gru": 675
+      },
+      {
+        "timestamp": "Feb 15, 01:00",
+        "hkg": 335,
+        "gru": 670,
+        "iad": 168,
+        "ams": 214,
+        "syd": 590,
+        "jnb": 978
+      },
+      {
+        "timestamp": "Feb 15, 02:00",
+        "gru": 731,
+        "syd": 652,
+        "jnb": 824,
+        "iad": 163,
+        "ams": 124,
+        "hkg": 364
+      },
+      {
+        "timestamp": "Feb 15, 03:00",
+        "jnb": 882,
+        "syd": 749,
+        "ams": 155,
+        "iad": 171,
+        "gru": 691,
+        "hkg": 356
+      },
+      {
+        "timestamp": "Feb 15, 04:00",
+        "iad": 163,
+        "ams": 170,
+        "jnb": 878,
+        "syd": 676,
+        "gru": 680,
+        "hkg": 360
+      },
+      {
+        "timestamp": "Feb 15, 05:00",
+        "hkg": 346,
+        "gru": 708,
+        "syd": 679,
+        "jnb": 883,
+        "ams": 160,
+        "iad": 167
+      },
+      {
+        "timestamp": "Feb 15, 06:00",
+        "hkg": 377,
+        "ams": 131,
+        "iad": 172,
+        "syd": 676,
+        "jnb": 910,
+        "gru": 726
+      },
+      {
+        "timestamp": "Feb 15, 07:00",
+        "iad": 169,
+        "ams": 135,
+        "jnb": 925,
+        "syd": 700,
+        "gru": 702,
+        "hkg": 387
+      },
+      {
+        "timestamp": "Feb 15, 08:00",
+        "gru": 718,
+        "ams": 154,
+        "iad": 162,
+        "jnb": 928,
+        "syd": 791,
+        "hkg": 367
+      },
+      {
+        "timestamp": "Feb 15, 09:00",
+        "gru": 706,
+        "ams": 161,
+        "iad": 160,
+        "syd": 663,
+        "jnb": 942,
+        "hkg": 397
+      },
+      {
+        "timestamp": "Feb 15, 10:00",
+        "syd": 802,
+        "jnb": 832,
+        "ams": 151,
+        "iad": 174,
+        "gru": 686,
+        "hkg": 372
+      },
+      {
+        "timestamp": "Feb 15, 11:00",
+        "hkg": 365,
+        "jnb": 864,
+        "syd": 656,
+        "iad": 158,
+        "ams": 154,
+        "gru": 691
+      },
+      {
+        "timestamp": "Feb 15, 12:00",
+        "hkg": 382,
+        "ams": 150,
+        "iad": 162,
+        "jnb": 910,
+        "syd": 616,
+        "gru": 685
+      },
+      {
+        "timestamp": "Feb 15, 13:00",
+        "hkg": 374,
+        "gru": 687,
+        "jnb": 897,
+        "syd": 601,
+        "iad": 164,
+        "ams": 142
+      },
+      {
+        "timestamp": "Feb 15, 14:00",
+        "hkg": 368,
+        "gru": 680,
+        "jnb": 903,
+        "syd": 731,
+        "ams": 130,
+        "iad": 174
+      },
+      {
+        "timestamp": "Feb 15, 15:00",
+        "hkg": 361,
+        "syd": 622,
+        "jnb": 859,
+        "iad": 171,
+        "ams": 160,
+        "gru": 665
+      },
+      {
+        "timestamp": "Feb 15, 16:00",
+        "syd": 584,
+        "jnb": 788,
+        "ams": 155,
+        "iad": 170,
+        "gru": 692,
+        "hkg": 355
+      },
+      {
+        "timestamp": "Feb 17, 10:00",
+        "hkg": 370,
+        "iad": 170,
+        "ams": 229,
+        "syd": 834,
+        "jnb": 1435,
+        "gru": 904
+      },
+      {
+        "timestamp": "Feb 17, 11:00",
+        "gru": 650,
+        "jnb": 1493,
+        "syd": 762,
+        "ams": 135,
+        "iad": 184,
+        "hkg": 356
+      },
+      {
+        "timestamp": "Feb 17, 12:00",
+        "syd": 748,
+        "jnb": 1436,
+        "ams": 158,
+        "iad": 182,
+        "gru": 736,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 17, 13:00",
+        "jnb": 1375,
+        "syd": 664,
+        "ams": 154,
+        "iad": 181,
+        "gru": 658,
+        "hkg": 365
+      },
+      {
+        "timestamp": "Feb 17, 14:00",
+        "hkg": 364,
+        "syd": 562,
+        "jnb": 1404,
+        "ams": 160,
+        "iad": 178,
+        "gru": 683
+      },
+      {
+        "timestamp": "Feb 17, 15:00",
+        "hkg": 357,
+        "gru": 635,
+        "iad": 175,
+        "ams": 152,
+        "syd": 728,
+        "jnb": 1522
+      },
+      {
+        "timestamp": "Feb 17, 16:00",
+        "hkg": 351,
+        "jnb": 1239,
+        "syd": 601,
+        "iad": 168,
+        "ams": 137,
+        "gru": 714
+      },
+      {
+        "timestamp": "Feb 17, 17:00",
+        "hkg": 358,
+        "gru": 679,
+        "syd": 699,
+        "jnb": 1457,
+        "ams": 139,
+        "iad": 174
+      },
+      {
+        "timestamp": "Feb 17, 18:00",
+        "gru": 645,
+        "syd": 719,
+        "jnb": 1445,
+        "iad": 173,
+        "ams": 153,
+        "hkg": 350
+      },
+      {
+        "timestamp": "Feb 17, 19:00",
+        "jnb": 1639,
+        "syd": 675,
+        "ams": 157,
+        "iad": 173,
+        "gru": 685,
+        "hkg": 334
+      },
+      {
+        "timestamp": "Feb 17, 20:00",
+        "hkg": 320,
+        "iad": 172,
+        "ams": 152,
+        "syd": 657,
+        "jnb": 1386,
+        "gru": 686
+      },
+      {
+        "timestamp": "Feb 17, 21:00",
+        "hkg": 337,
+        "gru": 685,
+        "syd": 604,
+        "jnb": 1509,
+        "ams": 151,
+        "iad": 171
+      },
+      {
+        "timestamp": "Feb 17, 22:00",
+        "hkg": 363,
+        "gru": 658,
+        "iad": 173,
+        "ams": 136,
+        "syd": 758,
+        "jnb": 1281
+      },
+      {
+        "timestamp": "Feb 17, 23:00",
+        "gru": 672,
+        "ams": 118,
+        "iad": 166,
+        "jnb": 1456,
+        "syd": 668,
+        "hkg": 329
+      },
+      {
+        "timestamp": "Feb 18, 00:00",
+        "jnb": 1198,
+        "syd": 664,
+        "ams": 124,
+        "iad": 169,
+        "gru": 650,
+        "hkg": 337
+      },
+      {
+        "timestamp": "Feb 18, 01:00",
+        "syd": 631,
+        "jnb": 1305,
+        "ams": 128,
+        "iad": 163,
+        "gru": 641,
+        "hkg": 352
+      },
+      {
+        "timestamp": "Feb 18, 02:00",
+        "gru": 704,
+        "syd": 682,
+        "jnb": 1412,
+        "iad": 164,
+        "ams": 119,
+        "hkg": 340
+      },
+      {
+        "timestamp": "Feb 18, 03:00",
+        "hkg": 357,
+        "gru": 690,
+        "jnb": 1329,
+        "syd": 714,
+        "ams": 134,
+        "iad": 160
+      },
+      {
+        "timestamp": "Feb 18, 04:00",
+        "hkg": 334,
+        "ams": 128,
+        "iad": 162,
+        "jnb": 1252,
+        "syd": 720,
+        "gru": 632
+      },
+      {
+        "timestamp": "Feb 18, 05:00",
+        "gru": 664,
+        "syd": 659,
+        "jnb": 1445,
+        "iad": 172,
+        "ams": 125,
+        "hkg": 343
+      },
+      {
+        "timestamp": "Feb 18, 06:00",
+        "gru": 639,
+        "ams": 136,
+        "iad": 158,
+        "syd": 615,
+        "jnb": 1291,
+        "hkg": 355
+      },
+      {
+        "timestamp": "Feb 18, 07:00",
+        "iad": 161,
+        "ams": 128,
+        "jnb": 1240,
+        "syd": 724,
+        "gru": 654,
+        "hkg": 368
+      },
+      {
+        "timestamp": "Feb 18, 08:00",
+        "hkg": 366,
+        "jnb": 1442,
+        "syd": 706,
+        "iad": 159,
+        "ams": 145,
+        "gru": 668
+      },
+      {
+        "timestamp": "Feb 18, 09:00",
+        "gru": 657,
+        "ams": 136,
+        "iad": 158,
+        "syd": 699,
+        "jnb": 1166,
+        "hkg": 354
+      },
+      {
+        "timestamp": "Feb 18, 10:00",
+        "syd": 855,
+        "jnb": 1591,
+        "iad": 158,
+        "ams": 132,
+        "gru": 622,
+        "hkg": 336
+      },
+      {
+        "timestamp": "Feb 18, 11:00",
+        "gru": 663,
+        "jnb": 1461,
+        "syd": 798,
+        "ams": 132,
+        "iad": 154,
+        "hkg": 366
+      },
+      {
+        "timestamp": "Feb 18, 12:00",
+        "hkg": 331,
+        "gru": 697,
+        "ams": 146,
+        "iad": 157,
+        "jnb": 1483,
+        "syd": 563
+      },
+      {
+        "timestamp": "Feb 18, 13:00",
+        "hkg": 363,
+        "jnb": 1547,
+        "syd": 855,
+        "iad": 160,
+        "ams": 165,
+        "gru": 712
+      },
+      {
+        "timestamp": "Feb 18, 14:00",
+        "hkg": 355,
+        "ams": 162,
+        "iad": 166,
+        "jnb": 1407,
+        "syd": 631,
+        "gru": 746
+      },
+      {
+        "timestamp": "Feb 18, 15:00",
+        "hkg": 346,
+        "syd": 764,
+        "jnb": 1550,
+        "ams": 187,
+        "iad": 167,
+        "gru": 779
+      },
+      {
+        "timestamp": "Feb 18, 16:00",
+        "hkg": 344,
+        "gru": 697,
+        "ams": 166,
+        "iad": 175,
+        "syd": 711,
+        "jnb": 1298
+      },
+      {
+        "timestamp": "Feb 18, 17:00",
+        "jnb": 1252,
+        "syd": 740,
+        "ams": 208,
+        "iad": 176,
+        "gru": 730,
+        "hkg": 370
+      },
+      {
+        "timestamp": "Feb 18, 18:00",
+        "gru": 677,
+        "jnb": 1442,
+        "syd": 689,
+        "iad": 167,
+        "ams": 154,
+        "hkg": 370
+      }
+    ]
+  },
+  "metricsByRegion": [
+    {
+      "region": "syd",
+      "avgLatency": 691,
+      "p75Latency": 825,
+      "p90Latency": 862,
+      "p95Latency": 869,
+      "p99Latency": 915
+    },
+    {
+      "region": "gru",
+      "avgLatency": 685,
+      "p75Latency": 705,
+      "p90Latency": 781,
+      "p95Latency": 815,
+      "p99Latency": 989
+    },
+    {
+      "region": "iad",
+      "avgLatency": 168,
+      "p75Latency": 173,
+      "p90Latency": 186,
+      "p95Latency": 195,
+      "p99Latency": 213
+    },
+    {
+      "region": "ams",
+      "avgLatency": 148,
+      "p75Latency": 158,
+      "p90Latency": 206,
+      "p95Latency": 225,
+      "p99Latency": 250
+    },
+    {
+      "region": "hkg",
+      "avgLatency": 356,
+      "p75Latency": 372,
+      "p90Latency": 386,
+      "p95Latency": 395,
+      "p99Latency": 416
+    },
+    {
+      "region": "jnb",
+      "avgLatency": 1229,
+      "p75Latency": 1532,
+      "p90Latency": 1685,
+      "p95Latency": 1744,
+      "p99Latency": 1812
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+VERSION 0
+
+DESCRIPTION >
+	last 5 cron timestamps within last 3 hours
+
+NODE group_by_cronTimestamp
+SQL >
+
+    %
+    SELECT
+        cronTimestamp,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM ping_response_v5
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        AND cronTimestamp
+        >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL 3 HOUR, 3))
+    GROUP BY cronTimestamp, monitorId
+    ORDER BY cronTimestamp DESC
+    LIMIT {{ Int16(limit, 5)}}
+
+

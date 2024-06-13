@@ -1,41 +1,60 @@
-import type { Tinybird } from "@chronark/zod-bird";
+import { Tinybird } from "@chronark/zod-bird";
 
 import {
+  tbBuildHomeStats,
   tbBuildMonitorList,
-  tbBuildResponseList,
+  tbBuildPublicStatus,
   tbIngestPingResponse,
+  tbParameterHomeStats,
   tbParameterMonitorList,
-  tbParameterResponseList,
+  tbParameterPublicStatus,
 } from "./validation";
 
 // REMINDER:
-// const tb = new Tinybird({ token: process.env.TINYBIRD_TOKEN! });
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
 
-export function publishPingResponse(tb: Tinybird) {
-  return tb.buildIngestEndpoint({
-    datasource: "ping_response__v2",
-    event: tbIngestPingResponse,
-  });
-}
+export const publishPingResponse = tb.buildIngestEndpoint({
+  datasource: "ping_response__v6",
+  event: tbIngestPingResponse,
+});
 
-export function getResponseList(tb: Tinybird) {
-  return tb.buildPipe({
-    pipe: "response_list__v0",
-    parameters: tbParameterResponseList,
-    data: tbBuildResponseList,
-    opts: {
-      cache: "no-store",
-    },
-  });
-}
-
+/**
+ * @deprecated but still used in server - please use OSTinybird.endpointStatusPeriod
+ */
 export function getMonitorList(tb: Tinybird) {
   return tb.buildPipe({
-    pipe: "monitor_list__v0",
+    pipe: "status_timezone__v1",
     parameters: tbParameterMonitorList,
     data: tbBuildMonitorList,
     opts: {
-      cache: "no-store",
+      // cache: "no-store",
+      next: {
+        revalidate: 600, // 10 min cache
+      },
     },
+  });
+}
+
+/**
+ * Homepage stats used for our marketing page
+ */
+export function getHomeStats(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "home_stats__v0",
+    parameters: tbParameterHomeStats,
+    data: tbBuildHomeStats,
+    opts: {
+      next: {
+        revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
+      },
+    },
+  });
+}
+
+export function getPublicStatus(tb: Tinybird) {
+  return tb.buildPipe({
+    pipe: "public_status__v0",
+    parameters: tbParameterPublicStatus,
+    data: tbBuildPublicStatus,
   });
 }

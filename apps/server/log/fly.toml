@@ -1,0 +1,18 @@
+# fly.toml app configuration file generated for openstatus-log on 2023-10-19T00:44:54+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "openstatus-log"
+primary_region = "ams"
+
+[build]
+  image = "ghcr.io/superfly/fly-log-shipper:latest"
+
+[http_service]
+  internal_port = 8686
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]

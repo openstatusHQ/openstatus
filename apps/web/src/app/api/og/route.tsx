@@ -1,135 +1,93 @@
-import { ImageResponse } from "next/server";
+/* eslint-disable @next/next/no-img-element */
+import { ImageResponse } from "next/og";
 
-import { getMonitorListData } from "@/lib/tb";
-import { cn, formatDate } from "@/lib/utils";
+import { DESCRIPTION, TITLE } from "@/app/shared-metadata";
+import { Background } from "./_components/background";
+import {
+  DEFAULT_URL,
+  SIZE,
+  calSemiBold,
+  interLight,
+  interMedium,
+  interRegular,
+} from "./utils";
 
 export const runtime = "edge";
 
-const size = {
-  width: 1200,
-  height: 630,
-};
-
-const TITLE = "OpenStatus";
-const DESCRIPTION = "An Open Source Alternative for your next Status Page";
-const LIMIT = 40;
-
-const interRegular = fetch(
-  new URL("../../../public/fonts/Inter-Regular.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
-
-const interLight = fetch(
-  new URL("../../../public/fonts/Inter-Light.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
-
-const calSemiBold = fetch(
-  new URL("../../../public/fonts/CalSans-SemiBold.ttf", import.meta.url),
-).then((res) => res.arrayBuffer());
+// const TITLE = "A better way to monitor your services.";
+// const DESCRIPTION = "Reduce alert fatigue by triggering only relevant alerts when your services experience downtime.";
+const IMAGE = "assets/og/dashboard.png";
+const FOOTER = "openstatus.dev";
 
 export async function GET(req: Request) {
-  const interRegularData = await interRegular;
-  const interLightData = await interLight;
-  const calSemiBoldData = await calSemiBold;
+  const [interRegularData, interLightData, calSemiBoldData, interMediumData] =
+    await Promise.all([interRegular, interLight, calSemiBold, interMedium]);
 
   const { searchParams } = new URL(req.url);
 
-  const title = searchParams.has("title") ? searchParams.get("title") : TITLE;
-  const description = searchParams.has("description")
-    ? searchParams.get("description")
-    : DESCRIPTION;
-  const monitorId = searchParams.has("monitorId")
-    ? searchParams.get("monitorId")
-    : undefined;
+  const title =
+    (searchParams.has("title") && searchParams.get("title")) || TITLE;
 
-  // currently, we only show the tracker for a single(!) monitor
-  const data =
-    (monitorId &&
-      (await getMonitorListData({
-        monitorId,
-        groupBy: "day",
-        limit: LIMIT,
-      }))) ||
-    [];
+  const description =
+    (searchParams.has("description") && searchParams.get("description")) ||
+    DESCRIPTION;
 
-  const uptime = data?.reduce(
-    (prev, curr) => {
-      prev.ok += curr.ok;
-      prev.count += curr.count;
-      return prev;
-    },
-    { ok: 0, count: 0 },
-  );
+  const image =
+    (searchParams.has("image") && searchParams.get("image")) || IMAGE;
+
+  const footer =
+    (searchParams.has("footer") && searchParams.get("footer")) || FOOTER;
 
   return new ImageResponse(
-    (
-      <div tw="relative flex flex-col bg-white items-center justify-center w-full h-full">
-        <div
-          tw="flex w-full h-full absolute inset-0"
-          // not every css variable is supported
-          style={{
-            backgroundImage: "radial-gradient(#cbd5e1 10%, transparent 10%)",
-            backgroundSize: "24px 24px",
-          }}
-        ></div>
-        <div
-          tw="flex w-full h-full absolute inset-0 opacity-70"
-          style={{
-            backgroundColor: "white",
-            backgroundImage:
-              "radial-gradient(farthest-corner at 100px 100px, #cbd5e1, white 80%)", // tbd: switch color position
-          }}
-        ></div>
-        <div tw="max-w-4xl relative flex flex-col">
-          <h1 style={{ fontFamily: "Cal" }} tw="text-6xl">
+    <Background tw="justify-start items-start">
+      <div
+        style={{ clipPath: "polygon(90% 0%, 200% 0%, 200% 200%, -30% 200%)" }}
+        tw="flex absolute h-full w-full bg-slate-200"
+      >
+        <img
+          alt=""
+          style={{ objectFit: "cover" }}
+          tw="flex w-full h-full"
+          src={new URL(image, DEFAULT_URL).toString()}
+        />
+      </div>
+      {/* adds a border to the mask element */}
+      <div
+        style={{
+          clipPath: "polygon(90% 0%, 170% 0%, -30% 200%, -29% 200%)",
+          // from-slate-100 to-slate-300
+          backgroundImage: "linear-gradient(to bottom left, #f1f5f9, #cbd5e1)",
+        }}
+        tw="flex absolute h-full w-full" // bg-slate-200
+      />
+      <div tw="flex flex-col justify-between h-full flex-1 py-24 px-24">
+        <div tw="flex flex-col h-full flex-1 justify-center">
+          <h1
+            style={{ fontFamily: "Cal", width: 700 }}
+            tw="text-6xl text-black"
+          >
             {title}
           </h1>
-          <p tw="text-slate-600 text-3xl">{description}</p>
-          {data && data.length > 0 ? (
-            <div tw="flex flex-col w-full mt-6">
-              <div tw="flex flex-row items-center justify-between -mb-1 text-black font-light">
-                <p tw="">{formatDate(new Date())}</p>
-                <p tw="mr-1">
-                  {((uptime.ok / uptime.count) * 100).toFixed(2)}% uptime
-                </p>
-              </div>
-              <div tw="flex flex-row relative">
-                {/* Empty State */}
-                {new Array(LIMIT).fill(null).map((_, i) => {
-                  return (
-                    <div
-                      key={i}
-                      tw="h-16 w-3 rounded-full mr-1 bg-black/20"
-                    ></div>
-                  );
-                })}
-                <div tw="flex flex-row absolute right-0">
-                  {data.map((item, i) => {
-                    const { variant } = getStatus(item.ok / item.count);
-                    return (
-                      <div
-                        key={i}
-                        tw={cn("h-16 w-3 rounded-full mr-1", {
-                          "bg-green-500": variant === "up",
-                          "bg-red-500": variant === "down",
-                          "bg-yellow-500": variant === "degraded",
-                        })}
-                      ></div>
-                    );
-                  })}
-                </div>
-              </div>
-              <div tw="flex flex-row items-center justify-between -mt-3 text-slate-500 text-sm">
-                <p tw="">{LIMIT} days ago</p>
-                <p tw="mr-1">today</p>
-              </div>
-            </div>
-          ) : null}
+          <p style={{ width: 580 }} tw="text-4xl text-slate-700">
+            {description}
+          </p>
+        </div>
+        <div tw="flex w-full">
+          <p style={{ width: 450 }} tw="font-medium text-xl">
+            {footer}
+          </p>
         </div>
       </div>
-    ),
+    </Background>,
     {
-      ...size,
+      ...SIZE,
       fonts: [
+        {
+          name: "Inter",
+          data: interMediumData,
+          style: "normal",
+          weight: 500,
+        },
         {
           name: "Inter",
           data: interRegularData,
@@ -152,12 +110,3 @@ export async function GET(req: Request) {
     },
   );
 }
-
-// FIXME this is a temporary solution (taken from Tracker)
-const getStatus = (
-  ratio: number,
-): { label: string; variant: "up" | "degraded" | "down" } => {
-  if (ratio >= 0.98) return { label: "Operational", variant: "up" };
-  if (ratio >= 0.5) return { label: "Degraded", variant: "degraded" };
-  return { label: "Downtime", variant: "down" };
-};

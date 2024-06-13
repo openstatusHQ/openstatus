@@ -1,0 +1,14 @@
+# REMINDER: legacy
+
+# Data Source created from Pipe 'aggregated_monitor_day_mv'
+VERSION 0
+
+SCHEMA >
+    `day` Int64,
+    `monitorId` String,
+    `avgLatency` AggregateFunction(avg, Int16),
+    `count` AggregateFunction(count),
+    `ok` AggregateFunction(count, Nullable(UInt8))
+
+ENGINE "AggregatingMergeTree"
+ENGINE_SORTING_KEY "day, monitorId"

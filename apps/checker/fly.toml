@@ -1,0 +1,42 @@
+# fly.toml app configuration file generated for openstatus-checker on 2023-11-30T20:23:20+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "openstatus-checker"
+primary_region = "ams"
+
+[build]
+  dockerfile = "./Dockerfile"
+
+[deploy]
+  strategy = "canary"
+
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = false
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "15s"
+  method = "GET"
+  timeout = "5s"
+  path = "/health"
+
+[http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500

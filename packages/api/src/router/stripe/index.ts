@@ -1,10 +1,16 @@
 import { z } from "zod";
 
 import { eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  user,
+  usersToWorkspaces,
+  workspace,
+  workspacePlans,
+} from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 import { stripe } from "./shared";
+import { PLANS, getPriceIdForPlan } from "./utils";
 import { webhookRouter } from "./webhook";
 
 const url =
@@ -29,7 +35,7 @@ export const stripeRouter = createTRPCRouter({
       const currentUser = opts.ctx.db
         .select()
         .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .where(eq(user.id, opts.ctx.user.id))
         .as("currentUser");
       const userHasAccess = await opts.ctx.db
         .select()
@@ -46,9 +52,9 @@ export const stripeRouter = createTRPCRouter({
           email?: string;
         } = {
           metadata: {
-            workspaceId: String(workspace.id),
+            workspaceId: String(result.id),
           },
-          email: opts.ctx.auth.user?.emailAddresses[0].emailAddress || "",
+          email: userHasAccess.currentUser.email || "",
         };
 
         const stripeUser = await stripe.customers.create(customerData);
@@ -62,7 +68,7 @@ export const stripeRouter = createTRPCRouter({
       }
 
       const session = await stripe.billingPortal.sessions.create({
-        customer: stripeId || "",
+        customer: stripeId,
         return_url: `${url}/app/${result.slug}/settings`,
       });
 
@@ -70,7 +76,13 @@ export const stripeRouter = createTRPCRouter({
     }),
 
   getCheckoutSession: protectedProcedure
-    .input(z.object({ workspaceSlug: z.string() }))
+    .input(
+      z.object({
+        workspaceSlug: z.string(),
+        plan: z.enum(workspacePlans),
+        // TODO: plan: workspacePlanSchema
+      }),
+    )
     .mutation(async (opts) => {
       console.log("getCheckoutSession");
       // The following code is duplicated we should extract it
@@ -85,7 +97,7 @@ export const stripeRouter = createTRPCRouter({
       const currentUser = opts.ctx.db
         .select()
         .from(user)
-        .where(eq(user.tenantId, opts.ctx.auth.userId))
+        .where(eq(user.id, opts.ctx.user.id))
         .as("currentUser");
       const userHasAccess = await opts.ctx.db
         .select()
@@ -100,14 +112,14 @@ export const stripeRouter = createTRPCRouter({
         const currentUser = await opts.ctx.db
           .select()
           .from(user)
-          .where(eq(user.tenantId, opts.ctx.auth.userId))
+          .where(eq(user.id, opts.ctx.user.id))
           .get();
         const customerData: {
           metadata: { workspaceId: string };
           email?: string;
         } = {
           metadata: {
-            workspaceId: String(workspace.id),
+            workspaceId: String(result.id),
           },
           email: currentUser?.email || "",
         };
@@ -121,19 +133,20 @@ export const stripeRouter = createTRPCRouter({
           .run();
       }
 
+      const priceId = getPriceIdForPlan(opts.input.plan);
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         customer: stripeId,
 
         line_items: [
           {
-            price: process.env.STRIPE_PRO_MONTHLY_PRICE_ID,
+            price: priceId,
             quantity: 1,
           },
         ],
         mode: "subscription",
-        success_url: `${url}/app/${result.slug}/settings?success=true`,
-        cancel_url: `${url}/app/${result.slug}/settings`,
+        success_url: `${url}/app/${result.slug}/settings/billing?success=true`,
+        cancel_url: `${url}/app/${result.slug}/settings/billing`,
       });
 
       return session;

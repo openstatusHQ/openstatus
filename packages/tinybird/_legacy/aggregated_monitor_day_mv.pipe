@@ -1,0 +1,25 @@
+# REMINDER: legacy
+
+VERSION 0
+
+NODE aggregated_monitor_day_0
+SQL >
+
+    SELECT
+        toUnixTimestamp64Milli(toDateTime64(DATE(cronTimestamp / 1000), 3)) AS day,
+        monitorId,
+        avgState(latency) AS avgLatency,
+        countState() AS count,
+        countState(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM ping_response__v4
+    WHERE (day IS NOT NULL) AND (day != 0)
+    GROUP BY
+        day,
+        monitorId
+    ORDER BY day DESC
+
+TYPE materialized
+DATASOURCE aggregated_monitor_per_day_0_mv
+ENGINE "AggregatingMergeTree"
+ENGINE_SORTING_KEY "day, monitorId"
+

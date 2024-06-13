@@ -1,0 +1,14 @@
+VERSION 1
+
+NODE __ttl_7d_all_details_get_0
+SQL >
+
+    %
+    SELECT *
+    from __ttl_7d_all_mv__v1
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        AND cronTimestamp = {{ Int64(cronTimestamp, 1709477432205) }}
+        AND region = {{ String(region, 'ams') }}
+
+

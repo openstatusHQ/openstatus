@@ -1,0 +1,19 @@
+meta {
+  name: Get on status report
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/v1/status_report/{{id}}
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: api-key
+}
+
+vars:pre-request {
+  id: 31
+}

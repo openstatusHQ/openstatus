@@ -1,5 +1,5 @@
 {
-  "extends": "tsconfig/nextjs.json",
+  "extends": "@openstatus/tsconfig/nextjs.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
@@ -18,5 +18,5 @@
     "**/*.mjs",
     ".contentlayer/generated"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "env.ts"]
 }

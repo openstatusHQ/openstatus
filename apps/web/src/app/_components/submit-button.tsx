@@ -1,9 +1,10 @@
 "use client";
 
-import { experimental_useFormStatus as useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
+
+import { Button } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { Button } from "@/components/ui/button";
 
 export function SubmitButton() {
   const { pending } = useFormStatus();

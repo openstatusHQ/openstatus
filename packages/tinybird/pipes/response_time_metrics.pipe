@@ -1,0 +1,55 @@
+VERSION 0
+
+NODE response_time_metrics__v0_0
+SQL >
+
+    %
+    SELECT
+        round(avg(latency)) as avgLatency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.9)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency,
+        count() as count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        -- TODO: make it more efficient
+        (
+            SELECT max(timestamp)
+            FROM materialized_view_ping_response_45d_ttl__v7
+            WHERE
+                monitorId = {{ String(monitorId, '1') }}
+                {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+                AND timestamp
+                >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3))
+        ) as lastTimestamp,
+        -- for sorting
+        toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3)) as time
+    FROM materialized_view_ping_response_45d_ttl__v7
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        AND timestamp
+        >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3))
+    UNION ALL
+    SELECT
+        round(avg(latency)) AS avgLatency,
+        round(quantile(0.75)(latency)) AS p75Latency,
+        round(quantile(0.9)(latency)) AS p90Latency,
+        round(quantile(0.95)(latency)) AS p95Latency,
+        round(quantile(0.99)(latency)) AS p99Latency,
+        count() as count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok,
+        NULL as lastTimestamp, -- no need to query the `lastTimestamp` as not relevant
+        -- for sorting
+        toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}}*2 HOUR, 3)) as time
+    FROM materialized_view_ping_response_45d_ttl__v7
+    WHERE
+        monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+        AND timestamp
+        >= toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}}*2 HOUR, 3))
+        AND timestamp
+        < toUnixTimestamp64Milli(toDateTime64(now() - INTERVAL {{ Int32(interval, 24)}} HOUR, 3))
+
+
+

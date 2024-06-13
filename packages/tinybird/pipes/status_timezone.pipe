@@ -1,0 +1,49 @@
+VERSION 1
+
+DESCRIPTION >
+	TODO: descripe what it is for!
+
+
+NODE group_by_cronTimestamp
+SQL >
+
+    %
+    SELECT
+        toDateTime(cronTimestamp / 1000, 'UTC') AS day,
+        toTimezone(day, {{ String(timezone, 'Europe/London') }}) as with_timezone,
+        toStartOfDay(with_timezone) as start_of_day,
+        -- latency,
+        statusCode
+    FROM ping_response__v7
+    {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+    WHERE monitorId = {{ String(monitorId, '1') }}
+        -- by default, we only query the last 45 days
+        AND cronTimestamp >= toUnixTimestamp64Milli(
+            toDateTime64(toStartOfDay(date_sub(DAY, 45, now())), 3)
+        )
+
+
+NODE group_by_day
+SQL >
+
+    %
+    SELECT
+        -- round(avg(latency)) as avgLatency,
+        -- round(quantile(0.75)(latency)) as p75Latency,
+        -- round(quantile(0.9)(latency)) as p90Latency,
+        -- round(quantile(0.95)(latency)) as p95Latency,
+        -- round(quantile(0.99)(latency)) as p99Latency,
+        start_of_day as day,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM group_by_cronTimestamp
+    GROUP BY start_of_day
+    ORDER BY start_of_day
+    WITH FILL
+    FROM
+        toStartOfDay(toTimezone(now(), {{ String(timezone, 'Europe/London') }}))
+        TO toStartOfDay(
+            toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/London') }})
+        ) STEP INTERVAL -1 DAY
+
+

@@ -1,0 +1,15 @@
+meta {
+  name: All  Status Reports
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/v1/status_report
+  body: none
+  auth: none
+}
+
+headers {
+  x-openstatus-key: api-key
+}

@@ -1,0 +1,22 @@
+name: "💡 Feature Request"
+description:
+  Describe a new feature or capability you would like to see in OpenStatus'
+  offering.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Welcome 👋🏻
+
+        Thank you for taking the time to write up a feature request. Please fill out the information below to be able to help you faster. If you have a question or need general help, please join our [Discord community](https://www.openstatus.dev/discord).
+  - type: textarea
+    attributes:
+      label: Description
+      description:
+        Describe the feature or capability you would like to see in OpenStatus'
+        offering.
+      placeholder:
+        Make sure it's unique, describe your use case, and explain the problem
+        and proposed solution.
+    validations:
+      required: true

@@ -1,11 +1,11 @@
 ---
 title: 48 hours of public OpenStatus
+image: /assets/posts/github-trending-list.png
 description: The numbers, limits we faced and consequences we have taken.
 author:
   name: Maximilian Kaske
   url: https://twitter.com/mxkaske
 publishedAt: 2023-08-02
-image: /assets/posts/the-first-48-hours/github-trending.png
 ---
 
 ## 48 hours of Rollercoaster 🎢
@@ -38,7 +38,12 @@ randomized check interval of 0 to 90 seconds.
 For the time being, we will keep it to ensure that every check is successfully
 processed.
 
-![Qstash Usage](/assets/posts/the-first-48-hours/qstash-usage.png)
+<Image
+  alt="Qstash Usage"
+  src="/assets/posts/the-first-48-hours/qstash-usage.png"
+  width={650}
+  height={168}
+/>
 
 Moreover, our actions caused the `/monitor/[id]/data` data-table to break. We
 were storing the metadata `res.text()` in Tinybird and retrieving it with the
@@ -62,7 +67,12 @@ all the regions:
 - Number of checks every 1h: 5.670 \* 6 = 34.020
 - Number of checks every day: 34.020 \* 24 = 816.480
 
-![Vercel Usage](/assets/posts/the-first-48-hours/vercel-usage.png)
+<Image
+  alt="Vercel Usage"
+  src="/assets/posts/the-first-48-hours/vercel-usage.png"
+  width={650}
+  height={263}
+/>
 
 > We have resolved an issue with regex invocation in the edge middleware.
 > Previously, it was being called whenever an API endpoint was called.
@@ -105,5 +115,16 @@ P.S. We are generating your workspace-slug by merging two random names. Create
 an account on [openstatus](https://openstatus.dev) and share yours on
 [Discord](https://openstatus.dev/discord) - it's fun to watch! 🍿
 
-![wet-grandmother slug](/assets/posts/the-first-48-hours/wet-grandmother-workspace-slug.png)
-![enough-gas slug](/assets/posts/the-first-48-hours/enough-gas-workspace-slug.png)
+<Image
+  alt="wet-grandmother slug"
+  src="/assets/posts/the-first-48-hours/wet-grandmother-workspace-slug.png"
+  width={400}
+  height={100}
+/>
+
+<Image
+  alt="enough-gas slug"
+  src="/assets/posts/the-first-48-hours/enough-gas-workspace-slug.png"
+  width={400}
+  height={100}
+/>

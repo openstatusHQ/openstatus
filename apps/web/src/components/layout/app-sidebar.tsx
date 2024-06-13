@@ -1,55 +1,52 @@
 "use client";
 
-import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, useSelectedLayoutSegment } from "next/navigation";
 
-import { pagesConfig } from "@/config/pages";
-import { cn } from "@/lib/utils";
-import { Icons } from "../icons";
+import type { Page } from "@/config/pages";
+import { ProBanner } from "../billing/pro-banner";
+import { AppLink } from "./app-link";
 
-export function AppSidebar() {
-  const pathname = usePathname();
-  const params = useParams();
+function replacePlaceholders(
+  template: string,
+  values: { [key: string]: string },
+): string {
+  return template.replace(/\[([^\]]+)\]/g, (_, key) => {
+    return values[key] || `[${key}]`;
+  });
+}
+
+export function AppSidebar({ page }: { page?: Page }) {
+  const params = useParams<Record<string, string>>();
+  const selectedSegment = useSelectedLayoutSegment();
+
+  if (!page) return null;
 
   return (
     <div className="flex h-full flex-col justify-between">
-      <ul className="grid gap-1">
-        {pagesConfig.map(({ title, href, icon, disabled }) => {
-          const Icon = Icons[icon];
-          const link = `/app/${params.workspaceSlug}${href}`;
-          return (
-            <li key={title} className="w-full">
-              <Link
-                href={link}
-                className={cn(
-                  "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-                  pathname.startsWith(link) &&
-                    "bg-muted/50 border-border text-foreground",
-                  disabled && "pointer-events-none opacity-60",
-                )}
-              >
-                <Icon className={cn("mr-2 h-4 w-4")} />
-                {title}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-      <ul>
-        <li className="w-full">
-          <Link
-            href={`/app/${params.workspaceSlug}/settings`}
-            className={cn(
-              "hover:bg-muted/50 hover:text-foreground text-muted-foreground group flex w-full min-w-[200px] items-center rounded-md border border-transparent px-3 py-1",
-              pathname.startsWith(`/app/${params.workspaceSlug}/settings`) &&
-                "bg-muted/50 border-border text-foreground",
-            )}
-          >
-            <Icons.cog className={cn("mr-2 h-4 w-4")} />
-            Settings
-          </Link>
-        </li>
-      </ul>
+      <div className="grid gap-2">
+        <p className="hidden px-3 font-medium text-foreground text-lg lg:block">
+          {page?.title}
+        </p>
+        <ul className="grid gap-2">
+          {page?.children?.map(({ title, segment, icon, disabled, href }) => {
+            const prefix = `/app/${params.workspaceSlug}`;
+            return (
+              <li key={title} className="w-full">
+                <AppLink
+                  label={title}
+                  href={`${prefix}${replacePlaceholders(href, params)}`}
+                  disabled={disabled}
+                  active={segment === selectedSegment}
+                  icon={icon}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+      <div className="hidden lg:block">
+        <ProBanner />
+      </div>
     </div>
   );
 }

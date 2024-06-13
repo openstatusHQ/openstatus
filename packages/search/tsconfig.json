@@ -1,0 +1,18 @@
+{
+  "extends": "@openstatus/tsconfig/react-library.json",
+  "exclude": ["node_modules"],
+  "baseUrl": ".",
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": ["./*"]
+    },
+    "preserveWatchOutput": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "strict": true
+  }
+}

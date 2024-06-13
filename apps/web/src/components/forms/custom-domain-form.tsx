@@ -1,15 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
-import { insertPageSchemaWithMonitors } from "@openstatus/db/src/schema";
-
-import { Button } from "@/components/ui/button";
+import { insertPageSchema } from "@openstatus/db/src/schema";
 import {
+  Button,
   Form,
   FormControl,
   FormDescription,
@@ -17,20 +16,24 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  InputWithAddons,
+} from "@openstatus/ui";
+
 import { useDomainStatus } from "@/hooks/use-domain-status";
+import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
 
-const customDomain = insertPageSchemaWithMonitors.pick({
+const customDomain = insertPageSchema.pick({
   customDomain: true,
   id: true,
 });
 
 type Schema = z.infer<typeof customDomain>;
+
+// TODO: check
 
 export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   const form = useForm<Schema>({
@@ -44,34 +47,39 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
 
   async function onSubmit(data: Schema) {
     startTransition(async () => {
-      if (defaultValues.id) {
-        await api.page.addCustomDomain.mutate({
-          customDomain: data.customDomain,
-          pageId: defaultValues?.id,
-        });
+      try {
+        if (defaultValues.id) {
+          await api.page.addCustomDomain.mutate({
+            customDomain: data.customDomain,
+            pageId: defaultValues?.id,
+          });
+        }
+        if (data.customDomain && !defaultValues.customDomain) {
+          await api.domain.addDomainToVercel.mutate({
+            domain: data.customDomain,
+          });
+          // if changed, remove old domain and add new one
+        } else if (
+          defaultValues.customDomain &&
+          data.customDomain !== defaultValues.customDomain
+        ) {
+          await api.domain.removeDomainFromVercelProject.mutate({
+            domain: defaultValues.customDomain,
+          });
+          await api.domain.addDomainToVercel.mutate({
+            domain: data.customDomain,
+          });
+          // if removed
+        } else if (data.customDomain === "") {
+          await api.domain.removeDomainFromVercelProject.mutate({
+            domain: defaultValues.customDomain,
+          });
+        }
+        toastAction("saved");
+        router.refresh();
+      } catch {
+        toastAction("error");
       }
-      if (data.customDomain && !defaultValues.customDomain) {
-        await api.domain.addDomainToVercel.mutate({
-          domain: data.customDomain,
-        });
-        // if changed, remove old domain and add new one
-      } else if (
-        defaultValues.customDomain &&
-        data.customDomain !== defaultValues.customDomain
-      ) {
-        await api.domain.removeDomainFromVercelProject.mutate({
-          domain: defaultValues.customDomain,
-        });
-        await api.domain.addDomainToVercel.mutate({
-          domain: data.customDomain,
-        });
-        // if removed
-      } else if (data.customDomain === "") {
-        await api.domain.removeDomainFromVercelProject.mutate({
-          domain: defaultValues.customDomain,
-        });
-      }
-      router.refresh();
     });
   }
 
@@ -89,7 +97,11 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
               <FormLabel>Custom Domain</FormLabel>
               <FormControl>
                 <div className="flex items-center space-x-3">
-                  <Input placeholder="acme.com" {...field} />
+                  <InputWithAddons
+                    placeholder="status.documenso.com"
+                    leading="https://"
+                    {...field}
+                  />
                   <div className="h-full w-7">
                     {/* TODO: add loading state */}
                     {status ? <DomainStatusIcon status={status} /> : null}
@@ -104,7 +116,7 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
           )}
         />
         <div className="sm:col-span-full">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto" size="lg">
             {!isPending ? "Confirm" : <LoadingAnimation />}
           </Button>
         </div>

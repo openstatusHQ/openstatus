@@ -1,0 +1,68 @@
+name: "🐛 Bug Report"
+description: Report a bug for OpenStatus.
+labels:
+  - "needs-triage"
+  - "bug"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Welcome 👋🏻
+
+        Thank you for taking the time to report an issue with OpenStatus. Please fill out the information below to help us resolve your issue faster. If you have a question or need general help, please join our [Discord community](https://www.openstatus.dev/discord).
+  - type: input
+    id: reproduction-link
+    attributes:
+      label: Reproduction / Replay Link (Optional)
+      placeholder: "https://github.com/username/repository-name/"
+      description: |
+        Link to a minimal reproduction (GitHub repository, CodeSandbox, StackBlitz, etc.) or a [Replay recording](https://www.replay.io/).
+
+        **Do not link to your actual project**, but provide a minimal reproduction in a fresh project.
+
+        Instructions:
+        - [How to record a Replay](https://docs.replay.io/bug-reports/recording-a-replay)
+    validations:
+      required: false
+  - type: textarea
+    attributes:
+      label: Description
+      description: Describe the issue that you're seeing.
+      value: |
+        <!-- Be as precise as you can. Feel free to share screenshots, videos, or data from the devtools of your browser -->
+
+        **Steps to reproduce:**
+
+        1. Step 1
+        2. Step 2
+
+        **Expected behavior:**
+
+        <!-- Describe what you expected to happen -->
+
+        **Actual behavior:**
+
+        <!-- Describe what actually happened -->
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Environment
+      render: Shell
+      description:
+        Run "npx envinfo --system --browsers --binaries --npmPackages" in your
+        project directory and paste the output here.
+      placeholder: |
+        You'll get an output similar to this:
+
+        System:
+          OS: Operating System
+          CPU: CPU
+        Binaries:
+          Node: X
+          npm: X
+        Browsers:
+          Chrome: X
+          Edge: X
+    validations:
+      required: false

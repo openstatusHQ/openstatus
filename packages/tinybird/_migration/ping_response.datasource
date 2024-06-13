@@ -1,0 +1,20 @@
+VERSION 8
+
+SCHEMA >
+    `latency` Int64 `json:$.latency`,
+    `monitorId` String `json:$.monitorId`,
+    `region` LowCardinality(String) `json:$.region`,
+    `statusCode` Nullable(Int16) `json:$.statusCode`,
+    `error` Int8 `json:$.error`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `url` String `json:$.url`,
+    `workspaceId` String `json:$.workspaceId`,
+    `cronTimestamp` Int64 `json:$.cronTimestamp`,
+    `message` Nullable(String) `json:$.message`,
+    `timing` Nullable(String) `json:$.timing`,
+    `headers` Nullable(String) `json:$.headers`,
+    `assertions` Nullable(String) `json:$.assertions`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "monitorId, cronTimestamp"
+ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(cronTimestamp))"

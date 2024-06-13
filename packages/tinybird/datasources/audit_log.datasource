@@ -1,0 +1,13 @@
+VERSION 0
+
+SCHEMA >
+    `action` String `json:$.action`,
+    `actor` String `json:$.actor`,
+    `id` String `json:$.id`,
+    `targets` Nullable(String) `json:$.targets`,
+    `metadata` Nullable(String) `json:$.metadata`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `version` Int16 `json:$.version`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "id, timestamp, action"

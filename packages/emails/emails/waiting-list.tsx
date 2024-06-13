@@ -5,9 +5,7 @@ const WaitingList = () => {
     <Html>
       <Head>
         <title>Thanks for joining OpenStatus waiting list</title>
-        <Preview>
-          Thanks for joining OpenStatus waiting list waiting list
-        </Preview>
+        <Preview>Thanks for joining OpenStatus waiting list</Preview>
         <Body>
           Hello,
           <br />

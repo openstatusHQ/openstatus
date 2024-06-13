@@ -1,0 +1,45 @@
+{
+  "name": "@openstatus/search",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/openstatusHQ/openstatus.git"
+  },
+  "keywords": [
+    "openstatus",
+    "react",
+    "monitoring"
+  ],
+  "homepage": "https://github.com/openstatusHQ/openstatus#readme",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "module": "./dist/index.mjs",
+  "files": [
+    "./dist/**"
+  ],
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsup --watch && pnpm run dev:tailwind",
+    "dev:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch",
+    "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "build": "tsup && pnpm run build:tailwind"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.64",
+    "tailwindcss": "3.4.3",
+    "tsup": "7.2.0",
+    "typescript": "5.4.5"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "dependencies": {
+    "class-variance-authority": "0.7.0",
+    "clsx": "2.0.0",
+    "lucide-react": "0.279.0",
+    "tailwind-merge": "1.14.0",
+    "tailwindcss-animate": "1.0.7"
+  }
+}

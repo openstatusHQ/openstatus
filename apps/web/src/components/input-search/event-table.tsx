@@ -1,13 +1,12 @@
 "use client";
 
-import React from "react";
 import { formatDistance } from "date-fns";
+import React from "react";
 
 import type { Ping } from "@openstatus/tinybird";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
+  Badge,
+  Button,
   Table,
   TableBody,
   TableCaption,
@@ -15,7 +14,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@openstatus/ui";
+
 import { cn } from "@/lib/utils";
 
 export function EventTable({ events }: { events: Ping[] }) {
@@ -52,23 +52,23 @@ export function EventTable({ events }: { events: Ping[] }) {
                       className={cn(
                         "px-2 py-0.5 text-xs",
                         isOk
-                          ? "border-green-100 bg-green-50"
-                          : "border-red-100 bg-red-50",
+                          ? "border-green-500/20 bg-green-500/10"
+                          : "border-red-500/20 bg-red-500/10",
                       )}
                     >
                       {event.statusCode}
                       <div
                         className={cn(
-                          "bg-foreground ml-1 h-1.5 w-1.5 rounded-full",
+                          "ml-1 h-1.5 w-1.5 rounded-full bg-foreground",
                           isOk ? "bg-green-500" : "bg-red-500",
                         )}
                       />
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-muted-foreground font-light">
+                  <TableCell className="font-light text-muted-foreground">
                     {event.latency}
                   </TableCell>
-                  <TableCell className="text-muted-foreground truncate text-right">
+                  <TableCell className="truncate text-right text-muted-foreground">
                     {event.region}
                   </TableCell>
                 </TableRow>
@@ -78,7 +78,7 @@ export function EventTable({ events }: { events: Ping[] }) {
         </Table>
       </div>
       {!open && (
-        <div className="bg-gradient to-background absolute inset-0 flex items-end justify-center bg-gradient-to-b from-transparent from-20%">
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient bg-gradient-to-b from-20% from-transparent to-background">
           <Button
             onClick={toggle}
             variant="outline"

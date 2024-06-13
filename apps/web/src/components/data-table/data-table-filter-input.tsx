@@ -2,7 +2,7 @@
 
 import type { Table } from "@tanstack/react-table";
 
-import { Input } from "@/components/ui/input";
+import { Input } from "@openstatus/ui";
 
 interface DataTableFilterInputProps<TData> {
   table: Table<TData>;
