@@ -65,7 +65,7 @@ test("Create a single check  ", async () => {
       latency: 100,
       region: "ams",
       status: 200,
-      timestamp: 1234567890,
+      time: 1234567890,
       timing: {
         connectDone: 4,
         connectStart: 3,
@@ -93,7 +93,7 @@ test.todo("Create a multiple check  ", async () => {
   mockFetch.mockReturnValue(
     Promise.resolve(
       new Response(
-        '{"status":200,"latency":100,"body":"Hello World","headers":{"Content-Type":"application/json"},"timestamp":1234567890,"timing":{"dnsStart":1,"dnsDone":2,"connectStart":3,"connectDone":4,"tlsHandshakeStart":5,"tlsHandshakeDone":6,"firstByteStart":7,"firstByteDone":8,"transferStart":9,"transferDone":10},"region":"ams"}',
+        '{"status":200,"latency":100,"body":"Hello World","headers":{"Content-Type":"application/json"},"time":1234567890,"timing":{"dnsStart":1,"dnsDone":2,"connectStart":3,"connectDone":4,"tlsHandshakeStart":5,"tlsHandshakeDone":6,"firstByteStart":7,"firstByteDone":8,"transferStart":9,"transferDone":10},"region":"ams"}',
         { status: 200, headers: { "content-type": "application/json" } }
       )
     )
@@ -134,7 +134,7 @@ test.todo("Create a multiple check  ", async () => {
       latency: 100,
       region: "ams",
       status: 200,
-      timestamp: 1234567890,
+      time: 1234567890,
       timing: {
         connectDone: 4,
         connectStart: 3,
