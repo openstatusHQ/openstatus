@@ -45,7 +45,8 @@ export async function StatusWidget({ slug, href }: StatusWidgetProps) {
       <span className="relative flex h-2 w-2">
         {status === "operational" ? (
           <span
-            className={`absolute inline-flex h-full w-full animate-ping rounded-full${color}opacity-75 duration-1000`}
+            // biome-ignore lint/nursery/useSortedClasses: <explanation>
+            className={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
           />
         ) : null}
         <span className={`relative inline-flex h-2 w-2 rounded-full${color}`} />
