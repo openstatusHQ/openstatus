@@ -74,7 +74,7 @@ export const AggregatedResponseSchema = z
   });
 
 export const ResponseSchema = z.object({
-  timestamp: z
+  time: z
     .number()
     .openapi({ description: "The timestamp of the response in UTC" }),
   status: z
