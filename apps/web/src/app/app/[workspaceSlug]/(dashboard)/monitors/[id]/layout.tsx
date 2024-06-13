@@ -8,6 +8,8 @@ import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-toolt
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
 
+export const revalidate = 0; // revalidate the data at most every hour
+
 export default async function Layout({
   children,
   params,
@@ -43,7 +45,7 @@ export default async function Layout({
                 <span className="text-muted-foreground/50 text-xs">•</span>
                 <TagBadgeWithTooltip
                   tags={monitor.monitorTagsToMonitors.map(
-                    ({ monitorTag }) => monitorTag
+                    ({ monitorTag }) => monitorTag,
                   )}
                 />
               </>

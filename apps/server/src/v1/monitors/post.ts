@@ -6,12 +6,7 @@ import { monitor } from "@openstatus/db/src/schema";
 
 import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src";
-import type { Assertion } from "../../../../../packages/assertions/src/types";
-import {
-  HeaderAssertion,
-  StatusAssertion,
-  TextBodyAssertion,
-} from "../../../../../packages/assertions/src/v1";
+
 import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";

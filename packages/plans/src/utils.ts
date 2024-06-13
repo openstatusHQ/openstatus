@@ -6,7 +6,7 @@ import type { Limits } from "./types";
 // TODO: use getLimit utils function
 export function getLimit<T extends keyof Limits>(
   plan: WorkspacePlan,
-  limit: T
+  limit: T,
 ) {
   return allPlans[plan].limits[limit];
 }

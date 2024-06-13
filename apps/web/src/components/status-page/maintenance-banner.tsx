@@ -1,4 +1,4 @@
-import { isSameDay, format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { Hammer } from "lucide-react";
 
 import type { Maintenance } from "@openstatus/db/src/schema";

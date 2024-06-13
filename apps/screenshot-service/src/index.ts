@@ -27,7 +27,7 @@ const receiver = new Receiver({
 const app = new Hono();
 
 app.get("/ping", (c) =>
-  c.json({ ping: "pong", region: process.env.FLY_REGION }, 200)
+  c.json({ ping: "pong", region: process.env.FLY_REGION }, 200),
 );
 
 app.post(
@@ -38,7 +38,7 @@ app.post(
       url: z.string().url(),
       incidentId: z.number(),
       kind: z.enum(["incident", "recovery"]),
-    })
+    }),
   ),
   async (c) => {
     const signature = c.req.header("Upstash-Signature");
@@ -53,7 +53,6 @@ app.post(
       body: JSON.stringify(data),
     });
     if (!isValid) {
-
       console.error("Unauthorized");
       return c.text("Unauthorized", 401);
     }
@@ -75,7 +74,7 @@ app.post(
           Bucket: "incident-screenshot",
           Key: id,
           ContentType: "image/png",
-        })
+        }),
       );
 
       if (data.kind === "incident") {
@@ -109,7 +108,7 @@ app.post(
     }
 
     return c.text("Screenshot saved");
-  }
+  },
 );
 
 export default app;

@@ -8,7 +8,7 @@ import { AppLink } from "./app-link";
 
 function replacePlaceholders(
   template: string,
-  values: { [key: string]: string }
+  values: { [key: string]: string },
 ): string {
   return template.replace(/\[([^\]]+)\]/g, (_, key) => {
     return values[key] || `[${key}]`;

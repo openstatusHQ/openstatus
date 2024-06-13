@@ -10,9 +10,9 @@ import {
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 
+import { SchemaError } from "@openstatus/error";
 import { trackNewNotification } from "../analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { SchemaError } from "@openstatus/error";
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -114,6 +114,7 @@ export const notificationRouter = createTRPCRouter({
           and(
             eq(notification.id, opts.input.id),
             eq(notification.id, opts.input.id),
+            eq(notification.workspaceId, opts.ctx.workspace.id),
           ),
         )
         .get();

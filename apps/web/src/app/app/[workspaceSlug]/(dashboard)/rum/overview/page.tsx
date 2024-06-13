@@ -1,9 +1,9 @@
 import * as React from "react";
 
-import { PathCard } from "./_components/path-card";
 import { api } from "@/trpc/server";
-import { SessionTable } from "./_components/session-table";
 import { z } from "zod";
+import { PathCard } from "./_components/path-card";
+import { SessionTable } from "./_components/session-table";
 
 const searchParamsSchema = z.object({
   path: z.string(),

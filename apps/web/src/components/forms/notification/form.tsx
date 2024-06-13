@@ -15,6 +15,9 @@ import { Button, Form } from "@openstatus/ui";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
+import { SchemaError } from "@openstatus/error";
+import { TRPCClientError } from "@trpc/client";
+import { ZodError, type ZodIssue } from "zod";
 import { SaveButton } from "../shared/save-button";
 import {
   getDefaultProviderData,
@@ -22,9 +25,6 @@ import {
   setProviderData,
 } from "./config";
 import { General } from "./general";
-import { TRPCClientError } from "@trpc/client";
-import { ZodError, type ZodIssue } from "zod";
-import { SchemaError } from "@openstatus/error";
 
 interface Props {
   defaultValues?: InsertNotification;

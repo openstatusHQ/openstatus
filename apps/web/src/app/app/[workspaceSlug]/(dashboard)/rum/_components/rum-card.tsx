@@ -1,6 +1,6 @@
-import { Card } from "@tremor/react";
 import { getColorByType, webVitalsConfig } from "@openstatus/rum";
 import type { WebVitalEvents, WebVitalsValues } from "@openstatus/rum";
+import { Card } from "@tremor/react";
 import { CategoryBar } from "./category-bar";
 
 export function prepareWebVitalValues(values: WebVitalsValues) {

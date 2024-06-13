@@ -23,7 +23,7 @@ export const StatusReportList = ({
     return statusReports.filter((report) => {
       if (filter.open && report.status !== "resolved") return true;
       return report.statusReportUpdates.some(
-        (update) => update.date.getTime() > filter?.date?.getTime()
+        (update) => update.date.getTime() > filter?.date?.getTime(),
       );
     });
   }

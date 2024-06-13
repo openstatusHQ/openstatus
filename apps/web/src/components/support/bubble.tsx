@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { MessageCircle } from "lucide-react";
+import { useState } from "react";
 
 import {
   Button,
@@ -10,8 +10,8 @@ import {
   PopoverTrigger,
 } from "@openstatus/ui";
 
-import { ContactForm } from "./contact-form";
 import { useSession } from "next-auth/react";
+import { ContactForm } from "./contact-form";
 
 export function Bubble() {
   const [open, setOpen] = useState(false);

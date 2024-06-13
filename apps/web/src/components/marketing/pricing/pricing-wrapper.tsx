@@ -4,9 +4,9 @@ import { useSearchParams } from "next/navigation";
 
 import type { WorkspacePlan } from "@openstatus/plans";
 
+import { Suspense } from "react";
 import { PricingPlanRadio } from "./pricing-plan-radio";
 import { PricingTable } from "./pricing-table";
-import { Suspense } from "react";
 
 export function PricingWrapper() {
   const searchParams = useSearchParams();

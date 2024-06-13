@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
 import type { User } from "next-auth";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { CaptureOptions, Properties } from "posthog-js";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
+import { useEffect } from "react";
 
 import { env } from "@/env";
 
