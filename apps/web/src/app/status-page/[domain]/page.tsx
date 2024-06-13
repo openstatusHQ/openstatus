@@ -4,11 +4,11 @@ import { notFound } from "next/navigation";
 import { Separator } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
+import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 
 type Props = {
   params: { domain: string };
@@ -25,7 +25,7 @@ export default async function Page({ params }: Props) {
   const currentMaintenances = page.maintenances.filter(
     (maintenance) =>
       maintenance.to.getTime() > Date.now() &&
-      maintenance.from.getTime() < Date.now()
+      maintenance.from.getTime() < Date.now(),
   );
 
   return (

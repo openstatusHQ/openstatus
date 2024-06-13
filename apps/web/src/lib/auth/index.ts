@@ -6,9 +6,9 @@ import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 
+import { identifyUser } from "@/providers/posthog";
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
-import { identifyUser } from "@/providers/posthog";
 
 export type { DefaultSession };
 

@@ -4,15 +4,16 @@ import { logger } from "hono/logger";
 
 import type { Limits } from "@openstatus/plans/src/types";
 
+import { handleError, handleZodError } from "../libs/errors";
+import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
 import { middleware } from "./middleware";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
-import { pagesApi } from "./pages";
 import { pageSubscribersApi } from "./pageSubscribers";
-import { statusReportsApi } from "./statusReports";
+import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
-import { handleError, handleZodError } from "../libs/errors";
+import { statusReportsApi } from "./statusReports";
 
 export type Variables = {
   workspaceId: string;
@@ -56,3 +57,4 @@ api.route("/page", pagesApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
+api.route("/check", checkAPI);

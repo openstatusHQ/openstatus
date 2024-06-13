@@ -14,7 +14,7 @@ import (
 const baseURL = "https://api.tinybird.co/v0/events"
 
 type Client interface {
-	SendEvent(ctx context.Context, event any) error
+	SendEvent(ctx context.Context, event any, dataSourceName string) error
 }
 
 type client struct {
@@ -29,7 +29,7 @@ func NewClient(httpClient *http.Client, apiKey string) Client {
 	}
 }
 
-func (c client) SendEvent(ctx context.Context, event any) error {
+func (c client) SendEvent(ctx context.Context, event any, dataSourceName string) error {
 	requestURL, err := url.Parse(baseURL)
 	if err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("unable to parse url")
@@ -37,7 +37,7 @@ func (c client) SendEvent(ctx context.Context, event any) error {
 	}
 
 	q := requestURL.Query()
-	q.Add("name", "ping_response__v8")
+	q.Add("name", dataSourceName)
 	requestURL.RawQuery = q.Encode()
 
 	var payload bytes.Buffer

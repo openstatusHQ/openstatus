@@ -3,10 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
-import { IncidentSchema } from "./schema";
-import type { incidentsApi } from "./index";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { incidentsApi } from "./index";
+import { IncidentSchema } from "./schema";
 
 const getAllRoute = createRoute({
   method: "get",

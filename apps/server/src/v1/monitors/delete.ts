@@ -3,10 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { ParamsSchema } from "./schema";
+import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
-import { HTTPException } from "hono/http-exception";
+import { ParamsSchema } from "./schema";
 
 const deleteRoute = createRoute({
   method: "delete",

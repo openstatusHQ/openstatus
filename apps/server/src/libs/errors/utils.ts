@@ -19,7 +19,7 @@ export function handleError(err: Error, c: Context): Response {
         message: error.message,
         docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (err instanceof HTTPException) {
@@ -30,7 +30,7 @@ export function handleError(err: Error, c: Context): Response {
         message: err.message,
         docs: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
       },
-      { status: err.status }
+      { status: err.status },
     );
   }
   return c.json<ErrorSchema>(
@@ -40,7 +40,7 @@ export function handleError(err: Error, c: Context): Response {
       docs: "https://docs.openstatus.dev/api-references/errors/code/INTERNAL_SERVER_ERROR",
     },
 
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -54,7 +54,7 @@ export function handleZodError(
         success: false;
         error: ZodError;
       },
-  c: Context
+  c: Context,
 ) {
   if (!result.success) {
     const error = SchemaError.fromZod(result.error, c);
@@ -64,7 +64,7 @@ export function handleZodError(
         docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
         message: error.message,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

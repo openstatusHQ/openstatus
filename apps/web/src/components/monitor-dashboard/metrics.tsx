@@ -27,7 +27,7 @@ export function Metrics({
   if (!metrics || metrics.length === 0) return null;
 
   const [current, last] = metrics.sort((a, b) =>
-    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
   );
 
   const isEmpty = current.count === 0;

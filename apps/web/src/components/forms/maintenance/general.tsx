@@ -16,8 +16,8 @@ import {
   Textarea,
 } from "@openstatus/ui";
 
-import { SectionHeader } from "../shared/section-header";
 import { format } from "date-fns";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMaintenance>;

@@ -14,8 +14,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { DataTableRowActions } from "./data-table-row-actions";
 import { Check } from "lucide-react";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<
   Page & {

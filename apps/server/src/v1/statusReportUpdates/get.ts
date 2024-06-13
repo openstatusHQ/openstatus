@@ -3,10 +3,10 @@ import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
+import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { statusReportUpdatesApi } from "./index";
 import { ParamsSchema, StatusReportUpdateSchema } from "./schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { HTTPException } from "hono/http-exception";
 
 const getRoute = createRoute({
   method: "get",
@@ -30,7 +30,7 @@ const getRoute = createRoute({
 });
 
 export function registerGetStatusReportUpdate(
-  api: typeof statusReportUpdatesApi
+  api: typeof statusReportUpdatesApi,
 ) {
   return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
@@ -43,8 +43,8 @@ export function registerGetStatusReportUpdate(
         statusReport,
         and(
           eq(statusReport.id, statusReportUpdate.statusReportId),
-          eq(statusReport.workspaceId, Number(workspaceId))
-        )
+          eq(statusReport.workspaceId, Number(workspaceId)),
+        ),
       )
       .where(eq(statusReportUpdate.id, Number(id)))
       .get();
@@ -54,7 +54,7 @@ export function registerGetStatusReportUpdate(
     }
 
     const data = StatusReportUpdateSchema.parse(
-      _statusReportJoin.status_report_update
+      _statusReportJoin.status_report_update,
     );
 
     return c.json(data);

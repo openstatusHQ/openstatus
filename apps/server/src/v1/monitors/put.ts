@@ -3,10 +3,12 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { MonitorSchema, ParamsSchema } from "./schema";
+import { HTTPException } from "hono/http-exception";
+import { serialize } from "../../../../../packages/assertions/src/serializing";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
-import { HTTPException } from "hono/http-exception";
+import { MonitorSchema, ParamsSchema } from "./schema";
+import { getAssertions } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -62,7 +64,9 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       throw new HTTPException(401, { message: "Unauthorized" });
     }
 
-    const { headers, regions, ...rest } = input;
+    const { headers, regions, assertions, ...rest } = input;
+
+    const assert = assertions ? getAssertions(assertions) : [];
 
     const _newMonitor = await db
       .update(monitor)
@@ -70,6 +74,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         ...rest,
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
       .returning()
       .get();

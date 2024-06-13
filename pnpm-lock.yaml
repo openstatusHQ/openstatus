@@ -144,13 +144,13 @@ importers:
     dependencies:
       '@hono/sentry':
         specifier: 1.1.0
-        version: 1.1.0(hono@4.0.0)
+        version: 1.1.0(hono@4.4.5)
       '@hono/zod-openapi':
-        specifier: 0.13.0
-        version: 0.13.0(hono@4.0.0)(zod@3.22.4)
+        specifier: 0.14.2
+        version: 0.14.2(hono@4.4.5)(zod@3.22.4)
       '@hono/zod-validator':
-        specifier: 0.2.1
-        version: 0.2.1(hono@4.0.0)(zod@3.22.4)
+        specifier: 0.2.2
+        version: 0.2.2(hono@4.4.5)(zod@3.22.4)
       '@openstatus/analytics':
         specifier: workspace:^
         version: link:../../packages/analytics
@@ -200,11 +200,14 @@ importers:
         specifier: 2.1.8
         version: 2.1.8
       hono:
-        specifier: 4.0.0
-        version: 4.0.0
+        specifier: 4.4.5
+        version: 4.4.5
       nanoid:
         specifier: 5.0.2
         version: 5.0.2
+      percentile:
+        specifier: ^1.6.0
+        version: 1.6.0
       validator:
         specifier: 13.11.0
         version: 13.11.0
@@ -2390,8 +2393,8 @@ packages:
     peerDependencies:
       hono: '>=3.*'
 
-  '@hono/zod-openapi@0.13.0':
-    resolution: {integrity: sha512-viL2N3apZOwtsgaUBgWSLof0hOivRPPVy96gIp3FPbkXB5cfYUC4QrY2nB4EnYc4pAwsnIBYd9JW7QJFQ4DMdg==}
+  '@hono/zod-openapi@0.14.2':
+    resolution: {integrity: sha512-nt4TCMwGebajiJ5QEZ2QOVRp3N7GMLs1P7csNQJSu6Aean4D+8TWgZTaAJSytLvVZWy90qnBbpRlVSS6C6M+0g==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       hono: '>=4.3.6'
@@ -2399,6 +2402,12 @@ packages:
 
   '@hono/zod-validator@0.2.1':
     resolution: {integrity: sha512-HFoxln7Q6JsE64qz2WBS28SD33UB2alp3aRKmcWnNLDzEL1BLsWfbdX6e1HIiUprHYTIXf5y7ax8eYidKUwyaA==}
+    peerDependencies:
+      hono: '>=3.9.0'
+      zod: ^3.19.1
+
+  '@hono/zod-validator@0.2.2':
+    resolution: {integrity: sha512-dSDxaPV70Py8wuIU2QNpoVEIOSzSXZ/6/B/h4xA7eOMz7+AarKTSGV8E6QwrdcCbBLkpqfJ4Q2TmBO0eP1tCBQ==}
     peerDependencies:
       hono: '>=3.9.0'
       zod: ^3.19.1
@@ -5681,16 +5690,16 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.0.0:
-    resolution: {integrity: sha512-8dKhuBBpRZEodUttQhrSFJ6PQqHRjXHyeeegfxOf132pvgbf0tOb9qqb7q7eYwAWpOcYrsUOsWdJ0sQIIovhZg==}
-    engines: {node: '>=16.0.0'}
-
   hono@4.2.2:
     resolution: {integrity: sha512-mDmjBHF6uBNN3TASdAbDCFsN9FLbrlgXyFZkhLEkU7hUgk0+T9hcsUrL/nho4qV+Xk0RDHx7gop4Q1gelZZVRw==}
     engines: {node: '>=16.0.0'}
 
   hono@4.3.9:
     resolution: {integrity: sha512-6c5LVE23HnIS8iBhY+XPmYJlPeeClznOi7mBNsAsJCgxo8Ciz75LTjqRUf5wv4RYq8kL+1KPLUZHCtKmbZssNg==}
+    engines: {node: '>=16.0.0'}
+
+  hono@4.4.5:
+    resolution: {integrity: sha512-hyf+1c+gTEo0+xjdYT2e8y4M3HcEy0ARuRZHPRgeRhq/mupkI4j9/qEWVKsyj0se4KhfRnYrld4Tk6z/9veq/Q==}
     engines: {node: '>=16.0.0'}
 
   hosted-git-info@2.8.9:
@@ -6843,6 +6852,9 @@ packages:
 
   peberminta@0.9.0:
     resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
+
+  percentile@1.6.0:
+    resolution: {integrity: sha512-8vSyjdzwxGDHHwH+cSGch3A9Uj2On3UpgOWxWXMKwUvoAbnujx6DaqmV1duWXNiH/oEWpyVd6nSQccix6DM3Ng==}
 
   periscopic@3.1.0:
     resolution: {integrity: sha512-vKiQ8RRtkl9P+r/+oefh25C3fhybptkHKCZSPlcXiJux2tJF55GnEj3BVn4A5gKfq9NWWXXrxkHBwVPUfH0opw==}
@@ -9662,26 +9674,26 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.4.5))
 
-  '@hono/sentry@1.1.0(hono@4.0.0)':
+  '@hono/sentry@1.1.0(hono@4.4.5)':
     dependencies:
-      hono: 4.0.0
+      hono: 4.4.5
       toucan-js: 3.4.0
 
-  '@hono/zod-openapi@0.13.0(hono@4.0.0)(zod@3.22.4)':
+  '@hono/zod-openapi@0.14.2(hono@4.4.5)(zod@3.22.4)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 7.0.0(zod@3.22.4)
-      '@hono/zod-validator': 0.2.1(hono@4.0.0)(zod@3.22.4)
-      hono: 4.0.0
-      zod: 3.22.4
-
-  '@hono/zod-validator@0.2.1(hono@4.0.0)(zod@3.22.4)':
-    dependencies:
-      hono: 4.0.0
+      '@hono/zod-validator': 0.2.2(hono@4.4.5)(zod@3.22.4)
+      hono: 4.4.5
       zod: 3.22.4
 
   '@hono/zod-validator@0.2.1(hono@4.2.2)(zod@3.22.4)':
     dependencies:
       hono: 4.2.2
+      zod: 3.22.4
+
+  '@hono/zod-validator@0.2.2(hono@4.4.5)(zod@3.22.4)':
+    dependencies:
+      hono: 4.4.5
       zod: 3.22.4
 
   '@hookform/resolvers@3.3.1(react-hook-form@7.47.0(react@18.2.0))':
@@ -13629,11 +13641,11 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.0.0: {}
-
   hono@4.2.2: {}
 
   hono@4.3.9: {}
+
+  hono@4.4.5: {}
 
   hosted-git-info@2.8.9: {}
 
@@ -15201,6 +15213,8 @@ snapshots:
   peberminta@0.8.0: {}
 
   peberminta@0.9.0: {}
+
+  percentile@1.6.0: {}
 
   periscopic@3.1.0:
     dependencies:

@@ -1,8 +1,8 @@
 "use client";
 
+import { Info } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Info } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
@@ -16,7 +16,7 @@ export function InfoBanner() {
         To inform your team about the workspace name, please set it in the{" "}
         <Link
           href={`/app/${params.workspaceSlug}/settings/general`}
-          className="text-foreground inline-flex items-center font-medium underline underline-offset-4 hover:no-underline"
+          className="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
         >
           general
         </Link>{" "}

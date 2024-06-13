@@ -51,7 +51,7 @@ export const openApiErrorResponses = {
     content: {
       "application/json": {
         schema: createErrorSchema("INTERNAL_SERVER_ERROR").openapi(
-          "ErrInternalServerError"
+          "ErrInternalServerError",
         ),
       },
     },
