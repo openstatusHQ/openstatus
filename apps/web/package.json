@@ -35,6 +35,7 @@
     "@openstatus/ui": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@radix-ui/react-portal": "^1.0.4",
     "@sentry/integrations": "7.116.0",
     "@sentry/nextjs": "7.116.0",
     "@stripe/stripe-js": "2.1.6",

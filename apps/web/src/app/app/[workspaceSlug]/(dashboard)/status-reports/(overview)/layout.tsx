@@ -8,7 +8,7 @@ import AppPageLayout from "@/components/layout/app-page-layout";
 
 export default async function Layout({ children }: { children: ReactNode }) {
   return (
-    <AppPageLayout withHelpCallout>
+    <AppPageLayout>
       <Header
         title="Status Reports"
         description="Overview of all your status reports and updates."

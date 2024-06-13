@@ -59,23 +59,8 @@ export function DataTableRowActions<TData>({
     });
   }
 
-  async function onToggleActive() {
-    startTransition(async () => {
-      try {
-        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-        const { jobType, ...rest } = monitor;
-        if (!monitor.id) return;
-        await api.monitor.toggleMonitorActive.mutate({
-          id: monitor.id,
-        });
-        toastAction("success");
-        router.refresh();
-      } catch {
-        toastAction("error");
-      }
-    });
-  }
-
+  // FIXME: the test doenst take the assertions into account!
+  // FIXME: improve (similar to the one in the edit form - also include toast.promise + better error message!)
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
@@ -120,11 +105,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleActive}>
-            {monitor.active ? "Pause" : "Resume"} monitor
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">

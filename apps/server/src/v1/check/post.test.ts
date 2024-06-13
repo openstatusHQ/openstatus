@@ -25,9 +25,9 @@ test("Create a single check  ", async () => {
     Promise.resolve(
       new Response(
         '{"status":200,"latency":100,"body":"Hello World","headers":{"Content-Type":"application/json"},"time":1234567890,"timing":{"dnsStart":1,"dnsDone":2,"connectStart":3,"connectDone":4,"tlsHandshakeStart":5,"tlsHandshakeDone":6,"firstByteStart":7,"firstByteDone":8,"transferStart":9,"transferDone":10},"region":"ams"}',
-        { status: 200, headers: { "content-type": "application/json" } }
-      )
-    )
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ),
   );
 
   const res = await api.request("/check", {
@@ -94,9 +94,9 @@ test.todo("Create a multiple check  ", async () => {
     Promise.resolve(
       new Response(
         '{"status":200,"latency":100,"body":"Hello World","headers":{"Content-Type":"application/json"},"time":1234567890,"timing":{"dnsStart":1,"dnsDone":2,"connectStart":3,"connectDone":4,"tlsHandshakeStart":5,"tlsHandshakeDone":6,"firstByteStart":7,"firstByteDone":8,"transferStart":9,"transferDone":10},"region":"ams"}',
-        { status: 200, headers: { "content-type": "application/json" } }
-      )
-    )
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    ),
   );
 
   const res = await api.request("/check", {

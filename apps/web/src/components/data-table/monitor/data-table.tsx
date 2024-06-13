@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { DataTableFloatingActions } from "./data-table-floating-actions";
+import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 
 interface DataTableProps<TData, TValue> {
@@ -47,6 +49,7 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
       public: false, // default is true
+      id: false, // we hide the id column
     });
 
   const table = useReactTable({
@@ -104,6 +107,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   return (
+                    // FIXME: className="[&:has(svg)]:w-4" takes the svg of the button > checkbox  into account
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
@@ -147,6 +151,8 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+      <DataTablePagination table={table} />
+      <DataTableFloatingActions table={table} tags={tags} />
     </div>
   );
 }

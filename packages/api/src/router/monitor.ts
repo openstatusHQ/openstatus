@@ -405,6 +405,82 @@ export const monitorRouter = createTRPCRouter({
       }
     }),
 
+  updateMonitors: protectedProcedure
+    .input(
+      insertMonitorSchema
+        .pick({ public: true, active: true })
+        .partial() // batched updates
+        .extend({ ids: z.number().array() }), // array of monitor ids to update
+    )
+    .mutation(async (opts) => {
+      const _monitors = await opts.ctx.db
+        .update(monitor)
+        .set(opts.input)
+        .where(
+          and(
+            inArray(monitor.id, opts.input.ids),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNull(monitor.deletedAt),
+          ),
+        );
+    }),
+
+  updateMonitorsTag: protectedProcedure
+    .input(
+      z.object({
+        ids: z.number().array(),
+        tagId: z.number(),
+        action: z.enum(["add", "remove"]),
+      }),
+    )
+    .mutation(async (opts) => {
+      const _monitorTag = await opts.ctx.db.query.monitorTag.findFirst({
+        where: and(
+          eq(monitorTag.workspaceId, opts.ctx.workspace.id),
+          eq(monitorTag.id, opts.input.tagId),
+        ),
+      });
+
+      const _monitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          inArray(monitor.id, opts.input.ids),
+        ),
+      });
+
+      if (!_monitorTag || _monitors.length !== opts.input.ids.length) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid tag",
+        });
+      }
+
+      if (opts.input.action === "add") {
+        await opts.ctx.db
+          .insert(monitorTagsToMonitors)
+          .values(
+            opts.input.ids.map((id) => ({
+              monitorId: id,
+              monitorTagId: opts.input.tagId,
+            })),
+          )
+          .onConflictDoNothing()
+          .run();
+      }
+
+      if (opts.input.action === "remove") {
+        await opts.ctx.db
+          .delete(monitorTagsToMonitors)
+          .where(
+            and(
+              inArray(monitorTagsToMonitors.monitorId, opts.input.ids),
+              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId),
+            ),
+          )
+          .run();
+      }
+    }),
+
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
@@ -439,6 +515,55 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(notificationsToMonitors)
           .where(eq(notificationsToMonitors.monitorId, monitorToDelete.id));
+        await tx
+          .delete(maintenancesToMonitors)
+          .where(eq(maintenancesToMonitors.monitorId, monitorToDelete.id));
+      });
+    }),
+
+  deleteMonitors: protectedProcedure
+    .input(z.object({ ids: z.number().array() }))
+    .mutation(async (opts) => {
+      const _monitors = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            inArray(monitor.id, opts.input.ids),
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
+        )
+        .all();
+
+      if (_monitors.length !== opts.input.ids.length) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found.",
+        });
+      }
+
+      await opts.ctx.db
+        .update(monitor)
+        .set({ deletedAt: new Date(), active: false })
+        .where(inArray(monitor.id, opts.input.ids))
+        .run();
+
+      await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorsToPages)
+          .where(inArray(monitorsToPages.monitorId, opts.input.ids));
+        await tx
+          .delete(monitorTagsToMonitors)
+          .where(inArray(monitorTagsToMonitors.monitorId, opts.input.ids));
+        await tx
+          .delete(monitorsToStatusReport)
+          .where(inArray(monitorsToStatusReport.monitorId, opts.input.ids));
+        await tx
+          .delete(notificationsToMonitors)
+          .where(inArray(notificationsToMonitors.monitorId, opts.input.ids));
+        await tx
+          .delete(maintenancesToMonitors)
+          .where(inArray(maintenancesToMonitors.monitorId, opts.input.ids));
       });
     }),
 

@@ -14,7 +14,7 @@ export default async function Layout({
   const isLimitReached =
     await api.notification.isNotificationLimitReached.query();
   return (
-    <AppPageLayout withHelpCallout>
+    <AppPageLayout>
       <Header
         title="Notifications"
         description="Overview of all your notification channels."
