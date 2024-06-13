@@ -144,6 +144,10 @@
           ]
         },
         {
+          "group": "Check",
+          "pages": ["api-reference/check/post-check"]
+        },
+        {
           "group": "Status Page",
           "pages": [
             "api-reference/page/get-page",
@@ -196,8 +200,7 @@
             "api-reference/errors/code/CONFLICT",
             "api-reference/errors/code/INTERNAL_SERVER_ERROR"
           ]
-        },
-        "api-reference/checker"
+        }
       ]
     }
   ],
