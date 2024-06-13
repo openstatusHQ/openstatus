@@ -57,6 +57,7 @@ type Response struct {
 	Timing  Timing            `json:"timing"`
 	Error   string            `json:"error,omitempty"`
 	Tags    []string          `json:"tags,omitempty"`
+	Region  string            `json:"region"`
 }
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {

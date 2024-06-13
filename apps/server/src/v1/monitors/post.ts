@@ -5,10 +5,13 @@ import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { HTTPException } from "hono/http-exception";
+import { serialize } from "../../../../../packages/assertions/src";
+
 import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
+import { getAssertions } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -42,8 +45,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
     const workspacePlan = c.get("workspacePlan");
-    const input = c.req.valid("json");
 
+    const input = c.req.valid("json");
     const count = (
       await db
         .select({ count: sql<number>`count(*)` })
@@ -67,7 +70,10 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
-    const { headers, regions, ...rest } = input;
+    const { headers, regions, assertions, ...rest } = input;
+
+    const assert = assertions ? getAssertions(assertions) : [];
+
     const _newMonitor = await db
       .insert(monitor)
       .values({
@@ -75,10 +81,10 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         workspaceId: Number(workspaceId),
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
+        assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
       .returning()
       .get();
-
     if (env.JITSU_WRITE_KEY) {
       trackAnalytics({
         event: "Monitor Created",

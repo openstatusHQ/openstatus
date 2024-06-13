@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 import type { Limits } from "@openstatus/plans/src/types";
 
 import { handleError, handleZodError } from "../libs/errors";
+import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
 import { middleware } from "./middleware";
 import { monitorsApi } from "./monitors";
@@ -56,3 +57,4 @@ api.route("/page", pagesApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
+api.route("/check", checkAPI);

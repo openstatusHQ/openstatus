@@ -24,6 +24,7 @@ test("GET one monitor", async () => {
     headers: [{ key: "key", value: "value" }],
     active: true,
     public: false,
+    assertions: null,
   });
 });
 
@@ -63,8 +64,54 @@ test("Create a monitor", async () => {
     headers: [{ key: "key", value: "value" }],
     active: true,
     public: true,
+    assertions: [
+      {
+        type: "status",
+        compare: "eq",
+        target: 200,
+      },
+      { type: "header", compare: "not_eq", key: "key", target: "value" },
+    ],
   };
 
+  const res = await api.request("/monitor", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  expect(res.status).toBe(200);
+
+  expect(await res.json()).toMatchObject({
+    id: expect.any(Number),
+    ...data,
+  });
+});
+
+test("Create a monitor with Assertion ", async () => {
+  const data = {
+    periodicity: "10m",
+    url: "https://www.openstatus.dev",
+    name: "OpenStatus",
+    description: "OpenStatus website",
+    regions: ["ams", "gru", "iad"],
+    method: "POST",
+    body: '{"hello":"world"}',
+    headers: [{ key: "key", value: "value" }],
+    active: true,
+    public: true,
+    assertions: [
+      {
+        type: "status",
+        compare: "eq",
+        target: 200,
+      },
+      { type: "header", compare: "not_eq", key: "key", target: "value" },
+    ],
+  };
   const res = await api.request("/monitor", {
     method: "POST",
     headers: {

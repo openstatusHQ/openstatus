@@ -6,6 +6,65 @@ import {
   monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema";
 import { ZodError } from "zod";
+import {
+  numberCompare,
+  stringCompare,
+} from "../../../../../packages/assertions/src/v1";
+
+const statusAssertion = z
+  .object({
+    type: z.literal("status"),
+    compare: numberCompare.openapi({
+      description: "The comparison to run",
+      example: "eq",
+    }),
+    target: z
+      .number()
+      .int()
+      .positive()
+      .openapi({ description: "The target value" }),
+  })
+  .openapi({
+    description: "The status assertion",
+  });
+
+const headerAssertion = z
+  .object({
+    type: z.literal("header"),
+    compare: stringCompare,
+    key: z.string().openapi({
+      description: "The key of the header",
+    }),
+    target: z.string().openapi({
+      description: "the header value",
+    }),
+  })
+  .openapi({ description: "The header assertion" });
+
+const textBodyAssertion = z
+  .object({
+    type: z.literal("textBody"),
+    compare: stringCompare,
+    target: z.string().openapi({
+      description: "The target value",
+    }),
+  })
+  .openapi({ description: "The text body assertion" });
+
+//   Not used yet
+const _jsonBodyAssertion = z.object({
+  type: z.literal("jsonBody"),
+  path: z.string(), // https://www.npmjs.com/package/jsonpath-plus
+  compare: stringCompare,
+  target: z.string(),
+});
+
+export const assertion = z.discriminatedUnion("type", [
+  statusAssertion,
+  headerAssertion,
+  textBodyAssertion,
+  // jsonBodyAssertion,
+]);
 
 export const ParamsSchema = z.object({
   id: z
@@ -108,6 +167,29 @@ export const MonitorSchema = z
       .openapi({
         description: "The headers of your request",
         example: [{ key: "x-apikey", value: "supersecrettoken" }],
+      }),
+    assertions: z
+      .preprocess((val) => {
+        try {
+          if (Array.isArray(val)) return val;
+          if (String(val).length > 0) {
+            return JSON.parse(String(val));
+          }
+          return [];
+        } catch (e) {
+          throw new ZodError([
+            {
+              code: "custom",
+              path: ["assertions"],
+              message: e instanceof Error ? e.message : "Invalid value",
+            },
+          ]);
+        }
+      }, z.array(assertion))
+      .nullish()
+      .default([])
+      .openapi({
+        description: "The assertions to run",
       }),
     active: z
       .boolean()

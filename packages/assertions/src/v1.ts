@@ -161,7 +161,7 @@ function evaluateString(
 
 export const base = z
   .object({
-    version: z.enum(["v1"]),
+    version: z.enum(["v1"]).default("v1"),
     type: z.string(),
   })
   .passthrough();
