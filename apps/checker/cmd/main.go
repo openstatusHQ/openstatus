@@ -261,10 +261,10 @@ func main() {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
 			r.Region = flyRegion
+			res = r
 			if err := tinybirdClient.SendEvent(ctx, res, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
-			res = r
 			return nil
 		}
 		if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {

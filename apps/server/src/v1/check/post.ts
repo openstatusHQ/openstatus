@@ -8,6 +8,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import type { checkAPI } from "./index";
 import {
   AggregatedResponseSchema,
+  AggregatedResult,
   CheckPostResponseSchema,
   CheckSchema,
   ResponseSchema,
@@ -93,14 +94,12 @@ export function registerPostCheck(api: typeof checkAPI) {
       const allResults = await Promise.allSettled(currentFetch);
       result.push(...allResults);
     }
-    console.log(result);
     const filteredResult = result.filter((r) => r.status === "fulfilled");
     const fulfilledRequest = [];
     for await (const r of filteredResult) {
       if (r.status !== "fulfilled") throw new Error("No value");
 
       const json = await r.value.json();
-      console.log(ResponseSchema.safeParse(json));
       fulfilledRequest.push(ResponseSchema.parse(json));
     }
 
@@ -144,14 +143,6 @@ export function registerPostCheck(api: typeof checkAPI) {
         latencyArray
       ) as number[];
 
-      const aggregate = z.object({
-        dms: AggregatedResponseSchema,
-        connect: AggregatedResponseSchema,
-        tls: AggregatedResponseSchema,
-        firstByte: AggregatedResponseSchema,
-        transfert: AggregatedResponseSchema,
-        latency: AggregatedResponseSchema,
-      });
       const aggregatedDNS = AggregatedResponseSchema.parse({
         p50: dnsPercentile[0],
         p75: dnsPercentile[1],
@@ -202,7 +193,7 @@ export function registerPostCheck(api: typeof checkAPI) {
         max: Math.max(...latencyArray),
       });
 
-      aggregatedResponse = aggregate.parse({
+      aggregatedResponse = AggregatedResult.parse({
         dns: aggregatedDNS,
         connection: aggregatedConnect,
         tls: aggregatedTls,
@@ -218,7 +209,7 @@ export function registerPostCheck(api: typeof checkAPI) {
       id: newCheck.id,
       raw: allTimings,
       response: lastResponse,
-      aggregated: aggregatedResponse,
+      aggregated: aggregatedResponse ? aggregatedResponse : undefined,
     });
 
     return c.json(responseResult);

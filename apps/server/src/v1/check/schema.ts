@@ -120,6 +120,15 @@ export const ResponseSchema = z.object({
   region: z.string().openapi({ description: "The region where the check ran" }),
 });
 
+export const AggregatedResult = z.object({
+  dns: AggregatedResponseSchema,
+  connect: AggregatedResponseSchema,
+  tls: AggregatedResponseSchema,
+  firstByte: AggregatedResponseSchema,
+  transfer: AggregatedResponseSchema,
+  latency: AggregatedResponseSchema,
+});
+
 export const CheckPostResponseSchema = z.object({
   id: z.number().int().openapi({ description: "The id of the check" }),
   raw: z.array(TimingSchema).openapi({
@@ -127,5 +136,8 @@ export const CheckPostResponseSchema = z.object({
   }),
   response: ResponseSchema.openapi({
     description: "The last response of the check",
+  }),
+  aggregated: AggregatedResult.optional().openapi({
+    description: "The aggregated data of the check",
   }),
 });
