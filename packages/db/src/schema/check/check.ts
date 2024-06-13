@@ -16,6 +16,6 @@ export const check = sqliteTable("check", {
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });

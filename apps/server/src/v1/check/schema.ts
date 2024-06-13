@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { MonitorSchema } from "../monitors/schema";
-import { min } from "@openstatus/db";
 
 export const CheckSchema = MonitorSchema.pick({
   url: true,

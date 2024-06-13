@@ -8,7 +8,7 @@ import {
 import type { assertion } from "./schema";
 
 export const getAssertions = (
-  assertions: z.infer<typeof assertion>[]
+  assertions: z.infer<typeof assertion>[],
 ): Assertion[] => {
   const assert: Assertion[] = [];
 
