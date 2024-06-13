@@ -11,6 +11,7 @@ export const CheckSchema = MonitorSchema.pick({
   .extend({
     runCount: z
       .number()
+      .max(5)
       .optional()
       .default(1)
       .openapi({ description: "The number of times to run the check" }),
