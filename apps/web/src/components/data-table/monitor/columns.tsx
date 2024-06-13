@@ -30,7 +30,7 @@ import { Bar } from "@/components/tracker/tracker";
 import { isActiveMaintenance } from "@/lib/maintenances/utils";
 
 import { DataTableRowActions } from "./data-table-row-actions";
-import { Radio, View } from "lucide-react";
+import { Eye, EyeOff, Radio, View } from "lucide-react";
 
 export const columns: ColumnDef<{
   monitor: Monitor;
@@ -71,7 +71,7 @@ export const columns: ColumnDef<{
     accessorKey: "active",
     accessorFn: (row) => row.monitor.active,
     header: () => (
-      <div className="mx-auto w-4">
+      <div className="w-4">
         <Radio className="h-4 w-4" />
       </div>
     ),
@@ -79,33 +79,14 @@ export const columns: ColumnDef<{
       const { active, status } = row.original.monitor;
       const maintenance = isActiveMaintenance(row.original.maintenances);
       return (
-        <div className="flex items-center justify-center">
-          <StatusDotWithTooltip
+          <div className="w-4 flex items-center justify-center">
+            <StatusDotWithTooltip
             active={active}
             status={status}
             maintenance={maintenance}
           />
         </div>
       );
-    },
-  },
-  {
-    accessorKey: "public",
-    accessorFn: (row) => row.monitor.public,
-    header: () => (
-      <div className="mx-auto w-4">
-        <View className="h-4 w-4" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const { public: _public } = row.original.monitor;
-      return (
-        <div className="flex items-center justify-center">{/* TODO: */}</div>
-      );
-    },
-    filterFn: (row, _id, value) => {
-      if (!Array.isArray(value)) return true;
-      return value.includes(row.original.monitor.public);
     },
   },
   {
@@ -141,6 +122,27 @@ export const columns: ColumnDef<{
       return value.some((item) =>
         row.original.tags?.some((tag) => tag.name === item)
       );
+    },
+  },
+  {
+    accessorKey: "public",
+    accessorFn: (row) => row.monitor.public,
+    header: () => (
+      <div className="w-4">
+        <View className="h-4 w-4" />
+        </div>
+    ),
+    cell: ({ row }) => {
+      const { public: _public } = row.original.monitor;
+      return (
+        <>
+          {_public ? <Eye className="h-4 w-4"/>: <EyeOff className="h-4 w-4" />}
+        </>
+      );
+    },
+    filterFn: (row, _id, value) => {
+      if (!Array.isArray(value)) return true;
+      return value.includes(row.original.monitor.public);
     },
   },
   {

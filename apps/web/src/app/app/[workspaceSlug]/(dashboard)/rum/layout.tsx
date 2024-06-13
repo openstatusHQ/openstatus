@@ -7,7 +7,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   return (
-    <AppPageLayout withHelpCallout>
+    <AppPageLayout>
       <Header
         title="Real User Monitoring"
         description="Get speed insights for your application."

@@ -107,6 +107,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
                   return (
+                    // FIXME: className="[&:has(svg)]:w-4" takes the svg of the button > checkbox  into account
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null

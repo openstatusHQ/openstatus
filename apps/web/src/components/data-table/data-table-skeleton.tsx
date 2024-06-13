@@ -16,6 +16,8 @@ interface DataTableSkeletonProps {
   rows?: number;
 }
 
+// TODO: add checkbox skeleton (for MonitorTable e.g.)
+
 export function DataTableSkeleton({ rows = 3 }: DataTableSkeletonProps) {
   return (
     <div className="rounded-md border">

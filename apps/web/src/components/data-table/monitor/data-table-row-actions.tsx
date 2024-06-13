@@ -105,7 +105,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          {/* <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem> */}
+          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
