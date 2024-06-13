@@ -33,7 +33,7 @@ export function DataTablePagination<TData>({
   const router = useRouter();
 
   const updatePageSearchParams = (
-    values: Record<string, number | string | null>
+    values: Record<string, number | string | null>,
   ) => {
     const newSearchParams = updateSearchParams(values);
     router.replace(`?${newSearchParams}`, { scroll: false });

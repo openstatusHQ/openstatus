@@ -29,8 +29,8 @@ import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip
 import { Bar } from "@/components/tracker/tracker";
 import { isActiveMaintenance } from "@/lib/maintenances/utils";
 
-import { DataTableRowActions } from "./data-table-row-actions";
 import { Eye, EyeOff, Radio, View } from "lucide-react";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<{
   monitor: Monitor;
@@ -79,8 +79,8 @@ export const columns: ColumnDef<{
       const { active, status } = row.original.monitor;
       const maintenance = isActiveMaintenance(row.original.maintenances);
       return (
-          <div className="w-4 flex items-center justify-center">
-            <StatusDotWithTooltip
+        <div className="flex w-4 items-center justify-center">
+          <StatusDotWithTooltip
             active={active}
             status={status}
             maintenance={maintenance}
@@ -130,13 +130,17 @@ export const columns: ColumnDef<{
     header: () => (
       <div className="w-4">
         <View className="h-4 w-4" />
-        </div>
+      </div>
     ),
     cell: ({ row }) => {
       const { public: _public } = row.original.monitor;
       return (
         <>
-          {_public ? <Eye className="h-4 w-4"/>: <EyeOff className="h-4 w-4" />}
+          {_public ? (
+            <Eye className="h-4 w-4" />
+          ) : (
+            <EyeOff className="h-4 w-4" />
+          )}
         </>
       );
     },

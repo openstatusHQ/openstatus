@@ -410,7 +410,7 @@ export const monitorRouter = createTRPCRouter({
       insertMonitorSchema
         .pick({ public: true, active: true })
         .partial() // batched updates
-        .extend({ ids: z.number().array() }) // array of monitor ids to update
+        .extend({ ids: z.number().array() }), // array of monitor ids to update
     )
     .mutation(async (opts) => {
       const _monitors = await opts.ctx.db
@@ -420,8 +420,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             inArray(monitor.id, opts.input.ids),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         );
     }),
 
@@ -431,20 +431,20 @@ export const monitorRouter = createTRPCRouter({
         ids: z.number().array(),
         tagId: z.number(),
         action: z.enum(["add", "remove"]),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const _monitorTag = await opts.ctx.db.query.monitorTag.findFirst({
         where: and(
           eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-          eq(monitorTag.id, opts.input.tagId)
+          eq(monitorTag.id, opts.input.tagId),
         ),
       });
 
       const _monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.ids)
+          inArray(monitor.id, opts.input.ids),
         ),
       });
 
@@ -462,7 +462,7 @@ export const monitorRouter = createTRPCRouter({
             opts.input.ids.map((id) => ({
               monitorId: id,
               monitorTagId: opts.input.tagId,
-            }))
+            })),
           )
           .onConflictDoNothing()
           .run();
@@ -474,8 +474,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               inArray(monitorTagsToMonitors.monitorId, opts.input.ids),
-              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId)
-            )
+              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId),
+            ),
           )
           .run();
       }
@@ -530,8 +530,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             inArray(monitor.id, opts.input.ids),
-            eq(monitor.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .all();
 

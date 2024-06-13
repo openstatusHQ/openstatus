@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import * as Portal from "@radix-ui/react-portal";
 import type { Table } from "@tanstack/react-table";
+import { useEffect, useState, useTransition } from "react";
 
+import { Kbd } from "@/components/kbd";
+import { LoadingAnimation } from "@/components/loading-animation";
+import { toast, toastAction } from "@/lib/toast";
+import { cn } from "@/lib/utils";
+import { api } from "@/trpc/client";
 import type { Monitor, MonitorTag } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
@@ -37,13 +42,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { api } from "@/trpc/client";
-import { useRouter } from "next/navigation";
-import { toast, toastAction } from "@/lib/toast";
 import { Check, Minus, X } from "lucide-react";
-import { Kbd } from "@/components/kbd";
-import { LoadingAnimation } from "@/components/loading-animation";
-import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface DataTableFloatingActions<TData> {
   table: Table<TData>;
@@ -94,7 +94,7 @@ export function DataTableFloatingActions<TData>({
           success: "Monitor(s) updated!",
           error: "Something went wrong!",
           finally: () => {},
-        }
+        },
       );
     });
   }
@@ -123,7 +123,7 @@ export function DataTableFloatingActions<TData>({
               : "Tag removed from monitor(s)",
           error: "Something went wrong!",
           finally: () => {},
-        }
+        },
       );
     });
   }
@@ -149,14 +149,14 @@ export function DataTableFloatingActions<TData>({
   const statusValue = rows.every((row) => row.getValue("active") === true)
     ? "true"
     : rows.every((row) => row.getValue("active") === false)
-    ? "false"
-    : undefined;
+      ? "false"
+      : undefined;
 
   const visibilityValue = rows.every((row) => row.getValue("public") === true)
     ? "true"
     : rows.every((row) => row.getValue("public") === false)
-    ? "false"
-    : undefined;
+      ? "false"
+      : undefined;
 
   const everyTagValue =
     tags?.filter((tag) => {
@@ -263,7 +263,7 @@ export function DataTableFloatingActions<TData>({
               <Button variant="outline" className="flex items-center gap-2">
                 <span>Tags</span>
                 {everyTagValue.length ? (
-                  <div className="flex relative overflow-hidden">
+                  <div className="relative flex overflow-hidden">
                     {everyTagValue.map((tag) => (
                       <div
                         key={tag.id}
@@ -311,7 +311,7 @@ export function DataTableFloatingActions<TData>({
                                 "text-muted-foreground": isIndeterminated,
                                 "opacity-50 [&_svg]:invisible":
                                   !isSelected && !isIndeterminated,
-                              }
+                              },
                             )}
                           >
                             <Check className={cn("h-4 w-4")} />

@@ -1,6 +1,6 @@
+import { type VariantProps, cva } from "class-variance-authority";
 // Copy Pasta from: https://github.com/sadmann7/shadcn-table/blob/main/src/components/kbd.tsx#L54
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ const kbdVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export interface KbdProps
@@ -48,7 +48,7 @@ const Kbd = React.forwardRef<HTMLUnknownElement, KbdProps>(
         )}
       </kbd>
     );
-  }
+  },
 );
 Kbd.displayName = "Kbd";
 
