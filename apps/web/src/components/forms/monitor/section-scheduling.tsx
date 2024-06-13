@@ -120,8 +120,8 @@ export function SectionScheduling({ form, plan }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item
-                                      )
+                                        (value) => value !== item,
+                                      ),
                                     );
                               }}
                             >

@@ -4,9 +4,9 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Maintenance } from "@openstatus/db/src/schema";
 
-import { DataTableRowActions } from "./data-table-row-actions";
 import { formatDateTime } from "@/lib/utils";
 import { format } from "date-fns";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Maintenance>[] = [
   {

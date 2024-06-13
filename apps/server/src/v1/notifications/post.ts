@@ -8,10 +8,10 @@ import {
   notificationsToMonitors,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { NotificationSchema } from "./schema";
-import type { notificationsApi } from "./index";
 import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { notificationsApi } from "./index";
+import { NotificationSchema } from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -75,8 +75,8 @@ export function registerPostNotification(api: typeof notificationsApi) {
           and(
             inArray(monitor.id, monitors),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 

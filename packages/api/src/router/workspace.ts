@@ -124,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 
@@ -141,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -154,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 

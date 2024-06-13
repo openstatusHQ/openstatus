@@ -1,7 +1,7 @@
 import { api } from "@/trpc/server";
-import { DataTableWrapper } from "./data-table-wrapper";
 import { useSearchParams } from "next/navigation";
 import { use } from "react";
+import { DataTableWrapper } from "./data-table-wrapper";
 
 const SessionTable = async ({ dsn, path }: { dsn: string; path: string }) => {
   const data = await api.tinybird.sessionRumMetricsForPath.query({

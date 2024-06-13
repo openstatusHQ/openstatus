@@ -3,10 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
+import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { HTTPException } from "hono/http-exception";
 
 const getAllRoute = createRoute({
   method: "get",
@@ -50,7 +50,7 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
         statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
         pageIds: r.pagesToStatusReports.map((p) => p.pageId),
         monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
-      }))
+      })),
     );
 
     return c.json(data);

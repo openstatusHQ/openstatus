@@ -4,11 +4,11 @@ import { trackAnalytics } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import type { monitorsApi } from "./index";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { MonitorSchema } from "./schema";
-import { env } from "../../env";
 import { HTTPException } from "hono/http-exception";
+import { env } from "../../env";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { monitorsApi } from "./index";
+import { MonitorSchema } from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -51,8 +51,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all()
     )[0].count;

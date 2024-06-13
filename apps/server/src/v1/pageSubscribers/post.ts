@@ -5,10 +5,10 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
 import { sendEmail } from "@openstatus/emails/emails/send";
-import { PageSubscriberSchema, ParamsSchema } from "./schema";
+import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { pageSubscribersApi } from "./index";
-import { HTTPException } from "hono/http-exception";
+import { PageSubscriberSchema, ParamsSchema } from "./schema";
 
 const postRouteSubscriber = createRoute({
   method: "post",
@@ -49,7 +49,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
       )
       .get();
 
@@ -63,8 +63,8 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .where(
         and(
           eq(pageSubscriber.email, input.email),
-          eq(pageSubscriber.pageId, Number(id))
-        )
+          eq(pageSubscriber.pageId, Number(id)),
+        ),
       )
       .get();
 

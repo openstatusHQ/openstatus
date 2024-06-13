@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@openstatus/ui";
 
@@ -46,9 +46,9 @@ export function LinkCards({ slug }: { slug: string }) {
                 <div className="flex flex-1 justify-between gap-2">
                   <CardDescription>{link.description}</CardDescription>
                   {isExternal ? (
-                    <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 self-end" />
+                    <ArrowUpRight className="h-4 w-4 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                   ) : (
-                    <ArrowRight className="text-muted-foreground group-hover:text-foreground h-4 w-4 shrink-0 self-end" />
+                    <ArrowRight className="h-4 w-4 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                   )}
                 </div>
               </CardHeader>

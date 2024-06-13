@@ -3,10 +3,10 @@ import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
+import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { statusReportsApi } from "./index";
 import { ParamsSchema, StatusReportSchema } from "./schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { HTTPException } from "hono/http-exception";
 
 const getRoute = createRoute({
   method: "get",
@@ -42,7 +42,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       },
       where: and(
         eq(statusReport.workspaceId, Number(workspaceId)),
-        eq(statusReport.id, Number(id))
+        eq(statusReport.id, Number(id)),
       ),
     });
 

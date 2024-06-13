@@ -1,8 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { ParamsSchema, StatusReportSchema } from "../schema";
-import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import type { statusReportsApi } from "../index";
+import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
   page,
   pageSubscriber,
@@ -10,9 +7,12 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { and, db, eq, isNotNull } from "@openstatus/db";
 import { sendEmailHtml } from "@openstatus/emails";
 import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
+import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
+import type { statusReportsApi } from "../index";
+import { ParamsSchema, StatusReportSchema } from "../schema";
 
 const postRouteUpdate = createRoute({
   method: "post",
@@ -57,8 +57,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId))
-        )
+          eq(statusReport.workspaceId, Number(workspaceId)),
+        ),
       )
       .returning()
       .get();
@@ -90,8 +90,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           .where(
             and(
               eq(pageSubscriber.pageId, currentPage.pageId),
-              isNotNull(pageSubscriber.acceptedAt)
-            )
+              isNotNull(pageSubscriber.acceptedAt),
+            ),
           )
           .all();
         const pageInfo = await db
@@ -101,7 +101,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           .get();
         if (!pageInfo) continue;
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email
+          (subscriber) => subscriber.email,
         );
         await sendEmailHtml({
           to: subscribersEmails,

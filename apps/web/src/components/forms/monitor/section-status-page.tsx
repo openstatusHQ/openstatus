@@ -89,8 +89,8 @@ export function SectionStatusPage({ form, pages }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
+                                        (value) => value !== item.id,
+                                      ),
                                     );
                               }}
                             >

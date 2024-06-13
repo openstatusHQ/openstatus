@@ -1,6 +1,6 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { maintenance } from "./maintenance";
 import { z } from "zod";
+import { maintenance } from "./maintenance";
 
 export const insertMaintenanceSchema = createInsertSchema(maintenance)
   .extend({

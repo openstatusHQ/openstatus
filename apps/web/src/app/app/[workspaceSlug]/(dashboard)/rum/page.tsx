@@ -1,12 +1,12 @@
 import * as React from "react";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { auth } from "@/lib/auth";
 import { api } from "@/trpc/server";
+import { Redis } from "@upstash/redis";
+import { RequestButton } from "./_components/request-button/request-button";
 import { RouteTable } from "./_components/route-table";
 import { RUMMetricCards } from "./_components/rum-metric-card";
-import { Redis } from "@upstash/redis";
-import { auth } from "@/lib/auth";
-import { RequestButton } from "./_components/request-button/request-button";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ export default async function RUMPage() {
 
   const accessRequested = await redis.sismember(
     "rum_access_requested",
-    session.user.email
+    session.user.email,
   );
 
   if (applications.length === 0) {

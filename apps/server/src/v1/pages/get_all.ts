@@ -1,11 +1,11 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import type { pagesApi } from "./index";
-import { PageSchema } from "./schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
 import { HTTPException } from "hono/http-exception";
+import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import type { pagesApi } from "./index";
+import { PageSchema } from "./schema";
 
 const getAllRoute = createRoute({
   method: "get",

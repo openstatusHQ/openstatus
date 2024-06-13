@@ -1,13 +1,13 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import type { Variables } from "../index";
-import { registerGetAllMonitors } from "./get_all";
-import { registerGetMonitor } from "./get";
-import { registerPutMonitor } from "./put";
-import { registerDeleteMonitor } from "./delete";
-import { registerGetMonitorSummary } from "./summary/get";
-import { registerPostMonitor } from "./post";
 import { handleZodError } from "../../libs/errors";
+import type { Variables } from "../index";
+import { registerDeleteMonitor } from "./delete";
+import { registerGetMonitor } from "./get";
+import { registerGetAllMonitors } from "./get_all";
+import { registerPostMonitor } from "./post";
+import { registerPutMonitor } from "./put";
+import { registerGetMonitorSummary } from "./summary/get";
 
 const monitorsApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useTransition } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -23,9 +23,9 @@ import {
   Textarea,
 } from "@openstatus/ui";
 
+import { toast } from "@/lib/toast";
 import { LoadingAnimation } from "../loading-animation";
 import { handlePlainSupport } from "./action";
-import { toast } from "@/lib/toast";
 
 export const types = [
   {
@@ -84,7 +84,7 @@ export function ContactForm({
       } else {
         handleSubmit?.();
         toast.success(
-          "Your message has been sent! We will get back to you soon."
+          "Your message has been sent! We will get back to you soon.",
         );
       }
     });

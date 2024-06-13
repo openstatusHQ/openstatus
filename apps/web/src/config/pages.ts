@@ -247,7 +247,7 @@ export const marketingPagesConfig = [
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig
+  currentPage: readonly Page[] = pagesConfig,
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);

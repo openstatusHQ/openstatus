@@ -4,7 +4,7 @@ import { createTRPCRouter, protectedProcedure } from "../../trpc";
 
 const event = z.enum(["CLS", "FCP", "FID", "INP", "LCP", "TTFB"]);
 
-const RouteData = z.object({
+const _RouteData = z.object({
   href: z.string(),
   total_event: z.coerce.number(),
   clsValue: z.number().optional(),
@@ -19,14 +19,14 @@ export const rumRouter = createTRPCRouter({
     .input(
       z.object({
         event: event,
-      })
+      }),
     )
-    .query((opts) => {
+    .query((_opts) => {
       // FIXME: Use tb pipe instead
       return null;
     }),
 
-  GetAggregatedPerPage: protectedProcedure.query((opts) => {
+  GetAggregatedPerPage: protectedProcedure.query((_opts) => {
     // FIXME: Use tb pipe instead
     return null;
   }),

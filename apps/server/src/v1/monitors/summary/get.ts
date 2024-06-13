@@ -5,12 +5,12 @@ import { monitor } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
-import { isoDate } from "../../utils";
-import { env } from "../../../env";
-import { ParamsSchema } from "../schema";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import type { monitorsApi } from "../index";
 import { HTTPException } from "hono/http-exception";
+import { env } from "../../../env";
+import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
+import { isoDate } from "../../utils";
+import type { monitorsApi } from "../index";
+import { ParamsSchema } from "../schema";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 const redis = Redis.fromEnv();
@@ -65,8 +65,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .get();
 
@@ -75,7 +75,7 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     }
 
     const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
-      `${id}-daily-stats`
+      `${id}-daily-stats`,
     );
     if (cache) {
       console.log("fetching from cache");
