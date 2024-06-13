@@ -49,15 +49,17 @@ type Timing struct {
 }
 
 type Response struct {
-	Status  int               `json:"status,omitempty"`
-	Latency int64             `json:"latency"`
-	Body    string            `json:"body,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
-	Time    int64             `json:"time"`
-	Timing  Timing            `json:"timing"`
-	Error   string            `json:"error,omitempty"`
-	Tags    []string          `json:"tags,omitempty"`
-	Region  string            `json:"region"`
+	RequestId   int64             `json:"requestId,omitempty"`
+	WorkspaceId int64             `json:"workspaceId,omitempty"`
+	Status      int               `json:"status,omitempty"`
+	Latency     int64             `json:"latency"`
+	Body        string            `json:"body,omitempty"`
+	Headers     map[string]string `json:"headers,omitempty"`
+	Time        int64             `json:"time"`
+	Timing      Timing            `json:"timing"`
+	Error       string            `json:"error,omitempty"`
+	Tags        []string          `json:"tags,omitempty"`
+	Region      string            `json:"region"`
 }
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
