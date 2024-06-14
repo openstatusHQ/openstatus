@@ -8,7 +8,7 @@
     "isolatedModules": true,
     "moduleResolution": "node",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     },
     "preserveWatchOutput": true,
     "skipLibCheck": true,

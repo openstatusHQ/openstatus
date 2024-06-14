@@ -5,7 +5,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { Search } from "lucide-react";
 import * as React from "react";
 
-import { cn } from "../lib/utils";
+import { cn } from "@/lib/utils";
 import { Dialog, DialogContent } from "./dialog";
 
 const Command = React.forwardRef<
@@ -72,10 +72,10 @@ CommandList.displayName = CommandPrimitive.List.displayName;
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Empty>
->(({ className, ...props }, ref) => (
+>((props, ref) => (
   <CommandPrimitive.Empty
     ref={ref}
-    className={cn("py-6 text-center text-sm", cn)}
+    className="py-6 text-center text-sm"
     {...props}
   />
 ));
