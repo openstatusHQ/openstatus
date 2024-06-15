@@ -10,13 +10,12 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  Input,
+  CommandSeparator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { Command as CommandPrimitive } from "cmdk";
 import { Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -240,6 +239,7 @@ export function InputSearch({ events, onSearch }: InputSearchProps) {
                   );
                 })}
               </CommandGroup>
+              <CommandSeparator />
               <CommandGroup heading="Query">
                 {Object.keys(search).map((key) => {
                   if (!currentWord.includes(`${key}:`)) return null;
