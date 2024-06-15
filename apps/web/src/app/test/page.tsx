@@ -4,6 +4,7 @@ import { MarketingLayout } from "@/components/layout/marketing-layout";
 
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
+import type { Event } from "./_components/search";
 
 export default async function TestPage() {
   return (
@@ -70,4 +71,4 @@ const data = [
     active: false,
     regions: ["ams", "gru"],
   },
-];
+] satisfies Event[];
