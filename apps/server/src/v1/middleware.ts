@@ -5,22 +5,24 @@ import { db, eq } from "@openstatus/db";
 import { workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/plans";
 import type { Variables } from "./index";
+import { HTTPException } from "hono/http-exception";
 
 export async function middleware(
   c: Context<{ Variables: Variables }, "/*">,
-  next: Next,
+  next: Next
 ) {
   const key = c.req.header("x-openstatus-key");
-  if (!key) return c.text("Unauthorized", 401);
+  if (!key) throw new HTTPException(401, { message: "Unauthorized" });
 
   const { error, result } =
     process.env.NODE_ENV === "production"
       ? await verifyKey(key)
       : { result: { valid: true, ownerId: "1" }, error: null };
 
-  if (error) return c.text("Internal Server Error", 500);
-  if (!result.valid) return c.text("Unauthorized", 401);
-  if (!result.ownerId) return c.text("Unauthorized", 401);
+  if (error) throw new HTTPException(500, { message: error.message });
+  if (!result.valid) throw new HTTPException(401, { message: "Unauthorized" });
+  if (!result.ownerId)
+    throw new HTTPException(401, { message: "Unauthorized" });
 
   const _workspace = await db
     .select()
@@ -30,7 +32,7 @@ export async function middleware(
 
   if (!_workspace) {
     console.error("Workspace not found");
-    return c.text("Unauthorized", 401);
+    throw new HTTPException(401, { message: "Unauthorized" });
   }
 
   c.set("workspacePlan", getPlanConfig(_workspace.plan));

@@ -30,7 +30,7 @@ const getRoute = createRoute({
 });
 
 export function registerGetStatusReportUpdate(
-  api: typeof statusReportUpdatesApi,
+  api: typeof statusReportUpdatesApi
 ) {
   return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
@@ -43,8 +43,8 @@ export function registerGetStatusReportUpdate(
         statusReport,
         and(
           eq(statusReport.id, statusReportUpdate.statusReportId),
-          eq(statusReport.workspaceId, Number(workspaceId)),
-        ),
+          eq(statusReport.workspaceId, Number(workspaceId))
+        )
       )
       .where(eq(statusReportUpdate.id, Number(id)))
       .get();
@@ -54,9 +54,9 @@ export function registerGetStatusReportUpdate(
     }
 
     const data = StatusReportUpdateSchema.parse(
-      _statusReportJoin.status_report_update,
+      _statusReportJoin.status_report_update
     );
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

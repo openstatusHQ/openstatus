@@ -24,6 +24,19 @@ import (
 
 type statusCode int
 
+// We should export it
+type PingResponse struct {
+	RequestId   int64          `json:"requestId,omitempty"`
+	WorkspaceId int64          `json:"workspaceId,omitempty"`
+	Status      int            `json:"status,omitempty"`
+	Latency     int64          `json:"latency"`
+	Body        string         `json:"body,omitempty"`
+	Headers     string         `json:"headers,omitempty"`
+	Time        int64          `json:"time"`
+	Timing      checker.Timing `json:"timing"`
+	Region      string         `json:"region"`
+}
+
 func (s statusCode) IsSuccessful() bool {
 	return s >= 200 && s < 300
 }
@@ -263,10 +276,25 @@ func main() {
 
 			r.Region = flyRegion
 
+			headersAsString, err := json.Marshal(r.Headers)
+			if err != nil {
+				return nil
+			}
+
+			tbData := PingResponse{
+				RequestId:   req.RequestId,
+				WorkspaceId: req.WorkspaceId,
+				Status:      r.Status,
+				Latency:     r.Latency,
+				Body:        r.Body,
+				Headers:     string(headersAsString),
+				Time:        r.Time,
+				Timing:      r.Timing,
+				Region:      r.Region,
+			}
+
 			res = r
-			res.RequestId = req.RequestId
-			res.WorkspaceId = req.WorkspaceId
-			if err := tinybirdClient.SendEvent(ctx, res, dataSourceName); err != nil {
+			if err := tinybirdClient.SendEvent(ctx, tbData, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 			return nil

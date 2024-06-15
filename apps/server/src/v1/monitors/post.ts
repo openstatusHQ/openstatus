@@ -54,8 +54,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all()
     )[0].count;
@@ -97,6 +97,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
 
     const data = MonitorSchema.parse(_newMonitor);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

@@ -72,8 +72,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
             inArray(monitor.id, monitorIds),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 
@@ -89,8 +89,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(page.workspaceId, Number(workspaceId)),
-            inArray(page.id, pageIds),
-          ),
+            inArray(page.id, pageIds)
+          )
         )
         .all();
 
@@ -127,7 +127,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               pageId: id,
               statusReportId: _newStatusReport.id,
             };
-          }),
+          })
         )
         .returning();
     }
@@ -141,7 +141,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               monitorId: id,
               statusReportId: _newStatusReport.id,
             };
-          }),
+          })
         )
         .returning();
     }
@@ -151,7 +151,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .select()
         .from(pagesToStatusReports)
         .where(
-          eq(pagesToStatusReports.statusReportId, Number(_newStatusReport.id)),
+          eq(pagesToStatusReports.statusReportId, Number(_newStatusReport.id))
         )
         .all();
       for (const currentPage of allPages) {
@@ -161,8 +161,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           .where(
             and(
               eq(pageSubscriber.pageId, currentPage.pageId),
-              isNotNull(pageSubscriber.acceptedAt),
-            ),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
           )
           .all();
         const pageInfo = await db
@@ -172,7 +172,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           .get();
         if (!pageInfo) continue;
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
+          (subscriber) => subscriber.email
         );
         await sendEmailHtml({
           to: subscribersEmails,
@@ -191,6 +191,6 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       statusReportUpdateIds: [_newStatusReportUpdate.id],
     });
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

@@ -42,6 +42,6 @@ export function registerGetAllIncidents(app: typeof incidentsApi) {
     }
 
     const returnValues = z.array(IncidentSchema).parse(_incidents); // TODO: think of using safeParse with SchemaError.fromZod
-    return c.json(returnValues);
+    return c.json(returnValues, 200);
   });
 }

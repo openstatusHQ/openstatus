@@ -1,6 +1,8 @@
 package request
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type AssertionType string
 

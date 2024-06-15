@@ -59,8 +59,8 @@ export function registerPutIncident(app: typeof incidentsApi) {
       .where(
         and(
           eq(incidentTable.id, Number(id)),
-          eq(incidentTable.workspaceId, Number(workspaceId)),
-        ),
+          eq(incidentTable.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
@@ -81,6 +81,6 @@ export function registerPutIncident(app: typeof incidentsApi) {
 
     const data = IncidentSchema.parse(_newIncident);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

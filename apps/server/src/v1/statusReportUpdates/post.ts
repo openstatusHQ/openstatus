@@ -44,7 +44,7 @@ const createStatusUpdate = createRoute({
 });
 
 export function registerPostStatusReportUpdate(
-  api: typeof statusReportUpdatesApi,
+  api: typeof statusReportUpdatesApi
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
     const workspaceId = c.get("workspaceId");
@@ -57,8 +57,8 @@ export function registerPostStatusReportUpdate(
       .where(
         and(
           eq(statusReport.id, input.statusReportId),
-          eq(statusReport.workspaceId, Number(workspaceId)),
-        ),
+          eq(statusReport.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
@@ -95,8 +95,8 @@ export function registerPostStatusReportUpdate(
           .where(
             and(
               eq(pageSubscriber.pageId, currentPage.pageId),
-              isNotNull(pageSubscriber.acceptedAt),
-            ),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
           )
           .all();
 
@@ -107,7 +107,7 @@ export function registerPostStatusReportUpdate(
           .get();
         if (!pageInfo) continue;
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
+          (subscriber) => subscriber.email
         );
 
         // TODO: verify if we leak any email data here
@@ -123,6 +123,6 @@ export function registerPostStatusReportUpdate(
 
     const data = StatusReportUpdateSchema.parse(_statusReportUpdate);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

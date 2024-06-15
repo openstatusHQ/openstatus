@@ -64,6 +64,6 @@ export function registerGetAllNotifications(app: typeof notificationsApi) {
       data.push(p);
     }
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

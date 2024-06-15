@@ -38,7 +38,7 @@ export function registerGetPage(api: typeof pagesApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.workspaceId, Number(workspaceId)), eq(page.id, Number(id))),
+        and(eq(page.workspaceId, Number(workspaceId)), eq(page.id, Number(id)))
       )
       .get();
 
@@ -48,6 +48,6 @@ export function registerGetPage(api: typeof pagesApi) {
 
     const data = PageSchema.parse(_page);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

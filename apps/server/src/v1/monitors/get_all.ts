@@ -37,8 +37,8 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .all();
 
@@ -48,6 +48,6 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
 
     const data = z.array(MonitorSchema).parse(_monitors);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }
