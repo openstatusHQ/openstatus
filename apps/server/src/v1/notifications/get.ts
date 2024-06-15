@@ -43,8 +43,8 @@ export function registerGetNotification(api: typeof notificationsApi) {
       .where(
         and(
           eq(page.workspaceId, Number(workspaceId)),
-          eq(notification.id, Number(id)),
-        ),
+          eq(notification.id, Number(id))
+        )
       )
       .get();
 
@@ -66,6 +66,6 @@ export function registerGetNotification(api: typeof notificationsApi) {
       monitors,
     });
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

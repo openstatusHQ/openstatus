@@ -57,8 +57,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId)),
-        ),
+          eq(statusReport.workspaceId, Number(workspaceId))
+        )
       )
       .returning()
       .get();
@@ -90,8 +90,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           .where(
             and(
               eq(pageSubscriber.pageId, currentPage.pageId),
-              isNotNull(pageSubscriber.acceptedAt),
-            ),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
           )
           .all();
         const pageInfo = await db
@@ -101,7 +101,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           .get();
         if (!pageInfo) continue;
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
+          (subscriber) => subscriber.email
         );
         await sendEmailHtml({
           to: subscribersEmails,
@@ -115,6 +115,6 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
 
     const data = StatusReportUpdateSchema.parse(_statusReportUpdate);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

@@ -50,9 +50,9 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
         statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
         pageIds: r.pagesToStatusReports.map((p) => p.pageId),
         monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
-      })),
+      }))
     );
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

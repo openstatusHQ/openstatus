@@ -81,6 +81,6 @@ export function registerPutMonitor(api: typeof monitorsApi) {
 
     const data = MonitorSchema.parse(_newMonitor);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }
