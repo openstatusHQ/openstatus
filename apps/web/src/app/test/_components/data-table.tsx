@@ -45,6 +45,9 @@ export function DataTable<TData, TValue>({
       <InputSearch
         events={[]}
         onSearch={(values) => {
+          // need to reset the filters as we don't remove filter values
+          table.resetColumnFilters();
+
           // biome-ignore lint/complexity/noForEach: <explanation>
           Object.keys(values).forEach((key) => {
             // if (key === "limit") use pagination!

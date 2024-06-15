@@ -39,7 +39,7 @@ const data = [
     name: "Test 4",
     public: true,
     active: true,
-    regions: ["gru", "syd"],
+    regions: ["syd"],
   },
   {
     name: "Test 5",

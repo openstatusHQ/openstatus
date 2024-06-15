@@ -23,13 +23,19 @@ export const columns: ColumnDef<Event>[] = [
       const array = row.getValue(id) as string[];
       if (typeof value === "string") return array.includes(value);
       // up to the user to define either `.some` or `.every`
-      if (Array.isArray(value)) return value.every((i) => array.includes(i));
+      if (Array.isArray(value)) return value.some((i) => array.includes(i));
       return false;
     },
   },
   {
     accessorKey: "active",
     header: "Active",
+    filterFn: (row, id, value) => {
+      const stringify = String(row.getValue(id));
+      if (typeof value === "string") return value === stringify;
+      if (Array.isArray(value)) return value.includes(stringify);
+      return false;
+    },
   },
   {
     accessorKey: "public",
