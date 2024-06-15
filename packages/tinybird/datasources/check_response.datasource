@@ -1,0 +1,24 @@
+VERSION 0
+
+SCHEMA >
+    `requestId` Int64 `json:$.requestId`,
+    `workspaceId` Int64 `json:$.workspaceId`,
+    `latency` Int64 `json:$.latency`,
+    `region` String `json:$.region`,
+    `time` DateTime `json:$.time`,
+    `headers` String `json:$.headers`,
+    `timing_connectDone` Int64 `json:$.timing.connectDone`,
+    `timing_connectStart` Int64 `json:$.timing.connectStart`,
+    `timing_dnsDone` Int64 `json:$.timing.dnsDone`,
+    `timing_dnsStart` Int64 `json:$.timing.dnsStart`,
+    `timing_firstByteDone` Int64 `json:$.timing.firstByteDone`,
+    `timing_firstByteStart` Int64 `json:$.timing.firstByteStart`,
+    `timing_tlsHandshakeDone` Int64 `json:$.timing.tlsHandshakeDone`,
+    `timing_tlsHandshakeStart` Int64 `json:$.timing.tlsHandshakeStart`,
+    `timing_transferDone` Int64 `json:$.timing.transferDone`,
+    `timing_transferStart` Int64 `json:$.timing.transferStart`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "workspaceId, requestId, time"
+ENGINE_TTL ""
+ENGINE_PARTITION_KEY ""

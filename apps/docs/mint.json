@@ -51,6 +51,10 @@
       "url": "api-reference"
     },
     {
+      "name": "Guides",
+      "url": "guides"
+    },
+    {
       "name": "Contributor Guides",
       "url": "contributing"
     }
@@ -202,6 +206,10 @@
           ]
         }
       ]
+    },
+    {
+      "group": "Guides",
+      "pages": ["guides/introduction", "guides/latency-ci-integration-test"]
     }
   ],
   "analytics": {

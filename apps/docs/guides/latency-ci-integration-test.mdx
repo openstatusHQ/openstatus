@@ -1,0 +1,107 @@
+---
+title: How to use OpenStatus in GitHub Actions to test latency.
+---
+
+## Introduction
+
+
+In this guide, we will show you how to use OpenStatus to test latency in GitHub Actions to ensure your website is performing well.
+
+We are deploying a Cloudflare workers and using OpenStatus to monitor the latency of the website. We will use GitHub Actions to run the OpenStatus gobal latency test and roll back the deployement if the latency is higher than expected.
+
+## Prerequisites
+
+- An Endpoint to test (Cloudflare Workers, Vercel, Netlify, etc.)
+- An OpenStatus Account
+
+
+## Our API Endpoint
+
+For this guide, we are using a simple Cloudflare Worker that returns `Hello OpenStatus!`.
+They are fast and have a
+
+```typescript
+import { Hono } from "hono";
+
+const app = new Hono();
+
+app.get("/", async (c) => {
+
+  return c.text("Hello OpenStatus!");
+});
+
+export default app;
+```
+
+
+## Setting up the test
+
+```typescript
+test("should fail if slow", async () => {
+
+  // Let's warm our endpoint
+  await fetch("https://github-action-rollback.thibaultleouay.workers.dev/");
+  // Run the test
+  const options = {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-openstatus-key": process.env.OPENSTATUS_API_KEY || "",
+    },
+    body: '{"url":"https://github-action-rollback.thibaultleouay.workers.dev/","method":"GET","regions":["ams","iad","gru"],"runCount":2,"aggregated":true}',
+  };
+
+  const data = await fetch("https://api.openstatus.dev/v1/check", options);
+  const json = await data.json();
+  const result = schema.parse(json);
+  expect(result.aggregated.firstByte.p75 < 1000).toBe(true);
+});
+```
+## Setting up the GitHub Actions
+
+```yaml
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy 🔥
+    runs-on: ubuntu-latest
+    env:
+      OPENSTATUS_API_KEY: ${{ secrets.OPENSTATUS_API_KEY }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📥 Download deps
+        run: bun install
+
+      - name: 🔥 Deploy
+        run: bun run deploy
+
+
+      - name: 🧪 Test
+        run: bun test
+        id: test
+
+      - name: 🚀 Rollback
+        if: failure() && steps.test.outcome == 'failure'
+        run: bun run rollback
+
+```
+
+
+
