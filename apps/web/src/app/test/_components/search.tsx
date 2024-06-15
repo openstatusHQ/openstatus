@@ -9,28 +9,32 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  Input,
 } from "@openstatus/ui";
+import { Search } from "lucide-react";
 
-type Event = {
+import { cn } from "@/lib/utils";
+
+export type Event = {
   public: boolean;
   active: boolean;
   regions: ("ams" | "gru" | "syd")[];
   name: string;
 };
 
-export function InputSearch({
-  events,
-  onSearch,
-}: {
-  onSearch(value: Record<string, string>): void;
-  events: Event[];
-}) {
+interface InputSearchProps {
+  onSearch(value: Record<string, string | string[]>): void;
+  events: Event[]; // TODO: instead of events, lets pass in a zod schema!
+}
+
+export function InputSearch({ events, onSearch }: InputSearchProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>("");
   const [currentWord, setCurrentWord] = useState("");
 
-  // TODO: check if there is a move efficient way
+  // TODO: create a debounce an update the value every 500ms!
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const searchparams = inputValue
       .trim()
@@ -40,14 +44,20 @@ export function InputSearch({
           const [name, value] = curr.split(":");
           if (value && name && curr !== currentWord) {
             // TODO: support multiple value with value.split(",")
-            prev[name] = value;
+            const values = value.split(",");
+            console.log({ values });
+            if (values.length > 1) {
+              prev[name] = values;
+            } else {
+              prev[name] = value;
+            }
           }
           return prev;
         },
-        {} as Record<string, string>,
+        {} as Record<string, string | string[]>,
       );
     onSearch(searchparams);
-  }, [onSearch, inputValue, currentWord]);
+  }, [inputValue, currentWord]);
 
   // DEFINE YOUR SEARCH PARAMETERS
   const search = useMemo(
@@ -105,8 +115,8 @@ export function InputSearch({
         onKeyDown={(e) => {
           if (e.key === "Escape") inputRef?.current?.blur();
         }}
-        onBlur={() => setOpen(false)}
-        onFocus={() => setOpen(true)}
+        // onBlur={() => setOpen(false)}
+        // onFocus={() => setOpen(true)}
         onInput={(e) => {
           const caretPositionStart = e.currentTarget?.selectionStart || -1;
           const inputValue = e.currentTarget?.value || "";
@@ -126,82 +136,94 @@ export function InputSearch({
         }}
         placeholder={`${events.length} total logs found...`}
       />
-      {open ? (
-        <CommandList>
-          <CommandGroup heading="Filter">
-            {Object.keys(search).map((key) => {
-              if (inputValue.includes(`${key}:`)) return null;
+      {/* {open ? ( */}
+      <CommandList>
+        <CommandGroup heading="Filter">
+          {Object.keys(search).map((key) => {
+            if (inputValue.includes(`${key}:`)) return null;
+            return (
+              <CommandItem
+                key={key}
+                value={key}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onSelect={(value) => {
+                  setInputValue((prev) => {
+                    if (currentWord.trim() === "") {
+                      const input = `${prev}${value}`;
+                      return `${input}:`;
+                    }
+                    // lots of cheat
+                    const isStarting = currentWord === prev;
+                    const prefix = isStarting ? "" : " ";
+                    const input = prev.replace(
+                      `${prefix}${currentWord}`,
+                      `${prefix}${value}`,
+                    );
+                    return `${input}:`;
+                  });
+                  setCurrentWord(`${value}:`);
+                }}
+                className="group"
+              >
+                {key}
+                <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
+                  {search[key as SearchKey].map((str) => `[${str}]`).join(" ")}
+                </span>
+              </CommandItem>
+            );
+          })}
+        </CommandGroup>
+        <CommandGroup heading="Query">
+          {Object.keys(search).map((key) => {
+            if (!currentWord.includes(`${key}:`)) return null;
+            return search[key as SearchKey].map((option) => {
               return (
                 <CommandItem
-                  key={key}
-                  value={key}
+                  key={`${key}`}
+                  value={`${key}:${option}`}
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                   }}
                   onSelect={(value) => {
                     setInputValue((prev) => {
-                      if (currentWord.trim() === "") {
-                        const input = `${prev}${value}`;
-                        return `${input}:`;
+                      console.log({ currentWord, value, prev });
+                      if (currentWord.includes(",")) {
+                        return `${prev}${option} `;
                       }
-                      // lots of cheat
-                      const isStarting = currentWord === prev;
-                      const prefix = isStarting ? "" : " ";
-                      const input = prev.replace(
-                        `${prefix}${currentWord}`,
-                        `${prefix}${value}`,
-                      );
-                      return `${input}:`;
+                      const input = prev.replace(currentWord, value);
+                      return `${input.trim()} `;
                     });
-                    setCurrentWord(`${value}:`);
+                    setCurrentWord("");
                   }}
-                  className="group"
+                  {...{ currentWord }}
                 >
-                  {key}
-                  <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
-                    {search[key as SearchKey]
-                      .map((str) => `[${str}]`)
-                      .join(" ")}
-                  </span>
+                  {`${option}`}
                 </CommandItem>
               );
-            })}
-          </CommandGroup>
-          <CommandGroup heading="Query">
-            {Object.keys(search).map((key) => {
-              if (!currentWord.includes(`${key}:`)) return null;
-              return search[key as SearchKey].map((option) => {
-                return (
-                  <CommandItem
-                    key={`${key}`}
-                    value={`${key}:${option}`}
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    onSelect={(value) => {
-                      setInputValue((prev) => {
-                        console.log({ currentWord, value, prev });
-                        if (currentWord.includes(",")) {
-                          return `${prev}${option} `;
-                        }
-                        const input = prev.replace(currentWord, value);
-                        return `${input.trim()} `;
-                      });
-                      setCurrentWord("");
-                    }}
-                    {...{ currentWord }}
-                  >
-                    {`${option}`}
-                  </CommandItem>
-                );
-              });
-            })}
-          </CommandGroup>
-          <CommandEmpty>No results found.</CommandEmpty>
-        </CommandList>
-      ) : null}
+            });
+          })}
+        </CommandGroup>
+        <CommandEmpty>No results found.</CommandEmpty>
+      </CommandList>
+      {/* ) : null} */}
     </Command>
+  );
+}
+
+export function FakeInput({ className }: { className?: string }) {
+  return (
+    <div className="flex items-center border border-border rounded-lg px-3 w-min">
+      <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+      <button
+        className={cn(
+          "placeholder:text-foreground-muted flex h-11 w-64 rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          className,
+        )}
+      />
+    </div>
   );
 }
