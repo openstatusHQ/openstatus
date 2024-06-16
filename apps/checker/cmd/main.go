@@ -294,8 +294,10 @@ func main() {
 			}
 
 			res = r
-			if err := tinybirdClient.SendEvent(ctx, tbData, dataSourceName); err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			if tbData.RequestId != 0 {
+				if err := tinybirdClient.SendEvent(ctx, tbData, dataSourceName); err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+				}
 			}
 			return nil
 		}
