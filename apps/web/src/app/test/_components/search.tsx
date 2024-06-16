@@ -20,97 +20,89 @@ import { Search, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import type { z } from "zod";
+import { z } from "zod";
 import { Kbd } from "@/components/kbd";
+import { ColumnFiltersState } from "@tanstack/react-table";
 
-export type Event = {
-  public: boolean;
-  active: boolean;
-  regions: ("ams" | "gru" | "syd")[];
-  name: string;
-};
+function deserialize<T extends z.ZodTypeAny>(schema: T) {
+  const castToSchema = z.preprocess((val) => {
+    console.log({ val });
+    if (typeof val !== "string") return val;
+    return val
+      .trim()
+      .split(" ")
+      .reduce(
+        (prev, curr) => {
+          const [name, value] = curr.split(":");
+          if (!value || !name) return prev;
 
-interface InputSearchProps {
-  onSearch(value: Record<string, string | string[]>): void;
-  events: Event[]; // TODO: instead of events, lets pass in a zod schema!
-  schema?: z.ZodTypeAny;
+          if (!value.includes(",")) {
+            prev[name] = [value];
+            return prev;
+          }
+          console.log(">>>", value);
+          const values = value.split(",");
+          console.log(">>>>", values);
+          prev[name] = values;
+          return prev;
+        },
+        {} as Record<string, unknown>,
+      );
+  }, schema);
+  return (value: string) => castToSchema.safeParse(value);
 }
 
-export function InputSearch({ events, onSearch }: InputSearchProps) {
+function serialize<T extends z.ZodTypeAny>(value: z.infer<T>) {
+  return ""; // return "regions:ams,gru active:true" from object / zod object
+}
+
+interface InputSearchProps<T extends z.ZodTypeAny> {
+  onSearch(value: z.infer<T>): void;
+  schema: T;
+  defaultValue?: z.infer<T>;
+}
+
+export function InputSearch<T extends z.ZodTypeAny>({
+  onSearch,
+  schema,
+}: InputSearchProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>("");
   const [currentWord, setCurrentWord] = useState("");
 
   // TODO: create a debounce an update the value every 500ms!
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    const searchparams = inputValue
-      .trim()
-      .split(" ")
-      .reduce(
-        (prev, curr) => {
-          const [name, value] = curr.split(":");
-          if (value && name && curr !== currentWord) {
-            // TODO: support multiple value with value.split(",")
-            const values = value.split(",");
-            console.log({ values });
-            if (values.length > 1) {
-              prev[name] = values;
-            } else {
-              prev[name] = value;
-            }
-          }
-          return prev;
-        },
-        {} as Record<string, string | string[]>,
-      );
-    onSearch(searchparams);
-  }, [inputValue, currentWord]);
+    if (!inputValue.endsWith(" ") || !open) return;
+    const searchparams = deserialize(schema)(inputValue);
+    console.log(searchparams);
+    if (searchparams.success) {
+      onSearch(searchparams.data);
+    }
+  }, [inputValue, open]);
 
-  // DEFINE YOUR SEARCH PARAMETERS
-  const search = useMemo(
-    () =>
-      events?.reduce(
-        (prev, curr) => {
-          return {
-            // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-            ...prev,
-            active: [...new Set([curr.active, ...(prev.active || [])])],
-            public: [...new Set([curr.public, ...(prev.public || [])])],
-            regions: [...new Set([...curr.regions, ...(prev.regions || [])])],
-          };
-        },
-        // defaultState
-        {
-          limit: [10, 25, 50],
-          public: [true, false],
-          active: [true, false],
-          regions: ["ams", "gru", "syd"],
-        } as {
-          public: boolean[];
-          active: boolean[];
-          limit: number[];
-          regions: string[];
-        },
-      ),
-    [events],
-  );
-
-  type SearchKey = keyof typeof search;
+  // DEFINE YOUR SEARCH PARAMETERS FROM ZOD!
+  const search = {
+    limit: [10, 25, 50],
+    public: [true, false],
+    active: [true, false],
+    regions: ["ams", "gru", "syd"],
+  };
 
   return (
     <div>
       <div
         className={cn(
-          "flex items-center border border-border rounded-lg px-3 w-min",
+          "group flex w-full max-w-64 items-center border border-input bg-background rounded-lg px-3",
           open ? "hidden" : "visible",
         )}
       >
         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
         <button
           type="button"
-          className="flex h-11 w-64 rounded-md bg-transparent py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-11 w-full py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
           onClick={(e) => {
             e.preventDefault();
             setOpen(true);
@@ -231,7 +223,7 @@ export function InputSearch({ events, onSearch }: InputSearchProps) {
                     >
                       {key}
                       <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
-                        {search[key as SearchKey]
+                        {search[key as keyof typeof search]
                           .map((str) => `[${str}]`)
                           .join(" ")}
                       </span>
@@ -243,7 +235,7 @@ export function InputSearch({ events, onSearch }: InputSearchProps) {
               <CommandGroup heading="Query">
                 {Object.keys(search).map((key) => {
                   if (!currentWord.includes(`${key}:`)) return null;
-                  return search[key as SearchKey].map((option) => {
+                  return search[key as keyof typeof search].map((option) => {
                     return (
                       <CommandItem
                         key={`${key}`}

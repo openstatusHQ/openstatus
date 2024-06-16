@@ -1,10 +1,9 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import type { Schema } from "./utils";
 
-import type { Event } from "./search";
-
-export const columns: ColumnDef<Event>[] = [
+export const columns: ColumnDef<Schema>[] = [
   {
     accessorKey: "name",
     header: "Name",
@@ -31,9 +30,9 @@ export const columns: ColumnDef<Event>[] = [
     accessorKey: "active",
     header: "Active",
     filterFn: (row, id, value) => {
-      const stringify = String(row.getValue(id));
-      if (typeof value === "string") return value === stringify;
-      if (Array.isArray(value)) return value.includes(stringify);
+      const rowValue = row.getValue(id);
+      if (typeof value === "string") return value === String(rowValue);
+      if (Array.isArray(value)) return value.includes(rowValue);
       return false;
     },
   },
@@ -41,9 +40,9 @@ export const columns: ColumnDef<Event>[] = [
     accessorKey: "public",
     header: "Public",
     filterFn: (row, id, value) => {
-      const stringify = String(row.getValue(id));
-      if (typeof value === "string") return value === stringify;
-      if (Array.isArray(value)) return value.includes(stringify);
+      const rowValue = row.getValue(id);
+      if (typeof value === "string") return value === String(rowValue);
+      if (Array.isArray(value)) return value.includes(rowValue);
       return false;
     },
   },

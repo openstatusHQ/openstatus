@@ -6,14 +6,15 @@ export interface InputWithAddonsProps
   extends React.InputHTMLAttributes<HTMLInputElement> {
   leading?: React.ReactNode;
   trailing?: React.ReactNode;
+  containerClassName?: string;
 }
 
 const InputWithAddons = React.forwardRef<
   HTMLInputElement,
   InputWithAddonsProps
->(({ leading, trailing, className, ...props }, ref) => {
+>(({ leading, trailing, containerClassName, className, ...props }, ref) => {
   return (
-    <div className="border-input ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md border bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+    <div className={cn("border-input ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md border bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2", containerClassName)}>
       {leading ? (
         <div className="border-input bg-muted border-r px-3 py-2">
           {leading}

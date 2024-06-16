@@ -4,15 +4,15 @@ import { MarketingLayout } from "@/components/layout/marketing-layout";
 
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
-import type { Event } from "./_components/search";
+import type { Schema } from "./_components/utils";
 
 export default async function TestPage() {
   return (
-    <MarketingLayout>
-      <div className="w-full rounded-lg border bg-background p-6">
-        <DataTable columns={columns} data={data} />
-      </div>
-    </MarketingLayout>
+    // <MarketingLayout>
+    <div className="w-full rounded-lg border bg-background p-6">
+      <DataTable columns={columns} data={data} />
+    </div>
+    // </MarketingLayout>
   );
 }
 
@@ -71,4 +71,4 @@ const data = [
     active: false,
     regions: ["ams", "gru"],
   },
-] satisfies Event[];
+] satisfies Schema[];
