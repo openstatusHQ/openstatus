@@ -1,27 +1,31 @@
 ---
-title: How to use OpenStatus in GitHub Actions to test latency.
-description: Learn how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance.
+title: How to use OpenStatus in GitHub Actions to test your Cloudflare Workers latency.
+description: Learn how to use OpenStatus for testing latency in your GitHub Actions to verify your Cloudflare Workers' performance.
 ---
 
 ## Introduction
 
+As a developer, you want to make sure your endpoints are fast and reliable after each deployment.
 
-In this guide, we will show you how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance. We'll deploy a basic API endpoint and run a latency test in a GitHub Action with OpenStatus. If the latency is higher than expected, we will roll back the deployment.
+In this guide, we will show you how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance.
 
-All the code used in this guide is available on [GitHub](https://github.com/openstatusHQ/github-action-rollback).
+ We'll deploy a basic API endpoint and run a latency test in a GitHub Action with OpenStatus. If the latency is higher than expected, we will roll back the deployment.
+
+All the code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/github-action-rollback).
 
 
 ## Prerequisites
 
-- An Endpoint to test (Cloudflare Workers, Vercel, Netlify, etc.)
-- A GitHub Account
-- An [OpenStatus](https://www.openstatus.dev) Account
+- A Cloudflare Account.
+- A GitHub Account.
+- An [OpenStatus](https://www.openstatus.dev) Account.
 
 
 ## Our API Endpoint
 
 For this guide, we are using a simple [Hono](https://www.hono.dev) server that returns `Hello OpenStatus!`.
-We are deploying it on [Cloudflare Workers](https://workers.cloudflare.com/).
+We are deploying it on [Cloudflare Workers](https://workers.cloudflare.com/). Cloudflare Workers is a serverless platform that allows you to deploy your code globally. They are fast and reliable. But sometimes you might introduce a bug that slows down your endpoint.
+
 
 ```typescript
 import { Hono } from "hono";
@@ -29,7 +33,6 @@ import { Hono } from "hono";
 const app = new Hono();
 
 app.get("/", async (c) => {
-
   return c.text("Hello OpenStatus!");
 });
 
@@ -39,12 +42,15 @@ export default app;
 
 ## Setting up the test
 
-For the test, we are using the OpenStatus API to run a global latency test on our endpoint.
+For the test, we are using the [OpenStatus API](https://docs.openstatus.dev/api-reference/check/post-check) to run a global latency test on our endpoint.
 If the latency is higher than expected, we will roll back the deployment.
 We expect our endpoint to have a 75th percentile latency of less than 1000ms in all regions.
 
 You need to get your OpenStatus API key from the OpenStatus dashboard.
-Settings -> API Tokens -> Create API Key
+
+To get your API key, go to:
+
+1. Settings -> 2. API Tokens -> 3. Create API Key
 
 <Frame caption="GitHub Settings">
   <img
@@ -55,12 +61,16 @@ Settings -> API Tokens -> Create API Key
 
 If you want to run the test locally copy your API key to a `.env` file.
 
+```env
+OPENSTATUS_API_KEY=your-api-key
+```
+
+Here is our test first we warm up our endpoint and then run the latency test with OpenStatus.
 
 
-Here is the test code:
 
 ```typescript
-test("should fail if slow", async () => {
+test("should fail if p75 > 1000", async () => {
 
   // Let's warm our endpoint
   await fetch("https://github-action-rollback.thibaultleouay.workers.dev/");
@@ -71,7 +81,7 @@ test("should fail if slow", async () => {
       "Content-Type": "application/json",
       "x-openstatus-key": process.env.OPENSTATUS_API_KEY || "",
     },
-    body: '{"url":"https://github-action-rollback.thibaultleouay.workers.dev/","method":"GET","regions":["ams","iad","gru"],"runCount":2,"aggregated":true}',
+    body: '{"url":"https://github-action-rollback.thibaultleouay.workers.dev/","method":"GET","regions":["ams","iad","gru","hkg","jnb","syd"],"runCount":2,"aggregated":true}',
   };
 
   const data = await fetch("https://api.openstatus.dev/v1/check", options);
@@ -80,6 +90,7 @@ test("should fail if slow", async () => {
   expect(result.aggregated.firstByte.p75 < 1000).toBe(true);
 });
 ```
+
 ## Setting up the GitHub Actions
 
 We will use GitHub Actions to deploy our endpoint and run the test.
@@ -87,7 +98,7 @@ We are using the bun CLI to deploy our endpoint instead of the Cloudflare Worker
 
 You need to set up your secrets in the GitHub repository settings for the OpenStatus API key and Cloudflare API token.
 
-Go to Settings -> Secrets and variables  -> New repository secret.
+Go to 1. Settings -> 2. Secrets and variables  -> 3. New repository secret.
 
 
 <Frame caption="GitHub Settings">
@@ -142,12 +153,30 @@ jobs:
       - name: 🚀 Rollback
         if: failure() && steps.test.outcome == 'failure'
         run: bun run rollback
-
 ```
 
-## Running the test
+In the workflow file, we have this step it will only run if the test fails:
+
+```yaml
+      - name: 🚀 Rollback
+        if: failure() && steps.test.outcome == 'failure'
+        run: bun run rollback
+```
+
+and in our package.json we have the following script:
+
+```json
+{
+  "scripts": {
+    "rollback": "wrangler rollback --message 'Integration test failed'"
+  }
+}
+```
+
+If you want to see the example in action, you can check the [GitHub repository actions](https://github.com/openstatusHQ/github-action-rollback/actions)
+
 
 ## Conclusion
 
-We have successfully set up a GitHub Action that deploys our endpoint and runs a latency test with OpenStatus.
+We have successfully set up a GitHub Action that deploys our endpoint our Cloudflare workers and runs a latency test against it with OpenStatus.
 Don't ever let your users experience slow endpoints, use OpenStatus to monitor your endpoint's performance and roll back deployments if needed.
