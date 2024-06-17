@@ -209,7 +209,10 @@
     },
     {
       "group": "Guides",
-      "pages": ["guides/introduction", "guides/latency-ci-integration-test"]
+      "pages": [
+        "guides/introduction",
+        "guides/test-latency-cf-workers-in-github-actions"
+      ]
     }
   ],
   "analytics": {
