@@ -10,8 +10,8 @@ SCHEMA >
     `workspaceId` String `json:$.workspaceId`,
     `cronTimestamp` Int64 `json:$.cronTimestamp`,
     `message` Nullable(String) `json:$.message`,
-    `timing` Nullable(String) `json:$.message`,
-    `headers` Nullable(String) `json:$.message`
+    `timing` Nullable(String) `json:$.timing`,
+    `headers` Nullable(String) `json:$.headers`,
 
 ENGINE "MergeTree"
 ENGINE_SORTING_KEY "monitorId, cronTimestamp"
