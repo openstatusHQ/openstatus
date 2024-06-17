@@ -12,8 +12,8 @@ export const schema = z.object({
   public: z.boolean().or(stringToBoolean.array()).optional(),
   active: z.boolean().or(stringToBoolean.array()).optional(),
   regions: z
-    .enum(["ams", "gru", "syd"])
-    .or(z.enum(["ams", "gru", "syd"]).array())
+    .enum(["ams", "gru", "syd", "hkg", "fra", "iad"])
+    .or(z.enum(["ams", "gru", "syd", "hkg", "fra", "iad"]).array())
     .optional(),
 });
 

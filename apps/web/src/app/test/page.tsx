@@ -1,18 +1,14 @@
 "use client";
 
-import { MarketingLayout } from "@/components/layout/marketing-layout";
-
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import type { Schema } from "./_components/utils";
 
 export default async function TestPage() {
   return (
-    // <MarketingLayout>
-    <div className="w-full rounded-lg border bg-background p-6">
+    <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
       <DataTable columns={columns} data={data} />
     </div>
-    // </MarketingLayout>
   );
 }
 
@@ -44,12 +40,12 @@ const data = [
   {
     name: "Test 5",
     public: false,
-    active: false,
+    active: true,
     regions: ["gru"],
   },
   {
     name: "Test 6",
-    public: true,
+    public: false,
     active: true,
     regions: ["ams", "syd"],
   },
@@ -69,6 +65,30 @@ const data = [
     name: "Test 9",
     public: true,
     active: false,
-    regions: ["ams", "gru"],
+    regions: ["fra", "gru"],
+  },
+  {
+    name: "Test 10",
+    public: false,
+    active: false,
+    regions: ["fra"],
+  },
+  {
+    name: "Test 11",
+    public: true,
+    active: false,
+    regions: ["hkg", "gru"],
+  },
+  {
+    name: "Test 12",
+    public: false,
+    active: false,
+    regions: ["hkg"],
+  },
+  {
+    name: "Test 13",
+    public: true,
+    active: true,
+    regions: ["iad", "fra"],
   },
 ] satisfies Schema[];

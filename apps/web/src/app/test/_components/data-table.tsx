@@ -1,9 +1,15 @@
 "use client";
 
-import type { ColumnDef, ColumnFiltersState } from "@tanstack/react-table";
+import type {
+  ColumnDef,
+  ColumnFiltersState,
+  Table,
+} from "@tanstack/react-table";
 import {
   flexRender,
   getCoreRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -41,33 +47,49 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getFacetedRowModel: getFacetedRowModel(),
+    getFacetedUniqueValues: (table: Table<TData>, columnId: string) => () => {
+      const map = getFacetedUniqueValues<TData>()(table, columnId)();
+      // TODO:
+      // overriding for region as it is an array
+      if (columnId === "region") {
+        const values = table
+          .getCoreRowModel()
+          .flatRows.map((row) => row.getValue(columnId)) as string[];
+      }
+      return map;
+    },
   });
 
   return (
-    <div className="grid gap-4">
-      {/* FIXME: sync to side bar */}
-      <InputSearch
-        // REMINDER: values is typed by infering `schema`
-        onSearch={(values) => {
-          // need to reset the filters as we don't remove filter values
-          table.resetColumnFilters();
+    <div className="flex flex-col gap-4 sm:flex-row">
+      <div className="w-full sm:max-w-48">
+        <DataTableFilterBar table={table} />
+      </div>
+      <div className="flex flex-1 flex-col gap-4">
+        <InputSearch
+          // REMINDER: values is typed by infering `schema`
+          onSearch={(values) => {
+            // need to reset the filters as we don't remove filter values
+            table.resetColumnFilters();
 
-          // biome-ignore lint/complexity/noForEach: <explanation>
-          Object.keys(values).forEach((key) => {
-            // if (key === "limit") use pagination!
-            table
-              .getColumn(key)
-              ?.setFilterValue(values[key as keyof typeof values]);
-          });
-        }}
-        // defaultValue={table.getState().columnFilters}
-        schema={schema}
-      />
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="w-full sm:max-w-48">
-          <DataTableFilterBar table={table} />
-        </div>
-        <div className="flex-1 rounded-md border">
+            // biome-ignore lint/complexity/noForEach: <explanation>
+            Object.keys(values).forEach((key) => {
+              // if (key === "limit") use pagination!
+              table
+                .getColumn(key)
+                ?.setFilterValue(values[key as keyof typeof values]);
+            });
+          }}
+          defaultValue={table.getState().columnFilters.reduce((prev, curr) => {
+            if (Array.isArray(curr.value)) {
+              return `${prev}${curr.id}:${curr.value.join(",")} `;
+            }
+            return `${prev}${curr.id}:${curr.value}`;
+          }, "")}
+          schema={schema}
+        />
+        <div className="rounded-md border">
           <Table>
             <TableHeader className="bg-muted/50">
               {table.getHeaderGroups().map((headerGroup) => (

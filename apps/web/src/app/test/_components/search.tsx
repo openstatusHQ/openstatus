@@ -52,23 +52,31 @@ function deserialize<T extends z.ZodTypeAny>(schema: T) {
   return (value: string) => castToSchema.safeParse(value);
 }
 
-function serialize<T extends z.ZodTypeAny>(value: z.infer<T>) {
-  return ""; // return "regions:ams,gru active:true" from object / zod object
+function serialize<T extends z.ZodTypeAny>(schema: T) {
+  return (value: z.infer<T>) =>
+    schema
+      .transform((val) => {
+        console.log("serialize", val);
+        return "test";
+      })
+      .safeParse(value); // return "regions:ams,gru active:true" from object / zod object
 }
 
 interface InputSearchProps<T extends z.ZodTypeAny> {
   onSearch(value: z.infer<T>): void;
   schema: T;
-  defaultValue?: z.infer<T>;
+  // defaultValue?: z.infer<T>;
+  defaultValue?: string;
 }
 
 export function InputSearch<T extends z.ZodTypeAny>({
   onSearch,
   schema,
+  defaultValue = "",
 }: InputSearchProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
-  const [inputValue, setInputValue] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>(defaultValue);
   const [currentWord, setCurrentWord] = useState("");
 
   // TODO: create a debounce an update the value every 500ms!
@@ -83,25 +91,30 @@ export function InputSearch<T extends z.ZodTypeAny>({
     }
   }, [inputValue, open]);
 
+  useEffect(() => {
+    setInputValue(defaultValue);
+  }, [defaultValue]);
+
   // DEFINE YOUR SEARCH PARAMETERS FROM ZOD!
   const search = {
     limit: [10, 25, 50],
     public: [true, false],
     active: [true, false],
-    regions: ["ams", "gru", "syd"],
+    regions: ["ams", "gru", "syd", "hkg", "iad", "fra"],
   };
 
   return (
     <div>
       <div
         className={cn(
-          "group flex w-full max-w-64 items-center border border-input bg-background rounded-lg px-3",
+          "group flex w-full items-center border border-input bg-background rounded-lg px-3",
           open ? "hidden" : "visible",
         )}
       >
         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
         <button
           type="button"
+          // TODO: add truncate
           className="flex h-11 w-full py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
           onClick={(e) => {
             e.preventDefault();
@@ -122,7 +135,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => setInputValue("")}
+                onClick={() => onSearch({})}
                 className={cn("-mr-1.5", inputValue ? "visible" : "invisible")}
               >
                 <X className="h-4 w-4" />

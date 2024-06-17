@@ -7,13 +7,14 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  Button,
   Checkbox,
   InputWithAddons,
   Label,
 } from "@openstatus/ui";
 import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { Search, X } from "lucide-react";
+import { useState } from "react";
 
 const config = [
   {
@@ -56,15 +57,27 @@ interface DataTableFilterBarProps<TData> {
 export function DataTableFilterBar<TData>({
   table,
 }: DataTableFilterBarProps<TData>) {
-  // const isFiltered = table.getState().columnFilters.length > 0;
   const filters = table.getState().columnFilters;
-
-  console.log(filters);
   return (
-    <div className="flex flex-col gap-3">
-      {config.map((config) => {
-        return <Section key={config.id} table={table} {...config} />;
-      })}
+    <div className="flex flex-col gap-4">
+      <div className="flex h-[46px] items-center justify-between gap-3">
+        <p className="font-medium text-foreground">Filters</p>
+        <div>
+          {filters.length ? (
+            <Button
+              variant="outline"
+              onClick={() => table.resetColumnFilters()}
+            >
+              Reset
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      <Accordion type="multiple" defaultValue={config.map(({ id }) => id)}>
+        {config.map((config) => {
+          return <Section key={config.id} table={table} {...config} />;
+        })}
+      </Accordion>
     </div>
   );
 }
@@ -81,73 +94,79 @@ type SectionProps<TData> = {
 
 function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
   const [inputValue, setInputValue] = useState("");
+  const column = table.getColumn(id);
+  const facetedValue = column?.getFacetedUniqueValues();
+  const filterValue = column?.getFilterValue();
 
   const filterOptions = options.filter(
     (option) => inputValue === "" || option.label.includes(inputValue),
   );
 
   return (
-    <div key={id}>
-      <div className="p-2">
+    <AccordionItem key={id} value={id} className="border-none">
+      <AccordionTrigger className="p-2">
         <p className="font-medium text-foreground text-sm">{label}</p>
-      </div>
-      {options.length > 2 ? (
-        <InputWithAddons
-          placeholder="Search"
-          leading={<Search className="h-4 w-4" />}
-          containerClassName="mb-2 h-8"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
-      ) : null}
-      <div className="rounded-lg border border-border empty:border-none">
-        {filterOptions.map((option, index) => {
-          const filterValue = table.getColumn(id)?.getFilterValue();
-          // use zod for validation?
+      </AccordionTrigger>
+      {/* className="overflow-visible" */}
+      <AccordionContent className="-m-4 p-4">
+        {options.length > 2 ? (
+          <InputWithAddons
+            placeholder="Search"
+            leading={<Search className="h-4 w-4" />}
+            containerClassName="mb-2 h-8 rounded-lg"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+          />
+        ) : null}
+        <div className="rounded-lg border border-border empty:border-none">
+          {filterOptions.map((option, index) => {
+            const checked = () => {
+              if (
+                typeof filterValue === "string" ||
+                typeof filterValue === "boolean"
+              )
+                return option.value === filterValue;
+              if (Array.isArray(filterValue))
+                return filterValue.includes(option.value);
+              return false;
+            };
 
-          const checked = useMemo(() => {
-            if (
-              typeof filterValue === "string" ||
-              typeof filterValue === "boolean"
-            )
-              return option.value === filterValue;
-            if (Array.isArray(filterValue))
-              return filterValue.includes(option.value);
-            return false;
-          }, [filterValue, option.value]);
-
-          console.log({ checked, filterValue });
-
-          return (
-            <div
-              key={String(option.value)}
-              className={cn(
-                "flex items-center space-x-2 p-2",
-                index !== filterOptions.length - 1 ? "border-b" : undefined,
-              )}
-            >
-              <Checkbox
-                id={`${id}-${option.value}`}
-                checked={checked}
-                onCheckedChange={(value) => {
-                  const newValue = value
-                    ? [...(filterValue || []), option.value]
-                    : filterValue?.filter((value) => option.value !== value);
-                  table
-                    .getColumn(id)
-                    ?.setFilterValue(newValue?.length ? newValue : undefined);
-                }}
-              />
-              <Label
-                htmlFor={`${id}-${option.value}`}
-                className="truncate font-normal text-muted-foreground"
+            return (
+              <div
+                key={String(option.value)}
+                className={cn(
+                  "flex items-center space-x-2 p-2",
+                  index !== filterOptions.length - 1 ? "border-b" : undefined,
+                )}
               >
-                {option.label}
-              </Label>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+                <Checkbox
+                  id={`${id}-${option.value}`}
+                  checked={checked()}
+                  onCheckedChange={(value) => {
+                    const newValue = value
+                      ? // @ts-expect-error is unknown
+                        [...(filterValue || []), option.value]
+                      : // @ts-expect-error is unknown
+                        filterValue?.filter((value) => option.value !== value);
+                    table
+                      .getColumn(id)
+                      ?.setFilterValue(newValue?.length ? newValue : undefined);
+                  }}
+                />
+                <Label
+                  htmlFor={`${id}-${option.value}`}
+                  className="flex w-full items-center justify-center gap-2 text-muted-foreground"
+                >
+                  <span className="truncate font-normal">{option.label}</span>
+                  <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+                    {facetedValue?.get(option.value)}
+                  </span>
+                </Label>
+              </div>
+            );
+          })}
+        </div>
+      </AccordionContent>
+    </AccordionItem>
   );
 }
