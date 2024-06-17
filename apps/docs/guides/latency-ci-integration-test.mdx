@@ -43,6 +43,21 @@ For the test, we are using the OpenStatus API to run a global latency test on ou
 If the latency is higher than expected, we will roll back the deployment.
 We expect our endpoint to have a 75th percentile latency of less than 1000ms in all regions.
 
+You need to get your OpenStatus API key from the OpenStatus dashboard.
+Settings -> API Tokens -> Create API Key
+
+<Frame caption="GitHub Settings">
+  <img
+    src="/images/guides/latency-ci-integration-test/openstatus-api-token.png"
+    alt="OpenStatus API Key Creation"
+  />
+</Frame>
+
+If you want to run the test locally copy your API key to a `.env` file.
+
+
+
+Here is the test code:
 
 ```typescript
 test("should fail if slow", async () => {
@@ -69,6 +84,22 @@ test("should fail if slow", async () => {
 
 We will use GitHub Actions to deploy our endpoint and run the test.
 We are using the bun CLI to deploy our endpoint instead of the Cloudflare Workers Action and run the test
+
+You need to set up your secrets in the GitHub repository settings for the OpenStatus API key and Cloudflare API token.
+
+Go to Settings -> Secrets and variables  -> New repository secret.
+
+
+<Frame caption="GitHub Settings">
+  <img
+    src="/images/guides/latency-ci-integration-test/github-api-token.png"
+    alt="GitHub Secrets"
+  />
+</Frame>
+
+
+
+Here is the GitHub Action workflow file:
 
 ```yaml
 
@@ -114,6 +145,7 @@ jobs:
 
 ```
 
+## Running the test
 
 ## Conclusion
 
