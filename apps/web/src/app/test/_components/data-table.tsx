@@ -3,7 +3,7 @@
 import type {
   ColumnDef,
   ColumnFiltersState,
-  Table,
+  Table as TTable,
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -48,7 +48,7 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: (table: Table<TData>, columnId: string) => () => {
+    getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
       // const facets = table.getColumn(columnId)?.getFacetedUniqueValues();
       // // Custom facets if keys is array then sum the equal value and remove duplicate
       // const customFacets = new Map();
