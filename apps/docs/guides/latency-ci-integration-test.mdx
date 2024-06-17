@@ -1,24 +1,27 @@
 ---
 title: How to use OpenStatus in GitHub Actions to test latency.
+description: Learn how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance.
 ---
 
 ## Introduction
 
 
-In this guide, we will show you how to use OpenStatus to test latency in GitHub Actions to ensure your website is performing well.
+In this guide, we will show you how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance. We'll deploy a basic API endpoint and run a latency test in a GitHub Action with OpenStatus. If the latency is higher than expected, we will roll back the deployment.
 
-We are deploying a Cloudflare workers and using OpenStatus to monitor the latency of the website. We will use GitHub Actions to run the OpenStatus gobal latency test and roll back the deployement if the latency is higher than expected.
+All the code used in this guide is available on [GitHub](https://github.com/openstatusHQ/github-action-rollback).
+
 
 ## Prerequisites
 
 - An Endpoint to test (Cloudflare Workers, Vercel, Netlify, etc.)
-- An OpenStatus Account
+- A GitHub Account
+- An [OpenStatus](https://www.openstatus.dev) Account
 
 
 ## Our API Endpoint
 
-For this guide, we are using a simple Cloudflare Worker that returns `Hello OpenStatus!`.
-They are fast and have a
+For this guide, we are using a simple [Hono](https://www.hono.dev) server that returns `Hello OpenStatus!`.
+We are deploying it on [Cloudflare Workers](https://workers.cloudflare.com/).
 
 ```typescript
 import { Hono } from "hono";
@@ -35,6 +38,11 @@ export default app;
 
 
 ## Setting up the test
+
+For the test, we are using the OpenStatus API to run a global latency test on our endpoint.
+If the latency is higher than expected, we will roll back the deployment.
+We expect our endpoint to have a 75th percentile latency of less than 1000ms in all regions.
+
 
 ```typescript
 test("should fail if slow", async () => {
@@ -58,6 +66,9 @@ test("should fail if slow", async () => {
 });
 ```
 ## Setting up the GitHub Actions
+
+We will use GitHub Actions to deploy our endpoint and run the test.
+We are using the bun CLI to deploy our endpoint instead of the Cloudflare Workers Action and run the test
 
 ```yaml
 
@@ -104,4 +115,7 @@ jobs:
 ```
 
 
+## Conclusion
 
+We have successfully set up a GitHub Action that deploys our endpoint and runs a latency test with OpenStatus.
+Don't ever let your users experience slow endpoints, use OpenStatus to monitor your endpoint's performance and roll back deployments if needed.
