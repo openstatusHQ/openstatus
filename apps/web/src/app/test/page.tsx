@@ -6,7 +6,7 @@ import type { Schema } from "./_components/utils";
 
 export default async function TestPage() {
   return (
-    <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
+    <div className="mx-auto my-16 w-full max-w-5xl rounded-lg border bg-background p-6">
       <DataTable columns={columns} data={data} />
     </div>
   );
@@ -14,81 +14,45 @@ export default async function TestPage() {
 
 const data = [
   {
-    name: "Test",
+    name: "Edge Api",
     public: true,
-    active: false,
+    active: true,
     regions: ["ams", "gru", "syd"],
+    tags: ["api"],
   },
   {
-    name: "Test 2",
-    public: false,
-    active: true,
-    regions: ["ams", "syd"],
-  },
-  {
-    name: "Test 3",
-    public: true,
-    active: false,
-    regions: ["ams", "gru"],
-  },
-  {
-    name: "Test 4",
+    name: "Lambda Api",
     public: true,
     active: true,
-    regions: ["syd"],
+    regions: ["ams", "gru", "syd"],
+    tags: ["api"],
   },
   {
-    name: "Test 5",
+    name: "Documentation",
     public: false,
     active: true,
-    regions: ["gru"],
-  },
-  {
-    name: "Test 6",
-    public: false,
-    active: true,
-    regions: ["ams", "syd"],
-  },
-  {
-    name: "Test 7",
-    public: true,
-    active: false,
     regions: ["ams"],
+    tags: ["web"],
   },
   {
-    name: "Test 8",
-    public: false,
-    active: false,
-    regions: ["syd"],
-  },
-  {
-    name: "Test 9",
+    name: "Marketing Site",
     public: true,
-    active: false,
-    regions: ["fra", "gru"],
+    active: true,
+    regions: ["hkg", "fra", "iad"],
+    tags: ["web"],
   },
   {
-    name: "Test 10",
+    name: "App",
     public: false,
-    active: false,
-    regions: ["fra"],
-  },
-  {
-    name: "Test 11",
-    public: true,
-    active: false,
-    regions: ["hkg", "gru"],
-  },
-  {
-    name: "Test 12",
-    public: false,
-    active: false,
-    regions: ["hkg"],
-  },
-  {
-    name: "Test 13",
-    public: true,
     active: true,
     regions: ["iad", "fra"],
+    tags: ["web"],
+  },
+  {
+    name: "Demo",
+    public: false,
+    active: false,
+    regions: ["iad"],
+    tags: ["web"],
   },
 ] satisfies Schema[];

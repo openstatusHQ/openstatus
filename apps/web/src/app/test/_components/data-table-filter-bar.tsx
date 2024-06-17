@@ -7,6 +7,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  Badge,
   Button,
   Checkbox,
   InputWithAddons,
@@ -21,16 +22,16 @@ const config = [
     label: "Public",
     id: "public",
     options: [
-      { label: "True", value: true },
-      { label: "False", value: false },
+      { label: "true", value: true },
+      { label: "false", value: false },
     ],
   },
   {
     label: "Active",
     id: "active",
     options: [
-      { label: "True", value: true },
-      { label: "False", value: false },
+      { label: "true", value: true },
+      { label: "false", value: false },
     ],
   },
   {
@@ -102,10 +103,27 @@ function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
     (option) => inputValue === "" || option.label.includes(inputValue),
   );
 
+  console.log(filterValue);
+
   return (
     <AccordionItem key={id} value={id} className="border-none">
-      <AccordionTrigger className="p-2">
-        <p className="font-medium text-foreground text-sm">{label}</p>
+      <AccordionTrigger className="p-2 hover:no-underline">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-foreground text-sm">{label}</p>
+          {filterValue && Array.isArray(filterValue) ? (
+            <Button
+              variant="outline"
+              className="px-1.5 py-1 h-5 text-[10px] rounded-full font-mono"
+              onClick={(e) => {
+                e.stopPropagation();
+                table.getColumn(id)?.setFilterValue(undefined);
+              }}
+            >
+              <span>{filterValue.length}</span>
+              <X className="ml-1 h-2.5 w-2.5 text-muted-foreground" />
+            </Button>
+          ) : null}
+        </div>
       </AccordionTrigger>
       {/* className="overflow-visible" */}
       <AccordionContent className="-m-4 p-4">

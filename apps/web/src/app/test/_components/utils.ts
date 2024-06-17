@@ -15,6 +15,7 @@ export const schema = z.object({
     .enum(["ams", "gru", "syd", "hkg", "fra", "iad"])
     .or(z.enum(["ams", "gru", "syd", "hkg", "fra", "iad"]).array())
     .optional(),
+  tags: z.string().or(z.string().array()).optional(),
 });
 
 export type Schema = z.infer<typeof schema>;

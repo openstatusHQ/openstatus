@@ -49,6 +49,20 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: (table: Table<TData>, columnId: string) => () => {
+      // const facets = table.getColumn(columnId)?.getFacetedUniqueValues();
+      // // Custom facets if keys is array then sum the equal value and remove duplicate
+      // const customFacets = new Map();
+      // for (const [key, value] of facets as any) {
+      //   if (Array.isArray(key)) {
+      //     for (const k of key) {
+      //       const prevValue = customFacets.get(k) || 0;
+      //       customFacets.set(k, prevValue + value);
+      //     }
+      //   } else {
+      //     const prevValue = customFacets.get(key) || 0;
+      //     customFacets.set(key, prevValue + value);
+      //   }
+      // }
       const map = getFacetedUniqueValues<TData>()(table, columnId)();
       // TODO:
       // overriding for region as it is an array
