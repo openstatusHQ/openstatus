@@ -9,7 +9,7 @@ As a developer, you want to make sure your endpoints are fast and reliable after
 
 In this guide, we will show you how to use OpenStatus for testing latency in GitHub Actions to verify your endpoint's performance.
 
- We'll deploy a basic API endpoint and run a latency test in a GitHub Action with OpenStatus. If the latency is higher than expected, we will roll back the deployment.
+We'll deploy a basic API endpoint and run a latency test in a GitHub Action with OpenStatus. If the latency is higher than expected, we will roll back the deployment.
 
 All the code showcased in this guide is available on [GitHub](https://github.com/openstatusHQ/github-action-rollback).
 
@@ -94,7 +94,7 @@ test("should fail if p75 > 1000", async () => {
 ## Setting up the GitHub Actions
 
 We will use GitHub Actions to deploy our endpoint and run the test.
-We are using the bun CLI to deploy our endpoint instead of the Cloudflare Workers Action and run the test
+We are using the package.json command to deploy our endpoint instead of the Cloudflare Workers Action and run the test
 
 You need to set up your secrets in the GitHub repository settings for the OpenStatus API key and Cloudflare API token.
 
@@ -178,5 +178,7 @@ If you want to see the example in action, you can check the [GitHub repository a
 
 ## Conclusion
 
-We have successfully set up a GitHub Action that deploys our endpoint our Cloudflare workers and runs a latency test against it with OpenStatus.
+We have successfully set up a GitHub Action that deploys our endpoint our Cloudflare Workers and runs a latency test against it with OpenStatus.
+
+
 Don't ever let your users experience slow endpoints, use OpenStatus to monitor your endpoint's performance and roll back deployments if needed.
