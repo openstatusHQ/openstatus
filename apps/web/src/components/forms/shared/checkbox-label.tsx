@@ -3,6 +3,7 @@ import { CheckCircle2 } from "lucide-react";
 import { Checkbox, Label } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
+import { d } from "@vercel/blob/dist/put-fca5396f";
 
 interface Props {
   id: string;
@@ -11,6 +12,7 @@ interface Props {
   onCheckedChange(checked: boolean): void;
   className?: string;
   name: string;
+  disabled?: boolean;
 }
 
 export function CheckboxLabel({
@@ -20,6 +22,7 @@ export function CheckboxLabel({
   onCheckedChange,
   className,
   name,
+  disabled,
 }: Props) {
   return (
     <div className="relative h-full">
@@ -29,12 +32,13 @@ export function CheckboxLabel({
         className="peer sr-only"
         checked={checked}
         onCheckedChange={onCheckedChange}
+        disabled={disabled}
       />
       <Label
         htmlFor={`${name}-${id}`}
         className={cn(
           "flex h-full items-center gap-1 rounded-md border border-border bg-popover p-4 pr-10 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
-          className,
+          className
         )}
       >
         {children}

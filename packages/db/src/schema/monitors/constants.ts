@@ -68,6 +68,6 @@ export const monitorPeriodicity = [
 ] as const;
 export const monitorMethods = ["GET", "POST", "HEAD"] as const;
 export const monitorStatus = ["active", "error"] as const;
-export const monitorRegions = [...flyRegions, "auto"] as const;
+export const monitorRegions = [...flyRegions] as const;
 
 export const monitorJobTypes = ["website", "cron", "other"] as const;

@@ -50,6 +50,11 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
+    for (const region of input.regions) {
+      if (!workspacePlan.limits.regions.includes(region)) {
+        throw new HTTPException(403, { message: "Upgrade for more region" });
+      }
+    }
     const _monitor = await db
       .select()
       .from(monitor)

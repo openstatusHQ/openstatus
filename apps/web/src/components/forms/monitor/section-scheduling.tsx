@@ -99,7 +99,11 @@ export function SectionScheduling({ form, plan }: Props) {
               <div className="mb-4">
                 <FormLabel className="text-base">Regions</FormLabel>
                 <FormDescription>
-                  Select the regions you want to monitor your endpoint from.
+                  Select the regions you want to monitor your endpoint from.{" "}
+                  <br />
+                  {plan === "free"
+                    ? "Only a few regions are available in the free plan. Upgrade to access all regions."
+                    : ""}
                 </FormDescription>
               </div>
               <div>
@@ -133,6 +137,9 @@ export function SectionScheduling({ form, plan }: Props) {
                                       >
                                         <FormControl className="h-full">
                                           <CheckboxLabel
+                                            disabled={
+                                              !regionsLimit.includes(item.code)
+                                            }
                                             id={item.code}
                                             name="region"
                                             checked={field.value?.includes(

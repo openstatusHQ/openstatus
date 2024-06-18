@@ -104,7 +104,7 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions: getLimit("free", "regions"),
+      regions: defaultValues?.regions || getLimit("free", "regions"),
       headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -125,7 +125,6 @@ export function MonitorForm({
     control: form.control,
   });
 
-  console.log("defaultValues", getLimit("free", "regions"));
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
       if (defaultValues) {
