@@ -3,7 +3,6 @@ import { CheckCircle2 } from "lucide-react";
 import { Checkbox, Label } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
-import { d } from "@vercel/blob/dist/put-fca5396f";
 
 interface Props {
   id: string;
