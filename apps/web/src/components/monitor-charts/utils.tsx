@@ -24,7 +24,7 @@ export function groupDataByTimestamp(
   const _data = data.reduce((acc, curr) => {
     const { timestamp, region } = curr;
     const latency = curr[`${quantile}Latency`];
-    const { flag, code, location } = regionsDict[region];
+    const { flag, code, location } = flyRegionsDict[region];
     const fullNameRegion = `${code}`;
     regions[fullNameRegion] = { flag, code, location }; // to get the region keys
     if (timestamp === currentTimestamp) {
