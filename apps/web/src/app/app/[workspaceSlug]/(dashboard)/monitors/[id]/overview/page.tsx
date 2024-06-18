@@ -104,7 +104,6 @@ export default async function Page({
   //   }),
   // );
 
-  monitor.regions;
   return (
     <div className="grid gap-4">
       <div className="flex justify-between gap-2">
