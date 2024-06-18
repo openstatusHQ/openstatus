@@ -2,12 +2,11 @@ import Link from "next/link";
 import * as z from "zod";
 
 import { Button } from "@openstatus/ui";
-import { flyRegions } from "@openstatus/utils";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ResponseDetails } from "@/components/monitor-dashboard/response-details";
 import { api } from "@/trpc/server";
-
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 //
 
 /**
@@ -16,7 +15,7 @@ import { api } from "@/trpc/server";
 const searchParamsSchema = z.object({
   monitorId: z.string(),
   url: z.string(),
-  region: z.enum(flyRegions).optional(),
+  region: monitorFlyRegionSchema.optional(),
   cronTimestamp: z.coerce.number(),
 });
 
