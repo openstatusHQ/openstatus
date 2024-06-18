@@ -8,6 +8,7 @@ export type Limits = {
   monitors: number;
   periodicity: Partial<MonitorPeriodicity>[];
   "multi-region": boolean;
+  "max-regions": number;
   "data-retention": string;
   // status pages
   "status-pages": number;

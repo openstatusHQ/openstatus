@@ -310,6 +310,24 @@ export const flyRegionsDict: Record<
     flag: "🇨🇱",
     continent: "South America",
   },
+  sjc: {
+    code: "sjc",
+    location: "San Jose, California, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+  },
+  sea: {
+    code: "sea",
+    location: "Seattle, Washington, USA",
+    flag: "🇺🇸",
+    continent: "North America",
+  },
+  sin: {
+    code: "sin",
+    location: "Singapore, Singapore",
+    flag: "🇸🇬",
+    continent: "Asia",
+  },
   syd: {
     code: "syd",
     location: "Sydney, Australia",
