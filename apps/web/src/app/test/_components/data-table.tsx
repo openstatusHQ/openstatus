@@ -49,27 +49,17 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
-      // const facets = table.getColumn(columnId)?.getFacetedUniqueValues();
-      // // Custom facets if keys is array then sum the equal value and remove duplicate
-      // const customFacets = new Map();
-      // for (const [key, value] of facets as any) {
-      //   if (Array.isArray(key)) {
-      //     for (const k of key) {
-      //       const prevValue = customFacets.get(k) || 0;
-      //       customFacets.set(k, prevValue + value);
-      //     }
-      //   } else {
-      //     const prevValue = customFacets.get(key) || 0;
-      //     customFacets.set(key, prevValue + value);
-      //   }
-      // }
       const map = getFacetedUniqueValues<TData>()(table, columnId)();
-      // TODO:
-      // overriding for region as it is an array
-      if (columnId === "region") {
-        const values = table
-          .getCoreRowModel()
-          .flatRows.map((row) => row.getValue(columnId)) as string[];
+      if (["regions", "tags"].includes(columnId)) {
+        const rowValues = table
+          .getGlobalFacetedRowModel()
+          .flatRows.map((row) => row.getValue(columnId) as string[]);
+        for (const values of rowValues) {
+          for (const value of values) {
+            const prevValue = map.get(value) || 0;
+            map.set(value, prevValue + 1);
+          }
+        }
       }
       return map;
     },
@@ -101,6 +91,18 @@ export function DataTable<TData, TValue>({
             }
             return `${prev}${curr.id}:${curr.value}`;
           }, "")}
+          values={{
+            // FIXME: main issue: 'edge api' e.g. has an empty space in between
+            // name: [
+            //   ...table
+            //     .getRowModel()
+            //     .rows.map((row) => row.getValue("name") as string),
+            // ],
+            public: [true, false],
+            active: [true, false],
+            regions: ["ams", "gru", "syd", "hkg", "iad", "fra"],
+            tags: ["web", "api"],
+          }}
           schema={schema}
         />
         <div className="rounded-md border">

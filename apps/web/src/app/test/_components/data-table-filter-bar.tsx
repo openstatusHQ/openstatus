@@ -12,6 +12,7 @@ import {
   Checkbox,
   InputWithAddons,
   Label,
+  ScrollArea,
 } from "@openstatus/ui";
 import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
@@ -21,6 +22,7 @@ const config = [
   {
     label: "Public",
     id: "public",
+    type: "checkbox",
     options: [
       { label: "true", value: true },
       { label: "false", value: false },
@@ -29,6 +31,7 @@ const config = [
   {
     label: "Active",
     id: "active",
+    type: "checkbox",
     options: [
       { label: "true", value: true },
       { label: "false", value: false },
@@ -37,6 +40,7 @@ const config = [
   {
     label: "Regions",
     id: "regions",
+    type: "checkbox",
     options: [
       // should we include some more descriptions (like the full name "Amsterdam") maybe with text-popover-muted
       { label: "ams", value: "ams" },
@@ -47,7 +51,17 @@ const config = [
       { label: "syd", value: "syd" },
     ],
   },
-];
+  {
+    label: "Tags",
+    id: "tags",
+    type: "checkbox",
+    options: [
+      // should we include some more descriptions (like the full name "Amsterdam") maybe with text-popover-muted
+      { label: "web", value: "web" },
+      { label: "api", value: "api" },
+    ],
+  },
+] satisfies SectionConfig[];
 
 // TODO: only pass the columns to generate the filters!
 // https://tanstack.com/table/v8/docs/framework/react/examples/filters
@@ -67,6 +81,7 @@ export function DataTableFilterBar<TData>({
           {filters.length ? (
             <Button
               variant="outline"
+              size="sm"
               onClick={() => table.resetColumnFilters()}
             >
               Reset
@@ -83,13 +98,17 @@ export function DataTableFilterBar<TData>({
   );
 }
 
-type SectionProps<TData> = {
+type SectionConfig = {
   id: string;
   label: string;
+  type: "checkbox" | "input";
   options: {
     label: string;
     value: string | boolean;
   }[];
+};
+
+type SectionProps<TData> = SectionConfig & {
   table: Table<TData>;
 };
 
@@ -102,8 +121,6 @@ function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
   const filterOptions = options.filter(
     (option) => inputValue === "" || option.label.includes(inputValue),
   );
-
-  console.log(filterValue);
 
   return (
     <AccordionItem key={id} value={id} className="border-none">
@@ -125,7 +142,6 @@ function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
           ) : null}
         </div>
       </AccordionTrigger>
-      {/* className="overflow-visible" */}
       <AccordionContent className="-m-4 p-4">
         {options.length > 2 ? (
           <InputWithAddons
@@ -137,52 +153,59 @@ function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
           />
         ) : null}
         <div className="rounded-lg border border-border empty:border-none">
-          {filterOptions.map((option, index) => {
-            const checked = () => {
-              if (
-                typeof filterValue === "string" ||
-                typeof filterValue === "boolean"
-              )
-                return option.value === filterValue;
-              if (Array.isArray(filterValue))
-                return filterValue.includes(option.value);
-              return false;
-            };
+          <ScrollArea className="max-h-40 overflow-y-scroll">
+            {filterOptions.map((option, index) => {
+              const checked = () => {
+                if (
+                  typeof filterValue === "string" ||
+                  typeof filterValue === "boolean"
+                )
+                  return option.value === filterValue;
+                if (Array.isArray(filterValue))
+                  return filterValue.includes(option.value);
+                return false;
+              };
 
-            return (
-              <div
-                key={String(option.value)}
-                className={cn(
-                  "flex items-center space-x-2 p-2",
-                  index !== filterOptions.length - 1 ? "border-b" : undefined,
-                )}
-              >
-                <Checkbox
-                  id={`${id}-${option.value}`}
-                  checked={checked()}
-                  onCheckedChange={(value) => {
-                    const newValue = value
-                      ? // @ts-expect-error is unknown
-                        [...(filterValue || []), option.value]
-                      : // @ts-expect-error is unknown
-                        filterValue?.filter((value) => option.value !== value);
-                    table
-                      .getColumn(id)
-                      ?.setFilterValue(newValue?.length ? newValue : undefined);
-                  }}
-                />
-                <Label
-                  htmlFor={`${id}-${option.value}`}
-                  className="flex w-full items-center justify-center gap-2 text-muted-foreground"
+              return (
+                <div
+                  key={String(option.value)}
+                  className={cn(
+                    "flex items-center space-x-2 p-2",
+                    index !== filterOptions.length - 1 ? "border-b" : undefined,
+                  )}
                 >
-                  <span className="truncate font-normal">{option.label}</span>
-                  <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-                    {facetedValue?.get(option.value)}
-                  </span>
-                </Label>
-              </div>
-            );
-          })}
+                  <Checkbox
+                    id={`${id}-${option.value}`}
+                    checked={checked()}
+                    onCheckedChange={(value) => {
+                      const newValue = value
+                        ? // @ts-expect-error is unknown
+                          [...(filterValue || []), option.value]
+                        : // @ts-expect-error is unknown
+                          filterValue?.filter(
+                            // @ts-expect-error is unknown
+                            (value) => option.value !== value,
+                          );
+                      table
+                        .getColumn(id)
+                        ?.setFilterValue(
+                          newValue?.length ? newValue : undefined,
+                        );
+                    }}
+                  />
+                  <Label
+                    htmlFor={`${id}-${option.value}`}
+                    className="flex w-full items-center justify-center gap-2 text-muted-foreground"
+                  >
+                    <span className="truncate font-normal">{option.label}</span>
+                    <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
+                      {facetedValue?.get(option.value)}
+                    </span>
+                  </Label>
+                </div>
+              );
+            })}
+          </ScrollArea>
         </div>
       </AccordionContent>
     </AccordionItem>

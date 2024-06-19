@@ -27,6 +27,24 @@ export const columns: ColumnDef<Schema>[] = [
     },
   },
   {
+    accessorKey: "tags",
+    header: "Tags",
+    cell: ({ row }) => {
+      const value = row.getValue("tags");
+      if (Array.isArray(value)) {
+        return <div>{value.join(", ")}</div>;
+      }
+      return <div>{`${value}`}</div>;
+    },
+    filterFn: (row, id, value) => {
+      const array = row.getValue(id) as string[];
+      if (typeof value === "string") return array.includes(value);
+      // up to the user to define either `.some` or `.every`
+      if (Array.isArray(value)) return value.some((i) => array.includes(i));
+      return false;
+    },
+  },
+  {
     accessorKey: "active",
     header: "Active",
     filterFn: (row, id, value) => {

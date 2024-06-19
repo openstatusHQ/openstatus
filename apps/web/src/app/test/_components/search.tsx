@@ -11,12 +11,9 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+  Separator,
 } from "@openstatus/ui";
-import { Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -67,12 +64,14 @@ interface InputSearchProps<T extends z.ZodTypeAny> {
   schema: T;
   // defaultValue?: z.infer<T>;
   defaultValue?: string;
+  values?: z.infer<T>;
 }
 
 export function InputSearch<T extends z.ZodTypeAny>({
   onSearch,
   schema,
   defaultValue = "",
+  values = {},
 }: InputSearchProps<T>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
@@ -94,14 +93,6 @@ export function InputSearch<T extends z.ZodTypeAny>({
   useEffect(() => {
     setInputValue(defaultValue);
   }, [defaultValue]);
-
-  // DEFINE YOUR SEARCH PARAMETERS FROM ZOD!
-  const search = {
-    limit: [10, 25, 50],
-    public: [true, false],
-    active: [true, false],
-    regions: ["ams", "gru", "syd", "hkg", "iad", "fra"],
-  };
 
   return (
     <div>
@@ -128,27 +119,6 @@ export function InputSearch<T extends z.ZodTypeAny>({
             <span className="text-muted-foreground">Search data table...</span>
           )}
         </button>
-        {/* maybe move everything into one component */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => onSearch({})}
-                className={cn("-mr-1.5", inputValue ? "visible" : "invisible")}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="flex items-center">
-              <p className="mr-2">Clear filter</p>
-              <Kbd abbrTitle="Escape" variant="outline">
-                Esc
-              </Kbd>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
       </div>
       <Command
         className={cn(
@@ -156,6 +126,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           open ? "visible" : "hidden",
         )}
         filter={(value, search) => {
+          console.log({ value });
           if (value.includes(currentWord.toLowerCase())) return 1;
           /**
            * @example [filter, query] = ["regions", "ams,gru"]
@@ -205,7 +176,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           <div className="absolute top-2 z-10 w-full rounded-lg border bg-popover text-popover-foreground shadow-md outline-none animate-in">
             <CommandList>
               <CommandGroup heading="Filter">
-                {Object.keys(search).map((key) => {
+                {Object.keys(values).map((key) => {
                   if (inputValue.includes(`${key}:`)) return null;
                   return (
                     <CommandItem
@@ -236,8 +207,8 @@ export function InputSearch<T extends z.ZodTypeAny>({
                     >
                       {key}
                       <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
-                        {search[key as keyof typeof search]
-                          .map((str) => `[${str}]`)
+                        {values[key as keyof typeof values]
+                          .map((str: string | boolean | number) => `[${str}]`)
                           .join(" ")}
                       </span>
                     </CommandItem>
@@ -246,44 +217,65 @@ export function InputSearch<T extends z.ZodTypeAny>({
               </CommandGroup>
               <CommandSeparator />
               <CommandGroup heading="Query">
-                {Object.keys(search).map((key) => {
+                {Object.keys(values).map((key) => {
                   if (!currentWord.includes(`${key}:`)) return null;
-                  return search[key as keyof typeof search].map((option) => {
-                    return (
-                      <CommandItem
-                        key={`${key}`}
-                        value={`${key}:${option}`}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        onSelect={(value) => {
-                          setInputValue((prev) => {
-                            console.log({ currentWord, value, prev });
-                            if (currentWord.includes(",")) {
-                              const values = currentWord.split(",");
-                              values[values.length - 1] = `${option}`;
-                              const input = prev.replace(
-                                currentWord,
-                                values.join(","),
-                              );
+                  return values[key as keyof typeof values].map(
+                    (option: string | boolean | number) => {
+                      return (
+                        <CommandItem
+                          key={`${key}`}
+                          value={`${key}:${option}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          onSelect={(value) => {
+                            setInputValue((prev) => {
+                              console.log({ currentWord, value, prev });
+                              if (currentWord.includes(",")) {
+                                const values = currentWord.split(",");
+                                values[values.length - 1] = `${option}`;
+                                const input = prev.replace(
+                                  currentWord,
+                                  values.join(","),
+                                );
+                                return `${input.trim()} `;
+                              }
+                              const input = prev.replace(currentWord, value);
                               return `${input.trim()} `;
-                            }
-                            const input = prev.replace(currentWord, value);
-                            return `${input.trim()} `;
-                          });
-                          setCurrentWord("");
-                        }}
-                        {...{ currentWord }}
-                      >
-                        {`${option}`}
-                      </CommandItem>
-                    );
-                  });
+                            });
+                            setCurrentWord("");
+                          }}
+                          {...{ currentWord }}
+                        >
+                          {`${option}`}
+                        </CommandItem>
+                      );
+                    },
+                  );
                 })}
               </CommandGroup>
               <CommandEmpty>No results found.</CommandEmpty>
             </CommandList>
+            <div
+              className="flex gap-3 border-t bg-accent/50 text-accent-foreground px-2 py-1.5 text-sm"
+              cmdk-footer=""
+            >
+              <span>
+                Use <Kbd className="bg-background">↑</Kbd>{" "}
+                <Kbd className="bg-background">↓</Kbd> to navigate
+              </span>
+              <span>
+                <Kbd className="bg-background">Enter</Kbd> to query
+              </span>
+              <span>
+                <Kbd className="bg-background">Esc</Kbd> to close
+              </span>
+              <Separator orientation="vertical" className="my-auto h-3" />
+              <span>
+                Union: <Kbd className="bg-background">regions:a,b</Kbd>
+              </span>
+            </div>
           </div>
         </div>
       </Command>

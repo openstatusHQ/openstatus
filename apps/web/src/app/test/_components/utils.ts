@@ -8,7 +8,7 @@ const stringToBoolean = z
   .pipe(z.boolean());
 
 export const schema = z.object({
-  name: z.string().optional(),
+  name: z.string().or(z.string().array()).optional(),
   public: z.boolean().or(stringToBoolean.array()).optional(),
   active: z.boolean().or(stringToBoolean.array()).optional(),
   regions: z
