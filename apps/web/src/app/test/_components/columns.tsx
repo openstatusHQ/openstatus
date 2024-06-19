@@ -1,6 +1,9 @@
 "use client";
 
+import { TagBadge } from "@/components/monitor/tag-badge";
 import type { ColumnDef } from "@tanstack/react-table";
+import { Check, Minus } from "lucide-react";
+import { tagsColor } from "./constants";
 import type { Schema } from "./utils";
 
 export const columns: ColumnDef<Schema>[] = [
@@ -30,11 +33,17 @@ export const columns: ColumnDef<Schema>[] = [
     accessorKey: "tags",
     header: "Tags",
     cell: ({ row }) => {
-      const value = row.getValue("tags");
+      const value = row.getValue("tags") as string | string[];
       if (Array.isArray(value)) {
-        return <div>{value.join(", ")}</div>;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {value.map((v) => (
+              <TagBadge key={v} name={v} color={tagsColor[v]} />
+            ))}
+          </div>
+        );
       }
-      return <div>{`${value}`}</div>;
+      return <TagBadge name={value} color={tagsColor[value]} />;
     },
     filterFn: (row, id, value) => {
       const array = row.getValue(id) as string[];
@@ -47,6 +56,11 @@ export const columns: ColumnDef<Schema>[] = [
   {
     accessorKey: "active",
     header: "Active",
+    cell: ({ row }) => {
+      const value = row.getValue("active");
+      if (value) return <Check className="h-4 w-4" />;
+      return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+    },
     filterFn: (row, id, value) => {
       const rowValue = row.getValue(id);
       if (typeof value === "string") return value === String(rowValue);
@@ -57,6 +71,11 @@ export const columns: ColumnDef<Schema>[] = [
   {
     accessorKey: "public",
     header: "Public",
+    cell: ({ row }) => {
+      const value = row.getValue("public");
+      if (value) return <Check className="h-4 w-4" />;
+      return <Minus className="h-4 w-4 text-muted-foreground/50" />;
+    },
     filterFn: (row, id, value) => {
       const rowValue = row.getValue(id);
       if (typeof value === "string") return value === String(rowValue);

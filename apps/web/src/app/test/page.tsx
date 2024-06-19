@@ -6,7 +6,7 @@ import type { Schema } from "./_components/utils";
 
 export default async function TestPage() {
   return (
-    <div className="mx-auto my-16 w-full max-w-5xl rounded-lg border bg-background p-6">
+    <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
       <DataTable columns={columns} data={data} />
     </div>
   );
@@ -18,7 +18,7 @@ const data = [
     public: true,
     active: true,
     regions: ["ams", "gru", "syd"],
-    tags: ["api"],
+    tags: ["api", "enterprise"],
   },
   {
     name: "Lambda Api",
@@ -28,8 +28,15 @@ const data = [
     tags: ["api"],
   },
   {
-    name: "Documentation",
+    name: "OpenStatus",
     public: false,
+    active: false,
+    regions: ["iad", "fra"],
+    tags: ["enterprise"],
+  },
+  {
+    name: "Documentation",
+    public: true,
     active: true,
     regions: ["ams"],
     tags: ["web"],
@@ -50,9 +57,16 @@ const data = [
   },
   {
     name: "Demo",
-    public: false,
-    active: false,
+    public: true,
+    active: true,
     regions: ["iad"],
+    tags: ["web"],
+  },
+  {
+    name: "Dashboard",
+    public: false,
+    active: true,
+    regions: ["iad", "fra"],
     tags: ["web"],
   },
 ] satisfies Schema[];

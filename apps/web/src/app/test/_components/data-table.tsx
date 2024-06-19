@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@openstatus/ui";
 import { DataTableFilterBar } from "./data-table-filter-bar";
+import { DataTablePagination } from "./data-table-pagination";
 import { InputSearch } from "./search";
 import { schema } from "./utils";
 
@@ -101,7 +102,7 @@ export function DataTable<TData, TValue>({
             public: [true, false],
             active: [true, false],
             regions: ["ams", "gru", "syd", "hkg", "iad", "fra"],
-            tags: ["web", "api"],
+            tags: ["web", "api", "enterprise"],
           }}
           schema={schema}
         />
@@ -155,6 +156,7 @@ export function DataTable<TData, TValue>({
             </TableBody>
           </Table>
         </div>
+        <DataTablePagination table={table} />
       </div>
     </div>
   );
