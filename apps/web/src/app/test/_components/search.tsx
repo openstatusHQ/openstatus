@@ -17,9 +17,9 @@ import { Search } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { z } from "zod";
 import { Kbd } from "@/components/kbd";
 import { ColumnFiltersState } from "@tanstack/react-table";
+import { z } from "zod";
 
 function deserialize<T extends z.ZodTypeAny>(schema: T) {
   const castToSchema = z.preprocess((val) => {
@@ -98,7 +98,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
     <div>
       <div
         className={cn(
-          "group flex w-full items-center border border-input bg-background rounded-lg px-3",
+          "group flex w-full items-center rounded-lg border border-input bg-background px-3",
           open ? "hidden" : "visible",
         )}
       >
@@ -125,7 +125,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           "overflow-visible rounded-lg border shadow-md",
           open ? "visible" : "hidden",
         )}
-        filter={(value, search) => {
+        filter={(value, _search) => {
           console.log({ value });
           if (value.includes(currentWord.toLowerCase())) return 1;
           /**
@@ -173,7 +173,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           placeholder="Search data table..."
         />
         <div className="relative">
-          <div className="absolute top-2 z-10 w-full rounded-lg border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+          <div className="absolute top-2 z-10 w-full animate-in rounded-lg border bg-popover text-popover-foreground shadow-md outline-none">
             <CommandList>
               <CommandGroup heading="Filter">
                 {Object.keys(values).map((key) => {
@@ -258,7 +258,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
               <CommandEmpty>No results found.</CommandEmpty>
             </CommandList>
             <div
-              className="flex gap-3 border-t bg-accent/50 text-accent-foreground px-2 py-1.5 text-sm"
+              className="flex gap-3 border-t bg-accent/50 px-2 py-1.5 text-accent-foreground text-sm"
               cmdk-footer=""
             >
               <span>

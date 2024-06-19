@@ -2,6 +2,7 @@
 
 import type { Table } from "@tanstack/react-table";
 
+import { cn } from "@/lib/utils";
 import {
   Accordion,
   AccordionContent,
@@ -14,7 +15,6 @@ import {
   Label,
   ScrollArea,
 } from "@openstatus/ui";
-import { cn } from "@/lib/utils";
 import { Search, X } from "lucide-react";
 import { useState } from "react";
 
@@ -130,7 +130,7 @@ function Section<TData>({ id, label, options, table }: SectionProps<TData>) {
           {filterValue && Array.isArray(filterValue) ? (
             <Button
               variant="outline"
-              className="px-1.5 py-1 h-5 text-[10px] rounded-full font-mono"
+              className="h-5 rounded-full px-1.5 py-1 font-mono text-[10px]"
               onClick={(e) => {
                 e.stopPropagation();
                 table.getColumn(id)?.setFilterValue(undefined);

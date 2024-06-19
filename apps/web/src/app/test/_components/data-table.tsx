@@ -24,9 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui";
+import { DataTableFilterBar } from "./data-table-filter-bar";
 import { InputSearch } from "./search";
 import { schema } from "./utils";
-import { DataTableFilterBar } from "./data-table-filter-bar";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];

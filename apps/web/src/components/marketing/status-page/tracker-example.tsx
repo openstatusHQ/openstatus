@@ -39,7 +39,9 @@ async function ExampleTracker() {
   );
 
   if (!data) return null;
-  return <div>
-    <Tracker data={data} name="Ping" description="Pong" />
-  </div>;
+  return (
+    <div>
+      <Tracker data={data} name="Ping" description="Pong" />
+    </div>
+  );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
+import { DataTable } from "./_components/data-table";
 import type { Schema } from "./_components/utils";
 
 export default async function TestPage() {
