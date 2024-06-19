@@ -23,7 +23,6 @@ import { z } from "zod";
 
 function deserialize<T extends z.ZodTypeAny>(schema: T) {
   const castToSchema = z.preprocess((val) => {
-    console.log({ val });
     if (typeof val !== "string") return val;
     return val
       .trim()
@@ -37,9 +36,7 @@ function deserialize<T extends z.ZodTypeAny>(schema: T) {
             prev[name] = [value];
             return prev;
           }
-          console.log(">>>", value);
           const values = value.split(",");
-          console.log(">>>>", values);
           prev[name] = values;
           return prev;
         },
@@ -53,7 +50,6 @@ function serialize<T extends z.ZodTypeAny>(schema: T) {
   return (value: z.infer<T>) =>
     schema
       .transform((val) => {
-        console.log("serialize", val);
         return "test";
       })
       .safeParse(value); // return "regions:ams,gru active:true" from object / zod object
@@ -84,7 +80,6 @@ export function InputSearch<T extends z.ZodTypeAny>({
   useEffect(() => {
     if (!inputValue.endsWith(" ") || !open) return;
     const searchparams = deserialize(schema)(inputValue);
-    console.log(searchparams);
     if (searchparams.success) {
       onSearch(searchparams.data);
     }
@@ -126,7 +121,6 @@ export function InputSearch<T extends z.ZodTypeAny>({
           open ? "visible" : "hidden",
         )}
         filter={(value, _search) => {
-          console.log({ value });
           if (value.includes(currentWord.toLowerCase())) return 1;
           /**
            * @example [filter, query] = ["regions", "ams,gru"]
@@ -231,7 +225,6 @@ export function InputSearch<T extends z.ZodTypeAny>({
                           }}
                           onSelect={(value) => {
                             setInputValue((prev) => {
-                              console.log({ currentWord, value, prev });
                               if (currentWord.includes(",")) {
                                 const values = currentWord.split(",");
                                 values[values.length - 1] = `${option}`;

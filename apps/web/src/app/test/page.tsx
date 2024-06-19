@@ -1,10 +1,8 @@
-"use client";
-
 import { columns } from "./_components/columns";
 import { DataTable } from "./_components/data-table";
 import type { Schema } from "./_components/utils";
 
-export default async function TestPage() {
+export default function TestPage() {
   return (
     <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
       <DataTable columns={columns} data={data} />
