@@ -45,7 +45,7 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
   const timestamp = Date.now();
@@ -54,7 +54,7 @@ export const cron = async ({
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
     )
     .as("currentMaintenance");
 
@@ -63,7 +63,7 @@ export const cron = async ({
     .from(maintenancesToMonitors)
     .innerJoin(
       currentMaintenance,
-      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
     );
 
   const result = await db
@@ -73,8 +73,8 @@ export const cron = async ({
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
     )
     .all();
 
@@ -84,7 +84,7 @@ export const cron = async ({
   const allResult = [];
 
   for (const row of monitors) {
-    const selectedRegions = row.regions.length > 0 ? row.regions : ["auto"];
+    const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
       .select()
@@ -127,7 +127,7 @@ export const cron = async ({
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 };
 // timestamp needs to be in ms

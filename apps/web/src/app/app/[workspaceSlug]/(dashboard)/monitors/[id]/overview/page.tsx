@@ -44,7 +44,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+          .filter((i) => flyRegions.includes(i as Region)) ?? []
     ),
 });
 
@@ -117,7 +117,7 @@ export default async function Page({
         period={period}
         quantile={quantile}
         interval={interval}
-        regions={regions as Region[]} // FIXME: not properly reseted after filtered
+        regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
         metricsByRegion={metricsByRegion}

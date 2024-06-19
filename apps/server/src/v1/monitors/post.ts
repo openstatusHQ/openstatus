@@ -70,6 +70,12 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
+    for (const region of input.regions) {
+      if (!workspacePlan.limits.regions.includes(region)) {
+        throw new HTTPException(403, { message: "Upgrade for more region" });
+      }
+    }
+
     const { headers, regions, assertions, ...rest } = input;
 
     const assert = assertions ? getAssertions(assertions) : [];

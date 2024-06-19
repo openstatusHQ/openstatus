@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
+import { getLimit } from "@openstatus/plans";
 
 import * as assertions from "@openstatus/assertions";
 import type {
@@ -14,7 +15,7 @@ import type {
   Page,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { flyRegions, insertMonitorSchema } from "@openstatus/db/src/schema";
+import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
 import {
@@ -72,8 +73,7 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions:
-        defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
+      regions: defaultValues?.regions || getLimit("free", "regions"),
       headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -138,7 +138,7 @@ export function MonitorForm({
         finally: () => {
           setPending(false);
         },
-      },
+      }
     );
   };
 
@@ -187,7 +187,7 @@ export function MonitorForm({
         JSON.stringify([
           ...(statusAssertions || []),
           ...(headerAssertions || []),
-        ]),
+        ])
       );
 
       const data = (await res.json()) as RegionChecker;
@@ -223,7 +223,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT,
+            ABORT_TIMEOUT
           )}.`,
         };
       }
