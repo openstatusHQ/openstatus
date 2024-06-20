@@ -8,7 +8,7 @@ import { getTimingPhases, latencyFormatter, regionFormatter } from "./utils";
 export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
   const data = regions.map((item) => {
     const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
-      item.timing,
+      item.timing
     );
     return {
       region: regionFormatter(item.region),
@@ -29,6 +29,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
       stack
       layout="vertical"
       yAxisWidth={65}
+      className="h-[64rem] w-full"
     />
   );
 }
