@@ -6,7 +6,12 @@ import CheckerPlay from "./_components/checker-play";
 export const metadata: Metadata = {
   title: "Speed Checker",
   description:
-    "Get speed insights for your api, website from multiple regions.",
+    "Test the performance your api, website from multiple regions. Get speed insights for free.",
+  openGraph: {
+    title: "Speed Checker",
+    description:
+      "Test the performance your api, website from multiple regions. Get speed insights for free.",
+  },
 };
 
 export default async function PlayPage() {
