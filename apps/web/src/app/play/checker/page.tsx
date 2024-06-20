@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default async function PlayPage() {
   return (
     <>
-      <div className="w-full space-y-12">
+      <div className="mx-auto space-y-12">
         <div className="mt-12">
           <BackButton href="/" />
           <CheckerPlay />
