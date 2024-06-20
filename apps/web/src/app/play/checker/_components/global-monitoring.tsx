@@ -13,6 +13,7 @@ import {
 } from "@/components/marketing/card";
 import { Globe } from "@/components/marketing/monitor/globe";
 import type { ValidIcon } from "@/components/icons";
+import { Shell } from "@/components/dashboard/shell";
 
 const features: {
   icon: ValidIcon;
@@ -29,36 +30,31 @@ const features: {
     icon: "play",
     catchline: "Monitor anything.",
     description:
-      "We can monitor your website, API, DNS, TCP or any other service you have running.",
+      "We can monitor your website, API, DNS, TCP or any other service you have running. ",
   },
   {
     icon: "bot",
     catchline: "Synthetic Monitoring.",
-    description:
-      "Run your tests in your CI/CD pipeline, or on a schedule. We can monitor it all.",
+    description: "Run your tests in your CI/CD pipeline, or on a schedule. ",
   },
 ];
 export const GlobalMonitoring = () => {
   return (
-    <CardContainer>
+    <Shell className="mx-auto">
       <CardHeader>
         <CardIcon icon={"activity"} />
-        <CardTitle>Global Monitoring</CardTitle>
+        <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Globe />
-        <CardFeatureContainer>
-          {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <CardFeature key={i} {...feature} />
-          ))}
-          <div className="order-first text-center md:order-none">
-            <Button asChild variant="outline" className="rounded-full">
-              <Link href="/app/sign-up">Get Started</Link>
-            </Button>
+      <>
+        <div className="mt-12">
+          <div className="list-none space-y-4">
+            {features?.map((feature, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+              <CardFeature key={i} {...feature} />
+            ))}
           </div>
-        </CardFeatureContainer>
-      </CardContent>
-    </CardContainer>
+        </div>
+      </>
+    </Shell>
   );
 };

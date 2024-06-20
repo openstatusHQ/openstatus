@@ -19,16 +19,18 @@ export const metadata: Metadata = {
 
 export default async function PlayPage() {
   return (
-    <div className="space-y-12">
-      <div className="mt-12">
-        <BackButton href="/" />
-        <CheckerPlay />
+    <>
+      <div className="w-full space-y-12">
+        <div className="mt-12">
+          <BackButton href="/" />
+          <CheckerPlay />
+        </div>
+        <Testimonial />
+        <GlobalMonitoring />
+        <div className="mx-auto max-w-2xl lg:max-w-4xl">
+          <BottomCTA />
+        </div>
       </div>
-      <Testimonial />
-      <GlobalMonitoring />
-      <div className="mx-auto max-w-2xl lg:max-w-4xl">
-        <BottomCTA />
-      </div>
-    </div>
+    </>
   );
 }
