@@ -211,7 +211,8 @@
       "group": "Guides",
       "pages": [
         "guides/introduction",
-        "guides/test-latency-cf-workers-in-github-actions"
+        "guides/test-latency-cf-workers-in-github-actions",
+        "guides/how-deploy-status-page-cf-pages"
       ]
     }
   ],
