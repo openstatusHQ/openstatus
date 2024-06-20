@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 import { MultiRegionChart } from "./multi-region-chart";
 import { MultiRegionTable } from "./multi-region-table";
 import type { RegionChecker } from "./utils";
+import { columns } from "./columns";
 
 export function MultiRegionTabs({ regions }: { regions: RegionChecker[] }) {
   return (
@@ -15,7 +16,7 @@ export function MultiRegionTabs({ regions }: { regions: RegionChecker[] }) {
         <MultiRegionChart regions={regions} />
       </TabsContent>
       <TabsContent value="table">
-        <MultiRegionTable regions={regions} />
+        <MultiRegionTable data={regions} columns={columns} />
       </TabsContent>
     </Tabs>
   );
