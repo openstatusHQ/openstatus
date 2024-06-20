@@ -19,7 +19,7 @@ function isWebGLContext() {
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prefersReducedMotion = useMediaQuery(
-    "(prefers-reduced-motion: reduce)",
+    "(prefers-reduced-motion: reduce)"
   );
   const [disabledWebGL, setDisabledWebGL] = useState(false);
 
@@ -58,6 +58,58 @@ export function Globe() {
         { location: [-33.8688, 151.2093], size: 0.05 },
         // GRU
         { location: [-23.5558, -46.6396], size: 0.05 },
+        // ARN
+        { location: [59.6519, 17.9186], size: 0.05 },
+        // ATL
+        { location: [33.6407, -84.4277], size: 0.05 },
+        // BOG
+        { location: [4.711, -74.0721], size: 0.05 },
+        // BOM
+        { location: [19.0896, 72.8656], size: 0.05 },
+        // CDG
+        { location: [49.0097, 2.5479], size: 0.05 },
+        // DEN
+        { location: [39.8561, -104.6737], size: 0.05 },
+        // DFW
+        { location: [32.8998, -97.0403], size: 0.05 },
+        // EWR
+        { location: [40.6895, -74.1745], size: 0.05 },
+        // EZE
+        { location: [-34.8226, -58.5336], size: 0.05 },
+        // FRA
+        { location: [50.0349, 8.5622], size: 0.05 },
+        // GDI
+        { location: [20.6752, -103.34], size: 0.05 },
+        // LAX
+        { location: [33.9416, -118.4085], size: 0.05 },
+        // MAD
+        { location: [40.4168, -3.7038], size: 0.05 },
+        // MIA
+        { location: [25.7617, -80.1918], size: 0.05 },
+        // NRT
+        { location: [35.6895, 139.6917], size: 0.05 },
+        // ORD
+        { location: [41.9742, -87.9073], size: 0.05 },
+        // OTP
+        { location: [44.4268, 26.1025], size: 0.05 },
+        // PHX
+        { location: [33.4484, -112.074], size: 0.05 },
+        // QRO
+        { location: [20.5881, -100.3899], size: 0.05 },
+        // SCL
+        { location: [-33.4489, -70.6693], size: 0.05 },
+        // SEA
+        { location: [47.6062, -122.3321], size: 0.05 },
+        // SIN
+        { location: [1.3521, 103.8198], size: 0.05 },
+        // SJC
+        { location: [37.3541, -121.9552], size: 0.05 },
+        // WAW
+        { location: [52.2297, 21.0122], size: 0.05 },
+        // YUL
+        { location: [45.5017, -73.5673], size: 0.05 },
+        // YYZ
+        { location: [43.6511, -79.347], size: 0.05 },
       ],
       onRender: (state) => {
         // Called on every animation frame.
