@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Table,
   TableBody,
@@ -17,53 +19,82 @@ import {
 } from "./utils";
 import type { RegionChecker } from "./utils";
 
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+  flexRender,
+  type SortingState,
+  getSortedRowModel,
+} from "@tanstack/react-table";
+import { useState } from "react";
+
 // TBD: add the popover infos about timing details
 
-export function MultiRegionTable({ regions }: { regions: RegionChecker[] }) {
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+}
+
+export function MultiRegionTable<TData, TValue>({
+  columns,
+  data,
+}: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+
+    state: {
+      sorting,
+    },
+  });
   return (
     <Table>
       <TableCaption>Multi Regions</TableCaption>
       <TableHeader>
-        <TableRow>
-          <TableHead>Region</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>DNS</TableHead>
-          <TableHead>Connect</TableHead>
-          <TableHead>TLS</TableHead>
-          <TableHead>TTFB</TableHead>
-          <TableHead>Total</TableHead>
-        </TableRow>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              return (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        ))}
       </TableHeader>
       <TableBody>
-        {regions.map(({ region, status, timing }) => {
-          const { dns, connection, tls, ttfb } = getTimingPhases(timing);
-          const total = getTotalLatency(timing);
-          return (
-            <TableRow key={region}>
-              <TableCell className="font-medium">
-                {regionFormatter(region)}
-              </TableCell>
-              <TableCell>
-                <StatusCodeBadge statusCode={status} />
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <code>{latencyFormatter(dns)}</code>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <code>{latencyFormatter(connection)}</code>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <code>{latencyFormatter(tls)}</code>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <code>{latencyFormatter(ttfb)}</code>
-              </TableCell>
-              <TableCell>
-                <code>{latencyFormatter(total)}</code>
-              </TableCell>
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              data-state={row.getIsSelected() && "selected"}
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
             </TableRow>
-          );
-        })}
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={columns.length} className="h-24 text-center">
+              No results.
+            </TableCell>
+          </TableRow>
+        )}
       </TableBody>
     </Table>
   );
