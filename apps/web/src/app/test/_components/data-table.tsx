@@ -29,6 +29,8 @@ import { DataTablePagination } from "./data-table-pagination";
 import { InputSearch } from "./search";
 import { schema } from "./utils";
 
+// TODO: include pagination + limit - it's missing in the useReactTable props
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -51,6 +53,7 @@ export function DataTable<TData, TValue>({
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
       const map = getFacetedUniqueValues<TData>()(table, columnId)();
+      // TODO: it would be great to do it dynamically, if we recognize the row to be Array.isArray
       if (["regions", "tags"].includes(columnId)) {
         const rowValues = table
           .getGlobalFacetedRowModel()
