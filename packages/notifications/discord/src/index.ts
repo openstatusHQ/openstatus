@@ -20,11 +20,13 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { discord: webhookUrl } = notificationData; // webhook url
@@ -37,7 +39,7 @@ export const sendAlert = async ({
       Your monitor with url ${monitor.url} is down with ${
         statusCode ? `status code ${statusCode}` : `error message ${message}`
       }.`,
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.error(err);
@@ -52,11 +54,14 @@ export const sendRecovery = async ({
   statusCode,
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { discord: webhookUrl } = notificationData; // webhook url
@@ -65,7 +70,7 @@ export const sendRecovery = async ({
   try {
     await postToWebhook(
       `Your monitor ${name}|${monitor.url}  is up again 🎉`,
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.error(err);
@@ -80,7 +85,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   try {
     await postToWebhook(
       "This is a test notification from OpenStatus. \nIf you see this, it means that your webhook is working! 🎉",
-      webhookUrl,
+      webhookUrl
     );
     return true;
   } catch (_err) {

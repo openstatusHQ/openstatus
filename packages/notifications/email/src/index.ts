@@ -8,11 +8,14 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   // FIXME:
   const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
@@ -56,11 +59,14 @@ export const sendRecovery = async ({
   statusCode,
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   // FIXME:
   const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));

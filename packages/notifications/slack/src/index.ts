@@ -18,11 +18,14 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -55,7 +58,7 @@ export const sendAlert = async ({
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -70,11 +73,14 @@ export const sendRecovery = async ({
   statusCode,
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -104,7 +110,7 @@ export const sendRecovery = async ({
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -126,7 +132,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
     return true;
   } catch (_err) {

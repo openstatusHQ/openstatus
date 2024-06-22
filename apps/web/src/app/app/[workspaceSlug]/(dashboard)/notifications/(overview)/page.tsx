@@ -8,6 +8,7 @@ import { Limit } from "@/components/dashboard/limit";
 import { columns } from "@/components/data-table/notification/columns";
 import { DataTable } from "@/components/data-table/notification/data-table";
 import { api } from "@/trpc/server";
+import ChannelTable from "./_components/channelTable";
 
 export default async function NotificationPage() {
   const notifications =
@@ -17,16 +18,14 @@ export default async function NotificationPage() {
 
   if (notifications.length === 0) {
     return (
-      <EmptyState
-        icon="bell"
-        title="No notifications"
-        description="Create your first notification channel"
-        action={
-          <Button asChild>
-            <Link href="./notifications/new">Create</Link>
-          </Button>
-        }
-      />
+      <>
+        <EmptyState
+          icon="bell"
+          title="No notifications"
+          description="Create your first notification channel"
+        />
+        <ChannelTable />
+      </>
     );
   }
 
@@ -34,6 +33,7 @@ export default async function NotificationPage() {
     <>
       <DataTable columns={columns} data={notifications} />
       {isLimitReached ? <Limit /> : null}
+      <ChannelTable />
     </>
   );
 }

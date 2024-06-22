@@ -169,6 +169,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-pagerduty':
+        specifier: workspace:*
+        version: link:../../packages/notifications/pagerduty
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack
@@ -802,6 +805,40 @@ importers:
       next:
         specifier: 14.2.3
         version: 14.2.3(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.2.0))(react@18.2.0)
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
+
+  packages/notifications/pagerduty:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@t3-oss/env-core':
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
+      '@types/validator':
+        specifier: 13.11.6
+        version: 13.11.6
+      validator:
+        specifier: 13.11.0
+        version: 13.11.0
+      zod:
+        specifier: 3.22.4
+        version: 3.22.4
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.64
+        version: 18.2.64
+      '@types/react-dom':
+        specifier: 18.2.21
+        version: 18.2.21
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -4125,9 +4162,6 @@ packages:
   '@types/prop-types@15.7.12':
     resolution: {integrity: sha512-5zvhXYtRNRluoE/jAp4GVsSduVUzNWKkOZrCDBWYtE7biZywwdC2AcEzg+cSMLFRfVgeAFqpfNabiPjxFddV1Q==}
 
-  '@types/prop-types@15.7.9':
-    resolution: {integrity: sha512-n1yyPsugYNSmHgxDFjicaI2+gCNjsBck8UX9kuofAKlc0h1bL+20oSF72KeNaW2DUlesbEVCFgyV2dPGTiY42g==}
-
   '@types/react-dom@18.2.21':
     resolution: {integrity: sha512-gnvBA/21SA4xxqNXEwNiVcP0xSGHh/gi1VhWv9Bl46a0ItbTT5nFY+G9VSQpaG/8N/qdJpJ+vftQ4zflTtnjLw==}
 
@@ -4751,9 +4785,6 @@ packages:
   cssstyle@2.3.0:
     resolution: {integrity: sha512-AZL67abkUzIuvcHqk7c09cezpGNcxUxU4Ioi/05xHk4DQeTkWmGYftIE6ctU6AEt+Gn4n1lDStOtj7FKycP71A==}
     engines: {node: '>=8'}
-
-  csstype@3.1.2:
-    resolution: {integrity: sha512-I7K1Uu0MBPzaFKg4nI5Q7Vs2t+3gWWW648spaF+Rg7pI9ds18Ugn+lvg4SHczUdKlHI5LWBXyqfS8+DufyBsgQ==}
 
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
@@ -11918,10 +11949,7 @@ snapshots:
 
   '@types/parse5@6.0.3': {}
 
-  '@types/prop-types@15.7.12':
-    optional: true
-
-  '@types/prop-types@15.7.9': {}
+  '@types/prop-types@15.7.12': {}
 
   '@types/react-dom@18.2.21':
     dependencies:
@@ -11929,9 +11957,9 @@ snapshots:
 
   '@types/react@18.2.64':
     dependencies:
-      '@types/prop-types': 15.7.9
+      '@types/prop-types': 15.7.12
       '@types/scheduler': 0.16.5
-      csstype: 3.1.2
+      csstype: 3.1.3
 
   '@types/react@18.3.2':
     dependencies:
@@ -12587,10 +12615,7 @@ snapshots:
     dependencies:
       cssom: 0.3.8
 
-  csstype@3.1.2: {}
-
-  csstype@3.1.3:
-    optional: true
+  csstype@3.1.3: {}
 
   d3-array@3.2.4:
     dependencies:

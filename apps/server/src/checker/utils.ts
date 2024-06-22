@@ -20,16 +20,23 @@ import {
   sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
 
+import {
+  sendAlert as sendPagerdutyAlert,
+  sendRecovery as sendPagerDutyRecovery,
+} from "@openstatus/notification-pagerduty";
+
 type SendNotification = ({
   monitor,
   notification,
   statusCode,
   message,
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => Promise<void>;
 
 type Notif = {
@@ -47,4 +54,8 @@ export const providerToFunction = {
   },
   discord: { sendAlert: sendDiscordAlert, sendRecovery: sendDiscordRecovery },
   sms: { sendAlert: sendSmsAlert, sendRecovery: sendSmsRecovery },
+  pagerduty: {
+    sendAlert: sendPagerdutyAlert,
+    sendRecovery: sendPagerDutyRecovery,
+  },
 } satisfies Record<NotificationProvider, Notif>;
