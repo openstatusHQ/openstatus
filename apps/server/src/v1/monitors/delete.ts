@@ -56,6 +56,6 @@ export function registerDeleteMonitor(app: typeof monitorsApi) {
 
     // FIXME: Remove all relations of the monitor from all notifications, pages,....
 
-    return c.json({});
+    return c.json({}, 200);
   });
 }

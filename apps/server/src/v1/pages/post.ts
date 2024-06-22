@@ -95,8 +95,8 @@ export function registerPostPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 
@@ -128,6 +128,6 @@ export function registerPostPage(api: typeof pagesApi) {
       }
     }
     const data = PageSchema.parse(_page);
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

@@ -6,19 +6,21 @@ import type { RegionChecker } from "./utils";
 import { getTimingPhases, latencyFormatter, regionFormatter } from "./utils";
 
 export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
-  const data = regions.map((item) => {
-    const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
-      item.timing,
-    );
-    return {
-      region: regionFormatter(item.region),
-      dns,
-      connection,
-      tls,
-      ttfb,
-      transfer,
-    };
-  });
+  const data = regions
+    .sort((a, b) => a.latency - b.latency)
+    .map((item) => {
+      const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
+        item.timing
+      );
+      return {
+        region: regionFormatter(item.region),
+        dns,
+        connection,
+        tls,
+        ttfb,
+        transfer,
+      };
+    });
   return (
     <BarChart
       data={data}
@@ -29,6 +31,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
       stack
       layout="vertical"
       yAxisWidth={65}
+      className="h-[64rem] w-full"
     />
   );
 }

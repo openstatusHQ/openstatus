@@ -40,6 +40,6 @@ export function registerGetAllPages(api: typeof pagesApi) {
 
     const data = z.array(PageSchema).parse(_pages);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

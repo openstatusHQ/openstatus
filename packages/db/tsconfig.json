@@ -18,5 +18,5 @@
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["src", "*.ts", "env.mjs", "**/*.ts"]
+  "include": ["src", "*.ts", "env.mjs", "**/*.ts", "../utils/try.ts"]
 }

@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { regionsDict } from "@openstatus/utils";
+import { flyRegionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
@@ -98,7 +98,7 @@ export const columns: ColumnDef<Ping>[] = [
         <div>
           <span className="font-mono">{String(row.getValue("region"))} </span>
           <span className="text-muted-foreground text-xs">
-            {regionsDict[row.original.region]?.location}
+            {flyRegionsDict[row.original.region]?.location}
           </span>
         </div>
       );

@@ -17,6 +17,7 @@ import {
   monitorMethods,
   monitorMethodsSchema,
   monitorPeriodicitySchema,
+  workspacePlans,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 import {
@@ -103,8 +104,7 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions:
-        defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
+      regions: defaultValues?.regions || getLimit("free", "regions"),
       headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -441,7 +441,7 @@ export function MonitorForm({
                           <Select
                             onValueChange={(value) =>
                               field.onChange(
-                                monitorPeriodicitySchema.parse(value),
+                                monitorPeriodicitySchema.parse(value)
                               )
                             }
                             defaultValue={field.value}
@@ -494,7 +494,7 @@ export function MonitorForm({
                                     role="combobox"
                                     className={cn(
                                       "h-10 w-full justify-between",
-                                      !field.value && "text-muted-foreground",
+                                      !field.value && "text-muted-foreground"
                                     )}
                                   >
                                     {renderText()}
@@ -526,9 +526,9 @@ export function MonitorForm({
                                                 "regions",
                                                 currentRegions.includes(code)
                                                   ? currentRegions.filter(
-                                                      (r) => r !== code,
+                                                      (r) => r !== code
                                                     )
-                                                  : [...currentRegions, code],
+                                                  : [...currentRegions, code]
                                               );
                                             }}
                                           >
@@ -537,13 +537,13 @@ export function MonitorForm({
                                                 "mr-2 h-4 w-4",
                                                 isSelected
                                                   ? "opacity-100"
-                                                  : "opacity-0",
+                                                  : "opacity-0"
                                               )}
                                             />
                                             {location}
                                           </CommandItem>
                                         );
-                                      },
+                                      }
                                     )}
                                   </CommandGroup>
                                 </Command>
@@ -650,8 +650,8 @@ export function MonitorForm({
                                               ])
                                             : field.onChange(
                                                 field.value?.filter(
-                                                  (value) => value !== item.id,
-                                                ),
+                                                  (value) => value !== item.id
+                                                )
                                               );
                                         }}
                                       />

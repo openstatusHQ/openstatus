@@ -22,6 +22,7 @@ export const pricingTableConfig: Record<
         value: "multi-region",
         label: "Multi-region monitoring",
       },
+      { value: "max-regions", label: "Number of Regions" },
       { value: "data-retention", label: "Data retention" },
     ],
   },

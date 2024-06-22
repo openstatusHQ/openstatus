@@ -42,7 +42,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       },
       where: and(
         eq(statusReport.workspaceId, Number(workspaceId)),
-        eq(statusReport.id, Number(id)),
+        eq(statusReport.id, Number(id))
       ),
     });
 
@@ -73,6 +73,6 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

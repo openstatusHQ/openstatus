@@ -1,10 +1,14 @@
-import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
+import type {
+  MonitorFlyRegion,
+  MonitorPeriodicity,
+} from "@openstatus/db/src/schema";
 
 export type Limits = {
   // monitors
   monitors: number;
   periodicity: Partial<MonitorPeriodicity>[];
   "multi-region": boolean;
+  "max-regions": number;
   "data-retention": string;
   // status pages
   "status-pages": number;
@@ -20,4 +24,5 @@ export type Limits = {
   // collaboration
   members: "Unlimited" | number;
   "audit-log": boolean;
+  regions: Partial<MonitorFlyRegion>[];
 };

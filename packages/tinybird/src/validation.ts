@@ -1,6 +1,6 @@
 import * as z from "zod";
-
-import { flyRegions } from "@openstatus/utils";
+import { monitorFlyRegionSchema } from "../../db/src/schema/monitors/validation";
+import type { flyRegions } from "../../db/src/schema/monitors/constants";
 
 export const tbIngestWebVitals = z.object({
   dsn: z.string(),
@@ -92,7 +92,7 @@ export const tbBuildResponseList = z.object({
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
-  region: z.enum(flyRegions),
+  region: monitorFlyRegionSchema,
   message: z.string().nullable().optional(),
   assertions: z.string().nullable().optional(),
 });
@@ -106,7 +106,7 @@ export const tbParameterResponseList = z.object({
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
-  region: z.enum(flyRegions).optional(),
+  region: monitorFlyRegionSchema.optional(),
   cronTimestamp: z.number().int().optional(),
 });
 
@@ -174,7 +174,7 @@ export const latencyMetrics = z.object({
  */
 export const tbBuildResponseGraph = z
   .object({
-    region: z.enum(flyRegions),
+    region: monitorFlyRegionSchema,
     timestamp: z.number().int(),
   })
   .merge(latencyMetrics);
@@ -279,7 +279,7 @@ export const tbParameterResponseTimeMetricsByRegion = z.object({
  */
 export const tbBuildResponseTimeMetricsByRegion = z
   .object({
-    region: z.enum(flyRegions),
+    region: monitorFlyRegionSchema,
   })
   .merge(latencyMetrics);
 

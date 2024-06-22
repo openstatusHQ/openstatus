@@ -75,8 +75,8 @@ export function registerPostNotification(api: typeof notificationsApi) {
           and(
             inArray(monitor.id, monitors),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 
@@ -113,6 +113,6 @@ export function registerPostNotification(api: typeof notificationsApi) {
       monitors,
       payload: _payload,
     });
-    return c.json(data);
+    return c.json(data, 200);
   });
 }

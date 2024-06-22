@@ -1189,6 +1189,9 @@ importers:
 
   packages/utils:
     devDependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../db
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

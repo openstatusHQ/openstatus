@@ -54,8 +54,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all()
     )[0].count;
@@ -68,6 +68,12 @@ export function registerPostMonitor(api: typeof monitorsApi) {
 
     if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
+    }
+
+    for (const region of input.regions) {
+      if (!workspacePlan.limits.regions.includes(region)) {
+        throw new HTTPException(403, { message: "Upgrade for more region" });
+      }
     }
 
     const { headers, regions, assertions, ...rest } = input;
@@ -97,6 +103,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
 
     const data = MonitorSchema.parse(_newMonitor);
 
-    return c.json(data);
+    return c.json(data, 200);
   });
 }
