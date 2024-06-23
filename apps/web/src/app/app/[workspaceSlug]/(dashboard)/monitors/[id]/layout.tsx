@@ -33,7 +33,14 @@ export default async function Layout({
         title={monitor.name}
         description={
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
-            <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
+            <a
+              href={monitor.url}
+              target="_blank"
+              rel="noreferrer"
+              className="max-w-xs truncate text-base text-muted-foreground md:max-w-md"
+            >
+              {monitor.url}
+            </a>
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusDotWithTooltip
               active={monitor.active}
@@ -45,7 +52,7 @@ export default async function Layout({
                 <span className="text-muted-foreground/50 text-xs">•</span>
                 <TagBadgeWithTooltip
                   tags={monitor.monitorTagsToMonitors.map(
-                    ({ monitorTag }) => monitorTag,
+                    ({ monitorTag }) => monitorTag
                   )}
                 />
               </>
