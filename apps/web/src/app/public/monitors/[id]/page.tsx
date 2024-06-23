@@ -102,9 +102,14 @@ export default async function Page({
       <Shell className="sticky top-2 z-10 flex items-center justify-between gap-2 bg-background/80 backdrop-blur-sm">
         <div className="min-w-0">
           <p className="font-semibold text-sm">{monitor.name}</p>
-          <p className="truncate text-base text-muted-foreground">
+          <a
+            href={monitor.url}
+            target="_blank"
+            rel="noreferrer"
+            className="truncate text-base text-muted-foreground"
+          >
             {monitor.url}
-          </p>
+          </a>
         </div>
         <div className="flex items-center gap-2">
           {isDirty ? <ButtonReset /> : null}
