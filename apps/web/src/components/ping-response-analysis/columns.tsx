@@ -18,7 +18,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => {
+      return <DataTableColumnHeader column={column} title="Status" />;
+    },
     cell: ({ row }) => {
       return <StatusCodeBadge statusCode={row.original.status} />;
     },

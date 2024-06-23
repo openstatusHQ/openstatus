@@ -3,6 +3,7 @@
 import type {
   ColumnDef,
   ColumnFiltersState,
+  PaginationState,
   Table as TTable,
   VisibilityState,
 } from "@tanstack/react-table";
@@ -11,6 +12,7 @@ import {
   getCoreRowModel,
   getFacetedRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
@@ -36,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   tags?: MonitorTag[];
   defaultColumnFilters?: ColumnFiltersState;
+  defaultPagination?: PaginationState;
 }
 
 export function DataTable<TData, TValue>({
@@ -43,6 +46,7 @@ export function DataTable<TData, TValue>({
   data,
   tags,
   defaultColumnFilters = [],
+  defaultPagination = { pageIndex: 0, pageSize: 10 },
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -52,13 +56,19 @@ export function DataTable<TData, TValue>({
       id: false, // we hide the id column
     });
 
+  const [pagination, setPagination] =
+    React.useState<PaginationState>(defaultPagination);
+
   const table = useReactTable({
     data,
     columns,
     state: {
       columnFilters,
       columnVisibility,
+      pagination,
     },
+    onPaginationChange: setPagination,
+    getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     getFilteredRowModel: getFilteredRowModel(),
@@ -113,7 +123,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -132,7 +142,7 @@ export function DataTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
