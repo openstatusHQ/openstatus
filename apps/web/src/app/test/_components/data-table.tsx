@@ -27,7 +27,8 @@ import {
 import { DataTableFilterBar } from "./data-table-filter-bar";
 import { DataTablePagination } from "./data-table-pagination";
 import { InputSearch } from "./search";
-import { schema } from "./utils";
+import { schema } from "./schema";
+import type { DataTableFilterField } from "./types";
 
 // TODO: include pagination + limit - it's missing in the useReactTable props
 
@@ -35,12 +36,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   defaultColumnFilters?: ColumnFiltersState;
+  filterFields?: DataTableFilterField<TData>[];
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   defaultColumnFilters = [],
+  filterFields = [],
 }: DataTableProps<TData, TValue>) {
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -73,7 +76,11 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <div className="w-full sm:max-w-48">
-        <DataTableFilterBar table={table} columns={columns} />
+        <DataTableFilterBar
+          table={table}
+          columns={columns}
+          filterFields={filterFields}
+        />
       </div>
       <div className="flex flex-1 flex-col gap-4">
         <InputSearch

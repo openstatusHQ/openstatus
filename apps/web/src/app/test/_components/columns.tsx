@@ -4,7 +4,7 @@ import { TagBadge } from "@/components/monitor/tag-badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { Check, Minus } from "lucide-react";
 import { tagsColor } from "./constants";
-import type { Schema } from "./utils";
+import type { Schema } from "./schema";
 
 export const columns: ColumnDef<Schema>[] = [
   {

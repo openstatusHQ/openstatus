@@ -121,6 +121,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           open ? "visible" : "hidden",
         )}
         filter={(value, _search) => {
+          console.log({ value, _search, currentWord });
           if (value.includes(currentWord.toLowerCase())) return 1;
           /**
            * @example [filter, query] = ["regions", "ams,gru"]
