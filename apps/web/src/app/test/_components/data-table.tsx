@@ -34,15 +34,16 @@ import { schema } from "./utils";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  defaultColumnFilters?: ColumnFiltersState;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  defaultColumnFilters = [],
 }: DataTableProps<TData, TValue>) {
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
+  const [columnFilters, setColumnFilters] =
+    React.useState<ColumnFiltersState>(defaultColumnFilters);
   const table = useReactTable({
     data,
     columns,
@@ -72,12 +73,12 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-col gap-4 sm:flex-row">
       <div className="w-full sm:max-w-48">
-        <DataTableFilterBar table={table} />
+        <DataTableFilterBar table={table} columns={columns} />
       </div>
       <div className="flex flex-1 flex-col gap-4">
         <InputSearch
           // REMINDER: values is typed by infering `schema`
-          onSearch={(values) => {
+          onSearch={(values, _raw) => {
             // need to reset the filters as we don't remove filter values
             table.resetColumnFilters();
 
@@ -93,7 +94,7 @@ export function DataTable<TData, TValue>({
             if (Array.isArray(curr.value)) {
               return `${prev}${curr.id}:${curr.value.join(",")} `;
             }
-            return `${prev}${curr.id}:${curr.value}`;
+            return `${prev}${curr.id}:${curr.value} `;
           }, "")}
           values={{
             // FIXME: main issue: 'edge api' e.g. has an empty space in between

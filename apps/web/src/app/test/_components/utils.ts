@@ -4,13 +4,20 @@ import { z } from "zod";
 const stringToBoolean = z
   .string()
   .toLowerCase()
-  .transform((val) => JSON.parse(val))
+  .transform((val) => {
+    try {
+      return JSON.parse(val);
+    } catch (e) {
+      console.log(e);
+      return false;
+    }
+  })
   .pipe(z.boolean());
 
 export const schema = z.object({
   name: z.string().or(z.string().array()).optional(),
-  public: z.boolean().or(stringToBoolean.array()).optional(),
-  active: z.boolean().or(stringToBoolean.array()).optional(),
+  public: stringToBoolean.or(stringToBoolean.array()).optional(),
+  active: stringToBoolean.or(stringToBoolean.array()).optional(),
   regions: z
     .enum(["ams", "gru", "syd", "hkg", "fra", "iad"])
     .or(z.enum(["ams", "gru", "syd", "hkg", "fra", "iad"]).array())
@@ -19,3 +26,5 @@ export const schema = z.object({
 });
 
 export type Schema = z.infer<typeof schema>;
+
+// include serialization + deserialization?

@@ -56,7 +56,7 @@ function serialize<T extends z.ZodTypeAny>(schema: T) {
 }
 
 interface InputSearchProps<T extends z.ZodTypeAny> {
-  onSearch(value: z.infer<T>): void;
+  onSearch(values: z.infer<T>, raw: string): void;
   schema: T;
   // defaultValue?: z.infer<T>;
   defaultValue?: string;
@@ -81,7 +81,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
     if (!inputValue.endsWith(" ") || !open) return;
     const searchparams = deserialize(schema)(inputValue);
     if (searchparams.success) {
-      onSearch(searchparams.data);
+      onSearch(searchparams.data, inputValue);
     }
   }, [inputValue, open]);
 

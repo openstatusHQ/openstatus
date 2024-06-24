@@ -1,11 +1,30 @@
 import { columns } from "./_components/columns";
 import { DataTable } from "./_components/data-table";
-import type { Schema } from "./_components/utils";
+import { schema, type Schema } from "./_components/utils";
 
-export default function TestPage() {
+// TODO: add schema validation
+
+export default function TestPage({
+  searchParams,
+}: { searchParams: { [key: string]: string | string[] | undefined } }) {
+  const search = schema.safeParse(searchParams);
+
+  console.log(searchParams);
+
+  if (!search.success) {
+    console.log(search.error);
+    return null;
+  }
+
   return (
     <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
-      <DataTable columns={columns} data={data} />
+      <DataTable
+        columns={columns}
+        data={data}
+        defaultColumnFilters={Object.entries(search.data).map(
+          ([key, value]) => ({ id: key, value }),
+        )}
+      />
     </div>
   );
 }

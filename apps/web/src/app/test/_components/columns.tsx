@@ -17,9 +17,9 @@ export const columns: ColumnDef<Schema>[] = [
     cell: ({ row }) => {
       const value = row.getValue("regions");
       if (Array.isArray(value)) {
-        return <div>{value.join(", ")}</div>;
+        return <div className="text-muted-foreground">{value.join(", ")}</div>;
       }
-      return <div>{`${value}`}</div>;
+      return <div className="text-muted-foreground">{`${value}`}</div>;
     },
     filterFn: (row, id, value) => {
       const array = row.getValue(id) as string[];
@@ -64,6 +64,7 @@ export const columns: ColumnDef<Schema>[] = [
     filterFn: (row, id, value) => {
       const rowValue = row.getValue(id);
       if (typeof value === "string") return value === String(rowValue);
+      if (typeof value === "boolean") return value === rowValue;
       if (Array.isArray(value)) return value.includes(rowValue);
       return false;
     },
@@ -79,6 +80,7 @@ export const columns: ColumnDef<Schema>[] = [
     filterFn: (row, id, value) => {
       const rowValue = row.getValue(id);
       if (typeof value === "string") return value === String(rowValue);
+      if (typeof value === "boolean") return value === rowValue;
       if (Array.isArray(value)) return value.includes(rowValue);
       return false;
     },

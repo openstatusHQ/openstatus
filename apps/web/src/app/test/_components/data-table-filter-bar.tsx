@@ -1,6 +1,6 @@
 "use client";
 
-import type { Table } from "@tanstack/react-table";
+import type { ColumnDef, Table } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";
 import {
@@ -18,6 +18,8 @@ import { Search, X } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 import { tagsColor } from "./constants";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { useRouter } from "next/navigation";
 
 const config = [
   {
@@ -79,13 +81,15 @@ const config = [
 
 // TODO: only pass the columns to generate the filters!
 // https://tanstack.com/table/v8/docs/framework/react/examples/filters
-interface DataTableFilterBarProps<TData> {
+interface DataTableFilterBarProps<TData, TValue> {
   table: Table<TData>;
+  columns: ColumnDef<TData, TValue>[];
 }
 
-export function DataTableFilterBar<TData>({
+export function DataTableFilterBar<TData, TValue>({
   table,
-}: DataTableFilterBarProps<TData>) {
+  columns,
+}: DataTableFilterBarProps<TData, TValue>) {
   const filters = table.getState().columnFilters;
   return (
     <div className="flex flex-col gap-4">
@@ -138,9 +142,24 @@ function Section<TData>({
   table,
 }: SectionProps<TData>) {
   const [inputValue, setInputValue] = useState("");
+  const updateSearchParams = useUpdateSearchParams();
+  const router = useRouter();
   const column = table.getColumn(id);
   const facetedValue = column?.getFacetedUniqueValues();
   const filterValue = column?.getFilterValue();
+
+  // TODO: check if we could useMemo
+  const filters = filterValue
+    ? Array.isArray(filterValue)
+      ? filterValue
+      : [filterValue]
+    : [];
+
+  const updatePageSearchParams = (values: Record<string, string>) => {
+    console.log({ values });
+    const newSearchParams = updateSearchParams(values);
+    router.replace(`?${newSearchParams}`, { scroll: false });
+  };
 
   const filterOptions = options.filter(
     (option) => inputValue === "" || option.label.includes(inputValue),
@@ -153,7 +172,8 @@ function Section<TData>({
       <AccordionTrigger className="p-2 hover:no-underline">
         <div className="flex items-center gap-2">
           <p className="font-medium text-foreground text-sm">{label}</p>
-          {filterValue && Array.isArray(filterValue) ? (
+          {filters.length ? (
+            // FIXME: button cannot be descendant of AccordionTrigger (which also is a button)
             <Button
               variant="outline"
               className="h-5 rounded-full px-1.5 py-1 font-mono text-[10px]"
@@ -161,9 +181,13 @@ function Section<TData>({
                 e.stopPropagation();
                 table.getColumn(id)?.setFilterValue(undefined);
               }}
+              asChild
             >
-              <span>{filterValue.length}</span>
-              <X className="ml-1 h-2.5 w-2.5 text-muted-foreground" />
+              {/* REMINDER: `AccordionTrigger` is also a button(!) and we get Hydration error when rendering button within button */}
+              <div role="button">
+                <span>{filters.length}</span>
+                <X className="ml-1 h-2.5 w-2.5 text-muted-foreground" />
+              </div>
             </Button>
           ) : null}
         </div>
@@ -181,16 +205,7 @@ function Section<TData>({
         <div className="rounded-lg border border-border empty:border-none">
           <ScrollArea className="max-h-40 overflow-y-scroll">
             {filterOptions.map((option, index) => {
-              const checked = () => {
-                if (
-                  typeof filterValue === "string" ||
-                  typeof filterValue === "boolean"
-                )
-                  return option.value === filterValue;
-                if (Array.isArray(filterValue))
-                  return filterValue.includes(option.value);
-                return false;
-              };
+              const checked = filters.includes(option.value);
 
               return (
                 <div
@@ -202,21 +217,18 @@ function Section<TData>({
                 >
                   <Checkbox
                     id={`${id}-${option.value}`}
-                    checked={checked()}
+                    checked={checked}
                     onCheckedChange={(value) => {
                       const newValue = value
-                        ? // @ts-expect-error is unknown
-                          [...(filterValue || []), option.value]
-                        : // @ts-expect-error is unknown
-                          filterValue?.filter(
-                            // @ts-expect-error is unknown
-                            (value) => option.value !== value,
-                          );
+                        ? [...(filters || []), option.value]
+                        : filters?.filter((value) => option.value !== value);
                       table
                         .getColumn(id)
                         ?.setFilterValue(
                           newValue?.length ? newValue : undefined,
                         );
+                      // @ts-expect-error FIXME: can have primary values or array
+                      updatePageSearchParams({ [id]: newValue });
                     }}
                   />
                   <Label
