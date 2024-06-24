@@ -42,14 +42,6 @@ export const NotificationDataSchema = z.union([
   z.object({ discord: urlSchema }),
   // PagerDuty
   z.object({
-    integration_keys: z.array(
-      z.object({
-        integration_key: z.string(),
-        name: z.string(),
-        id: z.string(),
-        type: z.string(),
-      })
-    ),
-    account: z.object({ subdomain: z.string(), Name: z.string() }),
+    pagerduty: z.string(),
   }),
 ]);

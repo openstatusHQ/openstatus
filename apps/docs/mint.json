@@ -93,6 +93,7 @@
                   "group": "Notification Channels",
                   "pages": [
                     "synthetic/features/notification/discord",
+                    "synthetic/features/notification/pagerduty",
                     "synthetic/features/notification/phone-call",
                     "synthetic/features/notification/slack",
                     "synthetic/features/notification/sms",

@@ -36,12 +36,6 @@ interface Props {
 }
 
 export function SectionNotifications({ form, plan, notifications }: Props) {
-  const [openDialog, setOpenDialog] = React.useState(false);
-
-  const notificationLimit = getLimit(plan, "notification-channels");
-  const notificationLimitReached = notifications
-    ? notifications.length >= notificationLimit
-    : false;
   return (
     <div className="grid w-full gap-4">
       {/* <div className="grid gap-1">
@@ -86,8 +80,8 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >
@@ -106,34 +100,15 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                 ))}
               </div>
               {!notifications || notifications.length === 0 ? (
-                <FormDescription>Missing notifications.</FormDescription>
+                <FormDescription>
+                  Create some notifications first.
+                </FormDescription>
               ) : null}
               <FormMessage />
             </FormItem>
           );
         }}
       />
-      <Dialog open={openDialog} onOpenChange={(val) => setOpenDialog(val)}>
-        <div>
-          <DialogTrigger asChild>
-            <Button variant="outline" disabled={notificationLimitReached}>
-              Add Notification Channel
-            </Button>
-          </DialogTrigger>
-        </div>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add Notification</DialogTitle>
-            <DialogDescription>
-              Get alerted when your endpoint is down.
-            </DialogDescription>
-          </DialogHeader>
-          <NotificationForm
-            onSubmit={() => setOpenDialog(false)}
-            workspacePlan={plan}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

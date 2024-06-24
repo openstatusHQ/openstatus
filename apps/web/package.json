@@ -27,6 +27,7 @@
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
+    "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/plans": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/rum": "workspace:*",

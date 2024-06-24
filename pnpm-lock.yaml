@@ -281,6 +281,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-pagerduty':
+        specifier: workspace:*
+        version: link:../../packages/notifications/pagerduty
       '@openstatus/notification-slack':
         specifier: workspace:*
         version: link:../../packages/notifications/slack

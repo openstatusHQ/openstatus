@@ -1,20 +1,10 @@
-import {
-  Badge,
-  Button,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@openstatus/ui";
+import { api } from "@/trpc/server";
+import { Button } from "@openstatus/ui";
+import Link from "next/link";
 
-export default function ChannelTable() {
+export default async function ChannelTable() {
+  const workspace = await api.workspace.getWorkspace.query();
+
   return (
     <div className="col-span-full w-full rounded-lg border border-border border-dashed bg-background p-8">
       <h2 className="font-bold font-cal text-2xl">Channels</h2>
@@ -28,18 +18,22 @@ export default function ChannelTable() {
             </p>
           </div>
           <div>
-            <Button>Create</Button>
+            <Button asChild>
+              <Link href="./notifications/new/discord">Create</Link>
+            </Button>
           </div>
         </div>
         <div className="flex items-center space-x-4 rounded-md border p-4">
           <div className="flex-1 space-y-1">
             <p className="font-medium text-sm leading-none">Email</p>
             <p className="text-muted-foreground text-sm">
-              Send notifications to discord.
+              Send notifications by email.
             </p>
           </div>
           <div>
-            <Button>Create</Button>
+            <Button asChild>
+              <Link href="./notifications/new/email">Create</Link>
+            </Button>
           </div>
         </div>
 
@@ -51,11 +45,23 @@ export default function ChannelTable() {
             </p>
           </div>
           <div>
-            <Button asChild>
-              <a href="https://app.pagerduty.com/install/integration?app_id=PN76M56&redirect_url=http://localhost:3000/app/love-openstatus/notifications/new/pagerduty&version=2">
-                Create
-              </a>
-            </Button>
+            {workspace.plan === "free" ? (
+              <Button disabled>Create</Button>
+            ) : (
+              <Button asChild>
+                <a
+                  href={`https://app.pagerduty.com/install/integration?app_id=PN76M56&redirect_url=${
+                    process.env.NODE_ENV === "development" // FIXME: This sucks
+                      ? "http://localhost:3000"
+                      : "https://www.openstatus.dev"
+                  }/app/${
+                    workspace.slug
+                  }/notifications/new/pagerduty&version=2`}
+                >
+                  Create
+                </a>
+              </Button>
+            )}
           </div>
         </div>
 
@@ -66,9 +72,9 @@ export default function ChannelTable() {
               Send notifications to slack.
             </p>
           </div>
-          <div>
-            <Button>Create</Button>
-          </div>
+          <Button asChild>
+            <Link href="./notifications/new/slack">Create</Link>
+          </Button>
         </div>
         <div className="flex items-center space-x-4 rounded-md border p-4">
           <div className="flex-1 space-y-1">
@@ -78,7 +84,13 @@ export default function ChannelTable() {
             </p>
           </div>
           <div>
-            <Button>Create</Button>
+            {workspace.plan === "free" ? (
+              <Button disabled>Create</Button>
+            ) : (
+              <Button asChild>
+                <Link href="./notifications/new/sms">Create</Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -19,7 +19,6 @@ import {
   notification,
   notificationsToMonitors,
   page,
-  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,

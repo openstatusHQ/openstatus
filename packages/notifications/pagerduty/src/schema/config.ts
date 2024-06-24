@@ -9,7 +9,7 @@ export const PagerDutySchema = z.object({
       type: z.string(),
     })
   ),
-  account: z.object({ subdomain: z.string(), Name: z.string() }),
+  account: z.object({ subdomain: z.string(), name: z.string() }),
 });
 
 export const actionSchema = z.union([

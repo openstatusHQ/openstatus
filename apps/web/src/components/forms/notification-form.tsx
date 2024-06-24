@@ -10,11 +10,7 @@ import type {
   NotificationProvider,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import {
-  insertNotificationSchema,
-  notificationProvider,
-  notificationProviderSchema,
-} from "@openstatus/db/src/schema";
+import { insertNotificationSchema } from "@openstatus/db/src/schema";
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import {
@@ -27,11 +23,6 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -85,6 +76,15 @@ function getProviderMetaData(provider: NotificationProvider) {
         sendTest: null,
         plans: ["pro", "team"],
       };
+    case "pagerduty":
+      return {
+        dataType: null,
+        placeholder: "",
+        setupDocLink:
+          "https://docs.openstatus.dev/synthetic/features/notification/pagerduty",
+        sendTest: null,
+        plans: ["starter", "pro", "team"],
+      };
 
     default:
       return {
@@ -102,6 +102,8 @@ interface Props {
   onSubmit?: () => void;
   workspacePlan: WorkspacePlan;
   nextUrl?: string;
+  provider: NotificationProvider;
+  d?: string;
 }
 
 export function NotificationForm({
@@ -109,6 +111,8 @@ export function NotificationForm({
   onSubmit: onExternalSubmit,
   workspacePlan,
   nextUrl,
+  provider,
+  d,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
@@ -117,20 +121,23 @@ export function NotificationForm({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
+      provider,
       name: defaultValues?.name || "",
       data: getDefaultProviderData(defaultValues),
     },
   });
-  const watchProvider = form.watch("provider");
   const watchWebhookUrl = form.watch("data");
-  const providerMetaData = useMemo(
-    () => getProviderMetaData(watchProvider),
-    [watchProvider],
-  );
+  const providerMetaData = getProviderMetaData(provider);
+  console.log(d);
 
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
+        if (provider === "pagerduty") {
+          if (d) {
+            data = d;
+          }
+        }
         if (data === "") {
           form.setError("data", { message: "This field is required" });
           return;
@@ -177,7 +184,9 @@ export function NotificationForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, (errors) => {
+          console.log(errors);
+        })}
         className="grid w-full gap-6"
         id="notification-form" // we use a form id to connect the submit button to the form (as we also have the form nested inside of `MonitorForm`)
       >
@@ -189,49 +198,6 @@ export function NotificationForm({
             </p>
           </div>
           <div className="grid gap-6 sm:col-span-2 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="provider"
-              render={({ field }) => (
-                <FormItem className="sm:col-span-1 sm:self-baseline">
-                  <FormLabel>Provider</FormLabel>
-                  <Select
-                    onValueChange={(value) =>
-                      field.onChange(notificationProviderSchema.parse(value))
-                    }
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="capitalize">
-                        <SelectValue placeholder="Select Provider" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {notificationProvider.map((provider) => {
-                        const isIncluded =
-                          getProviderMetaData(provider).plans?.includes(
-                            workspacePlan,
-                          );
-                        return (
-                          <SelectItem
-                            key={provider}
-                            value={provider}
-                            className="capitalize"
-                            disabled={!isIncluded}
-                          >
-                            {provider}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    What channel/provider to send a notification.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name="name"
@@ -248,7 +214,8 @@ export function NotificationForm({
                 </FormItem>
               )}
             />
-            {watchProvider && (
+
+            {providerMetaData.dataType && (
               <FormField
                 control={form.control}
                 name="data"
@@ -256,7 +223,7 @@ export function NotificationForm({
                   <FormItem className="sm:col-span-full">
                     {/* make the first letter capital */}
                     <div className="flex items-center justify-between">
-                      <FormLabel>{toCapitalize(watchProvider)}</FormLabel>
+                      <FormLabel>{toCapitalize(provider)}</FormLabel>
                     </div>
                     <FormControl>
                       <Input
@@ -277,8 +244,7 @@ export function NotificationForm({
                           className="underline hover:no-underline"
                           rel="noreferrer"
                         >
-                          How to setup your {toCapitalize(watchProvider)}{" "}
-                          webhook
+                          How to setup your {toCapitalize(provider)} webhook
                         </a>
                       )}
                     </FormDescription>
