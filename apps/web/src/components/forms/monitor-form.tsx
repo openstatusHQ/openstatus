@@ -719,18 +719,6 @@ export function MonitorForm({
           </div>
         </form>
       </Form>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Add Notification</DialogTitle>
-          <DialogDescription>
-            Get alerted when your endpoint is down.
-          </DialogDescription>
-        </DialogHeader>
-        <NotificationForm
-          onSubmit={() => setOpenDialog(false)}
-          workspacePlan={plan}
-        />
-      </DialogContent>
       <FailedPingAlertConfirmation
         monitor={form.getValues()}
         {...{ pingFailed, setPingFailed }}
