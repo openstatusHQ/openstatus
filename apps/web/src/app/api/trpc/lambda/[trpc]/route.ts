@@ -15,6 +15,7 @@ const handler = (req: NextRequest) =>
     endpoint: "/api/trpc/lambda",
     router: lambdaRouter,
     req: req,
+    // @ts-expect-error
     createContext: () => createTRPCContext({ req }),
     onError: ({ error }) => {
       console.log("Error in tRPC handler (lambda)");
