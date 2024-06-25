@@ -14,9 +14,6 @@ import { api } from "@/trpc/server";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 /**
  * allowed URL search params
  */
