@@ -7,6 +7,7 @@ import type { UseFormReturn } from "react-hook-form";
 import {
   numberCompareDictionary,
   stringCompareDictionary,
+  textBodyAssertion,
 } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
@@ -45,6 +46,11 @@ export function SectionAssertions({ form }: Props) {
     control: form.control,
     name: "headerAssertions",
   });
+  const textBodyAssertions = useFieldArray({
+    control: form.control,
+    name: "textBodyAssertions",
+  });
+
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
@@ -90,7 +96,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -151,7 +157,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -168,6 +174,57 @@ export function SectionAssertions({ form }: Props) {
                 size="icon"
                 onClick={() => headerAssertions.remove(i)}
                 variant="ghost"
+              >
+                <Icons.trash className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        {textBodyAssertions.fields.map((f, i) => (
+          <div key={f.id} className="grid grid-cols-12 items-center gap-4">
+            <p className="col-span-2 text-muted-foreground text-sm">Body</p>
+            <div className="col-span-3" />
+            <FormField
+              control={form.control}
+              name={`statusAssertions.${i}.compare`}
+              render={({ field }) => (
+                <FormItem className="col-span-3 w-full">
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue defaultValue="eq" placeholder="Equal" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.entries(stringCompareDictionary).map(
+                        ([key, value]) => (
+                          <SelectItem key={key} value={key}>
+                            {value}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+            <Input
+              {...form.register(`textBodyAssertions.${i}.target`, {
+                required: true,
+              })}
+              type="number"
+              placeholder="<html>...</html>"
+              className="col-span-3"
+            />
+            <div className="col-span-1">
+              <Button
+                size="icon"
+                onClick={() => textBodyAssertions.remove(i)}
+                variant="ghost"
+                type="button"
               >
                 <Icons.trash className="h-4 w-4" />
               </Button>
@@ -203,6 +260,21 @@ export function SectionAssertions({ form }: Props) {
             }
           >
             Add Header Assertion
+          </Button>
+
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() =>
+              textBodyAssertions.append({
+                version: "v1",
+                type: "textBody",
+                compare: "eq",
+                target: "",
+              })
+            }
+          >
+            Add String Body Assertion
           </Button>
         </div>
       </div>
