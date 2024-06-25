@@ -10,6 +10,7 @@ import { api } from "@/trpc/server";
 
 export const revalidate = 0; // revalidate the data at most every hour
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 
 export default async function Layout({
   children,
