@@ -12,9 +12,9 @@
     "@openstatus/tsconfig": "workspace:*",
     "@types/luxon": "3.3.1",
     "@types/node": "20.8.0",
-    "@types/react": "18.2.64",
-    "@types/react-dom": "18.2.21",
-    "typescript": "5.4.5"
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "typescript": "5.5.2"
   },
   "dependencies": {
     "@dnd-kit/core": "6.1.0",
@@ -48,12 +48,12 @@
     "date-fns": "2.30.0",
     "lucide-react": "0.279.0",
     "luxon": "3.3.0",
-    "react": "18.2.0",
+    "react": "18.3.1",
     "react-day-picker": "8.8.2",
     "react-hook-form": "7.47.0",
     "tailwind-merge": "1.14.0",
     "tailwindcss-animate": "1.0.7",
-    "zod": "3.22.4"
+    "zod": "3.23.8"
   },
   "peerDependencies": {
     "next-themes": "0.2.1",
