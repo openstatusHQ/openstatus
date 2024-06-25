@@ -11,7 +11,6 @@ import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
-import { DataTableWrapper } from "../[id]/data/_components/data-table-wrapper";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 

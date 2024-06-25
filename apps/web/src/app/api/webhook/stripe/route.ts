@@ -16,12 +16,13 @@ export async function POST(req: NextRequest) {
     const event = stripe.webhooks.constructEvent(
       payload,
       signature,
-      env.STRIPE_WEBHOOK_SECRET_KEY,
+      env.STRIPE_WEBHOOK_SECRET_KEY
     );
 
     /**
      * Forward to tRPC API to handle the webhook event
      */
+    // @ts-expect-error FIXME
     const ctx = await createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
