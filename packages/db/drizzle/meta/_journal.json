@@ -180,8 +180,57 @@
     {
       "idx": 25,
       "version": "5",
-      "when": 1712676818553,
-      "tag": "0025_lyrical_rhodey",
+      "when": 1713095971713,
+      "tag": "0025_strong_thunderball",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1713384976187,
+      "tag": "0026_giant_absorbing_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1714586658374,
+      "tag": "0027_bizarre_bastion",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "5",
+      "when": 1715173356076,
+      "tag": "0028_thin_power_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1716215342026,
+      "tag": "0029_regular_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1716364430118,
+      "tag": "0030_elite_barracuda",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1717837961923,
+      "tag": "0031_lowly_gabe_jones",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1718027484219,
+      "tag": "0032_hot_swordsman",
       "breakpoints": true
     }
   ]

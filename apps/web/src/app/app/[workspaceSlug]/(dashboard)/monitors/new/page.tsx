@@ -17,6 +17,7 @@ export default async function Page({
   const notifications =
     await api.notification.getNotificationsByWorkspace.query();
   const isLimitReached = await api.monitor.isMonitorLimitReached.query();
+  const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
 
   const pages = await api.page.getPagesByWorkspace.query();
 
@@ -30,6 +31,7 @@ export default async function Page({
       defaultSection={search.success ? search.data.section : undefined}
       notifications={notifications}
       pages={pages}
+      tags={tags}
       nextUrl="./" // back to the overview page
     />
   );

@@ -1,6 +1,6 @@
+import { ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 
 import {
   Card,
@@ -42,10 +42,10 @@ const ExternalStatusPage = async () => {
   const externalStatus = externalStatusArray.parse(data);
   return (
     <MarketingLayout>
-      <h1 className="text-foreground font-cal mb-4 text-4xl">
+      <h1 className="mb-4 font-cal text-4xl text-foreground">
         Is my external service down?
       </h1>
-      <div className="text-muted-foreground mb-6">
+      <div className="mb-6 text-muted-foreground">
         Easily check if your external providers is working properly
       </div>
       <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-2">
@@ -63,7 +63,7 @@ const ExternalStatusPage = async () => {
                   <CardDescription className={getClassname(status)}>
                     {status.status_description}
                   </CardDescription>
-                  <ArrowUpRight className="text-muted-foreground group-hover:text-foreground h-5 w-5 shrink-0 self-end" />
+                  <ArrowUpRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                 </div>
               </CardHeader>
             </Card>

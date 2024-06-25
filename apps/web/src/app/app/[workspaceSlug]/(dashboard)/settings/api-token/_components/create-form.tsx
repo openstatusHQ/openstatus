@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import {
   AlertDialog,
@@ -64,13 +64,14 @@ export function CreateForm({ ownerId }: { ownerId: number }) {
           </AlertDialogHeader>
           <div>
             <button
+              type="button"
               className="group inline-flex items-center p-2"
               onClick={() => {
                 copyToClipboard(String(rawKey));
                 setHasCopied(true);
               }}
             >
-              <span className="font-mono">{rawKey}</span>
+              <span className="ph-no-capture font-mono">{rawKey}</span>
               {!hasCopied ? (
                 <Icons.copy className="ml-2 hidden h-4 w-4 group-hover:block" />
               ) : (

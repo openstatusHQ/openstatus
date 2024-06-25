@@ -1,6 +1,8 @@
 package request
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type AssertionType string
 
@@ -61,8 +63,10 @@ type CheckerRequest struct {
 }
 
 type PingRequest struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Body    string            `json:"body"`
-	Headers map[string]string `json:"headers"`
+	RequestId   int64             `json:"requestId"`
+	WorkspaceId int64             `json:"workspaceId"`
+	URL         string            `json:"url"`
+	Method      string            `json:"method"`
+	Body        string            `json:"body"`
+	Headers     map[string]string `json:"headers"`
 }

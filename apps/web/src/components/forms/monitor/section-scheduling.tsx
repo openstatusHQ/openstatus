@@ -3,7 +3,10 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
-import { monitorPeriodicitySchema } from "@openstatus/db/src/schema";
+import {
+  flyRegions,
+  monitorPeriodicitySchema,
+} from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 import {
   FormControl,
@@ -18,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui";
-import { flyRegions, flyRegionsDict } from "@openstatus/utils";
+import { groupByContinent } from "@openstatus/utils";
 
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
@@ -40,13 +43,15 @@ interface Props {
 
 export function SectionScheduling({ form, plan }: Props) {
   const periodicityLimit = getLimit(plan, "periodicity");
+  const regionsLimit = getLimit(plan, "regions");
+  console.log(form.getValues());
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
         title="Schedule and Regions"
         description="Customize the period of time and the regions where your endpoint will be monitored."
       />
-      <div className="grid sm:grid-cols-2 md:grid-cols-3">
+      <div className="grid md:grid-cols-3 sm:grid-cols-2">
         <FormField
           control={form.control}
           name="periodicity"
@@ -87,51 +92,91 @@ export function SectionScheduling({ form, plan }: Props) {
       <FormField
         control={form.control}
         name="regions"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>
               <div className="mb-4">
                 <FormLabel className="text-base">Regions</FormLabel>
                 <FormDescription>
-                  Select the regions you want to monitor your endpoint from.
+                  Select the regions you want to monitor your endpoint from.{" "}
+                  <br />
+                  {plan === "free"
+                    ? "Only a few regions are available in the free plan. Upgrade to access all regions."
+                    : ""}
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-                {flyRegions.map((item) => (
-                  <FormField
-                    key={item}
-                    control={form.control}
-                    name="regions"
-                    render={({ field }) => {
-                      const { flag, location } = flyRegionsDict[item];
-                      return (
-                        <FormItem key={item} className="h-full w-full">
-                          <FormControl className="h-full">
-                            <CheckboxLabel
-                              id={item}
-                              checked={field.value?.includes(item)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([
-                                      ...(field.value ? field.value : []),
-                                      item,
-                                    ])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item,
-                                      ),
+              <div>
+                {Object.entries(groupByContinent)
+                  .sort((a, b) => a[0].localeCompare(b[0]))
+                  .map(([continent, regions]) => {
+                    return { continent, regions };
+                  })
+                  .map((current) => {
+                    return (
+                      <div key={current.continent} className="py-2">
+                        {current.continent}
+
+                        <div className="grid grid-cols-3 grid-rows-1 gap-2 pt-1">
+                          {current.regions
+                            .sort((a, b) =>
+                              a.location.localeCompare(b.location)
+                            )
+                            .map((item) => {
+                              return (
+                                <FormField
+                                  key={item.code}
+                                  control={form.control}
+                                  name="regions"
+                                  render={({ field }) => {
+                                    const { flag, location } = item;
+                                    return (
+                                      <FormItem
+                                        key={item.code}
+                                        className="h-full w-full"
+                                      >
+                                        <FormControl className="h-full">
+                                          <CheckboxLabel
+                                            disabled={
+                                              !regionsLimit.includes(item.code)
+                                            }
+                                            id={item.code}
+                                            name="region"
+                                            checked={field.value?.includes(
+                                              item.code
+                                            )}
+                                            onCheckedChange={(checked) => {
+                                              console.log(field.value);
+                                              return checked
+                                                ? field.onChange([
+                                                    ...(field.value
+                                                      ? field.value
+                                                      : []),
+                                                    item.code,
+                                                  ])
+                                                : field.onChange(
+                                                    field.value?.filter(
+                                                      (value) =>
+                                                        value !== item.code
+                                                    )
+                                                  );
+                                            }}
+                                          >
+                                            {location} {flag}
+                                          </CheckboxLabel>
+                                        </FormControl>
+                                      </FormItem>
                                     );
-                              }}
-                            >
-                              {location} {flag}
-                            </CheckboxLabel>
-                          </FormControl>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
+                                  }}
+                                />
+                              );
+                            })}
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
+
               <FormMessage />
             </FormItem>
           );

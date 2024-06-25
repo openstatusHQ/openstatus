@@ -22,6 +22,7 @@ export const pricingTableConfig: Record<
         value: "multi-region",
         label: "Multi-region monitoring",
       },
+      { value: "max-regions", label: "Number of Regions" },
       { value: "data-retention", label: "Data retention" },
     ],
   },
@@ -33,12 +34,20 @@ export const pricingTableConfig: Record<
         label: "Number of status pages",
       },
       {
+        value: "maintenance",
+        label: "Maintenance status",
+      },
+      {
         value: "status-subscribers",
         label: "Subscribers",
       },
       {
         value: "custom-domain",
         label: "Custom domain",
+      },
+      {
+        value: "password-protection",
+        label: "Password-protected",
       },
       {
         value: "white-label",

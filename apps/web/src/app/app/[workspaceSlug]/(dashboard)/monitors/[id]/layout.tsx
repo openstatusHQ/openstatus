@@ -1,10 +1,14 @@
 import { notFound } from "next/navigation";
 
+import { Badge } from "@openstatus/ui";
+
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
+
+export const revalidate = 0; // revalidate the data at most every hour
 
 export default async function Layout({
   children,
@@ -28,23 +32,41 @@ export default async function Layout({
       <Header
         title={monitor.name}
         description={
-          <div className="text-muted-foreground flex flex-wrap items-center gap-2">
-            <span className="max-w-xs truncate md:max-w-md">{monitor.url}</span>
+          <div className="flex flex-wrap items-center gap-2 text-muted-foreground">
+            <a
+              href={monitor.url}
+              target="_blank"
+              rel="noreferrer"
+              className="max-w-xs truncate text-base text-muted-foreground md:max-w-md"
+            >
+              {monitor.url}
+            </a>
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusDotWithTooltip
               active={monitor.active}
               status={monitor.status}
+              maintenance={monitor.maintenance}
             />
-            <span className="text-muted-foreground/50 text-xs">•</span>
-            <TagBadgeWithTooltip
-              tags={monitor.monitorTagsToMonitors.map(
-                ({ monitorTag }) => monitorTag,
-              )}
-            />
+            {monitor.monitorTagsToMonitors.length > 0 ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <TagBadgeWithTooltip
+                  tags={monitor.monitorTagsToMonitors.map(
+                    ({ monitorTag }) => monitorTag
+                  )}
+                />
+              </>
+            ) : null}
             <span className="text-muted-foreground/50 text-xs">•</span>
             <span className="text-sm">
               every <code>{monitor.periodicity}</code>
             </span>
+            {monitor.public ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <Badge variant="secondary">public</Badge>
+              </>
+            ) : null}
           </div>
         }
       />

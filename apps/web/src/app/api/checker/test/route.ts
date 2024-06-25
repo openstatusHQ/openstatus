@@ -3,13 +3,14 @@ import { z } from "zod";
 
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
 
-import { checkRegion } from "@/app/play/checker/[id]/utils"; // TODO: move into a shared package
+import { checkRegion } from "@/components/ping-response-analysis/utils";
 import { payloadSchema } from "../schema";
 import { isAnInvalidTestUrl } from "../utils";
 
 export const runtime = "edge";
 export const preferredRegion = "auto";
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export function GET() {
   return NextResponse.json({ success: true });

@@ -1,28 +1,40 @@
-/**
- * @deprecated
- */
-export const vercelRegions = [
-  "arn1",
-  "bom1",
-  "cdg1",
-  "cle1",
-  "cpt1",
-  "dub1",
-  "fra1",
-  "gru1",
-  "hkg1",
-  "hnd1",
-  "iad1",
-  "icn1",
-  "kix1",
-  "lhr1",
-  "pdx1",
-  "sfo1",
-  "sin1",
-  "syd1",
+export const flyRegions = [
+  "ams",
+  "arn",
+  "atl",
+  "bog",
+  "bom",
+  "bos",
+  "cdg",
+  "den",
+  "dfw",
+  "ewr",
+  "eze",
+  "fra",
+  "gdl",
+  "gig",
+  "gru",
+  "hkg",
+  "iad",
+  "jnb",
+  "lax",
+  "lhr",
+  "mad",
+  "mia",
+  "nrt",
+  "ord",
+  "otp",
+  "phx",
+  "qro",
+  "scl",
+  "sjc",
+  "sea",
+  "sin",
+  "syd",
+  "waw",
+  "yul",
+  "yyz",
 ] as const;
-
-export const flyRegions = ["ams", "iad", "hkg", "jnb", "syd", "gru"] as const;
 
 export const monitorPeriodicity = [
   "30s",
@@ -35,10 +47,6 @@ export const monitorPeriodicity = [
 ] as const;
 export const monitorMethods = ["GET", "POST", "HEAD"] as const;
 export const monitorStatus = ["active", "error", "degraded"] as const;
-export const monitorRegions = [
-  ...flyRegions,
-  ...vercelRegions,
-  "auto",
-] as const;
+export const monitorRegions = [...flyRegions] as const;
 
 export const monitorJobTypes = ["website", "cron", "other"] as const;

@@ -1,7 +1,4 @@
-import * as React from "react";
 import { useRouter } from "next/navigation";
-import type { Column } from "@tanstack/react-table";
-import { Check, PlusCircle } from "lucide-react";
 
 import {
   Badge,
@@ -18,6 +15,8 @@ import {
   PopoverTrigger,
   Separator,
 } from "@openstatus/ui";
+import type { Column } from "@tanstack/react-table";
+import { Check, PlusCircle } from "lucide-react";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
@@ -126,7 +125,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                   >
                     <div
                       className={cn(
-                        "border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
+                        "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
                           ? "bg-primary text-primary-foreground"
                           : "opacity-50 [&_svg]:invisible",
@@ -135,7 +134,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       <Check className={cn("h-4 w-4")} />
                     </div>
                     {option.icon && (
-                      <option.icon className="text-muted-foreground mr-2 h-4 w-4" />
+                      <option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
                     )}
                     <span>{option.label}</span>
                     {facets?.get(option.value) ? (

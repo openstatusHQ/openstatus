@@ -1,0 +1,61 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.6.2/schema.json",
+  "files": {
+    "ignore": [
+      "packages/ui/src/components/*.tsx",
+      "packages/ui/src/components/*.ts"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "a11y": {
+        "noSvgWithoutTitle": "off"
+      },
+      "correctness": {
+        "noUnusedVariables": "warn"
+      },
+      "nursery": {
+        "useSortedClasses": "error"
+      }
+    },
+    "ignore": [
+      "node_modules",
+      ".next",
+      "dist",
+      ".wrangler",
+      ".react-email",
+      ".contentlayer",
+      "meta"
+    ]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "enabled": true,
+    "lineWidth": 80,
+    "ignore": [
+      "node_modules",
+      ".next",
+      "dist",
+      ".nuxt",
+      ".wrangler",
+      ".react-email",
+      ".contentlayer",
+      "meta"
+    ]
+  },
+  "organizeImports": {
+    "enabled": true,
+    "ignore": [
+      "node_modules",
+      ".next",
+      "dist",
+      ".nuxt",
+      ".wrangler",
+      ".react-email",
+      ".contentlayer"
+    ]
+  }
+}

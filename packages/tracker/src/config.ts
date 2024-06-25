@@ -25,7 +25,7 @@ export const statusDetails: Record<Status, StatusDetails> = {
   [Status.UnderMaintenance]: {
     long: "Under Maintenance",
     short: "Maintenance",
-    variant: "empty",
+    variant: "maintenance",
   },
   [Status.Unknown]: {
     long: "Unknown",
@@ -46,4 +46,5 @@ export const classNames: Record<StatusVariant, string> = {
   down: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
   empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
   incident: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
+  maintenance: "bg-blue-500/90 data-[state=open]:bg-blue-500 border-blue-500",
 };

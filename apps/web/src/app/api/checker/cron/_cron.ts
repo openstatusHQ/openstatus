@@ -1,11 +1,13 @@
-import type { NextRequest } from "next/server";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { NextRequest } from "next/server";
 import { z } from "zod";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, gte, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
+  maintenance,
+  maintenancesToMonitors,
   monitor,
   monitorStatusTable,
   selectMonitorSchema,
@@ -30,6 +32,7 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   req,
 }: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
   const client = new CloudTasksClient({
@@ -42,30 +45,46 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
-  console.log(`Start cron for ${periodicity}`);
   const timestamp = Date.now();
 
-  // const ctx = createTRPCContext({ req, serverSideCall: true });
-  // // FIXME: we should the proper type
-  // ctx.auth = { userId: "cron" } as any;
-  // const caller = edgeRouter.createCaller(ctx);
+  const currentMaintenance = db
+    .select({ id: maintenance.id })
+    .from(maintenance)
+    .where(
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
+    )
+    .as("currentMaintenance");
 
-  // const monitors = await caller.monitor.getMonitorsForPeriodicity({
-  //   periodicity: periodicity,
-  // });
+  const currentMaintenanceMonitors = db
+    .select({ id: maintenancesToMonitors.monitorId })
+    .from(maintenancesToMonitors)
+    .innerJoin(
+      currentMaintenance,
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
+    );
+
   const result = await db
     .select()
     .from(monitor)
-    .where(and(eq(monitor.periodicity, periodicity), eq(monitor.active, true)))
+    .where(
+      and(
+        eq(monitor.periodicity, periodicity),
+        eq(monitor.active, true),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
+    )
     .all();
+
+  console.log(`Start cron for ${periodicity}`);
+
   const monitors = z.array(selectMonitorSchema).parse(result);
   const allResult = [];
 
   for (const row of monitors) {
-    const selectedRegions = row.regions.length > 1 ? row.regions : ["auto"];
+    const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
       .select()
@@ -73,9 +92,6 @@ export const cron = async ({
       .where(eq(monitorStatusTable.monitorId, row.id))
       .all();
     const monitorStatus = z.array(selectMonitorStatusSchema).parse(result);
-    // const monitorStatus = await caller.monitor.getMonitorStatusByMonitorId({
-    //   monitorId: row.id,
-    // });
 
     for (const region of selectedRegions) {
       const status =
@@ -104,9 +120,15 @@ export const cron = async ({
       }
     }
   }
-  await Promise.all(allResult);
 
-  console.log(`End cron for ${periodicity} with ${allResult.length} jobs`);
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  console.log(
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
+  );
 };
 // timestamp needs to be in ms
 const createCronTask = async ({
@@ -146,7 +168,7 @@ const createCronTask = async ({
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: "https://openstatus-checker.fly.dev/checker",
+      url: `https://openstatus-checker.fly.dev/checker?monitor_id=${row.id}`,
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {

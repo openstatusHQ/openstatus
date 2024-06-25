@@ -1,16 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNowStrict } from "date-fns";
+import Link from "next/link";
 
-import type { Incident, Monitor, MonitorTag } from "@openstatus/db/src/schema";
+import type {
+  Incident,
+  Maintenance,
+  Monitor,
+  MonitorTag,
+} from "@openstatus/db/src/schema";
 import type {
   Monitor as MonitorTracker,
   ResponseTimeMetrics,
 } from "@openstatus/tinybird";
 import { Tracker } from "@openstatus/tracker";
 import {
+  Badge,
+  Checkbox,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -20,6 +27,9 @@ import {
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { Bar } from "@/components/tracker/tracker";
+import { isActiveMaintenance } from "@/lib/maintenances/utils";
+
+import { Eye, EyeOff, Radio, View } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<{
@@ -27,22 +37,74 @@ export const columns: ColumnDef<{
   metrics?: ResponseTimeMetrics;
   data?: MonitorTracker[];
   incidents?: Incident[];
+  maintenances?: Maintenance[];
   tags?: MonitorTag[];
 }>[] = [
+  {
+    id: "id",
+    accessorKey: "id",
+    accessorFn: (row) => row.monitor.id,
+  },
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+        className="translate-y-[2px]"
+      />
+    ),
+  },
+  {
+    accessorKey: "active",
+    accessorFn: (row) => row.monitor.active,
+    header: () => (
+      <div className="w-4">
+        <Radio className="h-4 w-4" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const { active, status } = row.original.monitor;
+      const maintenance = isActiveMaintenance(row.original.maintenances);
+      return (
+        <div className="flex w-4 items-center justify-center">
+          <StatusDotWithTooltip
+            active={active}
+            status={status}
+            maintenance={maintenance}
+          />
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "name",
     accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
     header: "Name",
     cell: ({ row }) => {
-      const { active, status, name } = row.original.monitor;
+      const { name, public: _public } = row.original.monitor;
       return (
-        <Link
-          href={`./monitors/${row.original.monitor.id}/overview`}
-          className="group flex max-w-[150px] items-center gap-2 md:max-w-[250px]"
-        >
-          <StatusDotWithTooltip active={active} status={status} />
-          <span className="truncate group-hover:underline">{name}</span>
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`./monitors/${row.original.monitor.id}/overview`}
+            className="group flex max-w-full items-center gap-2"
+          >
+            <span className="truncate group-hover:underline">{name}</span>
+          </Link>
+          {_public ? <Badge variant="secondary">public</Badge> : null}
+        </div>
       );
     },
   },
@@ -53,13 +115,38 @@ export const columns: ColumnDef<{
       const { tags } = row.original;
       return <TagBadgeWithTooltip tags={tags} />;
     },
-    filterFn: (row, id, value) => {
+    filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
-      return value.some(
-        (item) => row.original.tags?.some((tag) => tag.name === item),
+      return value.some((item) =>
+        row.original.tags?.some((tag) => tag.name === item),
       );
+    },
+  },
+  {
+    accessorKey: "public",
+    accessorFn: (row) => row.monitor.public,
+    header: () => (
+      <div className="w-4">
+        <View className="h-4 w-4" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const { public: _public } = row.original.monitor;
+      return (
+        <>
+          {_public ? (
+            <Eye className="h-4 w-4" />
+          ) : (
+            <EyeOff className="h-4 w-4" />
+          )}
+        </>
+      );
+    },
+    filterFn: (row, _id, value) => {
+      if (!Array.isArray(value)) return true;
+      return value.includes(row.original.monitor.public);
     },
   },
   {
@@ -71,6 +158,7 @@ export const columns: ColumnDef<{
       const tracker = new Tracker({
         data: row.original.data?.slice(0, 7).reverse(),
         incidents: row.original.incidents,
+        maintenances: row.original.maintenances,
       });
       return (
         <div className="flex w-24 gap-1">
@@ -91,7 +179,7 @@ export const columns: ColumnDef<{
           addSuffix: true,
         });
         return (
-          <div className="text-muted-foreground flex max-w-[84px] sm:max-w-none">
+          <div className="flex max-w-[84px] text-muted-foreground sm:max-w-none">
             <span className="truncate">{distance}</span>
           </div>
         );
@@ -109,7 +197,7 @@ export const columns: ColumnDef<{
       if (!count || !ok)
         return <span className="text-muted-foreground">-</span>;
       const rounded = Math.round((ok / count) * 10_000) / 100;
-      return <Number value={rounded} suffix="%" />;
+      return <DisplayNumber value={rounded} suffix="%" />;
     },
   },
   {
@@ -119,7 +207,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p50Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -130,7 +218,7 @@ export const columns: ColumnDef<{
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p95Latency;
-      if (latency) return <Number value={latency} suffix="ms" />;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
   },
@@ -159,11 +247,11 @@ function HeaderTooltip({ label, content }: { label: string; content: string }) {
   );
 }
 
-function Number({ value, suffix }: { value: number; suffix: string }) {
+function DisplayNumber({ value, suffix }: { value: number; suffix: string }) {
   return (
     <span className="font-mono">
       {new Intl.NumberFormat("us").format(value).toString()}
-      <span className="text-muted-foreground text-xs font-normal">
+      <span className="font-normal text-muted-foreground text-xs">
         {suffix}
       </span>
     </span>

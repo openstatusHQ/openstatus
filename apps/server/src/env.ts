@@ -1,7 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
-import { flyRegions } from "@openstatus/utils";
+import { flyRegions } from "@openstatus/db/src/schema";
 
 export const env = createEnv({
   server: {
@@ -15,6 +15,7 @@ export const env = createEnv({
     JITSU_WRITE_KEY: z.string().optional(),
     JITSU_HOST: z.string().optional(),
     SCREENSHOT_SERVICE_URL: z.string(),
+    QSTASH_TOKEN: z.string(),
   },
 
   /**

@@ -5,11 +5,13 @@ import { logger } from "hono/logger";
 
 import { checkerRoute } from "./checker";
 import { env } from "./env";
+import { handleError } from "./libs/errors";
 import { publicRoute } from "./public";
 import { api } from "./v1";
 
 const app = new Hono({ strict: false });
 app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
+app.onError(handleError);
 
 /**
  * Public Routes

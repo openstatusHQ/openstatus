@@ -1,10 +1,10 @@
 "use client";
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -26,8 +26,8 @@ import {
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
@@ -59,28 +59,14 @@ export function DataTableRowActions<TData>({
     });
   }
 
-  async function onToggleActive() {
-    startTransition(async () => {
-      try {
-        const { jobType, ...rest } = monitor;
-        if (!monitor.id) return;
-        await api.monitor.toggleMonitorActive.mutate({
-          id: monitor.id,
-        });
-        toastAction("success");
-        router.refresh();
-      } catch {
-        toastAction("error");
-      }
-    });
-  }
-
+  // FIXME: the test doenst take the assertions into account!
+  // FIXME: improve (similar to the one in the edit form - also include toast.promise + better error message!)
   async function onTest() {
     startTransition(async () => {
       const { url, body, method, headers } = monitor;
 
       try {
-        const res = await fetch(`/api/checker/test`, {
+        const res = await fetch("/api/checker/test", {
           method: "POST",
           headers: new Headers({
             "Content-Type": "application/json",
@@ -106,7 +92,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+            className="h-8 w-8 p-0 data-[state=open]:bg-accent"
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
@@ -119,11 +105,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={onTest}>Test endpoint</DropdownMenuItem>
-          <DropdownMenuItem onClick={onToggleActive}>
-            {monitor.active ? "Pause" : "Resume"} monitor
-          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">

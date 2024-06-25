@@ -11,3 +11,6 @@ export * from "./monitor_status";
 export * from "./invitations";
 export * from "./incidents";
 export * from "./monitor_tags";
+export * from "./applications";
+export * from "./maintenances";
+export * from "./check";

@@ -19,11 +19,23 @@ import (
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 
-	unkey "github.com/WilfredAlmeida/unkey-go/features"
 	backoff "github.com/cenkalti/backoff/v4"
 )
 
 type statusCode int
+
+// We should export it
+type PingResponse struct {
+	RequestId   int64          `json:"requestId,omitempty"`
+	WorkspaceId int64          `json:"workspaceId,omitempty"`
+	Status      int            `json:"status,omitempty"`
+	Latency     int64          `json:"latency"`
+	Body        string         `json:"body,omitempty"`
+	Headers     string         `json:"headers,omitempty"`
+	Time        int64          `json:"time"`
+	Timing      checker.Timing `json:"timing"`
+	Region      string         `json:"region"`
+}
 
 func (s statusCode) IsSuccessful() bool {
 	return s >= 200 && s < 300
@@ -61,7 +73,7 @@ func main() {
 	router := gin.New()
 	router.POST("/checker", func(c *gin.Context) {
 		ctx := c.Request.Context()
-
+		dataSourceName := "ping_response__v8"
 		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
@@ -112,7 +124,6 @@ func main() {
 					if err != nil {
 						// handle error
 						return fmt.Errorf("unable to unmarshal assertion: %w", err)
-
 					}
 					switch assert.AssertionType {
 					case request.AssertionHeader:
@@ -205,7 +216,7 @@ func main() {
 				}
 			}
 
-			if err := tinybirdClient.SendEvent(ctx, res); err != nil {
+			if err := tinybirdClient.SendEvent(ctx, res, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
@@ -224,7 +235,7 @@ func main() {
 				Error:         1,
 				Assertions:    assertionAsString,
 				Body:          "",
-			}); err != nil {
+			}, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
 
@@ -248,6 +259,7 @@ func main() {
 	})
 
 	router.POST("/ping/:region", func(c *gin.Context) {
+		dataSourceName := "check_response__v1"
 		region := c.Param("region")
 		if region == "" {
 			c.String(http.StatusBadRequest, "region is required")
@@ -255,24 +267,9 @@ func main() {
 		}
 		fmt.Printf("Start of /ping/%s\n", region)
 
-		apiKey := c.GetHeader("x-openstatus-key")
-
-		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) && apiKey == "" {
+		if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", cronSecret) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
-		}
-		if apiKey != "" {
-			response, err := unkey.KeyVerify(apiKey)
-			if err != nil {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-				return
-			}
-
-			if !response.Valid {
-				fmt.Println("Key is not valid valid")
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
-			}
 		}
 
 		if region != flyRegion {
@@ -298,7 +295,32 @@ func main() {
 			if err != nil {
 				return fmt.Errorf("unable to ping: %w", err)
 			}
+
+			r.Region = flyRegion
+
+			headersAsString, err := json.Marshal(r.Headers)
+			if err != nil {
+				return nil
+			}
+
+			tbData := PingResponse{
+				RequestId:   req.RequestId,
+				WorkspaceId: req.WorkspaceId,
+				Status:      r.Status,
+				Latency:     r.Latency,
+				Body:        r.Body,
+				Headers:     string(headersAsString),
+				Time:        r.Time,
+				Timing:      r.Timing,
+				Region:      r.Region,
+			}
+
 			res = r
+			if tbData.RequestId != 0 {
+				if err := tinybirdClient.SendEvent(ctx, tbData, dataSourceName); err != nil {
+					log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+				}
+			}
 			return nil
 		}
 		if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {

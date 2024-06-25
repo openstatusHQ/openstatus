@@ -18,7 +18,7 @@ export default function NotFound() {
           <Shell>
             <div className="flex flex-col gap-4 p-6 sm:p-12">
               <div className="flex flex-col gap-2">
-                <p className="text-muted-foreground font-medium sm:text-lg">
+                <p className="font-medium text-muted-foreground sm:text-lg">
                   404 Page not found
                 </p>
                 <h2 className="font-cal text-2xl sm:text-3xl">

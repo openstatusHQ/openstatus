@@ -4,25 +4,32 @@ import { logger } from "hono/logger";
 
 import type { Limits } from "@openstatus/plans/src/types";
 
+import { handleError, handleZodError } from "../libs/errors";
+import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
 import { middleware } from "./middleware";
-import { monitorApi } from "./monitor";
-import { notificationApi } from "./notification";
-import { pageApi } from "./page";
-import { statusReportApi } from "./statusReport";
-import { statusReportUpdateApi } from "./statusReportUpdate";
+import { monitorsApi } from "./monitors";
+import { notificationsApi } from "./notifications";
+import { pageSubscribersApi } from "./pageSubscribers";
+import { pagesApi } from "./pages";
+import { statusReportUpdatesApi } from "./statusReportUpdates";
+import { statusReportsApi } from "./statusReports";
 
 export type Variables = {
   workspaceId: string;
   workspacePlan: {
-    title: string;
+    title: "Hobby" | "Starter" | "Growth" | "Pro";
     description: string;
     price: number;
     limits: Limits;
   };
 };
 
-export const api = new OpenAPIHono<{ Variables: Variables }>();
+export const api = new OpenAPIHono<{ Variables: Variables }>({
+  defaultHook: handleZodError,
+});
+
+api.onError(handleError);
 
 api.use("/openapi", cors());
 
@@ -39,10 +46,15 @@ api.doc("/openapi", {
  */
 api.use("/*", middleware);
 api.use("/*", logger());
-api.route("/incident", incidentsApi);
-api.route("/monitor", monitorApi);
-api.route("/notification", notificationApi);
-api.route("/page", pageApi);
 
-api.route("/status_report", statusReportApi);
-api.route("/status_report_update", statusReportUpdateApi);
+/**
+ * Routes
+ */
+api.route("/incident", incidentsApi);
+api.route("/monitor", monitorsApi);
+api.route("/notification", notificationsApi);
+api.route("/page", pagesApi);
+api.route("/page_subscriber", pageSubscribersApi);
+api.route("/status_report", statusReportsApi);
+api.route("/status_report_update", statusReportUpdatesApi);
+api.route("/check", checkAPI);

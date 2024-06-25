@@ -1,5 +1,5 @@
-import { headers } from "next/headers";
 import { format, getTimezoneOffset, utcToZonedTime } from "date-fns-tz";
+import { headers } from "next/headers";
 
 export function getRequestHeaderTimezone() {
   const headersList = headers();
@@ -26,7 +26,7 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 
   const msOffset = getTimezoneOffset(timezone);
 
-  if (isNaN(msOffset)) return "Etc/UTC";
+  if (Number.isNaN(msOffset)) return "Etc/UTC";
 
   const hrOffset = Math.round(msOffset / (1000 * 60 * 60)); // avoid weird 30min timezones
   const offset = hrOffset >= 0 ? `-${hrOffset}` : `+${Math.abs(hrOffset)}`;
@@ -36,6 +36,18 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
 
 export function getServerTimezoneFormat() {
   return format(new Date(), "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
+}
+
+export function formatDate(date: Date) {
+  return format(date, "LLL dd, y", { timeZone: "UTC" });
+}
+
+export function formatDateTime(date: Date) {
+  return format(date, "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
+}
+
+export function formatTime(date: Date) {
+  return format(date, "HH:mm:ss zzz", { timeZone: "UTC" });
 }
 
 /**
@@ -79,11 +91,10 @@ export function getClosestTimezone(defaultTimezone?: string) {
           timezone: curr,
           minDifference: timeDifferences[curr as keyof typeof timeDifferences],
         };
-      } else {
-        return prev;
       }
+      return prev;
     },
-    { timezone: "UTC", minDifference: Infinity },
+    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY },
   );
 
   return closestTimezone.timezone as keyof typeof timeDifferences;

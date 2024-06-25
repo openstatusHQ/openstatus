@@ -1,7 +1,51 @@
 import * as z from "zod";
+import { monitorFlyRegionSchema } from "../../db/src/schema/monitors/validation";
+import type { flyRegions } from "../../db/src/schema/monitors/constants";
 
-import { flyRegions } from "@openstatus/utils";
+export const tbIngestWebVitals = z.object({
+  dsn: z.string(),
+  href: z.string(),
+  speed: z.string(),
+  path: z.string(),
+  screen: z.string(),
+  name: z.string(),
+  rating: z.string().optional(),
+  value: z.number(),
+  id: z.string(),
+  session_id: z.string(),
+  browser: z.string().default(""),
+  city: z.string().default(""),
+  country: z.string().default(""),
+  continent: z.string().default(""),
+  device: z.string().default(""),
+  region_code: z.string().default(""),
+  timezone: z.string().default(""),
+  os: z.string(),
+  timestamp: z.number().int(),
+});
 
+export const responseRumPageQuery = z.object({
+  path: z.string(),
+  totalSession: z.number(),
+  cls: z.number(),
+  fcp: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
+});
+
+export const sessionRumPageQuery = z.object({
+  session_id: z.string(),
+  cls: z.number(),
+  fcp: z.number(),
+  // fid: z.number(),
+  inp: z.number(),
+  lcp: z.number(),
+  ttfb: z.number(),
+});
+
+export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
 /**
  * Values for the datasource ping_response
  */
@@ -48,7 +92,7 @@ export const tbBuildResponseList = z.object({
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),
-  region: z.enum(flyRegions),
+  region: monitorFlyRegionSchema,
   message: z.string().nullable().optional(),
   assertions: z.string().nullable().optional(),
 });
@@ -62,7 +106,7 @@ export const tbParameterResponseList = z.object({
   fromDate: z.number().int().default(0), // always start from a date
   toDate: z.number().int().optional(),
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
-  region: z.enum(flyRegions).optional(),
+  region: monitorFlyRegionSchema.optional(),
   cronTimestamp: z.number().int().optional(),
 });
 
@@ -130,7 +174,7 @@ export const latencyMetrics = z.object({
  */
 export const tbBuildResponseGraph = z
   .object({
-    region: z.enum(flyRegions),
+    region: monitorFlyRegionSchema,
     timestamp: z.number().int(),
   })
   .merge(latencyMetrics);
@@ -235,7 +279,7 @@ export const tbParameterResponseTimeMetricsByRegion = z.object({
  */
 export const tbBuildResponseTimeMetricsByRegion = z
   .object({
-    region: z.enum(flyRegions),
+    region: monitorFlyRegionSchema,
   })
   .merge(latencyMetrics);
 

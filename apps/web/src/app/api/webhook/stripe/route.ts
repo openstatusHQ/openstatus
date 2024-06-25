@@ -1,6 +1,6 @@
-import type { NextRequest } from "next/server";
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import type { NextRequest } from "next/server";
 
 import { createTRPCContext } from "@openstatus/api";
 import { lambdaRouter, stripe } from "@openstatus/api/src/lambda";
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     /**
      * Forward to tRPC API to handle the webhook event
      */
-    const ctx = createTRPCContext({ req });
+    const ctx = await createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
     switch (event.type) {

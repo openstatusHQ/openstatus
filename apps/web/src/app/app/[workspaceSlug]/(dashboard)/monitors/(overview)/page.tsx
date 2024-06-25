@@ -1,5 +1,6 @@
-import * as React from "react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
@@ -10,14 +11,45 @@ import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
-
-// import { RefreshWidget } from "../_components/refresh-widget";
+import { DataTableWrapper } from "../[id]/data/_components/data-table-wrapper";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
-export default async function MonitorPage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+/**
+ * allowed URL search params
+ */
+const searchParamsSchema = z.object({
+  tags: z
+    .string()
+    .transform((v) => v?.split(","))
+    .optional(),
+  public: z
+    .string()
+    .transform((v) =>
+      v?.split(",").map((v) => {
+        if (v === "true") return true;
+        if (v === "false") return false;
+        return undefined;
+      })
+    )
+    .optional(),
+  pageSize: z.coerce.number().optional().default(10),
+  pageIndex: z.coerce.number().optional().default(0),
+});
+
+export default async function MonitorPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const search = searchParamsSchema.safeParse(searchParams);
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   const isLimitReached = await api.monitor.isMonitorLimitReached.query();
+
+  if (!search.success) return notFound();
 
   if (monitors?.length === 0)
     return (
@@ -33,48 +65,64 @@ export default async function MonitorPage() {
       />
     );
 
-  const _incidents = await api.incident.getIncidentsByWorkspace.query();
+  const _incidents = await api.incident.getIncidentsByWorkspace.query(); // TODO: filter by last 7 days
   const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
+  const _maintenances = await api.maintenance.getLast7DaysByWorkspace.query();
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
-      const metrics = await tb.endpointMetrics("1d")({
-        monitorId: String(monitor.id),
-      });
+      const metrics = await tb.endpointMetrics("1d")(
+        {
+          monitorId: String(monitor.id),
+        },
+        { cache: "no-store", revalidate: 0 }
+      );
 
-      const data = await tb.endpointStatusPeriod("7d")({
-        monitorId: String(monitor.id),
-      });
+      const data = await tb.endpointStatusPeriod("7d")(
+        {
+          monitorId: String(monitor.id),
+        },
+        { cache: "no-store", revalidate: 0 }
+      );
 
       const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id,
+        (incident) => incident.monitorId === monitor.id
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag,
+        ({ monitorTag }) => monitorTag
       );
 
-      return { monitor, metrics: current, data, incidents, tags };
-    }),
-  );
+      const maintenances = _maintenances.filter((maintenance) =>
+        maintenance.monitors.includes(monitor.id)
+      );
 
-  // const lastCronTimestamp = monitorsWithData?.reduce((prev, acc) => {
-  //   const lastTimestamp = acc.metrics?.lastTimestamp || 0;
-  //   if (lastTimestamp > prev) return lastTimestamp;
-  //   return prev;
-  // }, 0);
+      return { monitor, metrics: current, data, incidents, maintenances, tags };
+    })
+  );
 
   return (
     <>
-      <DataTable columns={columns} data={monitorsWithData} tags={tags} />
+      <DataTable
+        defaultColumnFilters={[
+          { id: "tags", value: search.data.tags },
+          { id: "public", value: search.data.public },
+        ].filter((v) => v.value !== undefined)}
+        columns={columns}
+        data={monitorsWithData}
+        tags={tags}
+        defaultPagination={{
+          pageIndex: search.data.pageIndex,
+          pageSize: search.data.pageSize,
+        }}
+      />
       {isLimitReached ? <Limit /> : null}
-      {/* <RefreshWidget defaultValue={lastCronTimestamp} /> */}
     </>
   );
 }

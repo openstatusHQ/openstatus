@@ -8,8 +8,8 @@
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "jsonpath-plus": "7.2.0",
-    "typescript": "5.4.2",
-    "zod": "3.22.2"
+    "typescript": "5.4.5",
+    "zod": "3.22.4"
   },
   "keywords": [],
   "author": "",

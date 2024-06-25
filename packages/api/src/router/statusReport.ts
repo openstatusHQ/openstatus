@@ -6,8 +6,8 @@ import {
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   pageSubscriber,
+  pagesToStatusReports,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -176,7 +176,7 @@ export const statusReportRouter = createTRPCRouter({
             .includes(x),
       );
 
-      if (Boolean(addedMonitors.length)) {
+      if (addedMonitors.length) {
         const values = addedMonitors.map((monitorId) => ({
           monitorId: monitorId,
           statusReportId: currentStatusReport.id,
@@ -189,7 +189,7 @@ export const statusReportRouter = createTRPCRouter({
         .map(({ monitorId }) => monitorId)
         .filter((x) => !monitors?.includes(x));
 
-      if (Boolean(removedMonitors.length)) {
+      if (removedMonitors.length) {
         await opts.ctx.db
           .delete(monitorsToStatusReport)
           .where(
@@ -212,7 +212,7 @@ export const statusReportRouter = createTRPCRouter({
           !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
       );
 
-      if (Boolean(addedPages.length)) {
+      if (addedPages.length) {
         const values = addedPages.map((pageId) => ({
           pageId,
           statusReportId: currentStatusReport.id,
@@ -225,7 +225,7 @@ export const statusReportRouter = createTRPCRouter({
         .map(({ pageId }) => pageId)
         .filter((x) => !pages?.includes(x));
 
-      if (Boolean(removedPages.length)) {
+      if (removedPages.length) {
         await opts.ctx.db
           .delete(pagesToStatusReports)
           .where(
@@ -393,7 +393,9 @@ export const statusReportRouter = createTRPCRouter({
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
-          statusReportUpdates: true,
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
         },
       });
 

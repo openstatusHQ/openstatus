@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useMemo, useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -13,8 +13,11 @@ import { insertNotificationSchema } from "@openstatus/db/src/schema";
 import { Button, Form } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
+import { SchemaError } from "@openstatus/error";
+import { TRPCClientError } from "@trpc/client";
+import { ZodError, type ZodIssue } from "zod";
 import { SaveButton } from "../shared/save-button";
 import {
   getDefaultProviderData,
@@ -79,8 +82,9 @@ export function NotificationForm({
         }
         router.refresh();
         toastAction("saved");
-      } catch {
-        toastAction("error");
+      } catch (e) {
+        if (e instanceof TRPCClientError) toast.error(e.message);
+        else toastAction("error");
       } finally {
         onExternalSubmit?.();
       }

@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 
 import { selectUserSchema } from "@openstatus/db/src/schema";
 import {
@@ -59,7 +59,7 @@ export function DataTableRowActions<TData>({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="data-[state=open]:bg-accent h-8 w-8 p-0"
+            className="h-8 w-8 p-0 data-[state=open]:bg-accent"
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />

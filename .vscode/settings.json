@@ -1,15 +1,9 @@
 {
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit"
-  },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {},
+  "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
-  "eslint.rules.customizations": [{ "rule": "*", "severity": "warn" }],
-  "eslint.workingDirectories": [
-    { "pattern": "apps/*/" },
-    { "pattern": "packages/*/" }
-  ],
   "typescript.tsdk": "node_modules/typescript/lib",
+
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "[dotenv]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"

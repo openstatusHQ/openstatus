@@ -1,5 +1,5 @@
-import React from "react";
 import { Send } from "lucide-react";
+import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import { deserialize } from "@openstatus/assertions";
@@ -7,6 +7,7 @@ import type {
   InsertMonitor,
   MonitorFlyRegion,
 } from "@openstatus/db/src/schema";
+import { flyRegions } from "@openstatus/db/src/schema";
 import {
   Button,
   Dialog,
@@ -23,18 +24,19 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { flyRegions, flyRegionsDict } from "@openstatus/utils";
+import { flyRegionsDict } from "@openstatus/utils";
 
-import { RegionInfo } from "@/app/play/checker/[id]/_components/region-info";
-import { ResponseDetailTabs } from "@/app/play/checker/[id]/_components/response-detail-tabs";
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
+import { RegionInfo } from "@/components/ping-response-analysis/region-info";
+import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
+import { getLimit } from "@openstatus/plans";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   pingEndpoint(
-    region?: MonitorFlyRegion,
+    region?: MonitorFlyRegion
   ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
@@ -75,21 +77,23 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
 
   const { statusAssertions, headerAssertions } = form.getValues();
 
+  const regions = getLimit("free", "regions");
+
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
-      <div className="ring-offset-background focus-within:ring-ring group flex h-10 items-center rounded-md bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+      <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <Select
           value={value}
           onValueChange={(value: MonitorFlyRegion) => setValue(value)}
         >
           <SelectTrigger
-            className="border-accent flex-1 rounded-r-none focus:ring-0"
+            className="flex-1 rounded-r-none border-accent focus:ring-0"
             aria-label={value}
           >
             <SelectValue>{flag}</SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {flyRegions.map((region) => {
+            {regions.map((region) => {
               const { flag } = flyRegionsDict[region];
               return (
                 <SelectItem key={region} value={region}>
@@ -133,11 +137,12 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
             <ResponseDetailTabs
               timing={check.data.timing}
               headers={check.data.headers}
+              status={check.data.status}
               assertions={deserialize(
                 JSON.stringify([
                   ...(statusAssertions || []),
                   ...(headerAssertions || []),
-                ]),
+                ])
               )}
             />
           </div>

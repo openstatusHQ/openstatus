@@ -54,6 +54,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
       <FormField
         control={form.control}
         name="notifications"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>
@@ -63,7 +64,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                   Select the notification channels you want to be informed.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
                 {notifications?.map((item) => (
                   <FormField
                     key={item.id}
@@ -75,6 +76,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                           <FormControl className="h-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name={"notification"}
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked

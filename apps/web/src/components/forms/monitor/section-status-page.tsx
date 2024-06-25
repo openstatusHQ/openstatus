@@ -57,6 +57,7 @@ export function SectionStatusPage({ form, pages }: Props) {
       <FormField
         control={form.control}
         name="pages"
+        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
             <FormItem>
@@ -66,7 +67,7 @@ export function SectionStatusPage({ form, pages }: Props) {
                   Select the pages where you want to display the monitor.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
                 {pages?.map((item) => (
                   <FormField
                     key={item.id}
@@ -78,6 +79,7 @@ export function SectionStatusPage({ form, pages }: Props) {
                           <FormControl className="h-full">
                             <CheckboxLabel
                               id={String(item.id)}
+                              name="page"
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked

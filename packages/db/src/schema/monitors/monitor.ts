@@ -6,6 +6,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { maintenancesToMonitors } from "../maintenances";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
@@ -49,6 +50,8 @@ export const monitor = sqliteTable("monitor", {
 
   assertions: text("assertions"),
 
+  public: integer("public", { mode: "boolean" }).default(false),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
@@ -68,6 +71,7 @@ export const monitorRelation = relations(monitor, ({ one, many }) => ({
     references: [workspace.id],
   }),
   monitorsToNotifications: many(notificationsToMonitors),
+  maintenancesToMonitors: many(maintenancesToMonitors),
 }));
 
 export const monitorsToPages = sqliteTable(
@@ -82,6 +86,7 @@ export const monitorsToPages = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),
+    order: integer("order").default(0),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),

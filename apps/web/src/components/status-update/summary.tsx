@@ -14,25 +14,21 @@ export function Summary({
   monitors,
 }: {
   report: StatusReport & { statusReportUpdates: StatusReportUpdate[] };
-  monitors: Pick<Monitor, "name">[];
+  monitors: Pick<Monitor, "name" | "id">[];
 }) {
-  const sortedStatusReportUpdates = report.statusReportUpdates.sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
-
-  const firstUpdate = sortedStatusReportUpdates?.[0];
+  const firstUpdate = report.statusReportUpdates?.[0];
   const lastUpdate =
-    sortedStatusReportUpdates?.[sortedStatusReportUpdates.length - 1];
+    report.statusReportUpdates?.[report.statusReportUpdates.length - 1];
 
   return (
     <div className="grid grid-cols-5 gap-3 text-sm">
-      <p className="text-muted-foreground col-start-1">Started</p>
+      <p className="col-start-1 text-muted-foreground">Started</p>
       <p className="col-span-4">
         {firstUpdate ? (
           <code>{format(new Date(firstUpdate.date), "LLL dd, y HH:mm")}</code>
         ) : null}
       </p>
-      <p className="text-muted-foreground col-start-1">Status</p>
+      <p className="col-start-1 text-muted-foreground">Status</p>
       <div className="col-span-4 flex items-center gap-2">
         <StatusBadge status={report.status} />
         {firstUpdate && lastUpdate && report.status === "resolved" ? (
@@ -41,11 +37,11 @@ export function Summary({
           </span>
         ) : null}
       </div>
-      <p className="text-muted-foreground col-start-1">Affected</p>
-      <ul role="list" className="col-span-4 flex gap-2">
+      <p className="col-start-1 text-muted-foreground">Affected</p>
+      <ul className="col-span-4 flex gap-2">
         {monitors.length > 0 ? (
-          monitors.map(({ name }, i) => (
-            <li key={i} className="text-xs">
+          monitors.map(({ name, id }) => (
+            <li key={id} className="text-xs">
               <Badge variant="outline">{name}</Badge>
             </li>
           ))

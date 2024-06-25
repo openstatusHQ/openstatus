@@ -11,7 +11,7 @@ import {
 } from "./validation";
 
 // REMINDER:
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY! });
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
 
 export const publishPingResponse = tb.buildIngestEndpoint({
   datasource: "ping_response__v6",
@@ -28,7 +28,9 @@ export function getMonitorList(tb: Tinybird) {
     data: tbBuildMonitorList,
     opts: {
       // cache: "no-store",
-      revalidate: 600, // 10 min cache
+      next: {
+        revalidate: 600, // 10 min cache
+      },
     },
   });
 }
@@ -42,7 +44,9 @@ export function getHomeStats(tb: Tinybird) {
     parameters: tbParameterHomeStats,
     data: tbBuildHomeStats,
     opts: {
-      revalidate: 86400, // 60 * 60 * 24 = 86400s = 1d
+      next: {
+        revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
+      },
     },
   });
 }

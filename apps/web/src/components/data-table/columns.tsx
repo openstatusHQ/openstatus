@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
-import { regionsDict } from "@openstatus/utils";
+import { flyRegionsDict } from "@openstatus/utils";
 
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
@@ -61,7 +61,7 @@ export const columns: ColumnDef<Ping>[] = [
               <DataTableStatusBadge {...{ statusCode }} />
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-muted-foreground max-w-xs sm:max-w-sm">
+              <p className="max-w-xs text-muted-foreground sm:max-w-sm">
                 {message}
               </p>
             </TooltipContent>
@@ -82,9 +82,9 @@ export const columns: ColumnDef<Ping>[] = [
     filterFn: (row, id, value) => {
       const { select, input } = value || {};
       if (select === "min" && input)
-        return parseInt(row.getValue(id)) > parseInt(input);
+        return Number.parseInt(row.getValue(id)) > Number.parseInt(input);
       if (select === "max" && input)
-        return parseInt(row.getValue(id)) < parseInt(input);
+        return Number.parseInt(row.getValue(id)) < Number.parseInt(input);
       return true;
     },
   },
@@ -98,7 +98,7 @@ export const columns: ColumnDef<Ping>[] = [
         <div>
           <span className="font-mono">{String(row.getValue("region"))} </span>
           <span className="text-muted-foreground text-xs">
-            {regionsDict[row.original.region]?.location}
+            {flyRegionsDict[row.original.region]?.location}
           </span>
         </div>
       );

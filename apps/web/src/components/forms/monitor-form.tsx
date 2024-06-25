@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown, Wand2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import * as React from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import type {
@@ -17,6 +17,7 @@ import {
   monitorMethods,
   monitorMethodsSchema,
   monitorPeriodicitySchema,
+  workspacePlans,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 import {
@@ -62,9 +63,9 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -103,9 +104,8 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions:
-        defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      regions: defaultValues?.regions || getLimit("free", "regions"),
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -137,7 +137,7 @@ export function MonitorForm({
       }
       router.refresh();
       toastAction("saved");
-    } catch (error) {
+    } catch (_error) {
       toastAction("error");
     }
   };
@@ -159,7 +159,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -178,7 +178,7 @@ export function MonitorForm({
 
   const pingEndpoint = async () => {
     const { url, body, method, headers } = form.getValues();
-    const res = await fetch(`/api/checker/test`, {
+    const res = await fetch("/api/checker/test", {
       method: "POST",
       headers: new Headers({
         "Content-Type": "application/json",
@@ -228,7 +228,7 @@ export function MonitorForm({
         >
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="my-1.5 flex flex-col gap-2">
-              <p className="text-sm font-semibold leading-none">
+              <p className="font-semibold text-sm leading-none">
                 Endpoint Check
               </p>
               <p className="text-muted-foreground text-sm">
@@ -284,7 +284,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       Custom Request
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -423,7 +423,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">
+                    <p className="font-semibold text-sm leading-none">
                       More Configurations
                     </p>
                     <p className="text-muted-foreground text-sm">
@@ -441,7 +441,7 @@ export function MonitorForm({
                           <Select
                             onValueChange={(value) =>
                               field.onChange(
-                                monitorPeriodicitySchema.parse(value),
+                                monitorPeriodicitySchema.parse(value)
                               )
                             }
                             defaultValue={field.value}
@@ -494,7 +494,7 @@ export function MonitorForm({
                                     role="combobox"
                                     className={cn(
                                       "h-10 w-full justify-between",
-                                      !field.value && "text-muted-foreground",
+                                      !field.value && "text-muted-foreground"
                                     )}
                                   >
                                     {renderText()}
@@ -526,9 +526,9 @@ export function MonitorForm({
                                                 "regions",
                                                 currentRegions.includes(code)
                                                   ? currentRegions.filter(
-                                                      (r) => r !== code,
+                                                      (r) => r !== code
                                                     )
-                                                  : [...currentRegions, code],
+                                                  : [...currentRegions, code]
                                               );
                                             }}
                                           >
@@ -537,13 +537,13 @@ export function MonitorForm({
                                                 "mr-2 h-4 w-4",
                                                 isSelected
                                                   ? "opacity-100"
-                                                  : "opacity-0",
+                                                  : "opacity-0"
                                               )}
                                             />
                                             {location}
                                           </CommandItem>
                                         );
-                                      },
+                                      }
                                     )}
                                   </CommandGroup>
                                 </Command>
@@ -608,7 +608,7 @@ export function MonitorForm({
               <AccordionContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div className="my-1.5 flex flex-col gap-2">
-                    <p className="text-sm font-semibold leading-none">Alerts</p>
+                    <p className="font-semibold text-sm leading-none">Alerts</p>
                     <p className="text-muted-foreground text-sm">
                       How do you want to get informed if things break?
                     </p>
@@ -650,8 +650,8 @@ export function MonitorForm({
                                               ])
                                             : field.onChange(
                                                 field.value?.filter(
-                                                  (value) => value !== item.id,
-                                                ),
+                                                  (value) => value !== item.id
+                                                )
                                               );
                                         }}
                                       />

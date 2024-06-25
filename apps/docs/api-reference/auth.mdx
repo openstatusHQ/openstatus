@@ -9,7 +9,7 @@ On every request to `https://api.openstatus.dev/v1`, you'll have to attach the
 token to the header.
 
 ```ts
-const monitors = await fetch(`https://api.openstatus.dev/v1/monitors`, {
+const monitors = await fetch(`https://api.openstatus.dev/v1/monitor`, {
   method: "GET",
   headers: new Headers({
     "x-openstatus-key": "os_xxxxxxxxx",
@@ -22,4 +22,3 @@ Use the above snippet to try it out.
 We currently do not have an SDK to make the best out of it. Any contributions
 are welcome.
 
-The API infrastructure is powered by [Unkey](https://unkey.dev).

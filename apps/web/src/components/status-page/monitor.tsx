@@ -2,6 +2,7 @@ import type { z } from "zod";
 
 import type {
   Incident,
+  Maintenance,
   PublicMonitor,
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
@@ -16,10 +17,12 @@ export const Monitor = async ({
   monitor,
   statusReports,
   incidents,
+  maintenances,
 }: {
   monitor: PublicMonitor;
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
+  maintenances: Maintenance[];
 }) => {
   const data = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitor.id),
@@ -34,6 +37,7 @@ export const Monitor = async ({
       data={data}
       reports={statusReports}
       incidents={incidents}
+      maintenances={maintenances}
       {...monitor}
     />
   );

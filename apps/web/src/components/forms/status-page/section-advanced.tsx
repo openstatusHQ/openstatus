@@ -1,9 +1,9 @@
 "use client";
 
+import type { PutBlobResult } from "@vercel/blob";
+import Image from "next/image";
 import * as React from "react";
 import { useRef } from "react";
-import Image from "next/image";
-import type { PutBlobResult } from "@vercel/blob";
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertPage } from "@openstatus/db/src/schema";
@@ -76,6 +76,7 @@ export function SectionAdvanced({ form }: Props) {
   };
 
   const handleCancel = () => {
+    // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
     inputFileRef.current?.value && (inputFileRef.current.value = "");
   };
 
@@ -132,7 +133,7 @@ export function SectionAdvanced({ form }: Props) {
                 )}
                 {field.value && (
                   <div className="flex items-center">
-                    <div className="border-border h-10 w-10 rounded-sm border p-1">
+                    <div className="h-10 w-10 rounded-sm border border-border p-1">
                       <Image
                         src={field.value}
                         width={64}

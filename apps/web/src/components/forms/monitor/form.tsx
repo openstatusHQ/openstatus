@@ -1,9 +1,10 @@
 "use client";
 
-import * as React from "react";
-import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { usePathname, useRouter } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
+import { getLimit } from "@openstatus/plans";
 
 import * as assertions from "@openstatus/assertions";
 import type {
@@ -14,10 +15,9 @@ import type {
   Page,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { flyRegions, insertMonitorSchema } from "@openstatus/db/src/schema";
+import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
-import type { RegionChecker } from "@/app/play/checker/[id]/utils";
 import {
   Tabs,
   TabsContent,
@@ -25,6 +25,7 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
@@ -72,9 +73,8 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions:
-        defaultValues?.regions || (flyRegions as Writeable<typeof flyRegions>),
-      headers: Boolean(defaultValues?.headers?.length)
+      regions: defaultValues?.regions || getLimit("free", "regions"),
+      headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
       body: defaultValues?.body ?? "",
@@ -82,48 +82,64 @@ export function MonitorForm({
       notifications: defaultValues?.notifications ?? [],
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
+      public: defaultValues?.public ?? false,
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
     },
   });
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = React.useTransition();
+  const [isPending, setPending] = React.useState(false);
   const [pingFailed, setPingFailed] = React.useState(false);
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
+    if (defaultValues) {
+      await api.monitor.update.mutate(props);
+    } else {
+      await api.monitor.create.mutate(props);
+    }
+    if (nextUrl) {
+      router.push(nextUrl);
+    }
+    // to reset the `isDirty` state of them form while keeping the values for optimistic UI
+    form.reset(undefined, { keepValues: true });
+    router.refresh();
+  };
+
+  const handleForceDataUpdateOrInsertion = async (props: InsertMonitor) => {
     try {
-      if (defaultValues) {
-        await api.monitor.update.mutate(props);
-      } else {
-        await api.monitor.create.mutate(props);
-      }
-      if (nextUrl) {
-        router.push(nextUrl);
-      }
-      // to reset the `isDirty` state of them form while keeping the values for optimistic UI
-      form.reset(undefined, { keepValues: true });
-      router.refresh();
+      handleDataUpdateOrInsertion(props);
       toastAction("saved");
-    } catch (error) {
+    } catch (_error) {
       toastAction("error");
     }
   };
 
   const onSubmit = ({ ...props }: InsertMonitor) => {
-    startTransition(async () => {
-      try {
+    toast.promise(
+      async () => {
+        setPending(true);
         const { error } = await pingEndpoint();
         if (error) {
           setPingFailed(true);
-          toast.error(error);
-          return;
+          throw new Error(error);
         }
         await handleDataUpdateOrInsertion(props);
-      } catch {
-        toastAction("error");
+      },
+      {
+        loading: "Checking the endpoint before saving...",
+        success: () => "Endpoint is working fine. Saved!",
+        error: (error: Error) => {
+          if (error instanceof Error) return error.message;
+          return "Endpoint is not working.";
+        },
+        finally: () => {
+          setPending(false);
+        },
       }
-    });
+    );
   };
 
   const validateJSON = (value?: string) => {
@@ -132,7 +148,7 @@ export function MonitorForm({
       const obj = JSON.parse(value) as Record<string, unknown>;
       form.clearErrors("body");
       return obj;
-    } catch (e) {
+    } catch (_e) {
       form.setError("body", {
         message: "Not a valid JSON object",
       });
@@ -152,7 +168,7 @@ export function MonitorForm({
         }
       }
 
-      const res = await fetch(`/api/checker/test`, {
+      const res = await fetch("/api/checker/test", {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",
@@ -171,12 +187,13 @@ export function MonitorForm({
         JSON.stringify([
           ...(statusAssertions || []),
           ...(headerAssertions || []),
-        ]),
+        ])
       );
 
       const data = (await res.json()) as RegionChecker;
 
       const _headers: Record<string, string> = {};
+      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
       res.headers.forEach((value, key) => (_headers[key] = value));
 
       if (as.length > 0) {
@@ -206,7 +223,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT,
+            ABORT_TIMEOUT
           )}.`,
         };
       }
@@ -286,7 +303,7 @@ export function MonitorForm({
             </TabsContent>
             {defaultValues?.id ? (
               <TabsContent value="danger">
-                <SectionDanger monitorId={defaultValues.id} />
+                <SectionDanger monitorId={defaultValues.id} {...{ form }} />
               </TabsContent>
             ) : null}
           </Tabs>
@@ -303,7 +320,7 @@ export function MonitorForm({
       <FailedPingAlertConfirmation
         monitor={form.getValues()}
         {...{ pingFailed, setPingFailed }}
-        onConfirm={handleDataUpdateOrInsertion}
+        onConfirm={handleForceDataUpdateOrInsertion}
       />
     </>
   );

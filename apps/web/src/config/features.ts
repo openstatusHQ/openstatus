@@ -37,7 +37,7 @@ export const cardConfig = {
         icon: "globe",
         catchline: "Latency Monitoring.",
         description:
-          "Monitor the latency of your endpoints from all over the world. We currently support all the continents.",
+          "Monitor the latency of your endpoints from all over the world. We support all the continents.",
       },
       {
         icon: "play",
@@ -62,7 +62,7 @@ export const cardConfig = {
         icon: "puzzle",
         catchline: "Build trust",
         description:
-          "Showcase your reliability to your users, and reduce the numbers of customers service tickets.",
+          "Showcase your reliability to your users, and reduce the number of customer service tickets.",
       },
       {
         icon: "globe",
@@ -84,9 +84,9 @@ export const cardConfig = {
     features: [
       {
         icon: "sparkles",
-        catchline: "Connect.",
+        catchline: "Reduce fatigue.",
         description:
-          "Aggregate alerts from all your monitoring services (Grafana, Datadog) and use our AI to make them actionable.",
+          "Reduce your alerts fatigue with automatic noise reduction.",
         badge: "Coming soon",
       },
       {

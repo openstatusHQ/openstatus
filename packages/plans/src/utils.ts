@@ -11,6 +11,10 @@ export function getLimit<T extends keyof Limits>(
   return allPlans[plan].limits[limit];
 }
 
-export function getLimits(plan: WorkspacePlan) {
-  return allPlans[plan].limits;
+export function getLimits(plan: WorkspacePlan | null) {
+  return allPlans[plan || "free"].limits;
+}
+
+export function getPlanConfig(plan: WorkspacePlan | null) {
+  return allPlans[plan || "free"];
 }

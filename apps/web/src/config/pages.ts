@@ -46,6 +46,13 @@ export const settingsPagesConfig: Page[] = [
     icon: "sun",
     segment: "appearance",
   },
+  {
+    title: "User",
+    description: "Profile settings for the user.",
+    href: "/settings/user",
+    icon: "user",
+    segment: "user",
+  },
 ];
 
 export const monitorPagesConfig: Page[] = [
@@ -93,6 +100,13 @@ export const statusPagesPagesConfig: Page[] = [
     href: "/status-pages/[id]/subscribers",
     icon: "users",
     segment: "subscribers",
+  },
+  {
+    title: "Maintenance",
+    description: "Where you can see all the maintenance.",
+    href: "/status-pages/[id]/maintenances",
+    icon: "hammer",
+    segment: "maintenances",
   },
 ];
 
@@ -177,6 +191,13 @@ export const pagesConfig = [
     children: notificationsPagesConfig,
   },
   {
+    title: "Real User Monitoring",
+    description: "Get speed insights for your application.",
+    href: "/rum",
+    icon: "ratio",
+    segment: "rum",
+  },
+  {
     title: "Settings",
     description: "Your workspace settings",
     href: "/settings/general",
@@ -231,10 +252,11 @@ export function getPageBySegment(
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);
     return page;
-  } else if (Array.isArray(segment) && segment.length > 0) {
+  }
+  if (Array.isArray(segment) && segment.length > 0) {
     const [firstSegment, ...restSegments] = segment;
     const childPage = currentPage.find((page) => page.segment === firstSegment);
-    if (childPage && childPage.children) {
+    if (childPage?.children) {
       return getPageBySegment(restSegments, childPage.children);
     }
     return childPage;
