@@ -215,7 +215,6 @@ export function SectionAssertions({ form }: Props) {
               {...form.register(`textBodyAssertions.${i}.target`, {
                 required: true,
               })}
-              type="number"
               placeholder="<html>...</html>"
               className="col-span-3"
             />
