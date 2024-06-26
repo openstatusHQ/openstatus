@@ -1,3 +1,5 @@
+"use client";
+
 import { columns } from "./_components/columns";
 import { tagsColor } from "./_components/constants";
 import { DataTable } from "./_components/data-table";
@@ -19,15 +21,17 @@ export default function TestPage({
   }
 
   return (
-    <div className="mx-auto my-4 w-full max-w-5xl rounded-lg border bg-background p-6">
-      <DataTable
-        columns={columns}
-        data={data}
-        filterFields={filterFields}
-        defaultColumnFilters={Object.entries(search.data).map(
-          ([key, value]) => ({ id: key, value }),
-        )}
-      />
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="m-4 rounded-lg border bg-background p-6">
+        <DataTable
+          columns={columns}
+          data={data}
+          filterFields={filterFields}
+          defaultColumnFilters={Object.entries(search.data).map(
+            ([key, value]) => ({ id: key, value }),
+          )}
+        />
+      </div>
     </div>
   );
 }
@@ -55,10 +59,10 @@ const data = [
     tags: ["enterprise"],
   },
   {
-    name: "Documentation",
-    public: true,
+    name: "Storybook",
+    public: false,
     active: true,
-    regions: ["ams"],
+    regions: ["iad"],
     tags: ["web"],
   },
   {
@@ -73,7 +77,7 @@ const data = [
     public: false,
     active: true,
     regions: ["iad", "fra"],
-    tags: ["web"],
+    tags: ["app"],
   },
   {
     name: "Demo",
@@ -83,10 +87,38 @@ const data = [
     tags: ["web"],
   },
   {
+    name: "Documentation",
+    public: true,
+    active: true,
+    regions: ["ams"],
+    tags: ["api", "web"],
+  },
+  {
+    name: "Boilerplate",
+    public: true,
+    active: false,
+    regions: ["gru", "fra"],
+    tags: ["web"],
+  },
+  {
     name: "Dashboard",
     public: false,
     active: true,
     regions: ["iad", "fra"],
+    tags: ["web"],
+  },
+  {
+    name: "E2E Testing",
+    public: false,
+    active: true,
+    regions: ["iad"],
+    tags: ["web"],
+  },
+  {
+    name: "Web App",
+    public: true,
+    active: true,
+    regions: ["iad"],
     tags: ["web"],
   },
 ] satisfies Schema[];
@@ -123,28 +155,25 @@ const filterFields = [
   {
     label: "Tags",
     value: "tags",
-    // REMINDER: Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server".
-    // Or maybe you meant to call this function rather than return it.
-    // FIXME:
-    // component: async (props: Option) => {
-    //   "use server";
-    //   if (typeof props.value === "boolean") return null;
-    //   return (
-    //     <div className="flex w-full items-center justify-between gap-2">
-    //       <span className="truncate font-normal">{props.value}</span>
-    //       <span
-    //         className={"h-2 w-2 rounded-full"}
-    //         style={{ backgroundColor: tagsColor[props.value] }}
-    //       />
-    //     </div>
-    //   );
-    // },
+    // REMINDER: "use client" needs to be declared in the file - otherwise getting serialization error from Server Component
+    component: (props: Option) => {
+      if (typeof props.value === "boolean") return null;
+      return (
+        <div className="flex w-full items-center justify-between gap-2">
+          <span className="truncate font-normal">{props.value}</span>
+          <span
+            className={"h-2 w-2 rounded-full"}
+            style={{ backgroundColor: tagsColor[props.value] }}
+          />
+        </div>
+      );
+    },
     options: [
       // should we include some more descriptions (like the full name "Amsterdam") maybe with text-popover-muted
       { label: "web", value: "web" },
       { label: "api", value: "api" },
       { label: "enterprise", value: "enterprise" },
+      { label: "app", value: "app" },
     ],
   },
-  // FIXME: can we use the columns instead? Schema works for sure
 ] satisfies DataTableFilterField<Schema>[];

@@ -11,6 +11,7 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
+  getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
@@ -26,7 +27,7 @@ import {
 } from "@openstatus/ui";
 import { DataTableFilterBar } from "./data-table-filter-bar";
 import { DataTablePagination } from "./data-table-pagination";
-import { InputSearch } from "./search";
+import { DataTableFilterCommand } from "./data-table-filter-command";
 import { schema } from "./schema";
 import type { DataTableFilterField } from "./types";
 
@@ -55,6 +56,7 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getFacetedUniqueValues: (table: TTable<TData>, columnId: string) => () => {
       const map = getFacetedUniqueValues<TData>()(table, columnId)();
       // TODO: it would be great to do it dynamically, if we recognize the row to be Array.isArray
@@ -83,39 +85,10 @@ export function DataTable<TData, TValue>({
         />
       </div>
       <div className="flex flex-1 flex-col gap-4">
-        <InputSearch
-          // REMINDER: values is typed by infering `schema`
-          onSearch={(values, _raw) => {
-            // need to reset the filters as we don't remove filter values
-            table.resetColumnFilters();
-
-            // biome-ignore lint/complexity/noForEach: <explanation>
-            Object.keys(values).forEach((key) => {
-              // if (key === "limit") use pagination!
-              table
-                .getColumn(key)
-                ?.setFilterValue(values[key as keyof typeof values]);
-            });
-          }}
-          defaultValue={table.getState().columnFilters.reduce((prev, curr) => {
-            if (Array.isArray(curr.value)) {
-              return `${prev}${curr.id}:${curr.value.join(",")} `;
-            }
-            return `${prev}${curr.id}:${curr.value} `;
-          }, "")}
-          values={{
-            // FIXME: main issue: 'edge api' e.g. has an empty space in between
-            // name: [
-            //   ...table
-            //     .getRowModel()
-            //     .rows.map((row) => row.getValue("name") as string),
-            // ],
-            public: [true, false],
-            active: [true, false],
-            regions: ["ams", "gru", "syd", "hkg", "iad", "fra"],
-            tags: ["web", "api", "enterprise"],
-          }}
+        <DataTableFilterCommand
+          table={table}
           schema={schema}
+          filterFields={filterFields}
         />
         <div className="rounded-md border">
           <Table>

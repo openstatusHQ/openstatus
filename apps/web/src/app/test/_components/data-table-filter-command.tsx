@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  Button,
   Command,
   CommandEmpty,
   CommandGroup,
@@ -18,76 +17,62 @@ import { Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { Kbd } from "@/components/kbd";
-import { ColumnFiltersState } from "@tanstack/react-table";
-import { z } from "zod";
+import type { Table } from "@tanstack/react-table";
+import type { z } from "zod";
+import type { DataTableFilterField } from "./types";
+import { deserialize, serializeColumFilters } from "./utils";
 
-function deserialize<T extends z.ZodTypeAny>(schema: T) {
-  const castToSchema = z.preprocess((val) => {
-    if (typeof val !== "string") return val;
-    return val
-      .trim()
-      .split(" ")
-      .reduce(
-        (prev, curr) => {
-          const [name, value] = curr.split(":");
-          if (!value || !name) return prev;
-
-          if (!value.includes(",")) {
-            prev[name] = [value];
-            return prev;
-          }
-          const values = value.split(",");
-          prev[name] = values;
-          return prev;
-        },
-        {} as Record<string, unknown>,
-      );
-  }, schema);
-  return (value: string) => castToSchema.safeParse(value);
+interface DataTableFilterCommandProps<TData, TSchema extends z.AnyZodObject> {
+  table: Table<TData>;
+  schema: TSchema;
+  filterFields?: DataTableFilterField<TData>[];
 }
 
-function serialize<T extends z.ZodTypeAny>(schema: T) {
-  return (value: z.infer<T>) =>
-    schema
-      .transform((val) => {
-        return "test";
-      })
-      .safeParse(value); // return "regions:ams,gru active:true" from object / zod object
-}
-
-interface InputSearchProps<T extends z.ZodTypeAny> {
-  onSearch(values: z.infer<T>, raw: string): void;
-  schema: T;
-  // defaultValue?: z.infer<T>;
-  defaultValue?: string;
-  values?: z.infer<T>;
-}
-
-export function InputSearch<T extends z.ZodTypeAny>({
-  onSearch,
+export function DataTableFilterCommand<TData, TSchema extends z.AnyZodObject>({
   schema,
-  defaultValue = "",
-  values = {},
-}: InputSearchProps<T>) {
+  table,
+  filterFields,
+}: DataTableFilterCommandProps<TData, TSchema>) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState<boolean>(false);
-  const [inputValue, setInputValue] = useState<string>(defaultValue);
+  const [inputValue, setInputValue] = useState<string>("");
   const [currentWord, setCurrentWord] = useState("");
+  const columnFilters = table.getState().columnFilters;
 
-  // TODO: create a debounce an update the value every 500ms!
+  // DISCUSS: maybe we can rework the component to use the new DataTableFilterField type!
+  // otherwise useMemo!
+  const values =
+    filterFields?.reduce(
+      (prev, curr) => {
+        prev[curr.value] = curr.options?.map(({ value }) => value) || [];
+        return prev;
+      },
+      {} as Record<keyof TData, unknown>,
+    ) || ({} as Record<keyof TData, unknown>);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!inputValue.endsWith(" ") || !open) return;
+    if (open) return;
+    const newInputValue = serializeColumFilters(columnFilters);
+    setInputValue(newInputValue);
+  }, [columnFilters, open]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: no need for `table` in dependency array as we only use setter functions
+  useEffect(() => {
+    if (!inputValue.endsWith(" ") && open) return;
     const searchparams = deserialize(schema)(inputValue);
     if (searchparams.success) {
-      onSearch(searchparams.data, inputValue);
+      // need to reset the filters as we don't remove filter values
+      table.resetColumnFilters();
+
+      for (const key of Object.keys(searchparams.data)) {
+        table
+          .getColumn(key)
+          ?.setFilterValue(
+            searchparams.data[key as keyof typeof searchparams.data],
+          );
+      }
     }
   }, [inputValue, open]);
-
-  useEffect(() => {
-    setInputValue(defaultValue);
-  }, [defaultValue]);
 
   return (
     <div>
@@ -100,8 +85,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
         <button
           type="button"
-          // TODO: add truncate
-          className="flex h-11 w-full py-3 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="h-11 w-full max-w-sm truncate py-3 text-left text-sm outline-none md:max-w-xl xl:max-w-2xl disabled:cursor-not-allowed disabled:opacity-50"
           onClick={(e) => {
             e.preventDefault();
             setOpen(true);
@@ -121,7 +105,7 @@ export function InputSearch<T extends z.ZodTypeAny>({
           open ? "visible" : "hidden",
         )}
         filter={(value, _search) => {
-          console.log({ value, _search, currentWord });
+          // console.log({ value, _search, currentWord });
           if (value.includes(currentWord.toLowerCase())) return 1;
           /**
            * @example [filter, query] = ["regions", "ams,gru"]
@@ -173,6 +157,8 @@ export function InputSearch<T extends z.ZodTypeAny>({
               <CommandGroup heading="Filter">
                 {Object.keys(values).map((key) => {
                   if (inputValue.includes(`${key}:`)) return null;
+                  const items = values[key as keyof typeof values];
+                  if (!Array.isArray(items)) return null;
                   return (
                     <CommandItem
                       key={key}
@@ -201,8 +187,8 @@ export function InputSearch<T extends z.ZodTypeAny>({
                       className="group"
                     >
                       {key}
-                      <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
-                        {values[key as keyof typeof values]
+                      <span className="ml-1 hidden truncate text-muted-foreground/80 group-aria-[selected=true]:block">
+                        {items
                           .map((str: string | boolean | number) => `[${str}]`)
                           .join(" ")}
                       </span>
@@ -214,45 +200,45 @@ export function InputSearch<T extends z.ZodTypeAny>({
               <CommandGroup heading="Query">
                 {Object.keys(values).map((key) => {
                   if (!currentWord.includes(`${key}:`)) return null;
-                  return values[key as keyof typeof values].map(
-                    (option: string | boolean | number) => {
-                      return (
-                        <CommandItem
-                          key={`${key}`}
-                          value={`${key}:${option}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onSelect={(value) => {
-                            setInputValue((prev) => {
-                              if (currentWord.includes(",")) {
-                                const values = currentWord.split(",");
-                                values[values.length - 1] = `${option}`;
-                                const input = prev.replace(
-                                  currentWord,
-                                  values.join(","),
-                                );
-                                return `${input.trim()} `;
-                              }
-                              const input = prev.replace(currentWord, value);
+                  const items = values[key as keyof typeof values];
+                  if (!Array.isArray(items)) return null;
+                  return items.map((option: string | boolean | number) => {
+                    return (
+                      <CommandItem
+                        key={`${key}`}
+                        value={`${key}:${option}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onSelect={(value) => {
+                          setInputValue((prev) => {
+                            if (currentWord.includes(",")) {
+                              const words = currentWord.split(",");
+                              words[words.length - 1] = `${option}`;
+                              const input = prev.replace(
+                                currentWord,
+                                words.join(","),
+                              );
                               return `${input.trim()} `;
-                            });
-                            setCurrentWord("");
-                          }}
-                          {...{ currentWord }}
-                        >
-                          {`${option}`}
-                        </CommandItem>
-                      );
-                    },
-                  );
+                            }
+                            const input = prev.replace(currentWord, value);
+                            return `${input.trim()} `;
+                          });
+                          setCurrentWord("");
+                        }}
+                        {...{ currentWord }}
+                      >
+                        {`${option}`}
+                      </CommandItem>
+                    );
+                  });
                 })}
               </CommandGroup>
               <CommandEmpty>No results found.</CommandEmpty>
             </CommandList>
             <div
-              className="flex gap-3 border-t bg-accent/50 px-2 py-1.5 text-accent-foreground text-sm"
+              className="flex flex-wrap gap-3 border-t bg-accent/50 px-2 py-1.5 text-accent-foreground text-sm"
               cmdk-footer=""
             >
               <span>
