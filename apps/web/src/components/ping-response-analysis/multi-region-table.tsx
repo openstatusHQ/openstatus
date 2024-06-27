@@ -10,15 +10,6 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
-import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
-import {
-  getTimingPhases,
-  getTotalLatency,
-  latencyFormatter,
-  regionFormatter,
-} from "./utils";
-import type { RegionChecker } from "./utils";
-
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -56,7 +47,7 @@ export function MultiRegionTable<TData, TValue>({
   return (
     <Table>
       <TableCaption>Multi Regions</TableCaption>
-      <TableHeader>
+      <TableHeader className="bg-muted/50">
         {table.getHeaderGroups().map((headerGroup) => (
           <TableRow key={headerGroup.id}>
             {headerGroup.headers.map((header) => {
@@ -66,7 +57,7 @@ export function MultiRegionTable<TData, TValue>({
                     ? null
                     : flexRender(
                         header.column.columnDef.header,
-                        header.getContext()
+                        header.getContext(),
                       )}
                 </TableHead>
               );
