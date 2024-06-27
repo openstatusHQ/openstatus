@@ -8,7 +8,10 @@ export default async function Layout({
 }) {
   return (
     <AppPageLayout>
-      <Header title="Notifications" description="Create your notification" />
+      <Header
+        title="Notifications"
+        description="Add your a new notification channel "
+      />
       {children}
     </AppPageLayout>
   );

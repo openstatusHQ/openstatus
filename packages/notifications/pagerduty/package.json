@@ -1,0 +1,19 @@
+{
+  "name": "@openstatus/notification-pagerduty",
+  "version": "0.0.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@openstatus/db": "workspace:*",
+    "@t3-oss/env-core": "0.7.1",
+    "@types/validator": "13.11.6",
+    "validator": "13.11.0",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/node": "20.8.0",
+    "@types/react": "18.2.64",
+    "@types/react-dom": "18.2.21",
+    "typescript": "5.4.5"
+  }
+}
