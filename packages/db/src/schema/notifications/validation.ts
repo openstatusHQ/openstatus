@@ -40,7 +40,6 @@ export const NotificationDataSchema = z.union([
   z.object({ email: emailSchema }),
   z.object({ slack: urlSchema }),
   z.object({ discord: urlSchema }),
-  // PagerDuty
   z.object({
     pagerduty: z.string(),
   }),

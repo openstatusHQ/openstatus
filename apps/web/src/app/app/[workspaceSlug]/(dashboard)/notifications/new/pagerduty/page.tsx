@@ -38,7 +38,7 @@ export default async function PagerDutyPage({
         workspacePlan={workspace.plan}
         nextUrl="../"
         provider="pagerduty"
-        d={params.config}
+        callbackData={params.config}
       />
     </>
   );

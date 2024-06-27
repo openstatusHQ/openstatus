@@ -103,7 +103,7 @@ interface Props {
   workspacePlan: WorkspacePlan;
   nextUrl?: string;
   provider: NotificationProvider;
-  d?: string;
+  callbackData?: string;
 }
 
 export function NotificationForm({
@@ -112,7 +112,7 @@ export function NotificationForm({
   workspacePlan,
   nextUrl,
   provider,
-  d,
+  callbackData,
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [isTestPending, startTestTransition] = useTransition();
@@ -128,14 +128,13 @@ export function NotificationForm({
   });
   const watchWebhookUrl = form.watch("data");
   const providerMetaData = getProviderMetaData(provider);
-  console.log(d);
 
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
         if (provider === "pagerduty") {
-          if (d) {
-            data = d;
+          if (callbackData) {
+            data = callbackData;
           }
         }
         if (data === "") {
@@ -184,9 +183,7 @@ export function NotificationForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit, (errors) => {
-          console.log(errors);
-        })}
+        onSubmit={form.handleSubmit(onSubmit)}
         className="grid w-full gap-6"
         id="notification-form" // we use a form id to connect the submit button to the form (as we also have the form nested inside of `MonitorForm`)
       >

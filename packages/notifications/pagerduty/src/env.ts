@@ -3,8 +3,7 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    TWILLIO_AUTH_TOKEN: z.string(),
-    TWILLIO_ACCOUNT_ID: z.string(),
+    PAGERDUTY_APP_ID: z.string(),
   },
 
   /**
