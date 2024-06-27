@@ -26,12 +26,10 @@ import {
   TableRow,
 } from "@openstatus/ui";
 import { DataTableFilterBar } from "./data-table-filter-bar";
-import { DataTablePagination } from "./data-table-pagination";
 import { DataTableFilterCommand } from "./data-table-filter-command";
+import { DataTablePagination } from "./data-table-pagination";
 import { schema } from "./schema";
 import type { DataTableFilterField } from "./types";
-
-// TODO: include pagination + limit - it's missing in the useReactTable props
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -87,7 +85,7 @@ export function DataTable<TData, TValue>({
       <div className="flex flex-1 flex-col gap-4">
         <DataTableFilterCommand
           table={table}
-          schema={schema}
+          schema={schema} // needs input validation - mostly zod schema from filterFields
           filterFields={filterFields}
         />
         <div className="rounded-md border">

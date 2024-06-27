@@ -12,7 +12,7 @@ export interface Option {
 export interface DataTableFilterField<TData> {
   label: string;
   value: keyof TData;
-  component?: (props: Option) => React.ReactNode;
+  component?: (props: Option) => JSX.Element | null;
   options?: Option[];
 }
 

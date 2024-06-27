@@ -1,11 +1,11 @@
 "use client";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { Button } from "@openstatus/ui";
 import type { Table } from "@tanstack/react-table";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { DataTableFilterField } from "./types";
-import { Button } from "@openstatus/ui";
-import { X } from "lucide-react";
 
 interface DataTableFilterResetButtonProps<TData>
   extends DataTableFilterField<TData> {

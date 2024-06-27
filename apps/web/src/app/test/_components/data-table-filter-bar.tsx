@@ -2,6 +2,7 @@
 
 import type { ColumnDef, Table } from "@tanstack/react-table";
 
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import {
   Accordion,
   AccordionContent,
@@ -9,12 +10,11 @@ import {
   AccordionTrigger,
   Button,
 } from "@openstatus/ui";
-import type React from "react";
-import type { DataTableFilterField } from "./types";
-import { DataTableFilterResetButton } from "./data-table-filter-reset-button";
-import { DataTableFilterCheckobox } from "./data-table-filter-checkbox";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { useRouter } from "next/navigation";
+import type React from "react";
+import { DataTableFilterCheckobox } from "./data-table-filter-checkbox";
+import { DataTableFilterResetButton } from "./data-table-filter-reset-button";
+import type { DataTableFilterField } from "./types";
 
 // TODO: only pass the columns to generate the filters!
 // https://tanstack.com/table/v8/docs/framework/react/examples/filters

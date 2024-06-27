@@ -1,13 +1,13 @@
 "use client";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { cn } from "@/lib/utils";
+import { Checkbox, InputWithAddons, Label, ScrollArea } from "@openstatus/ui";
 import type { Table } from "@tanstack/react-table";
+import { Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { DataTableFilterField } from "./types";
-import { Checkbox, InputWithAddons, Label, ScrollArea } from "@openstatus/ui";
-import { cn } from "@/lib/utils";
-import { Search } from "lucide-react";
 
 interface DataTableFilterCheckoboxProps<TData>
   extends DataTableFilterField<TData> {
@@ -59,7 +59,7 @@ export function DataTableFilterCheckobox<TData>({
           onChange={(e) => setInputValue(e.target.value)}
         />
       ) : null}
-      <div className="rounded-lg border border-border empty:border-none">
+      <div className="overflow-hidden rounded-lg border border-border empty:border-none">
         <div className="max-h-40 overflow-y-scroll">
           {filterOptions.map((option, index) => {
             const checked = filters.includes(option.value);
@@ -68,7 +68,7 @@ export function DataTableFilterCheckobox<TData>({
               <div
                 key={String(option.value)}
                 className={cn(
-                  "flex items-center space-x-2 px-2 py-2.5",
+                  "group flex items-center space-x-2 px-2 py-2.5 hover:bg-accent",
                   index !== filterOptions.length - 1 ? "border-b" : undefined,
                 )}
               >
@@ -89,7 +89,7 @@ export function DataTableFilterCheckobox<TData>({
                 />
                 <Label
                   htmlFor={`${value}-${option.value}`}
-                  className="flex w-full items-center justify-center gap-1 truncate text-muted-foreground"
+                  className="flex w-full items-center justify-center gap-1 truncate text-muted-foreground group-hover:text-accent-foreground"
                 >
                   {Component ? (
                     <Component {...option} />

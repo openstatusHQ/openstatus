@@ -3,8 +3,8 @@
 import { columns } from "./_components/columns";
 import { tagsColor } from "./_components/constants";
 import { DataTable } from "./_components/data-table";
+import { type Schema, schema } from "./_components/schema";
 import type { DataTableFilterField, Option } from "./_components/types";
-import { schema, type Schema } from "./_components/schema";
 
 // TODO: add schema validation
 
@@ -12,8 +12,6 @@ export default function TestPage({
   searchParams,
 }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const search = schema.safeParse(searchParams);
-
-  console.log(searchParams);
 
   if (!search.success) {
     console.log(search.error);

@@ -9,13 +9,10 @@ export default function useUpdateSearchParams() {
    * If param is `null`, will be deleted.
    */
   const update = React.useCallback(
-    (
-      params: Record<
-        string,
-        boolean | string | number | boolean[] | string[] | number[] | null
-      >,
-    ) => {
-      const newSearchParams = new URLSearchParams(searchParams?.toString());
+    (params: Record<string, unknown>, opts?: { override: boolean }) => {
+      const newSearchParams = new URLSearchParams(
+        opts?.override ? undefined : searchParams?.toString(),
+      );
 
       for (const [key, value] of Object.entries(params)) {
         if (value === null) {
