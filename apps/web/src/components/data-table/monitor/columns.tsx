@@ -100,6 +100,7 @@ export const columns: ColumnDef<{
           <Link
             href={`./monitors/${row.original.monitor.id}/overview`}
             className="group flex max-w-full items-center gap-2"
+            prefetch={false}
           >
             <span className="truncate group-hover:underline">{name}</span>
           </Link>
@@ -120,7 +121,7 @@ export const columns: ColumnDef<{
       // REMINDER: if one value is found, return true
       // we could consider restricting it to all the values have to be found
       return value.some((item) =>
-        row.original.tags?.some((tag) => tag.name === item),
+        row.original.tags?.some((tag) => tag.name === item)
       );
     },
   },

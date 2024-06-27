@@ -8,7 +8,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.550.0",
     "@hono/zod-validator": "0.2.1",
-    "@libsql/client": "0.6.0",
+    "@libsql/client": "0.6.2",
     "@openstatus/db": "workspace:*",
     "@openstatus/utils": "workspace:^",
     "@t3-oss/env-core": "0.7.1",
@@ -16,7 +16,7 @@
     "drizzle-orm": "0.30.7",
     "hono": "4.2.2",
     "playwright": "1.43.0",
-    "zod": "3.22.4"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
