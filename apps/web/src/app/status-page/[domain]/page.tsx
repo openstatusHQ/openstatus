@@ -15,8 +15,7 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export const revalidate = 600;
-export const maxDuration = 120;
+export const revalidate = 120;
 
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
@@ -25,7 +24,7 @@ export default async function Page({ params }: Props) {
   const currentMaintenances = page.maintenances.filter(
     (maintenance) =>
       maintenance.to.getTime() > Date.now() &&
-      maintenance.from.getTime() < Date.now(),
+      maintenance.from.getTime() < Date.now()
   );
 
   return (
