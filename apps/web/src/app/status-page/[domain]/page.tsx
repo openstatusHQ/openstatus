@@ -15,10 +15,7 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const maxDuration = 120;
+export const revalidate = 120;
 
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });

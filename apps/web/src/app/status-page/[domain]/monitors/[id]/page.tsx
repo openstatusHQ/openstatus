@@ -50,10 +50,7 @@ const searchParamsSchema = z.object({
     ),
 });
 
-export const revalidate = 0;
-export const dynamic = "force-dynamic";
-export const fetchCache = "force-no-store";
-export const maxDuration = 120;
+export const revalidate = 120;
 
 export default async function Page({
   params,
