@@ -95,7 +95,7 @@ func main() {
 		}
 		//  We need a new client for each request to avoid connection reuse.
 		requestClient := &http.Client{
-			Timeout: time.Duration(req.Timeout) * time.Millisecond,
+			Timeout: time.Duration(req.Timeout) * time.Second,
 		}
 		defer requestClient.CloseIdleConnections()
 
