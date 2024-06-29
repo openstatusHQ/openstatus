@@ -78,7 +78,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   headerAssertions: z.array(assertions.headerAssertion).optional(),
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
   timeout: z.coerce.number().gte(0).lte(60).default(45),
-  degradedAfter: z.coerce.number().gte(0).lte(60).nullish(),
+  degradedAfter: z.number().gte(0).lte(60).nullish(),
 });
 
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
