@@ -87,7 +87,7 @@ export function MonitorForm({
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
 
-      degradedAfter: defaultValues?.degradedAfter ?? 30,
+      degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45,
     },
   });

@@ -43,7 +43,7 @@ export const monitor = sqliteTable("monitor", {
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   // Custom timeout for this monitor
-  timeout: integer("timeout"), // in seconds
+  timeout: integer("timeout").default(45), // in seconds
 
   // Threshold for the monitor to be considered degraded
   degradedAfter: integer("degraded_after"), // in second

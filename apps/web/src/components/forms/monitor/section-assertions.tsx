@@ -12,6 +12,7 @@ import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -72,7 +73,10 @@ export function SectionAssertions({ form }: Props) {
                   {...field}
                 />
               </FormControl>
-              {/* <FormMessage /> */}
+              <FormDescription>
+                In seconds, the time after which the endpoint is considered
+                degraded.
+              </FormDescription>
             </FormItem>
           )}
         />
@@ -90,6 +94,11 @@ export function SectionAssertions({ form }: Props) {
                   {...field}
                 />
               </FormControl>
+              <FormDescription>
+                In seconds, the maximum time allowed for the request to
+                complete.
+              </FormDescription>
+
               {/* <FormMessage /> */}
             </FormItem>
           )}

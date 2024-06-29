@@ -50,7 +50,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("other"),
-  timeout: z.number().optional().default(45),
+  timeout: z.number().default(45),
   regions: regionsToArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
@@ -76,8 +76,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   tags: z.array(z.number()).optional().default([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
-  timeout: z.coerce.number().gte(0).lte(60).optional().default(45),
-  degradedAfter: z.coerce.number().gte(0).lte(60).optional().default(30),
+  timeout: z.coerce.number().gte(0).lte(60).default(45),
+  degradedAfter: z.coerce.number().gte(0).lte(60).optional(),
 });
 
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
