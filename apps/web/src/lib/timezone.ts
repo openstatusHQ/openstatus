@@ -34,8 +34,15 @@ export function convertTimezoneToGMT(defaultTimezone?: string) {
   return `Etc/GMT${offset}` as const;
 }
 
+export function getServerTimezoneUTCFormat() {
+  const now = new Date();
+  const now_utc = new Date(now.toUTCString().slice(0, -4)); // remove the GMT end
+
+  return format(now_utc, "LLL dd, y HH:mm:ss (z)", { timeZone: "UTC" });
+}
+
 export function getServerTimezoneFormat() {
-  return format(new Date(), "LLL dd, y HH:mm:ss zzz", { timeZone: "UTC" });
+  return format(new Date(), "LLL dd, y HH:mm:ss (z)");
 }
 
 export function formatDate(date: Date) {

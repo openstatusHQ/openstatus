@@ -6,9 +6,9 @@ import type {
 import type { StatusVariant } from "@openstatus/tracker";
 import { Tracker } from "@openstatus/tracker";
 
-import { getServerTimezoneFormat } from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
+import { DateTimeTooltip } from "./datetime-tooltip";
 
 export async function StatusCheck({
   statusReports,
@@ -23,8 +23,6 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
-  const formattedServerDate = getServerTimezoneFormat();
-
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
@@ -33,10 +31,13 @@ export async function StatusCheck({
           <StatusIcon variant={details.variant} />
         </span>
       </div>
-      <p className="text-muted-foreground text-xs">
-        Status Check <span className="text-muted-foreground/50 text-xs">•</span>{" "}
-        {formattedServerDate}
-      </p>
+      <div className="flex flex-wrap gap-2">
+        <p className="text-muted-foreground text-xs">Status Check</p>
+        <span className="text-muted-foreground/50 text-xs">•</span>{" "}
+        <p className="text-xs">
+          <DateTimeTooltip date={new Date()} />
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { format } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -16,6 +15,9 @@ import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "../status-update/status-badge";
 import { ProcessMessage } from "./process-message";
+import { DateTimeTooltip } from "./datetime-tooltip";
+import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 function StatusReport({
   report,
@@ -65,10 +67,11 @@ function StatusReportDescription({
 }) {
   const firstReport =
     report.statusReportUpdates[report.statusReportUpdates.length - 1];
+
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <p className="text-muted-foreground">
-        {format(firstReport.date || new Date(), "LLL dd, y HH:mm")}
+      <p className="text-muted-foreground text-sm">
+        Started at <DateTimeTooltip date={firstReport.date} />
       </p>
       <span className="text-muted-foreground/50 text-xs">•</span>
       <StatusBadge status={report.status} />
@@ -89,17 +92,17 @@ function StatusReportDescription({
 // reports are already `orderBy: desc(report.date)` within the query itself
 function StatusReportUpdates({ report }: { report: StatusReportWithUpdates }) {
   return (
-    <div className="grid gap-4 md:grid-cols-4">
+    <div className="grid gap-2 md:grid-cols-10 md:gap-4">
       {report.statusReportUpdates.map((update) => {
         return (
           <Fragment key={update.id}>
-            <div className="flex items-center gap-2 md:col-span-1 md:flex-col md:items-start md:gap-1">
+            <div className="flex items-center gap-2 md:col-span-3 md:flex-col md:items-start md:gap-1">
               <p className="font-medium capitalize">{update.status}</p>
               <p className="font-mono text-muted-foreground text-sm md:text-xs">
-                {format(update.date, "LLL dd, y HH:mm")}
+                <DateTimeTooltip date={update.date} />
               </p>
             </div>
-            <div className="prose dark:prose-invert md:col-span-3">
+            <div className="prose dark:prose-invert md:col-span-7">
               <ProcessMessage value={update.message} />
             </div>
           </Fragment>
