@@ -36,15 +36,18 @@ export default async function EditPage({
       defaultSection={search.success ? search.data.section : undefined}
       defaultValues={{
         ...monitor,
+        // FIXME - Why is this not working?
+        timeout: monitor.timeout ?? 45,
+        degradedAfter: monitor.degradedAfter ?? undefined,
         pages: pages
           .filter((page) =>
-            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id),
+            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id)
           )
           .map(({ id }) => id),
         notifications: monitorNotifications?.map(({ id }) => id),
         tags: tags
           .filter((tag) =>
-            tag.monitor.map(({ monitorId }) => monitorId).includes(id),
+            tag.monitor.map(({ monitorId }) => monitorId).includes(id)
           )
           .map(({ id }) => id),
       }}
