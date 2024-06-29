@@ -50,6 +50,8 @@ const searchParamsSchema = z.object({
     ),
 });
 
+export const revalidate = 120;
+
 export default async function Page({
   params,
   searchParams,

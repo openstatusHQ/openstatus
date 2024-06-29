@@ -25,6 +25,8 @@ const searchParamsSchema = z.object({
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
+export const revalidate = 120;
+
 export default async function Page({
   params,
   searchParams,
@@ -51,7 +53,7 @@ export default async function Page({
             });
 
             return { monitor, data };
-          }),
+          })
         )
       : undefined;
 
@@ -81,7 +83,7 @@ export default async function Page({
                 groupDataByTimestamp(
                   data.map((data) => ({ ...data, region: "ams" })),
                   period,
-                  quantile,
+                  quantile
                 );
               return (
                 <li key={monitor.id} className="grid gap-2">
