@@ -43,20 +43,20 @@ export const monitor = sqliteTable("monitor", {
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   // Custom timeout for this monitor
-  timeout: integer("timeout"), // in milliseconds
+  timeout: integer("timeout"), // in seconds
 
   // Threshold for the monitor to be considered degraded
-  degradedAfter: integer("degraded_after"), // in milliseconds
+  degradedAfter: integer("degraded_after"), // in second
 
   assertions: text("assertions"),
 
   public: integer("public", { mode: "boolean" }).default(false),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
@@ -84,13 +84,13 @@ export const monitorsToPages = sqliteTable(
       .notNull()
       .references(() => page.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
     order: integer("order").default(0),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),
-  }),
+  })
 );
 
 export const monitorsToPagesRelation = relations(
@@ -104,5 +104,5 @@ export const monitorsToPagesRelation = relations(
       fields: [monitorsToPages.pageId],
       references: [page.id],
     }),
-  }),
+  })
 );

@@ -59,23 +59,23 @@ checkerRoute.post("/updateStatus", async (c) => {
       and(
         eq(incidentTable.monitorId, Number(monitorId)),
         isNull(incidentTable.resolvedAt),
-        isNull(incidentTable.acknowledgedAt),
-      ),
+        isNull(incidentTable.acknowledgedAt)
+      )
     )
     .get();
 
   if (status === "degraded") {
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${monitorId}`,
-      action: "monitor.degraded",
-      targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region, statusCode: Number(statusCode) },
-    });
     // We upsert the status of the  monitor
     await upsertMonitorStatus({
       monitorId: monitorId,
       status: "degraded",
       region: region,
+    });
+    await checkerAudit.publishAuditLog({
+      id: `monitor:${monitorId}`,
+      action: "monitor.degraded",
+      targets: [{ id: monitorId, type: "monitor" }],
+      metadata: { region, statusCode: Number(statusCode) },
     });
     const currentMonitor = await db
       .select()
@@ -83,7 +83,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       .where(eq(schema.monitor.id, Number(monitorId)))
       .get();
     if (currentMonitor?.status === "active") {
-      const redisKey = `${monitorId}-${cronTimestamp}-error`;
+      const redisKey = `${monitorId}-${cronTimestamp}-degraded`;
       // We add the new region to the set
       await redis.sadd(redisKey, region);
       // let's add an expire to the set
@@ -96,7 +96,12 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       if (nbAffectedRegion > numberOfRegions / 2) {
-        // send  degraded
+        await triggerNotifications({
+          monitorId,
+          statusCode,
+          message,
+          notifType: "degraded",
+        });
       }
     }
   }
@@ -136,7 +141,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`,
+        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`
       );
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       // 4 of 6 monitor need to fail to trigger an alerting
@@ -150,8 +155,8 @@ checkerRoute.post("/updateStatus", async (c) => {
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
               isNull(incidentTable.acknowledgedAt),
-              eq(incidentTable.startedAt, new Date(cronTimestamp)),
-            ),
+              eq(incidentTable.startedAt, new Date(cronTimestamp))
+            )
           )
           .get();
 
@@ -228,7 +233,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`,
+        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`
       );
       //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       //   // 4 of 6 monitor need to fail to trigger an alerting
@@ -240,8 +245,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt),
-            ),
+              isNull(incidentTable.acknowledgedAt)
+            )
           )
           .get();
         if (incident) {

@@ -35,25 +35,22 @@ const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
 
-const headersToArraySchema = z.preprocess(
-  (val) => {
-    // early return in case the header is already an array
-    if (Array.isArray(val)) {
-      return val;
-    }
-    if (String(val).length > 0) {
-      return JSON.parse(String(val));
-    }
-    return [];
-  },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
-);
+const headersToArraySchema = z.preprocess((val) => {
+  // early return in case the header is already an array
+  if (Array.isArray(val)) {
+    return val;
+  }
+  if (String(val).length > 0) {
+    return JSON.parse(String(val));
+  }
+  return [];
+}, z.array(z.object({ key: z.string(), value: z.string() })).default([]));
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
   jobType: monitorJobTypesSchema.default("other"),
-  timeout: z.number().optional().default(45000),
+  timeout: z.number().optional().default(45),
   regions: regionsToArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
@@ -79,6 +76,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   tags: z.array(z.number()).optional().default([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
+  timeout: z.coerce.number().gte(0).lte(60).optional().default(45),
+  degradedAfter: z.coerce.number().gte(0).lte(60).optional().default(30),
 });
 
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);

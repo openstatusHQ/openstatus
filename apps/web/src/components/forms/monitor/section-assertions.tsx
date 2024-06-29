@@ -14,6 +14,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   Input,
   Select,
   SelectContent,
@@ -47,6 +48,53 @@ export function SectionAssertions({ form }: Props) {
   });
   return (
     <div className="grid w-full gap-4">
+      <SectionHeader
+        title="Timing Setting"
+        description={
+          <>
+            Add specific time limits to your requests to receive notifications
+            if an endpoint takes longer than expected.
+          </>
+        }
+      />
+      <div className="grid w-full gap-4 sm:grid-cols-6">
+        <FormField
+          control={form.control}
+          name="degradedAfter"
+          render={({ field }) => (
+            <FormItem className="col-span-6 sm:col-span-3">
+              <FormLabel>Degraded</FormLabel>
+              <FormControl>
+                <Input
+                  className="bg-muted"
+                  type="number"
+                  placeholder="30"
+                  {...field}
+                />
+              </FormControl>
+              {/* <FormMessage /> */}
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="timeout"
+          render={({ field }) => (
+            <FormItem className="col-span-6 sm:col-span-3">
+              <FormLabel>Timeout</FormLabel>
+              <FormControl>
+                <Input
+                  className="bg-muted"
+                  type="number"
+                  placeholder="45"
+                  {...field}
+                />
+              </FormControl>
+              {/* <FormMessage /> */}
+            </FormItem>
+          )}
+        />
+      </div>
       <SectionHeader
         title="Assertions"
         description={
@@ -90,7 +138,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -151,7 +199,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>

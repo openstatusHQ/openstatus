@@ -183,6 +183,19 @@ func main() {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
+			// Check if the status is degraded
+			if isSuccessfull && req.Status == "active" {
+				if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+					checker.UpdateStatus(ctx, checker.UpdateData{
+						MonitorId:     req.MonitorID,
+						Status:        "degraded",
+						Region:        flyRegion,
+						StatusCode:    res.StatusCode,
+						CronTimestamp: req.CronTimestamp,
+					})
+				}
+			}
+			// We were in error and now we are successful don't check for degraded
 			if isSuccessfull && req.Status == "error" {
 				// Q: Why here we check the data before updating the status in this scenario?
 				checker.UpdateStatus(ctx, checker.UpdateData{
@@ -193,22 +206,12 @@ func main() {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
+			// if we were in degraded and now we are successful, we should update the status to active
 			if isSuccessfull && req.Status == "degraded" {
 				if req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
 					checker.UpdateStatus(ctx, checker.UpdateData{
 						MonitorId:     req.MonitorID,
 						Status:        "active",
-						Region:        flyRegion,
-						StatusCode:    res.StatusCode,
-						CronTimestamp: req.CronTimestamp,
-					})
-				}
-			}
-			if isSuccessfull && req.Status == "active" {
-				if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
-					checker.UpdateStatus(ctx, checker.UpdateData{
-						MonitorId:     req.MonitorID,
-						Status:        "degraded",
 						Region:        flyRegion,
 						StatusCode:    res.StatusCode,
 						CronTimestamp: req.CronTimestamp,
