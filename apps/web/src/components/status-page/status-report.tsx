@@ -17,6 +17,7 @@ import { StatusBadge } from "../status-update/status-badge";
 import { ProcessMessage } from "./process-message";
 import { DateTimeTooltip } from "./datetime-tooltip";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 function StatusReport({
   report,
@@ -69,8 +70,8 @@ function StatusReportDescription({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <p className="text-muted-foreground text-sm" suppressHydrationWarning>
-        Started at {format(firstReport.date, "LLL dd, y HH:mm (z)")}
+      <p className="text-muted-foreground text-sm">
+        Started at <DateTimeTooltip date={firstReport.date} />
       </p>
       <span className="text-muted-foreground/50 text-xs">•</span>
       <StatusBadge status={report.status} />
@@ -97,11 +98,8 @@ function StatusReportUpdates({ report }: { report: StatusReportWithUpdates }) {
           <Fragment key={update.id}>
             <div className="flex items-center gap-2 md:col-span-3 md:flex-col md:items-start md:gap-1">
               <p className="font-medium capitalize">{update.status}</p>
-              <p
-                className="font-mono text-muted-foreground text-sm md:text-xs"
-                suppressHydrationWarning
-              >
-                {format(update.date, "LLL dd, y HH:mm (z)")}
+              <p className="font-mono text-muted-foreground text-sm md:text-xs">
+                <DateTimeTooltip date={update.date} />
               </p>
             </div>
             <div className="prose dark:prose-invert md:col-span-7">
