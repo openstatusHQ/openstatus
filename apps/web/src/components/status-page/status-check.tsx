@@ -5,19 +5,10 @@ import type {
 } from "@openstatus/db/src/schema";
 import type { StatusVariant } from "@openstatus/tracker";
 import { Tracker } from "@openstatus/tracker";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui";
 
-import {
-  getServerTimezoneFormat,
-  getServerTimezoneUTCFormat,
-} from "@/lib/timezone";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
+import { DateTimeTooltip } from "./datetime-tooltip";
 
 export async function StatusCheck({
   statusReports,
@@ -32,9 +23,6 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
-  const formattedUTCServerDate = getServerTimezoneUTCFormat();
-  const formattedServerDate = getServerTimezoneFormat();
-
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
@@ -46,18 +34,9 @@ export async function StatusCheck({
       <div className="flex flex-wrap gap-2">
         <p className="text-muted-foreground text-xs">Status Check</p>
         <span className="text-muted-foreground/50 text-xs">•</span>{" "}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger className="text-muted-foreground text-xs underline decoration-dashed underline-offset-4">
-              {formattedServerDate}
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="text-muted-foreground text-xs">
-                {formattedUTCServerDate}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <p className="text-xs">
+          <DateTimeTooltip date={new Date()} />
+        </p>
       </div>
     </div>
   );
