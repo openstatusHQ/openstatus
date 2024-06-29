@@ -11,4 +11,7 @@ export const analytics =
       })
     : emptyAnalytics;
 
-export const trackAnalytics = (args: AnalyticsEvents) => analytics.track(args);
+export const trackAnalytics = (args: AnalyticsEvents) =>
+  env.JITSU_HOST && env.JITSU_WRITE_KEY
+    ? analytics.track(args)
+    : emptyAnalytics.track(args);

@@ -19,6 +19,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
     "@openstatus/plans": "workspace:*",
@@ -33,7 +34,7 @@
     "nanoid": "5.0.2",
     "percentile": "^1.6.0",
     "validator": "13.11.0",
-    "zod": "3.22.4"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

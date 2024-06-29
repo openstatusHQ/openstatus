@@ -19,6 +19,7 @@ export type Limits = {
   "white-label": boolean;
   // alerts
   notifications: boolean;
+  pagerduty: boolean;
   sms: boolean;
   "notification-channels": number;
   // collaboration

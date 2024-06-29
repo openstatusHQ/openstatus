@@ -19,6 +19,7 @@ export function AppTabs() {
               key={title}
               active={active}
               href={`/app/${params?.workspaceSlug}${href}`}
+              prefetch={false}
             >
               {title}
             </TabsLink>

@@ -11,22 +11,11 @@ export default async function Layout({
 }: {
   children: React.ReactNode;
 }) {
-  const isLimitReached =
-    await api.notification.isNotificationLimitReached.query();
   return (
     <AppPageLayout>
       <Header
         title="Notifications"
         description="Overview of all your notification channels."
-        actions={
-          <ButtonWithDisableTooltip
-            tooltip="You reached the limits"
-            asChild={!isLimitReached}
-            disabled={isLimitReached}
-          >
-            <Link href="./notifications/new">Create</Link>
-          </ButtonWithDisableTooltip>
-        }
       />
       {children}
     </AppPageLayout>

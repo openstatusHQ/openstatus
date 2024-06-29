@@ -16,11 +16,13 @@ export const triggerNotifications = async ({
   statusCode,
   message,
   notifType,
+  incidentId,
 }: {
   monitorId: string;
   statusCode?: number;
   message?: string;
   notifType: "alert" | "recovery" | "degraded";
+  incidentId?: string;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db
@@ -48,6 +50,7 @@ export const triggerNotifications = async ({
           notification: selectNotificationSchema.parse(notif.notification),
           statusCode,
           message,
+          incidentId,
         });
         break;
       case "recovery":
@@ -56,6 +59,7 @@ export const triggerNotifications = async ({
           notification: selectNotificationSchema.parse(notif.notification),
           statusCode,
           message,
+          incidentId,
         });
         break;
       case "degraded":

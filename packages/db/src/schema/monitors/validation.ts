@@ -76,6 +76,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   tags: z.array(z.number()).optional().default([]),
   statusAssertions: z.array(assertions.statusAssertion).optional(),
   headerAssertions: z.array(assertions.headerAssertion).optional(),
+  textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
   timeout: z.coerce.number().gte(0).lte(60).default(45),
   degradedAfter: z.coerce.number().gte(0).lte(60).optional(),
 });

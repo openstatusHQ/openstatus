@@ -1,4 +1,4 @@
-import { NotificationForm } from "@/components/forms/notification/form";
+import { NotificationForm } from "@/components/forms/notification-form";
 import { api } from "@/trpc/server";
 
 export default async function EditPage({
@@ -16,6 +16,7 @@ export default async function EditPage({
     <NotificationForm
       defaultValues={notification}
       workspacePlan={workspace.plan}
+      provider={notification.provider}
     />
   );
 }

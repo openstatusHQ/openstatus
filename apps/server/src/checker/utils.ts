@@ -24,16 +24,24 @@ import {
   sendDegraded as sendSmsDegraded,
 } from "@openstatus/notification-twillio-sms";
 
+import {
+  sendAlert as sendPagerdutyAlert,
+  sendRecovery as sendPagerDutyRecovery,
+  sendDegraded as sendPagerDutyDegraded,
+} from "@openstatus/notification-pagerduty";
+
 type SendNotification = ({
   monitor,
   notification,
   statusCode,
   message,
+  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
+  incidentId?: string;
 }) => Promise<void>;
 
 type Notif = {
@@ -61,5 +69,11 @@ export const providerToFunction = {
     sendAlert: sendSmsAlert,
     sendRecovery: sendSmsRecovery,
     sendDegraded: sendSmsDegraded,
+  },
+
+  pagerduty: {
+    sendAlert: sendPagerdutyAlert,
+    sendRecovery: sendPagerDutyRecovery,
+    sendDegraded: sendPagerDutyDegraded,
   },
 } satisfies Record<NotificationProvider, Notif>;

@@ -34,9 +34,9 @@ export function CopyToClipboardButton({
     >
       {children}
       {!hasCopied ? (
-        <Icons.copy className={cn("h-4 w-4", children && "ml-2")} />
+        <Icons.copy className="ml-2 hidden h-4 w-4 group-hover:block" />
       ) : (
-        <Icons.check className={cn("h-4 w-4", children && "ml-2")} />
+        <Icons.check className={cn("ml-2 h-4 w-4")} />
       )}
     </Button>
   );
