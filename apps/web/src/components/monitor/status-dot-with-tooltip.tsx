@@ -23,6 +23,7 @@ export function StatusDotWithTooltip(props: StatusDotWithTooltipProps) {
             if (!active) return "Monitor is inactive";
             if (maintenance) return "Monitor in maintenance";
             if (status === "error") return "Monitor has failed";
+            if (status === "degraded") return "Monitor is degraded";
             return "Monitor is active";
           })()}
         </TooltipContent>

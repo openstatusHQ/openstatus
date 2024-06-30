@@ -88,7 +88,7 @@ export function MonitorForm({
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
 
       degradedAfter: defaultValues?.degradedAfter,
-      timeout: defaultValues?.timeout || 45,
+      timeout: defaultValues?.timeout || 45000,
     },
   });
   const router = useRouter();
@@ -247,7 +247,7 @@ export function MonitorForm({
     <>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit, (e) => console.log(e))}
+          onSubmit={form.handleSubmit(onSubmit)}
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           className="flex w-full flex-col gap-6"
         >

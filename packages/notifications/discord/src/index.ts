@@ -100,7 +100,7 @@ export const sendDegraded = async ({
 
   try {
     await postToWebhook(
-      `Your monitor ${name}|${monitor.url}  is degraded ⚠️`,
+      `Your monitor ${name}|${monitor.url} is degraded ⚠️`,
       webhookUrl
     );
   } catch (err) {

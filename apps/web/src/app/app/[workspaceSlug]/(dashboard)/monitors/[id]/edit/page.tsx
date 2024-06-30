@@ -37,7 +37,6 @@ export default async function EditPage({
       defaultValues={{
         ...monitor,
         // FIXME - Why is this not working?
-        timeout: monitor.timeout ?? 45,
         degradedAfter: monitor.degradedAfter ?? undefined,
         pages: pages
           .filter((page) =>

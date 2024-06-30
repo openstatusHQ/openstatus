@@ -75,9 +75,11 @@ export function SectionAssertions({ form }: Props) {
                 <Input
                   className="bg-muted"
                   type="number"
-                  placeholder="30"
-                  {...form.register("degradedAfter", {
-                    setValueAs: (v) => (v === "" ? null : Number.parseInt(v)),
+                  min={0}
+                  max={60000}
+                  placeholder="30000"
+                  {...form.register(field.name, {
+                    setValueAs: (v) => (v === "" ? null : v),
                   })}
                 />
               </FormControl>
@@ -98,12 +100,14 @@ export function SectionAssertions({ form }: Props) {
                 <Input
                   className="bg-muted"
                   type="number"
-                  placeholder="45"
+                  placeholder="45000"
+                  min={0}
+                  max={60000}
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                In seconds, the maximum time allowed for the request to
+                In milleseconds, the maximum time allowed for the request to
                 complete.
               </FormDescription>
 
