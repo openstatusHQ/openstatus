@@ -19,7 +19,7 @@ export function Article({ post }: { post: Post }) {
     <article className="relative mx-auto flex max-w-prose flex-col gap-8">
       <div className="grid w-full gap-3">
         <h1 className="mb-5 font-cal text-3xl">{post.title}</h1>
-        <div className="relative h-64 w-full overflow-hidden rounded-lg border border-border">
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
           <Image
             src={post.image}
             fill={true}
