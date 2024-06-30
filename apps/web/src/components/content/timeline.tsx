@@ -57,13 +57,13 @@ function Article({
           </time>
         </div>
       </div>
-      <div className="relative order-1 h-64 w-full md:order-2 md:col-span-4">
+      <div className="relative order-1 aspect-video w-full overflow-hidden rounded-md border border-border md:order-2 md:col-span-4">
         <Link href={href}>
           <Image
             src={imageSrc}
             fill={true}
             alt={title}
-            className="rounded-md border border-border object-cover"
+            className="object-cover"
           />
         </Link>
       </div>
