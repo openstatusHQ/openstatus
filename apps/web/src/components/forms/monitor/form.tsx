@@ -247,7 +247,7 @@ export function MonitorForm({
     <>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit(onSubmit, (e) => console.log(e))}
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           className="flex w-full flex-col gap-6"
         >
