@@ -125,7 +125,7 @@ export const sendDegraded = async ({
       from: "Notifications <ping@openstatus.dev>",
 
       subject: `Your monitor ${monitor.name} is degraded ⚠️`,
-      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is taking longer than expected  </p><p>URL : ${monitor.url}</p> <p>OpenStatus 🏓 </p>`,
+      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is taking longer than expected to respond</p><p>URL : ${monitor.url}</p> <p>OpenStatus 🏓 </p>`,
     }),
   });
 

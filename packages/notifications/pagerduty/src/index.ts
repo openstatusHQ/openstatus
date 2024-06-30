@@ -72,7 +72,7 @@ export const sendDegraded = async ({
 
   const event = triggerEventPayloadSchema.parse({
     rounting_key: notificationData.integration_keys[0].integration_key,
-    dedup_key: `${monitor.id}}-${incidentId}`,
+    dedup_key: `${monitor.id}}`,
     event_action: "trigger",
     payload: {
       summary: `${name} is degraded`,

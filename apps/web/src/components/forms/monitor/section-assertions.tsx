@@ -84,7 +84,7 @@ export function SectionAssertions({ form }: Props) {
                 />
               </FormControl>
               <FormDescription>
-                In seconds, the time after which the endpoint is considered
+                In milliseconds, the time after which the endpoint is considered
                 degraded.
               </FormDescription>
             </FormItem>
@@ -107,7 +107,7 @@ export function SectionAssertions({ form }: Props) {
                 />
               </FormControl>
               <FormDescription>
-                In milleseconds, the maximum time allowed for the request to
+                In milliseconds, the maximum time allowed for the request to
                 complete.
               </FormDescription>
 
