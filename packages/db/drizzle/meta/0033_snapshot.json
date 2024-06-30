@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "e3936f4a-a34b-4bb1-8abe-f79a4dcff85b",
+  "id": "447f81c0-1837-4e85-bb0e-9ecce75e95d9",
   "prevId": "de3d58e5-d801-4b9e-a35a-39cfc09b7807",
   "tables": {
     "status_report_to_monitors": {
@@ -586,8 +586,9 @@
           "name": "timeout",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": 45
         },
         "degraded_after": {
           "name": "degraded_after",
