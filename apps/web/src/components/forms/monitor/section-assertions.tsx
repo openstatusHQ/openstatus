@@ -76,7 +76,11 @@ export function SectionAssertions({ form }: Props) {
                   className="bg-muted"
                   type="number"
                   placeholder="30"
-                  {...field}
+                  // biome-ignore lint/style/noUnusedTemplateLiteral: <explanation>
+                  {...form.register(`degradedAfter`, {
+                    valueAsNumber: true,
+                    setValueAs: (v) => (v === "" ? null : v),
+                  })}
                 />
               </FormControl>
               <FormDescription>
