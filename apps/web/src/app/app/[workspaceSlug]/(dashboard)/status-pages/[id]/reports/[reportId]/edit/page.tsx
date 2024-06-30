@@ -4,20 +4,17 @@ import { api } from "@/trpc/server";
 export default async function EditPage({
   params,
 }: {
-  params: { workspaceSlug: string; id: string };
+  params: { workspaceSlug: string; id: string; reportId: string };
 }) {
   const statusUpdate = await api.statusReport.getStatusReportById.query({
-    id: Number.parseInt(params.id),
+    id: Number.parseInt(params.reportId),
   });
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
-  const pages = await api.page.getPagesByWorkspace.query();
-
   return (
     <StatusReportForm
       monitors={monitors}
-      pages={pages}
       defaultValues={
         // TODO: we should move the mapping to the trpc layer
         // so we don't have to do this in the UI
@@ -25,9 +22,9 @@ export default async function EditPage({
         {
           ...statusUpdate,
           monitors: statusUpdate?.monitorsToStatusReports.map(
-            ({ monitorId }) => monitorId,
+            ({ monitorId }) => monitorId
           ),
-          pages: statusUpdate?.pagesToStatusReports.map(({ pageId }) => pageId),
+          pages: [Number.parseInt(params.id)],
           message: "",
         }
       }

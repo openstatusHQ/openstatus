@@ -12,10 +12,10 @@ import { api } from "@/trpc/server";
 export default async function OverviewPage({
   params,
 }: {
-  params: { workspaceSlug: string; id: string };
+  params: { workspaceSlug: string; reportId: string };
 }) {
   const report = await api.statusReport.getStatusReportById.query({
-    id: Number.parseInt(params.id),
+    id: Number.parseInt(params.reportId),
   });
 
   if (!report) return notFound();
@@ -25,7 +25,7 @@ export default async function OverviewPage({
   return (
     <>
       <Summary report={report} monitors={monitors} />
-      <Separator />
+      <Separator className="-my-2" />
       {report.statusReportUpdates.length > 0 ? (
         <Events statusReportUpdates={report.statusReportUpdates} editable />
       ) : (
@@ -36,7 +36,7 @@ export default async function OverviewPage({
           action={
             <Button asChild>
               {/* TODO: check if correct */}
-              <Link href={`./${params.id}/update/edit`}>Create</Link>
+              <Link href={`./${report.id}/update/edit`}>Create</Link>
             </Button>
           }
         />
