@@ -24,12 +24,12 @@ export default async function AuthLayout({
             className="rounded-full border border-border"
           />
         </Link>
-        <div className="flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-left">
+        <div className="flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-center mx-auto md:text-left md:mx-0">
           <div className="mx-auto grid gap-3">
-            <h1 className="font-cal text-2xl text-foreground">
+            <h1 className="font-cal text-3xl text-foreground">
               Open Source Monitoring Service
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Monitor your website or API and create your own status page within
               a couple of minutes. Want to know how it works? <br />
               <br />

@@ -67,6 +67,10 @@ export const pricingTableConfig: Record<
         label: "SMS",
       },
       {
+        value: "pagerduty",
+        label: "PagerDuty",
+      },
+      {
         value: "notification-channels",
         label: "Number of notification channels",
       },
