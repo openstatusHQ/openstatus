@@ -93,7 +93,7 @@ export default async function Page({
     period !== DEFAULT_PERIOD ||
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
-    flyRegions.length !== regions.length;
+    regions.length > 0;
 
   // GET VALUES FOR BLOG POST
   // console.log(
