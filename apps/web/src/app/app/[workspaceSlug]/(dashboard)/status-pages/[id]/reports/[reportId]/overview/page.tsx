@@ -32,12 +32,6 @@ export default async function OverviewPage({
           icon="megaphone"
           title="No status report updates"
           description="Create your first update"
-          action={
-            <Button asChild>
-              {/* TODO: check if correct */}
-              <Link href={`./${report.id}/update/edit`}>Create</Link>
-            </Button>
-          }
         />
       )}
     </>

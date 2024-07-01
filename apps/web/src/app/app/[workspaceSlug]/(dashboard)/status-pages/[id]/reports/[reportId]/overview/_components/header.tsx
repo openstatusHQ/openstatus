@@ -32,7 +32,7 @@ export function Header({
 
   const firstUpdate = report.statusReportUpdates?.[0];
   const lastUpdate =
-    report.statusReportUpdates?.[report.statusReportUpdates.length - 1];
+    report.statusReportUpdates?.[report.statusReportUpdates?.length - 1];
 
   return (
     <div className="space-y-3">
@@ -40,7 +40,11 @@ export function Header({
         <div className="space-y-2">
           <h3 className="font-cal text-lg">{report.title}</h3>
           <div className="flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
-            <span className="font-mono">{formatDate(firstUpdate.date)}</span>
+            <span className="font-mono">
+              {firstUpdate?.date
+                ? formatDate(firstUpdate?.date)
+                : "Missing date"}
+            </span>
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusBadge status={report.status} />
             <span className="text-muted-foreground/50 text-xs">•</span>
