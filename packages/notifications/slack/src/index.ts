@@ -118,6 +118,55 @@ export const sendRecovery = async ({
   }
 };
 
+export const sendDegraded = async ({
+  monitor,
+  notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  message,
+}: {
+  monitor: Monitor;
+  notification: Notification;
+  statusCode?: number;
+  message?: string;
+}) => {
+  const notificationData = JSON.parse(notification.data);
+  const { slack: webhookUrl } = notificationData; // webhook url
+  const { name } = monitor;
+
+  try {
+    await postToWebhook(
+      {
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "mrkdwn",
+              text: `Your monitor <${monitor.url}/|${name}> is degraded
+              ⚠️  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+            },
+            accessory: {
+              type: "button",
+              text: {
+                type: "plain_text",
+                text: "Open Monitor",
+                emoji: true,
+              },
+              value: `monitor_url_${monitor.url}`,
+              url: monitor.url,
+            },
+          },
+        ],
+      },
+      webhookUrl
+    );
+  } catch (err) {
+    console.log(err);
+    // Do something
+  }
+};
+
 export const sendTestSlackMessage = async (webhookUrl: string) => {
   try {
     await postToWebhook(

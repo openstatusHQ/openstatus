@@ -111,7 +111,7 @@ export function SectionRequests({ form }: Props) {
           control={form.control}
           name="url"
           render={({ field }) => (
-            <FormItem className="sm:col-span-5">
+            <FormItem className="sm:col-span-6">
               <FormLabel>URL</FormLabel>
               <FormControl>
                 {/* <InputWithAddons

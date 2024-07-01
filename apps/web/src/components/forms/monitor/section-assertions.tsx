@@ -13,8 +13,10 @@ import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   Input,
   Select,
   SelectContent,
@@ -53,6 +55,67 @@ export function SectionAssertions({ form }: Props) {
 
   return (
     <div className="grid w-full gap-4">
+      <SectionHeader
+        title="Timing Setting"
+        description={
+          <>
+            Add specific time limits to your requests to receive notifications
+            if an endpoint takes longer than expected.
+          </>
+        }
+      />
+      <div className="grid w-full gap-4 sm:grid-cols-6">
+        <FormField
+          control={form.control}
+          name="degradedAfter"
+          render={({ field }) => (
+            <FormItem className="col-span-6 sm:col-span-3">
+              <FormLabel>Degraded</FormLabel>
+              <FormControl>
+                <Input
+                  className="bg-muted"
+                  type="number"
+                  min={0}
+                  max={60000}
+                  placeholder="30000"
+                  {...form.register(field.name, {
+                    setValueAs: (v) => (v === "" ? null : v),
+                  })}
+                />
+              </FormControl>
+              <FormDescription>
+                In milliseconds, the time after which the endpoint is considered
+                degraded.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="timeout"
+          render={({ field }) => (
+            <FormItem className="col-span-6 sm:col-span-3">
+              <FormLabel>Timeout</FormLabel>
+              <FormControl>
+                <Input
+                  className="bg-muted"
+                  type="number"
+                  placeholder="45000"
+                  min={0}
+                  max={60000}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                In milliseconds, the maximum time allowed for the request to
+                complete.
+              </FormDescription>
+
+              {/* <FormMessage /> */}
+            </FormItem>
+          )}
+        />
+      </div>
       <SectionHeader
         title="Assertions"
         description={

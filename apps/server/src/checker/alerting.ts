@@ -21,7 +21,7 @@ export const triggerNotifications = async ({
   monitorId: string;
   statusCode?: number;
   message?: string;
-  notifType: "alert" | "recovery";
+  notifType: "alert" | "recovery" | "degraded";
   incidentId?: string;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
@@ -60,6 +60,14 @@ export const triggerNotifications = async ({
           statusCode,
           message,
           incidentId,
+        });
+        break;
+      case "degraded":
+        await providerToFunction[notif.notification.provider].sendDegraded({
+          monitor,
+          notification: selectNotificationSchema.parse(notif.notification),
+          statusCode,
+          message,
         });
         break;
     }

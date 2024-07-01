@@ -30,6 +30,14 @@ export function StatusDot({ active, status, maintenance }: StatusDotProps) {
       </span>
     );
   }
+  if (status === "degraded") {
+    return (
+      <span className="relative flex h-2 w-2">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-500/80 opacity-75 duration-[2000ms]" />
+        <span className="relative inline-flex h-2 w-2 rounded-full bg-yellow-500" />
+      </span>
+    );
+  }
 
   return (
     <span className="relative flex h-2 w-2">

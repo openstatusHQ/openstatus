@@ -29,7 +29,6 @@ import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
-import type { Writeable } from "@/types/utils";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { RequestTestButton } from "./request-test-button";
@@ -87,6 +86,9 @@ export function MonitorForm({
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
+
+      degradedAfter: defaultValues?.degradedAfter,
+      timeout: defaultValues?.timeout || 45000,
     },
   });
   const router = useRouter();
@@ -257,9 +259,9 @@ export function MonitorForm({
           >
             <TabsList>
               <TabsTrigger value="request">Request</TabsTrigger>
-              <TabsTrigger value="scheduling">Scheduling</TabsTrigger>
+              <TabsTrigger value="scheduling">Scheduling & Regions</TabsTrigger>
               <TabsTrigger value="assertions">
-                Assertions{" "}
+                Timing & Assertions{" "}
                 {_assertions.length ? (
                   <Badge variant="secondary" className="ml-1">
                     {_assertions.length}

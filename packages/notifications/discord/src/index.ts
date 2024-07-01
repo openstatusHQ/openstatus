@@ -78,6 +78,37 @@ export const sendRecovery = async ({
   }
 };
 
+export const sendDegraded = async ({
+  monitor,
+  notification,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  statusCode,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  message,
+  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
+  incidentId,
+}: {
+  monitor: Monitor;
+  notification: Notification;
+  statusCode?: number;
+  message?: string;
+  incidentId?: string;
+}) => {
+  const notificationData = JSON.parse(notification.data);
+  const { discord: webhookUrl } = notificationData; // webhook url
+  const { name } = monitor;
+
+  try {
+    await postToWebhook(
+      `Your monitor ${name}|${monitor.url} is degraded ⚠️`,
+      webhookUrl
+    );
+  } catch (err) {
+    console.error(err);
+    // Do something
+  }
+};
+
 export const sendTestDiscordMessage = async (webhookUrl: string) => {
   if (!webhookUrl) {
     return false;

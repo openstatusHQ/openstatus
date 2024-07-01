@@ -12,12 +12,12 @@ export function ChangelogCard({ post }: { post: Changelog }) {
           {formatDate(new Date(post.publishedAt))}
         </p>
         <h1 className="mb-5 font-cal text-3xl">{post.title}</h1>
-        <div className="relative h-64 w-full overflow-hidden rounded-lg border border-border">
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border">
           <Image
             src={post.image}
             fill={true}
             alt={post.title}
-            className="object-cover"
+            className="object-contain"
           />
         </div>
       </div>

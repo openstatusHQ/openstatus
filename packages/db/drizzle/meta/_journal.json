@@ -232,6 +232,13 @@
       "when": 1718027484219,
       "tag": "0032_hot_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1719740057514,
+      "tag": "0033_solid_colossus",
+      "breakpoints": true
     }
   ]
 }

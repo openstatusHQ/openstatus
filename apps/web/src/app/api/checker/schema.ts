@@ -13,6 +13,8 @@ export const payloadSchema = z.object({
   cronTimestamp: z.number(),
   status: z.enum(monitorStatus),
   assertions: z.array(base).nullable(),
+  timeout: z.number().default(45000),
+  degradedAfter: z.number().nullable(),
 });
 
 export type Payload = z.infer<typeof payloadSchema>;
