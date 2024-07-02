@@ -21,10 +21,7 @@ export const columns: ColumnDef<
     cell: ({ row }) => {
       const id = row.original.id;
       return (
-        <Link
-          href={`./status-reports/${id}/overview`}
-          className="hover:underline"
-        >
+        <Link href={`./reports/${id}/overview`} className="hover:underline">
           <span className="truncate">{row.getValue("title")}</span>
         </Link>
       );

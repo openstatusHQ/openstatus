@@ -21,68 +21,13 @@ import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {
   form: UseFormReturn<InsertStatusReport>;
-  pages?: Page[];
   monitors?: Monitor[];
 }
 
-export function SectionConnect({ form, pages, monitors }: Props) {
+export function SectionConnect({ form, monitors }: Props) {
   return (
     <div className="grid w-full gap-4">
       <div className="flex flex-col gap-3">
-        <FormField
-          control={form.control}
-          name="pages"
-          render={() => (
-            <FormItem>
-              <div className="mb-4">
-                <FormLabel>Pages</FormLabel>
-                <FormDescription>
-                  Select the pages that you want to refer the incident to.
-                </FormDescription>
-              </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 md:grid-cols-3 sm:grid-cols-2">
-                {pages?.map((item) => (
-                  <FormField
-                    key={item.id}
-                    control={form.control}
-                    name="pages"
-                    render={({ field }) => {
-                      return (
-                        <FormItem key={item.id} className="h-full w-full">
-                          <FormControl className="w-full">
-                            <CheckboxLabel
-                              id={String(item.id)}
-                              name="page"
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([
-                                      ...(field.value || []),
-                                      item.id,
-                                    ])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
-                                    );
-                              }}
-                            >
-                              {item.title}
-                            </CheckboxLabel>
-                          </FormControl>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              {!pages || pages.length === 0 ? (
-                <FormDescription>Missing status pages.</FormDescription>
-              ) : null}
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="monitors"
@@ -118,8 +63,8 @@ export function SectionConnect({ form, pages, monitors }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >

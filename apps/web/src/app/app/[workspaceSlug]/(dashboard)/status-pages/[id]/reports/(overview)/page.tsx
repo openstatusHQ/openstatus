@@ -19,11 +19,18 @@ export default async function MonitorPage() {
         description="Create your first status report"
         action={
           <Button asChild>
-            <Link href="./status-reports/new">Create</Link>
+            <Link href="./reports/new">Create</Link>
           </Button>
         }
       />
     );
 
-  return <DataTable columns={columns} data={reports} />;
+  return (
+    <div className="space-y-3">
+      <Button size="sm" asChild>
+        <Link href="./reports/new">Create Status Report</Link>
+      </Button>
+      <DataTable columns={columns} data={reports} />
+    </div>
+  );
 }

@@ -30,7 +30,6 @@ interface Props {
   defaultSection?: string;
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
-  pages?: Page[];
   nextUrl?: string;
 }
 
@@ -38,7 +37,6 @@ export function StatusReportForm({
   defaultSection,
   defaultValues,
   monitors,
-  pages,
   nextUrl,
 }: Props) {
   const form = useForm<InsertStatusReport>({
@@ -75,7 +73,7 @@ export function StatusReportForm({
               status,
               message,
               ...rest,
-            },
+            }
           );
           // include update on creation
           if (statusReport?.id) {
@@ -133,7 +131,7 @@ export function StatusReportForm({
             </TabsContent>
           ) : null}
           <TabsContent value="connect">
-            <SectionConnect form={form} monitors={monitors} pages={pages} />
+            <SectionConnect form={form} monitors={monitors} />
           </TabsContent>
         </Tabs>
         <SaveButton

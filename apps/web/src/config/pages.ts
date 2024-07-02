@@ -88,6 +88,13 @@ export const statusPagesPagesConfig: Page[] = [
     segment: "edit",
   },
   {
+    title: "Status Reports",
+    description: "Inform your users about recent reports",
+    href: "/status-pages/[id]/reports",
+    icon: "megaphone",
+    segment: "reports",
+  },
+  {
     title: "Domain",
     description: "Where you can see the domain settings.",
     href: "/status-pages/[id]/domain",
@@ -173,14 +180,6 @@ export const pagesConfig = [
     icon: "panel-top",
     segment: "status-pages",
     children: statusPagesPagesConfig,
-  },
-  {
-    title: "Status Reports",
-    description: "War room where you handle the incidents.",
-    href: "/status-reports",
-    icon: "megaphone",
-    segment: "status-reports",
-    children: statusReportsPagesConfig,
   },
   {
     title: "Notifications",
