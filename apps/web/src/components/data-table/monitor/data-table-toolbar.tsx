@@ -71,7 +71,7 @@ export function DataTableToolbar<TData>({
           </Button>
         )}
       </div>
-      <div className="h-8 self-end rounded-lg border bg-muted/50 px-3">
+      <div className="flex h-8 items-center self-end rounded-lg border border-dashed bg-muted/50 px-3">
         <p className="text-muted-foreground text-xs">
           Quantiles and Uptime are aggregated data from the last 24h.
         </p>
