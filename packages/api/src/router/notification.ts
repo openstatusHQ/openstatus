@@ -6,6 +6,7 @@ import {
   NotificationDataSchema,
   insertNotificationSchema,
   notification,
+  selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
@@ -23,7 +24,7 @@ export const notificationRouter = createTRPCRouter({
 
       const notificationLimit = getLimit(
         opts.ctx.workspace.plan,
-        "notification-channels"
+        "notification-channels",
       );
 
       const notificationNumber = (
@@ -85,8 +86,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .returning()
         .get();
@@ -100,8 +101,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.id, opts.input.id)
-          )
+            eq(notification.id, opts.input.id),
+          ),
         )
         .run();
     }),
@@ -116,8 +117,8 @@ export const notificationRouter = createTRPCRouter({
           and(
             eq(notification.id, opts.input.id),
             eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
 
@@ -125,19 +126,29 @@ export const notificationRouter = createTRPCRouter({
     }),
 
   getNotificationsByWorkspace: protectedProcedure.query(async (opts) => {
-    const notifications = await opts.ctx.db
-      .select()
-      .from(notification)
-      .where(eq(notification.workspaceId, opts.ctx.workspace.id))
-      .all();
+    const notifications = await opts.ctx.db.query.notification.findMany({
+      where: and(eq(notification.workspaceId, opts.ctx.workspace.id)),
+      with: {
+        // FIXME: first should be plurals!
+        monitor: { with: { monitor: true } },
+      },
+    });
 
-    return z.array(selectNotificationSchema).parse(notifications);
+    const schema = selectNotificationSchema.extend({
+      monitor: z.array(
+        z.object({
+          monitor: selectMonitorSchema,
+        }),
+      ),
+    });
+
+    return z.array(schema).parse(notifications);
   }),
 
   isNotificationLimitReached: protectedProcedure.query(async (opts) => {
     const notificationLimit = getLimit(
       opts.ctx.workspace.plan,
-      "notification-channels"
+      "notification-channels",
     );
     const notificationNumbers = (
       await opts.ctx.db.query.notification.findMany({

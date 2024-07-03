@@ -16,6 +16,7 @@ import {
 
 import { ArrowUpRight, Check } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableBadges } from "../data-table-badges";
 
 export const columns: ColumnDef<
   Page & {
@@ -76,38 +77,10 @@ export const columns: ColumnDef<
         .object({ monitor: z.object({ name: z.string() }) })
         .array()
         .parse(monitorsToPages);
-      const firstMonitors = monitors.splice(0, 2);
-      const lastMonitors = monitors;
       return (
-        <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
-            {firstMonitors.map(({ monitor: { name } }, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <Badge key={i} variant="outline">
-                {name}
-              </Badge>
-            ))}
-          </span>
-          {lastMonitors.length > 0 ? (
-            <TooltipProvider>
-              <Tooltip delayDuration={200}>
-                <TooltipTrigger>
-                  <Badge variant="secondary" className="border">
-                    +{lastMonitors.length}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="flex gap-2">
-                  {lastMonitors.map(({ monitor: { name } }, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                    <Badge key={i} variant="outline">
-                      {name}
-                    </Badge>
-                  ))}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null}
-        </div>
+        <DataTableBadges
+          names={monitors.map((monitor) => monitor.monitor.name)}
+        />
       );
     },
   },
