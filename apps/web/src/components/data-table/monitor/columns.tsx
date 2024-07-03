@@ -31,6 +31,8 @@ import { isActiveMaintenance } from "@/lib/maintenances/utils";
 
 import { Eye, EyeOff, Radio, View } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableColumnHeader } from "./data-table-column-header";
+import type { ReactNode } from "react";
 
 export const columns: ColumnDef<{
   monitor: Monitor;
@@ -88,11 +90,17 @@ export const columns: ColumnDef<{
         </div>
       );
     },
+    filterFn: (row, _id, value) => {
+      if (!Array.isArray(value)) return true;
+      return value.includes(row.original.monitor.active);
+    },
   },
   {
     accessorKey: "name",
     accessorFn: (row) => row.monitor.name, // used for filtering as name is nested within the monitor object
-    header: "Name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
     cell: ({ row }) => {
       const { name, public: _public } = row.original.monitor;
       return (
@@ -153,7 +161,9 @@ export const columns: ColumnDef<{
   {
     accessorKey: "tracker",
     header: () => (
-      <HeaderTooltip label="Last 7 days" content="UTC time period" />
+      <HeaderTooltip text="UTC time period">
+        <span className="underline decoration-dotted">Last 7 days</span>
+      </HeaderTooltip>
     ),
     cell: ({ row }) => {
       const tracker = new Tracker({
@@ -190,8 +200,8 @@ export const columns: ColumnDef<{
   },
   {
     accessorKey: "uptime",
-    header: () => (
-      <HeaderTooltip label="Uptime" content="Data from the last 24h" />
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Uptime" />
     ),
     cell: ({ row }) => {
       const { count, ok } = row.original?.metrics || {};
@@ -200,27 +210,83 @@ export const columns: ColumnDef<{
       const rounded = Math.round((ok / count) * 10_000) / 100;
       return <DisplayNumber value={rounded} suffix="%" />;
     },
+    sortingFn: (rowA, rowB, columnId) => {
+      const valueA = rowA.getValue(columnId) as number | undefined;
+      const valueB = rowB.getValue(columnId) as number | undefined;
+      if (!valueA || !valueB) return 0;
+      return valueA - valueB;
+    },
   },
   {
     accessorKey: "p50Latency",
-    header: () => (
-      <HeaderTooltip label="P50" content="Data from the last 24h" />
+    accessorFn: (row) => row.metrics?.p50Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P50" />
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p50Latency;
       if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
     },
+    sortingFn: (rowA, rowB, columnId) => {
+      const valueA = rowA.getValue(columnId) as number | undefined;
+      const valueB = rowB.getValue(columnId) as number | undefined;
+      if (!valueA || !valueB) return 0;
+      return valueA - valueB;
+    },
+  },
+  {
+    accessorKey: "p75Latency",
+    accessorFn: (row) => row.metrics?.p75Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P75" />
+    ),
+    cell: ({ row }) => {
+      const latency = row.original.metrics?.p75Latency;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
+      return <span className="text-muted-foreground">-</span>;
+    },
+    sortingFn: (rowA, rowB, columnId) => {
+      const valueA = rowA.getValue(columnId) as number | undefined;
+      const valueB = rowB.getValue(columnId) as number | undefined;
+      if (!valueA || !valueB) return 0;
+      return valueA - valueB;
+    },
   },
   {
     accessorKey: "p95Latency",
-    header: () => (
-      <HeaderTooltip label="P95" content="Data from the last 24h" />
+    accessorFn: (row) => row.metrics?.p95Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P95" />
     ),
     cell: ({ row }) => {
       const latency = row.original.metrics?.p95Latency;
       if (latency) return <DisplayNumber value={latency} suffix="ms" />;
       return <span className="text-muted-foreground">-</span>;
+    },
+    sortingFn: (rowA, rowB, columnId) => {
+      const valueA = rowA.getValue(columnId) as number | undefined;
+      const valueB = rowB.getValue(columnId) as number | undefined;
+      if (!valueA || !valueB) return 0;
+      return valueA - valueB;
+    },
+  },
+  {
+    accessorKey: "p99Latency",
+    accessorFn: (row) => row.metrics?.p99Latency,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="P99" />
+    ),
+    cell: ({ row }) => {
+      const latency = row.original.metrics?.p99Latency;
+      if (latency) return <DisplayNumber value={latency} suffix="ms" />;
+      return <span className="text-muted-foreground">-</span>;
+    },
+    sortingFn: (rowA, rowB, columnId) => {
+      const valueA = rowA.getValue(columnId) as number | undefined;
+      const valueB = rowB.getValue(columnId) as number | undefined;
+      if (!valueA || !valueB) return 0;
+      return valueA - valueB;
     },
   },
   {
@@ -235,14 +301,18 @@ export const columns: ColumnDef<{
   },
 ];
 
-function HeaderTooltip({ label, content }: { label: string; content: string }) {
+function HeaderTooltip({
+  text,
+  children,
+}: {
+  text: string;
+  children: ReactNode;
+}) {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger className="underline decoration-dotted">
-          {label}
-        </TooltipTrigger>
-        <TooltipContent>{content}</TooltipContent>
+        <TooltipTrigger suppressHydrationWarning>{children}</TooltipTrigger>
+        <TooltipContent>{text}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

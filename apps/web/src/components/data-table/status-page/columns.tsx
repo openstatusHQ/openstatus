@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { Check } from "lucide-react";
+import { ArrowUpRight, Check } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<
@@ -28,17 +28,35 @@ export const columns: ColumnDef<
     header: "Title",
     cell: ({ row }) => {
       return (
-        <Link
-          href={`./status-pages/${row.original.id}/edit`}
-          className="group flex items-center gap-2"
-        >
-          <span className="max-w-[125px] truncate group-hover:underline">
-            {row.getValue("title")}
-          </span>
-          {row.original.maintenancesToPages.length > 0 ? (
-            <Badge>Maintenance</Badge>
-          ) : null}
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            href={`./status-pages/${row.original.id}/edit`}
+            className="group flex items-center gap-2"
+          >
+            <span className="max-w-[125px] truncate group-hover:underline">
+              {row.getValue("title")}
+            </span>
+          </Link>
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger>
+                <a
+                  href={
+                    process.env.NODE_ENV === "production"
+                      ? `https://${row.original.slug}.openstatus.dev`
+                      : `/status-page/${row.original.slug}`
+                  }
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <ArrowUpRight className="h-4 w-4 flex-shrink-0" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Visit page</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       );
     },
   },
