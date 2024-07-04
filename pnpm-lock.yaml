@@ -629,9 +629,6 @@ importers:
       '@t3-oss/env-core':
         specifier: 0.7.0
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
-      dotenv:
-        specifier: 16.3.1
-        version: 16.3.1
       drizzle-orm:
         specifier: 0.30.10
         version: 0.30.10(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.6.2(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@10.0.0)(bun-types@1.1.8)(react@18.3.1)
