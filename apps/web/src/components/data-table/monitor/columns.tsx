@@ -213,7 +213,8 @@ export const columns: ColumnDef<{
     sortingFn: (rowA, rowB, columnId) => {
       const valueA = rowA.getValue(columnId) as number | undefined;
       const valueB = rowB.getValue(columnId) as number | undefined;
-      if (!valueA || !valueB) return 0;
+      if (!valueB) return valueA || 1;
+      if (!valueA) return -valueB;
       return valueA - valueB;
     },
   },
@@ -231,7 +232,8 @@ export const columns: ColumnDef<{
     sortingFn: (rowA, rowB, columnId) => {
       const valueA = rowA.getValue(columnId) as number | undefined;
       const valueB = rowB.getValue(columnId) as number | undefined;
-      if (!valueA || !valueB) return 0;
+      if (!valueB) return valueA || 1;
+      if (!valueA) return -valueB;
       return valueA - valueB;
     },
   },
@@ -249,7 +251,8 @@ export const columns: ColumnDef<{
     sortingFn: (rowA, rowB, columnId) => {
       const valueA = rowA.getValue(columnId) as number | undefined;
       const valueB = rowB.getValue(columnId) as number | undefined;
-      if (!valueA || !valueB) return 0;
+      if (!valueB) return valueA || 1;
+      if (!valueA) return -valueB;
       return valueA - valueB;
     },
   },
@@ -267,7 +270,8 @@ export const columns: ColumnDef<{
     sortingFn: (rowA, rowB, columnId) => {
       const valueA = rowA.getValue(columnId) as number | undefined;
       const valueB = rowB.getValue(columnId) as number | undefined;
-      if (!valueA || !valueB) return 0;
+      if (!valueB) return valueA || 1;
+      if (!valueA) return -valueB;
       return valueA - valueB;
     },
   },
@@ -285,7 +289,8 @@ export const columns: ColumnDef<{
     sortingFn: (rowA, rowB, columnId) => {
       const valueA = rowA.getValue(columnId) as number | undefined;
       const valueB = rowB.getValue(columnId) as number | undefined;
-      if (!valueA || !valueB) return 0;
+      if (!valueB) return valueA || 1;
+      if (!valueA) return -valueB;
       return valueA - valueB;
     },
   },

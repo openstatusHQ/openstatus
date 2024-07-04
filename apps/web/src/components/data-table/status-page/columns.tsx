@@ -7,7 +7,6 @@ import * as z from "zod";
 
 import type { Maintenance, Page } from "@openstatus/db/src/schema";
 import {
-  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -16,6 +15,7 @@ import {
 
 import { ArrowUpRight, Check } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { DataTableBadges } from "../data-table-badges";
 
 export const columns: ColumnDef<
   Page & {
@@ -28,35 +28,14 @@ export const columns: ColumnDef<
     header: "Title",
     cell: ({ row }) => {
       return (
-        <div className="flex items-center gap-1">
-          <Link
-            href={`./status-pages/${row.original.id}/edit`}
-            className="group flex items-center gap-2"
-          >
-            <span className="max-w-[125px] truncate group-hover:underline">
-              {row.getValue("title")}
-            </span>
-          </Link>
-          <TooltipProvider>
-            <Tooltip delayDuration={100}>
-              <TooltipTrigger>
-                <a
-                  href={
-                    process.env.NODE_ENV === "production"
-                      ? `https://${row.original.slug}.openstatus.dev`
-                      : `/status-page/${row.original.slug}`
-                  }
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-muted-foreground hover:text-foreground"
-                >
-                  <ArrowUpRight className="h-4 w-4 flex-shrink-0" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Visit page</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        <Link
+          href={`./status-pages/${row.original.id}/edit`}
+          className="group flex items-center gap-2"
+        >
+          <span className="max-w-[125px] truncate group-hover:underline">
+            {row.getValue("title")}
+          </span>
+        </Link>
       );
     },
   },
@@ -64,7 +43,30 @@ export const columns: ColumnDef<
     accessorKey: "slug",
     header: "Slug",
     cell: ({ row }) => {
-      return <span className="font-mono">{row.getValue("slug")}</span>;
+      return (
+        <TooltipProvider>
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger>
+              <a
+                href={
+                  process.env.NODE_ENV === "production"
+                    ? `https://${row.original.slug}.openstatus.dev`
+                    : `/status-page/${row.original.slug}`
+                }
+                target="_blank"
+                rel="noreferrer"
+                className="group flex items-center gap-1"
+              >
+                <span className="max-w-[125px] truncate font-mono group-hover:underline">
+                  {row.getValue("slug")}
+                </span>
+                <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+              </a>
+            </TooltipTrigger>
+            <TooltipContent>Visit page</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
     },
   },
   {
@@ -76,38 +78,10 @@ export const columns: ColumnDef<
         .object({ monitor: z.object({ name: z.string() }) })
         .array()
         .parse(monitorsToPages);
-      const firstMonitors = monitors.splice(0, 2);
-      const lastMonitors = monitors;
       return (
-        <div className="flex items-center gap-2">
-          <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
-            {firstMonitors.map(({ monitor: { name } }, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <Badge key={i} variant="outline">
-                {name}
-              </Badge>
-            ))}
-          </span>
-          {lastMonitors.length > 0 ? (
-            <TooltipProvider>
-              <Tooltip delayDuration={200}>
-                <TooltipTrigger>
-                  <Badge variant="secondary" className="border">
-                    +{lastMonitors.length}
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="flex gap-2">
-                  {lastMonitors.map(({ monitor: { name } }, i) => (
-                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                    <Badge key={i} variant="outline">
-                      {name}
-                    </Badge>
-                  ))}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : null}
-        </div>
+        <DataTableBadges
+          names={monitors.map((monitor) => monitor.monitor.name)}
+        />
       );
     },
   },
