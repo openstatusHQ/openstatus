@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 import { selectIncidentSchema } from "./incidents/validation";
-import {
-  maintenancesToMonitors,
-  selectMaintenanceSchema,
-} from "./maintenances";
+import { selectMaintenanceSchema } from "./maintenances";
 import { selectMonitorSchema } from "./monitors";
 import { selectPageSchema } from "./pages";
 import {
