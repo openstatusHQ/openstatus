@@ -8,6 +8,7 @@ import { Badge } from "@openstatus/ui";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { z } from "zod";
 import { DataTableBadges } from "../data-table-badges";
+import Link from "next/link";
 
 // TODO: use the getProviderMetaData function from the notification form to access the data
 
@@ -17,6 +18,20 @@ export const columns: ColumnDef<
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({ row }) => {
+      const { name } = row.original;
+      return (
+        <div className="flex gap-2">
+          <Link
+            href={`./notifications/${row.original.id}/edit`}
+            className="group flex max-w-full items-center gap-2"
+            prefetch={false}
+          >
+            <span className="truncate group-hover:underline">{name}</span>
+          </Link>
+        </div>
+      );
+    },
   },
   {
     accessorKey: "provider",
