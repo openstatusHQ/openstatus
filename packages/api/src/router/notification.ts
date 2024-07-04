@@ -110,19 +110,25 @@ export const notificationRouter = createTRPCRouter({
   getNotificationById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
-      const _notification = await opts.ctx.db
-        .select()
-        .from(notification)
-        .where(
-          and(
-            eq(notification.id, opts.input.id),
-            eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id),
-          ),
-        )
-        .get();
+      const _notification = await opts.ctx.db.query.notification.findFirst({
+        where: and(
+          eq(notification.id, opts.input.id),
+          eq(notification.id, opts.input.id),
+          eq(notification.workspaceId, opts.ctx.workspace.id),
+        ),
+        // FIXME: plural
+        with: { monitor: { with: { monitor: true } } },
+      });
 
-      return selectNotificationSchema.parse(_notification);
+      const schema = selectNotificationSchema.extend({
+        monitor: z.array(
+          z.object({
+            monitor: selectMonitorSchema,
+          }),
+        ),
+      });
+
+      return schema.parse(_notification);
     }),
 
   getNotificationsByWorkspace: protectedProcedure.query(async (opts) => {

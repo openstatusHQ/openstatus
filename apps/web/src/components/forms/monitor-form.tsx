@@ -1,3 +1,5 @@
+// REMINDER: legacy form - please use /forms/monitor/form.tsx
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +19,6 @@ import {
   monitorMethods,
   monitorMethodsSchema,
   monitorPeriodicitySchema,
-  workspacePlans,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 import {
@@ -33,10 +34,6 @@ import {
   CommandInput,
   CommandItem,
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
   Form,
   FormControl,
@@ -66,12 +63,9 @@ import { flyRegionsDict } from "@openstatus/utils";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { FailedPingAlertConfirmation } from "@/components/modals/failed-ping-alert-confirmation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toastAction } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
-import type { Writeable } from "@/types/utils";
-import { NotificationForm } from "./notification-form";
 
 const cronJobs = [
   { value: "30s", label: "30 seconds" },

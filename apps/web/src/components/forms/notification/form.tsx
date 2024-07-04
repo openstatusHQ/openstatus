@@ -7,17 +7,23 @@ import { useForm } from "react-hook-form";
 
 import type {
   InsertNotification,
+  Monitor,
+  NotificationProvider,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { insertNotificationSchema } from "@openstatus/db/src/schema";
 import { Button, Form } from "@openstatus/ui";
 
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/dashboard/tabs";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
-import { SchemaError } from "@openstatus/error";
 import { TRPCClientError } from "@trpc/client";
-import { ZodError, type ZodIssue } from "zod";
 import { SaveButton } from "../shared/save-button";
 import {
   getDefaultProviderData,
@@ -25,41 +31,47 @@ import {
   setProviderData,
 } from "./config";
 import { General } from "./general";
+import { SectionConnect } from "./section-connect";
 
 interface Props {
   defaultValues?: InsertNotification;
   onSubmit?: () => void;
+  monitors?: Monitor[];
   workspacePlan: WorkspacePlan;
   nextUrl?: string;
+  provider: NotificationProvider;
+  callbackData?: string;
 }
 
 export function NotificationForm({
   defaultValues,
   onSubmit: onExternalSubmit,
   workspacePlan,
+  monitors,
   nextUrl,
+  provider,
+  callbackData,
 }: Props) {
   const [isPending, startTransition] = useTransition();
-  const [isTestPending, startTestTransition] = useTransition();
   const router = useRouter();
   const form = useForm<InsertNotification>({
     resolver: zodResolver(insertNotificationSchema),
     defaultValues: {
       ...defaultValues,
+      provider,
       name: defaultValues?.name || "",
       data: getDefaultProviderData(defaultValues),
     },
   });
-  const watchProvider = form.watch("provider");
-  const watchWebhookUrl = form.watch("data");
-  const providerMetaData = useMemo(
-    () => getProviderMetaData(watchProvider),
-    [watchProvider],
-  );
 
   async function onSubmit({ provider, data, ...rest }: InsertNotification) {
     startTransition(async () => {
       try {
+        if (provider === "pagerduty") {
+          if (callbackData) {
+            data = callbackData;
+          }
+        }
         if (data === "") {
           form.setError("data", { message: "This field is required" });
           return;
@@ -91,19 +103,6 @@ export function NotificationForm({
     });
   }
 
-  async function sendTestWebhookPing() {
-    const webhookUrl = form.getValues("data");
-    if (!webhookUrl) return;
-    startTestTransition(async () => {
-      const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
-      if (isSuccessfull) {
-        toastAction("test-success");
-      } else {
-        toastAction("test-error");
-      }
-    });
-  }
-
   return (
     <Form {...form}>
       <form
@@ -112,23 +111,15 @@ export function NotificationForm({
         className="flex flex-col gap-4"
       >
         <General form={form} plan={workspacePlan} />
+        <Tabs defaultValue={"connect"} className="w-full">
+          <TabsList>
+            <TabsTrigger value="connect">Connect</TabsTrigger>
+          </TabsList>
+          <TabsContent value="connect">
+            <SectionConnect form={form} monitors={monitors} />
+          </TabsContent>
+        </Tabs>
         <div className="flex gap-4 sm:justify-end">
-          {providerMetaData.sendTest && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full sm:w-auto"
-              size="lg"
-              disabled={!watchWebhookUrl || isTestPending}
-              onClick={sendTestWebhookPing}
-            >
-              {!isTestPending ? (
-                "Test Webhook"
-              ) : (
-                <LoadingAnimation variant="inverse" />
-              )}
-            </Button>
-          )}
           <SaveButton
             form="notification-form"
             isPending={isPending}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useTransition } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type {
@@ -8,10 +8,7 @@ import type {
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import {
-  notificationProvider,
-  notificationProviderSchema,
-} from "@openstatus/db/src/schema";
-import {
+  Button,
   FormControl,
   FormDescription,
   FormField,
@@ -19,15 +16,12 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "@openstatus/ui";
 
 import { SectionHeader } from "../shared/section-header";
 import { getProviderMetaData } from "./config";
+import { toastAction } from "@/lib/toast";
+import { LoadingAnimation } from "@/components/loading-animation";
 
 interface Props {
   form: UseFormReturn<InsertNotification>;
@@ -35,11 +29,26 @@ interface Props {
 }
 
 export function General({ form, plan }: Props) {
+  const [isTestPending, startTestTransition] = useTransition();
   const watchProvider = form.watch("provider");
+  const watchWebhookUrl = form.watch("data");
   const providerMetaData = useMemo(
     () => getProviderMetaData(watchProvider),
-    [watchProvider],
+    [watchProvider]
   );
+
+  async function sendTestWebhookPing() {
+    const webhookUrl = form.getValues("data");
+    if (!webhookUrl) return;
+    startTestTransition(async () => {
+      const isSuccessfull = await providerMetaData.sendTest?.(webhookUrl);
+      if (isSuccessfull) {
+        toastAction("test-success");
+      } else {
+        toastAction("test-error");
+      }
+    });
+  }
 
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
@@ -48,48 +57,6 @@ export function General({ form, plan }: Props) {
         description="Select the notification channels you want to be informed."
       />
       <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
-        <FormField
-          control={form.control}
-          name="provider"
-          render={({ field }) => (
-            <FormItem className="sm:col-span-1 sm:self-baseline">
-              <FormLabel>Provider</FormLabel>
-              <Select
-                onValueChange={(value) =>
-                  field.onChange(notificationProviderSchema.parse(value))
-                }
-                defaultValue={field.value}
-              >
-                <FormControl>
-                  <SelectTrigger className="capitalize">
-                    <SelectValue placeholder="Select Provider" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {notificationProvider.map((provider) => {
-                    const providerData = getProviderMetaData(provider);
-                    const enabled = providerData.plans?.includes(plan);
-
-                    return (
-                      <SelectItem
-                        key={provider}
-                        value={provider}
-                        className="capitalize"
-                        disabled={!enabled}
-                      >
-                        {providerData.label}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                What channel/provider to send a notification.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="name"
@@ -104,7 +71,7 @@ export function General({ form, plan }: Props) {
             </FormItem>
           )}
         />
-        {watchProvider && (
+        {providerMetaData.dataType && (
           <FormField
             control={form.control}
             name="data"
@@ -137,6 +104,23 @@ export function General({ form, plan }: Props) {
             )}
           />
         )}
+        <div className="col-span-full text-right">
+          {providerMetaData.sendTest && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full sm:w-auto"
+              disabled={!watchWebhookUrl || isTestPending}
+              onClick={sendTestWebhookPing}
+            >
+              {!isTestPending ? (
+                "Test Webhook"
+              ) : (
+                <LoadingAnimation variant="inverse" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

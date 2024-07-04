@@ -57,6 +57,16 @@ export function getProviderMetaData(provider: NotificationProvider) {
         plans: plans.filter((plan) => allPlans[plan].limits.sms),
       };
 
+    case "pagerduty":
+      return {
+        dataType: null,
+        placeholder: "",
+        setupDocLink:
+          "https://docs.openstatus.dev/synthetic/features/notification/pagerduty",
+        sendTest: null,
+        plans: ["starter", "pro", "team"],
+      };
+
     default:
       return {
         label: "Webhook",
