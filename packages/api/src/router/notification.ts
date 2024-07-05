@@ -1,11 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
   NotificationDataSchema,
   insertNotificationSchema,
+  monitor,
   notification,
+  notificationsToMonitors,
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
@@ -20,7 +22,7 @@ export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
-      const { ...props } = opts.input;
+      const { monitors, ...props } = opts.input;
 
       const notificationLimit = getLimit(
         opts.ctx.workspace.plan,
@@ -55,6 +57,15 @@ export const notificationRouter = createTRPCRouter({
         .returning()
         .get();
 
+      const values = monitors.map((monitorId) => ({
+        notificationId: _notification.id,
+        monitorId,
+      }));
+
+      if (values.length) {
+        await opts.ctx.db.insert(notificationsToMonitors).values(values);
+      }
+
       if (env.JITSU_HOST !== undefined && env.JITSU_WRITE_KEY !== undefined) {
         await trackNewNotification(opts.ctx.user, {
           provider: _notification.provider,
@@ -69,7 +80,7 @@ export const notificationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
-      const { ...props } = opts.input;
+      const { monitors, ...props } = opts.input;
 
       const _data = NotificationDataSchema.safeParse(JSON.parse(props.data));
 
@@ -80,7 +91,7 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
-      return await opts.ctx.db
+      const currentNotification = await opts.ctx.db
         .update(notification)
         .set({ ...props, updatedAt: new Date() })
         .where(
@@ -91,6 +102,64 @@ export const notificationRouter = createTRPCRouter({
         )
         .returning()
         .get();
+
+      // TODO: relation
+
+      if (monitors.length) {
+        const allMonitors = await opts.ctx.db.query.monitor.findMany({
+          where: and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            inArray(monitor.id, monitors),
+          ),
+        });
+
+        if (allMonitors.length !== monitors.length) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You don't have access to all the monitors.",
+          });
+        }
+      }
+
+      const currentMonitorsToNotifications = await opts.ctx.db
+        .select()
+        .from(notificationsToMonitors)
+        .where(
+          eq(notificationsToMonitors.notificationId, currentNotification.id),
+        )
+        .all();
+
+      const removedMonitors = currentMonitorsToNotifications
+        .map(({ monitorId }) => monitorId)
+        .filter((x) => !monitors?.includes(x));
+
+      if (removedMonitors.length) {
+        await opts.ctx.db
+          .delete(notificationsToMonitors)
+          .where(
+            and(
+              inArray(notificationsToMonitors.monitorId, removedMonitors),
+              eq(
+                notificationsToMonitors.notificationId,
+                currentNotification.id,
+              ),
+            ),
+          );
+      }
+
+      const values = monitors.map((monitorId) => ({
+        notificationId: currentNotification.id,
+        monitorId,
+      }));
+
+      if (values.length) {
+        await opts.ctx.db
+          .insert(notificationsToMonitors)
+          .values(values)
+          .onConflictDoNothing();
+      }
+
+      return currentNotification;
     }),
 
   deleteNotification: protectedProcedure

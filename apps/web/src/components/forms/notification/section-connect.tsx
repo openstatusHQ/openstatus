@@ -61,8 +61,12 @@ export function SectionConnect({ form, monitors }: Props) {
                                       )
                                     );
                               }}
+                              className="flex-col items-start truncate"
                             >
-                              {item.name}
+                              <span>{item.name}</span>
+                              <span className="font-normal text-muted-foreground text-sm">
+                                {item.url}
+                              </span>
                             </CheckboxLabel>
                           </FormControl>
                         </FormItem>

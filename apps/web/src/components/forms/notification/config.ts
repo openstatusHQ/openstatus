@@ -59,12 +59,13 @@ export function getProviderMetaData(provider: NotificationProvider) {
 
     case "pagerduty":
       return {
+        label: "PagerDuty",
         dataType: null,
         placeholder: "",
         setupDocLink:
           "https://docs.openstatus.dev/synthetic/features/notification/pagerduty",
         sendTest: null,
-        plans: ["starter", "pro", "team"],
+        plans: plans.filter((plan) => allPlans[plan].limits.pagerduty),
       };
 
     default:

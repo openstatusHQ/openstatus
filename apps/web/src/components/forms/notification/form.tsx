@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useMemo, useTransition } from "react";
+import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 
 import type {
@@ -12,7 +12,7 @@ import type {
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { insertNotificationSchema } from "@openstatus/db/src/schema";
-import { Button, Form } from "@openstatus/ui";
+import { Badge, Form } from "@openstatus/ui";
 
 import {
   Tabs,
@@ -20,16 +20,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/dashboard/tabs";
-import { LoadingAnimation } from "@/components/loading-animation";
 import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { TRPCClientError } from "@trpc/client";
 import { SaveButton } from "../shared/save-button";
-import {
-  getDefaultProviderData,
-  getProviderMetaData,
-  setProviderData,
-} from "./config";
+import { getDefaultProviderData, setProviderData } from "./config";
 import { General } from "./general";
 import { SectionConnect } from "./section-connect";
 
@@ -113,7 +108,14 @@ export function NotificationForm({
         <General form={form} plan={workspacePlan} />
         <Tabs defaultValue={"connect"} className="w-full">
           <TabsList>
-            <TabsTrigger value="connect">Connect</TabsTrigger>
+            <TabsTrigger value="connect">
+              Connect{" "}
+              {defaultValues?.monitors.length ? (
+                <Badge variant="secondary" className="ml-1">
+                  {defaultValues?.monitors.length}
+                </Badge>
+              ) : null}
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="connect">
             <SectionConnect form={form} monitors={monitors} />

@@ -54,7 +54,7 @@ export function General({ form, plan }: Props) {
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader
         title="Alert"
-        description="Select the notification channels you want to be informed."
+        description={`Update your ${providerMetaData.label} settings`}
       />
       <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
         <FormField

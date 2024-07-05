@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
-import { MonitorForm } from "@/components/forms/monitor-form";
 import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
+import { MonitorForm } from "@/components/forms/monitor/form";
 
 // FIXME: uses legact MonitorForm and StatusPageForm
 
@@ -37,7 +37,10 @@ export default async function Onboarding({
         />
         <div className="grid h-full w-full gap-6 md:grid-cols-3 md:gap-8">
           <div className="md:col-span-2">
-            <MonitorForm notifications={allNotifications} />
+            <MonitorForm
+              notifications={allNotifications}
+              defaultSection="request"
+            />
           </div>
           <div className="hidden h-full md:col-span-1 md:block">
             <Description step="monitor" />

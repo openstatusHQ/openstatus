@@ -17,6 +17,7 @@ export default async function ChannelPage({
   if (!validation.success) notFound();
 
   const workspace = await api.workspace.getWorkspace.query();
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
   const provider = validation.data;
 
@@ -36,6 +37,7 @@ export default async function ChannelPage({
       workspacePlan={workspace.plan}
       nextUrl="../"
       provider={provider}
+      monitors={monitors}
     />
   );
 }
