@@ -125,21 +125,22 @@ import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
 //   },
 // } as const;
 
-export const flyRegionsDict: Record<
-  MonitorFlyRegion,
-  {
-    code: MonitorFlyRegion;
-    location: string;
-    flag: string;
-    continent:
-      | "Europe"
-      | "North America"
-      | "South America"
-      | "Asia"
-      | "Africa"
-      | "Oceania";
-  }
-> = {
+export type Continent =
+  | "Europe"
+  | "North America"
+  | "South America"
+  | "Asia"
+  | "Africa"
+  | "Oceania";
+
+export type RegionInfo = {
+  code: MonitorFlyRegion;
+  location: string;
+  flag: string;
+  continent: Continent;
+};
+
+export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
   ams: {
     code: "ams",
     location: "Amsterdam, Netherlands",
@@ -391,7 +392,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  }
+  },
 );
 
 export const vercelRegions = [
