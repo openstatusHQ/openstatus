@@ -11,6 +11,7 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandList,
 } from "@openstatus/ui";
 
 // TODO: once stable, use the shallow route to store the search params inside of the search params
@@ -32,17 +33,14 @@ export function InputSearch({
     const searchparams = inputValue
       .trim()
       .split(" ")
-      .reduce(
-        (prev, curr) => {
-          const [name, value] = curr.split(":");
-          if (value && name && curr !== currentWord) {
-            // TODO: support multiple value with value.split(",")
-            prev[name] = value;
-          }
-          return prev;
-        },
-        {} as Record<string, string>,
-      );
+      .reduce((prev, curr) => {
+        const [name, value] = curr.split(":");
+        if (value && name && curr !== currentWord) {
+          // TODO: support multiple value with value.split(",")
+          prev[name] = value;
+        }
+        return prev;
+      }, {} as Record<string, string>);
     onSearch(searchparams);
   }, [onSearch, inputValue, currentWord]);
 
@@ -63,9 +61,9 @@ export function InputSearch({
           status: (number | null)[];
           limit: number[];
           region: string[];
-        },
+        }
       ),
-    [events],
+    [events]
   );
 
   type SearchKey = keyof typeof search;
@@ -110,74 +108,76 @@ export function InputSearch({
       <div className="relative mt-2">
         {open ? (
           <div className="absolute top-0 z-10 w-full animate-in rounded-md border bg-popover text-popover-foreground shadow-md outline-none">
-            <CommandGroup className="max-h-64 overflow-auto">
-              {Object.keys(search).map((key) => {
-                if (
-                  inputValue.includes(`${key}:`) &&
-                  !currentWord.includes(`${key}:`)
-                )
-                  return null;
-                return (
-                  <React.Fragment key={key}>
-                    <CommandItem
-                      value={key}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onSelect={(value) => {
-                        setInputValue((prev) => {
-                          if (currentWord.trim() === "") {
-                            const input = `${prev}${value}`;
+            <CommandList>
+              <CommandGroup className="max-h-64 overflow-auto">
+                {Object.keys(search).map((key) => {
+                  if (
+                    inputValue.includes(`${key}:`) &&
+                    !currentWord.includes(`${key}:`)
+                  )
+                    return null;
+                  return (
+                    <React.Fragment key={key}>
+                      <CommandItem
+                        value={key}
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onSelect={(value) => {
+                          setInputValue((prev) => {
+                            if (currentWord.trim() === "") {
+                              const input = `${prev}${value}`;
+                              return `${input}:`;
+                            }
+                            // lots of cheat
+                            const isStarting = currentWord === prev;
+                            const prefix = isStarting ? "" : " ";
+                            const input = prev.replace(
+                              `${prefix}${currentWord}`,
+                              `${prefix}${value}`
+                            );
                             return `${input}:`;
-                          }
-                          // lots of cheat
-                          const isStarting = currentWord === prev;
-                          const prefix = isStarting ? "" : " ";
-                          const input = prev.replace(
-                            `${prefix}${currentWord}`,
-                            `${prefix}${value}`,
-                          );
-                          return `${input}:`;
-                        });
-                        setCurrentWord(`${value}:`);
-                      }}
-                      className="group"
-                    >
-                      {key}
-                      <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
-                        {search[key as SearchKey]
-                          .map((str) => `[${str}]`)
-                          .join(" ")}
-                      </span>
-                    </CommandItem>
-                    {search[key as SearchKey].map((option) => {
-                      return (
-                        <SubItem
-                          key={option}
-                          value={`${key}:${option}`}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                          }}
-                          onSelect={(value) => {
-                            setInputValue((prev) => {
-                              const input = prev.replace(currentWord, value);
-                              return `${input.trim()} `;
-                            });
-                            setCurrentWord("");
-                          }}
-                          {...{ currentWord }}
-                        >
-                          {option}
-                        </SubItem>
-                      );
-                    })}
-                  </React.Fragment>
-                );
-              })}
-            </CommandGroup>
-            <CommandEmpty>No results found.</CommandEmpty>
+                          });
+                          setCurrentWord(`${value}:`);
+                        }}
+                        className="group"
+                      >
+                        {key}
+                        <span className="ml-1 hidden truncate text-muted-foreground/90 group-aria-[selected=true]:block">
+                          {search[key as SearchKey]
+                            .map((str) => `[${str}]`)
+                            .join(" ")}
+                        </span>
+                      </CommandItem>
+                      {search[key as SearchKey].map((option) => {
+                        return (
+                          <SubItem
+                            key={option}
+                            value={`${key}:${option}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            onSelect={(value) => {
+                              setInputValue((prev) => {
+                                const input = prev.replace(currentWord, value);
+                                return `${input.trim()} `;
+                              });
+                              setCurrentWord("");
+                            }}
+                            {...{ currentWord }}
+                          >
+                            {option}
+                          </SubItem>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </CommandGroup>
+              <CommandEmpty>No results found.</CommandEmpty>
+            </CommandList>
           </div>
         ) : null}
       </div>
