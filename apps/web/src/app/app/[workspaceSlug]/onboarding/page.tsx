@@ -9,8 +9,6 @@ import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
 import { MonitorForm } from "@/components/forms/monitor/form";
 
-// FIXME: uses legact MonitorForm and StatusPageForm
-
 export default async function Onboarding({
   params,
 }: {

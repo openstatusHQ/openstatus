@@ -30,6 +30,7 @@ import { SectionConnect } from "./section-connect";
 
 interface Props {
   defaultValues?: InsertNotification;
+  defaultSection?: string;
   onSubmit?: () => void;
   monitors?: Monitor[];
   workspacePlan: WorkspacePlan;
@@ -40,6 +41,7 @@ interface Props {
 
 export function NotificationForm({
   defaultValues,
+  defaultSection = "connect",
   onSubmit: onExternalSubmit,
   workspacePlan,
   monitors,
@@ -106,7 +108,7 @@ export function NotificationForm({
         className="flex flex-col gap-4"
       >
         <General form={form} plan={workspacePlan} />
-        <Tabs defaultValue={"connect"} className="w-full">
+        <Tabs defaultValue={defaultSection} className="w-full">
           <TabsList>
             <TabsTrigger value="connect">
               Connect{" "}
