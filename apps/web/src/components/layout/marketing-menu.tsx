@@ -18,10 +18,14 @@ import { socialsConfig } from "@/config/socials";
 import { AppLink } from "./app-link";
 import { LoginButton } from "./login-button";
 import { SocialIconButton } from "./social-icon-button";
+import { useWindowScroll } from "@/hooks/use-window-scroll";
+import { cn } from "@/lib/utils";
 
 export function MarketingMenu() {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
+  const [{ y }] = useWindowScroll();
+  const isScroll = React.useMemo(() => y && y > 0, [y]);
 
   React.useEffect(() => {
     setOpen(false);
@@ -39,7 +43,7 @@ export function MarketingMenu() {
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="top" className="flex flex-col">
+      <SheetContent side="top" className={cn("flex flex-col")}>
         <SheetHeader>
           <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
         </SheetHeader>
