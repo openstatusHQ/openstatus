@@ -7,14 +7,17 @@ import { cn } from "@/lib/utils";
 import * as assertions from "@openstatus/assertions";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
-import { Button, Skeleton } from "@openstatus/ui";
+import { Button, InputWithAddons, Separator, Skeleton } from "@openstatus/ui";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "./_components/assertions-timing-form-example";
+import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
+import { Tracker } from "@/components/tracker/tracker";
 
 export default function FeaturePage() {
   return (
     <div className="grid w-full gap-12">
+      <FeatureCategoryTitle>Monitors</FeatureCategoryTitle>
       <Shell className="grid px-0 py-0 sm:grid-cols-3 md:p-0">
         <FeatureCardContentContainer
           variant="secondary"
@@ -94,6 +97,58 @@ export default function FeaturePage() {
           </div>
         </FeatureCardContentContainer>
       </Shell>
+
+      <FeatureCategoryTitle>Status Pages</FeatureCategoryTitle>
+
+      <Shell className="grid px-0 py-0 sm:grid-cols-3 md:p-0">
+        <FeatureCardContentContainer
+          variant="secondary"
+          className="flex flex-col gap-2 sm:col-span-2"
+        >
+          <FeatureSubheader icon="globe" title="Customize" />
+          <FeatureTitle
+            strong="Custom Domain."
+            regular="Bring your own domain, give the status page a personal touch."
+          />
+        </FeatureCardContentContainer>
+        <FeatureCardContentContainer className="flex items-center justify-center border-t sm:col-span-1 sm:border-t-0 sm:border-l">
+          <InputWithAddons leading="https://" placeholder="status.acme.com" />
+        </FeatureCardContentContainer>
+      </Shell>
+      <Shell className="grid h-auto px-0 py-0 md:grid-cols-3 md:p-0">
+        <FeatureCardContentContainer
+          variant="secondary"
+          className="flex flex-col gap-2 md:col-span-1"
+        >
+          <FeatureSubheader icon="panel-top" title="Simple by default" />
+          <FeatureTitle
+            strong="Status page."
+            regular="Connect your monitors and inform your users about the uptime."
+          />
+        </FeatureCardContentContainer>
+        <FeatureCardContentContainer className="flex items-center justify-between border-t md:col-span-2 md:border-t-0 md:border-l">
+          <Tracker
+            data={trackerData}
+            name="OpenStatus"
+            description="Website Health"
+          />
+        </FeatureCardContentContainer>
+      </Shell>
+      <Shell className="grid px-0 py-0 sm:grid-cols-3 md:p-0">
+        <FeatureCardContentContainer
+          variant="secondary"
+          className="flex flex-col gap-2 sm:col-span-2"
+        >
+          <FeatureSubheader icon="users" title="Reach your users" />
+          <FeatureTitle
+            strong="Subscriptions"
+            regular="Let your users subscribe to your status page, to automatically receive updates about the status of your services."
+          />
+        </FeatureCardContentContainer>
+        <FeatureCardContentContainer className="flex items-center justify-center border-t sm:col-span-1 sm:border-t-0 sm:border-l">
+          <SubscribeButton slug={""} isDemo />
+        </FeatureCardContentContainer>
+      </Shell>
     </div>
   );
 }
@@ -126,10 +181,10 @@ function FeatureCardContentContainer({
 function FeatureSubheader({ icon, title }: { icon: ValidIcon; title: string }) {
   const Icon = Icons[icon];
   return (
-    <h2 className="flex items-center gap-2 text-muted-foreground">
+    <h3 className="flex items-center gap-2 text-muted-foreground">
       <Icon className="h-4 w-4 text-foreground" />
       {title}
-    </h2>
+    </h3>
   );
 }
 
@@ -142,6 +197,17 @@ function FeatureTitle({
       <strong className="font-medium text-foreground">{strong}</strong>{" "}
       {regular}
     </p>
+  );
+}
+
+function FeatureCategoryTitle({
+  children,
+}: React.ComponentPropsWithoutRef<"div">) {
+  return (
+    <div className="grid gap-3">
+      <h2 className="font-cal text-3xl">{children}</h2>
+      <Separator />
+    </div>
   );
 }
 
@@ -179,6 +245,54 @@ const responseDetailTabs = {
     '[{"version":"v1","type":"header","compare":"eq","key":"Server","target":"Vercel"}]'
   ),
 };
+
+const trackerData = [
+  { day: "2024-07-07T00:00:00.000Z", count: 3944, ok: 3944 },
+  { day: "2024-07-06T00:00:00.000Z", count: 4692, ok: 4692 },
+  { day: "2024-07-05T00:00:00.000Z", count: 4737, ok: 4737 },
+  { day: "2024-07-04T00:00:00.000Z", count: 4862, ok: 4862 },
+  { day: "2024-07-03T00:00:00.000Z", count: 1958, ok: 1958 },
+  { day: "2024-07-02T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-07-01T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-30T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-29T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-28T00:00:00.000Z", count: 1128, ok: 1128 },
+  { day: "2024-06-27T00:00:00.000Z", count: 1144, ok: 1144 },
+  { day: "2024-06-26T00:00:00.000Z", count: 1148, ok: 1148 },
+  { day: "2024-06-25T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-24T00:00:00.000Z", count: 1151, ok: 1151 },
+  { day: "2024-06-23T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-22T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-21T00:00:00.000Z", count: 1152, ok: 1152 },
+  { day: "2024-06-20T00:00:00.000Z", count: 1152, ok: 1151 },
+  { day: "2024-06-19T00:00:00.000Z", count: 1064, ok: 1064 },
+  { day: "2024-06-18T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-17T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-16T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-15T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-14T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-13T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-12T00:00:00.000Z", count: 863, ok: 863 },
+  { day: "2024-06-11T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-10T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-09T00:00:00.000Z", count: 1320, ok: 1320 },
+  { day: "2024-06-08T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-07T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-06T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-05T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-04T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-03T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-02T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-06-01T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-31T00:00:00.000Z", count: 860, ok: 860 },
+  { day: "2024-05-30T00:00:00.000Z", count: 858, ok: 858 },
+  { day: "2024-05-29T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-28T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-27T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-26T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-25T00:00:00.000Z", count: 864, ok: 864 },
+  { day: "2024-05-24T00:00:00.000Z", count: 864, ok: 864 },
+];
 
 const combinedChart = {
   data: [
