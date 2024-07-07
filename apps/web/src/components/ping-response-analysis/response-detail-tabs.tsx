@@ -17,14 +17,19 @@ export async function ResponseDetailTabs({
   status,
   message,
   assertions,
+  defaultOpen,
+  hideInfo = true,
 }: {
   timing: Timing | null;
   headers: Record<string, string> | null;
   status: number | null;
   message?: string | null;
   assertions?: Assertion[] | null;
+  defaultOpen?: string;
+  hideInfo?: boolean;
 }) {
-  const defaultValue = headers ? "headers" : timing ? "timing" : "message";
+  const defaultValue =
+    defaultOpen || headers ? "headers" : timing ? "timing" : "message";
   return (
     <Tabs defaultValue={defaultValue}>
       <TabsList>
@@ -50,8 +55,9 @@ export async function ResponseDetailTabs({
         ) : null}
       </TabsContent>
       <TabsContent value="timing">
-        {/* TODO: show hideInfo={false} when in /play/checker page */}
-        {timing ? <ResponseTimingTable timing={timing} hideInfo /> : null}
+        {timing ? (
+          <ResponseTimingTable timing={timing} hideInfo={hideInfo} />
+        ) : null}
       </TabsContent>
       <TabsContent value="message">
         {message ? (

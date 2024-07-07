@@ -77,7 +77,10 @@ export default async function CheckPage({ params, searchParams }: Props) {
               <RegionInfo check={check} />
             </div>
           </div>
-          <ResponseDetailTabs {...{ timing, headers, status }} />
+          <ResponseDetailTabs
+            {...{ timing, headers, status }}
+            hideInfo={false}
+          />
         </div>
         <Separator />
         <p className="text-muted-foreground text-sm">

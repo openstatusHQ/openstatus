@@ -3,6 +3,7 @@ import {
   AlertTriangle,
   Bell,
   Book,
+  BookOpenCheck,
   Bot,
   Calendar,
   Camera,
@@ -112,6 +113,7 @@ export const Icons = {
   ratio: Ratio,
   user: UserCircle,
   camera: Camera,
+  "book-open-check": BookOpenCheck,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
