@@ -14,7 +14,7 @@ import { AssertionsTimingFormExample } from "./_components/assertions-timing-for
 
 export default function FeaturePage() {
   return (
-    <div className="grid w-full gap-6">
+    <div className="grid w-full gap-12">
       <Shell className="grid px-0 py-0 sm:grid-cols-3 md:p-0">
         <FeatureCardContentContainer
           variant="secondary"
@@ -34,9 +34,6 @@ export default function FeaturePage() {
         </FeatureCardContentContainer>
       </Shell>
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-3 md:p-0">
-        <FeatureCardContentContainer className="max-h-64 overflow-hidden border-b md:col-span-2 md:overflow-y-auto md:border-r md:border-b-0">
-          <AssertionsTimingFormExample />
-        </FeatureCardContentContainer>
         <FeatureCardContentContainer
           variant="secondary"
           className="flex flex-col gap-2 md:col-span-1"
@@ -50,6 +47,9 @@ export default function FeaturePage() {
             regular="Check the return value, status code, header or maximum response time."
           />
         </FeatureCardContentContainer>
+        <FeatureCardContentContainer className="max-h-72 overflow-hidden border-t md:col-span-2 md:overflow-y-auto md:border-t-0 md:border-l">
+          <AssertionsTimingFormExample />
+        </FeatureCardContentContainer>
       </Shell>
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-3 md:p-0">
         <FeatureCardContentContainer
@@ -62,8 +62,8 @@ export default function FeaturePage() {
             regular="Analyze DNS, TCP, TLS, and TTFB for every request and inspect Response Headers as needed."
           />
         </FeatureCardContentContainer>
-        <FeatureCardContentContainer className="relative max-h-64 overflow-hidden border-t md:col-span-2 md:overflow-y-scroll md:border-t-0 md:border-l">
-          <div className="-top-6 -mt-6 sticky inset-y-0 z-10 h-6 w-full bg-background" />
+        <FeatureCardContentContainer className="relative max-h-72 overflow-hidden border-t md:col-span-2 md:overflow-y-scroll md:border-t-0 md:border-l">
+          <div className="-top-8 -mt-8 sticky inset-y-0 z-10 h-8 w-full bg-background" />
           <ResponseDetailTabs
             {...responseDetailTabs}
             defaultOpen="timing"
@@ -72,7 +72,7 @@ export default function FeaturePage() {
         </FeatureCardContentContainer>
       </Shell>
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-1 md:p-0">
-        <FeatureCardContentContainer className="max-h-64 overflow-hidden md:col-span-1">
+        <FeatureCardContentContainer className="max-h-72 overflow-hidden md:col-span-1">
           {/* TODO: improve fallback */}
           <Suspense fallback={"loading..."}>
             <Chart {...combinedChart} />
@@ -112,9 +112,9 @@ function FeatureCardContentContainer({
   return (
     <div
       className={cn(
-        "px-3 py-6 md:p-6",
+        "px-3 py-6 md:p-8",
         variant === "secondary" && "bg-accent/50",
-        className,
+        className
       )}
       {...props}
     >
@@ -138,7 +138,7 @@ function FeatureTitle({
   regular,
 }: Record<"strong" | "regular", string>) {
   return (
-    <p className="text-lg text-muted-foreground">
+    <p className="text-muted-foreground text-xl">
       <strong className="font-medium text-foreground">{strong}</strong>{" "}
       {regular}
     </p>
@@ -176,7 +176,7 @@ const responseDetailTabs = {
   status: 200,
   message: null,
   assertions: assertions.deserialize(
-    '[{"version":"v1","type":"header","compare":"eq","key":"Server","target":"Vercel"}]',
+    '[{"version":"v1","type":"header","compare":"eq","key":"Server","target":"Vercel"}]'
   ),
 };
 
