@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
 import { AssertionsTimingFormExample } from "./_components/assertions-timing-form-example";
-import { Button } from "@openstatus/ui";
+import { Button, Skeleton } from "@openstatus/ui";
 import Link from "next/link";
 import { Chart } from "@/components/monitor-charts/chart";
 import * as assertions from "@openstatus/assertions";
+import { Suspense } from "react";
 
 export default function FeaturePage() {
   return (
@@ -71,7 +72,10 @@ export default function FeaturePage() {
       </Shell>
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-1 md:p-0">
         <FeatureCardContentContainer className="max-h-64 overflow-hidden md:col-span-1">
-          <Chart {...combinedChart} />
+          {/* TODO: improve fallback */}
+          <Suspense fallback={"loading..."}>
+            <Chart {...combinedChart} />
+          </Suspense>
         </FeatureCardContentContainer>
         <FeatureCardContentContainer
           variant="secondary"
@@ -108,7 +112,7 @@ function FeatureCardContentContainer({
     <div
       className={cn(
         "px-3 py-6 md:p-6",
-        variant === "secondary" && "bg-accent/30",
+        variant === "secondary" && "bg-accent/50",
         className
       )}
       {...props}
