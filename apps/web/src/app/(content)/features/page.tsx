@@ -1,16 +1,16 @@
 import { Shell } from "@/components/dashboard/shell";
 import { Icons, type ValidIcon } from "@/components/icons";
+import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { cn } from "@/lib/utils";
+import * as assertions from "@openstatus/assertions";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
-import { AssertionsTimingFormExample } from "./_components/assertions-timing-form-example";
 import { Button, Skeleton } from "@openstatus/ui";
 import Link from "next/link";
-import { Chart } from "@/components/monitor-charts/chart";
-import * as assertions from "@openstatus/assertions";
 import { Suspense } from "react";
+import { AssertionsTimingFormExample } from "./_components/assertions-timing-form-example";
 
 export default function FeaturePage() {
   return (
@@ -18,7 +18,7 @@ export default function FeaturePage() {
       <Shell className="grid px-0 py-0 sm:grid-cols-3 md:p-0">
         <FeatureCardContentContainer
           variant="secondary"
-          className="flex flex-col gap-1 sm:col-span-2"
+          className="flex flex-col gap-2 sm:col-span-2"
         >
           <FeatureSubheader icon="activity" title="Website & API monitoring" />
           <FeatureTitle
@@ -34,12 +34,12 @@ export default function FeaturePage() {
         </FeatureCardContentContainer>
       </Shell>
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-3 md:p-0">
-        <FeatureCardContentContainer className="max-h-64 overflow-y-scroll border-b md:col-span-2 md:border-r md:border-b-0">
+        <FeatureCardContentContainer className="max-h-64 overflow-hidden border-b md:col-span-2 md:overflow-y-auto md:border-r md:border-b-0">
           <AssertionsTimingFormExample />
         </FeatureCardContentContainer>
         <FeatureCardContentContainer
           variant="secondary"
-          className="flex flex-col gap-1 md:col-span-1"
+          className="flex flex-col gap-2 md:col-span-1"
         >
           <FeatureSubheader
             icon="book-open-check"
@@ -54,7 +54,7 @@ export default function FeaturePage() {
       <Shell className="grid h-auto px-0 py-0 md:grid-cols-3 md:p-0">
         <FeatureCardContentContainer
           variant="secondary"
-          className="flex flex-col gap-1 md:col-span-1"
+          className="flex flex-col gap-2 md:col-span-1"
         >
           <FeatureSubheader icon="timer" title="Request Metrics Insights" />
           <FeatureTitle
@@ -62,7 +62,8 @@ export default function FeaturePage() {
             regular="Analyze DNS, TCP, TLS, and TTFB for every request and inspect Response Headers as needed."
           />
         </FeatureCardContentContainer>
-        <FeatureCardContentContainer className="max-h-64 overflow-hidden border-t md:col-span-2 md:border-t-0 md:border-l">
+        <FeatureCardContentContainer className="relative max-h-64 overflow-hidden border-t md:col-span-2 md:overflow-y-scroll md:border-t-0 md:border-l">
+          <div className="-top-6 -mt-6 sticky inset-y-0 z-10 h-6 w-full bg-background" />
           <ResponseDetailTabs
             {...responseDetailTabs}
             defaultOpen="timing"
@@ -79,7 +80,7 @@ export default function FeaturePage() {
         </FeatureCardContentContainer>
         <FeatureCardContentContainer
           variant="secondary"
-          className="flex flex-col gap-1 border-t md:col-span-1"
+          className="flex flex-col gap-2 border-t md:col-span-1"
         >
           <FeatureSubheader icon="line-chart" title="Charts" />
           <FeatureTitle
@@ -113,7 +114,7 @@ function FeatureCardContentContainer({
       className={cn(
         "px-3 py-6 md:p-6",
         variant === "secondary" && "bg-accent/50",
-        className
+        className,
       )}
       {...props}
     >
@@ -163,10 +164,7 @@ const responseDetailTabs = {
     "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
     "Content-Type": "text/html; charset=utf-8",
     Date: "Sat, 06 Jul 2024 20:20:50 GMT",
-    Link: '</_next/static/media/162bf645eb375add-s.p.ttf>; rel=preload; as="font"; crossorigin=""; type="font/ttf", </_next/static/media/c9a5bc6a7c948fb0-s.p.woff2>; rel=preload; as="font"; crossorigin=""; type="font/woff2"',
     Server: "Vercel",
-    "Set-Cookie":
-      "__Host-authjs.csrf-token=1110e7e88b13521a056ad8981524094ef05c6d65e2cb48e4a5c506d4bc1a52c7%7C903fa27e3b85441e3e8b3a6d4761a1d89ed2f3b442cef2e54bb70bd0fe3169f8; Path=/; HttpOnly; Secure; SameSite=Lax",
     "Strict-Transport-Security": "max-age=63072000",
     Vary: "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
     "X-Matched-Path": "/",
@@ -178,7 +176,7 @@ const responseDetailTabs = {
   status: 200,
   message: null,
   assertions: assertions.deserialize(
-    '[{"version":"v1","type":"header","compare":"eq","key":"Server","target":"Vercel"}]'
+    '[{"version":"v1","type":"header","compare":"eq","key":"Server","target":"Vercel"}]',
   ),
 };
 

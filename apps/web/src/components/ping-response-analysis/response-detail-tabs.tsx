@@ -19,6 +19,7 @@ export async function ResponseDetailTabs({
   assertions,
   defaultOpen,
   hideInfo = true,
+  className,
 }: {
   timing: Timing | null;
   headers: Record<string, string> | null;
@@ -27,12 +28,13 @@ export async function ResponseDetailTabs({
   assertions?: Assertion[] | null;
   defaultOpen?: string;
   hideInfo?: boolean;
+  className?: string;
 }) {
   const defaultValue =
     defaultOpen || headers ? "headers" : timing ? "timing" : "message";
   return (
-    <Tabs defaultValue={defaultValue}>
-      <TabsList>
+    <Tabs defaultValue={defaultValue} className={className}>
+      <TabsList className="sticky top-0 bg-background">
         <TabsTrigger value="headers" disabled={!headers}>
           Headers
         </TabsTrigger>
