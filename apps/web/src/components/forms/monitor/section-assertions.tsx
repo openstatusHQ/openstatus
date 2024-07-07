@@ -293,7 +293,7 @@ export function SectionAssertions({ form }: Props) {
             </div>
           </div>
         ))}
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <Button
             variant="outline"
             type="button"
