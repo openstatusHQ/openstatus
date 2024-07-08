@@ -29,8 +29,12 @@ interface InteractiveFeatureProps
   iconText: string;
   title: string;
   subTitle: string;
+  /**
+   * Allows to include one or multiple CTA action(s)
+   * @example <Button>CTA</Button>
+   */
   action?: React.ReactNode;
-  // grid
+  // grid aligment
   position: "top" | "right" | "bottom" | "left";
   col: 1 | 2;
 }

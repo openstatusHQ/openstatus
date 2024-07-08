@@ -209,18 +209,18 @@ export const pagesConfig = [
 
 export const marketingProductPagesConfig = [
   {
-    href: "/product/monitoring",
+    href: "/features/monitoring",
     title: "Monitoring",
     description:
       "Get insights of your API and website performance all over the world.",
-    segment: "product",
+    segment: "features",
     icon: "activity",
   },
   {
-    href: "/product/status-page",
+    href: "/features/status-page",
     title: "Status Page",
     description: "Create beautiful status pages by default within seconds.",
-    segment: "product",
+    segment: "features",
     icon: "panel-top",
   },
 ] as const satisfies Page[];

@@ -3,19 +3,22 @@ import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
-import { Button, InputWithAddons, Separator } from "@openstatus/ui";
+import { Button } from "@openstatus/ui";
 import Link from "next/link";
 import { Suspense } from "react";
-import { AssertionsTimingFormExample } from "./_examples/assertions-timing-form-example";
-import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
-import { Tracker } from "@/components/tracker/tracker";
-import { InteractiveFeature } from "./_components/interactive-feature";
-import { mockChartData, mockResponseData, mockTrackerData } from "./mock";
+import { AssertionsTimingFormExample } from "../_components/assertions-timing-form-example";
+import { InteractiveFeature } from "../_components/interactive-feature";
+import { mockChartData, mockResponseData } from "../mock";
+import { Hero } from "../_components/hero";
+import { marketingProductPagesConfig } from "@/config/pages";
+import { Banner } from "../_components/banner";
+
+const { title, description } = marketingProductPagesConfig[0];
 
 export default function FeaturePage() {
   return (
     <div className="grid w-full gap-12">
-      <FeatureCategoryTitle>Monitors</FeatureCategoryTitle>
+      <Hero title={title} subTitle={description} />
       <InteractiveFeature
         icon="activity"
         iconText="Website & API monitoring"
@@ -76,61 +79,7 @@ export default function FeaturePage() {
         col={2}
         position={"top"}
       />
-      <FeatureCategoryTitle>Status Pages</FeatureCategoryTitle>
-      <InteractiveFeature
-        icon="globe"
-        iconText="Customize"
-        title="Custom Domain."
-        subTitle="Bring your own domain, give the status page a personal touch."
-        component={
-          <div className="m-auto">
-            <InputWithAddons leading="https://" placeholder="status.acme.com" />
-          </div>
-        }
-        col={1}
-        position={"left"}
-      />
-      <InteractiveFeature
-        icon="panel-top"
-        iconText="Simple by default"
-        title="Status page."
-        subTitle="Connect your monitors and inform your users about the uptime."
-        component={
-          <div className="my-auto">
-            <Tracker
-              data={mockTrackerData}
-              name="OpenStatus"
-              description="Website Health"
-            />
-          </div>
-        }
-        col={2}
-        position={"left"}
-      />
-      <InteractiveFeature
-        icon="users"
-        iconText="Reach your users"
-        title="Subscriptions"
-        subTitle="Let your users subscribe to your status page, to automatically receive updates about the status of your services."
-        component={
-          <div className="m-auto">
-            <SubscribeButton slug={""} isDemo />
-          </div>
-        }
-        col={1}
-        position={"left"}
-      />
-    </div>
-  );
-}
-
-function FeatureCategoryTitle({
-  children,
-}: React.ComponentPropsWithoutRef<"div">) {
-  return (
-    <div className="grid gap-3">
-      <h2 className="font-cal text-3xl">{children}</h2>
-      <Separator />
+      <Banner />
     </div>
   );
 }
