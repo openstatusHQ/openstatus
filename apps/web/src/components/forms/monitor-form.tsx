@@ -32,6 +32,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -505,47 +506,52 @@ export function MonitorForm({
                               <PopoverContent className="w-full p-0">
                                 <Command>
                                   <CommandInput placeholder="Select a region..." />
-                                  <CommandEmpty>No regions found.</CommandEmpty>
-                                  <CommandGroup className="max-h-[150px] overflow-y-scroll">
-                                    {Object.keys(flyRegionsDict).map(
-                                      (region) => {
-                                        const { code, location } =
-                                          flyRegionsDict[
-                                            region as keyof typeof flyRegionsDict
-                                          ];
-                                        const isSelected =
-                                          field.value?.includes(code);
-                                        return (
-                                          <CommandItem
-                                            value={code}
-                                            key={code}
-                                            onSelect={() => {
-                                              const currentRegions =
-                                                form.getValues("regions") || [];
-                                              form.setValue(
-                                                "regions",
-                                                currentRegions.includes(code)
-                                                  ? currentRegions.filter(
-                                                      (r) => r !== code
-                                                    )
-                                                  : [...currentRegions, code]
-                                              );
-                                            }}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                "mr-2 h-4 w-4",
-                                                isSelected
-                                                  ? "opacity-100"
-                                                  : "opacity-0"
-                                              )}
-                                            />
-                                            {location}
-                                          </CommandItem>
-                                        );
-                                      }
-                                    )}
-                                  </CommandGroup>
+                                  <CommandList>
+                                    <CommandEmpty>
+                                      No regions found.
+                                    </CommandEmpty>
+                                    <CommandGroup className="max-h-[150px] overflow-y-scroll">
+                                      {Object.keys(flyRegionsDict).map(
+                                        (region) => {
+                                          const { code, location } =
+                                            flyRegionsDict[
+                                              region as keyof typeof flyRegionsDict
+                                            ];
+                                          const isSelected =
+                                            field.value?.includes(code);
+                                          return (
+                                            <CommandItem
+                                              value={code}
+                                              key={code}
+                                              onSelect={() => {
+                                                const currentRegions =
+                                                  form.getValues("regions") ||
+                                                  [];
+                                                form.setValue(
+                                                  "regions",
+                                                  currentRegions.includes(code)
+                                                    ? currentRegions.filter(
+                                                        (r) => r !== code
+                                                      )
+                                                    : [...currentRegions, code]
+                                                );
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  "mr-2 h-4 w-4",
+                                                  isSelected
+                                                    ? "opacity-100"
+                                                    : "opacity-0"
+                                                )}
+                                              />
+                                              {location}
+                                            </CommandItem>
+                                          );
+                                        }
+                                      )}
+                                    </CommandGroup>
+                                  </CommandList>
                                 </Command>
                               </PopoverContent>
                             </Popover>

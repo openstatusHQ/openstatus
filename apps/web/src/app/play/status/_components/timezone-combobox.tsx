@@ -11,6 +11,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -60,40 +61,42 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
       <PopoverContent className="w-[300px] p-0">
         <Command>
           <CommandInput placeholder="Search timezone..." />
-          <CommandEmpty>No timezone found.</CommandEmpty>
-          <CommandGroup className="max-h-[300px] overflow-y-auto">
-            {timezones.map((timezone) => (
-              <CommandItem
-                key={timezone.value}
-                value={timezone.value}
-                onSelect={(currentValue) => {
-                  setOpen(false);
+          <CommandList>
+            <CommandEmpty>No timezone found.</CommandEmpty>
+            <CommandGroup className="max-h-[300px] overflow-y-auto">
+              {timezones.map((timezone) => (
+                <CommandItem
+                  key={timezone.value}
+                  value={timezone.value}
+                  onSelect={(currentValue) => {
+                    setOpen(false);
 
-                  // update search params
-                  const searchParams = updateSearchParams({
-                    timezone:
-                      currentValue === value
-                        ? null // remove search param and use default timezone
-                        : timezones.find(
-                            (timezone) => timezone.value === currentValue,
-                          )?.label || null,
-                  });
+                    // update search params
+                    const searchParams = updateSearchParams({
+                      timezone:
+                        currentValue === value
+                          ? null // remove search param and use default timezone
+                          : timezones.find(
+                              (timezone) => timezone.value === currentValue
+                            )?.label || null,
+                    });
 
-                  // refresh page with new search params
-                  router.replace(`${pathname}?${searchParams}`);
-                  router.refresh();
-                }}
-              >
-                <Check
-                  className={cn(
-                    "mr-2 h-4 w-4",
-                    value === timezone.value ? "opacity-100" : "opacity-0",
-                  )}
-                />
-                {timezone.label}
-              </CommandItem>
-            ))}
-          </CommandGroup>
+                    // refresh page with new search params
+                    router.replace(`${pathname}?${searchParams}`);
+                    router.refresh();
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === timezone.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {timezone.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>

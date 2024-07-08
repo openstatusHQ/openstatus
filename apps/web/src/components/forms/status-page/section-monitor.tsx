@@ -13,6 +13,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -64,43 +65,48 @@ export function SectionMonitor({ form, monitors }: Props) {
         <PopoverContent side="bottom" className="w-[240px] p-0">
           <Command>
             <CommandInput placeholder="Select monitors..." className="h-9" />
-            <CommandEmpty>No monitors found.</CommandEmpty>
-            <CommandGroup>
-              {monitors?.map((monitor) => (
-                <CommandItem
-                  key={monitor.id}
-                  value={String(monitor.id)}
-                  onSelect={(currentValue) => {
-                    const monitorIndex = watchMonitors.findIndex(
-                      (m) => m.monitorId === Number.parseInt(currentValue),
-                    );
-                    if (monitorIndex !== -1) {
-                      remove(monitorIndex);
-                    } else {
-                      append({
-                        monitorId: monitor.id,
-                        order: fields.length + 1,
-                      });
-                    }
-                  }}
-                >
-                  <div className="truncate">
-                    <p>{monitor.name}</p>
-                    {/* <p className="text-muted-foreground truncate text-xs">
+            <CommandList>
+              <CommandEmpty>No monitors found.</CommandEmpty>
+              <CommandGroup>
+                {monitors?.map((monitor) => (
+                  <CommandItem
+                    key={monitor.id}
+                    value={`${monitor.name}-${String(monitor.id)}`}
+                    keywords={[monitor.name]}
+                    onSelect={(currentValue) => {
+                      const splitValue = currentValue.split("-");
+                      const id = splitValue?.[splitValue.length - 1];
+                      const monitorIndex = watchMonitors.findIndex(
+                        (m) => m.monitorId === Number.parseInt(id)
+                      );
+                      if (monitorIndex !== -1) {
+                        remove(monitorIndex);
+                      } else {
+                        append({
+                          monitorId: monitor.id,
+                          order: fields.length + 1,
+                        });
+                      }
+                    }}
+                  >
+                    <div className="truncate">
+                      <p>{monitor.name}</p>
+                      {/* <p className="text-muted-foreground truncate text-xs">
                       {monitor.url}
                     </p> */}
-                  </div>
-                  <CheckIcon
-                    className={cn(
-                      "ml-auto h-4 w-4 shrink-0",
-                      watchMonitors.some((m) => m.monitorId === monitor.id)
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
+                    </div>
+                    <CheckIcon
+                      className={cn(
+                        "ml-auto h-4 w-4 shrink-0",
+                        watchMonitors.some((m) => m.monitorId === monitor.id)
+                          ? "opacity-100"
+                          : "opacity-0"
+                      )}
+                    />
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
@@ -120,7 +126,7 @@ export function SectionMonitor({ form, monitors }: Props) {
           <div className="w-full space-y-2">
             {fields.map((field) => {
               const monitor = monitors?.find(
-                ({ id }) => field.monitorId === id,
+                ({ id }) => field.monitorId === id
               );
               if (!monitor) return null;
               return (
