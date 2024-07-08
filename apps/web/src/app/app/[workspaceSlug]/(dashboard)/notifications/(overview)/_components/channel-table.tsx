@@ -40,7 +40,7 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
               ? "http://localhost:3000"
               : "https://www.openstatus.dev"
           }/app/${workspace.slug}/notifications/new/pagerduty&version=2`}
-          disabled={disabled || isPagerDutyAllowed}
+          disabled={disabled || !isPagerDutyAllowed}
         />
         <Separator />
         <Channel
@@ -54,7 +54,7 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
           title="SMS"
           description="Send notifications to your phones."
           href="./notifications/new/sms"
-          disabled={disabled || isSMSAllowed}
+          disabled={disabled || !isSMSAllowed}
         />
       </div>
     </div>

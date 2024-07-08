@@ -8,7 +8,7 @@ jobs:
     name: Deploy API
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
       - run:
           flyctl deploy --config apps/server/fly.toml

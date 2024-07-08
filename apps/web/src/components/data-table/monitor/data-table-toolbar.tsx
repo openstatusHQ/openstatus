@@ -50,6 +50,16 @@ export function DataTableToolbar<TData>({
             ]}
           />
         )}
+        {table.getColumn("active") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("active")}
+            title="Active"
+            options={[
+              { label: "True", value: true },
+              { label: "False", value: false },
+            ]}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"
@@ -60,6 +70,12 @@ export function DataTableToolbar<TData>({
             <X className="ml-2 h-4 w-4" />
           </Button>
         )}
+      </div>
+      <div className="flex items-center self-end rounded-lg border border-dashed bg-muted/50 px-3 py-2">
+        <p className="text-muted-foreground text-xs">
+          Quantiles and Uptime are aggregated data from the{" "}
+          <span className="text-foreground">last 24h</span>.
+        </p>
       </div>
     </div>
   );

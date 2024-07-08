@@ -4,6 +4,7 @@ import type {
   ColumnDef,
   ColumnFiltersState,
   PaginationState,
+  SortingState,
   Table as TTable,
   VisibilityState,
 } from "@tanstack/react-table";
@@ -11,8 +12,10 @@ import {
   flexRender,
   getCoreRowModel,
   getFacetedRowModel,
+  getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import * as React from "react";
@@ -48,6 +51,7 @@ export function DataTable<TData, TValue>({
   defaultColumnFilters = [],
   defaultPagination = { pageIndex: 0, pageSize: 10 },
 }: DataTableProps<TData, TValue>) {
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [columnVisibility, setColumnVisibility] =
@@ -66,6 +70,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       columnVisibility,
       pagination,
+      sorting,
     },
     onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(),
@@ -73,12 +78,14 @@ export function DataTable<TData, TValue>({
     onColumnVisibilityChange: setColumnVisibility,
     getFilteredRowModel: getFilteredRowModel(),
     getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     // TODO: check if we can optimize it - because it gets bigger and bigger with every new filter
     // getFacetedUniqueValues: getFacetedUniqueValues(),
     // REMINDER: We cannot use the default getFacetedUniqueValues as it doesnt support Array of Objects
     getFacetedUniqueValues: (_table: TTable<TData>, columnId: string) => () => {
-      const map = new Map();
+      const map = getFacetedUniqueValues<TData>()(_table, columnId)();
       if (columnId === "tags") {
         if (tags) {
           for (const tag of tags) {
@@ -94,14 +101,6 @@ export function DataTable<TData, TValue>({
             map.set(tag.name, tagsNumber);
           }
         }
-      }
-      if (columnId === "public") {
-        const values = table
-          .getCoreRowModel()
-          .flatRows.map((row) => row.getValue(columnId)) as boolean[];
-        const publicValue = values.filter((v) => v === true).length;
-        map.set(true, publicValue);
-        map.set(false, values.length - publicValue);
       }
       return map;
     },
