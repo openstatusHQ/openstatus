@@ -115,13 +115,13 @@ export function StatusPageForm({
   }, [watchTitle, form, defaultValues?.title]);
 
   const onSubmit = async ({ ...props }: InsertPage) => {
-    const isUnique = await checkUniqueSlug();
-    if (!isUnique) {
-      // the user will already have the "error" message - we include a toast as well
-      toastAction("unique-slug");
-    } else {
-      startTransition(async () => {
-        try {
+    startTransition(async () => {
+      try {
+        const isUnique = await checkUniqueSlug();
+        if (!isUnique) {
+          // the user will already have the "error" message - we include a toast as well
+          toastAction("unique-slug");
+        } else {
           if (defaultValues) {
             await api.page.update.mutate(props);
           } else {
@@ -145,11 +145,11 @@ export function StatusPageForm({
             router.push(nextUrl);
           }
           router.refresh();
-        } catch {
-          toastAction("error");
         }
-      });
-    }
+      } catch {
+        toastAction("error");
+      }
+    });
   };
 
   function onValueChange(value: string) {
