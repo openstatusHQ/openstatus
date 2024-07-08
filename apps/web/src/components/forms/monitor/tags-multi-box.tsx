@@ -23,6 +23,7 @@ import {
   CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
   CommandSeparator,
   Dialog,
   DialogContent,
@@ -64,12 +65,12 @@ interface TagsMultiBoxProps {
 }
 
 export function TagsMultiBox({
-  tags: defaultTags,
+  tags: defaultTags = [],
   values,
   onChange,
 }: TagsMultiBoxProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const [tags, setTags] = React.useState<MonitorTag[]>(defaultTags || []);
+  const [tags, setTags] = React.useState<MonitorTag[]>(defaultTags);
   const [openCombobox, setOpenCombobox] = React.useState(false);
   const [openDialog, setOpenDialog] = React.useState(false);
   const [inputValue, setInputValue] = React.useState<string>("");
@@ -95,7 +96,7 @@ export function TagsMultiBox({
     onChange(
       values?.includes(item.id)
         ? values.filter((v) => v !== item.id)
-        : [...values, item.id],
+        : [...values, item.id]
     );
     inputRef?.current?.focus();
   };
@@ -156,46 +157,48 @@ export function TagsMultiBox({
               value={inputValue}
               onValueChange={setInputValue}
             />
-            <CommandGroup className="max-h-[145px] overflow-auto">
-              {tags.map((item) => {
-                const isActive = values?.includes(item.id);
-                return (
-                  <CommandItem
-                    key={item.id}
-                    value={item.name}
-                    onSelect={() => toggle(item)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        isActive ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    <div className="flex-1">{item.name}</div>
-                    <div
-                      className="h-4 w-4 rounded-full"
-                      style={{ backgroundColor: item.color }}
-                    />
-                  </CommandItem>
-                );
-              })}
-              <CommandItemCreate
-                onSelect={() => create(inputValue)}
-                {...{ inputValue, tags }}
-              />
-            </CommandGroup>
-            <CommandSeparator alwaysRender />
-            <CommandGroup>
-              <CommandItem
-                value={`:${inputValue}:`} // HACK: that way, the edit button will always be shown
-                className="text-muted-foreground text-xs"
-                onSelect={() => setOpenDialog(true)}
-              >
-                <div className={cn("mr-2 h-4 w-4")} />
-                <Edit2 className="mr-2 h-2.5 w-2.5" />
-                Edit tags
-              </CommandItem>
-            </CommandGroup>
+            <CommandList>
+              <CommandGroup className="max-h-[145px] overflow-auto">
+                {tags.map((item) => {
+                  const isActive = values?.includes(item.id);
+                  return (
+                    <CommandItem
+                      key={item.id}
+                      value={item.name}
+                      onSelect={() => toggle(item)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          isActive ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex-1">{item.name}</div>
+                      <div
+                        className="h-4 w-4 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                    </CommandItem>
+                  );
+                })}
+                <CommandItemCreate
+                  onSelect={() => create(inputValue)}
+                  {...{ inputValue, tags }}
+                />
+              </CommandGroup>
+              <CommandSeparator alwaysRender />
+              <CommandGroup>
+                <CommandItem
+                  value={`:${inputValue}:`} // HACK: that way, the edit button will always be shown
+                  className="text-muted-foreground text-xs"
+                  onSelect={() => setOpenDialog(true)}
+                >
+                  <div className={cn("mr-2 h-4 w-4")} />
+                  <Edit2 className="mr-2 h-2.5 w-2.5" />
+                  Edit tags
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
