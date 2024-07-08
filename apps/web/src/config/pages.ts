@@ -207,7 +207,25 @@ export const pagesConfig = [
   },
 ] as const satisfies readonly Page[];
 
-export const marketingPagesConfig = [
+export const marketingProductPagesConfig = [
+  {
+    href: "/product/monitoring",
+    title: "Monitoring",
+    description:
+      "Get insights of your API and website performance all over the world.",
+    segment: "product",
+    icon: "activity",
+  },
+  {
+    href: "/product/status-page",
+    title: "Status Page",
+    description: "Create beautiful status pages by default within seconds.",
+    segment: "product",
+    icon: "panel-top",
+  },
+] as const satisfies Page[];
+
+export const marketingResourcePagesConfig = [
   {
     href: "/blog",
     title: "Blog",
@@ -230,6 +248,24 @@ export const marketingPagesConfig = [
     icon: "newspaper",
   },
   {
+    href: "https://docs.openstatus.dev",
+    description: "The documentation for OpenStatus.",
+    title: "Docs",
+    segment: "docs",
+    icon: "book",
+  },
+] as const satisfies Page[];
+
+export const marketingPagesConfig = [
+  {
+    href: "/product",
+    title: "Product",
+    description: "All product features for OpenStatus",
+    segment: "",
+    icon: "package",
+    children: marketingProductPagesConfig,
+  },
+  {
     href: "/pricing",
     title: "Pricing",
     description: "The pricing for OpenStatus.",
@@ -237,13 +273,14 @@ export const marketingPagesConfig = [
     icon: "credit-card",
   },
   {
-    href: "https://docs.openstatus.dev",
-    description: "The documentation for OpenStatus.",
-    title: "Docs",
-    segment: "docs",
-    icon: "book",
+    href: "/resources",
+    description: "All resources for OpenStatus",
+    title: "Resources",
+    segment: "",
+    icon: "library",
+    children: marketingResourcePagesConfig,
   },
-] as const satisfies readonly Page[];
+] satisfies Page[];
 
 export function getPageBySegment(
   segment: string | string[],

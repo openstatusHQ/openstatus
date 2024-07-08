@@ -5,6 +5,10 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
   Button,
   Sheet,
   SheetContent,
@@ -20,6 +24,8 @@ import { LoginButton } from "./login-button";
 import { SocialIconButton } from "./social-icon-button";
 import { useWindowScroll } from "@/hooks/use-window-scroll";
 import { cn } from "@/lib/utils";
+import Link, { type LinkProps } from "next/link";
+import { Icons, type ValidIcon } from "../icons";
 
 export function MarketingMenu() {
   const [open, setOpen] = React.useState(false);
@@ -45,23 +51,50 @@ export function MarketingMenu() {
       </SheetTrigger>
       <SheetContent side="top" className={cn("flex flex-col")}>
         <SheetHeader>
-          <SheetTitle className="ml-2 text-left">Menu</SheetTitle>
+          <SheetTitle className="text-left">Menu</SheetTitle>
         </SheetHeader>
-        <div className="flex flex-1 flex-col justify-between gap-4">
+        <div className="flex flex-1 flex-col justify-between gap-8">
           <ul className="grid gap-1">
-            {/* biome-ignore lint/correctness/noUnusedVariables: <explanation> */}
-            {marketingPagesConfig.map(({ href, title, segment }) => {
-              const isExternal = href.startsWith("http");
-              const externalProps = isExternal ? { target: "_blank" } : {};
-              const isActive = pathname.startsWith(href);
+            {marketingPagesConfig.map(({ href, title, icon, children }) => {
+              if (!children) {
+                const isExternal = href.startsWith("http");
+                const externalProps = isExternal ? { target: "_blank" } : {};
+                const isActive = pathname.startsWith(href);
+                return (
+                  <li key={href} className="w-full">
+                    <ListItemSingle title={title} href={href} icon={icon} />
+                  </li>
+                );
+              }
+
               return (
-                <li key={href} className="w-full">
-                  <AppLink
-                    href={href}
-                    label={title}
-                    active={isActive}
-                    {...externalProps}
-                  />
+                <li key={href}>
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value={title}>
+                      <AccordionTrigger>{title}</AccordionTrigger>
+                      <AccordionContent>
+                        <ul>
+                          {children.map((page) => {
+                            const { href, title, icon } = page;
+                            const isExternal = href.startsWith("http");
+                            const externalProps = isExternal
+                              ? { target: "_blank" }
+                              : {};
+                            const isActive = pathname.startsWith(href);
+                            return (
+                              <li key={href} className="w-full">
+                                <ListItem
+                                  title={title}
+                                  href={href}
+                                  icon={icon}
+                                />
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
                 </li>
               );
             })}
@@ -81,3 +114,50 @@ export function MarketingMenu() {
     </Sheet>
   );
 }
+
+const ListItem = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & LinkProps & { icon: ValidIcon }
+>(({ className, title, children, icon, ...props }, ref) => {
+  // TODO: if external, add Arrow-Right-Up Icon
+  const Icon = Icons[icon];
+  return (
+    <li className="group">
+      <Link
+        ref={ref}
+        className={cn(
+          "flex items-center gap-2 select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          className
+        )}
+        {...props}
+      >
+        <Icon className="h-4 w-4" />
+        <div className="text-sm font-medium leading-none">{title}</div>
+      </Link>
+    </li>
+  );
+});
+ListItem.displayName = "ListItem";
+
+const ListItemSingle = React.forwardRef<
+  React.ElementRef<"a">,
+  React.ComponentPropsWithoutRef<"a"> & LinkProps & { icon: ValidIcon }
+>(({ className, title, children, icon, ...props }, ref) => {
+  // TODO: if external, add Arrow-Right-Up Icon
+  const Icon = Icons[icon];
+  return (
+    <li className="group">
+      <Link
+        ref={ref}
+        className={cn(
+          "flex flex-1 items-center justify-between border-b py-4 font-medium transition-all hover:underline",
+          className
+        )}
+        {...props}
+      >
+        {title}
+      </Link>
+    </li>
+  );
+});
+ListItemSingle.displayName = "ListItemSingle";
