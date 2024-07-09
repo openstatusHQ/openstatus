@@ -144,6 +144,7 @@ async function main() {
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
+      pageId: 1,
     })
     .run();
 

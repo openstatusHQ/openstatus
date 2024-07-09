@@ -40,7 +40,7 @@ test("Get all status report", async () => {
         title: "Test Status Report",
         status: "investigating",
         statusReportUpdateIds: expect.arrayContaining([2]), // depending on the order of the updates
-        pageIds: 1,
+        pageId: 1,
       },
     ],
   });
