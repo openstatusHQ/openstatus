@@ -19,19 +19,19 @@ import {
 
 import { marketingPagesConfig } from "@/config/pages";
 import { socialsConfig } from "@/config/socials";
-import { AppLink } from "./app-link";
-import { LoginButton } from "./login-button";
-import { SocialIconButton } from "./social-icon-button";
 import { useWindowScroll } from "@/hooks/use-window-scroll";
 import { cn } from "@/lib/utils";
 import Link, { type LinkProps } from "next/link";
 import { Icons, type ValidIcon } from "../icons";
+import { AppLink } from "./app-link";
+import { LoginButton } from "./login-button";
+import { SocialIconButton } from "./social-icon-button";
 
 export function MarketingMenu() {
   const [open, setOpen] = React.useState(false);
   const pathname = usePathname();
   const [{ y }] = useWindowScroll();
-  const isScroll = React.useMemo(() => y && y > 0, [y]);
+  const _isScroll = React.useMemo(() => y && y > 0, [y]);
 
   React.useEffect(() => {
     setOpen(false);
@@ -58,8 +58,8 @@ export function MarketingMenu() {
             {marketingPagesConfig.map(({ href, title, icon, children }) => {
               if (!children) {
                 const isExternal = href.startsWith("http");
-                const externalProps = isExternal ? { target: "_blank" } : {};
-                const isActive = pathname.startsWith(href);
+                const _externalProps = isExternal ? { target: "_blank" } : {};
+                const _isActive = pathname.startsWith(href);
                 return (
                   <li key={href} className="w-full">
                     <ListItemSingle title={title} href={href} icon={icon} />
@@ -77,10 +77,10 @@ export function MarketingMenu() {
                           {children.map((page) => {
                             const { href, title, icon } = page;
                             const isExternal = href.startsWith("http");
-                            const externalProps = isExternal
+                            const _externalProps = isExternal
                               ? { target: "_blank" }
                               : {};
-                            const isActive = pathname.startsWith(href);
+                            const _isActive = pathname.startsWith(href);
                             return (
                               <li key={href} className="w-full">
                                 <ListItem
@@ -126,13 +126,13 @@ const ListItem = React.forwardRef<
       <Link
         ref={ref}
         className={cn(
-          "flex items-center gap-2 select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-          className
+          "flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
+          className,
         )}
         {...props}
       >
         <Icon className="h-4 w-4" />
-        <div className="text-sm font-medium leading-none">{title}</div>
+        <div className="font-medium text-sm leading-none">{title}</div>
       </Link>
     </li>
   );
@@ -144,14 +144,14 @@ const ListItemSingle = React.forwardRef<
   React.ComponentPropsWithoutRef<"a"> & LinkProps & { icon: ValidIcon }
 >(({ className, title, children, icon, ...props }, ref) => {
   // TODO: if external, add Arrow-Right-Up Icon
-  const Icon = Icons[icon];
+  const _Icon = Icons[icon];
   return (
     <li className="group">
       <Link
         ref={ref}
         className={cn(
           "flex flex-1 items-center justify-between border-b py-4 font-medium transition-all hover:underline",
-          className
+          className,
         )}
         {...props}
       >

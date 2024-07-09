@@ -19,7 +19,7 @@ const containerVariant = cva(
         left: "order-1 border-b md:border-b-0 md:border-r",
       },
     },
-  }
+  },
 );
 
 interface InteractiveFeatureProps
@@ -55,7 +55,7 @@ export function InteractiveFeature({
     <Shell
       className={cn(
         "grid px-0 py-0 md:grid-cols-3 md:p-0",
-        isSingleCol && "md:grid-cols-1"
+        isSingleCol && "md:grid-cols-1",
       )}
     >
       <FeatureCardContentContainer
@@ -64,7 +64,7 @@ export function InteractiveFeature({
           containerVariant({
             col: (3 - col) as 1 | 2,
             position,
-          })
+          }),
         )}
       >
         <FeatureSubheader icon={icon} text={iconText} />
@@ -80,9 +80,9 @@ export function InteractiveFeature({
                 ? "bottom"
                 : "top"
               : position === "left"
-              ? "right"
-              : "left",
-          })
+                ? "right"
+                : "left",
+          }),
         )}
       >
         {Component}
@@ -107,7 +107,7 @@ function FeatureCardContentContainer({
       className={cn(
         "px-3 py-6 md:p-8",
         variant === "secondary" && "bg-accent/50",
-        className
+        className,
       )}
       {...props}
     >

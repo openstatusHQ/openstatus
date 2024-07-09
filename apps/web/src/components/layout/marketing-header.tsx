@@ -15,12 +15,11 @@ import {
 
 import { marketingPagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
+import * as React from "react";
+import { Icons, type ValidIcon } from "../icons";
 import { BrandName } from "./brand-name";
 import { LoginButton } from "./login-button";
 import { MarketingMenu } from "./marketing-menu";
-import { useWindowScroll } from "@/hooks/use-window-scroll";
-import * as React from "react";
-import { Icons, type ValidIcon } from "../icons";
 
 interface Props {
   className?: string;
@@ -28,82 +27,79 @@ interface Props {
 
 export function MarketingHeader({ className }: Props) {
   const pathname = usePathname();
-  const [{ y }] = useWindowScroll();
-  const isScroll = React.useMemo(() => y && y > 0, [y]);
 
   return (
     <header
       className={cn(
-        "sticky top-6 z-10 grid w-full grid-cols-2 gap-2 border border-transparent md:grid-cols-5",
-        {
-          "rounded-full border-border backdrop-blur-lg": isScroll,
-        },
+        "sticky top-6 z-10 flex w-full items-center justify-between gap-8 rounded-full border border-border px-2.5 py-1.5 backdrop-blur-lg",
         className
       )}
     >
-      <div className="flex items-center pl-3 md:col-span-1 md:pl-6">
-        <BrandName />
-      </div>
-      <div
-        className={cn(
-          "mx-auto hidden items-center justify-center border border-transparent md:col-span-3 md:flex md:gap-1",
-          { "rounded-full border-border backdrop-blur-lg": !isScroll }
-        )}
-      >
-        <NavigationMenu>
-          <NavigationMenuList>
-            {marketingPagesConfig.map((page) => {
-              const { href, title, segment, children } = page;
-              if (!children) {
+      <div className="flex items-center gap-6">
+        <div className="ml-3 flex items-center gap-3">
+          <BrandName />
+        </div>
+        <div
+          className={cn(
+            "mx-auto hidden items-center justify-center border border-transparent md:flex md:gap-1"
+          )}
+        >
+          <NavigationMenu>
+            <NavigationMenuList>
+              {marketingPagesConfig.map((page) => {
+                const { href, title, segment, children } = page;
+                if (!children) {
+                  return (
+                    <NavigationMenuItem>
+                      <Link href={href} legacyBehavior passHref>
+                        <NavigationMenuLink
+                          className={cn(
+                            navigationMenuTriggerStyle(),
+                            "h-9 rounded-full bg-transparent text-muted-foreground hover:bg-accent/50",
+                            { "text-foreground": href === pathname }
+                          )}
+                        >
+                          {title}
+                        </NavigationMenuLink>
+                      </Link>
+                    </NavigationMenuItem>
+                  );
+                }
+
                 return (
-                  <NavigationMenuItem>
-                    <Link href={href} legacyBehavior passHref>
-                      <NavigationMenuLink
-                        className={cn(
-                          navigationMenuTriggerStyle(),
-                          "h-9 rounded-full bg-transparent hover:bg-accent/50"
-                        )}
-                      >
-                        {title}
-                      </NavigationMenuLink>
-                    </Link>
+                  <NavigationMenuItem key={href}>
+                    <NavigationMenuTrigger className="h-9 rounded-full bg-transparent text-muted-foreground hover:bg-transparent data-[state=open]:text-accent-foreground">
+                      {title}
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[400px] gap-3 p-4 lg:w-[600px] md:w-[500px] md:grid-cols-2">
+                        {children?.map((item) => {
+                          const isExternal = item.href.startsWith("http");
+                          const _externalProps = isExternal
+                            ? { target: "_blank" }
+                            : {};
+                          const _isActive = pathname.startsWith(item.href);
+                          return (
+                            <ListItem
+                              key={item.title}
+                              title={item.title}
+                              href={item.href}
+                              icon={item.icon}
+                            >
+                              {item.description}
+                            </ListItem>
+                          );
+                        })}
+                      </ul>
+                    </NavigationMenuContent>
                   </NavigationMenuItem>
                 );
-              }
-
-              return (
-                <NavigationMenuItem key={href}>
-                  <NavigationMenuTrigger className="h-9 rounded-full bg-transparent hover:bg-transparent">
-                    {title}
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
-                      {children?.map((item) => {
-                        const isExternal = item.href.startsWith("http");
-                        const externalProps = isExternal
-                          ? { target: "_blank" }
-                          : {};
-                        const isActive = pathname.startsWith(item.href);
-                        return (
-                          <ListItem
-                            key={item.title}
-                            title={item.title}
-                            href={item.href}
-                            icon={item.icon}
-                          >
-                            {item.description}
-                          </ListItem>
-                        );
-                      })}
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              );
-            })}
-          </NavigationMenuList>
-        </NavigationMenu>
+              })}
+            </NavigationMenuList>
+          </NavigationMenu>
+        </div>
       </div>
-      <div className="flex items-center justify-end gap-3 md:col-span-1">
+      <div className="flex items-center justify-end gap-3">
         <div className="block md:hidden">
           <MarketingMenu />
         </div>
@@ -125,7 +121,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "flex gap-3 select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+            "flex select-none gap-3 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
             className
           )}
           {...props}
@@ -133,9 +129,9 @@ const ListItem = React.forwardRef<
           <div className="self-start rounded-md border p-2 group-hover:bg-background">
             <Icon className="h-4 w-4" />
           </div>
-          <div>
-            <div className="text-sm font-medium leading-none">{title}</div>
-            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+          <div className="grid gap-1">
+            <div className="font-medium text-sm leading-none">{title}</div>
+            <p className="line-clamp-2 text-muted-foreground text-sm leading-snug">
               {children}
             </p>
           </div>

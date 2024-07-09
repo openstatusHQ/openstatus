@@ -234,13 +234,6 @@ export const marketingResourcePagesConfig = [
     icon: "book",
   },
   {
-    href: "/play",
-    title: "Playground",
-    description: "All the latest tools build by OpenStatus.",
-    segment: "play",
-    icon: "toy-brick",
-  },
-  {
     href: "/changelog",
     title: "Changelog",
     description: "All the latest features, fixes and work to OpenStatus.",
@@ -248,11 +241,18 @@ export const marketingResourcePagesConfig = [
     icon: "newspaper",
   },
   {
-    href: "https://docs.openstatus.dev",
-    description: "The documentation for OpenStatus.",
-    title: "Docs",
-    segment: "docs",
-    icon: "book",
+    href: "/play/checker",
+    title: "Speed Checker",
+    description: "Check your endpoints latency right away.",
+    segment: "checker",
+    icon: "gauge",
+  },
+  {
+    href: "/play",
+    title: "Playground",
+    description: "All the latest tools build by OpenStatus.",
+    segment: "play",
+    icon: "toy-brick",
   },
 ] as const satisfies Page[];
 
@@ -266,6 +266,14 @@ export const marketingPagesConfig = [
     children: marketingProductPagesConfig,
   },
   {
+    href: "/resources",
+    description: "All resources for OpenStatus",
+    title: "Resources",
+    segment: "",
+    icon: "library",
+    children: marketingResourcePagesConfig,
+  },
+  {
     href: "/pricing",
     title: "Pricing",
     description: "The pricing for OpenStatus.",
@@ -273,12 +281,11 @@ export const marketingPagesConfig = [
     icon: "credit-card",
   },
   {
-    href: "/resources",
-    description: "All resources for OpenStatus",
-    title: "Resources",
-    segment: "",
-    icon: "library",
-    children: marketingResourcePagesConfig,
+    href: "https://docs.openstatus.dev",
+    description: "The documentation for OpenStatus.",
+    title: "Docs",
+    segment: "docs",
+    icon: "book",
   },
 ] satisfies Page[];
 

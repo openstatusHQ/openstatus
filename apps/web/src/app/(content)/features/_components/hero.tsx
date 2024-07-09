@@ -11,7 +11,7 @@ export function Hero({ title, subTitle, className, ...props }: HeroProps) {
     <div
       className={cn(
         "mx-auto my-16 flex max-w-xl flex-col items-center gap-4",
-        className
+        className,
       )}
       {...props}
     >

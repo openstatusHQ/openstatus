@@ -1,17 +1,17 @@
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import { marketingProductPagesConfig } from "@/config/pages";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "../_components/assertions-timing-form-example";
+import { Banner } from "../_components/banner";
+import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
-import { Hero } from "../_components/hero";
-import { marketingProductPagesConfig } from "@/config/pages";
-import { Banner } from "../_components/banner";
 
 const { title, description } = marketingProductPagesConfig[0];
 

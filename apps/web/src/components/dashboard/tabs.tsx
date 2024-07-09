@@ -17,7 +17,7 @@ export function TabsList({
     <div className={className}>
       <ShadcnTabsList
         className={cn(
-          "w-full justify-start overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0"
+          "w-full justify-start overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0",
         )}
         {...props}
       />
@@ -34,7 +34,7 @@ export function TabsTrigger({
     <ShadcnTabsTrigger
       className={cn(
         "relative rounded-none border-b-4 border-b-transparent bg-transparent px-4 pt-2 pb-3 text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground hover:text-primary data-[state=active]:shadow-none",
-        className
+        className,
       )}
       {...props}
     />

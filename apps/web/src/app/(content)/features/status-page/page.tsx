@@ -1,11 +1,11 @@
-import { InputWithAddons } from "@openstatus/ui";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
 import { Tracker } from "@/components/tracker/tracker";
+import { marketingProductPagesConfig } from "@/config/pages";
+import { InputWithAddons } from "@openstatus/ui";
+import { Banner } from "../_components/banner";
+import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockTrackerData } from "../mock";
-import { marketingProductPagesConfig } from "@/config/pages";
-import { Hero } from "../_components/hero";
-import { Banner } from "../_components/banner";
 
 const { title, description } = marketingProductPagesConfig[1];
 

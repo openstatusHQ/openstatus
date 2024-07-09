@@ -14,8 +14,8 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast } from "@/lib/toast";
-import { handleSubscribe } from "./actions";
 import { wait } from "@/lib/utils";
+import { handleSubscribe } from "./actions";
 
 interface Props {
   slug: string;
