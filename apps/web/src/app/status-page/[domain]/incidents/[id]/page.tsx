@@ -20,20 +20,12 @@ export default async function IncidentPage({
 
   if (!report) return notFound();
 
-  const affectedMonitors = report.monitorsToStatusReports.map(
-    ({ monitor }) => monitor,
-  );
-
   return (
     <div className="grid gap-8 text-left">
       <Header
         title={report.title}
         description={
-          <StatusReportDescription
-            report={report}
-            monitors={affectedMonitors}
-            className="mt-2"
-          />
+          <StatusReportDescription report={report} className="mt-2" />
         }
         actions={<CopyLinkButton />}
       />

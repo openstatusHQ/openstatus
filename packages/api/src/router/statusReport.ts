@@ -4,10 +4,8 @@ import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
 import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
-  monitorsToStatusReport,
   page,
   pageSubscriber,
-  pagesToStatusReports,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -25,8 +23,7 @@ export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { id, monitors, pages, date, message, ...statusReportInput } =
-        opts.input;
+      const { id, date, message, ...statusReportInput } = opts.input;
 
       const newStatusReport = await opts.ctx.db
         .insert(statusReport)
@@ -37,32 +34,6 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      if (monitors.length > 0) {
-        await opts.ctx.db
-          .insert(monitorsToStatusReport)
-          .values(
-            monitors.map((monitor) => ({
-              monitorId: monitor,
-              statusReportId: newStatusReport.id,
-            })),
-          )
-          .returning()
-          .get();
-      }
-
-      if (pages.length > 0) {
-        await opts.ctx.db
-          .insert(pagesToStatusReports)
-          .values(
-            pages.map((page) => ({
-              pageId: page,
-              statusReportId: newStatusReport.id,
-            })),
-          )
-          .returning()
-          .get();
-      }
-
       return newStatusReport;
     }),
 
@@ -70,14 +41,14 @@ export const statusReportRouter = createTRPCRouter({
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       // update parent status report with latest status
-      await opts.ctx.db
+      const _statusReport = await opts.ctx.db
         .update(statusReport)
         .set({ status: opts.input.status, updatedAt: new Date() })
         .where(
           and(
             eq(statusReport.id, opts.input.statusReportId),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .returning()
         .get();
@@ -98,35 +69,24 @@ export const statusReportRouter = createTRPCRouter({
         .where(eq(workspace.id, opts.ctx.workspace.id))
         .get();
       if (currentWorkspace?.plan !== "pro") {
-        const allPages = await opts.ctx.db
+        const subscribers = await opts.ctx.db
           .select()
-          .from(pagesToStatusReports)
+          .from(pageSubscriber)
           .where(
-            eq(
-              pagesToStatusReports.statusReportId,
-              updatedValue.statusReportId,
-            ),
+            and(
+              eq(pageSubscriber.pageId, _statusReport.pageId),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
           )
           .all();
-        for (const currentPage of allPages) {
-          const subscribers = await opts.ctx.db
-            .select()
-            .from(pageSubscriber)
-            .where(
-              and(
-                eq(pageSubscriber.pageId, currentPage.pageId),
-                isNotNull(pageSubscriber.acceptedAt),
-              ),
-            )
-            .all();
-          const pageInfo = await opts.ctx.db
-            .select()
-            .from(page)
-            .where(eq(page.id, currentPage.pageId))
-            .get();
-          if (!pageInfo) continue;
+        const pageInfo = await opts.ctx.db
+          .select()
+          .from(page)
+          .where(eq(page.id, _statusReport.pageId))
+          .get();
+        if (pageInfo) {
           const subscribersEmails = subscribers.map(
-            (subscriber) => subscriber.email,
+            (subscriber) => subscriber.email
           );
           await sendEmailHtml({
             to: subscribersEmails,
@@ -143,7 +103,7 @@ export const statusReportRouter = createTRPCRouter({
   updateStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { monitors, pages, ...statusReportInput } = opts.input;
+      const { ...statusReportInput } = opts.input;
 
       if (!statusReportInput.id) return;
 
@@ -155,87 +115,11 @@ export const statusReportRouter = createTRPCRouter({
         .where(
           and(
             eq(statusReport.id, statusReportInput.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .returning()
         .get();
-
-      const currentMonitorsToStatusReport = await opts.ctx.db
-        .select()
-        .from(monitorsToStatusReport)
-        .where(
-          eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
-        )
-        .all();
-
-      const addedMonitors = monitors.filter(
-        (x) =>
-          !currentMonitorsToStatusReport
-            .map(({ monitorId }) => monitorId)
-            .includes(x),
-      );
-
-      if (addedMonitors.length) {
-        const values = addedMonitors.map((monitorId) => ({
-          monitorId: monitorId,
-          statusReportId: currentStatusReport.id,
-        }));
-
-        await opts.ctx.db.insert(monitorsToStatusReport).values(values).run();
-      }
-
-      const removedMonitors = currentMonitorsToStatusReport
-        .map(({ monitorId }) => monitorId)
-        .filter((x) => !monitors?.includes(x));
-
-      if (removedMonitors.length) {
-        await opts.ctx.db
-          .delete(monitorsToStatusReport)
-          .where(
-            and(
-              eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
-              inArray(monitorsToStatusReport.monitorId, removedMonitors),
-            ),
-          )
-          .run();
-      }
-
-      const currentPagesToStatusReports = await opts.ctx.db
-        .select()
-        .from(pagesToStatusReports)
-        .where(eq(pagesToStatusReports.statusReportId, currentStatusReport.id))
-        .all();
-
-      const addedPages = pages?.filter(
-        (x) =>
-          !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
-      );
-
-      if (addedPages.length) {
-        const values = addedPages.map((pageId) => ({
-          pageId,
-          statusReportId: currentStatusReport.id,
-        }));
-
-        await opts.ctx.db.insert(pagesToStatusReports).values(values).run();
-      }
-
-      const removedPages = currentPagesToStatusReports
-        .map(({ pageId }) => pageId)
-        .filter((x) => !pages?.includes(x));
-
-      if (removedPages.length) {
-        await opts.ctx.db
-          .delete(pagesToStatusReports)
-          .where(
-            and(
-              eq(pagesToStatusReports.statusReportId, currentStatusReport.id),
-              inArray(pagesToStatusReports.pageId, removedPages),
-            ),
-          )
-          .run();
-      }
 
       return currentStatusReport;
     }),
@@ -266,8 +150,8 @@ export const statusReportRouter = createTRPCRouter({
         .where(
           and(
             eq(statusReport.id, opts.input.id),
-            eq(statusReport.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(statusReport.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
       if (!statusReportToDelete) return;
@@ -301,18 +185,7 @@ export const statusReportRouter = createTRPCRouter({
       const selectPublicStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
           status: statusReportStatusSchema.default("investigating"), // TODO: remove!
-          monitorsToStatusReports: z
-            .array(
-              z.object({
-                statusReportId: z.number(),
-                monitorId: z.number(),
-                monitor: selectMonitorSchema,
-              }),
-            )
-            .default([]),
-          pagesToStatusReports: z
-            .array(z.object({ statusReportId: z.number(), pageId: z.number() }))
-            .default([]),
+
           statusReportUpdates: z.array(selectStatusReportUpdateSchema),
           date: z.date().default(new Date()),
         });
@@ -320,11 +193,9 @@ export const statusReportRouter = createTRPCRouter({
       const data = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
           eq(statusReport.id, opts.input.id),
-          eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          eq(statusReport.workspaceId, opts.ctx.workspace.id)
         ),
         with: {
-          monitorsToStatusReports: { with: { monitor: true } },
-          pagesToStatusReports: true,
           statusReportUpdates: {
             orderBy: (statusReportUpdate, { desc }) => [
               desc(statusReportUpdate.createdAt),
@@ -349,22 +220,12 @@ export const statusReportRouter = createTRPCRouter({
     // FIXME: can we get rid of that?
     const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
       status: statusReportStatusSchema.default("investigating"), // TODO: remove!
-      monitorsToStatusReports: z
-        .array(
-          z.object({
-            statusReportId: z.number(),
-            monitorId: z.number(),
-            monitor: selectMonitorSchema,
-          }),
-        )
-        .default([]),
       statusReportUpdates: z.array(selectStatusReportUpdateSchema),
     });
 
     const result = await opts.ctx.db.query.statusReport.findMany({
       where: eq(statusReport.workspaceId, opts.ctx.workspace.id),
       with: {
-        monitorsToStatusReports: { with: { monitor: true } },
         statusReportUpdates: {
           orderBy: (statusReportUpdate, { desc }) => [
             desc(statusReportUpdate.createdAt),
@@ -389,10 +250,9 @@ export const statusReportRouter = createTRPCRouter({
       const _statusReport = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
           eq(statusReport.id, opts.input.id),
-          eq(statusReport.workspaceId, result.workspaceId),
+          eq(statusReport.workspaceId, result.workspaceId)
         ),
         with: {
-          monitorsToStatusReports: { with: { monitor: true } },
           statusReportUpdates: {
             orderBy: (reports, { desc }) => desc(reports.date),
           },

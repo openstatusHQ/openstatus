@@ -23,10 +23,8 @@ import { useState } from "react";
 
 export function Header({
   report,
-  monitors,
 }: {
   report: StatusReport & { statusReportUpdates: StatusReportUpdate[] };
-  monitors?: Pick<Monitor, "name" | "id">[];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -46,11 +44,6 @@ export function Header({
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusBadge status={report.status} />
             <span className="text-muted-foreground/50 text-xs">•</span>
-            {monitors?.map(({ name, id }) => (
-              <Badge key={id} variant="outline">
-                {name}
-              </Badge>
-            ))}
           </div>
         </div>
 

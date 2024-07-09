@@ -1,15 +1,13 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { and, db, eq, gte, inArray, isNull, lte } from "@openstatus/db";
+import { and, db, eq, gte, inArray, isNull, lte, ne } from "@openstatus/db";
 import {
   incidentTable,
   maintenance,
   monitor,
   monitorsToPages,
-  monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { Status, Tracker } from "@openstatus/tracker";
@@ -47,7 +45,7 @@ status.get("/:slug", async (c) => {
 
   const {
     pageStatusReportData,
-    monitorStatusReportData,
+
     ongoingIncidents,
     maintenanceData,
   } = await getStatusPageData(currentPage.id);
@@ -55,11 +53,8 @@ status.get("/:slug", async (c) => {
 
   console.log(maintenanceData);
 
-  const statusReports = [
-    ...pageStatusReportData,
-    ...monitorStatusReportData,
-  ].map((item) => {
-    return item.status_report;
+  const statusReports = [...pageStatusReportData].map((item) => {
+    return item;
   });
 
   const tracker = new Tracker({
@@ -84,8 +79,8 @@ async function getStatusPageData(pageId: number) {
       and(
         eq(monitorsToPages.monitorId, monitor.id),
         eq(monitor.active, true),
-        eq(monitorsToPages.pageId, pageId),
-      ),
+        eq(monitorsToPages.pageId, pageId)
+      )
     )
 
     .all();
@@ -100,25 +95,11 @@ async function getStatusPageData(pageId: number) {
     };
   }
 
-  const monitorStatusReportQuery = db
-    .select()
-    .from(monitorsToStatusReport)
-    .innerJoin(
-      statusReport,
-      eq(monitorsToStatusReport.statusReportId, statusReport.id),
-    )
-    .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
-    .all();
-
   const pageStatusReportDataQuery = db
     .select()
-    .from(pagesToStatusReports)
-    .innerJoin(
-      statusReport,
-      and(
-        eq(pagesToStatusReports.statusReportId, statusReport.id),
-        eq(pagesToStatusReports.pageId, pageId),
-      ),
+    .from(statusReport)
+    .where(
+      and(eq(statusReport.pageId, pageId), ne(statusReport.status, "resolved"))
     )
     .all();
 
@@ -128,8 +109,8 @@ async function getStatusPageData(pageId: number) {
     .where(
       and(
         isNull(incidentTable.resolvedAt),
-        inArray(incidentTable.monitorId, monitorIds),
-      ),
+        inArray(incidentTable.monitorId, monitorIds)
+      )
     )
     .all();
 
@@ -140,26 +121,20 @@ async function getStatusPageData(pageId: number) {
       and(
         eq(maintenance.pageId, pageId),
         lte(maintenance.from, new Date()),
-        gte(maintenance.to, new Date()),
-      ),
+        gte(maintenance.to, new Date())
+      )
     );
 
-  const [
-    monitorStatusReportData,
-    pageStatusReportData,
-    ongoingIncidents,
-    maintenanceData,
-  ] = await Promise.all([
-    monitorStatusReportQuery,
-    pageStatusReportDataQuery,
-    ongoingIncidentsQuery,
-    ongoingMaintenancesQuery,
-  ]);
+  const [pageStatusReportData, ongoingIncidents, maintenanceData] =
+    await Promise.all([
+      pageStatusReportDataQuery,
+      ongoingIncidentsQuery,
+      ongoingMaintenancesQuery,
+    ]);
 
   return {
     // monitorData,
     pageStatusReportData,
-    monitorStatusReportData,
     maintenanceData,
     ongoingIncidents,
   };

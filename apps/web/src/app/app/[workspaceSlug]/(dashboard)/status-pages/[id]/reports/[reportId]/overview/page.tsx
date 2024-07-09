@@ -20,11 +20,9 @@ export default async function OverviewPage({
 
   if (!report) return notFound();
 
-  const monitors = report.monitorsToStatusReports.map(({ monitor }) => monitor);
-
   return (
     <>
-      <Header report={report} monitors={monitors} />
+      <Header report={report} />
       {report.statusReportUpdates.length > 0 ? (
         <Events statusReportUpdates={report.statusReportUpdates} editable />
       ) : (

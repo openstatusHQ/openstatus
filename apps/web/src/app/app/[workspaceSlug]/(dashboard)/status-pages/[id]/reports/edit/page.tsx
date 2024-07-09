@@ -55,12 +55,6 @@ export default async function EditPage({
               // it should be something like defaultValues={statusReport}
               {
                 ...statusUpdate,
-                monitors: statusUpdate?.monitorsToStatusReports.map(
-                  ({ monitorId }) => monitorId,
-                ),
-                pages: statusUpdate?.pagesToStatusReports.map(
-                  ({ pageId }) => pageId,
-                ),
                 message: "",
               }
             : undefined

@@ -27,18 +27,15 @@ type Maintenances = Maintenance[];
  */
 export class Tracker {
   private data: Monitors = [];
-  private statusReports: StatusReports = [];
   private incidents: Incidents = [];
   private maintenances: Maintenances = [];
 
   constructor(arg: {
     data?: Monitors;
-    statusReports?: StatusReports;
     incidents?: Incidents;
     maintenances?: Maintenance[];
   }) {
     this.data = arg.data || []; // TODO: use another Class to handle a single Day
-    this.statusReports = arg.statusReports || [];
     this.incidents = arg.incidents || [];
     this.maintenances = arg.maintenances || [];
   }
@@ -56,7 +53,7 @@ export class Tracker {
         prev.count += curr.count;
         return prev;
       },
-      { count: 0, ok: 0 },
+      { count: 0, ok: 0 }
     );
   }
 
@@ -80,7 +77,7 @@ export class Tracker {
   private isOngoingReport() {
     const resolved: StatusReport["status"][] = ["monitoring", "resolved"];
     return this.statusReports.some(
-      (report) => !resolved.includes(report.status),
+      (report) => !resolved.includes(report.status)
     );
   }
 
@@ -152,7 +149,7 @@ export class Tracker {
   private getStatusReportsByDay(props: Monitor): StatusReports {
     const statusReports = this.statusReports?.filter((report) => {
       const firstStatusReportUpdate = report?.statusReportUpdates?.sort(
-        (a, b) => a.date.getTime() - b.date.getTime(),
+        (a, b) => a.date.getTime() - b.date.getTime()
       )?.[0];
 
       if (!firstStatusReportUpdate) return false;
@@ -191,10 +188,10 @@ export class Tracker {
       const status = maintenances.length
         ? Status.UnderMaintenance
         : incidents.length
-          ? Status.Incident
-          : isMissingData
-            ? Status.Unknown
-            : this.calculateUptimeStatus([props]);
+        ? Status.Incident
+        : isMissingData
+        ? Status.Unknown
+        : this.calculateUptimeStatus([props]);
 
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;
