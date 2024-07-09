@@ -50,15 +50,13 @@ import { api } from "@/trpc/client";
 
 interface Props {
   defaultValues?: InsertStatusReport;
-  monitors?: Monitor[];
-  pages?: Page[];
+
   nextUrl?: string;
 }
 
 export function StatusReportForm({
   defaultValues,
-  monitors,
-  pages,
+
   nextUrl,
 }: Props) {
   const form = useForm<InsertStatusReport>({

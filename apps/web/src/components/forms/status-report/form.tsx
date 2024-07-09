@@ -23,20 +23,17 @@ import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
-import { SectionConnect } from "./section-connect";
 import { SectionUpdateMessage } from "./section-update-message";
 
 interface Props {
   defaultSection?: string;
   defaultValues?: InsertStatusReport;
-  monitors?: Monitor[];
   nextUrl?: string;
 }
 
 export function StatusReportForm({
   defaultSection,
   defaultValues,
-  monitors,
   nextUrl,
 }: Props) {
   const form = useForm<InsertStatusReport>({
@@ -128,9 +125,6 @@ export function StatusReportForm({
               <SectionUpdateMessage form={form} />
             </TabsContent>
           ) : null}
-          <TabsContent value="connect">
-            <SectionConnect form={form} monitors={monitors} />
-          </TabsContent>
         </Tabs>
         <SaveButton
           isPending={isPending}
