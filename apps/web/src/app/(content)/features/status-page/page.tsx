@@ -5,8 +5,9 @@ import { InputWithAddons } from "@openstatus/ui";
 import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
-import { mockTrackerData } from "../mock";
+import { mockTrackerData, statusReportData } from "../mock";
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
+import { StatusReport } from "@/components/status-page/status-report";
 
 const { title, description } = marketingProductPagesConfig[1];
 
@@ -56,6 +57,19 @@ export default function FeaturePage() {
         }
         col={1}
         position={"left"}
+      />
+      <InteractiveFeature
+        icon="search-check"
+        iconText="Inform your users"
+        title="Status Updates."
+        subTitle="Down't let your users in the dark and show what's wrong."
+        component={
+          <div className="-translate-y-6 m-auto scale-[0.80]">
+            <StatusReport {...statusReportData} />
+          </div>
+        }
+        col={1}
+        position={"bottom"}
       />
       <InteractiveFeature
         icon="eye-off"

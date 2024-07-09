@@ -1012,3 +1012,48 @@ export const mockChartData = {
   ],
   regions: ["ams", "gru", "iad", "jnb", "syd", "hkg"],
 };
+
+export const statusReportData = {
+  report: {
+    id: 0,
+    status: "resolved" as const,
+    title: "Downtime",
+    workspaceId: 1,
+    createdAt: new Date("2024-07-09T21:22:43.000Z"),
+    updatedAt: new Date("2024-07-09T21:23:17.000Z"),
+    statusReportUpdates: [
+      {
+        id: 3,
+        status: "resolved" as const,
+        date: new Date("2024-07-09T21:59:23.000Z"),
+        message:
+          "The database server has been successfully restarted and data integrity has been verified. All affected systems are now operational. We are currently monitoring the systems closely to ensure stability and to confirm that there are no further issues.",
+        statusReportId: 1,
+        createdAt: new Date("2024-07-09T21:59:23.000Z"),
+        updatedAt: new Date("2024-07-09T21:59:23.000Z"),
+      },
+      {
+        id: 2,
+        status: "identified" as const,
+        date: new Date("2024-07-09T21:44:03.000Z"),
+        message:
+          "The issue has been identified as a database server failure. Our team is working to restart the server and check data integrity. We will provide an estimated time for resolution shortly.",
+        statusReportId: 1,
+        createdAt: new Date("2024-07-09T21:23:12.000Z"),
+        updatedAt: new Date("2024-07-09T21:23:12.000Z"),
+      },
+      {
+        id: 1,
+        status: "investigating" as const,
+        date: new Date("2024-07-09T21:21:23.000Z"),
+        message:
+          "An unexpected outage occurred affecting the website, customer portal, and internal email systems. Our team is currently investigating the issue to determine the cause and restore services as quickly as possible. Further updates will be provided as soon as more information is available.",
+        statusReportId: 1,
+        createdAt: new Date("2024-07-09T21:22:43.000Z"),
+        updatedAt: new Date("2024-07-09T21:22:43.000Z"),
+      },
+    ],
+    monitorsToStatusReports: [],
+  },
+  monitors: [],
+};
