@@ -27,15 +27,18 @@ type Maintenances = Maintenance[];
  */
 export class Tracker {
   private data: Monitors = [];
+  private statusReports: StatusReports = [];
   private incidents: Incidents = [];
   private maintenances: Maintenances = [];
 
   constructor(arg: {
     data?: Monitors;
+    statusReports?: StatusReports;
     incidents?: Incidents;
     maintenances?: Maintenance[];
   }) {
     this.data = arg.data || []; // TODO: use another Class to handle a single Day
+    this.statusReports = arg.statusReports || [];
     this.incidents = arg.incidents || [];
     this.maintenances = arg.maintenances || [];
   }
