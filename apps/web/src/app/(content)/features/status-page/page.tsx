@@ -6,6 +6,7 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockTrackerData } from "../mock";
+import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 
 const { title, description } = marketingProductPagesConfig[1];
 
@@ -54,6 +55,19 @@ export default function FeaturePage() {
           </div>
         }
         col={1}
+        position={"left"}
+      />
+      <InteractiveFeature
+        icon="eye-off"
+        iconText="Restrict access"
+        title="Password Protection."
+        subTitle="Hide your page to unexepected users."
+        component={
+          <div className="m-auto max-w-lg">
+            <PasswordFormSuspense slug="" />
+          </div>
+        }
+        col={2}
         position={"left"}
       />
       <Banner />
