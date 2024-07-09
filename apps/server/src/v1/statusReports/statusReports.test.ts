@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { api } from "../index";
+import { page } from "@openstatus/db/src/schema";
 
 test("GET one status report", async () => {
   const res = await api.request("/status_report/1", {
@@ -14,8 +15,7 @@ test("GET one status report", async () => {
     title: "Test Status Report",
     status: "monitoring",
     statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
-    monitorIds: null,
-    pageIds: [1],
+    pageId: 1,
   });
 });
 
@@ -33,16 +33,14 @@ test("Get all status report", async () => {
         title: "Test Status Report",
         status: "monitoring",
         statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
-        monitorIds: [],
-        pageIds: [1],
+        pageId: 1,
       },
       {
         id: 2,
         title: "Test Status Report",
         status: "investigating",
         statusReportUpdateIds: expect.arrayContaining([2]), // depending on the order of the updates
-        monitorIds: [1, 2],
-        pageIds: [1],
+        pageIds: 1,
       },
     ],
   });
