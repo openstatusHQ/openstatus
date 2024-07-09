@@ -23,7 +23,7 @@ const getRoute = createRoute({
           schema: StatusReportSchema,
         },
       },
-      description: "Get all status reports",
+      description: "Get a status report",
     },
     ...openApiErrorResponses,
   },

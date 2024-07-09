@@ -68,7 +68,7 @@ export const statusReportRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.id, opts.ctx.workspace.id))
         .get();
-      if (currentWorkspace?.plan !== "pro") {
+      if (currentWorkspace?.plan !== "pro" && _statusReport.pageId) {
         const subscribers = await opts.ctx.db
           .select()
           .from(pageSubscriber)
