@@ -85,6 +85,9 @@ export function DataTableRowActions<TData>({
       }
     });
   }
+  async function onClone() {
+    // Logic to clone monitor and redirect it to /monitor/[id]/edit
+  }
 
   return (
     <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
@@ -105,6 +108,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
+          <DropdownMenuItem onClick={onClone}>Clone</DropdownMenuItem>
           <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
