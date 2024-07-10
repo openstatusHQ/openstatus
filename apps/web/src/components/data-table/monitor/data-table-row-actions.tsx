@@ -30,6 +30,8 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
+import { getLimit } from "@openstatus/plans";
+import * as assertions from "@openstatus/assertions";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -87,6 +89,75 @@ export function DataTableRowActions<TData>({
   }
   async function onClone() {
     // Logic to clone monitor and redirect it to /monitor/[id]/edit
+    startTransition(async () => {
+      try {
+        const id = monitor.id;
+        if (!id) return;
+        const monitorData = await api.monitor.getMonitorById.query({ id });
+        const monitorNotifications =
+          await api.monitor.getAllNotificationsForMonitor.query({ id });
+        const pages = await api.page.getPagesByWorkspace.query();
+        const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
+
+        const data = {
+          ...monitorData,
+          // FIXME - Why is this not working?
+          degradedAfter: monitorData.degradedAfter ?? undefined,
+          pages: pages
+            .filter((page) =>
+              page.monitorsToPages
+                .map(({ monitorId }) => monitorId)
+                .includes(id)
+            )
+            .map(({ id }) => id),
+          notifications: monitorNotifications?.map(({ id }) => id),
+          tags: tags
+            .filter((tag) =>
+              tag.monitor.map(({ monitorId }) => monitorId).includes(id)
+            )
+            .map(({ id }) => id),
+        };
+
+        const _assertions = data?.assertions
+          ? assertions.deserialize(data?.assertions).map((a) => a.schema)
+          : [];
+        const defaultValues = {
+          url: data?.url || "",
+          name: data?.name || "",
+          description: data?.description || "",
+          periodicity: data?.periodicity || "30m",
+          active: data?.active ?? true,
+          id: data?.id || 0,
+          regions: data?.regions || getLimit("free", "regions"),
+          headers: data?.headers?.length
+            ? data?.headers
+            : [{ key: "", value: "" }],
+          body: data?.body ?? "",
+          method: data?.method ?? "GET",
+          notifications: data?.notifications ?? [],
+          pages: data?.pages ?? [],
+          tags: data?.tags ?? [],
+          public: data?.public ?? false,
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          statusAssertions: _assertions.filter(
+            (a) => a.type === "status"
+          ) as any, // TS considers a.type === "header"
+          // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+          headerAssertions: _assertions.filter(
+            (a) => a.type === "header"
+          ) as any, // TS considers a.type === "status"
+
+          degradedAfter: data?.degradedAfter,
+          timeout: data?.timeout || 45000,
+        };
+
+        const result = await api.monitor.create.mutate(defaultValues);
+
+        // Navigate user to /monitor/[id]/edit
+      } catch {
+        toastAction("error");
+      }
+    });
   }
 
   return (
