@@ -1,13 +1,16 @@
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
 import { Tracker } from "@/components/tracker/tracker";
 import { marketingProductPagesConfig } from "@/config/pages";
-import { InputWithAddons } from "@openstatus/ui";
+import { Button, InputWithAddons } from "@openstatus/ui";
 import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
-import { mockTrackerData, statusReportData } from "../mock";
+import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { StatusReport } from "@/components/status-page/status-report";
+import { StatusCheck } from "@/components/status-page/status-check";
+import Link from "next/link";
+import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 
 const { title, description } = marketingProductPagesConfig[1];
 
@@ -60,7 +63,7 @@ export default function FeaturePage() {
       />
       <InteractiveFeature
         icon="search-check"
-        iconText="Inform your users"
+        iconText="Stay up to date"
         title="Status Updates."
         subTitle="Down't let your users in the dark and show what's wrong."
         component={
@@ -79,6 +82,39 @@ export default function FeaturePage() {
         component={
           <div className="m-auto max-w-lg">
             <PasswordFormSuspense slug="" />
+          </div>
+        }
+        col={2}
+        position={"left"}
+      />
+      <InteractiveFeature
+        icon="user"
+        iconText="Keep it simple"
+        title="Build trust."
+        subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
+        component={
+          <div className="m-auto max-w-lg">
+            <StatusCheck />
+          </div>
+        }
+        action={
+          <div className="mt-2">
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="https://status.openstatus.dev">Status Page</Link>
+            </Button>
+          </div>
+        }
+        col={2}
+        position={"bottom"}
+      />
+      <InteractiveFeature
+        icon="hammer"
+        iconText="Handle migrations"
+        title="Maintenance"
+        subTitle="Mute your monitors for a specific period and inform the users about upcoming maintenance."
+        component={
+          <div className="m-auto">
+            <MaintenanceBanner {...maintenanceData} />
           </div>
         }
         col={2}

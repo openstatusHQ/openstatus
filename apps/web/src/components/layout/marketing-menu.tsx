@@ -23,7 +23,6 @@ import { useWindowScroll } from "@/hooks/use-window-scroll";
 import { cn } from "@/lib/utils";
 import Link, { type LinkProps } from "next/link";
 import { Icons, type ValidIcon } from "../icons";
-import { AppLink } from "./app-link";
 import { LoginButton } from "./login-button";
 import { SocialIconButton } from "./social-icon-button";
 
@@ -62,7 +61,12 @@ export function MarketingMenu() {
                 const _isActive = pathname.startsWith(href);
                 return (
                   <li key={href} className="w-full">
-                    <ListItemSingle title={title} href={href} icon={icon} />
+                    <ListItemSingle
+                      title={title}
+                      href={href}
+                      icon={icon}
+                      onClick={() => setOpen(false)}
+                    />
                   </li>
                 );
               }
@@ -87,6 +91,7 @@ export function MarketingMenu() {
                                   title={title}
                                   href={href}
                                   icon={icon}
+                                  onClick={() => setOpen(false)}
                                 />
                               </li>
                             );
@@ -127,7 +132,7 @@ const ListItem = React.forwardRef<
         ref={ref}
         className={cn(
           "flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
-          className,
+          className
         )}
         {...props}
       >
@@ -151,7 +156,7 @@ const ListItemSingle = React.forwardRef<
         ref={ref}
         className={cn(
           "flex flex-1 items-center justify-between border-b py-4 font-medium transition-all hover:underline",
-          className,
+          className
         )}
         {...props}
       >
