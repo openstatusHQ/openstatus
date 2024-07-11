@@ -39,6 +39,7 @@ const publicAppPaths = [
   "/app/sign-up",
   "/app/login",
   "/app/invite",
+  "/app/onboarding",
 ];
 
 // remove auth middleware if needed
