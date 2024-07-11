@@ -3,13 +3,8 @@
 import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import type {
-  InsertMonitor,
-  Notification,
-  WorkspacePlan,
-} from "@openstatus/db/src/schema";
+import type { InsertNotification, Monitor } from "@openstatus/db/src/schema";
 import {
-  Badge,
   FormControl,
   FormDescription,
   FormField,
@@ -21,52 +16,43 @@ import {
 import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {
-  form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
-  notifications?: Notification[];
+  form: UseFormReturn<InsertNotification>;
+  monitors?: Monitor[];
 }
 
-export function SectionNotifications({ form, plan, notifications }: Props) {
+export function SectionConnect({ form, monitors }: Props) {
   return (
     <div className="grid w-full gap-4">
-      {/* <div className="grid gap-1">
-        <h4 className="text-foreground font-medium">Schedule and Regions</h4>
-        <p className="text-muted-foreground text-sm">
-          Customize the period of time and the regions where your endpoint will
-          be monitored.
-        </p>
-      </div> */}
-      <FormField
-        control={form.control}
-        name="notifications"
-        // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-        render={({ field }) => {
-          return (
+      <div className="flex flex-col gap-3">
+        <FormField
+          control={form.control}
+          name="monitors"
+          render={() => (
             <FormItem>
               <div className="mb-4">
-                <FormLabel className="text-base">Notifications</FormLabel>
+                <FormLabel>Monitors</FormLabel>
                 <FormDescription>
-                  Select the notification channels you want to be informed.
+                  Attach the notification to specific monitors.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
-                {notifications?.map((item) => (
+              <div className="grid grid-cols-1 grid-rows-1 gap-6 md:grid-cols-3 sm:grid-cols-2">
+                {monitors?.map((item) => (
                   <FormField
                     key={item.id}
                     control={form.control}
-                    name="notifications"
+                    name="monitors"
                     render={({ field }) => {
                       return (
                         <FormItem key={item.id} className="h-full w-full">
-                          <FormControl className="h-full">
+                          <FormControl className="w-full">
                             <CheckboxLabel
                               id={String(item.id)}
-                              name={"notification"}
+                              name="monitor"
                               checked={field.value?.includes(item.id)}
                               onCheckedChange={(checked) => {
                                 return checked
                                   ? field.onChange([
-                                      ...(field.value ? field.value : []),
+                                      ...(field.value || []),
                                       item.id,
                                     ])
                                   : field.onChange(
@@ -75,12 +61,11 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                                       )
                                     );
                               }}
+                              className="flex-col items-start truncate"
                             >
                               <span>{item.name}</span>
-                              <span>
-                                <Badge variant="secondary">
-                                  {item.provider}
-                                </Badge>
+                              <span className="font-normal text-muted-foreground text-sm">
+                                {item.url}
                               </span>
                             </CheckboxLabel>
                           </FormControl>
@@ -90,16 +75,14 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                   />
                 ))}
               </div>
-              {!notifications || notifications.length === 0 ? (
-                <FormDescription>
-                  Create some notifications first.
-                </FormDescription>
+              {!monitors || monitors.length === 0 ? (
+                <FormDescription>Missing monitors.</FormDescription>
               ) : null}
               <FormMessage />
             </FormItem>
-          );
-        }}
-      />
+          )}
+        />
+      </div>
     </div>
   );
 }
