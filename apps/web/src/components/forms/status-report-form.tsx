@@ -51,16 +51,10 @@ import { api } from "@/trpc/client";
 interface Props {
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
-  pages?: Page[];
   nextUrl?: string;
 }
 
-export function StatusReportForm({
-  defaultValues,
-  monitors,
-  pages,
-  nextUrl,
-}: Props) {
+export function StatusReportForm({ defaultValues, monitors, nextUrl }: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
     defaultValues: defaultValues
@@ -69,7 +63,6 @@ export function StatusReportForm({
           title: defaultValues.title,
           status: defaultValues.status,
           monitors: defaultValues.monitors,
-          pages: defaultValues.pages,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,
@@ -94,7 +87,7 @@ export function StatusReportForm({
               status,
               message,
               ...rest,
-            },
+            }
           );
           // include update on creation
           if (statusReport?.id) {
@@ -224,8 +217,8 @@ export function StatusReportForm({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id,
-                                          ),
+                                            (value) => value !== item.id
+                                          )
                                         );
                                   }}
                                 />
@@ -240,7 +233,7 @@ export function StatusReportForm({
                                       "rounded-full p-1",
                                       item.active
                                         ? "bg-green-500"
-                                        : "bg-red-500",
+                                        : "bg-red-500"
                                     )}
                                   />
                                 </div>
@@ -292,8 +285,8 @@ export function StatusReportForm({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id,
-                                          ),
+                                            (value) => value !== item.id
+                                          )
                                         );
                                   }}
                                 />
