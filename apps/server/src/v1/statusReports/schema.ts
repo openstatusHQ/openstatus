@@ -49,15 +49,6 @@ export const StatusReportSchema = z.object({
       description: "id of monitors this report needs to refer",
     })
     .nullable(),
-  pageIds: z
-    .array(z.number())
-    .optional()
-    .nullable()
-    .default([])
-    .openapi({
-      description: "id of status pages this report needs to refer",
-    })
-    .nullable(),
 });
 
 export type StatusReportSchema = z.infer<typeof StatusReportSchema>;

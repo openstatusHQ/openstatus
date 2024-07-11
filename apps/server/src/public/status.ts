@@ -9,7 +9,6 @@ import {
   monitorsToPages,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { Status, Tracker } from "@openstatus/tracker";
@@ -45,20 +44,13 @@ status.get("/:slug", async (c) => {
     return c.json({ status: Status.Unknown });
   }
 
-  const {
-    pageStatusReportData,
-    monitorStatusReportData,
-    ongoingIncidents,
-    maintenanceData,
-  } = await getStatusPageData(currentPage.id);
+  const { monitorStatusReportData, ongoingIncidents, maintenanceData } =
+    await getStatusPageData(currentPage.id);
   endTime(c, "database");
 
   console.log(maintenanceData);
 
-  const statusReports = [
-    ...pageStatusReportData,
-    ...monitorStatusReportData,
-  ].map((item) => {
+  const statusReports = [...monitorStatusReportData].map((item) => {
     return item.status_report;
   });
 
@@ -84,8 +76,8 @@ async function getStatusPageData(pageId: number) {
       and(
         eq(monitorsToPages.monitorId, monitor.id),
         eq(monitor.active, true),
-        eq(monitorsToPages.pageId, pageId),
-      ),
+        eq(monitorsToPages.pageId, pageId)
+      )
     )
 
     .all();
@@ -105,21 +97,9 @@ async function getStatusPageData(pageId: number) {
     .from(monitorsToStatusReport)
     .innerJoin(
       statusReport,
-      eq(monitorsToStatusReport.statusReportId, statusReport.id),
+      eq(monitorsToStatusReport.statusReportId, statusReport.id)
     )
     .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
-    .all();
-
-  const pageStatusReportDataQuery = db
-    .select()
-    .from(pagesToStatusReports)
-    .innerJoin(
-      statusReport,
-      and(
-        eq(pagesToStatusReports.statusReportId, statusReport.id),
-        eq(pagesToStatusReports.pageId, pageId),
-      ),
-    )
     .all();
 
   const ongoingIncidentsQuery = db
@@ -128,8 +108,8 @@ async function getStatusPageData(pageId: number) {
     .where(
       and(
         isNull(incidentTable.resolvedAt),
-        inArray(incidentTable.monitorId, monitorIds),
-      ),
+        inArray(incidentTable.monitorId, monitorIds)
+      )
     )
     .all();
 
@@ -140,25 +120,19 @@ async function getStatusPageData(pageId: number) {
       and(
         eq(maintenance.pageId, pageId),
         lte(maintenance.from, new Date()),
-        gte(maintenance.to, new Date()),
-      ),
+        gte(maintenance.to, new Date())
+      )
     );
 
-  const [
-    monitorStatusReportData,
-    pageStatusReportData,
-    ongoingIncidents,
-    maintenanceData,
-  ] = await Promise.all([
-    monitorStatusReportQuery,
-    pageStatusReportDataQuery,
-    ongoingIncidentsQuery,
-    ongoingMaintenancesQuery,
-  ]);
+  const [monitorStatusReportData, ongoingIncidents, maintenanceData] =
+    await Promise.all([
+      monitorStatusReportQuery,
+      ongoingIncidentsQuery,
+      ongoingMaintenancesQuery,
+    ]);
 
   return {
     // monitorData,
-    pageStatusReportData,
     monitorStatusReportData,
     maintenanceData,
     ongoingIncidents,
