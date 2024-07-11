@@ -24,7 +24,7 @@ export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { id, monitors, pages, date, message, ...statusReportInput } =
+      const { id, monitors, date, message, ...statusReportInput } =
         opts.input;
 
       const newStatusReport = await opts.ctx.db
@@ -118,7 +118,7 @@ export const statusReportRouter = createTRPCRouter({
   updateStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { monitors, pages, ...statusReportInput } = opts.input;
+      const { monitors, ...statusReportInput } = opts.input;
 
       if (!statusReportInput.id) return;
 
