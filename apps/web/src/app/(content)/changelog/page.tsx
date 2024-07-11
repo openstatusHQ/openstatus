@@ -1,5 +1,4 @@
 import ChangelogClient from "./ChangelogClient";
-import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import { Shell } from "@/components/dashboard/shell";
 import {

@@ -1,16 +1,11 @@
-import { allPosts } from "contentlayer/generated";
-import { Rss } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import type { Metadata } from "next";
 
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { Timeline } from "@/components/content/timeline";
 import { Shell } from "@/components/dashboard/shell";
 import Blog from "./Blog";
 
