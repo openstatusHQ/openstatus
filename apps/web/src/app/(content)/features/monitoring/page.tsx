@@ -1,3 +1,4 @@
+import { Mdx } from "@/components/content/mdx";
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
@@ -5,6 +6,7 @@ import { marketingProductPagesConfig } from "@/config/pages";
 import { flyRegions } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
+import { allUnrelateds } from "contentlayer/generated";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "../_components/assertions-timing-form-example";
@@ -14,6 +16,9 @@ import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
 
 const { title, description } = marketingProductPagesConfig[0];
+const code = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "ci-cd-features-block",
+);
 
 export default function FeaturePage() {
   return (
@@ -36,6 +41,34 @@ export default function FeaturePage() {
         position={"left"}
       />
       <InteractiveFeature
+        icon="bot"
+        iconText="CI/CD Integration"
+        title="Synthetic Monitoring."
+        subTitle="Run your check in your CI."
+        component={
+          code ? (
+            <Mdx
+              code={code.body.code}
+              className="max-w-none prose-pre:my-0 prose-pre:overflow-hidden"
+            />
+          ) : (
+            <p>Code not found</p>
+          )
+        }
+        action={
+          <div className="mt-2">
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="https://docs.openstatus.dev/guides/test-latency-cf-workers-in-github-actions">
+                Guide
+              </Link>
+            </Button>
+          </div>
+        }
+        col={2}
+        position={"bottom"}
+        withGradient
+      />
+      <InteractiveFeature
         icon="book-open-check"
         iconText="Timing & Assertions"
         title="Validate the response."
@@ -43,6 +76,7 @@ export default function FeaturePage() {
         component={<AssertionsTimingFormExample />}
         col={2}
         position={"left"}
+        withGradient
       />
       <InteractiveFeature
         icon="timer"
@@ -58,6 +92,7 @@ export default function FeaturePage() {
         }
         col={2}
         position={"left"}
+        withGradient
       />
       <InteractiveFeature
         icon="line-chart"
@@ -78,6 +113,7 @@ export default function FeaturePage() {
         }
         col={2}
         position={"top"}
+        withGradient
       />
       <Banner />
     </div>

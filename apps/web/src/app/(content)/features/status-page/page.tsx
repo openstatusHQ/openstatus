@@ -1,16 +1,16 @@
+import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
+import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
+import { StatusCheck } from "@/components/status-page/status-check";
+import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
 import { marketingProductPagesConfig } from "@/config/pages";
 import { Button, InputWithAddons } from "@openstatus/ui";
+import Link from "next/link";
 import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
-import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
-import { StatusReport } from "@/components/status-page/status-report";
-import { StatusCheck } from "@/components/status-page/status-check";
-import Link from "next/link";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 
 const { title, description } = marketingProductPagesConfig[1];
 
@@ -73,6 +73,7 @@ export default function FeaturePage() {
         }
         col={1}
         position={"bottom"}
+        withGradient
       />
       <InteractiveFeature
         icon="eye-off"

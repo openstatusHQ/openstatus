@@ -37,6 +37,7 @@ interface InteractiveFeatureProps
   // grid aligment
   position: "top" | "right" | "bottom" | "left";
   col: 1 | 2;
+  withGradient?: boolean;
 }
 
 export function InteractiveFeature({
@@ -48,6 +49,7 @@ export function InteractiveFeature({
   component,
   position,
   col,
+  withGradient = false,
 }: InteractiveFeatureProps) {
   const Component = component;
   const isSingleCol = ["top", "bottom"].includes(position);
@@ -83,11 +85,21 @@ export function InteractiveFeature({
                 ? "right"
                 : "left",
           }),
+          "relative",
         )}
       >
         {Component}
+        {withGradient ? <Gradient /> : null}
       </FeatureCardContentContainer>
     </Shell>
+  );
+}
+
+function Gradient() {
+  return (
+    <div className="absolute inset-x-0 bottom-0 z-10 h-16 w-full overflow-hidden rounded-b-xl">
+      <div className="h-full w-full bg-gradient-to-b from-transparent to-background" />
+    </div>
   );
 }
 
