@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { Documenso } from "@/components/svg/documenso";
 import { Hanko } from "@/components/svg/hanko";
-import { Trigger } from "@/components/svg/trigger";
+
 
 export function Partners() {
   return (
@@ -33,17 +33,7 @@ export function Partners() {
             <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
-        <div className="flex items-center justify-center">
-          <a
-            href="https://status.trigger.dev"
-            target="_blank"
-            rel="noreferrer"
-            className="group inline-flex items-center justify-center"
-          >
-            <Trigger className="h-6 w-24 sm:h-8 sm:w-32" />
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
-          </a>
-        </div>
+       
         <div className="flex items-center justify-center">
           <p>
             <a
