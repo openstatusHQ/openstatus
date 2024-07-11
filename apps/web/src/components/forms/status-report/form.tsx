@@ -47,7 +47,6 @@ export function StatusReportForm({
           title: defaultValues.title,
           status: defaultValues.status,
           monitors: defaultValues.monitors,
-          pages: defaultValues.pages,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,

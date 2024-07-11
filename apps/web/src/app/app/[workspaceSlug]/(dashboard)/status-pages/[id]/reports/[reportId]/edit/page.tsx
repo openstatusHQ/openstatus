@@ -24,7 +24,7 @@ export default async function EditPage({
           monitors: statusUpdate?.monitorsToStatusReports.map(
             ({ monitorId }) => monitorId
           ),
-          pages: [Number.parseInt(params.id)],
+          pageId: Number.parseInt(params.id),
           message: "",
         }
       }

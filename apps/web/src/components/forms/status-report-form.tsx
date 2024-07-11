@@ -251,66 +251,6 @@ export function StatusReportForm({ defaultValues, monitors, nextUrl }: Props) {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="pages"
-              render={() => (
-                <FormItem className="sm:col-span-full">
-                  <div className="mb-4">
-                    <FormLabel>Pages</FormLabel>
-                    <FormDescription>
-                      Select the pages that you want to refer the incident to.
-                    </FormDescription>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {pages?.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="pages"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={item.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([
-                                          ...(field.value || []),
-                                          item.id,
-                                        ])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <div className="grid gap-1.5 leading-none">
-                                <div className="flex items-center gap-2">
-                                  <FormLabel className="font-normal">
-                                    {item.title}
-                                  </FormLabel>
-                                </div>
-                                <p className="truncate text-muted-foreground text-sm">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
         </div>
         {/* include update on creation */}

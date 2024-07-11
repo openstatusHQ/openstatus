@@ -37,8 +37,6 @@ export default async function EditPage({
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
-  const pages = await api.page.getPagesByWorkspace.query();
-
   return (
     <AppPageLayout>
       <Header
@@ -47,7 +45,6 @@ export default async function EditPage({
       />
       <StatusReportForm
         monitors={monitors}
-        pages={pages}
         defaultValues={
           statusUpdate
             ? // TODO: we should move the mapping to the trpc layer
