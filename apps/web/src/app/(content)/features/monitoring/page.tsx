@@ -24,16 +24,16 @@ const code = allUnrelateds.find(
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title: "API & Website Monitoring | OpenStatus",
+  title: "API & Website Monitoring",
   description:'Get insights of the latency of your API and website from all over the world.',
   twitter: {
     ...twitterMetadata,
-    title: "API & Website Monitoring | OpenStatus",
+    title: "API & Website Monitoring",
     description:'Get insights of the latency of your API and website from all over the world.',
   },
   openGraph: {
     ...ogMetadata,
-    title: "API & Website Monitoring | OpenStatus",
+    title: "API & Website Monitoring",
     description:'Get insights of the latency of your API and website from all over the world.',
   },
 };

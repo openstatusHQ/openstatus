@@ -18,16 +18,16 @@ const { description, subtitle } = marketingProductPagesConfig[1];
 
 export const metadata: Metadata = {
   ...defaultMetadata,
-  title: "Status Page | OpenStatus",
+  title: "Status Page",
   description:'Easily report to your users with our public or private status page.',
   twitter: {
     ...twitterMetadata,
-    title: "Status Page | OpenStatus",
+    title: "Status Page",
     description:'Easily report to your users with our public or private status page.',
   },
   openGraph: {
     ...ogMetadata,
-    title: "Status Page | OpenStatus",
+    title: "Status Page",
     description:'Easily report to your users with our public or private status page.',
   },
 };
