@@ -23,12 +23,16 @@ import { useState } from "react";
 
 export function Header({
   report,
+  monitors,
 }: {
   report: StatusReport & { statusReportUpdates: StatusReportUpdate[] };
+  monitors?: Pick<Monitor, "name" | "id">[];
 }) {
   const [open, setOpen] = useState(false);
 
   const firstUpdate = report.statusReportUpdates?.[0];
+  const lastUpdate =
+    report.statusReportUpdates?.[report.statusReportUpdates?.length - 1];
 
   return (
     <div className="space-y-3">
@@ -44,6 +48,11 @@ export function Header({
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusBadge status={report.status} />
             <span className="text-muted-foreground/50 text-xs">•</span>
+            {monitors?.map(({ name, id }) => (
+              <Badge key={id} variant="outline">
+                {name}
+              </Badge>
+            ))}
           </div>
         </div>
 

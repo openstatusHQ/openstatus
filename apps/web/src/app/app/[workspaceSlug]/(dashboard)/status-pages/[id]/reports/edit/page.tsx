@@ -35,6 +35,10 @@ export default async function EditPage({
       })
     : undefined;
 
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
+
+  const pages = await api.page.getPagesByWorkspace.query();
+
   return (
     <AppPageLayout>
       <Header
@@ -42,6 +46,8 @@ export default async function EditPage({
         description="Create a public report for your incident"
       />
       <StatusReportForm
+        monitors={monitors}
+        pages={pages}
         defaultValues={
           statusUpdate
             ? // TODO: we should move the mapping to the trpc layer
@@ -49,6 +55,12 @@ export default async function EditPage({
               // it should be something like defaultValues={statusReport}
               {
                 ...statusUpdate,
+                monitors: statusUpdate?.monitorsToStatusReports.map(
+                  ({ monitorId }) => monitorId,
+                ),
+                pages: statusUpdate?.pagesToStatusReports.map(
+                  ({ pageId }) => pageId,
+                ),
                 message: "",
               }
             : undefined

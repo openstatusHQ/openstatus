@@ -15,6 +15,7 @@ import {
   monitorTag,
   monitorTagsToMonitors,
   monitorsToPages,
+  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
@@ -538,7 +539,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(monitorTagsToMonitors)
           .where(eq(monitorTagsToMonitors.monitorId, monitorToDelete.id));
-
+        await tx
+          .delete(monitorsToStatusReport)
+          .where(eq(monitorsToStatusReport.monitorId, monitorToDelete.id));
         await tx
           .delete(notificationsToMonitors)
           .where(eq(notificationsToMonitors.monitorId, monitorToDelete.id));
@@ -582,6 +585,9 @@ export const monitorRouter = createTRPCRouter({
         await tx
           .delete(monitorTagsToMonitors)
           .where(inArray(monitorTagsToMonitors.monitorId, opts.input.ids));
+        await tx
+          .delete(monitorsToStatusReport)
+          .where(inArray(monitorsToStatusReport.monitorId, opts.input.ids));
         await tx
           .delete(notificationsToMonitors)
           .where(inArray(notificationsToMonitors.monitorId, opts.input.ids));

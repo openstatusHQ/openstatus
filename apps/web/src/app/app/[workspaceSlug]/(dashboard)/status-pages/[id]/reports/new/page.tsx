@@ -11,6 +11,7 @@ export default async function NewPage({
   return (
     <StatusReportForm
       // TODO: add defaultValues or pageId
+      monitors={monitors}
       nextUrl={"./"}
       defaultSection="update-message"
     />

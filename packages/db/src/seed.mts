@@ -7,9 +7,11 @@ import {
   incidentTable,
   monitor,
   monitorsToPages,
+  monitorsToStatusReport,
   notification,
   notificationsToMonitors,
   page,
+  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
   user,
@@ -144,7 +146,6 @@ async function main() {
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
-      pageId: 1,
     })
     .run();
 
@@ -164,7 +165,6 @@ async function main() {
     .values({
       id: 2,
       workspaceId: 1,
-      pageId: 1,
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
@@ -181,6 +181,28 @@ async function main() {
       date: new Date(),
     })
     .run();
+
+  await db.insert(monitorsToStatusReport).values([
+    {
+      monitorId: 1,
+      statusReportId: 2,
+    },
+    {
+      monitorId: 2,
+      statusReportId: 2,
+    },
+  ]);
+
+  await db.insert(pagesToStatusReports).values([
+    {
+      pageId: 1,
+      statusReportId: 2,
+    },
+    {
+      pageId: 1,
+      statusReportId: 1,
+    },
+  ]);
 
   await db
     .insert(incidentTable)

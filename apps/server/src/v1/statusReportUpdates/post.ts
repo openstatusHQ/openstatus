@@ -4,6 +4,7 @@ import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
   page,
   pageSubscriber,
+  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -80,24 +81,31 @@ export function registerPostStatusReportUpdate(
 
     // send email
 
-    if (workspacePlan.title !== "Hobby" && _statusReport.pageId) {
-      const subscribers = await db
+    if (workspacePlan.title !== "Hobby") {
+      const allPages = await db
         .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
-        )
+        .from(pagesToStatusReports)
+        .where(eq(pagesToStatusReports.statusReportId, _statusReport.id))
         .all();
 
-      const pageInfo = await db
-        .select()
-        .from(page)
-        .where(eq(page.id, _statusReport.pageId))
-        .get();
-      if (pageInfo) {
+      for (const currentPage of allPages) {
+        const subscribers = await db
+          .select()
+          .from(pageSubscriber)
+          .where(
+            and(
+              eq(pageSubscriber.pageId, currentPage.pageId),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
+          )
+          .all();
+
+        const pageInfo = await db
+          .select()
+          .from(page)
+          .where(eq(page.id, currentPage.pageId))
+          .get();
+        if (!pageInfo) continue;
         const subscribersEmails = subscribers.map(
           (subscriber) => subscriber.email
         );

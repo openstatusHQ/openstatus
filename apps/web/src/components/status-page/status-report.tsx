@@ -58,9 +58,11 @@ function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
 
 function StatusReportDescription({
   report,
+  monitors,
   className,
 }: {
   report: StatusReportWithUpdates;
+  monitors: PublicMonitor[];
   className?: string;
 }) {
   const firstReport =
@@ -73,6 +75,16 @@ function StatusReportDescription({
       </p>
       <span className="text-muted-foreground/50 text-xs">•</span>
       <StatusBadge status={report.status} />
+      {monitors.length > 0 ? (
+        <>
+          <span className="text-muted-foreground/50 text-xs">•</span>
+          {monitors.map((monitor) => (
+            <Badge key={monitor.id} variant="secondary">
+              {monitor.name}
+            </Badge>
+          ))}
+        </>
+      ) : null}
     </div>
   );
 }

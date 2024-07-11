@@ -15,10 +15,12 @@ const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const Monitor = async ({
   monitor,
+  statusReports,
   incidents,
   maintenances,
 }: {
   monitor: PublicMonitor;
+  statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
   maintenances: Maintenance[];
 }) => {
@@ -33,6 +35,7 @@ export const Monitor = async ({
   return (
     <Tracker
       data={data}
+      reports={statusReports}
       incidents={incidents}
       maintenances={maintenances}
       {...monitor}

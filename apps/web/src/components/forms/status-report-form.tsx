@@ -50,13 +50,15 @@ import { api } from "@/trpc/client";
 
 interface Props {
   defaultValues?: InsertStatusReport;
-
+  monitors?: Monitor[];
+  pages?: Page[];
   nextUrl?: string;
 }
 
 export function StatusReportForm({
   defaultValues,
-
+  monitors,
+  pages,
   nextUrl,
 }: Props) {
   const form = useForm<InsertStatusReport>({
@@ -66,6 +68,8 @@ export function StatusReportForm({
           id: defaultValues.id,
           title: defaultValues.title,
           status: defaultValues.status,
+          monitors: defaultValues.monitors,
+          pages: defaultValues.pages,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,
@@ -90,7 +94,7 @@ export function StatusReportForm({
               status,
               message,
               ...rest,
-            }
+            },
           );
           // include update on creation
           if (statusReport?.id) {
@@ -180,6 +184,137 @@ export function StatusReportForm({
                       );
                     })}
                   </RadioGroup>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="monitors"
+              render={() => (
+                <FormItem className="sm:col-span-full">
+                  <div className="mb-4">
+                    <FormLabel>Monitors</FormLabel>
+                    {/* TODO: second phrase can be set inside of a (?) tooltip */}
+                    <FormDescription>
+                      Select the monitors that you want to refer the incident
+                      to. It will be displayed on the status page they are
+                      attached to.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {monitors?.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="monitors"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={item.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([
+                                          ...(field.value || []),
+                                          item.id,
+                                        ])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== item.id,
+                                          ),
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="grid gap-1.5 leading-none">
+                                <div className="flex items-center gap-2">
+                                  <FormLabel className="font-normal">
+                                    {item.name}
+                                  </FormLabel>
+                                  <span
+                                    className={cn(
+                                      "rounded-full p-1",
+                                      item.active
+                                        ? "bg-green-500"
+                                        : "bg-red-500",
+                                    )}
+                                  />
+                                </div>
+                                <p className="truncate text-muted-foreground text-sm">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="pages"
+              render={() => (
+                <FormItem className="sm:col-span-full">
+                  <div className="mb-4">
+                    <FormLabel>Pages</FormLabel>
+                    <FormDescription>
+                      Select the pages that you want to refer the incident to.
+                    </FormDescription>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    {pages?.map((item) => (
+                      <FormField
+                        key={item.id}
+                        control={form.control}
+                        name="pages"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                              key={item.id}
+                              className="flex flex-row items-start space-x-3 space-y-0"
+                            >
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(item.id)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([
+                                          ...(field.value || []),
+                                          item.id,
+                                        ])
+                                      : field.onChange(
+                                          field.value?.filter(
+                                            (value) => value !== item.id,
+                                          ),
+                                        );
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="grid gap-1.5 leading-none">
+                                <div className="flex items-center gap-2">
+                                  <FormLabel className="font-normal">
+                                    {item.title}
+                                  </FormLabel>
+                                </div>
+                                <p className="truncate text-muted-foreground text-sm">
+                                  {item.description}
+                                </p>
+                              </div>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <FormMessage />
                 </FormItem>
               )}
             />

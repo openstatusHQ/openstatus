@@ -10,6 +10,7 @@ import { maintenancesToMonitors } from "../maintenances";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
+import { monitorsToStatusReport } from "../status_reports";
 import { workspace } from "../workspaces";
 import {
   monitorJobTypes,
@@ -63,6 +64,7 @@ export const monitor = sqliteTable("monitor", {
 
 export const monitorRelation = relations(monitor, ({ one, many }) => ({
   monitorsToPages: many(monitorsToPages),
+  monitorsToStatusReports: many(monitorsToStatusReport),
   monitorTagsToMonitors: many(monitorTagsToMonitors),
   workspace: one(workspace, {
     fields: [monitor.workspaceId],

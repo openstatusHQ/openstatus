@@ -23,7 +23,7 @@ export const StatusReportList = ({
     return statusReports.filter((report) => {
       if (filter.open && report.status !== "resolved") return true;
       return report.statusReportUpdates.some(
-        (update) => update.date.getTime() > filter?.date?.getTime()
+        (update) => update.date.getTime() > filter?.date?.getTime(),
       );
     });
   }
@@ -38,7 +38,26 @@ export const StatusReportList = ({
     return <EmptyState />;
   }
 
-  return <div className="grid gap-8" />;
+  return (
+    <div className="grid gap-8">
+      {reports.map((report, i) => {
+        const affectedMonitors = report.monitorsToStatusReports
+          .map(({ monitorId }) => {
+            const monitor = monitors.find(({ id }) => monitorId === id);
+            return monitor || undefined;
+          })
+          .filter(notEmpty);
+        const isLast = reports.length - 1 === i;
+
+        return (
+          <div key={report.id} className="grid gap-6">
+            <StatusReport monitors={affectedMonitors} report={report} />
+            {!isLast ? <Separator /> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
 };
 
 function EmptyState() {

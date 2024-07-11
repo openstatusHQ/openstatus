@@ -2,8 +2,11 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, asc, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
+  monitor,
+  monitorsToStatusReport,
   page,
   pageSubscriber,
+  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -59,7 +62,42 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
     const workspaceId = c.get("workspaceId");
     const workspacePlan = c.get("workspacePlan");
 
-    const { date, ...rest } = input;
+    const { pageIds, monitorIds, date, ...rest } = input;
+
+    if (monitorIds?.length) {
+      const _monitors = await db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.workspaceId, Number(workspaceId)),
+            inArray(monitor.id, monitorIds),
+            isNull(monitor.deletedAt)
+          )
+        )
+        .all();
+
+      if (_monitors.length !== monitorIds.length) {
+        throw new HTTPException(400, { message: "Monitor not found" });
+      }
+    }
+
+    if (pageIds?.length) {
+      const _pages = await db
+        .select()
+        .from(page)
+        .where(
+          and(
+            eq(page.workspaceId, Number(workspaceId)),
+            inArray(page.id, pageIds)
+          )
+        )
+        .all();
+
+      if (_pages.length !== pageIds.length) {
+        throw new HTTPException(400, { message: "Page not found" });
+      }
+    }
 
     const _newStatusReport = await db
       .insert(statusReport)
@@ -80,26 +118,62 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .returning()
       .get();
 
+    if (pageIds?.length) {
+      await db
+        .insert(pagesToStatusReports)
+        .values(
+          pageIds.map((id) => {
+            return {
+              pageId: id,
+              statusReportId: _newStatusReport.id,
+            };
+          })
+        )
+        .returning();
+    }
+
+    if (monitorIds?.length) {
+      await db
+        .insert(monitorsToStatusReport)
+        .values(
+          monitorIds.map((id) => {
+            return {
+              monitorId: id,
+              statusReportId: _newStatusReport.id,
+            };
+          })
+        )
+        .returning();
+    }
+
     if (workspacePlan.title !== "Hobby") {
-      const subscribers = await db
+      const allPages = await db
         .select()
-        .from(pageSubscriber)
+        .from(pagesToStatusReports)
         .where(
-          and(
-            eq(pageSubscriber.pageId, input.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+          eq(pagesToStatusReports.statusReportId, Number(_newStatusReport.id))
         )
         .all();
-      const pageInfo = await db
-        .select()
-        .from(page)
-        .where(eq(page.id, input.pageId))
-        .get();
-      const subscribersEmails = subscribers.map(
-        (subscriber) => subscriber.email
-      );
-      if (pageInfo) {
+      for (const currentPage of allPages) {
+        const subscribers = await db
+          .select()
+          .from(pageSubscriber)
+          .where(
+            and(
+              eq(pageSubscriber.pageId, currentPage.pageId),
+              isNotNull(pageSubscriber.acceptedAt)
+            )
+          )
+          .all();
+        const pageInfo = await db
+          .select()
+          .from(page)
+          .where(eq(page.id, currentPage.pageId))
+          .get();
+        if (!pageInfo) continue;
+        const subscribersEmails = subscribers.map(
+          (subscriber) => subscriber.email
+        );
         await sendEmailHtml({
           to: subscribersEmails,
           subject: `New status update for ${pageInfo.title}`,
@@ -112,6 +186,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
 
     const data = StatusReportSchema.parse({
       ..._newStatusReport,
+      monitorIds,
+      pageIds,
       statusReportUpdateIds: [_newStatusReportUpdate.id],
     });
 

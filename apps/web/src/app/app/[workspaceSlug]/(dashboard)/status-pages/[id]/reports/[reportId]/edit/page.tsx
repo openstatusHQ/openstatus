@@ -10,15 +10,21 @@ export default async function EditPage({
     id: Number.parseInt(params.reportId),
   });
 
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
+
   return (
     <StatusReportForm
+      monitors={monitors}
       defaultValues={
         // TODO: we should move the mapping to the trpc layer
         // so we don't have to do this in the UI
         // it should be something like defaultValues={statusReport}
         {
           ...statusUpdate,
-          pageId: Number.parseInt(params.id),
+          monitors: statusUpdate?.monitorsToStatusReports.map(
+            ({ monitorId }) => monitorId
+          ),
+          pages: [Number.parseInt(params.id)],
           message: "",
         }
       }

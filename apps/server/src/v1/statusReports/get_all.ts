@@ -34,6 +34,8 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
     const _statusReports = await db.query.statusReport.findMany({
       with: {
         statusReportUpdates: true,
+        monitorsToStatusReports: true,
+        pagesToStatusReports: true,
       },
       where: eq(statusReport.workspaceId, Number(workspaceId)),
     });
@@ -46,6 +48,8 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
       _statusReports.map((r) => ({
         ...r,
         statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
+        pageIds: r.pagesToStatusReports.map((p) => p.pageId),
+        monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
       }))
     );
 

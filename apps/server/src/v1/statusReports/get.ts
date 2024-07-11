@@ -23,7 +23,7 @@ const getRoute = createRoute({
           schema: StatusReportSchema,
         },
       },
-      description: "Get a status report",
+      description: "Get all status reports",
     },
     ...openApiErrorResponses,
   },
@@ -37,6 +37,8 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
     const _statusUpdate = await db.query.statusReport.findFirst({
       with: {
         statusReportUpdates: true,
+        monitorsToStatusReports: true,
+        pagesToStatusReports: true,
       },
       where: and(
         eq(statusReport.workspaceId, Number(workspaceId)),
@@ -48,7 +50,11 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    const { statusReportUpdates } = _statusUpdate;
+    const {
+      statusReportUpdates,
+      monitorsToStatusReports,
+      pagesToStatusReports,
+    } = _statusUpdate;
 
     // most recent report information
     const { message, date } =
@@ -58,6 +64,12 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       ..._statusUpdate,
       message,
       date,
+      monitorIds: monitorsToStatusReports.length
+        ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
+        : null,
+      pageIds: pagesToStatusReports.length
+        ? pagesToStatusReports.map((page) => page.pageId)
+        : null,
       statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });
 
