@@ -51,7 +51,7 @@ export default function FeaturePage() {
       <InteractiveFeature
         icon="users"
         iconText="Reach your users"
-        title="Subscriptions"
+        title="Subscriptions."
         subTitle="Let your users subscribe to your status page, to automatically receive updates about the status of your services."
         component={
           <div className="m-auto">
@@ -111,7 +111,7 @@ export default function FeaturePage() {
       <InteractiveFeature
         icon="hammer"
         iconText="Handle migrations"
-        title="Maintenance"
+        title="Maintenance."
         subTitle="Mute your monitors for a specific period and inform the users about upcoming maintenance."
         component={
           <div className="m-auto">

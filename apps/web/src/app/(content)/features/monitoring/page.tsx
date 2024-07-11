@@ -17,7 +17,7 @@ import { mockChartData, mockResponseData } from "../mock";
 
 const { title, description } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block",
+  (unrelated) => unrelated.slug === "ci-cd-features-block"
 );
 
 export default function FeaturePage() {
@@ -81,7 +81,7 @@ export default function FeaturePage() {
       <InteractiveFeature
         icon="timer"
         iconText="Request Metrics Insights"
-        title="Optimize Web Performance"
+        title="Optimize Web Performance."
         subTitle="Analyze DNS, TCP, TLS, and TTFB for every request and inspect Response Headers as needed."
         component={
           <ResponseDetailTabs
@@ -97,7 +97,7 @@ export default function FeaturePage() {
       <InteractiveFeature
         icon="line-chart"
         iconText="Charts"
-        title="Opinionated Dashboard"
+        title="Opinionated Dashboard."
         subTitle="Keep an overview about Uptime, P50, P75, P90, P95, P99 of your monitors."
         action={
           <div className="mt-2">
