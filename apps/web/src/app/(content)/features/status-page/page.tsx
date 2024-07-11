@@ -12,12 +12,12 @@ import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
 
-const { title, description } = marketingProductPagesConfig[1];
+const { description, subtitle } = marketingProductPagesConfig[1];
 
 export default function FeaturePage() {
   return (
     <div className="grid w-full gap-12">
-      <Hero title={title} subTitle={description} />
+      <Hero title={description} subTitle={subtitle} />
       <InteractiveFeature
         icon="globe"
         iconText="Customize"

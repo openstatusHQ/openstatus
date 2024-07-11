@@ -11,12 +11,14 @@ export function Hero({ title, subTitle, className, ...props }: HeroProps) {
     <div
       className={cn(
         "mx-auto my-16 flex max-w-xl flex-col items-center gap-4",
-        className,
+        className
       )}
       {...props}
     >
-      <h1 className="font-cal text-5xl">{title}</h1>
-      <h2 className="text-center text-2xl text-muted-foreground">{subTitle}</h2>
+      <h1 className="text-center font-cal text-5xl">{title}</h1>
+      <h2 className="mx-auto max-w-md text-center text-lg text-muted-foreground md:max-w-xl md:text-xl">
+        {subTitle}
+      </h2>
     </div>
   );
 }

@@ -50,7 +50,7 @@ export function MarketingHeader({ className }: Props) {
                 const { href, title, segment, children } = page;
                 if (!children) {
                   return (
-                    <NavigationMenuItem>
+                    <NavigationMenuItem key={title}>
                       <Link href={href} legacyBehavior passHref>
                         <NavigationMenuLink
                           className={cn(

@@ -15,7 +15,7 @@ import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
 
-const { title, description } = marketingProductPagesConfig[0];
+const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
   (unrelated) => unrelated.slug === "ci-cd-features-block"
 );
@@ -23,12 +23,12 @@ const code = allUnrelateds.find(
 export default function FeaturePage() {
   return (
     <div className="grid w-full gap-12">
-      <Hero title={title} subTitle={description} />
+      <Hero title={description} subTitle={subtitle} />
       <InteractiveFeature
         icon="activity"
         iconText="Website & API monitoring"
-        title="From all over the world."
-        subTitle="Get insights of the latency."
+        title="Global Monitoring."
+        subTitle="Get insights of the latency worldwide."
         component={
           <div className="m-auto">
             <RegionsPreset
@@ -39,34 +39,6 @@ export default function FeaturePage() {
         }
         col={1}
         position={"left"}
-      />
-      <InteractiveFeature
-        icon="bot"
-        iconText="CI/CD Integration"
-        title="Synthetic Monitoring."
-        subTitle="Run your check in your CI."
-        component={
-          code ? (
-            <Mdx
-              code={code.body.code}
-              className="max-w-none prose-pre:overflow-hidden"
-            />
-          ) : (
-            <p>Code not found</p>
-          )
-        }
-        action={
-          <div className="mt-2">
-            <Button variant="outline" className="rounded-full" asChild>
-              <Link href="https://docs.openstatus.dev/guides/test-latency-cf-workers-in-github-actions">
-                Guide
-              </Link>
-            </Button>
-          </div>
-        }
-        col={2}
-        position={"bottom"}
-        withGradient
       />
       <InteractiveFeature
         icon="book-open-check"
@@ -113,6 +85,34 @@ export default function FeaturePage() {
         }
         col={2}
         position={"top"}
+        withGradient
+      />
+      <InteractiveFeature
+        icon="bot"
+        iconText="API Monitoring"
+        title="Synthetic Monitoring."
+        subTitle="Run your check in your CI/CD pipeline or on demand."
+        component={
+          code ? (
+            <Mdx
+              code={code.body.code}
+              className="max-w-none prose-pre:overflow-hidden"
+            />
+          ) : (
+            <p>Code not found</p>
+          )
+        }
+        action={
+          <div className="mt-2">
+            <Button variant="outline" className="rounded-full" asChild>
+              <Link href="https://docs.openstatus.dev/guides/test-latency-cf-workers-in-github-actions">
+                How-to
+              </Link>
+            </Button>
+          </div>
+        }
+        col={2}
+        position={"bottom"}
         withGradient
       />
       <Banner />
