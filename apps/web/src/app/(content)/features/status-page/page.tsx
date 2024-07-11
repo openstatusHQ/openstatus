@@ -11,8 +11,26 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
+import type { Metadata } from "next";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[1];
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Status Page | OpenStatus",
+  description:'Easily report to your users with our public or private status page.',
+  twitter: {
+    ...twitterMetadata,
+    title: "Status Page | OpenStatus",
+    description:'Easily report to your users with our public or private status page.',
+  },
+  openGraph: {
+    ...ogMetadata,
+    title: "Status Page | OpenStatus",
+    description:'Easily report to your users with our public or private status page.',
+  },
+};
 
 export default function FeaturePage() {
   return (

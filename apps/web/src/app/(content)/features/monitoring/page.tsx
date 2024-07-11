@@ -14,11 +14,30 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
+import type { Metadata } from "next";
+import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
   (unrelated) => unrelated.slug === "ci-cd-features-block"
 );
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "API & Website Monitoring | OpenStatus",
+  description:'Get insights of the latency of your API and website from all over the world.',
+  twitter: {
+    ...twitterMetadata,
+    title: "API & Website Monitoring | OpenStatus",
+    description:'Get insights of the latency of your API and website from all over the world.',
+  },
+  openGraph: {
+    ...ogMetadata,
+    title: "API & Website Monitoring | OpenStatus",
+    description:'Get insights of the latency of your API and website from all over the world.',
+  },
+};
+
 
 export default function FeaturePage() {
   return (
