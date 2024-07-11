@@ -4,7 +4,7 @@ test("should fail if slow", async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-openstatus-key": process.env.OPENSTATUS_API_KEY || "",
+      "x-openstatus-key": process.env.OPENSTATUS_API_KEY,
     },
     body: JSON.stringify({
       url: "https://github-action-rollback.thibaultleouay.workers.dev/",
