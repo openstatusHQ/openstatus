@@ -49,7 +49,7 @@ export default function FeaturePage() {
           code ? (
             <Mdx
               code={code.body.code}
-              className="max-w-none prose-pre:my-0 prose-pre:overflow-hidden"
+              className="max-w-none prose-pre:overflow-hidden"
             />
           ) : (
             <p>Code not found</p>
