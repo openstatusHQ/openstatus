@@ -15,9 +15,9 @@ export async function StatusCheck({
   incidents,
   maintenances,
 }: {
-  statusReports: StatusReport[];
-  incidents: Incident[];
-  maintenances: Maintenance[];
+  statusReports?: StatusReport[];
+  incidents?: Incident[];
+  maintenances?: Maintenance[];
 }) {
   const tracker = new Tracker({ statusReports, incidents, maintenances });
   const className = tracker.currentClassName;

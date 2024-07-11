@@ -37,3 +37,4 @@ export * from "./components/toggle";
 export * from "./components/collabsible";
 export * from "./components/sonner";
 export * from "./components/sortable";
+export * from "./components/navigation-menu";

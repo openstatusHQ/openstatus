@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { dataFormatter, regionFormatter } from "./utils";
 
 interface ChartProps {
-  data: { timestamp: string; [key: string]: string }[];
+  data: { timestamp: string; [key: string]: string | number }[];
   regions: string[];
 }
 

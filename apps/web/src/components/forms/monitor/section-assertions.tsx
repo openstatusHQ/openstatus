@@ -70,10 +70,11 @@ export function SectionAssertions({ form }: Props) {
           name="degradedAfter"
           render={({ field }) => (
             <FormItem className="col-span-6 sm:col-span-3">
-              <FormLabel>Degraded</FormLabel>
+              <FormLabel>
+                Degraded <span className="font-normal">(in ms.)</span>
+              </FormLabel>
               <FormControl>
                 <Input
-                  className="bg-muted"
                   type="number"
                   min={0}
                   max={60000}
@@ -84,8 +85,7 @@ export function SectionAssertions({ form }: Props) {
                 />
               </FormControl>
               <FormDescription>
-                In milliseconds, the time after which the endpoint is considered
-                degraded.
+                Time after which the endpoint is considered degraded.
               </FormDescription>
             </FormItem>
           )}
@@ -95,10 +95,11 @@ export function SectionAssertions({ form }: Props) {
           name="timeout"
           render={({ field }) => (
             <FormItem className="col-span-6 sm:col-span-3">
-              <FormLabel>Timeout</FormLabel>
+              <FormLabel>
+                Timeout <span className="font-normal">(in ms.)</span>
+              </FormLabel>
               <FormControl>
                 <Input
-                  className="bg-muted"
                   type="number"
                   placeholder="45000"
                   min={0}
@@ -107,8 +108,7 @@ export function SectionAssertions({ form }: Props) {
                 />
               </FormControl>
               <FormDescription>
-                In milliseconds, the maximum time allowed for the request to
-                complete.
+                Max. time allowed for request to complete.
               </FormDescription>
 
               {/* <FormMessage /> */}
@@ -293,7 +293,7 @@ export function SectionAssertions({ form }: Props) {
             </div>
           </div>
         ))}
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-4">
           <Button
             variant="outline"
             type="button"

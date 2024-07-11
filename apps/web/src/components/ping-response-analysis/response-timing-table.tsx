@@ -46,12 +46,12 @@ export function ResponseTimingTable({
           return (
             <TableRow key={key}>
               <TableCell>
-                <div className="flex w-[72px] items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <p className="text-muted-foreground">{short}</p>
                   {!hideInfo ? (
                     <Popover>
                       <PopoverTrigger className="text-muted-foreground data-[state=open]:text-foreground hover:text-foreground">
-                        <Info className="h-4 w-4" />
+                        <Info className="mr-2 h-4 w-4" />
                       </PopoverTrigger>
                       <PopoverContent>
                         <p className="font-medium">{long}</p>

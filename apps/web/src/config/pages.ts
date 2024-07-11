@@ -207,7 +207,29 @@ export const pagesConfig = [
   },
 ] as const satisfies readonly Page[];
 
-export const marketingPagesConfig = [
+type MarketingPageType = Page & { subtitle: string };
+
+export const marketingProductPagesConfig = [
+  {
+    subtitle: "Get insights of the latency of your API and website from all over the world.",
+    href: "/features/monitoring",
+    title: "Monitoring",
+    description:
+      "Monitor your API and website globablly.",
+    segment: "features",
+    icon: "activity",
+  },
+  {
+    subtitle: "Easily report to your users with our public or private status page.",
+    href: "/features/status-page",
+    title: "Status Page",
+    description: "Create beautiful status pages within seconds.",
+    segment: "features",
+    icon: "panel-top",
+  },
+] as const satisfies MarketingPageType[];
+
+export const marketingResourcePagesConfig = [
   {
     href: "/blog",
     title: "Blog",
@@ -216,18 +238,44 @@ export const marketingPagesConfig = [
     icon: "book",
   },
   {
+    href: "/changelog",
+    title: "Changelog",
+    description: "All the latest features, fixes and work to OpenStatus.",
+    segment: "changelog",
+    icon: "newspaper",
+  },
+  {
+    href: "/play/checker",
+    title: "Speed Checker",
+    description: "Check your endpoints latency right away.",
+    segment: "checker",
+    icon: "gauge",
+  },
+  {
     href: "/play",
     title: "Playground",
     description: "All the latest tools build by OpenStatus.",
     segment: "play",
     icon: "toy-brick",
   },
+] as const satisfies Page[];
+
+export const marketingPagesConfig = [
   {
-    href: "/changelog",
-    title: "Changelog",
-    description: "All the latest features, fixes and work to OpenStatus.",
-    segment: "changelog",
-    icon: "newspaper",
+    href: "/product",
+    title: "Product",
+    description: "All product features for OpenStatus",
+    segment: "",
+    icon: "package",
+    children: marketingProductPagesConfig,
+  },
+  {
+    href: "/resources",
+    description: "All resources for OpenStatus",
+    title: "Resources",
+    segment: "",
+    icon: "library",
+    children: marketingResourcePagesConfig,
   },
   {
     href: "/pricing",
@@ -243,11 +291,11 @@ export const marketingPagesConfig = [
     segment: "docs",
     icon: "book",
   },
-] as const satisfies readonly Page[];
+] satisfies Page[];
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig,
+  currentPage: readonly Page[] = pagesConfig
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);

@@ -16,8 +16,6 @@ import { cn } from "@/lib/utils";
 import { StatusBadge } from "../status-update/status-badge";
 import { ProcessMessage } from "./process-message";
 import { DateTimeTooltip } from "./datetime-tooltip";
-import { format } from "date-fns";
-import { formatInTimeZone } from "date-fns-tz";
 
 function StatusReport({
   report,
@@ -42,16 +40,18 @@ function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
   return (
     <div className="flex items-center gap-2">
       <h3 className="font-semibold text-xl">{report.title}</h3>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-muted-foreground/50 group-hover:text-foreground"
-        asChild
-      >
-        <Link href={setPrefixUrl(`/incidents/${report.id}`, params)}>
-          <ChevronRight className="h-4 w-4" />
-        </Link>
-      </Button>
+      {report.id ? (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground/50 group-hover:text-foreground"
+          asChild
+        >
+          <Link href={setPrefixUrl(`/incidents/${report.id}`, params)}>
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      ) : null}
     </div>
   );
 }
