@@ -1,17 +1,12 @@
-import { allChangelogs } from "contentlayer/generated";
+import ChangelogClient from "./ChangelogClient";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
-
-import { Button } from "@openstatus/ui";
-
+import { Shell } from "@/components/dashboard/shell";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { Mdx } from "@/components/content/mdx";
-import { Timeline } from "@/components/content/timeline";
-import { Shell } from "@/components/dashboard/shell";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -26,38 +21,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Changelog() {
-  const changelogs = allChangelogs.sort(
-    (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
-
+export default function Changelog() {
   return (
     <Shell>
-      <Timeline
-        title="Changelog"
-        description="All the latest features, fixes and work to OpenStatus."
-        actions={
-          <Button variant="outline" size="icon" asChild>
-            <a href="/changelog/feed.xml" target="_blank" rel="noreferrer">
-              <Rss className="h-4 w-4" />
-              <span className="sr-only">RSS feed</span>
-            </a>
-          </Button>
-        }
-      >
-        {changelogs.map((changelog) => (
-          <Timeline.Article
-            key={changelog.slug}
-            publishedAt={changelog.publishedAt}
-            imageSrc={changelog.image}
-            title={changelog.title}
-            href={`./changelog/${changelog.slug}`}
-          >
-            <Mdx code={changelog.body.code} />
-          </Timeline.Article>
-        ))}
-      </Timeline>
+      <ChangelogClient />
     </Shell>
   );
 }
