@@ -16,7 +16,7 @@ export function BrandName() {
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <Link href="/" className="flex items-center gap-2 font-cal text-lg">
+        <Link href="/" className="flex items-center gap-2 font-cal">
           <Image
             src="/icon.png"
             alt="OpenStatus"
