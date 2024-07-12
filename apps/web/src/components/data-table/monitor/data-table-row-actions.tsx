@@ -28,7 +28,7 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
-import { toastAction } from "@/lib/toast";
+import { toastAction, toast } from "@/lib/toast";
 import { api } from "@/trpc/client";
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -106,7 +106,10 @@ export function DataTableRowActions<TData>({
           ...cloneMonitorData,
         });
 
-        router.push(`./monitors/${createdCloneMonitorData.id}/edit`);
+        router.push(
+          `./monitors/${createdCloneMonitorData.id}/edit?active=true`
+        );
+        toast.success("Monitor cloned!");
       } catch (error) {
         console.log("error", error);
         toastAction("error");
