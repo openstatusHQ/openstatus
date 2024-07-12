@@ -16,14 +16,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const routes = [
     "/",
-    "/play",
-    "/play/checker",
-    "/oss-friends",
-    "/pricing",
     "/about",
+    "/app/login",
     "/blog",
     "/changelog",
-    "/app/login",
+    "/features/status-page",
+    "/features/monitoring",
+    "/play",
+    "/play/checker",
+    "/pricing",
+    "/oss-friends",
   ].map((route) => ({
     url: addPathToBaseURL(route),
     lastModified: new Date(),
