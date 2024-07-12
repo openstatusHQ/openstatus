@@ -5,6 +5,7 @@ import { api } from "@/trpc/server";
 
 const searchParamsSchema = z.object({
   section: z.string().optional().default("request"),
+  active: z.string().optional(),
 });
 
 export default async function EditPage({
@@ -30,6 +31,8 @@ export default async function EditPage({
 
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
+  const active =
+    search.success && search?.data?.active === "true" ? true : monitor.active;
 
   return (
     <MonitorForm
@@ -49,6 +52,7 @@ export default async function EditPage({
             tag.monitor.map(({ monitorId }) => monitorId).includes(id)
           )
           .map(({ id }) => id),
+        active,
       }}
       plan={workspace?.plan}
       notifications={notifications}
