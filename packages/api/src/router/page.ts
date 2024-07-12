@@ -277,7 +277,7 @@ export const pageRouter = createTRPCRouter({
       const statusReports =
         statusReportIds.length > 0
           ? await opts.ctx.db.query.statusReport.findMany({
-              where: or(inArray(statusReport.id, statusReportIds)),
+              where: or(inArray(statusReport.id, statusReportIds), eq(statusReport.pageId, result.id)),
               with: {
                 statusReportUpdates: {
                   orderBy: (reports, { desc }) => desc(reports.date),
