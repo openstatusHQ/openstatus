@@ -4,8 +4,6 @@ on:
     paths:
       - "apps/checker/**"
 
-
-
 jobs:
   build:
     runs-on: ubuntu-latest
