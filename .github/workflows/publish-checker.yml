@@ -4,9 +4,7 @@ on:
     paths:
       - "apps/checker/**"
 
-defaults:
- run:
-  working-directory: ./apps/checker
+
 
 jobs:
   build:
@@ -20,7 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: depot/setup-action@v1
-      - uses: depot/build-push-action@v1
+      - name: Build and push
+        uses: depot/build-push-action@v1
         with:
           project: 9cknw183m8
-          context: .
+          context: apps/checker
