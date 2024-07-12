@@ -28,6 +28,6 @@ jobs:
         with:
           project: 9cknw183m8
           context: apps/checker
-          tags: openstatus/checker:latest
+          tags: openstatushq/checker:latest
           push: true
 
