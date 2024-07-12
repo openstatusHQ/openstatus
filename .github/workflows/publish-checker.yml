@@ -1,10 +1,14 @@
 name: Publish Checker
 on:
   push:
-
+    branches:
+      - main
+    paths:
+      - "apps/checker/**"
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: checker
+
 jobs:
   build:
     runs-on: ubuntu-latest
