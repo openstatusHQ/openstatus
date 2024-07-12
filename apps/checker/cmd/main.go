@@ -54,10 +54,11 @@ func main() {
 	}()
 
 	// environment variables.
-	flyRegion := env("FLY_REGION", "local")
+	flyRegion := env("FLY_REGION", env("REGION", "local"))
 	cronSecret := env("CRON_SECRET", "")
 	tinyBirdToken := env("TINYBIRD_TOKEN", "")
 	logLevel := env("LOG_LEVEL", "warn")
+	cloudProvider := env("CLOUD_PROVIDER", "fly")
 
 	logger.Configure(logLevel)
 
@@ -79,12 +80,14 @@ func main() {
 			return
 		}
 
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != flyRegion {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
+		if cloudProvider == "fly" {
+			// if the request has been routed to a wrong region, we forward it to the correct one.
+			region := c.GetHeader("fly-prefer-region")
+			if region != "" && region != flyRegion {
+				c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+				c.String(http.StatusAccepted, "Forwarding request to %s", region)
+				return
+			}
 		}
 
 		var req request.CheckerRequest
@@ -275,10 +278,13 @@ func main() {
 			return
 		}
 
-		if region != flyRegion {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
+		if cloudProvider == "fly" {
+
+			if region != flyRegion {
+				c.Header("fly-replay", fmt.Sprintf("region=%s", region))
+				c.String(http.StatusAccepted, "Forwarding request to %s", region)
+				return
+			}
 		}
 		//  We need a new client for each request to avoid connection reuse.
 		requestClient := &http.Client{
