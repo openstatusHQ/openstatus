@@ -47,6 +47,7 @@ interface Props {
   tags?: MonitorTag[];
   pages?: Page[];
   nextUrl?: string;
+  withTestButton?: boolean;
 }
 
 const ABORT_TIMEOUT = 7_000; // in ms
@@ -59,6 +60,7 @@ export function MonitorForm({
   pages,
   tags,
   nextUrl,
+  withTestButton = true,
 }: Props) {
   const _assertions = defaultValues?.assertions
     ? assertions.deserialize(defaultValues?.assertions).map((a) => a.schema)
@@ -310,7 +312,9 @@ export function MonitorForm({
             ) : null}
           </Tabs>
           <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
-            <RequestTestButton {...{ form, pingEndpoint }} />
+            {withTestButton ? (
+              <RequestTestButton {...{ form, pingEndpoint }} />
+            ) : null}
             <SaveButton
               isPending={isPending}
               isDirty={form.formState.isDirty}

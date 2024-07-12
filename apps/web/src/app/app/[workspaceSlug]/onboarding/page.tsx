@@ -38,6 +38,8 @@ export default async function Onboarding({
             <MonitorForm
               notifications={allNotifications}
               defaultSection="request"
+              // FIXME: we are getting an https://react.dev/errors/482 error here!
+              withTestButton={false}
             />
           </div>
           <div className="hidden h-full md:col-span-1 md:block">
