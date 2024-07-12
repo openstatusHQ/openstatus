@@ -39,9 +39,9 @@ export default function Pre({ children, ...props }: PreProps) {
         onClick={onClick}
       >
         {!copied ? (
-          <Clipboard className="h-5 w-5 text-black" />
+          <Clipboard className="h-5 w-5" />
         ) : (
-          <ClipboardCopy className="h-5 w-5 text-brand-900" />
+          <ClipboardCopy className="h-5 w-5" />
         )}
       </Button>
       <pre ref={ref} {...props}>
