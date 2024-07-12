@@ -5,7 +5,10 @@ import { api } from "@/trpc/server";
 
 const searchParamsSchema = z.object({
   section: z.string().optional().default("request"),
-  active: z.string().optional(),
+  active: z
+    .enum(["false", "true"])
+    .transform((val) => val === "true")
+    .optional(),
 });
 
 export default async function EditPage({
@@ -31,9 +34,7 @@ export default async function EditPage({
 
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
-  const active =
-    search.success && search?.data?.active === "true" ? true : monitor.active;
-
+  const active = (search.success && search?.data?.active) || monitor.active;
   return (
     <MonitorForm
       defaultSection={search.success ? search.data.section : undefined}
