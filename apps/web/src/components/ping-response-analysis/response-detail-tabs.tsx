@@ -11,7 +11,7 @@ import { ResponseHeaderTable } from "./response-header-table";
 import { ResponseTimingTable } from "./response-timing-table";
 import type { Timing } from "./utils";
 
-export async function ResponseDetailTabs({
+export function ResponseDetailTabs({
   timing,
   headers,
   status,

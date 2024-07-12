@@ -33,13 +33,11 @@ export default async function Onboarding({
             </Button>
           }
         />
-        <div className="grid h-full w-full gap-6 md:grid-cols-3 md:gap-8">
-          <div className="md:col-span-2">
+        <div className="flex flex-1 flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
+          <div className="flex flex-col md:col-span-2">
             <MonitorForm
               notifications={allNotifications}
               defaultSection="request"
-              // FIXME: we are getting an https://react.dev/errors/482 error here!
-              withTestButton={false}
             />
           </div>
           <div className="hidden h-full md:col-span-1 md:block">
@@ -62,8 +60,8 @@ export default async function Onboarding({
             </Button>
           }
         />
-        <div className="grid h-full w-full gap-6 md:grid-cols-3 md:gap-8">
-          <div className="md:col-span-2">
+        <div className="flex flex-1 flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
+          <div className="flex flex-col md:col-span-2">
             <StatusPageForm
               {...{ workspaceSlug, allMonitors }}
               nextUrl={`/app/${workspaceSlug}/status-pages`}

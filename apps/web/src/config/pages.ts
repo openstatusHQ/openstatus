@@ -2,6 +2,7 @@ import type { ValidIcon } from "@/components/icons";
 
 export type Page = {
   title: string;
+  subtitle?: string;
   description: string;
   href: string;
   icon: ValidIcon;
@@ -207,22 +208,23 @@ export const pagesConfig = [
   },
 ] as const satisfies readonly Page[];
 
-type MarketingPageType = Page & { subtitle: string };
+type MarketingPageType = Page;
 
 export const marketingProductPagesConfig = [
   {
-    subtitle: "Get insights of the latency of your API and website from all over the world.",
     href: "/features/monitoring",
     title: "Monitoring",
-    description:
-      "Monitor your API and website globablly.",
+    subtitle:
+      "Get insights of the latency of your API and website from all over the world.",
+    description: "Monitor your API and website globally.",
     segment: "features",
     icon: "activity",
   },
   {
-    subtitle: "Easily report to your users with our public or private status page.",
     href: "/features/status-page",
     title: "Status Page",
+    subtitle:
+      "Easily report to your users with our public or private status page.",
     description: "Create beautiful status pages within seconds.",
     segment: "features",
     icon: "panel-top",
@@ -295,7 +297,7 @@ export const marketingPagesConfig = [
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig
+  currentPage: readonly Page[] = pagesConfig,
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);
