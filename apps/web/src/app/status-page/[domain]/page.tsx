@@ -9,6 +9,7 @@ import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
+import { EmptyState } from "@/components/dashboard/empty-state";
 
 type Props = {
   params: { domain: string };
@@ -46,26 +47,36 @@ export default async function Page({ params }: Props) {
           ))}
         </div>
       ) : null}
-      <MonitorList
-        monitors={page.monitors}
-        statusReports={page.statusReports}
-        incidents={page.incidents}
-        maintenances={page.maintenances}
-      />
+      {page.monitors.length ? (
+        <MonitorList
+          monitors={page.monitors}
+          statusReports={page.statusReports}
+          incidents={page.incidents}
+          maintenances={page.maintenances}
+        />
+      ) : (
+        <EmptyState
+          icon="tally-4"
+          title="No monitors"
+          description="The status page has no connected monitors."
+        />
+      )}
       <Separator />
       <div className="grid gap-6">
-        <div>
-          <h2 className="font-semibold text-xl">Last updates</h2>
-          <p className="text-muted-foreground text-sm">
-            Reports of the last 7 days or incidents that have not been resolved
-            yet.
-          </p>
-        </div>
-        <StatusReportList
-          statusReports={page.statusReports}
-          monitors={page.monitors}
-          filter={{ date: subDays(Date.now(), 7), open: true }}
-        />
+        <h2 className="font-semibold text-xl">Last updates</h2>
+        {page.statusReports.length ? (
+          <StatusReportList
+            statusReports={page.statusReports}
+            monitors={page.monitors}
+            filter={{ date: subDays(Date.now(), 7), open: true }}
+          />
+        ) : (
+          <EmptyState
+            icon="siren"
+            title="No incidents"
+            description="Til this date, no incidents have been noted."
+          />
+        )}
       </div>
     </div>
   );

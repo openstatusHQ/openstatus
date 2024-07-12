@@ -12,6 +12,7 @@ import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
 import { quantiles } from "@/lib/monitor/utils";
 import { api } from "@/trpc/server";
+import { EmptyState } from "@/components/dashboard/empty-state";
 
 // Add loading page
 
@@ -111,9 +112,11 @@ export default async function Page({
           </ul>
         </div>
       ) : (
-        <p className="text-center font-light text-muted-foreground text-sm">
-          No public monitor.
-        </p>
+        <EmptyState
+          icon="activity"
+          title="No public monitors"
+          description="No public monitors have been added to this page."
+        />
       )}
     </div>
   );

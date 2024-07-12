@@ -36,7 +36,6 @@ export default async function StatusPageLayout({ children, params }: Props) {
       label: "Maintenances",
       segment: "maintenances",
       href: setPrefixUrl("/maintenances", params),
-      disabled: page.maintenances.length === 0,
     },
     {
       label: "Incidents",
@@ -47,8 +46,6 @@ export default async function StatusPageLayout({ children, params }: Props) {
       label: "Monitors",
       segment: "monitors",
       href: setPrefixUrl("/monitors", params),
-      disabled:
-        page.monitors.filter((monitor) => Boolean(monitor.public)).length === 0,
     },
   ];
 

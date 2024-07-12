@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/dashboard/header";
 import { MaintenanceList } from "@/components/status-page/maintenance-list";
 import { api } from "@/trpc/server";
+import { EmptyState } from "@/components/dashboard/empty-state";
 
 type Props = {
   params: { domain: string };
@@ -22,10 +23,18 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      <MaintenanceList
-        maintenances={page.maintenances}
-        monitors={page.monitors}
-      />
+      {page.maintenances.length === 0 ? (
+        <EmptyState
+          icon="hammer"
+          title="No maintenances"
+          description="Til this date, no maintenances have been noted."
+        />
+      ) : (
+        <MaintenanceList
+          maintenances={page.maintenances}
+          monitors={page.monitors}
+        />
+      )}
     </div>
   );
 }
