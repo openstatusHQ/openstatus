@@ -100,7 +100,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: "/app/login",
-    // newUser: "/app/onboarding", // TODO: rethink this as we still have the `slug` to use
+    newUser: "/app/onboarding",
   },
   // basePath: "/api/auth", // default is `/api/auth`
   // secret: process.env.AUTH_SECRET, // default is `AUTH_SECRET`

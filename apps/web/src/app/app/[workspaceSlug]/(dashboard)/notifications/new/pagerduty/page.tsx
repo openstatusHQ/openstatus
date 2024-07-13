@@ -1,5 +1,5 @@
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
-import { NotificationForm } from "@/components/forms/notification-form";
+import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 import { getLimit } from "@openstatus/plans";
@@ -17,6 +17,7 @@ export default async function PagerDutyPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const workspace = await api.workspace.getWorkspace.query();
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
   const params = searchParamsSchema.parse(searchParams);
 
   if (!params.config) {
@@ -39,6 +40,7 @@ export default async function PagerDutyPage({
         nextUrl="../"
         provider="pagerduty"
         callbackData={params.config}
+        monitors={monitors}
       />
     </>
   );

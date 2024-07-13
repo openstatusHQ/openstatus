@@ -14,13 +14,15 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast } from "@/lib/toast";
+import { wait } from "@/lib/utils";
 import { handleSubscribe } from "./actions";
 
 interface Props {
   slug: string;
+  isDemo?: boolean;
 }
 
-export function SubscribeButton({ slug }: Props) {
+export function SubscribeButton({ slug, isDemo = false }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -42,16 +44,23 @@ export function SubscribeButton({ slug }: Props) {
           <form
             className="grid gap-2"
             action={async (formData) => {
-              const res = await handleSubscribe(formData);
-              if (res?.error) {
-                toast.error("Something went wrong", {
-                  description: res.error,
+              if (!isDemo) {
+                const res = await handleSubscribe(formData);
+                if (res?.error) {
+                  toast.error("Something went wrong", {
+                    description: res.error,
+                  });
+                  return;
+                }
+                toast.message("Success", {
+                  description: "Please confirm your email.",
                 });
-                return;
+              } else {
+                await wait(1000);
+                toast.message("Success (Demo)", {
+                  description: "Please confirm your email (not).",
+                });
               }
-              toast.message("Success", {
-                description: "Please confirm your email.",
-              });
             }}
           >
             <Label htmlFor="email">Email</Label>

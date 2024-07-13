@@ -21,7 +21,7 @@ export function MarketingFooter({ className }: Props) {
           <div className="col-span-2 flex flex-col gap-3">
             <div>
               <BrandName />
-              <p className="mt-2 font-light text-muted-foreground text-sm">
+              <p className="mt-2 max-w-md font-light text-muted-foreground text-sm">
                 We are on a mission to provide a reliable, easy and fast way to
                 monitor the performance of your APIs and websites.
                 <br />

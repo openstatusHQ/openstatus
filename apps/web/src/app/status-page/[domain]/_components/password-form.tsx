@@ -22,6 +22,7 @@ import {
 import { LoadingAnimation } from "@/components/loading-animation";
 import { useCookieState } from "@/hooks/use-cookie-state";
 import { toast, toastAction } from "@/lib/toast";
+import { wait } from "@/lib/utils";
 import { createProtectedCookieKey } from "../utils";
 import { handleValidatePassword } from "./actions";
 
@@ -30,7 +31,7 @@ import { handleValidatePassword } from "./actions";
 // in the `layout.tsx` because we cannot access the search params there
 
 const schema = z.object({
-  password: z.string(),
+  password: z.string().min(1),
 });
 
 type Schema = z.infer<typeof schema>;
@@ -69,6 +70,12 @@ export function PasswordForm({ slug }: PasswordFormProps) {
         formData.append("password", data.password);
         formData.append("slug", slug);
 
+        // REMINDER: used for the demo on features/status-page
+        if (slug === "") {
+          await wait(500);
+          return;
+        }
+
         const res = await handleValidatePassword(formData);
 
         if (res?.error || res.data === undefined) {
@@ -101,7 +108,7 @@ export function PasswordForm({ slug }: PasswordFormProps) {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <InputWithAddons
-                  placeholder="top-secret"
+                  placeholder="open-source"
                   type={inputType}
                   disabled={loading}
                   trailing={
@@ -109,7 +116,7 @@ export function PasswordForm({ slug }: PasswordFormProps) {
                     <button
                       onClick={() =>
                         setInputType((type) =>
-                          type === "password" ? "text" : "password",
+                          type === "password" ? "text" : "password"
                         )
                       }
                     >

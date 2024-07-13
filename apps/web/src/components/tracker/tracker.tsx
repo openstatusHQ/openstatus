@@ -77,7 +77,7 @@ export function Tracker({
   const isMissing = tracker.isDataMissing;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex w-full flex-col gap-1.5">
       <div className="flex justify-between text-sm">
         <div className="flex items-center gap-2">
           <p className="line-clamp-1 font-semibold text-foreground">{name}</p>

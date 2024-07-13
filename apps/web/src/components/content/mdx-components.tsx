@@ -23,6 +23,7 @@ import {
 
 import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
 import { MetricsCard } from "../monitor-dashboard/metrics-card";
+import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
 
@@ -88,4 +89,5 @@ export const components = {
   td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
     <TableCell {...props} />
   ),
+  pre: (props: HTMLAttributes<HTMLPreElement>) => <Pre {...props} />,
 };

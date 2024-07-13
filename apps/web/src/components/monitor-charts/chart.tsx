@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { dataFormatter, regionFormatter } from "./utils";
 
 interface ChartProps {
-  data: { timestamp: string; [key: string]: string }[];
+  data: { timestamp: string; [key: string]: string | number }[];
   regions: string[];
 }
 
@@ -77,7 +77,10 @@ const customTooltip = ({
                 className={cn("flex flex-1 gap-2", !isActive && "opacity-60")}
               >
                 <div
-                  className={`bg- flex w-1 flex-col${category.color}-500 rounded`}
+                  className={cn(
+                    "flex w-1 flex-col rounded",
+                    `bg-${category.color}-500`
+                  )}
                 />
                 <div className="flex w-full justify-between gap-2">
                   <p className="shrink-0 text-tremor-content dark:text-dark-tremor-content">

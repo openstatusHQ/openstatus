@@ -1,3 +1,5 @@
+"use client";
+
 import { Send } from "lucide-react";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";

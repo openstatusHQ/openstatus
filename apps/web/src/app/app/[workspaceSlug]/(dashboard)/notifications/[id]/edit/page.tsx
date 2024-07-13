@@ -1,4 +1,4 @@
-import { NotificationForm } from "@/components/forms/notification-form";
+import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 
 export default async function EditPage({
@@ -7,6 +7,7 @@ export default async function EditPage({
   params: { workspaceSlug: string; id: string };
 }) {
   const workspace = await api.workspace.getWorkspace.query();
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
 
   const notification = await api.notification.getNotificationById.query({
     id: Number(params.id),
@@ -14,7 +15,11 @@ export default async function EditPage({
 
   return (
     <NotificationForm
-      defaultValues={notification}
+      defaultValues={{
+        ...notification,
+        monitors: notification.monitor.map(({ monitor }) => monitor.id),
+      }}
+      monitors={monitors}
       workspacePlan={workspace.plan}
       provider={notification.provider}
     />
