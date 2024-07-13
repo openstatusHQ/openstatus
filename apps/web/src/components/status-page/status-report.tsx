@@ -60,7 +60,6 @@ function StatusReportHeader({
         </ul>
       </div>
       <div>
-        {/* actions */}
         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
       </div>
     </div>

@@ -32,26 +32,6 @@ export const StatusReportList = ({
   }
 
   // TODO: group reports by day!
-  // function groupReportsByDay(reports: StatusReportWithUpdates[]) {
-  //   const grouped = reports.reduce(
-  //     (acc, report) => {
-  //       const firstUpdate = report.statusReportUpdates[0]; // make sure we get the correct order from backend query!
-  //       const timestamp = new Date(firstUpdate.date.toDateString()).getTime();
-
-  //       if (!acc[timestamp]) {
-  //         acc[timestamp] = [];
-  //       }
-
-  //       acc[timestamp].push(report);
-  //       return acc;
-  //     },
-  //     {} as Record<number, StatusReportWithUpdates[]>
-  //   );
-
-  //   return grouped;
-  // }
-
-  // TODO: group reports by day!
   function groupReportsByDay(reports: StatusReportWithUpdates[]) {
     const grouped = reports.reduce(
       (acc, report) => {
