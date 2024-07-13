@@ -14,6 +14,7 @@ import type {
   Notification,
   Page,
   WorkspacePlan,
+  Limits,
 } from "@openstatus/db/src/schema";
 import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
@@ -41,8 +42,9 @@ import { SectionStatusPage } from "./section-status-page";
 
 interface Props {
   defaultSection?: string;
+  limits: Limits;
+  plan: WorkspacePlan;
   defaultValues?: InsertMonitor;
-  plan?: WorkspacePlan;
   notifications?: Notification[];
   tags?: MonitorTag[];
   pages?: Page[];
@@ -55,11 +57,12 @@ const ABORT_TIMEOUT = 7_000; // in ms
 export function MonitorForm({
   defaultSection,
   defaultValues,
-  plan = "free",
   notifications,
   pages,
   tags,
   nextUrl,
+  limits,
+  plan,
   withTestButton = true,
 }: Props) {
   const _assertions = defaultValues?.assertions
@@ -253,7 +256,7 @@ export function MonitorForm({
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           className="flex w-full flex-col gap-6"
         >
-          <General {...{ form, plan, tags }} />
+          <General {...{ form, tags }} />
           <Tabs
             defaultValue={defaultSection}
             className="w-full"
@@ -291,19 +294,19 @@ export function MonitorForm({
               ) : null}
             </TabsList>
             <TabsContent value="request">
-              <SectionRequests {...{ form, plan, pingEndpoint }} />
+              <SectionRequests {...{ form, pingEndpoint }} />
             </TabsContent>
             <TabsContent value="assertions">
               <SectionAssertions {...{ form }} />
             </TabsContent>
             <TabsContent value="scheduling">
-              <SectionScheduling {...{ form, plan }} />
+              <SectionScheduling {...{ form, limits, plan }} />
             </TabsContent>
             <TabsContent value="notifications">
-              <SectionNotifications {...{ form, plan, notifications }} />
+              <SectionNotifications {...{ form, notifications }} />
             </TabsContent>
             <TabsContent value="status-page">
-              <SectionStatusPage {...{ form, plan, pages }} />
+              <SectionStatusPage {...{ form, pages }} />
             </TabsContent>
             {defaultValues?.id ? (
               <TabsContent value="danger">

@@ -2,7 +2,11 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
-import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
+import type {
+  InsertMonitor,
+  Limits,
+  WorkspacePlan,
+} from "@openstatus/db/src/schema";
 import {
   flyRegions,
   monitorPeriodicitySchema,
@@ -38,13 +42,13 @@ const cronJobs = [
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
+  limits: Limits;
   plan: WorkspacePlan;
 }
 
-export function SectionScheduling({ form, plan }: Props) {
-  const periodicityLimit = getLimit(plan, "periodicity");
-  const regionsLimit = getLimit(plan, "regions");
-  console.log(form.getValues());
+export function SectionScheduling({ form, limits, plan }: Props) {
+  const periodicityLimit = limits.periodicity;
+  const regionsLimit = limits.regions;
   return (
     <div className="grid w-full gap-4">
       <SectionHeader

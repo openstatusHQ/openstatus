@@ -11,7 +11,6 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
 
 import { SchemaError } from "@openstatus/error";
 import { trackNewNotification } from "../analytics";
@@ -24,10 +23,8 @@ export const notificationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { monitors, ...props } = opts.input;
 
-      const notificationLimit = getLimit(
-        opts.ctx.workspace.plan,
-        "notification-channels",
-      );
+      const notificationLimit =
+        opts.ctx.workspace.limits["notification-channels"];
 
       const notificationNumber = (
         await opts.ctx.db.query.notification.findMany({
@@ -97,8 +94,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(notification.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .returning()
         .get();
@@ -109,7 +106,7 @@ export const notificationRouter = createTRPCRouter({
         const allMonitors = await opts.ctx.db.query.monitor.findMany({
           where: and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            inArray(monitor.id, monitors),
+            inArray(monitor.id, monitors)
           ),
         });
 
@@ -125,7 +122,7 @@ export const notificationRouter = createTRPCRouter({
         .select()
         .from(notificationsToMonitors)
         .where(
-          eq(notificationsToMonitors.notificationId, currentNotification.id),
+          eq(notificationsToMonitors.notificationId, currentNotification.id)
         )
         .all();
 
@@ -139,11 +136,8 @@ export const notificationRouter = createTRPCRouter({
           .where(
             and(
               inArray(notificationsToMonitors.monitorId, removedMonitors),
-              eq(
-                notificationsToMonitors.notificationId,
-                currentNotification.id,
-              ),
-            ),
+              eq(notificationsToMonitors.notificationId, currentNotification.id)
+            )
           );
       }
 
@@ -170,8 +164,8 @@ export const notificationRouter = createTRPCRouter({
         .where(
           and(
             eq(notification.id, opts.input.id),
-            eq(notification.id, opts.input.id),
-          ),
+            eq(notification.id, opts.input.id)
+          )
         )
         .run();
     }),
@@ -183,7 +177,7 @@ export const notificationRouter = createTRPCRouter({
         where: and(
           eq(notification.id, opts.input.id),
           eq(notification.id, opts.input.id),
-          eq(notification.workspaceId, opts.ctx.workspace.id),
+          eq(notification.workspaceId, opts.ctx.workspace.id)
         ),
         // FIXME: plural
         with: { monitor: { with: { monitor: true } } },
@@ -193,7 +187,7 @@ export const notificationRouter = createTRPCRouter({
         monitor: z.array(
           z.object({
             monitor: selectMonitorSchema,
-          }),
+          })
         ),
       });
 
@@ -213,7 +207,7 @@ export const notificationRouter = createTRPCRouter({
       monitor: z.array(
         z.object({
           monitor: selectMonitorSchema,
-        }),
+        })
       ),
     });
 
@@ -221,10 +215,8 @@ export const notificationRouter = createTRPCRouter({
   }),
 
   isNotificationLimitReached: protectedProcedure.query(async (opts) => {
-    const notificationLimit = getLimit(
-      opts.ctx.workspace.plan,
-      "notification-channels",
-    );
+    const notificationLimit =
+      opts.ctx.workspace.limits["notification-channels"];
     const notificationNumbers = (
       await opts.ctx.db.query.notification.findMany({
         where: eq(notification.workspaceId, opts.ctx.workspace.id),

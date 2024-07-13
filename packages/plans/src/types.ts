@@ -6,6 +6,7 @@ import type {
 export type Limits = {
   // monitors
   monitors: number;
+  "synthetic-checks": number;
   periodicity: Partial<MonitorPeriodicity>[];
   "multi-region": boolean;
   "max-regions": number;

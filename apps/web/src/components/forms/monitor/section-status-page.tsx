@@ -22,7 +22,6 @@ import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
   pages?: Page[];
 }
 
@@ -89,8 +88,8 @@ export function SectionStatusPage({ form, pages }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id,
-                                      ),
+                                        (value) => value !== item.id
+                                      )
                                     );
                               }}
                             >

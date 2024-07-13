@@ -17,7 +17,8 @@ export const allPlans: Record<
     description: "For personal projects",
     price: 0,
     limits: {
-      monitors: 3,
+      monitors: 1,
+      "synthetic-checks": 1000,
       periodicity: ["10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 6,
@@ -40,9 +41,10 @@ export const allPlans: Record<
   starter: {
     title: "Starter",
     description: "For small projects",
-    price: 29,
+    price: 30,
     limits: {
-      monitors: 30,
+      monitors: 5,
+      "synthetic-checks": 10000,
       periodicity: ["1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,
@@ -101,9 +103,10 @@ export const allPlans: Record<
   team: {
     title: "Growth",
     description: "For small teams",
-    price: 79,
+    price: 100,
     limits: {
-      monitors: 100,
+      monitors: 15,
+      "synthetic-checks": 50000,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,
@@ -162,9 +165,10 @@ export const allPlans: Record<
   pro: {
     title: "Pro",
     description: "For bigger teams",
-    price: 149,
+    price: 300,
     limits: {
-      monitors: 500,
+      monitors: 50,
+      "synthetic-checks": 150000,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,

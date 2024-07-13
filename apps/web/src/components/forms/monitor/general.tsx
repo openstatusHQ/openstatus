@@ -24,7 +24,6 @@ import { TagsMultiBox } from "./tags-multi-box";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
   tags?: MonitorTag[];
 }
 

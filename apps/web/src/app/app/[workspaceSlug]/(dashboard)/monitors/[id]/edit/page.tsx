@@ -50,10 +50,11 @@ export default async function EditPage({
           )
           .map(({ id }) => id),
       }}
-      plan={workspace?.plan}
+      limits={workspace.limits}
       notifications={notifications}
       tags={tags}
       pages={pages}
+      plan={workspace.plan}
     />
   );
 }
