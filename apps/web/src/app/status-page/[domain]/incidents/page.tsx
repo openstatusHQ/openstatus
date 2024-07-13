@@ -23,18 +23,10 @@ export default async function Page({ params }: Props) {
         description={page.description}
         className="text-left"
       />
-      {page.statusReports.length === 0 ? (
-        <EmptyState
-          icon="siren"
-          title="No incidents"
-          description="Til this date, no incidents have been noted."
-        />
-      ) : (
-        <StatusReportList
-          statusReports={page.statusReports}
-          monitors={page.monitors}
-        />
-      )}
+      <StatusReportList
+        statusReports={page.statusReports}
+        monitors={page.monitors}
+      />
     </div>
   );
 }

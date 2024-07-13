@@ -29,7 +29,7 @@ export default async function Page({ params }: Props) {
   );
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-8">
+    <div className="mx-auto flex w-full flex-col gap-12">
       <Header
         title={page.title}
         description={page.description}
@@ -61,23 +61,11 @@ export default async function Page({ params }: Props) {
           description="The status page has no connected monitors."
         />
       )}
-      <Separator />
-      <div className="grid gap-6">
-        <h2 className="font-semibold text-xl">Last updates</h2>
-        {page.statusReports.length ? (
-          <StatusReportList
-            statusReports={page.statusReports}
-            monitors={page.monitors}
-            filter={{ date: subDays(Date.now(), 7), open: true }}
-          />
-        ) : (
-          <EmptyState
-            icon="siren"
-            title="No incidents"
-            description="Til this date, no incidents have been noted."
-          />
-        )}
-      </div>
+      <StatusReportList
+        statusReports={page.statusReports}
+        monitors={page.monitors}
+        filter={{ date: subDays(Date.now(), 7), open: true }}
+      />
     </div>
   );
 }
