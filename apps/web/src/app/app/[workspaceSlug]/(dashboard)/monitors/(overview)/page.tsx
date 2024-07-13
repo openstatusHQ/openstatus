@@ -99,7 +99,7 @@ export default async function MonitorPage({
         maintenance.monitors.includes(monitor.id)
       );
 
-      return { monitor, metrics: current, data, incidents, maintenances, tags };
+      return { monitor, metrics: current, data, incidents, maintenances, tags, isLimitReached };
     })
   );
 

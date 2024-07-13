@@ -37,8 +37,10 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const { monitor } = z
-    .object({ monitor: selectMonitorSchema })
+  const { monitor,isLimitReached } = z
+    .object({ monitor: selectMonitorSchema,
+      isLimitReached: z.boolean()
+     })
     .parse(row.original);
   const router = useRouter();
   const [alertOpen, setAlertOpen] = React.useState(false);
@@ -136,7 +138,7 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={onClone}>Clone</DropdownMenuItem>
+          <DropdownMenuItem onClick={onClone} disabled={isLimitReached}>Clone</DropdownMenuItem>
           <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
