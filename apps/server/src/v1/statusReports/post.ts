@@ -81,6 +81,24 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       }
     }
 
+
+    if(rest.pageId){
+      const _pages = await db
+      .select()
+      .from(page)
+      .where(
+        and(
+          eq(page.workspaceId, Number(workspaceId)),
+          eq(page.id, rest.pageId)
+        )
+      )
+      .all();
+
+    if (_pages.length !== 1) {
+      throw new HTTPException(400, { message: "Page not found" });
+    }
+    }
+
     const _newStatusReport = await db
       .insert(statusReport)
       .values({
