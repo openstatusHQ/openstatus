@@ -142,6 +142,7 @@ async function main() {
     .values({
       id: 1,
       workspaceId: 1,
+      pageId:1,
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
