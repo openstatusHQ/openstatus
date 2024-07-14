@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
 import { InfoAlertDialog } from "@/components/dashboard/info-alert-dialog";
+import Link from "next/link";
 
 // TODO: make the container min-h-screen and the footer below!
 export default async function AppLayout({
@@ -31,7 +32,20 @@ export default async function AppLayout({
         id="status-report-location-change"
         title="An update on Status Reports"
         expires={365} // 1 year - TODO: delete the block after 30 days
-        description="Each status report is now saved within a Status Page. You can find them by selecting the appropriate page."
+        description={
+          <>
+            Each report is now saved within a{" "}
+            <span className="font-semibold text-foreground">Status Page</span>.
+            Select a page to view all reports for related to it.{" "}
+            <Link
+              href="/changelog/status-report-location-change"
+              className="underline underline-offset-4 hover:text-primary hover:no-underline"
+            >
+              Read changelog
+            </Link>
+            .
+          </>
+        }
         workspaceSlug={workspaceSlug}
       />
     </div>
