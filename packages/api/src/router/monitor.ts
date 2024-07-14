@@ -741,7 +741,7 @@ export const monitorRouter = createTRPCRouter({
 
     return monitorNumbers >= monitorLimit;
   }),
-  getMonitorStatusTagNotificationById: protectedProcedure
+  getMonitorRelationsById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async (opts) => {
       const id = opts.input.id
@@ -767,9 +767,9 @@ export const monitorRouter = createTRPCRouter({
       const parsedTags = tags.map(({monitorTagId})=>monitorTagId)
 
       return {
-        selectedNotification:parsedMonitorNotification,
-        selectedPages:parsedPages,
-        selectedTags:parsedTags
+        notificationIds:parsedMonitorNotification,
+        pageIds:parsedPages,
+        monitorTagIds:parsedTags
       }
     }),
 });
