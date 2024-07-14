@@ -8,8 +8,14 @@ import { columns } from "@/components/data-table/status-report/columns";
 import { DataTable } from "@/components/data-table/status-report/data-table";
 import { api } from "@/trpc/server";
 
-export default async function MonitorPage() {
-  const reports = await api.statusReport.getStatusReportByWorkspace.query();
+export default async function MonitorPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const reports = await api.statusReport.getStatusReportByPageId.query({
+    id: Number.parseInt(params.id),
+  });
 
   if (reports?.length === 0)
     return (

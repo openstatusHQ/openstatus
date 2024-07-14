@@ -14,6 +14,7 @@ export default async function NewPage({
       monitors={monitors}
       nextUrl={"./"}
       defaultSection="update-message"
+      pageId={Number.parseInt(params.id)}
     />
   );
 }

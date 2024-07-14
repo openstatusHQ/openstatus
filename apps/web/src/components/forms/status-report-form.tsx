@@ -52,9 +52,15 @@ interface Props {
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
   nextUrl?: string;
+  pageId: number;
 }
 
-export function StatusReportForm({ defaultValues, monitors, nextUrl }: Props) {
+export function StatusReportForm({
+  defaultValues,
+  monitors,
+  nextUrl,
+  pageId,
+}: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
     defaultValues: defaultValues
@@ -79,13 +85,17 @@ export function StatusReportForm({ defaultValues, monitors, nextUrl }: Props) {
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.statusReport.updateStatusReport.mutate({ ...props });
+          await api.statusReport.updateStatusReport.mutate({
+            pageId,
+            ...props,
+          });
         } else {
           const { message, date, status, ...rest } = props;
           const statusReport = await api.statusReport.createStatusReport.mutate(
             {
               status,
               message,
+              pageId,
               ...rest,
             }
           );

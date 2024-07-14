@@ -12,10 +12,11 @@ import { Header } from "./_components/header";
 export default async function OverviewPage({
   params,
 }: {
-  params: { workspaceSlug: string; reportId: string };
+  params: { workspaceSlug: string; id: string; reportId: string };
 }) {
   const report = await api.statusReport.getStatusReportById.query({
     id: Number.parseInt(params.reportId),
+    pageId: Number.parseInt(params.id),
   });
 
   if (!report) return notFound();

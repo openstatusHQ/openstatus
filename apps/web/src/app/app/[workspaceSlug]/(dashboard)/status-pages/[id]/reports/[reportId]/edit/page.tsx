@@ -8,6 +8,7 @@ export default async function EditPage({
 }) {
   const statusUpdate = await api.statusReport.getStatusReportById.query({
     id: Number.parseInt(params.reportId),
+    pageId: Number.parseInt(params.id),
   });
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
@@ -24,10 +25,10 @@ export default async function EditPage({
           monitors: statusUpdate?.monitorsToStatusReports.map(
             ({ monitorId }) => monitorId
           ),
-          pageId: Number.parseInt(params.id),
           message: "",
         }
       }
+      pageId={Number.parseInt(params.id)}
       defaultSection="connect"
     />
   );
