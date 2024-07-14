@@ -96,17 +96,20 @@ export function DataTableRowActions<TData>({
           id,
         });
 
+        const {selectedNotification,selectedPages,selectedTags} = await api.monitor.getMonitorStatusTagNotificationById.query({id});
+
         const cloneMonitorData = {
           ...selectedMonitordata,
+          tags: selectedTags,
+          notifications:selectedNotification,
+          pages: selectedPages,
           active: false,
           id: undefined,
           updatedAt: undefined,
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData = await api.monitor.create.mutate({
-          ...cloneMonitorData,
-        });
+        const createdCloneMonitorData = await api.monitor.create.mutate(cloneMonitorData);
 
         router.push(
           `./monitors/${createdCloneMonitorData.id}/edit?active=true`

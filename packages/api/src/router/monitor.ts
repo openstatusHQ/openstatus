@@ -741,4 +741,35 @@ export const monitorRouter = createTRPCRouter({
 
     return monitorNumbers >= monitorLimit;
   }),
+  getMonitorStatusTagNotificationById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const id = opts.input.id
+
+
+      const _monitorNotification = opts.ctx.db.query.notificationsToMonitors.findMany({
+        where: eq(notificationsToMonitors.monitorId, id),
+      });
+
+        const _pages =  opts.ctx.db.query.monitorsToPages.findMany({
+          where: eq(monitorsToPages.monitorId, id),
+        });
+
+        const _tags =  opts.ctx.db.query.monitorTagsToMonitors.findMany({
+          where: eq(monitorTagsToMonitors.monitorId, id),
+        });
+
+      const [monitorNotification, pages,tags] = await Promise.all([_monitorNotification,_pages,_tags])
+
+
+      const parsedMonitorNotification = monitorNotification.map(({notificationId})=>notificationId)
+      const parsedPages = pages.map(val=>val.pageId)
+      const parsedTags = tags.map(({monitorTagId})=>monitorTagId)
+
+      return {
+        selectedNotification:parsedMonitorNotification,
+        selectedPages:parsedPages,
+        selectedTags:parsedTags
+      }
+    }),
 });
