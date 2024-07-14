@@ -11,7 +11,6 @@ import {
   notification,
   notificationsToMonitors,
   page,
-  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
   user,
@@ -143,6 +142,7 @@ async function main() {
     .values({
       id: 1,
       workspaceId: 1,
+      pageId:1,
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
@@ -165,6 +165,7 @@ async function main() {
     .values({
       id: 2,
       workspaceId: 1,
+      pageId:1,
       title: "Test Status Report",
       status: "investigating",
       updatedAt: new Date(),
@@ -190,17 +191,6 @@ async function main() {
     {
       monitorId: 2,
       statusReportId: 2,
-    },
-  ]);
-
-  await db.insert(pagesToStatusReports).values([
-    {
-      pageId: 1,
-      statusReportId: 2,
-    },
-    {
-      pageId: 1,
-      statusReportId: 1,
     },
   ]);
 

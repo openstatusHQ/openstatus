@@ -3,7 +3,7 @@ import { generateSlug } from "random-word-slugs";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, sql } from "@openstatus/db";
+import { and, eq, isNotNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -206,7 +206,12 @@ export const workspaceRouter = createTRPCRouter({
       const monitors = await tx
         .select({ count: sql<number>`count(*)` })
         .from(monitor)
-        .where(eq(monitor.workspaceId, opts.ctx.workspace.id));
+        .where(
+          and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNotNull(monitor.deletedAt),
+          ),
+        );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })
         .from(page)
