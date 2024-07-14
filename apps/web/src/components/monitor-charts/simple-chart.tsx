@@ -4,6 +4,7 @@ import type { CustomTooltipProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 
 import { dataFormatter } from "./utils";
+import { cn } from "@/lib/utils";
 
 export interface SimpleChartProps {
   data: { timestamp: string; [key: string]: string }[];
@@ -48,7 +49,10 @@ const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <div key={idx} className="flex flex-1 gap-2">
               <div
-                className={`bg- flex w-1 flex-col${category.color}-500 rounded`}
+                className={cn(
+                  "flex w-1 flex-col rounded",
+                  `bg-${category.color}-500`
+                )}
               />
               <div className="flex flex-col gap-1">
                 <p className="text-tremor-content dark:text-dark-tremor-content">

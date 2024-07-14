@@ -34,8 +34,7 @@ export const metadata: Metadata = {
 export default async function PlayPage() {
   return (
     <>
-      <BackButton href="/" />
-      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
+      <div className="my-8 grid w-full grid-cols-1 gap-4 md:my-16 md:grid-cols-3 sm:grid-cols-2">
         {playgrounds.map((play, i) => {
           const isFirst = i === 0;
           return (

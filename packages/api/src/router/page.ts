@@ -1,7 +1,17 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, gte, inArray, isNull, lte, or, sql } from "@openstatus/db";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+  sql,
+} from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -10,7 +20,6 @@ import {
   monitorsToPages,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
@@ -269,34 +278,21 @@ export const pageRouter = createTRPCRouter({
               .all()
           : [];
 
-      const statusReportsToPagesResult = await opts.ctx.db
-        .select()
-        .from(pagesToStatusReports)
-        .where(eq(pagesToStatusReports.pageId, result.id))
-        .all();
-
       const monitorStatusReportIds = monitorsToStatusReportResult.map(
         ({ statusReportId }) => statusReportId,
       );
 
-      const pageStatusReportIds = statusReportsToPagesResult.map(
-        ({ statusReportId }) => statusReportId,
-      );
-
-      const statusReportIds = Array.from(
-        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
-      );
+      const statusReportIds = Array.from(new Set([...monitorStatusReportIds]));
 
       const statusReports =
         statusReportIds.length > 0
           ? await opts.ctx.db.query.statusReport.findMany({
-              where: or(inArray(statusReport.id, statusReportIds)),
+              where: eq(statusReport.pageId, result.id),
               with: {
                 statusReportUpdates: {
                   orderBy: (reports, { desc }) => desc(reports.date),
                 },
                 monitorsToStatusReports: { with: { monitor: true } },
-                pagesToStatusReports: true,
               },
             })
           : [];

@@ -8,16 +8,8 @@ import type {
   Notification,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
 import {
   Badge,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
   FormControl,
   FormDescription,
   FormField,
@@ -26,7 +18,6 @@ import {
   FormMessage,
 } from "@openstatus/ui";
 
-import { NotificationForm } from "../notification-form";
 import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {

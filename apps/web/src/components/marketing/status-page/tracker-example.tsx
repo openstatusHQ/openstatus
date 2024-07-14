@@ -35,7 +35,7 @@ async function ExampleTracker() {
     },
     {
       revalidate: 600, // 10 minutes
-    },
+    }
   );
 
   if (!data) return null;

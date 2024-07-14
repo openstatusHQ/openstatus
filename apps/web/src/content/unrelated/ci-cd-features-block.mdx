@@ -1,0 +1,18 @@
+```ts
+test("should fail if slow", async () => {
+  const data = await fetch("https://api.openstatus.dev/v1/check", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-openstatus-key": process.env.OPENSTATUS_API_KEY,
+    },
+    body: JSON.stringify({
+      url: "https://openstat.us",
+      method: "GET",
+      regions: ["ams", "iad", "gru"],
+      runCount: 5,
+      aggregated: true,
+    }),
+  });
+});
+```

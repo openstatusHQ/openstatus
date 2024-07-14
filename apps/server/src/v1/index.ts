@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { apiReference } from "@scalar/hono-api-reference";
 
 import type { Limits } from "@openstatus/plans/src/types";
 
@@ -41,6 +42,14 @@ api.doc("/openapi", {
   },
 });
 
+api.get(
+  "/",
+  apiReference({
+    spec: {
+      url: "/v1/openapi",
+    },
+  })
+);
 /**
  * Authentification Middleware
  */

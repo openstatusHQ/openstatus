@@ -38,7 +38,6 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       with: {
         statusReportUpdates: true,
         monitorsToStatusReports: true,
-        pagesToStatusReports: true,
       },
       where: and(
         eq(statusReport.workspaceId, Number(workspaceId)),
@@ -50,11 +49,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    const {
-      statusReportUpdates,
-      monitorsToStatusReports,
-      pagesToStatusReports,
-    } = _statusUpdate;
+    const { statusReportUpdates, monitorsToStatusReports } = _statusUpdate;
 
     // most recent report information
     const { message, date } =
@@ -67,9 +62,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
       monitorIds: monitorsToStatusReports.length
         ? monitorsToStatusReports.map((monitor) => monitor.monitorId)
         : null,
-      pageIds: pagesToStatusReports.length
-        ? pagesToStatusReports.map((page) => page.pageId)
-        : null,
+
       statusReportUpdateIds: statusReportUpdates.map((update) => update.id),
     });
 
