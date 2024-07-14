@@ -1,4 +1,4 @@
-import type { Limits } from "./types";
+import type { Limits } from "./version";
 
 export const pricingTableConfig: Record<
   string,
