@@ -5,13 +5,14 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { Shell } from "@/components/dashboard/shell";
 import { Button } from "@openstatus/ui";
 import { Mdx } from "@/components/content/mdx";
 import { Timeline } from "@/components/content/timeline";
+import { Shell } from "@/components/dashboard/shell";
 import { allChangelogs } from "contentlayer/generated";
-import { Context } from "vm";
-import ListPagination from "../_components/ListPagination";
+import { ListPagination } from "../_components/list-pagination";
+import { Rss } from "lucide-react";
+import { z } from "zod";
 
 
 export const metadata: Metadata = {
@@ -27,8 +28,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ChangelogClient(context: Context) {
-  const currentPage = parseInt(context.searchParams.page) || 1
+const SearchParamsSchema = z.object({
+  page: z.string().optional().transform((val) => parseInt(val || "1", 10)),
+});
+
+export default function ChangelogClient({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined }; }) {
+  const search = SearchParamsSchema.safeParse(searchParams);
+
+  const page = search.data?.page
+  const currentPage = !page ? 1 : page
   const itemsPerPage = 10;
 
   const sortedChangelogs = allChangelogs.sort(
@@ -50,13 +58,12 @@ export default function ChangelogClient(context: Context) {
         actions={
           <Button variant="outline" size="icon" asChild>
             <a href="/changelog/feed.xml" target="_blank" rel="noreferrer">
-              <span className="h-4 w-4">RSS</span>
+              <Rss className="h-4 w-4" />
               <span className="sr-only">RSS feed</span>
             </a>
           </Button>
         }
       >
-        <ListPagination current={currentPage} total={totalPages} />
         {paginatedChangelogs.map((changelog) => (
           <Timeline.Article
             key={changelog.slug}
@@ -68,7 +75,9 @@ export default function ChangelogClient(context: Context) {
             <Mdx code={changelog.body.code} />
           </Timeline.Article>
         ))}
-        <ListPagination current={currentPage} total={totalPages} />
+        {currentPage && totalPages &&
+          <ListPagination current={currentPage} total={totalPages} />
+        }
       </Timeline>
     </Shell>
   );

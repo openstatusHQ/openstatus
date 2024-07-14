@@ -7,10 +7,9 @@ import {
   PaginationNext,
   PaginationPrevious,
   PaginationLink
-} from "@/components/ui/pagination";
+} from "@openstatus/ui";
 
-
-function ListPagination({ current, total }: { current: number, total: number }) {
+export const ListPagination = ({ current, total }: { current: number, total: number }) => {
   return (
     <Pagination>
       <PaginationContent>
@@ -49,4 +48,3 @@ function ListPagination({ current, total }: { current: number, total: number }) 
   )
 }
 
-export default ListPagination

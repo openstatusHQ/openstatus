@@ -86,8 +86,7 @@ export default function ChangelogPage({
   if (!post) {
     notFound();
   }
-
-  console.log('hello world')
+  
   const { next, prev } = getChangelogPagination(params.slug);
 
   return (
