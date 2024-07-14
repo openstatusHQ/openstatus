@@ -87,7 +87,6 @@ export default function ChangelogPage({
     notFound();
   }
 
-  console.log('hello world')
   const { next, prev } = getChangelogPagination(params.slug);
 
   return (
