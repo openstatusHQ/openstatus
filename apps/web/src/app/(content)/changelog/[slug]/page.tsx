@@ -87,6 +87,7 @@ export default function ChangelogPage({
     notFound();
   }
 
+  console.log('hello world')
   const { next, prev } = getChangelogPagination(params.slug);
 
   return (
@@ -95,7 +96,7 @@ export default function ChangelogPage({
       <Shell className="flex flex-col gap-8 md:gap-12 md:py-12 sm:py-8">
         <ChangelogCard post={post} />
         <Separator className="mx-auto max-w-prose" />
-        <Pagination {...{ next, prev }} />
+        <Pagination {...{ prev, next }} />
       </Shell>
     </>
   );

@@ -15,7 +15,7 @@ export function Pagination({
   return (
     <div className="mx-auto flex w-full max-w-prose items-center justify-between">
       <div />
-      {/* {prev ? (
+      {prev ? (
         <div className="w-1/2 flex-1 text-left">
           <Button asChild variant="link">
             <Link href={`/changelog/${prev.slug}`} className="group">
@@ -26,7 +26,7 @@ export function Pagination({
         </div>
       ) : (
         <div />
-      )} */}
+      )}
       {next ? (
         <div className="w-1/2 flex-1 text-right">
           <Button asChild variant="link">
