@@ -28,7 +28,8 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
-import { toastAction, toast } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -37,13 +38,12 @@ interface DataTableRowActionsProps<TData> {
 export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
-  const { monitor,isLimitReached } = z
-    .object({ monitor: selectMonitorSchema,
-      isLimitReached: z.boolean()
-     })
+  const { monitor, isLimitReached } = z
+    .object({ monitor: selectMonitorSchema, isLimitReached: z.boolean() })
     .parse(row.original);
   const router = useRouter();
   const [alertOpen, setAlertOpen] = React.useState(false);
+  const [alertType, setAlertType] = React.useState<"delete" | "clone" | "">("");
   const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
@@ -54,6 +54,7 @@ export function DataTableRowActions<TData>({
         toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
+        setAlertType("");
       } catch {
         toastAction("error");
       }
@@ -96,11 +97,12 @@ export function DataTableRowActions<TData>({
           id,
         });
 
-        const {notificationIds,pageIds,monitorTagIds} = await api.monitor.getMonitorRelationsById.query({id});
+        const { notificationIds, pageIds, monitorTagIds } =
+          await api.monitor.getMonitorRelationsById.query({ id });
 
         const cloneMonitorData = {
           ...selectedMonitorData,
-          name: selectedMonitorData.name + " - copy",
+          name: `${selectedMonitorData.name} - copy`,
           tags: monitorTagIds,
           notifications: notificationIds,
           pages: pageIds,
@@ -110,12 +112,15 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData = await api.monitor.create.mutate(cloneMonitorData);
+        const createdCloneMonitorData =
+          await api.monitor.create.mutate(cloneMonitorData);
 
         router.push(
-          `./monitors/${createdCloneMonitorData.id}/edit?active=true`
+          `./monitors/${createdCloneMonitorData.id}/edit?active=true`,
         );
         toast.success("Monitor cloned!");
+        setAlertOpen(false);
+        setAlertType("");
       } catch (error) {
         console.log("error", error);
         toastAction("error");
@@ -142,11 +147,21 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem onClick={onClone} disabled={isLimitReached}>Clone</DropdownMenuItem>
+          <AlertDialogTrigger asChild>
+            <DropdownMenuItem
+              onClick={() => setAlertType("clone")}
+              disabled={isLimitReached}
+            >
+              Clone
+            </DropdownMenuItem>
+          </AlertDialogTrigger>
           <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
-            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
+            <DropdownMenuItem
+              onClick={() => setAlertType("delete")}
+              className="text-destructive focus:bg-destructive focus:text-background"
+            >
               Delete
             </DropdownMenuItem>
           </AlertDialogTrigger>
@@ -156,8 +171,9 @@ export function DataTableRowActions<TData>({
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the
-            monitor.
+            {alertType === "delete"
+              ? "This action cannot be undone. This will permanently delete the monitor."
+              : "This action cannot be undone. This will clone the monitor."}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -165,12 +181,28 @@ export function DataTableRowActions<TData>({
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
-              onDelete();
+              if (alertType === "delete") onDelete();
+              else if (alertType === "clone") onClone();
             }}
             disabled={isPending}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className={cn({
+              "bg-destructive text-destructive-foreground hover:bg-destructive/90":
+                alertType === "delete",
+              "bg-primary text-primary-foreground hover:bg-primary/90":
+                alertType === "clone",
+            })}
           >
-            {!isPending ? "Delete" : <LoadingAnimation />}
+            {!isPending ? (
+              alertType === "delete" ? (
+                "Delete"
+              ) : alertType === "clone" ? (
+                "Clone"
+              ) : (
+                ""
+              )
+            ) : (
+              <LoadingAnimation />
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
