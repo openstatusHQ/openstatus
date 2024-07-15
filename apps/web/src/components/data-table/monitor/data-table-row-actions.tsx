@@ -100,6 +100,7 @@ export function DataTableRowActions<TData>({
 
         const cloneMonitorData = {
           ...selectedMonitorData,
+          name: selectedMonitorData.name + " - copy",
           tags: monitorTagIds,
           notifications: notificationIds,
           pages: pageIds,
