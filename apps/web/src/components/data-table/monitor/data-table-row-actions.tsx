@@ -92,14 +92,14 @@ export function DataTableRowActions<TData>({
         const id = monitor.id;
         if (!id) return;
 
-        const selectedMonitordata = await api.monitor.getMonitorById.query({
+        const selectedMonitorData = await api.monitor.getMonitorById.query({
           id,
         });
 
         const {notificationIds,pageIds,monitorTagIds} = await api.monitor.getMonitorRelationsById.query({id});
 
         const cloneMonitorData = {
-          ...selectedMonitordata,
+          ...selectedMonitorData,
           tags: monitorTagIds,
           notifications: notificationIds,
           pages: pageIds,
