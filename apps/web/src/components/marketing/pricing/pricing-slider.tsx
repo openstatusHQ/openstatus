@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 import { InputWithAddons, Slider } from "@openstatus/ui";
 import { useMemo, useState } from "react";
 
+const MAX_REGIONS = 35;
+
 const slides = [
   {
     key: "30s",
@@ -52,7 +54,7 @@ export function PricingSlider() {
             <InputWithAddons
               type="number"
               min={0}
-              max={39}
+              max={MAX_REGIONS}
               step={1}
               trailing="regions"
               className="text-right font-mono"
@@ -68,7 +70,7 @@ export function PricingSlider() {
         <div className="mt-2 grid w-full gap-2 sm:col-span-2">
           <Slider
             min={0}
-            max={5}
+            max={slides.length - 1}
             step={1}
             minStepsBetweenThumbs={1}
             value={index}
