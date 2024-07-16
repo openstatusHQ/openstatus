@@ -1,8 +1,5 @@
 import { db, eq, schema } from "@openstatus/db";
-import type {
-  MonitorFlyRegion,
-  MonitorStatus,
-} from "@openstatus/db/src/schema";
+import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
   selectMonitorSchema,
   selectNotificationSchema,
@@ -10,6 +7,7 @@ import {
 
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared/shared";
 
 export const triggerNotifications = async ({
   monitorId,

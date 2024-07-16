@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, asc, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorsToStatusReport,
@@ -81,22 +81,21 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       }
     }
 
-
-    if(rest.pageId){
+    if (rest.pageId) {
       const _pages = await db
-      .select()
-      .from(page)
-      .where(
-        and(
-          eq(page.workspaceId, Number(workspaceId)),
-          eq(page.id, rest.pageId)
+        .select()
+        .from(page)
+        .where(
+          and(
+            eq(page.workspaceId, Number(workspaceId)),
+            eq(page.id, rest.pageId)
+          )
         )
-      )
-      .all();
+        .all();
 
-    if (_pages.length !== 1) {
-      throw new HTTPException(400, { message: "Page not found" });
-    }
+      if (_pages.length !== 1) {
+        throw new HTTPException(400, { message: "Page not found" });
+      }
     }
 
     const _newStatusReport = await db
