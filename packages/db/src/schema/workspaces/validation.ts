@@ -38,7 +38,35 @@ const limitsV1 = z.object({
 });
 
 export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
-  limits: limitsV1,
+  limits: z.string().transform((val) => {
+    const parsed = JSON.parse(val);
+    const result = limitsV1.safeParse(parsed);
+    if (result.error) {
+      // Fallback to default limits
+      return limitsV1.parse({
+        monitors: 1,
+        "synthetic-checks": 1000,
+        periodicity: ["10m", "30m", "1h"],
+        "multi-region": true,
+        "max-regions": 6,
+        "data-retention": "14 days",
+        "status-pages": 1,
+        maintenance: true,
+        "status-subscribers": false,
+        "custom-domain": false,
+        "password-protection": false,
+        "white-label": false,
+        notifications: true,
+        sms: false,
+        pagerduty: false,
+        "notification-channels": 1,
+        members: 1,
+        "audit-log": false,
+        regions: ["ams", "gru", "iad", "jnb", "hkg", "syd"],
+      });
+    }
+    return result.data;
+  }),
   plan: z
     .enum(workspacePlans)
     .nullable()

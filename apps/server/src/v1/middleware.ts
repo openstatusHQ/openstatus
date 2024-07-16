@@ -34,12 +34,11 @@ export async function middleware(
     console.error("Workspace not found");
     throw new HTTPException(401, { message: "Unauthorized" });
   }
-
   const _work = selectWorkspaceSchema.parse(_workspace);
-
   c.set("workspacePlan", getPlanConfig(_workspace.plan));
   c.set("workspaceId", `${result.ownerId}`);
   c.set("limits", _work.limits);
+
   await next();
 }
 
