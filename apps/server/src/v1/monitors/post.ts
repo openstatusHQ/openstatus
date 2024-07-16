@@ -12,6 +12,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";
+import { getLimit } from "@openstatus/plans";
 
 const postRoute = createRoute({
   method: "post",
@@ -44,7 +45,6 @@ const postRoute = createRoute({
 export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
     const limits = c.get("limits");
     const input = c.req.valid("json");
     const count = (
@@ -60,18 +60,18 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .all()
     )[0].count;
 
-    if (count >= limits.monitors) {
+    if (count >= getLimit(limits, "monitors")) {
       throw new HTTPException(403, {
         message: "Upgrade for more monitors",
       });
     }
 
-    if (!limits.periodicity.includes(input.periodicity)) {
+    if (!getLimit(limits, "periodicity").includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
     for (const region of input.regions) {
-      if (!limits.regions.includes(region)) {
+      if (!getLimit(limits, "regions").includes(region)) {
         throw new HTTPException(403, { message: "Upgrade for more region" });
       }
     }

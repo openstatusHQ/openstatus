@@ -9,6 +9,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
+import { getLimit } from "@openstatus/plans";
 
 const postRoute = createRoute({
   method: "post",
@@ -52,14 +53,14 @@ export function registerPostPage(api: typeof pagesApi) {
         .all()
     )[0].count;
 
-    if (count >= limits["status-pages"]) {
+    if (count >= getLimit(limits, "status-pages")) {
       throw new HTTPException(403, {
         message: "Upgrade for more status pages",
       });
     }
 
     if (
-      limits["password-protection"] === false &&
+      getLimit(limits, "password-protection") === false &&
       input?.passwordProtected === true
     ) {
       throw new HTTPException(403, {

@@ -11,7 +11,7 @@ import {
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);
 
-const limitsV1 = z.object({
+export const limitsV1 = z.object({
   version: z.undefined(),
   monitors: z.number(),
   "synthetic-checks": z.number(),
@@ -65,6 +65,7 @@ export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
         regions: ["ams", "gru", "iad", "jnb", "hkg", "syd"],
       });
     }
+
     return result.data;
   }),
   plan: z
