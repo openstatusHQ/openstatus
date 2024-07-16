@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/shared/shared";
 
 import { checkRegion } from "@/components/ping-response-analysis/utils";
 import { payloadSchema } from "../schema";

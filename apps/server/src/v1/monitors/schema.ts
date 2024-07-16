@@ -1,15 +1,15 @@
 import { z } from "@hono/zod-openapi";
 
-import {
-  flyRegions,
-  monitorMethods,
-  monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
+import { monitorMethods } from "@openstatus/db/src/schema";
 import { ZodError } from "zod";
 import {
   numberCompare,
   stringCompare,
 } from "../../../../../packages/assertions/src/v1";
+import {
+  flyRegions,
+  monitorPeriodicitySchema,
+} from "@openstatus/db/src/schema/shared/shared";
 
 const statusAssertion = z
   .object({
@@ -113,7 +113,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.enum(flyRegions)),
+        z.array(z.enum(flyRegions))
       )
       .default([])
       .openapi({
@@ -161,7 +161,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).default([])
       )
       .nullish()
       .openapi({

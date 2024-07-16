@@ -3,7 +3,7 @@ import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { marketingProductPagesConfig } from "@/config/pages";
-import { flyRegions } from "@openstatus/db/src/schema";
+import { flyRegions } from "@openstatus/db/src/schema/shared/shared";
 import type { Region } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 import { allUnrelateds } from "contentlayer/generated";
@@ -15,7 +15,11 @@ import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
 import type { Metadata } from "next";
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/shared-metadata";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
@@ -25,19 +29,21 @@ const code = allUnrelateds.find(
 export const metadata: Metadata = {
   ...defaultMetadata,
   title: "API & Website Monitoring",
-  description:'Get insights of the latency of your API and website from all over the world.',
+  description:
+    "Get insights of the latency of your API and website from all over the world.",
   twitter: {
     ...twitterMetadata,
     title: "API & Website Monitoring",
-    description:'Get insights of the latency of your API and website from all over the world.',
+    description:
+      "Get insights of the latency of your API and website from all over the world.",
   },
   openGraph: {
     ...ogMetadata,
     title: "API & Website Monitoring",
-    description:'Get insights of the latency of your API and website from all over the world.',
+    description:
+      "Get insights of the latency of your API and website from all over the world.",
   },
 };
-
 
 export default function FeaturePage() {
   return (
