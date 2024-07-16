@@ -16,6 +16,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import { isoDate } from "../utils";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
+import { getLimit } from "@openstatus/plans";
 
 const postRoute = createRoute({
   method: "post",
@@ -59,7 +60,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
 
     const { monitorIds, date, ...rest } = input;
 
@@ -131,7 +132,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .returning();
     }
 
-    if (workspacePlan.limits.notifications && _newStatusReport.pageId) {
+    if (getLimit(limits, "status-subscribers") && _newStatusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)

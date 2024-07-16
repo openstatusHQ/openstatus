@@ -2,7 +2,7 @@ import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
 import { db, eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
+import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/plans";
 import type { Variables } from "./index";
 import { HTTPException } from "hono/http-exception";
@@ -35,9 +35,11 @@ export async function middleware(
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
+  const _work = selectWorkspaceSchema.parse(_workspace);
+
   c.set("workspacePlan", getPlanConfig(_workspace.plan));
   c.set("workspaceId", `${result.ownerId}`);
-
+  c.set("limits", _work.limits);
   await next();
 }
 
