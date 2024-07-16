@@ -22,7 +22,7 @@ export default async function ChannelPage({
   const provider = validation.data;
 
   const allowed =
-    provider === "sms" ? getLimit(workspace.plan, provider) : true;
+    provider === "sms" ? getLimit(workspace.limits, provider) : true;
 
   if (!allowed) return <ProFeatureAlert feature="SMS channel notification" />;
 

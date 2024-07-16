@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 import * as z from "zod";
 
-import { flyRegions } from "@openstatus/db/src/schema";
+import { flyRegions } from "@openstatus/db/src/schema/shared/shared";
 import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";

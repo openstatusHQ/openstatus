@@ -42,16 +42,16 @@ const putRoute = createRoute({
 export function registerPutMonitor(api: typeof monitorsApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
+    if (!limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
     for (const region of input.regions) {
-      if (!workspacePlan.limits.regions.includes(region)) {
+      if (!limits.regions.includes(region)) {
         throw new HTTPException(403, { message: "Upgrade for more region" });
       }
     }

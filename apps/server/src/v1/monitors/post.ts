@@ -45,7 +45,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
     const workspacePlan = c.get("workspacePlan");
-
+    const limits = c.get("limits");
     const input = c.req.valid("json");
     const count = (
       await db
@@ -60,18 +60,18 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .all()
     )[0].count;
 
-    if (count >= workspacePlan.limits.monitors) {
+    if (count >= limits.monitors) {
       throw new HTTPException(403, {
         message: "Upgrade for more monitors",
       });
     }
 
-    if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
+    if (!limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
     for (const region of input.regions) {
-      if (!workspacePlan.limits.regions.includes(region)) {
+      if (!limits.regions.includes(region)) {
         throw new HTTPException(403, { message: "Upgrade for more region" });
       }
     }

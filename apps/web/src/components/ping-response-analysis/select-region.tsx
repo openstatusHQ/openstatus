@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
-import { flyRegions } from "@openstatus/db/src/schema";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared/shared";
+import { flyRegions } from "@openstatus/db/src/schema/shared/shared";
 import {
   Label,
   Select,
