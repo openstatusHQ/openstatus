@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { endTime, setMetric, startTime } from "hono/timing";
 
-import { and, db, eq, gte, inArray, isNull, lte } from "@openstatus/db";
+import { and, db, eq, gte, inArray, isNull, lte, ne } from "@openstatus/db";
 import {
   incidentTable,
   maintenance,
@@ -9,7 +9,6 @@ import {
   monitorsToPages,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { Status, Tracker } from "@openstatus/tracker";
@@ -53,14 +52,11 @@ status.get("/:slug", async (c) => {
   } = await getStatusPageData(currentPage.id);
   endTime(c, "database");
 
-  console.log(maintenanceData);
-
-  const statusReports = [
-    ...pageStatusReportData,
-    ...monitorStatusReportData,
-  ].map((item) => {
+  const statusReports = [...monitorStatusReportData].map((item) => {
     return item.status_report;
   });
+
+  statusReports.push(...pageStatusReportData);
 
   const tracker = new Tracker({
     incidents: ongoingIncidents,
@@ -110,18 +106,6 @@ async function getStatusPageData(pageId: number) {
     .where(inArray(monitorsToStatusReport.monitorId, monitorIds))
     .all();
 
-  const pageStatusReportDataQuery = db
-    .select()
-    .from(pagesToStatusReports)
-    .innerJoin(
-      statusReport,
-      and(
-        eq(pagesToStatusReports.statusReportId, statusReport.id),
-        eq(pagesToStatusReports.pageId, pageId),
-      ),
-    )
-    .all();
-
   const ongoingIncidentsQuery = db
     .select()
     .from(incidentTable)
@@ -144,14 +128,21 @@ async function getStatusPageData(pageId: number) {
       ),
     );
 
+  const pageStatusReportDataQuery = db
+    .select()
+    .from(statusReport)
+    .where(
+      and(eq(statusReport.pageId, pageId), ne(statusReport.status, "resolved")),
+    );
+
   const [
-    monitorStatusReportData,
     pageStatusReportData,
+    monitorStatusReportData,
     ongoingIncidents,
     maintenanceData,
   ] = await Promise.all([
-    monitorStatusReportQuery,
     pageStatusReportDataQuery,
+    monitorStatusReportQuery,
     ongoingIncidentsQuery,
     ongoingMaintenancesQuery,
   ]);

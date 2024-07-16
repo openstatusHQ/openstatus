@@ -7,7 +7,6 @@ import {
   monitorsToStatusReport,
   page,
   pageSubscriber,
-  pagesToStatusReports,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -25,8 +24,7 @@ export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { id, monitors, pages, date, message, ...statusReportInput } =
-        opts.input;
+      const { id, monitors, date, message, ...statusReportInput } = opts.input;
 
       const newStatusReport = await opts.ctx.db
         .insert(statusReport)
@@ -50,19 +48,6 @@ export const statusReportRouter = createTRPCRouter({
           .get();
       }
 
-      if (pages.length > 0) {
-        await opts.ctx.db
-          .insert(pagesToStatusReports)
-          .values(
-            pages.map((page) => ({
-              pageId: page,
-              statusReportId: newStatusReport.id,
-            })),
-          )
-          .returning()
-          .get();
-      }
-
       return newStatusReport;
     }),
 
@@ -70,7 +55,7 @@ export const statusReportRouter = createTRPCRouter({
     .input(insertStatusReportUpdateSchema)
     .mutation(async (opts) => {
       // update parent status report with latest status
-      await opts.ctx.db
+      const _statusReport = await opts.ctx.db
         .update(statusReport)
         .set({ status: opts.input.status, updatedAt: new Date() })
         .where(
@@ -97,34 +82,23 @@ export const statusReportRouter = createTRPCRouter({
         .from(workspace)
         .where(eq(workspace.id, opts.ctx.workspace.id))
         .get();
-      if (currentWorkspace?.plan !== "pro") {
-        const allPages = await opts.ctx.db
+      if (currentWorkspace?.plan !== "pro" && _statusReport.pageId) {
+        const subscribers = await opts.ctx.db
           .select()
-          .from(pagesToStatusReports)
+          .from(pageSubscriber)
           .where(
-            eq(
-              pagesToStatusReports.statusReportId,
-              updatedValue.statusReportId,
+            and(
+              eq(pageSubscriber.pageId, _statusReport.pageId),
+              isNotNull(pageSubscriber.acceptedAt),
             ),
           )
           .all();
-        for (const currentPage of allPages) {
-          const subscribers = await opts.ctx.db
-            .select()
-            .from(pageSubscriber)
-            .where(
-              and(
-                eq(pageSubscriber.pageId, currentPage.pageId),
-                isNotNull(pageSubscriber.acceptedAt),
-              ),
-            )
-            .all();
-          const pageInfo = await opts.ctx.db
-            .select()
-            .from(page)
-            .where(eq(page.id, currentPage.pageId))
-            .get();
-          if (!pageInfo) continue;
+        const pageInfo = await opts.ctx.db
+          .select()
+          .from(page)
+          .where(eq(page.id, _statusReport.pageId))
+          .get();
+        if (pageInfo) {
           const subscribersEmails = subscribers.map(
             (subscriber) => subscriber.email,
           );
@@ -143,7 +117,7 @@ export const statusReportRouter = createTRPCRouter({
   updateStatusReport: protectedProcedure
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
-      const { monitors, pages, ...statusReportInput } = opts.input;
+      const { monitors, ...statusReportInput } = opts.input;
 
       if (!statusReportInput.id) return;
 
@@ -196,42 +170,6 @@ export const statusReportRouter = createTRPCRouter({
             and(
               eq(monitorsToStatusReport.statusReportId, currentStatusReport.id),
               inArray(monitorsToStatusReport.monitorId, removedMonitors),
-            ),
-          )
-          .run();
-      }
-
-      const currentPagesToStatusReports = await opts.ctx.db
-        .select()
-        .from(pagesToStatusReports)
-        .where(eq(pagesToStatusReports.statusReportId, currentStatusReport.id))
-        .all();
-
-      const addedPages = pages?.filter(
-        (x) =>
-          !currentPagesToStatusReports.map(({ pageId }) => pageId)?.includes(x),
-      );
-
-      if (addedPages.length) {
-        const values = addedPages.map((pageId) => ({
-          pageId,
-          statusReportId: currentStatusReport.id,
-        }));
-
-        await opts.ctx.db.insert(pagesToStatusReports).values(values).run();
-      }
-
-      const removedPages = currentPagesToStatusReports
-        .map(({ pageId }) => pageId)
-        .filter((x) => !pages?.includes(x));
-
-      if (removedPages.length) {
-        await opts.ctx.db
-          .delete(pagesToStatusReports)
-          .where(
-            and(
-              eq(pagesToStatusReports.statusReportId, currentStatusReport.id),
-              inArray(pagesToStatusReports.pageId, removedPages),
             ),
           )
           .run();
@@ -296,7 +234,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   getStatusReportById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.number(), pageId: z.number().optional() }))
     .query(async (opts) => {
       const selectPublicStatusReportSchemaWithRelation =
         selectStatusReportSchema.extend({
@@ -310,9 +248,6 @@ export const statusReportRouter = createTRPCRouter({
               }),
             )
             .default([]),
-          pagesToStatusReports: z
-            .array(z.object({ statusReportId: z.number(), pageId: z.number() }))
-            .default([]),
           statusReportUpdates: z.array(selectStatusReportUpdateSchema),
           date: z.date().default(new Date()),
         });
@@ -321,10 +256,13 @@ export const statusReportRouter = createTRPCRouter({
         where: and(
           eq(statusReport.id, opts.input.id),
           eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          // only allow to fetch status report if it belongs to the page
+          opts.input.pageId
+            ? eq(statusReport.pageId, opts.input.pageId)
+            : undefined,
         ),
         with: {
           monitorsToStatusReports: { with: { monitor: true } },
-          pagesToStatusReports: true,
           statusReportUpdates: {
             orderBy: (statusReportUpdate, { desc }) => [
               desc(statusReportUpdate.createdAt),
@@ -377,6 +315,42 @@ export const statusReportRouter = createTRPCRouter({
     return z.array(selectStatusSchemaWithRelation).parse(result);
   }),
 
+  getStatusReportByPageId: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      // FIXME: can we get rid of that?
+      const selectStatusSchemaWithRelation = selectStatusReportSchema.extend({
+        status: statusReportStatusSchema.default("investigating"), // TODO: remove!
+        monitorsToStatusReports: z
+          .array(
+            z.object({
+              statusReportId: z.number(),
+              monitorId: z.number(),
+              monitor: selectMonitorSchema,
+            }),
+          )
+          .default([]),
+        statusReportUpdates: z.array(selectStatusReportUpdateSchema),
+      });
+
+      const result = await opts.ctx.db.query.statusReport.findMany({
+        where: and(
+          eq(statusReport.workspaceId, opts.ctx.workspace.id),
+          eq(statusReport.pageId, opts.input.id),
+        ),
+        with: {
+          monitorsToStatusReports: { with: { monitor: true } },
+          statusReportUpdates: {
+            orderBy: (statusReportUpdate, { desc }) => [
+              desc(statusReportUpdate.createdAt),
+            ],
+          },
+        },
+        orderBy: (statusReport, { desc }) => [desc(statusReport.updatedAt)],
+      });
+      return z.array(selectStatusSchemaWithRelation).parse(result);
+    }),
+
   getPublicStatusReportById: publicProcedure
     .input(z.object({ slug: z.string().toLowerCase(), id: z.number() }))
     .query(async (opts) => {
@@ -389,6 +363,7 @@ export const statusReportRouter = createTRPCRouter({
       const _statusReport = await opts.ctx.db.query.statusReport.findFirst({
         where: and(
           eq(statusReport.id, opts.input.id),
+          eq(statusReport.pageId, result.id),
           eq(statusReport.workspaceId, result.workspaceId),
         ),
         with: {

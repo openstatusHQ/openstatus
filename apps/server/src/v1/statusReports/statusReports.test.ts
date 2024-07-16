@@ -15,7 +15,7 @@ test("GET one status report", async () => {
     status: "monitoring",
     statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
     monitorIds: null,
-    pageIds: [1],
+    pageId: 1,
   });
 });
 
@@ -34,7 +34,7 @@ test("Get all status report", async () => {
         status: "monitoring",
         statusReportUpdateIds: expect.arrayContaining([1, 3]), // depending on the order of the updates
         monitorIds: [],
-        pageIds: [1],
+        pageId: 1,
       },
       {
         id: 2,
@@ -42,7 +42,7 @@ test("Get all status report", async () => {
         status: "investigating",
         statusReportUpdateIds: expect.arrayContaining([2]), // depending on the order of the updates
         monitorIds: [1, 2],
-        pageIds: [1],
+        pageId: 1,
       },
     ],
   });
@@ -60,7 +60,7 @@ test("Create one status report including passing optional fields", async () => {
       title: "New Status Report",
       message: "Message",
       monitorIds: [1],
-      pageIds: [1],
+      pageId: 1,
     }),
   });
   const json = await res.json();
@@ -73,7 +73,7 @@ test("Create one status report including passing optional fields", async () => {
     status: "investigating",
     statusReportUpdateIds: [expect.any(Number)],
     monitorIds: [1],
-    pageIds: [1],
+    pageId: 1,
   });
 });
 
@@ -118,7 +118,7 @@ test("Create status report with non existing monitor ids should return 400", asy
       title: "New Status Report",
       message: "Message",
       monitorIds: [100],
-      pageIds: [1],
+      pageId: 1,
     }),
   });
 
@@ -137,7 +137,7 @@ test("Create status report with non existing page ids should return 400", async 
       title: "New Status Report",
       message: "Message",
       monitorIds: [1],
-      pageIds: [100],
+      pageId: 100,
     }),
   });
 
