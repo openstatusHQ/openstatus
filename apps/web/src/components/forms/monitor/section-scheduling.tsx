@@ -7,10 +7,7 @@ import type {
   Limits,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import {
-  flyRegions,
-  monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
+import { monitorPeriodicitySchema } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/plans";
 import {
   FormControl,
@@ -47,8 +44,8 @@ interface Props {
 }
 
 export function SectionScheduling({ form, limits, plan }: Props) {
-  const periodicityLimit = limits.periodicity;
-  const regionsLimit = limits.regions;
+  const periodicityLimit = getLimit(limits, "periodicity");
+  const regionsLimit = getLimit(limits, "regions");
   return (
     <div className="grid w-full gap-4">
       <SectionHeader

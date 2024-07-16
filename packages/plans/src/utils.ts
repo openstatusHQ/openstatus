@@ -4,11 +4,8 @@ import { allPlans } from "./index";
 import type { Limits } from "./version";
 
 // TODO: use getLimit utils function
-export function getLimit<T extends keyof Limits>(
-  plan: WorkspacePlan,
-  limit: T,
-) {
-  return allPlans[plan].limits[limit];
+export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
+  return limits[limit] || allPlans.free.limits[limit];
 }
 
 export function getLimits(plan: WorkspacePlan | null) {

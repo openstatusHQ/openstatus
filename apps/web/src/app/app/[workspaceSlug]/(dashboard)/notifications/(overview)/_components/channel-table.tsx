@@ -1,4 +1,5 @@
 import type { Workspace } from "@openstatus/db/src/schema";
+import { getLimit } from "@openstatus/plans";
 import { Button, Separator } from "@openstatus/ui";
 import Link from "next/link";
 
@@ -10,8 +11,8 @@ interface ChannelTable {
 }
 
 export default function ChannelTable({ workspace, disabled }: ChannelTable) {
-  const isPagerDutyAllowed = workspace.limits.pagerduty;
-  const isSMSAllowed = workspace.limits.sms;
+  const isPagerDutyAllowed = getLimit(workspace.limits, "pagerduty");
+  const isSMSAllowed = getLimit(workspace.limits, "sms");
   return (
     <div className="col-span-full w-full rounded-lg border border-border border-dashed bg-background p-8">
       <h2 className="font-cal text-2xl">Channels</h2>

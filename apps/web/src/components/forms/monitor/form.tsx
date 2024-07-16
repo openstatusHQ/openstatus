@@ -77,7 +77,7 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions: defaultValues?.regions || getLimit("free", "regions"),
+      regions: defaultValues?.regions || getLimit(limits, "regions"),
       headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
