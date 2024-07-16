@@ -316,7 +316,7 @@ export function MonitorForm({
           </Tabs>
           <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
             {withTestButton ? (
-              <RequestTestButton {...{ form, pingEndpoint }} />
+              <RequestTestButton {...{ form, limits, pingEndpoint }} />
             ) : null}
             <SaveButton
               isPending={isPending}
