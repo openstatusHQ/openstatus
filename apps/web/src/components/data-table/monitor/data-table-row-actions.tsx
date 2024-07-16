@@ -4,7 +4,7 @@ import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import * as React from "react";
+import { useState, useTransition } from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
   Button,
+  buttonVariants,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -29,11 +30,35 @@ import {
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 import { api } from "@/trpc/client";
+import { cn } from "@/lib/utils";
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }
+
+const alerts = {
+  clone: {
+    action: {
+      variant: "default",
+      text: "Clone",
+    },
+    dialog: {
+      title: "Are you absolutely sure?",
+      description: "This action cannot be undone. This will clone the monitor.",
+    },
+  },
+  delete: {
+    action: {
+      text: "Delete",
+      variant: "destructive",
+    },
+    dialog: {
+      title: "Are you absolutely sure?",
+      description:
+        "This action cannot be undone. This will permanently delete the monitor.",
+    },
+  },
+} as const;
 
 export function DataTableRowActions<TData>({
   row,
@@ -42,9 +67,9 @@ export function DataTableRowActions<TData>({
     .object({ monitor: selectMonitorSchema, isLimitReached: z.boolean() })
     .parse(row.original);
   const router = useRouter();
-  const [alertOpen, setAlertOpen] = React.useState(false);
-  const [alertType, setAlertType] = React.useState<"delete" | "clone" | "">("");
-  const [isPending, startTransition] = React.useTransition();
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertType, setAlertType] = useState<"delete" | "clone">("delete");
+  const [isPending, startTransition] = useTransition();
 
   async function onDelete() {
     startTransition(async () => {
@@ -54,7 +79,7 @@ export function DataTableRowActions<TData>({
         toastAction("deleted");
         router.refresh();
         setAlertOpen(false);
-        setAlertType("");
+        setAlertType("delete");
       } catch {
         toastAction("error");
       }
@@ -112,15 +137,16 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData =
-          await api.monitor.create.mutate(cloneMonitorData);
+        const createdCloneMonitorData = await api.monitor.create.mutate(
+          cloneMonitorData
+        );
 
         router.push(
-          `./monitors/${createdCloneMonitorData.id}/edit?active=true`,
+          `./monitors/${createdCloneMonitorData.id}/edit?active=true`
         );
         toast.success("Monitor cloned!");
         setAlertOpen(false);
-        setAlertType("");
+        setAlertType("delete");
       } catch (error) {
         console.log("error", error);
         toastAction("error");
@@ -169,40 +195,33 @@ export function DataTableRowActions<TData>({
       </DropdownMenu>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>{alerts[alertType].dialog.title}</AlertDialogTitle>
           <AlertDialogDescription>
-            {alertType === "delete"
-              ? "This action cannot be undone. This will permanently delete the monitor."
-              : "This action cannot be undone. This will clone the monitor."}
+            {alerts[alertType].dialog.description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={(e) => {
-              e.preventDefault();
-              if (alertType === "delete") onDelete();
-              else if (alertType === "clone") onClone();
-            }}
-            disabled={isPending}
-            className={cn({
-              "bg-destructive text-destructive-foreground hover:bg-destructive/90":
-                alertType === "delete",
-              "bg-primary text-primary-foreground hover:bg-primary/90":
-                alertType === "clone",
-            })}
-          >
-            {!isPending ? (
-              alertType === "delete" ? (
-                "Delete"
-              ) : alertType === "clone" ? (
-                "Clone"
+          <AlertDialogAction asChild>
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                if (alertType === "delete") onDelete();
+                else if (alertType === "clone") onClone();
+              }}
+              disabled={isPending}
+              // FIXME: For some reason variant is not working
+              // variant={alerts[alertType].action.variant}
+              className={cn(
+                buttonVariants({ variant: alerts[alertType].action.variant })
+              )}
+            >
+              {!isPending ? (
+                alerts[alertType].action.text
               ) : (
-                ""
-              )
-            ) : (
-              <LoadingAnimation />
-            )}
+                <LoadingAnimation />
+              )}
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
