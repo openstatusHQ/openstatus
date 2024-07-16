@@ -6,8 +6,7 @@ import { workspace } from "./workspace";
 import {
   monitorFlyRegionSchema,
   monitorPeriodicitySchema,
-  monitorRegionSchema,
-} from "../monitors/validation";
+} from "../shared/shared";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);

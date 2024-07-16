@@ -9,7 +9,6 @@ import { getLimit } from "@openstatus/plans";
 import * as assertions from "@openstatus/assertions";
 import type {
   InsertMonitor,
-  MonitorFlyRegion,
   MonitorTag,
   Notification,
   Page,
@@ -39,6 +38,7 @@ import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
 import { SectionStatusPage } from "./section-status-page";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared/shared";
 
 interface Props {
   defaultSection?: string;

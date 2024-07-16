@@ -1,8 +1,9 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
 
-import { monitorRegionSchema, monitorStatusSchema } from "../monitors";
+import { monitorStatusSchema } from "../monitors";
 import { monitorStatusTable } from "./monitor_status";
+import { monitorRegionSchema } from "../shared/shared";
 
 export const selectMonitorStatusSchema = createSelectSchema(
   monitorStatusTable,

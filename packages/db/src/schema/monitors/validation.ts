@@ -3,22 +3,16 @@ import { z } from "zod";
 
 import * as assertions from "@openstatus/assertions";
 
-import {
-  flyRegions,
-  monitorJobTypes,
-  monitorMethods,
-  monitorPeriodicity,
-  monitorRegions,
-  monitorStatus,
-} from "./constants";
+import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 import { monitor, monitorsToPages } from "./monitor";
+import {
+  monitorPeriodicitySchema,
+  monitorRegionSchema,
+} from "../shared/shared";
 
-export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
-export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
-export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 // TODO: shared function
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>
@@ -90,5 +84,4 @@ export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
 export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
-export type MonitorFlyRegion = z.infer<typeof monitorFlyRegionSchema>;
 export type MonitorJobType = z.infer<typeof monitorJobTypesSchema>;

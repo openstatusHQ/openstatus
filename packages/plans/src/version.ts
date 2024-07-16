@@ -1,7 +1,7 @@
 import {
   monitorFlyRegionSchema,
   monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
+} from "@openstatus/db/src/schema/shared/shared";
 import { z } from "zod";
 
 const limitsV1 = z.object({
