@@ -4,7 +4,7 @@ import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import * as React from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -19,7 +19,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
   Button,
-  buttonVariants,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -29,36 +28,11 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
-import { toast, toastAction } from "@/lib/toast";
+import { toastAction, toast } from "@/lib/toast";
 import { api } from "@/trpc/client";
-import { cn } from "@/lib/utils";
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }
-
-const alerts = {
-  clone: {
-    action: {
-      variant: "default",
-      text: "Clone",
-    },
-    dialog: {
-      title: "Are you sure?",
-      description: "This will clone the monitor.",
-    },
-  },
-  delete: {
-    action: {
-      text: "Delete",
-      variant: "destructive",
-    },
-    dialog: {
-      title: "Are you absolutely sure?",
-      description:
-        "This action cannot be undone. This will permanently delete the monitor.",
-    },
-  },
-} as const;
 
 export function DataTableRowActions<TData>({
   row,
@@ -67,13 +41,8 @@ export function DataTableRowActions<TData>({
     .object({ monitor: selectMonitorSchema, isLimitReached: z.boolean() })
     .parse(row.original);
   const router = useRouter();
-  const [alertType, setAlertType] = useState<"delete" | "clone" | undefined>();
-  const [isPending, startTransition] = useTransition();
-  const alertOpen = useMemo(() => alertType !== undefined, [alertType]);
-  const alert = useMemo(
-    () => (alertType ? alerts[alertType] : undefined),
-    [alertType]
-  );
+  const [alertOpen, setAlertOpen] = React.useState(false);
+  const [isPending, startTransition] = React.useTransition();
 
   async function onDelete() {
     startTransition(async () => {
@@ -81,8 +50,8 @@ export function DataTableRowActions<TData>({
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
         toastAction("deleted");
-        setAlertType(undefined);
         router.refresh();
+        setAlertOpen(false);
       } catch {
         toastAction("error");
       }
@@ -130,7 +99,7 @@ export function DataTableRowActions<TData>({
 
         const cloneMonitorData = {
           ...selectedMonitorData,
-          name: `${selectedMonitorData.name} - copy`,
+          name: selectedMonitorData.name + " - copy",
           tags: monitorTagIds,
           notifications: notificationIds,
           pages: pageIds,
@@ -140,14 +109,14 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData =
-          await api.monitor.create.mutate(cloneMonitorData);
+        const createdCloneMonitorData = await api.monitor.create.mutate(
+          cloneMonitorData
+        );
 
-        toast.success("Monitor cloned!");
-        setAlertType(undefined);
         router.push(
           `./monitors/${createdCloneMonitorData.id}/edit?active=true`
         );
+        toast.success("Monitor cloned!");
       } catch (error) {
         console.log("error", error);
         toastAction("error");
@@ -156,7 +125,7 @@ export function DataTableRowActions<TData>({
   }
 
   return (
-    <AlertDialog open={alertOpen}>
+    <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -174,57 +143,40 @@ export function DataTableRowActions<TData>({
           <Link href={`./monitors/${monitor.id}/overview`}>
             <DropdownMenuItem>Details</DropdownMenuItem>
           </Link>
-          <AlertDialogTrigger asChild>
-            <DropdownMenuItem
-              onClick={() => setAlertType("clone")}
-              disabled={isLimitReached}
-            >
-              Clone
-            </DropdownMenuItem>
-          </AlertDialogTrigger>
+          <DropdownMenuItem onClick={onClone} disabled={isLimitReached}>
+            Clone
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
-            <DropdownMenuItem
-              onClick={() => setAlertType("delete")}
-              className="text-destructive focus:bg-destructive focus:text-background"
-            >
+            <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete
             </DropdownMenuItem>
           </AlertDialogTrigger>
         </DropdownMenuContent>
       </DropdownMenu>
-      {alert ? (
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{alert.dialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {alert.dialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAlertType(undefined)}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction asChild>
-              <Button
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (alertType === "delete") onDelete();
-                  else if (alertType === "clone") onClone();
-                }}
-                disabled={isPending}
-                // FIXME: variant={alerts[alertType].action.variant} not being updated
-                className={cn(
-                  buttonVariants({ variant: alerts[alertType].action.variant })
-                )}
-              >
-                {!isPending ? alert.action.text : <LoadingAnimation />}
-              </Button>
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      ) : null}
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the
+            monitor.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              onDelete();
+            }}
+            disabled={isPending}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {!isPending ? "Delete" : <LoadingAnimation />}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
     </AlertDialog>
   );
 }
