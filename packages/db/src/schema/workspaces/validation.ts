@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { workspacePlans, workspaceRole } from "./constants";
 import { workspace } from "./workspace";
-import { limitsV1 } from "../plan";
+import { limitsV1 } from "../plan/schema";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);

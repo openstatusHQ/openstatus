@@ -3,7 +3,7 @@ import type { Context, Next } from "hono";
 
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
-import { getPlanConfig } from "@openstatus/plans";
+import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
 import type { Variables } from "./index";
 import { HTTPException } from "hono/http-exception";
 

@@ -9,7 +9,7 @@ import {
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewInvitation } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -34,7 +34,7 @@ export const invitationRouter = createTRPCRouter({
           where: and(
             eq(invitation.workspaceId, opts.ctx.workspace.id),
             gte(invitation.expiresAt, new Date()),
-            isNull(invitation.acceptedAt),
+            isNull(invitation.acceptedAt)
           ),
         })
       ).length;
@@ -60,7 +60,7 @@ export const invitationRouter = createTRPCRouter({
 
       if (process.env.NODE_ENV === "development") {
         console.log(
-          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `,
+          `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `
         );
       } else {
         await fetch("https://api.resend.com/emails", {
@@ -104,8 +104,8 @@ export const invitationRouter = createTRPCRouter({
         .where(
           and(
             eq(invitation.id, opts.input.id),
-            eq(invitation.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(invitation.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -115,7 +115,7 @@ export const invitationRouter = createTRPCRouter({
       where: and(
         eq(invitation.workspaceId, opts.ctx.workspace.id),
         gte(invitation.expiresAt, new Date()),
-        isNull(invitation.acceptedAt),
+        isNull(invitation.acceptedAt)
       ),
     });
     return _invitations;
@@ -144,13 +144,13 @@ export const invitationRouter = createTRPCRouter({
       z.object({
         message: z.string(),
         data: selectWorkspaceSchema.optional(),
-      }),
+      })
     )
     .mutation(async (opts) => {
       const _invitation = await opts.ctx.db.query.invitation.findFirst({
         where: and(
           eq(invitation.token, opts.input.token),
-          isNull(invitation.acceptedAt),
+          isNull(invitation.acceptedAt)
         ),
         with: {
           workspace: true,

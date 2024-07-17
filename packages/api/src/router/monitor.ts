@@ -24,7 +24,7 @@ import {
   selectNotificationSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewMonitor } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";

@@ -9,7 +9,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 const postRoute = createRoute({
   method: "post",

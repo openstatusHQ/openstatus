@@ -8,7 +8,8 @@ import type {
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/shared";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+
 import {
   FormControl,
   FormDescription,

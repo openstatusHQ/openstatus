@@ -9,7 +9,7 @@ import { user, workspace } from "@openstatus/db/src/schema";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPlanFromPriceId } from "./utils";
-import { getLimits } from "@openstatus/plans";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({

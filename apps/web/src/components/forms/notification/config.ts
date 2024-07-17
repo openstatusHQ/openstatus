@@ -4,8 +4,8 @@ import type {
 } from "@openstatus/db/src/schema";
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
-import { allPlans, plans } from "@openstatus/plans";
-
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 export function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (!defaultValues?.provider) return ""; // FIXME: input can empty - needs to be undefined
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
@@ -24,7 +24,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "dev@documenso.com",
         setupDocLink: null,
         sendTest: null,
-        plans: plans,
+        plans: workspacePlans,
       };
 
     case "slack":
@@ -35,7 +35,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         setupDocLink:
           "https://api.slack.com/messaging/webhooks#getting_started",
         sendTest: sendTestSlackMessage,
-        plans: plans,
+        plans: workspacePlans,
       };
 
     case "discord":
@@ -45,7 +45,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "https://discord.com/api/webhooks/{channelId}/xxx...",
         setupDocLink: "https://support.discord.com/hc/en-us/articles/228383668",
         sendTest: sendTestDiscordMessage,
-        plans: plans,
+        plans: workspacePlans,
       };
     case "sms":
       return {
@@ -54,7 +54,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "+123456789",
         setupDocLink: null,
         sendTest: null,
-        plans: plans.filter((plan) => allPlans[plan].limits.sms),
+        plans: workspacePlans.filter((plan) => allPlans[plan].limits.sms),
       };
 
     case "pagerduty":
@@ -65,7 +65,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         setupDocLink:
           "https://docs.openstatus.dev/synthetic/features/notification/pagerduty",
         sendTest: null,
-        plans: plans.filter((plan) => allPlans[plan].limits.pagerduty),
+        plans: workspacePlans.filter((plan) => allPlans[plan].limits.pagerduty),
       };
 
     default:
@@ -75,7 +75,7 @@ export function getProviderMetaData(provider: NotificationProvider) {
         placeholder: "xxxx",
         setupDocLink: `https://docs.openstatus.dev/integrations/${provider}`,
         send: null,
-        plans: plans,
+        plans: workspacePlans,
       };
   }
 }

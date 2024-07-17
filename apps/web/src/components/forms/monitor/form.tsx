@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import * as assertions from "@openstatus/assertions";
 import type {

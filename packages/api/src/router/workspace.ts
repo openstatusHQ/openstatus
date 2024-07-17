@@ -16,7 +16,7 @@ import {
   workspace,
   workspacePlanSchema,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/plans";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -124,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -141,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -154,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -209,8 +209,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNotNull(monitor.deletedAt),
-          ),
+            isNotNull(monitor.deletedAt)
+          )
         );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })

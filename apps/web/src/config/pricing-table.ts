@@ -1,4 +1,4 @@
-import type { Limits } from "@openstatus/db/src/schema/plan";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 export const pricingTableConfig: Record<
   string,

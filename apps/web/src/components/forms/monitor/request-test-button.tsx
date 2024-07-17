@@ -33,7 +33,7 @@ import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;

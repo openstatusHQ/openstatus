@@ -1,9 +1,7 @@
-import type { WorkspacePlan } from "@openstatus/db/src/schema";
+import type { Limits } from "./schema";
+import { allPlans } from "./config";
+import type { WorkspacePlan } from "../workspaces/validation";
 
-import { allPlans } from "./index";
-import type { Limits } from "@openstatus/db/src/schema/plan";
-
-// TODO: use getLimit utils function
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
   return limits[limit] || allPlans.free.limits[limit];
 }

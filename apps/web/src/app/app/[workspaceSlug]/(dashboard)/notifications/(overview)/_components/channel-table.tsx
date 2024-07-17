@@ -1,5 +1,6 @@
 import type { Workspace } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+
 import { Button, Separator } from "@openstatus/ui";
 import Link from "next/link";
 

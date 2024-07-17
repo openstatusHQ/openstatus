@@ -2,7 +2,8 @@ import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 import { notificationProviderSchema } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+
 import { notFound } from "next/navigation";
 
 export default async function ChannelPage({
