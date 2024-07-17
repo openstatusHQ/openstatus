@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/shared";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import {

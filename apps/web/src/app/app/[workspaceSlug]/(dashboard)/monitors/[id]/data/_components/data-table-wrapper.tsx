@@ -20,7 +20,7 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { api } from "@/trpc/client";
 import type { z } from "zod";
-import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/shared";
+import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 
 // EXAMPLE: get the type of the response of the endpoint
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>

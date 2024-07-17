@@ -13,7 +13,6 @@ import type {
   Notification,
   Page,
   WorkspacePlan,
-  Limits,
 } from "@openstatus/db/src/schema";
 import { insertMonitorSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
@@ -38,7 +37,8 @@ import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
 import { SectionStatusPage } from "./section-status-page";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 interface Props {
   defaultSection?: string;

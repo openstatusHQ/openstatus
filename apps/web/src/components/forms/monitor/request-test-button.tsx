@@ -5,11 +5,11 @@ import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import { deserialize } from "@openstatus/assertions";
-import type { InsertMonitor, Limits } from "@openstatus/db/src/schema";
+import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   type MonitorFlyRegion,
-} from "@openstatus/db/src/schema/shared";
+} from "@openstatus/db/src/schema/constants";
 import {
   Button,
   Dialog,
@@ -34,6 +34,7 @@ import { ResponseDetailTabs } from "@/components/ping-response-analysis/response
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;

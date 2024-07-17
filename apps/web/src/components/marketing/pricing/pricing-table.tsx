@@ -4,12 +4,9 @@ import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 
-import type { WorkspacePlan } from "@openstatus/plans";
-import {
-  allPlans,
-  plans as defaultPlans,
-  pricingTableConfig,
-} from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
+import { pricingTableConfig } from "../../../config/pricing-table";
+import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 import {
   Badge,
   Button,
@@ -24,9 +21,10 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { cn } from "@/lib/utils";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 export function PricingTable({
-  plans = defaultPlans,
+  plans = workspacePlans,
   currentPlan,
   events,
   isLoading,
@@ -57,7 +55,7 @@ export function PricingTable({
                 key={key}
                 className={cn(
                   "h-auto px-3 py-3 align-bottom text-foreground",
-                  key === "team" ? "bg-muted/30" : "bg-background",
+                  key === "team" ? "bg-muted/30" : "bg-background"
                 )}
               >
                 <p className="sticky top-0 mb-2 font-cal text-2xl">
@@ -157,7 +155,7 @@ export function PricingTable({
                             key={key}
                             className={cn(
                               "p-3",
-                              plan.key === "team" && "bg-muted/30",
+                              plan.key === "team" && "bg-muted/30"
                             )}
                           >
                             {renderContent()}
@@ -169,7 +167,7 @@ export function PricingTable({
                 })}
               </Fragment>
             );
-          },
+          }
         )}
       </TableBody>
     </Table>

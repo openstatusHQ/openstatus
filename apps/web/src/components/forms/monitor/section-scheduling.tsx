@@ -2,12 +2,8 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
-import type {
-  InsertMonitor,
-  Limits,
-  WorkspacePlan,
-} from "@openstatus/db/src/schema";
-import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/shared";
+import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
+import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import {
@@ -27,6 +23,7 @@ import { groupByContinent } from "@openstatus/utils";
 
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 // TODO: centralize in a shared file!
 const cronJobs = [

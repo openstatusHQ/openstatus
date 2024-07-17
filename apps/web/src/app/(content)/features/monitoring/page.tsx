@@ -3,7 +3,7 @@ import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { marketingProductPagesConfig } from "@/config/pages";
-import { flyRegions } from "@openstatus/db/src/schema/shared";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 import { allUnrelateds } from "contentlayer/generated";

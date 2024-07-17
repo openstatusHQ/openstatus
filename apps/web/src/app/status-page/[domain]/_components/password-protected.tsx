@@ -1,4 +1,4 @@
-import type { WorkspacePlan } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 import { Shell } from "@/components/dashboard/shell";
 import { Footer } from "../_components/footer";
