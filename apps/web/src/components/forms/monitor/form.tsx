@@ -38,7 +38,7 @@ import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
 import { SectionStatusPage } from "./section-status-page";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared/shared";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared";
 
 interface Props {
   defaultSection?: string;

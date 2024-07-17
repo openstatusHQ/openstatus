@@ -4,7 +4,7 @@ import { OSTinybird } from "@openstatus/tinybird";
 
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { flyRegions } from "@openstatus/db/src/schema/shared/shared";
+import { flyRegions } from "@openstatus/db/src/schema/shared";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 

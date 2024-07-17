@@ -1,7 +1,7 @@
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
 import { allPlans } from "./index";
-import type { Limits } from "./version";
+import type { Limits } from "@openstatus/db/src/schema/plan";
 
 // TODO: use getLimit utils function
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {

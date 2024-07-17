@@ -9,7 +9,7 @@ import type { InsertMonitor, Limits } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   type MonitorFlyRegion,
-} from "@openstatus/db/src/schema/shared/shared";
+} from "@openstatus/db/src/schema/shared";
 import {
   Button,
   Dialog,

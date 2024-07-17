@@ -1,7 +1,7 @@
 import { NoopTinybird, Tinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
-import { flyRegions } from "../../db/src/schema/shared/shared";
+import { flyRegions } from "../../db/src/schema/shared";
 
 import type { tbIngestWebVitalsArray } from "./validation";
 import {

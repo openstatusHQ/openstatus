@@ -3,39 +3,10 @@ import { z } from "zod";
 
 import { workspacePlans, workspaceRole } from "./constants";
 import { workspace } from "./workspace";
-import {
-  monitorFlyRegionSchema,
-  monitorPeriodicitySchema,
-} from "../shared/shared";
+import { limitsV1 } from "../plan";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);
-
-export const limitsV1 = z.object({
-  version: z.undefined(),
-  monitors: z.number(),
-  "synthetic-checks": z.number(),
-  periodicity: monitorPeriodicitySchema.array(),
-  "multi-region": z.boolean(),
-  "max-regions": z.number(),
-  "data-retention": z.enum(["14 days", "3 months", "12 months", "24 months"]),
-  // status pages
-  "status-pages": z.number(),
-  maintenance: z.boolean(),
-  "status-subscribers": z.boolean(),
-  "custom-domain": z.boolean(),
-  "password-protection": z.boolean(),
-  "white-label": z.boolean(),
-  // alerts
-  notifications: z.boolean(),
-  pagerduty: z.boolean(),
-  sms: z.boolean(),
-  "notification-channels": z.number(),
-  // collaboration
-  members: z.literal("Unlimited").or(z.number()),
-  "audit-log": z.boolean(),
-  regions: monitorFlyRegionSchema.array(),
-});
 
 export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
   limits: z.string().transform((val) => {
@@ -80,4 +51,3 @@ export const insertWorkspaceSchema = createSelectSchema(workspace);
 export type Workspace = z.infer<typeof selectWorkspaceSchema>;
 export type WorkspacePlan = z.infer<typeof workspacePlanSchema>;
 export type WorkspaceRole = z.infer<typeof workspaceRoleSchema>;
-export type Limits = z.infer<typeof limitsV1>;

@@ -1,6 +1,6 @@
 import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
-import type { Limits } from "./version";
+import type { Limits } from "@openstatus/db/src/schema/plan";
 
 // TODO: rename to `planConfig`
 export const allPlans: Record<

@@ -6,7 +6,7 @@ import { Button } from "@openstatus/ui";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ResponseDetails } from "@/components/monitor-dashboard/response-details";
 import { api } from "@/trpc/server";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/shared/shared";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/shared";
 //
 
 /**

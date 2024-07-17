@@ -1,6 +1,6 @@
 import * as z from "zod";
-import { monitorFlyRegionSchema } from "../../db/src/schema/shared/shared";
-import type { flyRegions } from "../../db/src/schema/shared/shared";
+import { monitorFlyRegionSchema } from "../../db/src/schema/shared";
+import type { flyRegions } from "../../db/src/schema/shared";
 
 export const tbIngestWebVitals = z.object({
   dsn: z.string(),

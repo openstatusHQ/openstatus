@@ -13,7 +13,7 @@ import { page } from "../pages";
 import { monitorsToStatusReport } from "../status_reports";
 import { workspace } from "../workspaces/workspace";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
-import { monitorPeriodicity } from "../shared/shared";
+import { monitorPeriodicity } from "../shared";
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),

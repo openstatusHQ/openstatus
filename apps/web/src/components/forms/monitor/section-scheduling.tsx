@@ -7,7 +7,7 @@ import type {
   Limits,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/shared/shared";
+import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/shared";
 import { getLimit } from "@openstatus/plans";
 import {
   FormControl,

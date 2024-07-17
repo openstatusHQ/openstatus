@@ -5,10 +5,7 @@ import * as assertions from "@openstatus/assertions";
 
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 import { monitor, monitorsToPages } from "./monitor";
-import {
-  monitorPeriodicitySchema,
-  monitorRegionSchema,
-} from "../shared/shared";
+import { monitorPeriodicitySchema, monitorRegionSchema } from "../shared";
 
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);

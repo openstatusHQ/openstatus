@@ -13,7 +13,7 @@ import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { statusReportsApi } from "./statusReports";
-import type { Limits } from "@openstatus/db/src/schema/workspaces/validation";
+import type { Limits } from "@openstatus/db/src/schema/plan";
 
 export type Variables = {
   workspaceId: string;
