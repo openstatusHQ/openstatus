@@ -43,8 +43,8 @@ const alerts = {
       text: "Clone",
     },
     dialog: {
-      title: "Are you absolutely sure?",
-      description: "This action cannot be undone. This will clone the monitor.",
+      title: "Are you sure?",
+      description: "This will clone the monitor.",
     },
   },
   delete: {
@@ -214,7 +214,10 @@ export function DataTableRowActions<TData>({
                   else if (alertType === "clone") onClone();
                 }}
                 disabled={isPending}
-                variant={alert.action.variant}
+                // FIXME: variant={alerts[alertType].action.variant} not being updated
+                className={cn(
+                  buttonVariants({ variant: alerts[alertType].action.variant })
+                )}
               >
                 {!isPending ? alert.action.text : <LoadingAnimation />}
               </Button>
