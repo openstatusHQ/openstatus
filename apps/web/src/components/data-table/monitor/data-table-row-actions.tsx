@@ -112,6 +112,7 @@ export function DataTableRowActions<TData>({
         await api.monitor.create.mutate(cloneMonitorData);
 
         toast.success("Monitor cloned!");
+        router.refresh();
       } catch (error) {
         console.log("error", error);
         toastAction("error");
