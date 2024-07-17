@@ -138,7 +138,11 @@ export function PricingTable({
                           }
                           if (typeof limitValue === "number") {
                             return (
-                              <span className="font-mono">{limitValue}</span>
+                              <span className="font-mono">
+                                {new Intl.NumberFormat("us")
+                                  .format(limitValue)
+                                  .toString()}
+                              </span>
                             );
                           }
                           if (

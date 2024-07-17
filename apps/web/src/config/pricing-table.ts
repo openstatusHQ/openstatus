@@ -26,6 +26,15 @@ export const pricingTableConfig: Record<
       { value: "data-retention", label: "Data retention" },
     ],
   },
+  "synthetic-checks": {
+    label: "Synthetic API Checks",
+    features: [
+      {
+        value: "synthetic-checks",
+        label: "Number of synthetic API checks",
+      },
+    ],
+  },
   "status-pages": {
     label: "Status Pages",
     features: [
