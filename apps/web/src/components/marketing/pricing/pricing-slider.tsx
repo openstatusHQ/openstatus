@@ -45,8 +45,8 @@ export function PricingSlider() {
         <div className="grid gap-2 sm:col-span-2">
           <h4 className="font-semibold text-2xl">Total requests per monitor</h4>
           <p className="text-muted-foreground">
-            Check how many total requests you will make with OpenStatus for a
-            single monitor over the selected time.
+            Check how many requests you will make with OpenStatus for a single
+            monitor over the selected time period.
           </p>
         </div>
         <div className="flex justify-end">
