@@ -109,13 +109,8 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData = await api.monitor.create.mutate(
-          cloneMonitorData
-        );
+        await api.monitor.create.mutate(cloneMonitorData);
 
-        router.push(
-          `./monitors/${createdCloneMonitorData.id}/edit?active=true`
-        );
         toast.success("Monitor cloned!");
       } catch (error) {
         console.log("error", error);
