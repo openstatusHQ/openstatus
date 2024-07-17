@@ -3,7 +3,7 @@
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
 
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 
 // export const vercelRegionsDict = {
 //   /**

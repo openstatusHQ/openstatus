@@ -9,7 +9,7 @@ import {
 import {
   flyRegions,
   monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema/shared";
+} from "@openstatus/db/src/schema/constants";
 
 const statusAssertion = z
   .object({

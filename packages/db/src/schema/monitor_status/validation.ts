@@ -3,7 +3,7 @@ import type { z } from "zod";
 
 import { monitorStatusSchema } from "../monitors";
 import { monitorStatusTable } from "./monitor_status";
-import { monitorRegionSchema } from "../shared";
+import { monitorRegionSchema } from "../constants";
 
 export const selectMonitorStatusSchema = createSelectSchema(
   monitorStatusTable,

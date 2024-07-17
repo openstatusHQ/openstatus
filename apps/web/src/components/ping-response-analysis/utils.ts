@@ -4,8 +4,8 @@ import { z } from "zod";
 import {
   flyRegions,
   monitorFlyRegionSchema,
-} from "@openstatus/db/src/schema/shared";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared";
+} from "@openstatus/db/src/schema/constants";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 import { flyRegionsDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {

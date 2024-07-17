@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { monitorFlyRegionSchema, monitorPeriodicitySchema } from "../shared";
+import { monitorFlyRegionSchema, monitorPeriodicitySchema } from "../constants";
 
 // This is not a database table but just a schema for the limits of the plan
 

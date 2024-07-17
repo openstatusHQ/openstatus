@@ -7,7 +7,7 @@ import {
 
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/shared";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 
 export const triggerNotifications = async ({
   monitorId,
