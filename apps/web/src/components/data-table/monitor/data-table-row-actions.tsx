@@ -4,7 +4,7 @@ import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -67,9 +67,13 @@ export function DataTableRowActions<TData>({
     .object({ monitor: selectMonitorSchema, isLimitReached: z.boolean() })
     .parse(row.original);
   const router = useRouter();
-  const [alertOpen, setAlertOpen] = useState(false);
-  const [alertType, setAlertType] = useState<"delete" | "clone">("delete");
+  const [alertType, setAlertType] = useState<"delete" | "clone" | undefined>();
   const [isPending, startTransition] = useTransition();
+  const alertOpen = useMemo(() => alertType !== undefined, [alertType]);
+  const alert = useMemo(
+    () => (alertType ? alerts[alertType] : undefined),
+    [alertType]
+  );
 
   async function onDelete() {
     startTransition(async () => {
@@ -77,9 +81,8 @@ export function DataTableRowActions<TData>({
         if (!monitor.id) return;
         await api.monitor.delete.mutate({ id: monitor.id });
         toastAction("deleted");
+        setAlertType(undefined);
         router.refresh();
-        setAlertOpen(false);
-        setAlertType("delete");
       } catch {
         toastAction("error");
       }
@@ -137,16 +140,14 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
-        const createdCloneMonitorData = await api.monitor.create.mutate(
-          cloneMonitorData
-        );
+        const createdCloneMonitorData =
+          await api.monitor.create.mutate(cloneMonitorData);
 
+        toast.success("Monitor cloned!");
+        setAlertType(undefined);
         router.push(
           `./monitors/${createdCloneMonitorData.id}/edit?active=true`
         );
-        toast.success("Monitor cloned!");
-        setAlertOpen(false);
-        setAlertType("delete");
       } catch (error) {
         console.log("error", error);
         toastAction("error");
@@ -155,7 +156,7 @@ export function DataTableRowActions<TData>({
   }
 
   return (
-    <AlertDialog open={alertOpen} onOpenChange={(value) => setAlertOpen(value)}>
+    <AlertDialog open={alertOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -193,38 +194,34 @@ export function DataTableRowActions<TData>({
           </AlertDialogTrigger>
         </DropdownMenuContent>
       </DropdownMenu>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{alerts[alertType].dialog.title}</AlertDialogTitle>
-          <AlertDialogDescription>
-            {alerts[alertType].dialog.description}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction asChild>
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                if (alertType === "delete") onDelete();
-                else if (alertType === "clone") onClone();
-              }}
-              disabled={isPending}
-              // FIXME: For some reason variant is not working
-              // variant={alerts[alertType].action.variant}
-              className={cn(
-                buttonVariants({ variant: alerts[alertType].action.variant })
-              )}
-            >
-              {!isPending ? (
-                alerts[alertType].action.text
-              ) : (
-                <LoadingAnimation />
-              )}
-            </Button>
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      {alert ? (
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alert.dialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {alert.dialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAlertType(undefined)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (alertType === "delete") onDelete();
+                  else if (alertType === "clone") onClone();
+                }}
+                disabled={isPending}
+                variant={alert.action.variant}
+              >
+                {!isPending ? alert.action.text : <LoadingAnimation />}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      ) : null}
     </AlertDialog>
   );
 }
