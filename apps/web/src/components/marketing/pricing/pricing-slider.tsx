@@ -43,9 +43,9 @@ export function PricingSlider() {
     <div className="grid gap-4">
       <div className="grid gap-8 sm:grid-cols-3">
         <div className="grid gap-2 sm:col-span-2">
-          <h4 className="font-semibold text-2xl"># Pings</h4>
+          <h4 className="font-semibold text-2xl">Total requests per monitor</h4>
           <p className="text-muted-foreground">
-            Check how many total pings you will make with OpenStatus for a
+            Check how many total requests you will make with OpenStatus for a
             single monitor over the selected time.
           </p>
         </div>
@@ -96,7 +96,7 @@ export function PricingSlider() {
               {new Intl.NumberFormat("us").format(region).toString()} pings{" "}
             </span>{" "}
             <span className="font-normal text-muted-foreground">
-              / month / region
+              / region / month
             </span>
           </p>
         </div>
