@@ -4,7 +4,7 @@ import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import * as React from "react";
+import { useState, useTransition } from "react";
 import { z } from "zod";
 
 import { selectMonitorSchema } from "@openstatus/db/src/schema";
@@ -41,8 +41,8 @@ export function DataTableRowActions<TData>({
     .object({ monitor: selectMonitorSchema, isLimitReached: z.boolean() })
     .parse(row.original);
   const router = useRouter();
-  const [alertOpen, setAlertOpen] = React.useState(false);
-  const [isPending, startTransition] = React.useTransition();
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   async function onDelete() {
     startTransition(async () => {
