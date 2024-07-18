@@ -47,7 +47,7 @@ export function MarketingHeader({ className }: Props) {
           <NavigationMenu>
             <NavigationMenuList>
               {marketingPagesConfig.map((page) => {
-                const { href, title, segment, children } = page;
+                const { href, title, children } = page;
                 if (!children) {
                   return (
                     <NavigationMenuItem key={title}>

@@ -20,7 +20,6 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;

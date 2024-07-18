@@ -18,7 +18,7 @@ export const sendAlert = async ({
   incidentId?: string;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
+    JSON.parse(notification.data)
   );
   const { name } = monitor;
 
@@ -29,7 +29,7 @@ export const sendAlert = async ({
     "Body",
     `Your monitor ${name} / ${monitor.url} is down with ${
       statusCode ? `status code ${statusCode}` : `error: ${message}`
-    }`,
+    }`
   );
 
   try {
@@ -40,10 +40,10 @@ export const sendAlert = async ({
         body,
         headers: {
           Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`
           )}`,
         },
-      },
+      }
     );
   } catch (err) {
     console.log(err);
@@ -68,7 +68,7 @@ export const sendRecovery = async ({
   incidentId?: string;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
+    JSON.parse(notification.data)
   );
   const { name } = monitor;
 
@@ -85,10 +85,10 @@ export const sendRecovery = async ({
         body,
         headers: {
           Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`
           )}`,
         },
-      },
+      }
     );
   } catch (err) {
     console.log(err);
@@ -103,7 +103,6 @@ export const sendDegraded = async ({
   statusCode,
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -112,7 +111,7 @@ export const sendDegraded = async ({
   incidentId?: string;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
-    JSON.parse(notification.data),
+    JSON.parse(notification.data)
   );
   const { name } = monitor;
 
@@ -129,10 +128,10 @@ export const sendDegraded = async ({
         body,
         headers: {
           Authorization: `Basic ${btoa(
-            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`,
+            `${env.TWILLIO_ACCOUNT_ID}:${env.TWILLIO_AUTH_TOKEN}`
           )}`,
         },
-      },
+      }
     );
   } catch (err) {
     console.log(err);
