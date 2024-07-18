@@ -29,7 +29,7 @@ export const columns: ColumnDef<
     cell: ({ row }) => {
       return (
         <Link
-          href={`./status-pages/${row.original.id}/edit`}
+          href={`./status-pages/${row.original.id}/reports`}
           className="group flex items-center gap-2"
         >
           <span className="max-w-[125px] truncate group-hover:underline">
