@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Fragment } from "react";
 import { DayHeader } from "./day-header";
 import { StatusReportHeader, StatusReportUpdates } from "./status-report";
+import { MaintenanceContainer } from "./maintenance";
 
 export function MaintenanceList({
   maintenances,
@@ -55,30 +56,11 @@ export function MaintenanceList({
                 .filter(notEmpty);
 
               return (
-                <div
+                <MaintenanceContainer
                   key={maintenance.id}
-                  className="grid gap-4 border border-transparent p-3"
-                >
-                  <StatusReportHeader
-                    title={maintenance.title}
-                    monitors={affectedMonitors || []}
-                    actions={
-                      <p className="font-mono text-muted-foreground text-sm">
-                        {format(maintenance.from, "LLL dd HH:mm")} -{" "}
-                        {format(maintenance.to, "LLL dd HH:mm")}
-                      </p>
-                    }
-                  />
-                  <StatusReportUpdates
-                    updates={[
-                      {
-                        message: maintenance.message,
-                        id: maintenance.id,
-                        status: "maintenance",
-                      },
-                    ]}
-                  />
-                </div>
+                  maintenance={maintenance}
+                  monitors={affectedMonitors || []}
+                />
               );
             })}
           </Fragment>

@@ -4,12 +4,10 @@ import type {
   PublicMonitor,
   StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
-import { Separator } from "@openstatus/ui";
 
 import { notEmpty } from "@/lib/utils";
 import { StatusReport } from "./status-report";
 import { EmptyState } from "../dashboard/empty-state";
-import { format } from "date-fns";
 import { Fragment } from "react";
 import { DayHeader } from "./day-header";
 
