@@ -30,7 +30,6 @@ export default async function EditPage({
 
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
-
   return (
     <MonitorForm
       defaultSection={search.success ? search.data.section : undefined}
