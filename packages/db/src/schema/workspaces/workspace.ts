@@ -17,19 +17,19 @@ export const workspace = sqliteTable(
     plan: text("plan", { enum: workspacePlans }),
     endsAt: integer("ends_at", { mode: "timestamp" }),
     paidUntil: integer("paid_until", { mode: "timestamp" }),
-
+    limits: text("limits").default("{}").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
 
     dsn: text("dsn"), // should be removed soon
   },
   (t) => ({
     unique: unique().on(t.id, t.dsn),
-  }),
+  })
 );
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({

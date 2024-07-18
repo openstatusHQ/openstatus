@@ -3,7 +3,7 @@
  * https://vercel.com/docs/concepts/edge-network/regions#region-list
  */
 
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 
 // export const vercelRegionsDict = {
 //   /**
@@ -392,7 +392,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  },
+  }
 );
 
 export const vercelRegions = [

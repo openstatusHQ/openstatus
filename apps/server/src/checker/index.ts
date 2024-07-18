@@ -4,7 +4,6 @@ import { z } from "zod";
 
 import { and, db, eq, isNull, schema } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema";
-import { flyRegions } from "@openstatus/db/src/schema/monitors/constants";
 import {
   monitorStatusSchema,
   selectMonitorSchema,
@@ -14,6 +13,7 @@ import { Redis } from "@openstatus/upstash";
 import { env } from "../env";
 import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 export const checkerRoute = new Hono();
 const redis = Redis.fromEnv();

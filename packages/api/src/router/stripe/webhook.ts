@@ -9,6 +9,7 @@ import { user, workspace } from "@openstatus/db/src/schema";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPlanFromPriceId } from "./utils";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -22,7 +23,7 @@ const webhookProcedure = publicProcedure.input(
       }),
       type: z.string(),
     }),
-  }),
+  })
 );
 
 export const webhookRouter = createTRPCRouter({
@@ -35,7 +36,7 @@ export const webhookRouter = createTRPCRouter({
       });
     }
     const subscription = await stripe.subscriptions.retrieve(
-      session.subscription,
+      session.subscription
     );
     const customerId =
       typeof subscription.customer === "string"
@@ -67,6 +68,7 @@ export const webhookRouter = createTRPCRouter({
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
+        limits: JSON.stringify(getLimits(plan.plan)),
       })
       .where(eq(workspace.id, result.id))
       .run();

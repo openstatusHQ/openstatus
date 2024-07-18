@@ -4,8 +4,8 @@ import Image from "next/image";
 import { useSelectedLayoutSegment } from "next/navigation";
 
 import type { PublicPage } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
-import type { WorkspacePlan } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 import { Shell } from "@/components/dashboard/shell";
 import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";

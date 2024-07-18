@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
-import type { WorkspacePlan } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 interface Props {
   feature: string;

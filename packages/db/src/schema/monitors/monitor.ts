@@ -11,13 +11,9 @@ import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
 import { page } from "../pages";
 import { monitorsToStatusReport } from "../status_reports";
-import { workspace } from "../workspaces";
-import {
-  monitorJobTypes,
-  monitorMethods,
-  monitorPeriodicity,
-  monitorStatus,
-} from "./constants";
+import { workspace } from "../workspaces/workspace";
+import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
+import { monitorPeriodicity } from "../constants";
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),

@@ -33,5 +33,6 @@ jobs:
           project: 9cknw183m8
           context: apps/checker
           tags: ghcr.io/openstatushq/checker:latest
+          platforms: linux/amd64,linux/arm64
           push: true
 

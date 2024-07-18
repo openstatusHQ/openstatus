@@ -3,7 +3,7 @@ import { generateSlug } from "random-word-slugs";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, sql } from "@openstatus/db";
+import { and, eq, isNotNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -16,7 +16,7 @@ import {
   workspace,
   workspacePlanSchema,
 } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/plans";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -124,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -141,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -154,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -206,7 +206,12 @@ export const workspaceRouter = createTRPCRouter({
       const monitors = await tx
         .select({ count: sql<number>`count(*)` })
         .from(monitor)
-        .where(eq(monitor.workspaceId, opts.ctx.workspace.id));
+        .where(
+          and(
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+            isNotNull(monitor.deletedAt)
+          )
+        );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })
         .from(page)

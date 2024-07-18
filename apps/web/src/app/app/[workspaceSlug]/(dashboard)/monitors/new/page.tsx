@@ -27,12 +27,13 @@ export default async function Page({
 
   return (
     <MonitorForm
-      plan={workspace?.plan}
       defaultSection={search.success ? search.data.section : undefined}
       notifications={notifications}
       pages={pages}
       tags={tags}
+      limits={workspace.limits}
       nextUrl="./" // back to the overview page
+      plan={workspace.plan}
     />
   );
 }

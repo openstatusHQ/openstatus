@@ -30,7 +30,6 @@ export default async function EditPage({
 
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
-
   return (
     <MonitorForm
       defaultSection={search.success ? search.data.section : undefined}
@@ -50,10 +49,11 @@ export default async function EditPage({
           )
           .map(({ id }) => id),
       }}
-      plan={workspace?.plan}
+      limits={workspace.limits}
       notifications={notifications}
       tags={tags}
       pages={pages}
+      plan={workspace.plan}
     />
   );
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { workspacePlanHierarchy } from "@openstatus/db/src/schema";
-import type { WorkspacePlan } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@openstatus/ui";
 
 function upgradePlan(current: WorkspacePlan, required: WorkspacePlan) {

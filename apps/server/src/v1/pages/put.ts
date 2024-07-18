@@ -42,12 +42,12 @@ const putRoute = createRoute({
 export function registerPutPage(api: typeof pagesApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
     if (
-      workspacePlan.limits["password-protection"] === false &&
+      limits["password-protection"] === false &&
       input?.passwordProtected === true
     ) {
       throw new HTTPException(403, {
