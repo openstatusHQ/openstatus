@@ -4,6 +4,7 @@ import { z } from "zod";
 import { workspacePlans, workspaceRole } from "./constants";
 import { workspace } from "./workspace";
 import { limitsV1 } from "../plan/schema";
+import { allPlans } from "../plan/config";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);
@@ -15,25 +16,7 @@ export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
     if (result.error) {
       // Fallback to default limits
       return limitsV1.parse({
-        monitors: 1,
-        "synthetic-checks": 1000,
-        periodicity: ["10m", "30m", "1h"],
-        "multi-region": true,
-        "max-regions": 6,
-        "data-retention": "14 days",
-        "status-pages": 1,
-        maintenance: true,
-        "status-subscribers": false,
-        "custom-domain": false,
-        "password-protection": false,
-        "white-label": false,
-        notifications: true,
-        sms: false,
-        pagerduty: false,
-        "notification-channels": 1,
-        members: 1,
-        "audit-log": false,
-        regions: ["ams", "gru", "iad", "jnb", "hkg", "syd"],
+        ...allPlans.free.limits,
       });
     }
 
