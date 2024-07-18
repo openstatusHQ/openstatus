@@ -46,10 +46,6 @@ export default function RootLayout({
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
         } ${calSans.variable}`}
       >
-        {/* Only include RUM in prod */}
-        {process.env.NODE_ENV === "production" && (
-          <OpenStatusProvider dsn="openstatus" />
-        )}
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
           <Toaster richColors />
