@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, asc, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorsToStatusReport,
@@ -16,6 +16,7 @@ import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses
 import { isoDate } from "../utils";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -59,7 +60,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
 
     const { monitorIds, date, ...rest } = input;
 
@@ -81,22 +82,21 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       }
     }
 
-
-    if(rest.pageId){
+    if (rest.pageId) {
       const _pages = await db
-      .select()
-      .from(page)
-      .where(
-        and(
-          eq(page.workspaceId, Number(workspaceId)),
-          eq(page.id, rest.pageId)
+        .select()
+        .from(page)
+        .where(
+          and(
+            eq(page.workspaceId, Number(workspaceId)),
+            eq(page.id, rest.pageId)
+          )
         )
-      )
-      .all();
+        .all();
 
-    if (_pages.length !== 1) {
-      throw new HTTPException(400, { message: "Page not found" });
-    }
+      if (_pages.length !== 1) {
+        throw new HTTPException(400, { message: "Page not found" });
+      }
     }
 
     const _newStatusReport = await db
@@ -132,7 +132,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .returning();
     }
 
-    if (workspacePlan.limits.notifications && _newStatusReport.pageId) {
+    if (getLimit(limits, "status-subscribers") && _newStatusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)

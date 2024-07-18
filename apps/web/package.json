@@ -28,7 +28,6 @@
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
-    "@openstatus/plans": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/rum": "workspace:*",
     "@openstatus/tinybird": "workspace:*",

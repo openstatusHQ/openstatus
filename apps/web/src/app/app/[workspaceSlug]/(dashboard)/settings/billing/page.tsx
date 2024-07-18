@@ -1,4 +1,3 @@
-import { getLimits } from "@openstatus/plans";
 import { Progress, Separator } from "@openstatus/ui";
 
 import { api } from "@/trpc/server";
@@ -8,8 +7,6 @@ import { SettingsPlan } from "./_components/plan";
 export default async function BillingPage() {
   const workspace = await api.workspace.getWorkspace.query();
   const currentNumbers = await api.workspace.getCurrentWorkspaceNumbers.query();
-
-  const limits = getLimits(workspace.plan);
 
   return (
     <div className="grid gap-4">
@@ -21,7 +18,7 @@ export default async function BillingPage() {
       </div>
       <div className="grid max-w-lg gap-3">
         {Object.entries(currentNumbers).map(([key, value]) => {
-          const limit = limits[key as keyof typeof currentNumbers];
+          const limit = workspace.limits[key as keyof typeof currentNumbers];
           return (
             <div key={key}>
               <div className="mb-1 flex items-center justify-between text-muted-foreground">

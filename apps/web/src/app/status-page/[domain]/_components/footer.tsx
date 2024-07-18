@@ -1,5 +1,5 @@
-import { allPlans } from "@openstatus/plans";
-import type { WorkspacePlan } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 

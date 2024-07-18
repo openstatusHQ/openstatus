@@ -1,4 +1,4 @@
-import type { Limits } from "./types";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 export const pricingTableConfig: Record<
   string,
@@ -24,6 +24,15 @@ export const pricingTableConfig: Record<
       },
       { value: "max-regions", label: "Number of Regions" },
       { value: "data-retention", label: "Data retention" },
+    ],
+  },
+  "synthetic-checks": {
+    label: "Synthetic API Checks",
+    features: [
+      {
+        value: "synthetic-checks",
+        label: "Number of synthetic API checks",
+      },
     ],
   },
   "status-pages": {

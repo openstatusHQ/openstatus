@@ -4,12 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { getLimit } from "@openstatus/plans";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import * as assertions from "@openstatus/assertions";
 import type {
   InsertMonitor,
-  MonitorFlyRegion,
   MonitorTag,
   Notification,
   Page,
@@ -38,11 +37,14 @@ import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
 import { SectionStatusPage } from "./section-status-page";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 interface Props {
   defaultSection?: string;
+  limits: Limits;
+  plan: WorkspacePlan;
   defaultValues?: InsertMonitor;
-  plan?: WorkspacePlan;
   notifications?: Notification[];
   tags?: MonitorTag[];
   pages?: Page[];
@@ -55,11 +57,12 @@ const ABORT_TIMEOUT = 7_000; // in ms
 export function MonitorForm({
   defaultSection,
   defaultValues,
-  plan = "free",
   notifications,
   pages,
   tags,
   nextUrl,
+  limits,
+  plan,
   withTestButton = true,
 }: Props) {
   const _assertions = defaultValues?.assertions
@@ -74,7 +77,7 @@ export function MonitorForm({
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,
       id: defaultValues?.id || 0,
-      regions: defaultValues?.regions || getLimit("free", "regions"),
+      regions: defaultValues?.regions || getLimit(limits, "regions"),
       headers: defaultValues?.headers?.length
         ? defaultValues?.headers
         : [{ key: "", value: "" }],
@@ -253,7 +256,7 @@ export function MonitorForm({
           onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
           className="flex w-full flex-col gap-6"
         >
-          <General {...{ form, plan, tags }} />
+          <General {...{ form, tags }} />
           <Tabs
             defaultValue={defaultSection}
             className="w-full"
@@ -291,19 +294,19 @@ export function MonitorForm({
               ) : null}
             </TabsList>
             <TabsContent value="request">
-              <SectionRequests {...{ form, plan, pingEndpoint }} />
+              <SectionRequests {...{ form, pingEndpoint }} />
             </TabsContent>
             <TabsContent value="assertions">
               <SectionAssertions {...{ form }} />
             </TabsContent>
             <TabsContent value="scheduling">
-              <SectionScheduling {...{ form, plan }} />
+              <SectionScheduling {...{ form, limits, plan }} />
             </TabsContent>
             <TabsContent value="notifications">
-              <SectionNotifications {...{ form, plan, notifications }} />
+              <SectionNotifications {...{ form, notifications }} />
             </TabsContent>
             <TabsContent value="status-page">
-              <SectionStatusPage {...{ form, plan, pages }} />
+              <SectionStatusPage {...{ form, pages }} />
             </TabsContent>
             {defaultValues?.id ? (
               <TabsContent value="danger">
@@ -313,7 +316,7 @@ export function MonitorForm({
           </Tabs>
           <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
             {withTestButton ? (
-              <RequestTestButton {...{ form, pingEndpoint }} />
+              <RequestTestButton {...{ form, limits, pingEndpoint }} />
             ) : null}
             <SaveButton
               isPending={isPending}

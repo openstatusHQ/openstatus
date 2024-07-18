@@ -1,8 +1,11 @@
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
 
-import { flyRegions, monitorFlyRegionSchema } from "@openstatus/db/src/schema";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
+import {
+  flyRegions,
+  monitorFlyRegionSchema,
+} from "@openstatus/db/src/schema/constants";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 import { flyRegionsDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {

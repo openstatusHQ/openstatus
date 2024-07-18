@@ -3,11 +3,9 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
-import {
-  flyRegions,
-  monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
+import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+
 import {
   FormControl,
   FormDescription,
@@ -25,6 +23,7 @@ import { groupByContinent } from "@openstatus/utils";
 
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 // TODO: centralize in a shared file!
 const cronJobs = [
@@ -38,13 +37,13 @@ const cronJobs = [
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
+  limits: Limits;
   plan: WorkspacePlan;
 }
 
-export function SectionScheduling({ form, plan }: Props) {
-  const periodicityLimit = getLimit(plan, "periodicity");
-  const regionsLimit = getLimit(plan, "regions");
-  console.log(form.getValues());
+export function SectionScheduling({ form, limits, plan }: Props) {
+  const periodicityLimit = getLimit(limits, "periodicity");
+  const regionsLimit = getLimit(limits, "regions");
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
