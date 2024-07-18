@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { workspacePlans, workspaceRole } from "./constants";
 import { workspace } from "./workspace";
-import { limitSchema, limitsV1 } from "../plan/schema";
+import { limitsV1 } from "../plan/schema";
 import { allPlans } from "../plan/config";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
@@ -12,10 +12,10 @@ export const workspaceRoleSchema = z.enum(workspaceRole);
 export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
   limits: z.string().transform((val) => {
     const parsed = JSON.parse(val);
-    const result = limitSchema.safeParse(parsed);
+    const result = limitsV1.safeParse(parsed);
     if (result.error) {
       // Fallback to default limits
-      return limitSchema.parse({
+      return limitsV1.parse({
         ...allPlans.free.limits,
       });
     }

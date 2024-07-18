@@ -37,11 +37,11 @@ export const limitsV2 = limitsV1.extend({
 
 export type LimitsV2 = z.infer<typeof limitsV2>;
 
-const unknownLimit = z.discriminatedUnion("version", [limitsV1, limitsV2]);
+const unknownLimit = z.discriminatedUnion("version", [limitsV1]);
 
 export function migrateFromV1ToV2({ data }: { data: LimitsV1 }) {
   return {
-    version: 2,
+    version: "v2",
     ...data,
     "private-locations": true,
   };
