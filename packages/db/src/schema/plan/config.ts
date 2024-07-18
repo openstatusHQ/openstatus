@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "../workspaces/validation";
-import type { Limits } from "./schema";
+import type { Limits, LimitsV1, LimitsV2 } from "./schema";
 
 // TODO: rename to `planConfig`
 export const allPlans: Record<
@@ -8,7 +8,7 @@ export const allPlans: Record<
     title: "Hobby" | "Starter" | "Growth" | "Pro";
     description: string;
     price: number;
-    limits: Limits;
+    limits: Limits & { "private-locations": boolean };
   }
 > = {
   free: {
@@ -35,6 +35,7 @@ export const allPlans: Record<
       members: 1,
       "audit-log": false,
       regions: ["ams", "gru", "iad", "jnb", "hkg", "syd"],
+      "private-locations": false,
     },
   },
   starter: {
@@ -97,6 +98,7 @@ export const allPlans: Record<
         "yul",
         "yyz",
       ],
+      "private-locations": false,
     },
   },
   team: {
@@ -159,6 +161,7 @@ export const allPlans: Record<
         "yul",
         "yyz",
       ],
+      "private-locations": false,
     },
   },
   pro: {
@@ -221,6 +224,7 @@ export const allPlans: Record<
         "yul",
         "yyz",
       ],
+      "private-locations": true,
     },
   },
 };

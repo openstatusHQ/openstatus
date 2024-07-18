@@ -114,7 +114,7 @@ export function PricingTable({
                 </TableRow>
                 {features.map(({ label, value, badge }, _i) => {
                   return (
-                    <TableRow key={key}>
+                    <TableRow key={key + label}>
                       <TableCell className="gap-1">
                         {label}{" "}
                         {badge ? (
@@ -156,7 +156,8 @@ export function PricingTable({
 
                         return (
                           <TableCell
-                            key={key}
+                            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                            key={key + value + _i}
                             className={cn(
                               "p-3",
                               plan.key === "team" && "bg-muted/30"
