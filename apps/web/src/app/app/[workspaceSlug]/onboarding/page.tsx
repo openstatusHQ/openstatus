@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
+import { MonitorForm } from "@/components/forms/monitor/form";
 import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
-import { MonitorForm } from "@/components/forms/monitor/form";
 
 export default async function Onboarding({
   params,

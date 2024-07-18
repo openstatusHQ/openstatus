@@ -39,7 +39,7 @@ export const sendAlert = async ({
       Your monitor with url ${monitor.url} is down with ${
         statusCode ? `status code ${statusCode}` : `error message ${message}`
       }.`,
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.error(err);
@@ -70,7 +70,7 @@ export const sendRecovery = async ({
   try {
     await postToWebhook(
       `Your monitor ${name}|${monitor.url}  is up again 🎉`,
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.error(err);
@@ -101,7 +101,7 @@ export const sendDegraded = async ({
   try {
     await postToWebhook(
       `Your monitor ${name}|${monitor.url} is degraded ⚠️`,
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.error(err);
@@ -116,7 +116,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   try {
     await postToWebhook(
       "This is a test notification from OpenStatus. \nIf you see this, it means that your webhook is working! 🎉",
-      webhookUrl
+      webhookUrl,
     );
     return true;
   } catch (_err) {

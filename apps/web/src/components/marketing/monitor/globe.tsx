@@ -19,7 +19,7 @@ function isWebGLContext() {
 export function Globe() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prefersReducedMotion = useMediaQuery(
-    "(prefers-reduced-motion: reduce)"
+    "(prefers-reduced-motion: reduce)",
   );
   const [disabledWebGL, setDisabledWebGL] = useState(false);
 

@@ -57,8 +57,8 @@ export function SectionConnect({ form, monitors }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
+                                        (value) => value !== item.id,
+                                      ),
                                     );
                               }}
                               className="flex-col items-start truncate"

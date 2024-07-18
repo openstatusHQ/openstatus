@@ -12,11 +12,11 @@ import {
 
 import {
   type ColumnDef,
-  getCoreRowModel,
-  useReactTable,
-  flexRender,
   type SortingState,
+  flexRender,
+  getCoreRowModel,
   getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
 

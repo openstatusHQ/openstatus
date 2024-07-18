@@ -1,6 +1,6 @@
-import type { Limits } from "./schema";
-import { allPlans } from "./config";
 import type { WorkspacePlan } from "../workspaces/validation";
+import { allPlans } from "./config";
+import type { Limits } from "./schema";
 
 export function getLimit<T extends keyof Limits>(limits: Limits, limit: T) {
   return limits[limit] || allPlans.free.limits[limit];

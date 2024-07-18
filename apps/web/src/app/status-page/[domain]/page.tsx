@@ -24,7 +24,7 @@ export default async function Page({ params }: Props) {
   const currentMaintenances = page.maintenances.filter(
     (maintenance) =>
       maintenance.to.getTime() > Date.now() &&
-      maintenance.from.getTime() < Date.now()
+      maintenance.from.getTime() < Date.now(),
   );
 
   return (

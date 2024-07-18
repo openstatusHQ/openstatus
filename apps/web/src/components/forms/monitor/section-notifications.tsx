@@ -70,8 +70,8 @@ export function SectionNotifications({ form, notifications }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
+                                        (value) => value !== item.id,
+                                      ),
                                     );
                               }}
                             >

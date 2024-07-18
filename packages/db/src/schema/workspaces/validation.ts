@@ -1,10 +1,10 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import { allPlans } from "../plan/config";
+import { limitsV1 } from "../plan/schema";
 import { workspacePlans, workspaceRole } from "./constants";
 import { workspace } from "./workspace";
-import { limitsV1 } from "../plan/schema";
-import { allPlans } from "../plan/config";
 
 export const workspacePlanSchema = z.enum(workspacePlans);
 export const workspaceRoleSchema = z.enum(workspaceRole);

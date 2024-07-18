@@ -1,3 +1,8 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Mdx } from "@/components/content/mdx";
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
@@ -7,6 +12,7 @@ import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 import { allUnrelateds } from "contentlayer/generated";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "../_components/assertions-timing-form-example";
@@ -14,16 +20,10 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
-import type { Metadata } from "next";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block"
+  (unrelated) => unrelated.slug === "ci-cd-features-block",
 );
 
 export const metadata: Metadata = {

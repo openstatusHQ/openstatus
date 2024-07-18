@@ -13,7 +13,7 @@ export const insertStatusReportUpdateSchema = createInsertSchema(
   statusReportUpdate,
   {
     status: statusReportStatusSchema,
-  }
+  },
 );
 
 export const insertStatusReportSchema = createInsertSchema(statusReport, {
@@ -41,7 +41,7 @@ export const selectStatusReportUpdateSchema = createSelectSchema(
   statusReportUpdate,
   {
     status: statusReportStatusSchema,
-  }
+  },
 );
 
 export type InsertStatusReport = z.infer<typeof insertStatusReportSchema>;

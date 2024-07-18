@@ -10,7 +10,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
     .sort((a, b) => a.latency - b.latency)
     .map((item) => {
       const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
-        item.timing
+        item.timing,
       );
       return {
         region: regionFormatter(item.region),

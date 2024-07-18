@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 import { Label, RadioGroup, RadioGroupItem } from "@openstatus/ui";
+import { useRouter } from "next/navigation";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
@@ -27,7 +27,7 @@ export function PricingPlanRadio() {
             htmlFor={key}
             className={cn(
               "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
-              key === "team" && "bg-muted/50"
+              key === "team" && "bg-muted/50",
             )}
           >
             <span className="text-sm capitalize">{key}</span>

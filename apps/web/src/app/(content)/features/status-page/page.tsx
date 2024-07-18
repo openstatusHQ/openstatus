@@ -1,3 +1,8 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
 import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
@@ -6,29 +11,31 @@ import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
 import { marketingProductPagesConfig } from "@/config/pages";
 import { Button, InputWithAddons } from "@openstatus/ui";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
-import type { Metadata } from "next";
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[1];
 
 export const metadata: Metadata = {
   ...defaultMetadata,
   title: "Status Page",
-  description:'Easily report to your users with our public or private status page.',
+  description:
+    "Easily report to your users with our public or private status page.",
   twitter: {
     ...twitterMetadata,
     title: "Status Page",
-    description:'Easily report to your users with our public or private status page.',
+    description:
+      "Easily report to your users with our public or private status page.",
   },
   openGraph: {
     ...ogMetadata,
     title: "Status Page",
-    description:'Easily report to your users with our public or private status page.',
+    description:
+      "Easily report to your users with our public or private status page.",
   },
 };
 

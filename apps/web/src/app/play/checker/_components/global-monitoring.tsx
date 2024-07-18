@@ -2,18 +2,18 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui";
 
+import { Shell } from "@/components/dashboard/shell";
+import type { ValidIcon } from "@/components/icons";
 import {
   CardContainer,
+  CardContent,
   CardFeature,
   CardFeatureContainer,
-  CardIcon,
-  CardContent,
   CardHeader,
+  CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
 import { Globe } from "@/components/marketing/monitor/globe";
-import type { ValidIcon } from "@/components/icons";
-import { Shell } from "@/components/dashboard/shell";
 
 const features: {
   icon: ValidIcon;

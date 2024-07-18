@@ -5,29 +5,29 @@ import type {
 } from "@openstatus/db/src/schema";
 import {
   sendAlert as sendDiscordAlert,
-  sendRecovery as sendDiscordRecovery,
   sendDegraded as sendDiscordDegraded,
+  sendRecovery as sendDiscordRecovery,
 } from "@openstatus/notification-discord";
 import {
   sendAlert as sendEmailAlert,
-  sendRecovery as sendEmailRecovery,
   sendDegraded as sendEmailDegraded,
+  sendRecovery as sendEmailRecovery,
 } from "@openstatus/notification-emails";
 import {
   sendAlert as sendSlackAlert,
-  sendRecovery as sendSlackRecovery,
   sendDegraded as sendSlackDegraded,
+  sendRecovery as sendSlackRecovery,
 } from "@openstatus/notification-slack";
 import {
   sendAlert as sendSmsAlert,
-  sendRecovery as sendSmsRecovery,
   sendDegraded as sendSmsDegraded,
+  sendRecovery as sendSmsRecovery,
 } from "@openstatus/notification-twillio-sms";
 
 import {
-  sendAlert as sendPagerdutyAlert,
-  sendRecovery as sendPagerDutyRecovery,
   sendDegraded as sendPagerDutyDegraded,
+  sendRecovery as sendPagerDutyRecovery,
+  sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
 
 type SendNotification = ({

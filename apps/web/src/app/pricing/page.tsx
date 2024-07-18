@@ -6,12 +6,12 @@ import { FAQs } from "@/components/marketing/faqs";
 import { EnterpricePlan } from "@/components/marketing/pricing/enterprice-plan";
 import { PricingSlider } from "@/components/marketing/pricing/pricing-slider";
 import { PricingWrapperSuspense } from "@/components/marketing/pricing/pricing-wrapper";
+import { Separator } from "@openstatus/ui";
 import {
   defaultMetadata,
   ogMetadata,
   twitterMetadata,
 } from "../shared-metadata";
-import { Separator } from "@openstatus/ui";
 
 export const metadata: Metadata = {
   ...defaultMetadata,

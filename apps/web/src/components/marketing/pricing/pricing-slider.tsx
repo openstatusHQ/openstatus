@@ -77,12 +77,12 @@ export function PricingSlider() {
             onValueChange={setIndex}
           />
           <div className="flex items-center justify-between">
-            {slides.map((slide, i) => (
+            {slides.map((slide, _i) => (
               // TODO: make them clickable
               <div
                 key={slide.key}
                 className={cn(
-                  "text-left font-mono text-muted-foreground text-xs"
+                  "text-left font-mono text-muted-foreground text-xs",
                 )}
               >
                 {slide.key}

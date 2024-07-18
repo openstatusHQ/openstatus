@@ -32,7 +32,7 @@ export function MarketingHeader({ className }: Props) {
     <header
       className={cn(
         "sticky top-3 z-10 flex w-full items-center justify-between gap-8 rounded-full border border-border px-2.5 py-1.5 backdrop-blur-lg md:top-6",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-6">
@@ -41,7 +41,7 @@ export function MarketingHeader({ className }: Props) {
         </div>
         <div
           className={cn(
-            "mx-auto hidden items-center justify-center border border-transparent md:flex md:gap-1"
+            "mx-auto hidden items-center justify-center border border-transparent md:flex md:gap-1",
           )}
         >
           <NavigationMenu>
@@ -56,7 +56,7 @@ export function MarketingHeader({ className }: Props) {
                           className={cn(
                             navigationMenuTriggerStyle(),
                             "h-9 rounded-full bg-transparent text-muted-foreground hover:bg-accent/50",
-                            { "text-foreground": href === pathname }
+                            { "text-foreground": href === pathname },
                           )}
                         >
                           {title}
@@ -122,7 +122,7 @@ const ListItem = React.forwardRef<
           ref={ref}
           className={cn(
             "flex select-none gap-3 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
-            className
+            className,
           )}
           {...props}
         >

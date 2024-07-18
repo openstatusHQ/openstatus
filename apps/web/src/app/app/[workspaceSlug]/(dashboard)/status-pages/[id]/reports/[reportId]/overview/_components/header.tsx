@@ -31,7 +31,7 @@ export function Header({
   const [open, setOpen] = useState(false);
 
   const firstUpdate = report.statusReportUpdates?.[0];
-  const lastUpdate =
+  const _lastUpdate =
     report.statusReportUpdates?.[report.statusReportUpdates?.length - 1];
 
   return (

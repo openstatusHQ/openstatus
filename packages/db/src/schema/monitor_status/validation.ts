@@ -1,16 +1,16 @@
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import type { z } from "zod";
 
+import { monitorRegionSchema } from "../constants";
 import { monitorStatusSchema } from "../monitors";
 import { monitorStatusTable } from "./monitor_status";
-import { monitorRegionSchema } from "../constants";
 
 export const selectMonitorStatusSchema = createSelectSchema(
   monitorStatusTable,
   {
     status: monitorStatusSchema.default("active"),
     region: monitorRegionSchema.default("ams"),
-  }
+  },
 );
 
 export const insertMonitorStatusSchema = createInsertSchema(
@@ -18,7 +18,7 @@ export const insertMonitorStatusSchema = createInsertSchema(
   {
     status: monitorStatusSchema.default("active"),
     region: monitorRegionSchema.default("ams"),
-  }
+  },
 );
 
 // export type InsertMonitorStatus = z.infer<typeof insertMonitorStatusSchema>;

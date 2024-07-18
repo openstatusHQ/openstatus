@@ -79,7 +79,7 @@ const customTooltip = ({
                 <div
                   className={cn(
                     "flex w-1 flex-col rounded",
-                    `bg-${category.color}-500`
+                    `bg-${category.color}-500`,
                   )}
                 />
                 <div className="flex w-full justify-between gap-2">

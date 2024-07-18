@@ -4,12 +4,12 @@ import type { Context, Next } from "hono";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
-import type { Variables } from "./index";
 import { HTTPException } from "hono/http-exception";
+import type { Variables } from "./index";
 
 export async function middleware(
   c: Context<{ Variables: Variables }, "/*">,
-  next: Next
+  next: Next,
 ) {
   const key = c.req.header("x-openstatus-key");
   if (!key) throw new HTTPException(401, { message: "Unauthorized" });

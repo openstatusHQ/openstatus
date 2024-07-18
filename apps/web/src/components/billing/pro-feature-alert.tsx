@@ -4,8 +4,8 @@ import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
-import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
+import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 interface Props {
   feature: string;

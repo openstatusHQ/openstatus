@@ -14,8 +14,8 @@ import { Badge, Button } from "@openstatus/ui";
 import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "../status-update/status-badge";
-import { ProcessMessage } from "./process-message";
 import { DateTimeTooltip } from "./datetime-tooltip";
+import { ProcessMessage } from "./process-message";
 
 function StatusReport({
   report,

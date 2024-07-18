@@ -58,7 +58,7 @@ export const sendAlert = async ({
           },
         ],
       },
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.log(err);
@@ -110,7 +110,7 @@ export const sendRecovery = async ({
           },
         ],
       },
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.log(err);
@@ -159,7 +159,7 @@ export const sendDegraded = async ({
           },
         ],
       },
-      webhookUrl
+      webhookUrl,
     );
   } catch (err) {
     console.log(err);
@@ -181,7 +181,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
           },
         ],
       },
-      webhookUrl
+      webhookUrl,
     );
     return true;
   } catch (_err) {

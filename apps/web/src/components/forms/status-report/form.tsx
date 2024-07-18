@@ -78,7 +78,7 @@ export function StatusReportForm({
               message,
               pageId,
               ...rest,
-            }
+            },
           );
           // include update on creation
           if (statusReport?.id) {
