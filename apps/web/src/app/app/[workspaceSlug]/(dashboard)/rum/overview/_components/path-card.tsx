@@ -1,6 +1,4 @@
 import { api } from "@/trpc/server";
-import { useSearchParams } from "next/navigation";
-import { use } from "react";
 import { RUMCard } from "../../_components/rum-card";
 
 export const PathCard = async ({
