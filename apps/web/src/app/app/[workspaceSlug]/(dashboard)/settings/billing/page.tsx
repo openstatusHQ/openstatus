@@ -8,6 +8,7 @@ export default async function BillingPage() {
   const workspace = await api.workspace.getWorkspace.query();
   const currentNumbers = await api.workspace.getCurrentWorkspaceNumbers.query();
 
+  console.log(currentNumbers);
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-3">

@@ -1,10 +1,10 @@
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
 
 export const pricingTableConfig: Record<
   string,
   {
     label: string;
-    features: { value: keyof Limits; label: string; badge?: string }[];
+    features: { value: keyof LimitsV2; label: string; badge?: string }[];
   }
 > = {
   monitors: {
@@ -23,6 +23,7 @@ export const pricingTableConfig: Record<
         label: "Multi-region monitoring",
       },
       { value: "max-regions", label: "Number of Regions" },
+
       { value: "data-retention", label: "Data retention" },
     ],
   },
@@ -33,6 +34,7 @@ export const pricingTableConfig: Record<
         value: "synthetic-checks",
         label: "Number of synthetic API checks",
       },
+      { value: "private-locations", label: "Private Locations" },
     ],
   },
   "status-pages": {

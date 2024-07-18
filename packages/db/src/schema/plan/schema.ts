@@ -29,13 +29,29 @@ export const limitsV1 = z.object({
   regions: monitorFlyRegionSchema.array(),
 });
 
-const unknownLimit = z.discriminatedUnion("version", [limitsV1]);
+export type LimitsV1 = z.infer<typeof limitsV1>;
+export const limitsV2 = limitsV1.extend({
+  version: z.literal("v2"),
+  "private-locations": z.boolean(),
+});
 
-// export const limitSchema = unknownLimit.transform((val) => {
-//   if (!val.version) {
-//     return migrateFromV1ToV2(val);
-//   }
-//   return val;
-// });
+export type LimitsV2 = z.infer<typeof limitsV2>;
+
+const unknownLimit = z.discriminatedUnion("version", [limitsV1, limitsV2]);
+
+export function migrateFromV1ToV2({ data }: { data: LimitsV1 }) {
+  return {
+    version: 2,
+    ...data,
+    "private-locations": true,
+  };
+}
+
+export const limitSchema = unknownLimit.transform((val) => {
+  if (!val.version) {
+    return migrateFromV1ToV2({ data: val });
+  }
+  return val;
+});
 
 export type Limits = z.infer<typeof unknownLimit>;
