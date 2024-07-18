@@ -1,20 +1,20 @@
 # https://github.com/kentcdodds/kentcdodds.com/blob/main/.github/workflows/deployment.yml
-name: Code Check
+name: autofix.ci # needed to securely identify the workflow
 on:
-  push:
-    branches:
-      - "main"
   pull_request:
-    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 
 jobs:
-  lint:
-    name: ⬣ BiomeJS
+  autofix:
+    name: autofix
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -35,3 +35,7 @@ jobs:
 
       - name: 🔬 Lint
         run: pnpm format
+      - name: Apply fixes
+        uses: autofix-ci/action@dd55f44df8f7cdb7a6bf74c78677eb8acd40cd0a
+        with:
+          commit-message: 'ci: apply automated fixes'
