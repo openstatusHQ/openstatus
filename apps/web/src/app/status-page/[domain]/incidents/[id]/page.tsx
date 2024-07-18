@@ -37,7 +37,7 @@ export default async function IncidentPage({
         }
         actions={<CopyLinkButton />}
       />
-      <StatusReportUpdates report={report} />
+      <StatusReportUpdates updates={report.statusReportUpdates} />
     </div>
   );
 }

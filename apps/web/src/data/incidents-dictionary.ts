@@ -27,4 +27,12 @@ export const statusDict = {
     color: "border-green-500/20 bg-green-500/10 text-green-500",
     order: 4,
   },
+  // FIXME: check source of thruth
+  maintenance: {
+    value: "maintenance",
+    label: "Maintenance",
+    icon: "hammer",
+    color: "border-blue-500/20 bg-blue-500/10 text-blue-500",
+    order: 0,
+  },
 } as const;

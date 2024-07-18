@@ -1,7 +1,10 @@
 import { notEmpty } from "@/lib/utils";
 import type { Maintenance, PublicMonitor } from "@openstatus/db/src/schema";
 import { Badge } from "@openstatus/ui";
-import { format, isSameDay } from "date-fns";
+import { format } from "date-fns";
+import { Fragment } from "react";
+import { DayHeader } from "./day-header";
+import { StatusReportHeader, StatusReportUpdates } from "./status-report";
 
 export function MaintenanceList({
   maintenances,
@@ -14,42 +17,74 @@ export function MaintenanceList({
     return <EmptyState />;
   }
 
+  function groupMaintenancesByDay(maintenances: Maintenance[]) {
+    const grouped = maintenances.reduce(
+      (acc, maintenance) => {
+        const date = new Date(maintenance.from.toDateString()).getTime();
+
+        const exists = acc.find((item) => item.timestamp === date);
+
+        if (exists) {
+          exists.maintenances.push(maintenance);
+        } else {
+          acc.push({ timestamp: date, maintenances: [maintenance] });
+        }
+
+        return acc;
+      },
+      [] as { timestamp: number; maintenances: Maintenance[] }[]
+    );
+
+    grouped.sort((a, b) => b.timestamp - a.timestamp);
+
+    return grouped;
+  }
+
   return (
-    <ul className="grid gap-6">
-      {maintenances.map((maintenance) => {
-        const maintenanceMonitors = maintenance.monitors
-          ?.map((id) => {
-            return monitors.find((monitor) => monitor.id === id);
-          })
-          .filter(notEmpty);
+    <div className="grid gap-4">
+      {groupMaintenancesByDay(maintenances).map((group) => {
         return (
-          <li key={maintenance.id} className="grid gap-3">
-            <div>
-              <h3 className="font-semibold text-xl">{maintenance.title}</h3>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-mono text-muted-foreground text-sm">
-                  {format(maintenance.from, "LLL dd, y HH:mm")} -{" "}
-                  {isSameDay(maintenance.from, maintenance.to)
-                    ? format(maintenance.to, "HH:mm")
-                    : format(maintenance.to, "LLL dd, y HH:mm")}
-                </span>
-                {maintenanceMonitors?.length ? (
-                  <>
-                    <span className="text-muted-foreground/50 text-xs">•</span>
-                    {maintenanceMonitors.map((monitor) => (
-                      <Badge key={monitor.id} variant="secondary">
-                        {monitor.name}
-                      </Badge>
-                    ))}
-                  </>
-                ) : null}
-              </div>
-            </div>
-            <p>{maintenance.message}</p>
-          </li>
+          <Fragment key={group.timestamp}>
+            <DayHeader date={new Date(group.timestamp)} />
+            {group.maintenances.map((maintenance, i) => {
+              const affectedMonitors = maintenance.monitors
+                ?.map((monitorId) => {
+                  const monitor = monitors.find(({ id }) => monitorId === id);
+                  return monitor || undefined;
+                })
+                .filter(notEmpty);
+
+              return (
+                <div
+                  key={maintenance.id}
+                  className="grid gap-4 border border-transparent p-3"
+                >
+                  <StatusReportHeader
+                    title={maintenance.title}
+                    monitors={affectedMonitors || []}
+                    actions={
+                      <p className="font-mono text-muted-foreground text-sm">
+                        {format(maintenance.from, "LLL dd HH:mm")} -{" "}
+                        {format(maintenance.to, "LLL dd HH:mm")}
+                      </p>
+                    }
+                  />
+                  <StatusReportUpdates
+                    updates={[
+                      {
+                        message: maintenance.message,
+                        id: maintenance.id,
+                        status: "maintenance",
+                      },
+                    ]}
+                  />
+                </div>
+              );
+            })}
+          </Fragment>
         );
       })}
-    </ul>
+    </div>
   );
 }
 
