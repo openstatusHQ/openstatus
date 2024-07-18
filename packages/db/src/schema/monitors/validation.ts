@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import * as assertions from "@openstatus/assertions";
 
+import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 import { monitor, monitorsToPages } from "./monitor";
-import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
 
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
@@ -26,16 +26,19 @@ const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
 
-const headersToArraySchema = z.preprocess((val) => {
-  // early return in case the header is already an array
-  if (Array.isArray(val)) {
-    return val;
-  }
-  if (String(val).length > 0) {
-    return JSON.parse(String(val));
-  }
-  return [];
-}, z.array(z.object({ key: z.string(), value: z.string() })).default([]));
+const headersToArraySchema = z.preprocess(
+  (val) => {
+    // early return in case the header is already an array
+    if (Array.isArray(val)) {
+      return val;
+    }
+    if (String(val).length > 0) {
+      return JSON.parse(String(val));
+    }
+    return [];
+  },
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+);
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),

@@ -2,10 +2,10 @@ import type {
   InsertNotification,
   NotificationProvider,
 } from "@openstatus/db/src/schema";
-import { sendTestDiscordMessage } from "@openstatus/notification-discord";
-import { sendTestSlackMessage } from "@openstatus/notification-slack";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
+import { sendTestDiscordMessage } from "@openstatus/notification-discord";
+import { sendTestSlackMessage } from "@openstatus/notification-slack";
 export function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (!defaultValues?.provider) return ""; // FIXME: input can empty - needs to be undefined
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];

@@ -39,13 +39,13 @@ export default async function EditPage({
         degradedAfter: monitor.degradedAfter ?? undefined,
         pages: pages
           .filter((page) =>
-            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id)
+            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id),
           )
           .map(({ id }) => id),
         notifications: monitorNotifications?.map(({ id }) => id),
         tags: tags
           .filter((tag) =>
-            tag.monitor.map(({ monitorId }) => monitorId).includes(id)
+            tag.monitor.map(({ monitorId }) => monitorId).includes(id),
           )
           .map(({ id }) => id),
       }}

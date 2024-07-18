@@ -59,7 +59,6 @@ export const sendDegraded = async ({
   notification,
   statusCode,
   message,
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;

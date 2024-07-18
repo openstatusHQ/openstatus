@@ -40,8 +40,8 @@ export function registerDeleteStatusReport(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId))
-        )
+          eq(statusReport.workspaceId, Number(workspaceId)),
+        ),
       )
       .get();
 

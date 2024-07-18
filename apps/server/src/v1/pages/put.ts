@@ -59,7 +59,7 @@ export function registerPutPage(api: typeof pagesApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
       )
       .get();
 
@@ -98,8 +98,8 @@ export function registerPutPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 
@@ -132,8 +132,8 @@ export function registerPutPage(api: typeof pagesApi) {
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, newPage.id)
-          )
+            eq(monitorsToPages.pageId, newPage.id),
+          ),
         );
     }
 

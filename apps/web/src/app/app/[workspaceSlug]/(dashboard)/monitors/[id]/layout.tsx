@@ -54,7 +54,7 @@ export default async function Layout({
                 <span className="text-muted-foreground/50 text-xs">•</span>
                 <TagBadgeWithTooltip
                   tags={monitor.monitorTagsToMonitors.map(
-                    ({ monitorTag }) => monitorTag
+                    ({ monitorTag }) => monitorTag,
                   )}
                 />
               </>

@@ -1,7 +1,7 @@
 {
   "editor.codeActionsOnSave": {},
   "editor.defaultFormatter": "biomejs.biome",
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "typescript.tsdk": "node_modules/typescript/lib",
 
   "typescript.enablePromptUseWorkspaceTsdk": true,

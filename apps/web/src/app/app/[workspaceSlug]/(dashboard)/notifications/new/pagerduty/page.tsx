@@ -1,8 +1,8 @@
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
-import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 
 import { z } from "zod";
 

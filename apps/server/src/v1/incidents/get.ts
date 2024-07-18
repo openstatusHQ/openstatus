@@ -40,8 +40,8 @@ export function registerGetIncident(app: typeof incidentsApi) {
       .where(
         and(
           eq(incidentTable.workspaceId, Number(workspaceId)),
-          eq(incidentTable.id, Number(id))
-        )
+          eq(incidentTable.id, Number(id)),
+        ),
       )
       .get();
 

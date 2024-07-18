@@ -116,7 +116,7 @@ export function PasswordForm({ slug }: PasswordFormProps) {
                     <button
                       onClick={() =>
                         setInputType((type) =>
-                          type === "password" ? "text" : "password"
+                          type === "password" ? "text" : "password",
                         )
                       }
                     >

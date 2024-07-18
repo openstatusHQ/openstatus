@@ -77,7 +77,7 @@ export function SectionMonitor({ form, monitors }: Props) {
                       const splitValue = currentValue.split("-");
                       const id = splitValue?.[splitValue.length - 1];
                       const monitorIndex = watchMonitors.findIndex(
-                        (m) => m.monitorId === Number.parseInt(id)
+                        (m) => m.monitorId === Number.parseInt(id),
                       );
                       if (monitorIndex !== -1) {
                         remove(monitorIndex);
@@ -100,7 +100,7 @@ export function SectionMonitor({ form, monitors }: Props) {
                         "ml-auto h-4 w-4 shrink-0",
                         watchMonitors.some((m) => m.monitorId === monitor.id)
                           ? "opacity-100"
-                          : "opacity-0"
+                          : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -126,7 +126,7 @@ export function SectionMonitor({ form, monitors }: Props) {
           <div className="w-full space-y-2">
             {fields.map((field) => {
               const monitor = monitors?.find(
-                ({ id }) => field.monitorId === id
+                ({ id }) => field.monitorId === id,
               );
               if (!monitor) return null;
               return (

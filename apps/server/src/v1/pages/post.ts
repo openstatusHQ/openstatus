@@ -4,12 +4,12 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -96,8 +96,8 @@ export function registerPostPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 

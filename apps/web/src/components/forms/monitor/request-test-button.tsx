@@ -7,8 +7,8 @@ import type { UseFormReturn } from "react-hook-form";
 import { deserialize } from "@openstatus/assertions";
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
-  flyRegions,
   type MonitorFlyRegion,
+  flyRegions,
 } from "@openstatus/db/src/schema/constants";
 import {
   Button,
@@ -33,14 +33,14 @@ import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
   limits: Limits;
   pingEndpoint(
-    region?: MonitorFlyRegion
+    region?: MonitorFlyRegion,
   ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
@@ -146,7 +146,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
                 JSON.stringify([
                   ...(statusAssertions || []),
                   ...(headerAssertions || []),
-                ])
+                ]),
               )}
             />
           </div>

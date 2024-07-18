@@ -2,9 +2,9 @@ import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -29,7 +29,7 @@ export const tinybirdRouter = createTRPCRouter({
         url: z.string().url().optional(),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.endpointResponseDetails("7d")(opts.input);
@@ -52,7 +52,7 @@ export const tinybirdRouter = createTRPCRouter({
         dsn: z.string(),
         path: z.string(),
         period: z.enum(["24h", "7d", "30d"]),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.applicationRUMMetricsForPath()(opts.input);
@@ -63,7 +63,7 @@ export const tinybirdRouter = createTRPCRouter({
         dsn: z.string(),
         path: z.string(),
         period: z.enum(["24h", "7d", "30d"]),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.applicationSessionMetricsPerPath()(opts.input);

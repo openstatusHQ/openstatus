@@ -53,7 +53,7 @@ export default async function Page({
             });
 
             return { monitor, data };
-          })
+          }),
         )
       : undefined;
 
@@ -83,7 +83,7 @@ export default async function Page({
                 groupDataByTimestamp(
                   data.map((data) => ({ ...data, region: "ams" })),
                   period,
-                  quantile
+                  quantile,
                 );
               return (
                 <li key={monitor.id} className="grid gap-2">

@@ -1,10 +1,10 @@
+import { InfoAlertDialog } from "@/components/dashboard/info-alert-dialog";
 import { AppHeader } from "@/components/layout/header/app-header";
 import { api } from "@/trpc/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
-import { InfoAlertDialog } from "@/components/dashboard/info-alert-dialog";
-import Link from "next/link";
 
 // TODO: make the container min-h-screen and the footer below!
 export default async function AppLayout({

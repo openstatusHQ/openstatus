@@ -1,8 +1,9 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { apiReference } from "@scalar/hono-api-reference";
 
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { handleError, handleZodError } from "../libs/errors";
 import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
@@ -13,7 +14,6 @@ import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { statusReportsApi } from "./statusReports";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 export type Variables = {
   workspaceId: string;
@@ -47,7 +47,7 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
-  })
+  }),
 );
 /**
  * Authentification Middleware

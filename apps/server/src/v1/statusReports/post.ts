@@ -10,13 +10,13 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendEmailHtml } from "@openstatus/emails";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { isoDate } from "../utils";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -72,8 +72,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
             inArray(monitor.id, monitorIds),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 
@@ -89,8 +89,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(page.workspaceId, Number(workspaceId)),
-            eq(page.id, rest.pageId)
-          )
+            eq(page.id, rest.pageId),
+          ),
         )
         .all();
 
@@ -127,7 +127,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               monitorId: id,
               statusReportId: _newStatusReport.id,
             };
-          })
+          }),
         )
         .returning();
     }
@@ -139,8 +139,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _newStatusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
       const pageInfo = await db
@@ -150,7 +150,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .get();
       if (pageInfo) {
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email
+          (subscriber) => subscriber.email,
         );
         await sendEmailHtml({
           to: subscribersEmails,

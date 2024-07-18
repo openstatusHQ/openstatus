@@ -26,7 +26,7 @@ export function DateTimeTooltip({
           onClick={() => setOpen(false)}
           className={cn(
             "text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
-            className
+            className,
           )}
           asChild
         >

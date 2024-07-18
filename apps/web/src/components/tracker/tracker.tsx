@@ -155,7 +155,7 @@ export const Bar = ({
               <div
                 className={cn(
                   rootClassName,
-                  "h-auto w-1 flex-none rounded-full"
+                  "h-auto w-1 flex-none rounded-full",
                 )}
               />
               <div className="grid flex-1 gap-1">
@@ -250,7 +250,7 @@ export function DowntimeText({
       Down for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false }
+        { format: ["days", "hours", "minutes", "seconds"], zero: false },
       )}
     </p>
   );
