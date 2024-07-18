@@ -1,5 +1,3 @@
-"use client";
-
 import type { Assertion } from "@openstatus/assertions";
 
 import {

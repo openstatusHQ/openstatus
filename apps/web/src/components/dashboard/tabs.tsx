@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Separator,
   Tabs as ShadcnTabs,
