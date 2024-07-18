@@ -98,7 +98,7 @@ export const allPlans: Record<
         "yul",
         "yyz",
       ],
-      "private-locations": true,
+      "private-locations": false,
     },
   },
   team: {
@@ -161,7 +161,7 @@ export const allPlans: Record<
         "yul",
         "yyz",
       ],
-      "private-locations": true,
+      "private-locations": false,
     },
   },
   pro: {
