@@ -15,8 +15,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-
-
 export function PHProvider({ children }: { children: React.ReactNode }) {
   if (process.env.NODE_ENV !== "production") {
     return <>{children}</>;

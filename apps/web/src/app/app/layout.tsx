@@ -2,9 +2,9 @@ import { SessionProvider } from "next-auth/react";
 
 import { PHProvider } from "@/providers/posthog";
 
-const PostHogPageview = dynamic( () =>  import('@/app/PostHogPageView'), {
+const PostHogPageview = dynamic(() => import("@/app/PostHogPageView"), {
   ssr: false,
-})
+});
 
 import { Bubble } from "@/components/support/bubble";
 import dynamic from "next/dynamic";
