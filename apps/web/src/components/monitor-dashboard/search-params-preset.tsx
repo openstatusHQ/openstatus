@@ -13,6 +13,7 @@ import type { ReactNode } from "react";
 import { Icons } from "@/components/icons";
 import type { ValidIcon } from "@/components/icons";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { cn } from "@/lib/utils";
 
 export function SearchParamsPreset<T extends string>({
   disabled,
@@ -22,6 +23,7 @@ export function SearchParamsPreset<T extends string>({
   icon,
   placeholder,
   formatter,
+  className,
 }: {
   disabled?: boolean;
   defaultValue?: T;
@@ -30,6 +32,7 @@ export function SearchParamsPreset<T extends string>({
   icon?: ValidIcon;
   placeholder?: string;
   formatter?(value: T): ReactNode;
+  className?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,7 +51,9 @@ export function SearchParamsPreset<T extends string>({
       onValueChange={onSelect}
       disabled={disabled}
     >
-      <SelectTrigger className="w-[150px] bg-background text-left">
+      <SelectTrigger
+        className={cn("w-[150px] bg-background text-left", className)}
+      >
         <span className="flex items-center gap-2">
           {Icon ? <Icon className="h-4 w-4" /> : null}
           <SelectValue placeholder={placeholder} />

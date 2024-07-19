@@ -17,6 +17,7 @@ export function DateTimeTooltip({
 }: {
   date?: Date;
   className?: string;
+  // formatter?: (date: Date) => string;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -25,15 +26,14 @@ export function DateTimeTooltip({
         <TooltipTrigger
           onClick={() => setOpen(false)}
           className={cn(
-            "text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
+            "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
             className
           )}
-          asChild
         >
-          <span>{formatInTimeZone(date, "UTC", "LLL dd, y HH:mm (z)")}</span>
+          {formatInTimeZone(date, "UTC", "LLL dd, y HH:mm (z)")}
         </TooltipTrigger>
         <TooltipContent>
-          <p className="text-muted-foreground text-xs">
+          <p className="font-mono text-muted-foreground text-xs">
             {format(date, "LLL dd, y HH:mm (z)")}
           </p>
         </TooltipContent>

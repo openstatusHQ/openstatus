@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { ProcessMessage } from "./process-message";
 import { statusDict } from "@/data/incidents-dictionary";
 import { Icons } from "../icons";
-import { format } from "date-fns";
+import { DateTimeTooltip } from "./datetime-tooltip";
 
 function StatusReport({
   report,
@@ -28,7 +28,7 @@ function StatusReport({
 }) {
   const params = useParams<{ domain: string }>();
   return (
-    <Link href={setPrefixUrl(`/incidents/${report.id}`, params)}>
+    <Link href={setPrefixUrl(`/feed/report/${report.id}`, params)}>
       <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
         <StatusReportHeader title={report.title} {...{ monitors, actions }} />
         <StatusReportUpdates updates={report.statusReportUpdates} />
@@ -48,10 +48,10 @@ function StatusReportHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-semibold text-xl">{title}</h3>
-        <ul className="flex gap-2">
+        <ul className="flex flex-wrap gap-2">
           {monitors.map((monitor) => (
             <li key={monitor.id}>
               <Badge variant="secondary">{monitor.name}</Badge>
@@ -116,9 +116,7 @@ function StatusReportUpdates({ updates }: StatusReportUpdatesProps) {
                 <p className="font-medium text-sm">{label}</p>
                 {update.date ? (
                   <p className="mt-px text-muted-foreground text-xs">
-                    <code>
-                      {format(new Date(update.date), "LLL dd, y HH:mm")}
-                    </code>
+                    <DateTimeTooltip date={new Date(update.date)} />
                   </p>
                 ) : null}
               </div>

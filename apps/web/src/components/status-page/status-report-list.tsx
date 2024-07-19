@@ -87,7 +87,6 @@ export const StatusReportList = ({
                   return monitor || undefined;
                 })
                 .filter(notEmpty);
-              const isLast = reports.length - 1 === i;
 
               return (
                 <div key={report.id} className="grid gap-6">

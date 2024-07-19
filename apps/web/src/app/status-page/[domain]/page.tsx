@@ -1,15 +1,13 @@
 import { subDays } from "date-fns";
 import { notFound } from "next/navigation";
 
-import { Separator } from "@openstatus/ui";
-
 import { Header } from "@/components/dashboard/header";
 import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
-import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { Feed } from "@/components/status-page/feed";
 
 type Props = {
   params: { domain: string };
@@ -61,11 +59,28 @@ export default async function Page({ params }: Props) {
           description="The status page has no connected monitors."
         />
       )}
-      <StatusReportList
-        statusReports={page.statusReports}
-        monitors={page.monitors}
-        filter={{ date: subDays(Date.now(), 7), open: true }}
-      />
+      {page.statusReports.length || page.maintenances.length ? (
+        <Feed
+          monitors={page.monitors}
+          maintenances={page.maintenances.filter((maintenance) => {
+            return (
+              maintenance.from.getTime() > subDays(new Date(), 7).getTime()
+            );
+          })}
+          statusReports={page.statusReports.filter((report) => {
+            return report.statusReportUpdates.some(
+              (update) =>
+                update.date.getTime() > subDays(new Date(), 7).getTime()
+            );
+          })}
+        />
+      ) : (
+        <EmptyState
+          icon="siren"
+          title="No latest incidents"
+          description="There have been no incidents within the last 7 days."
+        />
+      )}
     </div>
   );
 }

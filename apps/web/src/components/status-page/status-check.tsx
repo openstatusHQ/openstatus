@@ -31,8 +31,8 @@ export async function StatusCheck({
           <StatusIcon variant={details.variant} />
         </span>
       </div>
-      <div className="flex flex-wrap gap-2">
-        <p className="text-muted-foreground text-xs">Status Check</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-muted-foreground text-sm">Status Check</p>
         <span className="text-muted-foreground/50 text-xs">•</span>{" "}
         <p className="text-xs">
           <DateTimeTooltip date={new Date()} />

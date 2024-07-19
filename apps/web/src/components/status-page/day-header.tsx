@@ -1,12 +1,16 @@
-import { Separator } from "@openstatus/ui";
+import { Badge, Separator } from "@openstatus/ui";
 import { format } from "date-fns";
 
 export function DayHeader({ date }: { date: Date }) {
+  const isInFuture = date.getTime() > new Date().getTime();
   return (
     <div className="grid gap-2">
-      <p className="font-mono text-muted-foreground text-sm">
-        {format(date, "LLL dd, y")}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-muted-foreground text-sm">
+          {format(date, "LLL dd, y")}
+        </p>
+        {isInFuture ? <Badge>Soon</Badge> : null}
+      </div>
       <Separator />
     </div>
   );

@@ -56,7 +56,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col space-y-6 p-4 md:p-8">
+    <div className="relative mx-auto flex min-h-screen w-full max-w-3xl flex-col space-y-6 p-4 md:p-8">
       <Header navigation={navigation} plan={plan} page={page} />
       <main className="flex h-full w-full flex-1 flex-col">
         <Shell className="mx-auto h-full flex-1 px-4 py-4">{children}</Shell>

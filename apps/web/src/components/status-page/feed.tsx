@@ -4,7 +4,6 @@ import type {
   PublicMonitor,
   StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
-import { Fragment } from "react";
 import { DayHeader } from "./day-header";
 import { MaintenanceContainer } from "./maintenance";
 import { StatusReport } from "./status-report";
@@ -26,10 +25,6 @@ export function Feed({
   statusReports: StatusReportWithUpdates[];
   monitors: PublicMonitor[];
 }) {
-  if (!maintenances.length) {
-    return <EmptyState />;
-  }
-
   function groupByDay(
     maintenances: Maintenance[],
     statusReports: StatusReportWithUpdates[]
@@ -93,10 +88,10 @@ export function Feed({
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-8">
       {groupByDay(maintenances, statusReports).map((group) => {
         return (
-          <Fragment key={group.timestamp}>
+          <div key={group.timestamp} className="grid gap-4">
             <DayHeader date={new Date(group.timestamp)} />
             {group.list.map((item, i) => {
               if (item.type === "maintenance") {
@@ -112,6 +107,7 @@ export function Feed({
                     key={item.value.id}
                     maintenance={item.value}
                     monitors={affectedMonitors || []}
+                    className="rounded-lg border-blue-500/10 bg-blue-500/5"
                   />
                 );
               }
@@ -134,17 +130,9 @@ export function Feed({
               }
               return null;
             })}
-          </Fragment>
+          </div>
         );
       })}
     </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <p className="text-center font-light text-muted-foreground text-sm">
-      No maintenances reported.
-    </p>
   );
 }

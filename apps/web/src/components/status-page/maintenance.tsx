@@ -1,23 +1,27 @@
 import type { Maintenance, PublicMonitor } from "@openstatus/db/src/schema";
 import { StatusReportHeader, StatusReportUpdates } from "./status-report";
-import { format } from "date-fns";
+import { cn } from "@/lib/utils";
+import { DateTimeTooltip } from "./datetime-tooltip";
 
 export function MaintenanceContainer({
   maintenance,
   monitors,
+  className,
 }: {
   maintenance: Maintenance;
   monitors: PublicMonitor[];
+  className?: string;
 }) {
   return (
-    <div className="grid gap-4 border border-transparent p-3">
+    <div className={cn("grid gap-4 border border-transparent p-3", className)}>
       <StatusReportHeader
         title={maintenance.title}
         monitors={monitors || []}
+        // <DateTimeTooltip date={new Date()} />
         actions={
-          <p className="font-mono text-muted-foreground text-sm">
-            {format(maintenance.from, "LLL dd HH:mm")} -{" "}
-            {format(maintenance.to, "LLL dd HH:mm")}
+          <p className="font-mono text-muted-foreground text-xs">
+            <DateTimeTooltip date={maintenance.from} /> -{" "}
+            <DateTimeTooltip date={maintenance.to} />
           </p>
         }
       />

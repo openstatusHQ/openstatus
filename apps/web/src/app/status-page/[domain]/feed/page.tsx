@@ -1,9 +1,14 @@
 import { api } from "@/trpc/server";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/dashboard/header";
-import { StatusReportList } from "@/components/status-page/status-report-list";
-import { MaintenanceList } from "@/components/status-page/maintenance-list";
 import { Feed } from "@/components/status-page/feed";
+import { z } from "zod";
+import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params-preset";
+import { formatter } from "./utils";
+
+const searchParamsSchema = z.object({
+  filter: z.enum(["all", "maintenances", "reports"]).optional().default("all"),
+});
 
 type Props = {
   params: { domain: string };
@@ -12,21 +17,38 @@ type Props = {
 
 export const revalidate = 120;
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
+  const search = searchParamsSchema.safeParse(searchParams);
+
   if (!page) return notFound();
+
+  const filter = search.success ? search.data.filter : "all";
 
   return (
     <div className="grid gap-8">
       <Header
         title={page.title}
         description={page.description}
+        actions={
+          <SearchParamsPreset
+            searchParam="filter"
+            defaultValue={filter}
+            values={["all", "maintenances", "reports"]}
+            className="w-auto sm:w-[150px]"
+            formatter={formatter}
+          />
+        }
         className="text-left"
       />
       <Feed
-        maintenances={page.maintenances}
         monitors={page.monitors}
-        statusReports={page.statusReports}
+        maintenances={
+          ["all", "maintenances"].includes(filter) ? page.maintenances : []
+        }
+        statusReports={
+          ["all", "reports"].includes(filter) ? page.statusReports : []
+        }
       />
     </div>
   );
