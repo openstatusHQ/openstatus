@@ -69,6 +69,25 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        /* Status Tracker */
+        status: {
+          operational: {
+            DEFAULT: "hsl(var(--status-operational))",
+            // foreground: "hsl(var(--status-operational-foreground))",
+          },
+          degraded: {
+            DEFAULT: "hsl(var(--status-degraded))",
+            // foreground: "hsl(var(--status-degraded-foreground))",
+          },
+          down: {
+            DEFAULT: "hsl(var(--status-down))",
+            // foreground: "hsl(var(--status-down-foreground))",
+          },
+          monitoring: {
+            DEFAULT: "hsl(var(--status-monitoring))",
+            // foreground: "hsl(var(--status-monitoring-foreground))",
+          },
+        },
         /* Tremor */
         // light mode
         tremor: {

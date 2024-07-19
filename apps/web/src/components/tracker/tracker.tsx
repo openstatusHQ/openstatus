@@ -35,13 +35,13 @@ import { cn } from "@/lib/utils";
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
-      blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
+      blacklist:
+        "bg-status-operational/80 data-[state=open]:bg-status-operational",
       ...classNames,
     },
     report: {
       0: "",
-      // IDEA: data-[state=open]:from-40% data-[state=open]:to-40%
-      30: "bg-gradient-to-t from-blue-500/90 hover:from-blue-500 from-30% to-transparent to-30%",
+      30: "bg-gradient-to-t from-status-monitoring/90 hover:from-status-monitoring from-30% to-transparent to-30%",
     },
   },
   defaultVariants: {
@@ -167,10 +167,12 @@ export const Bar = ({
                 </div>
                 <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
                   <p>
-                    <code className="text-green-500">{count}</code> requests
+                    <code className="text-status-operational">{count}</code>{" "}
+                    requests
                   </p>
                   <p>
-                    <code className="text-red-500">{count - ok}</code> failed
+                    <code className="text-status-down">{count - ok}</code>{" "}
+                    failed
                   </p>
                 </div>
               </div>

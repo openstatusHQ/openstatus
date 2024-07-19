@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 
 export function StatusCheck({ tracker }: { tracker: Tracker }) {
   const details = tracker.currentDetails;
-  const className = tracker.currentClassName;
 
   // FIXME: move icons into @openstatus/tracker lib
   function getVariant() {
@@ -22,11 +21,32 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
     }
   }
 
+  // REMINDER: we cannot use custom tailwind utility colors like `bg-status-operational/90` here
+  function getClassName() {
+    switch (details.variant) {
+      case "maintenance":
+        return "bg-blue-500/90 border-blue-500";
+      case "down":
+        return "bg-rose-500/90 border-rose-500";
+      case "degraded":
+        return "bg-amber-500/90 border-amber-500";
+      case "incident":
+        return "bg-rose-500/90 border-rose-500";
+      default:
+        return "bg-green-500/90 border-green-500";
+    }
+  }
+
   const Icon = getVariant();
 
   return (
     <div tw="flex flex-col justify-center items-center w-full">
-      <div tw={cn("flex text-white rounded-full p-3 border-2 mb-2", className)}>
+      <div
+        tw={cn(
+          "flex text-white rounded-full p-3 border-2 mb-2",
+          getClassName()
+        )}
+      >
         <Icon />
       </div>
       <p style={{ fontFamily: "Cal" }} tw="text-4xl">

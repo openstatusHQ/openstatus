@@ -23,8 +23,11 @@ export function Tracker({ data }: { data: Monitor[] }) {
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-green-400" />
+                  <div
+                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                    key={i}
+                    tw="h-16 w-3 rounded-full mr-1 bg-status-operational/90"
+                  />
                 );
               }
               return (
@@ -33,7 +36,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
                   key={i}
                   tw={cn(
                     "h-16 w-3 rounded-full mr-1",
-                    classNames[item.variant],
+                    classNames[item.variant]
                   )}
                 />
               );

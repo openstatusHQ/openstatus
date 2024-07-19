@@ -7,6 +7,7 @@ import type {
 import { DayHeader } from "./day-header";
 import { MaintenanceContainer } from "./maintenance";
 import { StatusReport } from "./status-report";
+import { EmptyState } from "../dashboard/empty-state";
 
 function isMaintenanceType(value: unknown): value is Maintenance {
   return (value as Maintenance).from !== undefined;
@@ -25,6 +26,12 @@ export function Feed({
   statusReports: StatusReportWithUpdates[];
   monitors: PublicMonitor[];
 }) {
+  if ([...maintenances, ...statusReports].length === 0) {
+    return (
+      <EmptyState icon="newspaper" title="No entries found." description="" />
+    );
+  }
+
   function groupByDay(
     maintenances: Maintenance[],
     statusReports: StatusReportWithUpdates[]
@@ -107,7 +114,7 @@ export function Feed({
                     key={item.value.id}
                     maintenance={item.value}
                     monitors={affectedMonitors || []}
-                    className="rounded-lg border-blue-500/10 bg-blue-500/5"
+                    className="rounded-lg border-status-monitoring/10 bg-status-monitoring/5"
                   />
                 );
               }

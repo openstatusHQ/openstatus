@@ -8,6 +8,7 @@ import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Feed } from "@/components/status-page/feed";
+import { Separator } from "@openstatus/ui";
 
 type Props = {
   params: { domain: string };
@@ -25,6 +26,16 @@ export default async function Page({ params }: Props) {
       maintenance.to.getTime() > Date.now() &&
       maintenance.from.getTime() < Date.now()
   );
+
+  const lastMaintenances = page.maintenances.filter((maintenance) => {
+    return maintenance.from.getTime() > subDays(new Date(), 7).getTime();
+  });
+
+  const lastStatusReports = page.statusReports.filter((report) => {
+    return report.statusReportUpdates.some(
+      (update) => update.date.getTime() > subDays(new Date(), 7).getTime()
+    );
+  });
 
   return (
     <div className="mx-auto flex w-full flex-col gap-12">
@@ -59,15 +70,16 @@ export default async function Page({ params }: Props) {
           description="The status page has no connected monitors."
         />
       )}
-      {page.statusReports.length || page.maintenances.length ? (
+      <Separator />
+      {lastStatusReports.length || lastMaintenances.length ? (
         <Feed
           monitors={page.monitors}
-          maintenances={page.maintenances.filter((maintenance) => {
+          maintenances={lastMaintenances.filter((maintenance) => {
             return (
               maintenance.from.getTime() > subDays(new Date(), 7).getTime()
             );
           })}
-          statusReports={page.statusReports.filter((report) => {
+          statusReports={lastStatusReports.filter((report) => {
             return report.statusReportUpdates.some(
               (update) =>
                 update.date.getTime() > subDays(new Date(), 7).getTime()

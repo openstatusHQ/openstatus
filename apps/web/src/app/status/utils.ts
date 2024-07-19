@@ -34,19 +34,19 @@ export type AtlassianDescriptionEnum = z.infer<typeof atlassianDescriptionEnum>;
 export function getClassname(status: ExternalStatus) {
   switch (status.status_description) {
     case "All Systems Operational":
-      return "text-green-500";
+      return "text-status-operational";
     case "Major System Outage":
-      return "text-rose-500";
+      return "text-status-down";
     case "Partial System Outage":
-      return "text-orange-500";
+      return "text-status-degraded";
     case "Minor Service Outage":
-      return "text-amber-500";
+      return "text-status-degraded";
     case "Degraded System Service":
-      return "text-amber-500";
+      return "text-status-degraded";
     case "Partially Degraded Service":
-      return "text-amber-500";
+      return "text-status-degraded";
     case "Service Under Maintenance":
-      return "text-blue-500";
+      return "text-status-monitoring";
     default:
       return "text-gray-500";
   }

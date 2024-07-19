@@ -3,28 +3,31 @@ export const statusDict = {
     value: "investigating",
     label: "Investigating",
     icon: "search",
-    color: "border-rose-500/20 bg-rose-500/10 text-rose-500",
+    color: "border-status-down/20 bg-status-down/10 text-status-down",
     order: 1,
   },
   identified: {
     value: "identified",
     label: "Identified",
     icon: "fingerprint",
-    color: "border-amber-500/20 bg-amber-500/10 text-amber-500",
+    color:
+      "border-status-degraded/20 bg-status-degraded/10 text-status-degraded",
     order: 2,
   },
   monitoring: {
     value: "monitoring",
     label: "Monitoring",
     icon: "activity",
-    color: "border-blue-500/20 bg-blue-500/10 text-blue-500",
+    color:
+      "border-status-monitoring/20 bg-status-monitoring/10 text-status-monitoring",
     order: 3,
   },
   resolved: {
     value: "resolved",
     label: "Resolved",
     icon: "search-check",
-    color: "border-green-500/20 bg-green-500/10 text-green-500",
+    color:
+      "border-status-operational/20 bg-status-operational/10 text-status-operational",
     order: 4,
   },
   // FIXME: check source of thruth
@@ -32,7 +35,8 @@ export const statusDict = {
     value: "maintenance",
     label: "Maintenance",
     icon: "hammer",
-    color: "border-blue-500/20 bg-blue-500/10 text-blue-500",
+    color:
+      "border-status-monitoring/20 bg-status-monitoring/10 text-status-monitoring",
     order: 0,
   },
 } as const;

@@ -41,10 +41,13 @@ export const statusDetails: Record<Status, StatusDetails> = {
 
 // REMINDER: add `@openstatus/tracker/src/**/*.ts into tailwindcss content prop */
 export const classNames: Record<StatusVariant, string> = {
-  up: "bg-green-500/90 data-[state=open]:bg-green-500 border-green-500",
-  degraded: "bg-amber-500/90 data-[state=open]:bg-amber-500 border-amber-500",
-  down: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
+  up: "bg-status-operational/90 data-[state=open]:bg-status-operational border-status-operational",
+  degraded:
+    "bg-status-degraded/90 data-[state=open]:bg-status-degraded border-status-degraded",
+  down: "bg-status-down/90 data-[state=open]:bg-status-down border-status-down",
   empty: "bg-muted-foreground/20 data-[state=open]:bg-muted-foreground/30",
-  incident: "bg-red-500/90 data-[state=open]:bg-red-500 border-red-500",
-  maintenance: "bg-blue-500/90 data-[state=open]:bg-blue-500 border-blue-500",
+  incident:
+    "bg-status-down/90 data-[state=open]:bg-status-down border-status-down",
+  maintenance:
+    "bg-status-monitoring/90 data-[state=open]:bg-status-monitoring border-status-monitoring",
 };
