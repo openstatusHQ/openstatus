@@ -17,8 +17,8 @@ export async function TrackerExample() {
           <ExampleTracker />
         </Suspense>
       </div>
-      <Button asChild variant="outline" className="rounded-full">
-        <Link href="/play/status">Playground</Link>
+      <Button className="rounded-full" asChild>
+        <Link href="/features/status-page">Learn more</Link>
       </Button>
     </div>
   );
