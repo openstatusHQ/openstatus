@@ -58,7 +58,11 @@ export function Feed({
 
         if (isStatusReport) {
           const firstUpdate = element.statusReportUpdates[0]; // make sure we get the correct order from backend query!
-          const date = new Date(firstUpdate.date.toDateString()).getTime();
+          const date = (
+            firstUpdate
+              ? new Date(firstUpdate?.date.toDateString())
+              : new Date(new Date().toDateString())
+          ).getTime();
 
           const exists = acc.find((item) => item.timestamp === date);
 

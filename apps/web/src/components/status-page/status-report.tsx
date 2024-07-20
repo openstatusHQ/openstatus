@@ -28,7 +28,7 @@ function StatusReport({
 }) {
   const params = useParams<{ domain: string }>();
   return (
-    <Link href={setPrefixUrl(`/feed/report/${report.id}`, params)}>
+    <Link href={setPrefixUrl(`/events/report/${report.id}`, params)}>
       <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
         <StatusReportHeader title={report.title} {...{ monitors, actions }} />
         <StatusReportUpdates updates={report.statusReportUpdates} />

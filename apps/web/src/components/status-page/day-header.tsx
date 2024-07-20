@@ -9,7 +9,7 @@ export function DayHeader({ date }: { date: Date }) {
         <p className="font-mono text-muted-foreground text-sm">
           {format(date, "LLL dd, y")}
         </p>
-        {isInFuture ? <Badge>Soon</Badge> : null}
+        {isInFuture ? <Badge>Coming up</Badge> : null}
       </div>
       <Separator />
     </div>

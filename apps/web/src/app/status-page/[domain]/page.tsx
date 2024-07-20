@@ -49,13 +49,6 @@ export default async function Page({ params }: Props) {
         incidents={page.incidents}
         maintenances={page.maintenances}
       />
-      {currentMaintenances.length ? (
-        <div className="grid w-full gap-3">
-          {currentMaintenances.map((maintenance) => (
-            <MaintenanceBanner key={maintenance.id} {...maintenance} />
-          ))}
-        </div>
-      ) : null}
       {page.monitors.length ? (
         <MonitorList
           monitors={page.monitors}
@@ -65,7 +58,7 @@ export default async function Page({ params }: Props) {
         />
       ) : (
         <EmptyState
-          icon="tally-4"
+          icon="activity"
           title="No monitors"
           description="The status page has no connected monitors."
         />
