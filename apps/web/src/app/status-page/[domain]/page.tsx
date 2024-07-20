@@ -21,12 +21,6 @@ export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 
-  const currentMaintenances = page.maintenances.filter(
-    (maintenance) =>
-      maintenance.to.getTime() > Date.now() &&
-      maintenance.from.getTime() < Date.now()
-  );
-
   const lastMaintenances = page.maintenances.filter((maintenance) => {
     return maintenance.from.getTime() > subDays(new Date(), 7).getTime();
   });

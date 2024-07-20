@@ -192,9 +192,11 @@ export class Tracker {
         ? Status.UnderMaintenance
         : incidents.length
           ? Status.Incident
-          : isMissingData
-            ? Status.Unknown
-            : this.calculateUptimeStatus([props]);
+          : statusReports.length
+            ? Status.DegradedPerformance
+            : isMissingData
+              ? Status.Unknown
+              : this.calculateUptimeStatus([props]);
 
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;
