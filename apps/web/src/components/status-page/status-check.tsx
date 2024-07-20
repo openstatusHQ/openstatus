@@ -23,6 +23,8 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
+  console.log(tracker, tracker.currentDetails, tracker.currentStatus);
+
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="flex items-center gap-3">
