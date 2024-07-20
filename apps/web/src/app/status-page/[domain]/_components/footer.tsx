@@ -5,7 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 interface Props {
   plan: WorkspacePlan;
-  timeZone: string | null;
+  timeZone?: string | null;
 }
 
 export function Footer({ plan, timeZone }: Props) {
