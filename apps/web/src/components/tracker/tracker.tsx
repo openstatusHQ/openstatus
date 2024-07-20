@@ -76,6 +76,8 @@ export function Tracker({
   const uptime = tracker.totalUptime;
   const isMissing = tracker.isDataMissing;
 
+  console.log(reports, maintenances);
+
   return (
     <div className="flex w-full flex-col gap-1.5">
       <div className="flex justify-between text-sm">

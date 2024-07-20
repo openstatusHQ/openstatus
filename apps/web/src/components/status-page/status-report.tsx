@@ -21,12 +21,24 @@ function StatusReport({
   report,
   monitors,
   actions,
+  isDemo,
 }: {
   report: StatusReportWithUpdates;
   monitors: PublicMonitor[];
   actions?: React.ReactNode;
+  isDemo?: boolean;
 }) {
   const params = useParams<{ domain: string }>();
+
+  if (isDemo) {
+    return (
+      <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
+        <StatusReportHeader title={report.title} {...{ monitors, actions }} />
+        <StatusReportUpdates updates={report.statusReportUpdates} />
+      </div>
+    );
+  }
+
   return (
     <Link href={setPrefixUrl(`/events/report/${report.id}`, params)}>
       <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">

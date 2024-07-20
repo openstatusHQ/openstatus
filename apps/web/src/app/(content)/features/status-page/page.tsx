@@ -1,6 +1,5 @@
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
@@ -12,23 +11,31 @@ import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
 import type { Metadata } from "next";
-import { defaultMetadata, ogMetadata, twitterMetadata } from "@/app/shared-metadata";
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
+import { MaintenanceContainer } from "@/components/status-page/maintenance";
 
 const { description, subtitle } = marketingProductPagesConfig[1];
 
 export const metadata: Metadata = {
   ...defaultMetadata,
   title: "Status Page",
-  description:'Easily report to your users with our public or private status page.',
+  description:
+    "Easily report to your users with our public or private status page.",
   twitter: {
     ...twitterMetadata,
     title: "Status Page",
-    description:'Easily report to your users with our public or private status page.',
+    description:
+      "Easily report to your users with our public or private status page.",
   },
   openGraph: {
     ...ogMetadata,
     title: "Status Page",
-    description:'Easily report to your users with our public or private status page.',
+    description:
+      "Easily report to your users with our public or private status page.",
   },
 };
 
@@ -86,7 +93,7 @@ export default function FeaturePage() {
         subTitle="Down't let your users in the dark and show what's wrong."
         component={
           <div className="-translate-y-6 m-auto scale-[0.80]">
-            <StatusReport {...statusReportData} />
+            <StatusReport isDemo {...statusReportData} />
           </div>
         }
         col={1}
@@ -132,8 +139,11 @@ export default function FeaturePage() {
         title="Maintenance."
         subTitle="Mute your monitors for a specific period and inform the users about upcoming maintenance."
         component={
-          <div className="m-auto">
-            <MaintenanceBanner {...maintenanceData} />
+          <div className="m-auto scale-[0.80]">
+            <MaintenanceContainer
+              className="rounded-lg border-status-monitoring/10 bg-status-monitoring/5"
+              {...maintenanceData}
+            />
           </div>
         }
         col={2}
