@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default async function Page() {
-  redirect("./feed?filter=reports");
+  redirect("./events?filter=reports");
 }

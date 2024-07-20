@@ -40,13 +40,13 @@ const tracker = cva("h-10 rounded-full flex-1", {
       ...classNames,
     },
     report: {
-      0: "",
-      30: "bg-gradient-to-t from-status-monitoring/90 hover:from-status-monitoring from-30% to-transparent to-30%",
+      false: "",
+      true: classNames.degraded,
     },
   },
   defaultVariants: {
     variant: "empty",
-    report: 0,
+    report: false,
   },
 });
 
@@ -132,7 +132,7 @@ export const Bar = ({
   const [open, setOpen] = React.useState(false);
 
   const rootClassName = tracker({
-    report: statusReports && statusReports.length > 0 ? 30 : undefined,
+    report: statusReports.length > 0,
     variant: blacklist ? "blacklist" : variant,
   });
 
@@ -203,7 +203,7 @@ export function StatusReportList({ reports }: { reports: StatusReport[] }) {
         <li key={report.id} className="text-muted-foreground text-sm">
           <Link
             // TODO: include setPrefixUrl for local development
-            href={`./incidents/${report.id}`}
+            href={`./events/report/${report.id}`}
             className="group flex items-center justify-between gap-2 hover:text-foreground"
           >
             <span className="truncate">{report.title}</span>

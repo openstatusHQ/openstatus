@@ -5,15 +5,18 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 interface Props {
   plan: WorkspacePlan;
+  timeZone: string | null;
 }
 
-export function Footer({ plan }: Props) {
+export function Footer({ plan, timeZone }: Props) {
   const isWhiteLabel = allPlans[plan].limits["white-label"];
   return (
-    <footer className="z-10 mx-auto flex w-full items-center justify-between">
-      <div />
+    <footer className="z-10 mx-auto grid w-full grid-cols-5 items-center justify-between gap-4">
+      <p className="truncate font-light text-muted-foreground text-xs">
+        {timeZone}
+      </p>
       {!isWhiteLabel ? (
-        <p className="text-center text-muted-foreground text-sm">
+        <p className="col-span-3 text-center text-muted-foreground text-sm">
           powered by{" "}
           <a
             href="https://www.openstatus.dev"
@@ -25,7 +28,9 @@ export function Footer({ plan }: Props) {
           </a>
         </p>
       ) : null}
-      <ThemeToggle />
+      <div className="text-right">
+        <ThemeToggle />
+      </div>
     </footer>
   );
 }

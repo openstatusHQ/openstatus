@@ -5,5 +5,5 @@ export default async function IncidentPage({
 }: {
   params: { domain: string; id: string };
 }) {
-  redirect(`../feed/report/${params.id}`);
+  redirect(`../events/report/${params.id}`);
 }
