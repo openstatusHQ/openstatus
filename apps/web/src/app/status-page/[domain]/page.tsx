@@ -2,7 +2,6 @@ import { subDays } from "date-fns";
 import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
