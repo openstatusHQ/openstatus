@@ -12,14 +12,8 @@ export const workspaceRoleSchema = z.enum(workspaceRole);
 export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
   limits: z.string().transform((val) => {
     const parsed = JSON.parse(val);
-    const result = limitsV1.safeParse(parsed);
-    if (result.error) {
-      // Fallback to default limits
-      return limitsV1.parse({
-        ...allPlans.free.limits,
-      });
-    }
-
+    const result = limitsV1.partial().safeParse(parsed);
+    if (result.error) return {};
     return result.data;
   }),
   plan: z
@@ -27,6 +21,12 @@ export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
     .nullable()
     .default("free")
     .transform((val) => val ?? "free"),
+}).transform((val) => {
+  console.log({ val })
+  return {
+    ...val,
+    limits: limitsV1.parse({...allPlans[val.plan].limits, ...val.limits})
+  }
 });
 
 export const insertWorkspaceSchema = createSelectSchema(workspace);

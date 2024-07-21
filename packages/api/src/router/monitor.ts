@@ -34,10 +34,10 @@ export const monitorRouter = createTRPCRouter({
     .input(insertMonitorSchema)
     .output(selectMonitorSchema)
     .mutation(async (opts) => {
-      const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
+      const monitorLimit = opts.ctx.workspace.limits.monitors;
       const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+        opts.ctx.workspace.limits.periodicity;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
@@ -253,9 +253,9 @@ export const monitorRouter = createTRPCRouter({
       if (!opts.input.id) return;
 
       const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
+        opts.ctx.workspace.limits.periodicity;
 
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       // the user is not allowed to use the cron job
       if (
@@ -729,7 +729,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   isMonitorLimitReached: protectedProcedure.query(async (opts) => {
-    const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
+    const monitorLimit = opts.ctx.workspace.limits.monitors;
     const monitorNumbers = (
       await opts.ctx.db.query.monitor.findMany({
         where: and(
