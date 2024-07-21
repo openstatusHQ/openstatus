@@ -36,7 +36,7 @@
     --radius: 0.5rem;
 
     /* Status Tracker Colors - Radix Color */
-    --status-degraded: 26 100% 56%; /* Orange 10 */
+    --status-degraded: 50 100% 52%; /* Amber 10 */
     --status-operational: 131 39% 51%; /* Grass 10 */
     --status-down: 11 82% 59%; /* Tomato 10 */
     --status-monitoring: 210 100% 62%; /* Blue 10 */
@@ -73,7 +73,7 @@
     --ring: 217.2 32.6% 17.5%;
 
     /* Status Tracker Colors - Radix Color */
-    --status-degraded: 26 100% 56%; /* Orange 10 */
+    --status-degraded: 50 100% 52%; /* Amber 10 */
     --status-operational: 131 39% 51%; /* Grass 10 */
     --status-down: 11 82% 59%; /* Tomato 10 */
     --status-monitoring: 210 100% 62%; /* Blue 10 */

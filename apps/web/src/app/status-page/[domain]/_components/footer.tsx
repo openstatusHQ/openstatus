@@ -15,19 +15,21 @@ export function Footer({ plan, timeZone }: Props) {
       <p className="truncate font-light text-muted-foreground text-xs">
         {timeZone}
       </p>
-      {!isWhiteLabel ? (
-        <p className="col-span-3 text-center text-muted-foreground text-sm">
-          powered by{" "}
-          <a
-            href="https://www.openstatus.dev"
-            target="_blank"
-            rel="noreferrer"
-            className="text-foreground underline underline-offset-4 hover:no-underline"
-          >
-            openstatus.dev
-          </a>
-        </p>
-      ) : null}
+      <div className="col-span-3 w-full">
+        {!isWhiteLabel ? (
+          <p className="text-center text-muted-foreground text-sm">
+            powered by{" "}
+            <a
+              href="https://www.openstatus.dev"
+              target="_blank"
+              rel="noreferrer"
+              className="text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              openstatus.dev
+            </a>
+          </p>
+        ) : null}
+      </div>
       <div className="text-right">
         <ThemeToggle />
       </div>
