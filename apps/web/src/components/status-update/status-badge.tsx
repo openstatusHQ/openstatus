@@ -8,18 +8,16 @@ import { Icons } from "../icons";
 export function StatusBadge({
   status,
   className,
-  onlyIcon = false,
 }: {
   status: StatusReport["status"];
   className?: string;
-  onlyIcon?: boolean;
 }) {
   const { label, icon, color } = statusDict[status];
   const Icon = Icons[icon];
   return (
     <Badge variant="outline" className={cn("font-normal", color, className)}>
       <Icon className="mr-1 h-3 w-3" />
-      {onlyIcon ? null : label}
+      {label}
     </Badge>
   );
 }

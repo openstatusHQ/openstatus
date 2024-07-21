@@ -17,7 +17,6 @@ export function MaintenanceContainer({
       <StatusReportHeader
         title={maintenance.title}
         monitors={monitors || []}
-        // <DateTimeTooltip date={new Date()} />
         actions={
           <p className="font-mono text-muted-foreground text-xs">
             <DateTimeTooltip date={maintenance.from} /> -{" "}
