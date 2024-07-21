@@ -269,33 +269,15 @@ export const pageRouter = createTRPCRouter({
         ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
-      const monitorsToStatusReportResult =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(monitorsToStatusReport)
-              .where(inArray(monitorsToStatusReport.monitorId, monitorsId))
-              .all()
-          : [];
-
-      const monitorStatusReportIds = monitorsToStatusReportResult.map(
-        ({ statusReportId }) => statusReportId,
-      );
-
-      const statusReportIds = Array.from(new Set([...monitorStatusReportIds]));
-
-      const statusReports =
-        statusReportIds.length > 0
-          ? await opts.ctx.db.query.statusReport.findMany({
-              where: eq(statusReport.pageId, result.id),
-              with: {
-                statusReportUpdates: {
-                  orderBy: (reports, { desc }) => desc(reports.date),
-                },
-                monitorsToStatusReports: { with: { monitor: true } },
-              },
-            })
-          : [];
+      const statusReports = await opts.ctx.db.query.statusReport.findMany({
+        where: eq(statusReport.pageId, result.id),
+        with: {
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
+          monitorsToStatusReports: { with: { monitor: true } },
+        },
+      });
 
       // TODO: monitorsToPagesResult has the result already, no need to query again
       const monitors =

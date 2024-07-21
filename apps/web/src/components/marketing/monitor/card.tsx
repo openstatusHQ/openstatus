@@ -29,9 +29,12 @@ export function MonitoringCard() {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
             <CardFeature key={i} {...feature} />
           ))}
-          <div className="order-first text-center md:order-none">
-            <Button asChild variant="outline" className="rounded-full">
+          <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
+            <Button variant="outline" className="rounded-full" asChild>
               <Link href="/play/checker">Playground</Link>
+            </Button>
+            <Button className="rounded-full" asChild>
+              <Link href="/features/monitoring">Learn more</Link>
             </Button>
           </div>
         </CardFeatureContainer>

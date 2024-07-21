@@ -5,7 +5,7 @@ import {
 } from "@/app/shared-metadata";
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
+import { MaintenanceContainer } from "@/components/status-page/maintenance";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
@@ -93,7 +93,7 @@ export default function FeaturePage() {
         subTitle="Down't let your users in the dark and show what's wrong."
         component={
           <div className="-translate-y-6 m-auto scale-[0.80]">
-            <StatusReport {...statusReportData} />
+            <StatusReport isDemo {...statusReportData} />
           </div>
         }
         col={1}
@@ -118,11 +118,7 @@ export default function FeaturePage() {
         iconText="Keep it simple"
         title="Build trust."
         subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
-        component={
-          <div className="m-auto max-w-lg">
-            <StatusCheck />
-          </div>
-        }
+        component={<StatusCheck />}
         action={
           <div className="mt-2">
             <Button variant="outline" className="rounded-full" asChild>
@@ -139,8 +135,11 @@ export default function FeaturePage() {
         title="Maintenance."
         subTitle="Mute your monitors for a specific period and inform the users about upcoming maintenance."
         component={
-          <div className="m-auto">
-            <MaintenanceBanner {...maintenanceData} />
+          <div className="m-auto scale-[0.80]">
+            <MaintenanceContainer
+              className="rounded-lg border-status-monitoring/10 bg-status-monitoring/5"
+              {...maintenanceData}
+            />
           </div>
         }
         col={2}

@@ -3,109 +3,140 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Fragment } from "react";
 
 import type {
   PublicMonitor,
   StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
-import { Badge, Button } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui";
 
 import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
+import { statusDict } from "@/data/incidents-dictionary";
 import { cn } from "@/lib/utils";
-import { StatusBadge } from "../status-update/status-badge";
+import { Icons } from "../icons";
 import { DateTimeTooltip } from "./datetime-tooltip";
 import { ProcessMessage } from "./process-message";
 
 function StatusReport({
   report,
   monitors,
+  actions,
+  isDemo,
 }: {
   report: StatusReportWithUpdates;
   monitors: PublicMonitor[];
+  actions?: React.ReactNode;
+  isDemo?: boolean;
 }) {
-  return (
-    <div className="group grid gap-4">
-      <div className="grid gap-1">
-        <StatusReportHeader {...{ report }} />
-        <StatusReportDescription {...{ report, monitors }} />
-      </div>
-      <StatusReportUpdates {...{ report }} />
-    </div>
-  );
-}
-
-function StatusReportHeader({ report }: { report: StatusReportWithUpdates }) {
   const params = useParams<{ domain: string }>();
+
+  if (isDemo) {
+    return (
+      <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
+        <StatusReportHeader title={report.title} {...{ monitors, actions }} />
+        <StatusReportUpdates updates={report.statusReportUpdates} />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex items-center gap-2">
-      <h3 className="font-semibold text-xl">{report.title}</h3>
-      {report.id ? (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground/50 group-hover:text-foreground"
-          asChild
-        >
-          <Link href={setPrefixUrl(`/incidents/${report.id}`, params)}>
-            <ChevronRight className="h-4 w-4" />
-          </Link>
-        </Button>
-      ) : null}
-    </div>
+    <Link href={setPrefixUrl(`/events/report/${report.id}`, params)}>
+      <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
+        <StatusReportHeader title={report.title} {...{ monitors, actions }} />
+        <StatusReportUpdates updates={report.statusReportUpdates} />
+      </div>
+    </Link>
   );
 }
 
-function StatusReportDescription({
-  report,
+// REMINDER: we had the report?.id in the link href to features page to be clickable
+function StatusReportHeader({
+  title,
   monitors,
-  className,
+  actions,
 }: {
-  report: StatusReportWithUpdates;
+  title: StatusReportWithUpdates["title"];
   monitors: PublicMonitor[];
-  className?: string;
+  actions?: React.ReactNode;
 }) {
-  const firstReport =
-    report.statusReportUpdates[report.statusReportUpdates.length - 1];
-
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <p className="text-muted-foreground text-sm">
-        Started at <DateTimeTooltip date={firstReport.date} />
-      </p>
-      <span className="text-muted-foreground/50 text-xs">•</span>
-      <StatusBadge status={report.status} />
-      {monitors.length > 0 ? (
-        <>
-          <span className="text-muted-foreground/50 text-xs">•</span>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-semibold text-xl">{title}</h3>
+        <ul className="flex flex-wrap gap-2">
           {monitors.map((monitor) => (
-            <Badge key={monitor.id} variant="secondary">
-              {monitor.name}
-            </Badge>
+            <li key={monitor.id}>
+              <Badge variant="secondary">{monitor.name}</Badge>
+            </li>
           ))}
-        </>
-      ) : null}
+        </ul>
+      </div>
+      <div>
+        {/* NOT IDEAL BUT IT WORKS */}
+        {actions ? (
+          actions
+        ) : (
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground" />
+        )}
+      </div>
     </div>
   );
 }
 
-// reports are already `orderBy: desc(report.date)` within the query itself
-function StatusReportUpdates({ report }: { report: StatusReportWithUpdates }) {
+interface StatusReportUpdatesProps {
+  updates: {
+    date?: Date;
+    id: number;
+    status:
+      | "investigating"
+      | "identified"
+      | "monitoring"
+      | "resolved"
+      | "maintenance";
+    message: string;
+  }[];
+}
+
+function StatusReportUpdates({ updates }: StatusReportUpdatesProps) {
   return (
-    <div className="grid gap-2 md:grid-cols-10 md:gap-4">
-      {report.statusReportUpdates.map((update) => {
+    <div className="grid gap-4">
+      {updates.map((update, i) => {
+        const { icon, label, color } = statusDict[update.status];
+        const StatusIcon = Icons[icon];
         return (
-          <Fragment key={update.id}>
-            <div className="flex items-center gap-2 md:col-span-3 md:flex-col md:items-start md:gap-1">
-              <p className="font-medium capitalize">{update.status}</p>
-              <p className="font-mono text-muted-foreground text-sm md:text-xs">
-                <DateTimeTooltip date={update.date} />
-              </p>
+          <div
+            key={update.id}
+            className={cn(
+              "group -m-2 relative flex gap-4 border border-transparent p-2",
+            )}
+          >
+            <div className="relative">
+              <div
+                className={cn(
+                  "rounded-full border border-border bg-background p-2",
+                  i === 0 ? color : null,
+                )}
+              >
+                <StatusIcon className="h-4 w-4" />
+              </div>
+              {i !== updates.length - 1 ? (
+                <div className="absolute inset-x-0 mx-auto h-full w-[2px] bg-muted" />
+              ) : null}
             </div>
-            <div className="prose dark:prose-invert md:col-span-7">
-              <ProcessMessage value={update.message} />
+            <div className="mt-2 grid flex-1 gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium text-sm">{label}</p>
+                {update.date ? (
+                  <p className="mt-px text-muted-foreground text-xs">
+                    <DateTimeTooltip date={new Date(update.date)} />
+                  </p>
+                ) : null}
+              </div>
+              <div className="prose dark:prose-invert">
+                <ProcessMessage value={update.message} />
+              </div>
             </div>
-          </Fragment>
+          </div>
         );
       })}
     </div>
@@ -113,12 +144,6 @@ function StatusReportUpdates({ report }: { report: StatusReportWithUpdates }) {
 }
 
 StatusReport.Header = StatusReportHeader;
-StatusReport.Description = StatusReportDescription;
 StatusReport.Updates = StatusReportUpdates;
 
-export {
-  StatusReport,
-  StatusReportDescription,
-  StatusReportHeader,
-  StatusReportUpdates,
-};
+export { StatusReport, StatusReportHeader, StatusReportUpdates };

@@ -187,14 +187,21 @@ export class Tracker {
 
       const isMissingData = props.count === 0;
 
-      // FIXME:
+      /**
+       * 1. Maintenance
+       * 2. Status Reports (Degraded Performance)
+       * 3. Incidents
+       * 4. Uptime Status (Operational, Degraded Performance, Partial Outage, Major Outage)
+       */
       const status = maintenances.length
         ? Status.UnderMaintenance
-        : incidents.length
-          ? Status.Incident
-          : isMissingData
-            ? Status.Unknown
-            : this.calculateUptimeStatus([props]);
+        : statusReports.length
+          ? Status.DegradedPerformance
+          : incidents.length
+            ? Status.Incident
+            : isMissingData
+              ? Status.Unknown
+              : this.calculateUptimeStatus([props]);
 
       const variant = statusDetails[status].variant;
       const label = statusDetails[status].short;
