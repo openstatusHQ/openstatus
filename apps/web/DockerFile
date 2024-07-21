@@ -1,0 +1,13 @@
+FROM oven/bun
+
+WORKDIR /app
+
+COPY tsconfig.json package.json vercel.json ./
+
+RUN bun install --ignore-scripts
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["bun", "start"]
