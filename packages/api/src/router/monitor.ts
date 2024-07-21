@@ -35,8 +35,7 @@ export const monitorRouter = createTRPCRouter({
     .output(selectMonitorSchema)
     .mutation(async (opts) => {
       const monitorLimit = opts.ctx.workspace.limits.monitors;
-      const periodicityLimit =
-        opts.ctx.workspace.limits.periodicity;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
       const regionsLimit = opts.ctx.workspace.limits.regions;
 
       const monitorNumbers = (
@@ -252,8 +251,7 @@ export const monitorRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
-      const periodicityLimit =
-        opts.ctx.workspace.limits.periodicity;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
 
       const regionsLimit = opts.ctx.workspace.limits.regions;
 

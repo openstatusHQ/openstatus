@@ -42,7 +42,7 @@ export const pageRouter = createTRPCRouter({
       })
     ).length;
 
-    const limit =opts.ctx.workspace.limits;
+    const limit = opts.ctx.workspace.limits;
 
     // the user has reached the status page number limits
     if (pageNumbers >= limit["status-pages"]) {
