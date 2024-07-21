@@ -35,12 +35,11 @@
 
     --radius: 0.5rem;
 
-    /* Status Tracker Colors */
-    --status-degraded: 37.7 92.1% 50.2%;
-    --status-operational: 160.1 84.1% 39.4%;
-    --status-down: 349.7 89.2% 60.2%;
-    /* Color used for Maintenance and Status Reports */
-    --status-monitoring: 198.6 88.7% 48.4%;
+    /* Status Tracker Colors - Radix Color */
+    --status-degraded: 26 100% 56%; /* Orange 10 */
+    --status-operational: 131 39% 51%; /* Grass 10 */
+    --status-down: 11 82% 59%; /* Tomato 10 */
+    --status-monitoring: 210 100% 62%; /* Blue 10 */
   }
 
   .dark {
@@ -73,12 +72,11 @@
 
     --ring: 217.2 32.6% 17.5%;
 
-    /* Status Tracker Colors */
-    --status-degraded: 37.7 92.1% 50.2%;
-    --status-operational: 160.1 84.1% 39.4%;
-    --status-down: 349.7 89.2% 60.2%;
-    /* Color used for Maintenance and Status Reports */
-    --status-monitoring: 198.6 88.7% 48.4%;
+    /* Status Tracker Colors - Radix Color */
+    --status-degraded: 26 100% 56%; /* Orange 10 */
+    --status-operational: 131 39% 51%; /* Grass 10 */
+    --status-down: 11 82% 59%; /* Tomato 10 */
+    --status-monitoring: 210 100% 62%; /* Blue 10 */
   }
 }
 
