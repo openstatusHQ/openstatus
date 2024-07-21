@@ -23,25 +23,34 @@ export async function StatusCheck({
   const className = tracker.currentClassName;
   const details = tracker.currentDetails;
 
-  console.log(tracker, tracker.currentDetails, tracker.currentStatus);
-
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="flex items-center gap-3">
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-lg border p-3",
+        containerClassName(details.variant)
+      )}
+    >
+      <span className={cn("rounded-full border p-1.5", className)}>
+        <StatusIcon variant={details.variant} />
+      </span>
+      <div className="flex w-full flex-wrap items-center justify-between gap-1">
         <h2 className="font-semibold text-xl">{details.long}</h2>
-        <span className={cn("rounded-full border p-1.5", className)}>
-          <StatusIcon variant={details.variant} />
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-muted-foreground text-sm">Status Check</p>
-        <span className="text-muted-foreground/50 text-xs">•</span>{" "}
         <p className="text-xs">
           <DateTimeTooltip date={new Date()} />
         </p>
       </div>
     </div>
   );
+}
+
+function containerClassName(variant: StatusVariant) {
+  if (variant === "incident") return "bg-status-down/10 border-status-down/20";
+  if (variant === "maintenance")
+    return "bg-status-monitoring/10 border-status-monitoring/20";
+  if (variant === "degraded")
+    return "bg-status-degraded/10 border-status-degraded/20";
+  if (variant === "down") return "bg-status-down/10 border-status-down/20";
+  return "bg-status-operational/10 border-status-operational/20";
 }
 
 export function StatusIcon({ variant }: { variant: StatusVariant }) {

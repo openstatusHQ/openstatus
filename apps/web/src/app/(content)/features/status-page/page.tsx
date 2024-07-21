@@ -118,11 +118,7 @@ export default function FeaturePage() {
         iconText="Keep it simple"
         title="Build trust."
         subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
-        component={
-          <div className="m-auto max-w-lg">
-            <StatusCheck />
-          </div>
-        }
+        component={<StatusCheck />}
         action={
           <div className="mt-2">
             <Button variant="outline" className="rounded-full" asChild>

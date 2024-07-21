@@ -74,9 +74,9 @@ export default async function Page({ params }: Props) {
         />
       ) : (
         <EmptyState
-          icon="siren"
-          title="No latest incidents"
-          description="There have been no incidents within the last 7 days."
+          icon="newspaper"
+          title="No recent notices"
+          description="There have been no reports within the last 7 days."
         />
       )}
     </div>

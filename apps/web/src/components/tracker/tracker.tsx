@@ -76,8 +76,6 @@ export function Tracker({
   const uptime = tracker.totalUptime;
   const isMissing = tracker.isDataMissing;
 
-  console.log(reports, maintenances);
-
   return (
     <div className="flex w-full flex-col gap-1.5">
       <div className="flex justify-between text-sm">
@@ -209,7 +207,7 @@ export function StatusReportList({ reports }: { reports: StatusReport[] }) {
             className="group flex items-center justify-between gap-2 hover:text-foreground"
           >
             <span className="truncate">{report.title}</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 shrink-0" />
           </Link>
         </li>
       ))}
@@ -251,7 +249,7 @@ export function DowntimeText({
 
   return (
     <p className="text-muted-foreground text-xs">
-      Down for{" "}
+      Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
         { format: ["days", "hours", "minutes", "seconds"], zero: false }
