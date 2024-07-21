@@ -44,8 +44,8 @@ export function SectionDanger({ monitorId, form }: Props) {
       try {
         await api.monitor.delete.mutate({ id: monitorId });
         toastAction("deleted");
-        router.refresh();
         setOpen(false);
+        router.push("/app");
       } catch {
         toastAction("error");
       }
