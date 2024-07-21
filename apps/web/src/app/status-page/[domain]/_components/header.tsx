@@ -55,7 +55,7 @@ export function Header({ navigation, plan, page }: Props) {
                     "h-9 rounded-full bg-transparent px-4 py-2 font-medium text-muted-foreground hover:bg-accent/50",
                     { "text-foreground": active }
                   )}
-                  {...{ active, href, label, disabled }}
+                  {...{ href, disabled }}
                 >
                   {label}
                 </Link>
