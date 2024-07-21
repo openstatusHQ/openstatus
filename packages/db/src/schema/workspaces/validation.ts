@@ -22,7 +22,6 @@ export const selectWorkspaceSchema = createSelectSchema(workspace).extend({
     .default("free")
     .transform((val) => val ?? "free"),
 }).transform((val) => {
-  console.log({ val })
   return {
     ...val,
     limits: limitsV1.parse({...allPlans[val.plan].limits, ...val.limits})
