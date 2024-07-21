@@ -7,12 +7,12 @@ import { monitor } from "@openstatus/db/src/schema";
 import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -54,8 +54,8 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all()
     )[0].count;

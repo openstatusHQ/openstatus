@@ -97,7 +97,7 @@ export function StatusReportForm({
               message,
               pageId,
               ...rest,
-            }
+            },
           );
           // include update on creation
           if (statusReport?.id) {
@@ -227,8 +227,8 @@ export function StatusReportForm({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
+                                            (value) => value !== item.id,
+                                          ),
                                         );
                                   }}
                                 />
@@ -243,7 +243,7 @@ export function StatusReportForm({
                                       "rounded-full p-1",
                                       item.active
                                         ? "bg-green-500"
-                                        : "bg-red-500"
+                                        : "bg-red-500",
                                     )}
                                   />
                                 </div>

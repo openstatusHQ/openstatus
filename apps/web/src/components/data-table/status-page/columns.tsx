@@ -14,8 +14,8 @@ import {
 } from "@openstatus/ui";
 
 import { ArrowUpRight, Check } from "lucide-react";
-import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableBadges } from "../data-table-badges";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<
   Page & {

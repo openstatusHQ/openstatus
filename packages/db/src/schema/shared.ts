@@ -26,7 +26,7 @@ export const selectStatusReportPageSchema = selectStatusReportSchema.extend({
         monitorId: z.number(),
         statusReportId: z.number(),
         monitor: selectPublicMonitorSchema,
-      })
+      }),
     )
     .default([]),
 });
@@ -37,7 +37,7 @@ export const selectMaintenancePageSchema = selectMaintenanceSchema.extend({
       z.object({
         monitorId: z.number(),
         maintenanceId: z.number(),
-      })
+      }),
     )
     .default([]),
 });
@@ -56,7 +56,7 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
       pageId: z.number(),
       order: z.number().default(0).optional(),
       monitor: selectMonitorSchema,
-    })
+    }),
   ),
   maintenancesToPages: selectMaintenanceSchema.array().default([]),
 });
@@ -85,7 +85,7 @@ export const selectPublicStatusReportSchemaWithRelation =
           monitorId: z.number(),
           statusReportId: z.number(),
           monitor: selectPublicMonitorSchema,
-        })
+        }),
       )
       .default([]),
     statusReportUpdates: z.array(selectStatusReportUpdateSchema),

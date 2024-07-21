@@ -3,7 +3,7 @@ import { generateSlug } from "random-word-slugs";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, isNotNull, sql } from "@openstatus/db";
+import { and, eq, isNotNull, isNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -124,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 
@@ -141,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -154,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
           ),
         });
 
@@ -198,6 +198,7 @@ export const workspaceRouter = createTRPCRouter({
     }),
 
   getCurrentWorkspaceNumbers: protectedProcedure.query(async (opts) => {
+    console.log(opts.ctx.workspace.id);
     const currentNumbers = await opts.ctx.db.transaction(async (tx) => {
       const notifications = await tx
         .select({ count: sql<number>`count(*)` })
@@ -209,8 +210,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNotNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })

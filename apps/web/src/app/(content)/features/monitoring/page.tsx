@@ -1,3 +1,8 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { Mdx } from "@/components/content/mdx";
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
@@ -5,8 +10,10 @@ import { ResponseDetailTabs } from "@/components/ping-response-analysis/response
 import { marketingProductPagesConfig } from "@/config/pages";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
+import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 import { allUnrelateds } from "contentlayer/generated";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "../_components/assertions-timing-form-example";
@@ -14,16 +21,10 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { mockChartData, mockResponseData } from "../mock";
-import type { Metadata } from "next";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "@/app/shared-metadata";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block"
+  (unrelated) => unrelated.slug === "ci-cd-features-block",
 );
 
 export const metadata: Metadata = {
@@ -55,12 +56,14 @@ export default function FeaturePage() {
         title="Global Monitoring."
         subTitle="Get insights of the latency worldwide."
         component={
-          <div className="m-auto">
-            <RegionsPreset
-              regions={flyRegions as unknown as Region[]}
-              selectedRegions={flyRegions as unknown as Region[]}
-            />
-          </div>
+          <Suspense fallback={<Skeleton />}>
+            <div className="m-auto">
+              <RegionsPreset
+                regions={flyRegions as unknown as Region[]}
+                selectedRegions={flyRegions as unknown as Region[]}
+              />
+            </div>
+          </Suspense>
         }
         col={1}
         position={"left"}
@@ -70,7 +73,11 @@ export default function FeaturePage() {
         iconText="Timing & Assertions"
         title="Validate the response."
         subTitle="Check the return value, status code, header or maximum response time."
-        component={<AssertionsTimingFormExample />}
+        component={
+          <Suspense fallback={<Skeleton />}>
+            <AssertionsTimingFormExample />{" "}
+          </Suspense>
+        }
         col={2}
         position={"left"}
         withGradient
@@ -81,11 +88,13 @@ export default function FeaturePage() {
         title="Optimize Web Performance."
         subTitle="Analyze DNS, TCP, TLS, and TTFB for every request and inspect Response Headers as needed."
         component={
-          <ResponseDetailTabs
-            {...mockResponseData}
-            defaultOpen="timing"
-            hideInfo={false}
-          />
+          <Suspense fallback={<Skeleton />}>
+            <ResponseDetailTabs
+              {...mockResponseData}
+              defaultOpen="timing"
+              hideInfo={false}
+            />
+          </Suspense>
         }
         col={2}
         position={"left"}

@@ -6,6 +6,7 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { monitorPeriodicity } from "../constants";
 import { maintenancesToMonitors } from "../maintenances";
 import { monitorTagsToMonitors } from "../monitor_tags";
 import { notificationsToMonitors } from "../notifications";
@@ -13,7 +14,6 @@ import { page } from "../pages";
 import { monitorsToStatusReport } from "../status_reports";
 import { workspace } from "../workspaces/workspace";
 import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
-import { monitorPeriodicity } from "../constants";
 
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),
@@ -49,10 +49,10 @@ export const monitor = sqliteTable("monitor", {
   public: integer("public", { mode: "boolean" }).default(false),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 
   deletedAt: integer("deleted_at", { mode: "timestamp" }),
@@ -80,13 +80,13 @@ export const monitorsToPages = sqliteTable(
       .notNull()
       .references(() => page.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
     order: integer("order").default(0),
   },
   (t) => ({
     pk: primaryKey(t.monitorId, t.pageId),
-  })
+  }),
 );
 
 export const monitorsToPagesRelation = relations(
@@ -100,5 +100,5 @@ export const monitorsToPagesRelation = relations(
       fields: [monitorsToPages.pageId],
       references: [page.id],
     }),
-  })
+  }),
 );

@@ -6,10 +6,10 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import { user, workspace } from "@openstatus/db/src/schema";
 
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPlanFromPriceId } from "./utils";
-import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 
 const webhookProcedure = publicProcedure.input(
   z.object({
@@ -23,7 +23,7 @@ const webhookProcedure = publicProcedure.input(
       }),
       type: z.string(),
     }),
-  })
+  }),
 );
 
 export const webhookRouter = createTRPCRouter({
@@ -36,7 +36,7 @@ export const webhookRouter = createTRPCRouter({
       });
     }
     const subscription = await stripe.subscriptions.retrieve(
-      session.subscription
+      session.subscription,
     );
     const customerId =
       typeof subscription.customer === "string"

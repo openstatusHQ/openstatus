@@ -1,10 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import * as assertions from "@openstatus/assertions";
 import type {
@@ -28,6 +28,8 @@ import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { formatDuration } from "@/lib/utils";
 import { api } from "@/trpc/client";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { RequestTestButton } from "./request-test-button";
@@ -37,8 +39,6 @@ import { SectionNotifications } from "./section-notifications";
 import { SectionRequests } from "./section-requests";
 import { SectionScheduling } from "./section-scheduling";
 import { SectionStatusPage } from "./section-status-page";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 interface Props {
   defaultSection?: string;
@@ -145,7 +145,7 @@ export function MonitorForm({
         finally: () => {
           setPending(false);
         },
-      }
+      },
     );
   };
 
@@ -194,7 +194,7 @@ export function MonitorForm({
         JSON.stringify([
           ...(statusAssertions || []),
           ...(headerAssertions || []),
-        ])
+        ]),
       );
 
       const data = (await res.json()) as RegionChecker;
@@ -230,7 +230,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT
+            ABORT_TIMEOUT,
           )}.`,
         };
       }

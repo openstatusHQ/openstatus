@@ -77,7 +77,7 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
                         currentValue === value
                           ? null // remove search param and use default timezone
                           : timezones.find(
-                              (timezone) => timezone.value === currentValue
+                              (timezone) => timezone.value === currentValue,
                             )?.label || null,
                     });
 
@@ -89,7 +89,7 @@ export function TimezoneCombobox({ defaultValue }: { defaultValue?: string }) {
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value === timezone.value ? "opacity-100" : "opacity-0"
+                      value === timezone.value ? "opacity-100" : "opacity-0",
                     )}
                   />
                   {timezone.label}

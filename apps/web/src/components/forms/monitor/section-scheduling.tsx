@@ -21,9 +21,9 @@ import {
 } from "@openstatus/ui";
 import { groupByContinent } from "@openstatus/utils";
 
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
 // TODO: centralize in a shared file!
 const cronJobs = [
@@ -119,7 +119,7 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                         <div className="grid grid-cols-3 grid-rows-1 gap-2 pt-1">
                           {current.regions
                             .sort((a, b) =>
-                              a.location.localeCompare(b.location)
+                              a.location.localeCompare(b.location),
                             )
                             .map((item) => {
                               return (
@@ -142,7 +142,7 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                             id={item.code}
                                             name="region"
                                             checked={field.value?.includes(
-                                              item.code
+                                              item.code,
                                             )}
                                             onCheckedChange={(checked) => {
                                               console.log(field.value);
@@ -156,8 +156,8 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                                 : field.onChange(
                                                     field.value?.filter(
                                                       (value) =>
-                                                        value !== item.code
-                                                    )
+                                                        value !== item.code,
+                                                    ),
                                                   );
                                             }}
                                           >

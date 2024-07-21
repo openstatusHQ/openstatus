@@ -7,7 +7,7 @@ export const PagerDutySchema = z.object({
       name: z.string(),
       id: z.string(),
       type: z.string(),
-    })
+    }),
   ),
   account: z.object({ subdomain: z.string(), name: z.string() }),
 });
@@ -56,19 +56,19 @@ export const triggerEventPayloadSchema = baseEventPayloadSchema.merge(
     }),
     images: z.array(imageSchema).optional(),
     links: z.array(linkSchema).optional(),
-  })
+  }),
 );
 
 export const acknowledgeEventPayloadSchema = baseEventPayloadSchema.merge(
   z.object({
     event_action: z.literal("acknowledge"),
-  })
+  }),
 );
 
 export const resolveEventPayloadSchema = baseEventPayloadSchema.merge(
   z.object({
     event_action: z.literal("resolve"),
-  })
+  }),
 );
 
 export const eventPayloadV2Schema = z.discriminatedUnion("event_action", [

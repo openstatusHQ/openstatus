@@ -118,7 +118,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      } // RETHINK: not the best way to handle it
+      }, // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -178,7 +178,7 @@ export class OSTinybird {
 
   endpointStatusPeriod(
     period: "7d" | "45d",
-    timezone: "UTC" = "UTC" // "EST" | "PST" | "CET"
+    timezone: "UTC" = "UTC", // "EST" | "PST" | "CET"
   ) {
     const parameters = z.object({ monitorId: z.string() });
 
@@ -187,7 +187,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      } // RETHINK: not the best way to handle it
+      }, // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({

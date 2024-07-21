@@ -28,7 +28,7 @@ import {
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
-import { toastAction, toast } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;

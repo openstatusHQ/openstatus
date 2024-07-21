@@ -44,7 +44,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? []
+          .filter((i) => flyRegions.includes(i as Region)) ?? [],
     ),
 });
 

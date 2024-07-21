@@ -65,8 +65,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .get();
 
@@ -75,7 +75,7 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     }
 
     const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
-      `${id}-daily-stats`
+      `${id}-daily-stats`,
     );
     if (cache) {
       console.log("fetching from cache");

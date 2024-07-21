@@ -11,14 +11,14 @@ export function Hero({ title, subTitle, className, ...props }: HeroProps) {
     <div
       className={cn(
         "mx-auto my-16 flex max-w-xl flex-col items-center gap-4",
-        className
+        className,
       )}
       {...props}
     >
       <h1
         className={cn(
           "text-center font-cal text-5xl leading-tight",
-          "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-30% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
+          "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-30% to-[hsl(var(--foreground))] bg-clip-text text-transparent",
         )}
       >
         {title}
