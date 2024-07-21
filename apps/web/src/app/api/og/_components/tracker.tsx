@@ -36,7 +36,7 @@ export function Tracker({ data }: { data: Monitor[] }) {
                   key={i}
                   tw={cn(
                     "h-16 w-3 rounded-full mr-1",
-                    classNames[item.variant]
+                    classNames[item.variant],
                   )}
                 />
               );

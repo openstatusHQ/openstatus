@@ -1,7 +1,7 @@
-import type { Maintenance, PublicMonitor } from "@openstatus/db/src/schema";
-import { StatusReportHeader, StatusReportUpdates } from "./status-report";
 import { cn } from "@/lib/utils";
+import type { Maintenance, PublicMonitor } from "@openstatus/db/src/schema";
 import { DateTimeTooltip } from "./datetime-tooltip";
+import { StatusReportHeader, StatusReportUpdates } from "./status-report";
 
 export function MaintenanceContainer({
   maintenance,

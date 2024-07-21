@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
+import { DateTimeTooltip } from "@/components/status-page/datetime-tooltip";
 import { StatusReportUpdates } from "@/components/status-page/status-report";
 import { api } from "@/trpc/server";
-import { CopyLinkButton } from "./_components/copy-link-button";
 import { Badge } from "@openstatus/ui";
-import { DateTimeTooltip } from "@/components/status-page/datetime-tooltip";
+import { CopyLinkButton } from "./_components/copy-link-button";
 
 export default async function IncidentPage({
   params,
@@ -20,7 +20,7 @@ export default async function IncidentPage({
   if (!report) return notFound();
 
   const affectedMonitors = report.monitorsToStatusReports.map(
-    ({ monitor }) => monitor
+    ({ monitor }) => monitor,
   );
 
   const firstUpdate =

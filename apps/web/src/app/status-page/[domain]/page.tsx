@@ -1,12 +1,12 @@
 import { subDays } from "date-fns";
 import { notFound } from "next/navigation";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
+import { Feed } from "@/components/status-page/feed";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
-import { EmptyState } from "@/components/dashboard/empty-state";
-import { Feed } from "@/components/status-page/feed";
 import { Separator } from "@openstatus/ui";
 
 type Props = {
@@ -26,7 +26,7 @@ export default async function Page({ params }: Props) {
 
   const lastStatusReports = page.statusReports.filter((report) => {
     return report.statusReportUpdates.some(
-      (update) => update.date.getTime() > subDays(new Date(), 7).getTime()
+      (update) => update.date.getTime() > subDays(new Date(), 7).getTime(),
     );
   });
 
@@ -68,7 +68,7 @@ export default async function Page({ params }: Props) {
           statusReports={lastStatusReports.filter((report) => {
             return report.statusReportUpdates.some(
               (update) =>
-                update.date.getTime() > subDays(new Date(), 7).getTime()
+                update.date.getTime() > subDays(new Date(), 7).getTime(),
             );
           })}
         />

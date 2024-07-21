@@ -27,7 +27,7 @@ export async function StatusCheck({
     <div
       className={cn(
         "flex items-center gap-3 rounded-lg border p-3",
-        containerClassName(details.variant)
+        containerClassName(details.variant),
       )}
     >
       <span className={cn("rounded-full border p-1.5", className)}>

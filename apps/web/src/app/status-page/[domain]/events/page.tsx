@@ -1,9 +1,9 @@
+import { Header } from "@/components/dashboard/header";
+import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params-preset"; // TOO: move to shared components
+import { Feed } from "@/components/status-page/feed";
 import { api } from "@/trpc/server";
 import { notFound } from "next/navigation";
-import { Header } from "@/components/dashboard/header";
-import { Feed } from "@/components/status-page/feed";
 import { z } from "zod";
-import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params-preset"; // TOO: move to shared components
 import { formatter } from "./utils";
 
 const searchParamsSchema = z.object({

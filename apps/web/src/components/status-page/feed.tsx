@@ -4,10 +4,10 @@ import type {
   PublicMonitor,
   StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
+import { EmptyState } from "../dashboard/empty-state";
 import { DayHeader } from "./day-header";
 import { MaintenanceContainer } from "./maintenance";
 import { StatusReport } from "./status-report";
-import { EmptyState } from "../dashboard/empty-state";
 
 function isMaintenanceType(value: unknown): value is Maintenance {
   return (value as Maintenance).from !== undefined;
@@ -34,7 +34,7 @@ export function Feed({
 
   function groupByDay(
     maintenances: Maintenance[],
-    statusReports: StatusReportWithUpdates[]
+    statusReports: StatusReportWithUpdates[],
   ) {
     const grouped = [...maintenances, ...statusReports].reduce(
       (acc, element) => {
@@ -90,7 +90,7 @@ export function Feed({
               value: StatusReportWithUpdates;
             }
         )[];
-      }[]
+      }[],
     );
 
     grouped.sort((a, b) => b.timestamp - a.timestamp);
@@ -104,7 +104,7 @@ export function Feed({
         return (
           <div key={group.timestamp} className="grid gap-4">
             <DayHeader date={new Date(group.timestamp)} />
-            {group.list.map((item, i) => {
+            {group.list.map((item, _i) => {
               if (item.type === "maintenance") {
                 const affectedMonitors = item.value.monitors
                   ?.map((monitorId) => {

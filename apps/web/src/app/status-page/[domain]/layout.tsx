@@ -8,12 +8,12 @@ import {
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
+import { getRequestHeaderTimezone } from "@/lib/timezone";
 import { api } from "@/trpc/server";
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
 import PasswordProtected from "./_components/password-protected";
 import { createProtectedCookieKey, setPrefixUrl } from "./utils";
-import { getRequestHeaderTimezone } from "@/lib/timezone";
 
 type Props = {
   params: { domain: string };

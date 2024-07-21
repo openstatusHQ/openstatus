@@ -44,7 +44,7 @@ export function StatusCheck({ tracker }: { tracker: Tracker }) {
       <div
         tw={cn(
           "flex text-white rounded-full p-3 border-2 mb-2",
-          getClassName()
+          getClassName(),
         )}
       >
         <Icon />

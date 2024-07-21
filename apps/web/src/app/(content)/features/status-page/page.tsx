@@ -5,6 +5,7 @@ import {
 } from "@/app/shared-metadata";
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
+import { MaintenanceContainer } from "@/components/status-page/maintenance";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReport } from "@/components/status-page/status-report";
 import { Tracker } from "@/components/tracker/tracker";
@@ -16,7 +17,6 @@ import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
 import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
-import { MaintenanceContainer } from "@/components/status-page/maintenance";
 
 const { description, subtitle } = marketingProductPagesConfig[1];
 

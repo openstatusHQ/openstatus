@@ -6,13 +6,13 @@ import { z } from "zod";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
 import { quantiles } from "@/lib/monitor/utils";
 import { api } from "@/trpc/server";
-import { EmptyState } from "@/components/dashboard/empty-state";
 
 // Add loading page
 

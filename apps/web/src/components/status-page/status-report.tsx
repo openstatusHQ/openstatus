@@ -11,11 +11,11 @@ import type {
 import { Badge } from "@openstatus/ui";
 
 import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
-import { cn } from "@/lib/utils";
-import { ProcessMessage } from "./process-message";
 import { statusDict } from "@/data/incidents-dictionary";
+import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
 import { DateTimeTooltip } from "./datetime-tooltip";
+import { ProcessMessage } from "./process-message";
 
 function StatusReport({
   report,
@@ -107,14 +107,14 @@ function StatusReportUpdates({ updates }: StatusReportUpdatesProps) {
           <div
             key={update.id}
             className={cn(
-              "group -m-2 relative flex gap-4 border border-transparent p-2"
+              "group -m-2 relative flex gap-4 border border-transparent p-2",
             )}
           >
             <div className="relative">
               <div
                 className={cn(
                   "rounded-full border border-border bg-background p-2",
-                  i === 0 ? color : null
+                  i === 0 ? color : null,
                 )}
               >
                 <StatusIcon className="h-4 w-4" />
