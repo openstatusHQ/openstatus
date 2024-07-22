@@ -42,7 +42,7 @@ export const pageRouter = createTRPCRouter({
       })
     ).length;
 
-    const limit = allPlans[opts.ctx.workspace.plan].limits;
+    const limit = opts.ctx.workspace.limits;
 
     // the user has reached the status page number limits
     if (pageNumbers >= limit["status-pages"]) {
@@ -123,7 +123,7 @@ export const pageRouter = createTRPCRouter({
 
     const monitorIds = monitors?.map((item) => item.monitorId) || [];
 
-    const limit = allPlans[opts.ctx.workspace.plan].limits;
+    const limit = opts.ctx.workspace.limits;
 
     // the user is not eligible for password protection
     if (
@@ -369,7 +369,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   isPageLimitReached: protectedProcedure.query(async (opts) => {
-    const pageLimit = allPlans[opts.ctx.workspace.plan].limits["status-pages"];
+    const pageLimit = opts.ctx.workspace.limits["status-pages"];
     const pageNumbers = (
       await opts.ctx.db.query.page.findMany({
         where: eq(monitor.workspaceId, opts.ctx.workspace.id),

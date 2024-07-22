@@ -15,7 +15,7 @@ export default async function CustomDomainPage({
   const page = await api.page.getPageById.query({ id });
   const workspace = await api.workspace.getWorkspace.query();
 
-  const isValid = allPlans[workspace.plan].limits["custom-domain"];
+  const isValid = workspace.limits["custom-domain"];
 
   if (!page) return notFound();
 
