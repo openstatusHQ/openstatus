@@ -35,7 +35,7 @@ export default function Pre({ children, ...props }: PreProps) {
       <Button
         variant="outline"
         size="icon"
-        className="absolute top-4 right-4"
+        className="absolute top-2 right-2"
         onClick={onClick}
       >
         {!copied ? (
