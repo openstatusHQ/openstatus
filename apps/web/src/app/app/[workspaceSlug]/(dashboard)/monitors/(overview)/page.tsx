@@ -42,8 +42,11 @@ export default async function MonitorPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
-  const monitors = await api.monitor.getMonitorsByWorkspace.query();
-  const isLimitReached = await api.monitor.isMonitorLimitReached.query();
+
+  const [monitors, isLimitReached] = await Promise.all([
+    api.monitor.getMonitorsByWorkspace.query(),
+    api.monitor.isMonitorLimitReached.query()
+  ])
 
   if (!search.success) return notFound();
 
@@ -61,9 +64,11 @@ export default async function MonitorPage({
       />
     );
 
-  const _incidents = await api.incident.getIncidentsByWorkspace.query(); // TODO: filter by last 7 days
-  const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
-  const _maintenances = await api.maintenance.getLast7DaysByWorkspace.query();
+    const [_incidents,tags, _maintenances] = await Promise.all([
+      api.incident.getIncidentsByWorkspace.query(),
+      api.monitorTag.getMonitorTagsByWorkspace.query(),
+      api.maintenance.getLast7DaysByWorkspace.query(),
+    ])
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
