@@ -113,7 +113,7 @@ Made with [Contrib.rocks](https://contrib.rocks)
 4. Follow the steps to run your sqlite database locally inside of
    [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
 
-5. Start the development with the below command
+5. Start the development with the below command inside of `/apps/web`
 
    ```sh
     pnpm dev
