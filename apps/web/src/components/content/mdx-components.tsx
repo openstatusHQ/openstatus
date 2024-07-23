@@ -26,6 +26,7 @@ import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
+import { PricingSlider } from "../marketing/pricing/pricing-slider";
 
 export const components = {
   a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
@@ -63,6 +64,11 @@ export const components = {
       <div className="not-prose">
         <MetricsCard {...props} />
       </div>
+    );
+  },
+  PricingSlider: () => {
+    return (
+      <PricingSlider />
     );
   },
   SimpleChart: (props: SimpleChartProps) => {
