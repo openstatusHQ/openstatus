@@ -1,0 +1,86 @@
+---
+title: "Our latest pricing update: more value, cleaner numbers."
+description: We have update our pricing again, let's deep dive into it.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://twitter.com/thibaultleouay
+publishedAt: 2024-07-29
+image: /assets/posts/pricing-update-july-2024/pricing.png
+---
+
+
+It's been six months since our last pricing update, and a lot has changed. We've shipped a lot of new features  since January significantly improving our product, e.g :
+- [35 regions available](/changelog/more-regions),
+- [Password protected status page](changelog/password-protected-status-page),
+- [PagerDuty integrations](/changelog/pagerduty-integration)
+
+
+In light of these improvements, we realized our pricing needed a refresh to accurately reflect the current value we're providing to our users.
+
+Let's dive into the details of our update and why it matters.
+
+**We have grandfathered all our existing users into the previous pricing, so this update only affects new users."
+
+**
+
+## 🫳 9️⃣ We Dropped the 9: Embracing Clean Pricing
+
+You may notice something unusual in our new pricing structure: the absence of prices ending in 9 This isn't a random choice, but a deliberate step towards more transparent and honest pricing.
+
+The psychology behind pricing is fascinating. Research by [Paddle](https://www.paddle.com/blog/end-prices-in-9s) reveals that while prices ending in 9 can boost sales, it's a common practice accross all industry. They're often associated with discount brands or perceived as a marketing ploy. By embracing round numbers, we're making a statement about our product's quality and value. We're not trying to create an illusion of a bargain; instead, we're confidently presenting our true worth.
+
+## 🌍💰More Regions, Lower Price
+
+We're proud to say that even with our updated pricing, we remain more affordable than our competitors while offering more regions. Here's a quick comparison:
+
+We currently support `35 regions`, and plans to expand to `41 regions` soon.
+
+Our main competitor, Datadog, only covers `29 regions`. They also charge per request `$7.20 per 10k requests`, which can quickly add up if you're monitoring multiple services.
+
+We took a completly different approach we are charging per monitors instead of requests. You can still run some checks via our [API](https://docs.openstatus.dev/api-reference/check/post-check) if you need to.
+
+This means you can set a fixed number of monitors without worrying about the number of requests our price is fixed.
+
+You can see how many requests you can do with a monitor:
+
+<PricingSlider />
+
+
+## 🏠💸 The Cost of Self-Hosting.
+
+Some of you might be wondering, "Could I save money by hosting this myself?" Let's break it down.
+
+Our checker is built in Go, making it incredibly lightweight and resource-efficient.
+Unlike most of our competitors who use Node-based checkers and/or Playwright, our solution can handle millions of requests on small machines.
+Plus, Golang's networking package is unparalleled for handling various network checks (with DNS, TCP, and ICMP support coming soon).
+
+If you were to host our checker yourself across the same number of regions we cover, here's a rough cost estimate:
+
+```
+35 (Number of Fly Regions) * $3 (Average price per Fly Machine) = $105 per month
+```
+
+
+And that's just for hosting.
+
+It doesn't account for the time and expertise required to manage and maintain the system across all these regions.
+
+But you can get it for $30 with our `Starter` plan.
+
+## 🔄💰 Why Regular Pricing Updates Matter
+
+Updating pricing regularly is crucial for any startup. It's a way to gauge how users value the product and ensure the business model remains sustainable as the product evolves.
+
+Valuing a product correctly is one of the most challenging tasks for any team.
+It requires a delicate balance between providing value to users and ensuring the company can continue to innovate and grow.
+
+## Conclusion
+
+
+Our pricing update reflects the significant improvements we've made to our product over the past six months.
+
+This pricing allows us to continue providing top-notch service across more regions than our competitors, all while keeping costs manageable for our users.
+
+We believe in transparency, which is why we've shared these insights into our pricing strategy.
+
+Our goal is to continue providing you with the best monitoring service.
