@@ -46,8 +46,8 @@ export default async function MonitorPage({
 
   const [monitors, isLimitReached] = await Promise.all([
     api.monitor.getMonitorsByWorkspace.query(),
-    api.monitor.isMonitorLimitReached.query()
-  ])
+    api.monitor.isMonitorLimitReached.query(),
+  ]);
 
 
   if (monitors?.length === 0)
@@ -64,11 +64,11 @@ export default async function MonitorPage({
       />
     );
 
-    const [_incidents,tags, _maintenances] = await Promise.all([
-      api.incident.getIncidentsByWorkspace.query(),
-      api.monitorTag.getMonitorTagsByWorkspace.query(),
-      api.maintenance.getLast7DaysByWorkspace.query(),
-    ])
+  const [_incidents, tags, _maintenances] = await Promise.all([
+    api.incident.getIncidentsByWorkspace.query(),
+    api.monitorTag.getMonitorTagsByWorkspace.query(),
+    api.maintenance.getLast7DaysByWorkspace.query(),
+  ]);
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
