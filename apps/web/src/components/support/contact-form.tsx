@@ -25,7 +25,7 @@ import {
 
 import { toast } from "@/lib/toast";
 import { LoadingAnimation } from "../loading-animation";
-import { handlePlainSupport } from "./action";
+import { handleSlackWebhookSupport } from "./action";
 
 export const types = [
   {
@@ -77,14 +77,13 @@ export function ContactForm({
 
   async function onSubmit(data: FormValues) {
     startTransition(async () => {
-      const result = await handlePlainSupport(data);
+      const result = await handleSlackWebhookSupport(data);
       if (result.error) {
-        console.error(result.error);
-        toast.error("Something went wrong. Please try again.");
+        toast.error(result.error);
       } else {
         handleSubmit?.();
         toast.success(
-          "Your message has been sent! We will get back to you soon.",
+          "Your message has been sent! We will get back to you soon."
         );
       }
     });
