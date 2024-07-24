@@ -53,17 +53,20 @@ export function RegionsPreset({
     }
   }, [allSelected, router, pathname, updateSearchParams, selected]);
 
-  const regionsByContinent = regions.reduce((prev, curr) => {
-    const region = flyRegionsDict[curr];
+  const regionsByContinent = regions.reduce(
+    (prev, curr) => {
+      const region = flyRegionsDict[curr];
 
-    if (prev[region.continent]) {
-      prev[region.continent].push(region);
-    } else {
-      prev[region.continent] = [region];
-    }
+      if (prev[region.continent]) {
+        prev[region.continent].push(region);
+      } else {
+        prev[region.continent] = [region];
+      }
 
-    return prev;
-  }, {} as Record<Continent, RegionInfo[]>);
+      return prev;
+    },
+    {} as Record<Continent, RegionInfo[]>,
+  );
 
   return (
     <Popover>
@@ -115,7 +118,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code)
+                              : prev.filter((r) => r !== code),
                           );
                         }}
                       >
@@ -124,7 +127,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
+                              : "opacity-50 [&_svg]:invisible",
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />

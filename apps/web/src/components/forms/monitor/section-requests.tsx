@@ -35,7 +35,6 @@ import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
 }
 
 // TODO: add Dialog with response informations when pingEndpoint!

@@ -37,7 +37,7 @@ export function CheckboxLabel({
         htmlFor={`${name}-${id}`}
         className={cn(
           "flex h-full items-center gap-1 rounded-md border border-border bg-popover p-4 pr-10 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
-          className
+          className,
         )}
       >
         {children}

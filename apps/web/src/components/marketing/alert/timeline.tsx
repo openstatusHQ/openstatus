@@ -110,7 +110,7 @@ const timeline = [
   {
     label: "Monitor recovered",
     date: new Date("03.12.2023, 19:21:30"),
-    message: "The enpoint response is back.",
+    message: "The endpoint response is back.",
     icon: {
       name: "check",
       textColor: "text-green-500",

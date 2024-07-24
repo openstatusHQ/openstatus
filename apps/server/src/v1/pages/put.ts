@@ -42,12 +42,12 @@ const putRoute = createRoute({
 export function registerPutPage(api: typeof pagesApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
     if (
-      workspacePlan.limits["password-protection"] === false &&
+      limits["password-protection"] === false &&
       input?.passwordProtected === true
     ) {
       throw new HTTPException(403, {
@@ -59,7 +59,7 @@ export function registerPutPage(api: typeof pagesApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
       )
       .get();
 
@@ -98,8 +98,8 @@ export function registerPutPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 
@@ -132,8 +132,8 @@ export function registerPutPage(api: typeof pagesApi) {
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, newPage.id)
-          )
+            eq(monitorsToPages.pageId, newPage.id),
+          ),
         );
     }
 

@@ -2,14 +2,14 @@ import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
 import { db, eq } from "@openstatus/db";
-import { workspace } from "@openstatus/db/src/schema";
-import { getPlanConfig } from "@openstatus/plans";
-import type { Variables } from "./index";
+import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
+import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
+import type { Variables } from "./index";
 
 export async function middleware(
   c: Context<{ Variables: Variables }, "/*">,
-  next: Next
+  next: Next,
 ) {
   const key = c.req.header("x-openstatus-key");
   if (!key) throw new HTTPException(401, { message: "Unauthorized" });
@@ -34,9 +34,10 @@ export async function middleware(
     console.error("Workspace not found");
     throw new HTTPException(401, { message: "Unauthorized" });
   }
-
+  const _work = selectWorkspaceSchema.parse(_workspace);
   c.set("workspacePlan", getPlanConfig(_workspace.plan));
   c.set("workspaceId", `${result.ownerId}`);
+  c.set("limits", _work.limits);
 
   await next();
 }

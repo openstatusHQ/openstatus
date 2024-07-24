@@ -1014,17 +1014,20 @@ export const mockChartData = {
 };
 
 export const maintenanceData = {
-  id: 0,
-  from: new Date("2024-07-09T21:02:43.000Z"),
-  to: new Date("2024-07-09T21:05:43.000Z"),
-  title: "Maintenance",
-  message:
-    "We are performing maintenance on our environment. Services and projects may be unavailable for a few minutes.",
-  createdAt: null,
-  updatedAt: null,
-  workspaceId: null,
-  pageId: null,
-  monitors: undefined,
+  maintenance: {
+    id: 0,
+    from: new Date("2024-07-09T21:02:43.000Z"),
+    to: new Date("2024-07-09T21:05:43.000Z"),
+    title: "Maintenance",
+    message:
+      "We are performing maintenance on our environment. Services and projects may be unavailable for a few minutes.",
+    createdAt: null,
+    updatedAt: null,
+    workspaceId: null,
+    pageId: null,
+    monitors: undefined,
+  },
+  monitors: [],
 };
 
 export const statusReportData = {
@@ -1033,6 +1036,7 @@ export const statusReportData = {
     status: "resolved" as const,
     title: "Downtime",
     workspaceId: 1,
+    pageId: 0,
     createdAt: new Date("2024-07-09T21:22:43.000Z"),
     updatedAt: new Date("2024-07-09T21:23:17.000Z"),
     statusReportUpdates: [

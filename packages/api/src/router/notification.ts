@@ -11,12 +11,11 @@ import {
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
 
 import { SchemaError } from "@openstatus/error";
 import { trackNewNotification } from "../analytics";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { env } from "../env";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -24,10 +23,8 @@ export const notificationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { monitors, ...props } = opts.input;
 
-      const notificationLimit = getLimit(
-        opts.ctx.workspace.plan,
-        "notification-channels",
-      );
+      const notificationLimit =
+        opts.ctx.workspace.limits["notification-channels"];
 
       const notificationNumber = (
         await opts.ctx.db.query.notification.findMany({
@@ -221,10 +218,8 @@ export const notificationRouter = createTRPCRouter({
   }),
 
   isNotificationLimitReached: protectedProcedure.query(async (opts) => {
-    const notificationLimit = getLimit(
-      opts.ctx.workspace.plan,
-      "notification-channels",
-    );
+    const notificationLimit =
+      opts.ctx.workspace.limits["notification-channels"];
     const notificationNumbers = (
       await opts.ctx.db.query.notification.findMany({
         where: eq(notification.workspaceId, opts.ctx.workspace.id),

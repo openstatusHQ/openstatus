@@ -51,15 +51,15 @@ import { api } from "@/trpc/client";
 interface Props {
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
-  pages?: Page[];
   nextUrl?: string;
+  pageId: number;
 }
 
 export function StatusReportForm({
   defaultValues,
   monitors,
-  pages,
   nextUrl,
+  pageId,
 }: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
@@ -69,7 +69,6 @@ export function StatusReportForm({
           title: defaultValues.title,
           status: defaultValues.status,
           monitors: defaultValues.monitors,
-          pages: defaultValues.pages,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,
@@ -86,13 +85,17 @@ export function StatusReportForm({
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.statusReport.updateStatusReport.mutate({ ...props });
+          await api.statusReport.updateStatusReport.mutate({
+            pageId,
+            ...props,
+          });
         } else {
           const { message, date, status, ...rest } = props;
           const statusReport = await api.statusReport.createStatusReport.mutate(
             {
               status,
               message,
+              pageId,
               ...rest,
             },
           );
@@ -243,66 +246,6 @@ export function StatusReportForm({
                                         : "bg-red-500",
                                     )}
                                   />
-                                </div>
-                                <p className="truncate text-muted-foreground text-sm">
-                                  {item.description}
-                                </p>
-                              </div>
-                            </FormItem>
-                          );
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="pages"
-              render={() => (
-                <FormItem className="sm:col-span-full">
-                  <div className="mb-4">
-                    <FormLabel>Pages</FormLabel>
-                    <FormDescription>
-                      Select the pages that you want to refer the incident to.
-                    </FormDescription>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    {pages?.map((item) => (
-                      <FormField
-                        key={item.id}
-                        control={form.control}
-                        name="pages"
-                        render={({ field }) => {
-                          return (
-                            <FormItem
-                              key={item.id}
-                              className="flex flex-row items-start space-x-3 space-y-0"
-                            >
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(item.id)}
-                                  onCheckedChange={(checked) => {
-                                    return checked
-                                      ? field.onChange([
-                                          ...(field.value || []),
-                                          item.id,
-                                        ])
-                                      : field.onChange(
-                                          field.value?.filter(
-                                            (value) => value !== item.id,
-                                          ),
-                                        );
-                                  }}
-                                />
-                              </FormControl>
-                              <div className="grid gap-1.5 leading-none">
-                                <div className="flex items-center gap-2">
-                                  <FormLabel className="font-normal">
-                                    {item.title}
-                                  </FormLabel>
                                 </div>
                                 <p className="truncate text-muted-foreground text-sm">
                                   {item.description}

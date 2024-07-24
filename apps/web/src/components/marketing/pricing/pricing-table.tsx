@@ -4,12 +4,8 @@ import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 
-import type { WorkspacePlan } from "@openstatus/plans";
-import {
-  allPlans,
-  plans as defaultPlans,
-  pricingTableConfig,
-} from "@openstatus/plans";
+import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import {
   Badge,
   Button,
@@ -21,12 +17,14 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui";
+import { pricingTableConfig } from "../../../config/pricing-table";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { cn } from "@/lib/utils";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 export function PricingTable({
-  plans = defaultPlans,
+  plans = workspacePlans,
   currentPlan,
   events,
   isLoading,
@@ -116,7 +114,7 @@ export function PricingTable({
                 </TableRow>
                 {features.map(({ label, value, badge }, _i) => {
                   return (
-                    <TableRow key={key}>
+                    <TableRow key={key + label}>
                       <TableCell className="gap-1">
                         {label}{" "}
                         {badge ? (
@@ -140,7 +138,11 @@ export function PricingTable({
                           }
                           if (typeof limitValue === "number") {
                             return (
-                              <span className="font-mono">{limitValue}</span>
+                              <span className="font-mono">
+                                {new Intl.NumberFormat("us")
+                                  .format(limitValue)
+                                  .toString()}
+                              </span>
                             );
                           }
                           if (
@@ -154,7 +156,8 @@ export function PricingTable({
 
                         return (
                           <TableCell
-                            key={key}
+                            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                            key={key + value + _i}
                             className={cn(
                               "p-3",
                               plan.key === "team" && "bg-muted/30",

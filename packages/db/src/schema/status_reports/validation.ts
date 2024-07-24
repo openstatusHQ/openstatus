@@ -25,7 +25,6 @@ export const insertStatusReportSchema = createInsertSchema(statusReport, {
      * relationship to monitors and pages
      */
     monitors: z.number().array().optional().default([]),
-    pages: z.number().array().optional().default([]),
   })
   .extend({
     /**

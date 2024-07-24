@@ -30,16 +30,16 @@ interface Props {
   defaultSection?: string;
   defaultValues?: InsertStatusReport;
   monitors?: Monitor[];
-  pages?: Page[];
   nextUrl?: string;
+  pageId: number;
 }
 
 export function StatusReportForm({
   defaultSection,
   defaultValues,
   monitors,
-  pages,
   nextUrl,
+  pageId,
 }: Props) {
   const form = useForm<InsertStatusReport>({
     resolver: zodResolver(insertStatusReportSchema),
@@ -49,7 +49,6 @@ export function StatusReportForm({
           title: defaultValues.title,
           status: defaultValues.status,
           monitors: defaultValues.monitors,
-          pages: defaultValues.pages,
           // include update on creation
           message: defaultValues.message,
           date: defaultValues.date,
@@ -67,13 +66,17 @@ export function StatusReportForm({
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.statusReport.updateStatusReport.mutate({ ...props });
+          await api.statusReport.updateStatusReport.mutate({
+            pageId,
+            ...props,
+          });
         } else {
           const { message, date, status, ...rest } = props;
           const statusReport = await api.statusReport.createStatusReport.mutate(
             {
               status,
               message,
+              pageId,
               ...rest,
             },
           );
@@ -133,7 +136,7 @@ export function StatusReportForm({
             </TabsContent>
           ) : null}
           <TabsContent value="connect">
-            <SectionConnect form={form} monitors={monitors} pages={pages} />
+            <SectionConnect form={form} monitors={monitors} />
           </TabsContent>
         </Tabs>
         <SaveButton

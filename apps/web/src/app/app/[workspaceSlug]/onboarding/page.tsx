@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { Button } from "@openstatus/ui";
 
 import { Header } from "@/components/dashboard/header";
+import { MonitorForm } from "@/components/forms/monitor/form";
 import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
-import { MonitorForm } from "@/components/forms/monitor/form";
 
 export default async function Onboarding({
   params,
@@ -16,6 +16,7 @@ export default async function Onboarding({
 }) {
   const { workspaceSlug } = params;
 
+  const workspace = await api.workspace.getWorkspace.query();
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
   const allPages = await api.page.getPagesByWorkspace.query();
   const allNotifications =
@@ -38,6 +39,8 @@ export default async function Onboarding({
             <MonitorForm
               notifications={allNotifications}
               defaultSection="request"
+              limits={workspace.limits}
+              plan={workspace.plan}
             />
           </div>
           <div className="hidden h-full md:col-span-1 md:block">

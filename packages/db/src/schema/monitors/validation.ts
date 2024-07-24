@@ -3,22 +3,13 @@ import { z } from "zod";
 
 import * as assertions from "@openstatus/assertions";
 
-import {
-  flyRegions,
-  monitorJobTypes,
-  monitorMethods,
-  monitorPeriodicity,
-  monitorRegions,
-  monitorStatus,
-} from "./constants";
+import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";
+import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 import { monitor, monitorsToPages } from "./monitor";
 
-export const monitorPeriodicitySchema = z.enum(monitorPeriodicity);
 export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
-export const monitorRegionSchema = z.enum(monitorRegions);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
-export const monitorFlyRegionSchema = z.enum(flyRegions);
 
 // TODO: shared function
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>
@@ -35,16 +26,19 @@ const bodyToStringSchema = z.preprocess((val) => {
   return String(val);
 }, z.string());
 
-const headersToArraySchema = z.preprocess((val) => {
-  // early return in case the header is already an array
-  if (Array.isArray(val)) {
-    return val;
-  }
-  if (String(val).length > 0) {
-    return JSON.parse(String(val));
-  }
-  return [];
-}, z.array(z.object({ key: z.string(), value: z.string() })).default([]));
+const headersToArraySchema = z.preprocess(
+  (val) => {
+    // early return in case the header is already an array
+    if (Array.isArray(val)) {
+      return val;
+    }
+    if (String(val).length > 0) {
+      return JSON.parse(String(val));
+    }
+    return [];
+  },
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+);
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
@@ -90,5 +84,4 @@ export type MonitorStatus = z.infer<typeof monitorStatusSchema>;
 export type MonitorPeriodicity = z.infer<typeof monitorPeriodicitySchema>;
 export type MonitorMethod = z.infer<typeof monitorMethodsSchema>;
 export type MonitorRegion = z.infer<typeof monitorRegionSchema>;
-export type MonitorFlyRegion = z.infer<typeof monitorFlyRegionSchema>;
 export type MonitorJobType = z.infer<typeof monitorJobTypesSchema>;

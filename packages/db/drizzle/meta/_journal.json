@@ -239,6 +239,20 @@
       "when": 1719740057514,
       "tag": "0033_solid_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1720727898360,
+      "tag": "0034_serious_shard",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "6",
+      "when": 1721159796428,
+      "tag": "0035_open_the_professor",
+      "breakpoints": true
     }
   ]
 }

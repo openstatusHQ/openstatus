@@ -7,6 +7,7 @@ import { monitor } from "@openstatus/db/src/schema";
 import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
@@ -44,8 +45,7 @@ const postRoute = createRoute({
 export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
-
+    const limits = c.get("limits");
     const input = c.req.valid("json");
     const count = (
       await db
@@ -54,24 +54,24 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all()
     )[0].count;
 
-    if (count >= workspacePlan.limits.monitors) {
+    if (count >= getLimit(limits, "monitors")) {
       throw new HTTPException(403, {
         message: "Upgrade for more monitors",
       });
     }
 
-    if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
+    if (!getLimit(limits, "periodicity").includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
     for (const region of input.regions) {
-      if (!workspacePlan.limits.regions.includes(region)) {
+      if (!getLimit(limits, "regions").includes(region)) {
         throw new HTTPException(403, { message: "Upgrade for more region" });
       }
     }

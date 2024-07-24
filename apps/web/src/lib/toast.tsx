@@ -17,7 +17,10 @@ const config = {
     description: "Please try again",
     action: {
       label: "Discord",
-      onClick: () => window.open("/discord", "_blank")?.location,
+      onClick: () => {
+        if (typeof window === "undefined") return;
+        window.open("/discord", "_blank")?.location;
+      },
     },
   },
   "unique-slug": {

@@ -1,16 +1,16 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, asc, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
+import { and, db, eq, inArray, isNotNull, isNull } from "@openstatus/db";
 import {
   monitor,
   monitorsToStatusReport,
   page,
   pageSubscriber,
-  pagesToStatusReports,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendEmailHtml } from "@openstatus/emails";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
@@ -60,9 +60,9 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
 
-    const { pageIds, monitorIds, date, ...rest } = input;
+    const { monitorIds, date, ...rest } = input;
 
     if (monitorIds?.length) {
       const _monitors = await db
@@ -72,8 +72,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
             inArray(monitor.id, monitorIds),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 
@@ -82,19 +82,19 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       }
     }
 
-    if (pageIds?.length) {
+    if (rest.pageId) {
       const _pages = await db
         .select()
         .from(page)
         .where(
           and(
             eq(page.workspaceId, Number(workspaceId)),
-            inArray(page.id, pageIds)
-          )
+            eq(page.id, rest.pageId),
+          ),
         )
         .all();
 
-      if (_pages.length !== pageIds.length) {
+      if (_pages.length !== 1) {
         throw new HTTPException(400, { message: "Page not found" });
       }
     }
@@ -118,20 +118,6 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .returning()
       .get();
 
-    if (pageIds?.length) {
-      await db
-        .insert(pagesToStatusReports)
-        .values(
-          pageIds.map((id) => {
-            return {
-              pageId: id,
-              statusReportId: _newStatusReport.id,
-            };
-          })
-        )
-        .returning();
-    }
-
     if (monitorIds?.length) {
       await db
         .insert(monitorsToStatusReport)
@@ -141,38 +127,30 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               monitorId: id,
               statusReportId: _newStatusReport.id,
             };
-          })
+          }),
         )
         .returning();
     }
 
-    if (workspacePlan.title !== "Hobby") {
-      const allPages = await db
+    if (getLimit(limits, "status-subscribers") && _newStatusReport.pageId) {
+      const subscribers = await db
         .select()
-        .from(pagesToStatusReports)
+        .from(pageSubscriber)
         .where(
-          eq(pagesToStatusReports.statusReportId, Number(_newStatusReport.id))
+          and(
+            eq(pageSubscriber.pageId, _newStatusReport.pageId),
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
-      for (const currentPage of allPages) {
-        const subscribers = await db
-          .select()
-          .from(pageSubscriber)
-          .where(
-            and(
-              eq(pageSubscriber.pageId, currentPage.pageId),
-              isNotNull(pageSubscriber.acceptedAt)
-            )
-          )
-          .all();
-        const pageInfo = await db
-          .select()
-          .from(page)
-          .where(eq(page.id, currentPage.pageId))
-          .get();
-        if (!pageInfo) continue;
+      const pageInfo = await db
+        .select()
+        .from(page)
+        .where(eq(page.id, _newStatusReport.pageId))
+        .get();
+      if (pageInfo) {
         const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email
+          (subscriber) => subscriber.email,
         );
         await sendEmailHtml({
           to: subscribersEmails,
@@ -187,7 +165,6 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
     const data = StatusReportSchema.parse({
       ..._newStatusReport,
       monitorIds,
-      pageIds,
       statusReportUpdateIds: [_newStatusReportUpdate.id],
     });
 

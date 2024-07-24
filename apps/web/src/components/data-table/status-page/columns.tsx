@@ -14,8 +14,8 @@ import {
 } from "@openstatus/ui";
 
 import { ArrowUpRight, Check } from "lucide-react";
-import { DataTableRowActions } from "./data-table-row-actions";
 import { DataTableBadges } from "../data-table-badges";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<
   Page & {
@@ -29,7 +29,7 @@ export const columns: ColumnDef<
     cell: ({ row }) => {
       return (
         <Link
-          href={`./status-pages/${row.original.id}/edit`}
+          href={`./status-pages/${row.original.id}/reports`}
           className="group flex items-center gap-2"
         >
           <span className="max-w-[125px] truncate group-hover:underline">

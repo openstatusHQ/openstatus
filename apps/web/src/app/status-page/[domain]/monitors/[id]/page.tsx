@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 import * as z from "zod";
 
-import { flyRegions } from "@openstatus/db/src/schema";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
@@ -46,7 +46,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? []
+          .filter((i) => flyRegions.includes(i as Region)) ?? [],
     ),
 });
 
@@ -74,7 +74,6 @@ export default async function Page({
 
   const { period, quantile, interval, regions } = search.data;
 
-  console.log(regions.length);
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
   const periodicityMinutes = getMinutesByInterval(monitor.periodicity);

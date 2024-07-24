@@ -9,7 +9,7 @@ import {
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewInvitation } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -20,7 +20,7 @@ export const invitationRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const { email } = opts.input;
 
-      const _members = allPlans[opts.ctx.workspace.plan].limits.members;
+      const _members = opts.ctx.workspace.limits.members;
       const membersLimit = _members === "Unlimited" ? 420 : _members;
 
       const usersToWorkspacesNumbers = (

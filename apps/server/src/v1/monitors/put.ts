@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { HTTPException } from "hono/http-exception";
@@ -42,16 +42,16 @@ const putRoute = createRoute({
 export function registerPutMonitor(api: typeof monitorsApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    if (!workspacePlan.limits.periodicity.includes(input.periodicity)) {
+    if (!limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
     for (const region of input.regions) {
-      if (!workspacePlan.limits.regions.includes(region)) {
+      if (!limits.regions.includes(region)) {
         throw new HTTPException(403, { message: "Upgrade for more region" });
       }
     }
@@ -81,6 +81,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
+      .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
 

@@ -26,11 +26,11 @@ export function SubscribeButton({ slug, isDemo = false }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button size="sm" variant="outline">
+        <Button variant="outline" className="rounded-full">
           Get updates
         </Button>
       </PopoverTrigger>
-      <PopoverContent>
+      <PopoverContent align="end">
         <div className="grid gap-4">
           <div className="space-y-2">
             <h4 className="flex items-center font-medium leading-none">

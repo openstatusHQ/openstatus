@@ -18,10 +18,10 @@ import {
   Input,
 } from "@openstatus/ui";
 
+import { LoadingAnimation } from "@/components/loading-animation";
+import { toastAction } from "@/lib/toast";
 import { SectionHeader } from "../shared/section-header";
 import { getProviderMetaData } from "./config";
-import { toastAction } from "@/lib/toast";
-import { LoadingAnimation } from "@/components/loading-animation";
 
 interface Props {
   form: UseFormReturn<InsertNotification>;
@@ -34,7 +34,7 @@ export function General({ form, plan }: Props) {
   const watchWebhookUrl = form.watch("data");
   const providerMetaData = useMemo(
     () => getProviderMetaData(watchProvider),
-    [watchProvider]
+    [watchProvider],
   );
 
   async function sendTestWebhookPing() {

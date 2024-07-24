@@ -2,7 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 
-import type { WorkspacePlan } from "@openstatus/plans";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 import { Suspense } from "react";
 import { PricingPlanRadio } from "./pricing-plan-radio";

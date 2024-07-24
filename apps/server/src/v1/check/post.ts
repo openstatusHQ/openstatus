@@ -107,40 +107,40 @@ export function registerPostCheck(api: typeof checkAPI) {
     if (aggregated) {
       // This is ugly
       const dnsArray = fulfilledRequest.map(
-        (r) => r.timing.dnsDone - r.timing.dnsStart
+        (r) => r.timing.dnsDone - r.timing.dnsStart,
       );
       const connectArray = fulfilledRequest.map(
-        (r) => r.timing.connectDone - r.timing.connectStart
+        (r) => r.timing.connectDone - r.timing.connectStart,
       );
       const tlsArray = fulfilledRequest.map(
-        (r) => r.timing.tlsHandshakeDone - r.timing.tlsHandshakeStart
+        (r) => r.timing.tlsHandshakeDone - r.timing.tlsHandshakeStart,
       );
       const firstArray = fulfilledRequest.map(
-        (r) => r.timing.firstByteDone - r.timing.firstByteStart
+        (r) => r.timing.firstByteDone - r.timing.firstByteStart,
       );
       const transferArray = fulfilledRequest.map(
-        (r) => r.timing.transferDone - r.timing.transferStart
+        (r) => r.timing.transferDone - r.timing.transferStart,
       );
       const latencyArray = fulfilledRequest.map((r) => r.latency);
 
       const dnsPercentile = percentile([50, 75, 95, 99], dnsArray) as number[];
       const connectPercentile = percentile(
         [50, 75, 95, 99],
-        connectArray
+        connectArray,
       ) as number[];
       const tlsPercentile = percentile([50, 75, 95, 99], tlsArray) as number[];
       const firstPercentile = percentile(
         [50, 75, 95, 99],
-        firstArray
+        firstArray,
       ) as number[];
 
       const transferPercentile = percentile(
         [50, 75, 95, 99],
-        transferArray
+        transferArray,
       ) as number[];
       const latencyPercentile = percentile(
         [50, 75, 95, 99],
-        latencyArray
+        latencyArray,
       ) as number[];
 
       const aggregatedDNS = AggregatedResponseSchema.parse({

@@ -35,18 +35,18 @@ import { cn } from "@/lib/utils";
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
     variant: {
-      blacklist: "bg-green-500/80 data-[state=open]:bg-green-500",
+      blacklist:
+        "bg-status-operational/80 data-[state=open]:bg-status-operational",
       ...classNames,
     },
     report: {
-      0: "",
-      // IDEA: data-[state=open]:from-40% data-[state=open]:to-40%
-      30: "bg-gradient-to-t from-blue-500/90 hover:from-blue-500 from-30% to-transparent to-30%",
+      false: "",
+      true: classNames.degraded,
     },
   },
   defaultVariants: {
     variant: "empty",
-    report: 0,
+    report: false,
   },
 });
 
@@ -132,7 +132,7 @@ export const Bar = ({
   const [open, setOpen] = React.useState(false);
 
   const rootClassName = tracker({
-    report: statusReports && statusReports.length > 0 ? 30 : undefined,
+    report: statusReports.length > 0,
     variant: blacklist ? "blacklist" : variant,
   });
 
@@ -155,7 +155,7 @@ export const Bar = ({
               <div
                 className={cn(
                   rootClassName,
-                  "h-auto w-1 flex-none rounded-full"
+                  "h-auto w-1 flex-none rounded-full",
                 )}
               />
               <div className="grid flex-1 gap-1">
@@ -167,10 +167,12 @@ export const Bar = ({
                 </div>
                 <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
                   <p>
-                    <code className="text-green-500">{count}</code> requests
+                    <code className="text-status-operational">{count}</code>{" "}
+                    requests
                   </p>
                   <p>
-                    <code className="text-red-500">{count - ok}</code> failed
+                    <code className="text-status-down">{count - ok}</code>{" "}
+                    failed
                   </p>
                 </div>
               </div>
@@ -201,11 +203,11 @@ export function StatusReportList({ reports }: { reports: StatusReport[] }) {
         <li key={report.id} className="text-muted-foreground text-sm">
           <Link
             // TODO: include setPrefixUrl for local development
-            href={`./incidents/${report.id}`}
+            href={`./events/report/${report.id}`}
             className="group flex items-center justify-between gap-2 hover:text-foreground"
           >
             <span className="truncate">{report.title}</span>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 shrink-0" />
           </Link>
         </li>
       ))}
@@ -247,10 +249,10 @@ export function DowntimeText({
 
   return (
     <p className="text-muted-foreground text-xs">
-      Down for{" "}
+      Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false }
+        { format: ["days", "hours", "minutes", "seconds"], zero: false },
       )}
     </p>
   );

@@ -1,10 +1,10 @@
 import { z } from "@hono/zod-openapi";
 
+import { monitorMethods } from "@openstatus/db/src/schema";
 import {
   flyRegions,
-  monitorMethods,
   monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
+} from "@openstatus/db/src/schema/constants";
 import { ZodError } from "zod";
 import {
   numberCompare,

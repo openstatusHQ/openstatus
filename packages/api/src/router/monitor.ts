@@ -24,7 +24,7 @@ import {
   selectNotificationSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewMonitor } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -34,16 +34,15 @@ export const monitorRouter = createTRPCRouter({
     .input(insertMonitorSchema)
     .output(selectMonitorSchema)
     .mutation(async (opts) => {
-      const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
-      const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+      const monitorLimit = opts.ctx.workspace.limits.monitors;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
           where: and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
+            isNull(monitor.deletedAt),
           ),
         })
       ).length;
@@ -120,7 +119,7 @@ export const monitorRouter = createTRPCRouter({
         const allNotifications = await opts.ctx.db.query.notification.findMany({
           where: and(
             eq(notification.workspaceId, opts.ctx.workspace.id),
-            inArray(notification.id, notifications)
+            inArray(notification.id, notifications),
           ),
         });
 
@@ -136,7 +135,7 @@ export const monitorRouter = createTRPCRouter({
         const allTags = await opts.ctx.db.query.monitorTag.findMany({
           where: and(
             eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-            inArray(monitorTag.id, tags)
+            inArray(monitorTag.id, tags),
           ),
         });
 
@@ -152,7 +151,7 @@ export const monitorRouter = createTRPCRouter({
         const allPages = await opts.ctx.db.query.page.findMany({
           where: and(
             eq(page.workspaceId, opts.ctx.workspace.id),
-            inArray(page.id, pages)
+            inArray(page.id, pages),
           ),
         });
 
@@ -179,7 +178,7 @@ export const monitorRouter = createTRPCRouter({
         where: and(
           eq(monitor.id, opts.input.id),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt)
+          isNull(monitor.deletedAt),
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -204,7 +203,7 @@ export const monitorRouter = createTRPCRouter({
           maintenance: _monitor?.maintenancesToMonitors.some(
             (item) =>
               item.maintenance.from.getTime() <= Date.now() &&
-              item.maintenance.to.getTime() >= Date.now()
+              item.maintenance.to.getTime() >= Date.now(),
           ),
         });
 
@@ -226,7 +225,7 @@ export const monitorRouter = createTRPCRouter({
         where: and(
           eq(monitor.id, opts.input.id),
           isNull(monitor.deletedAt),
-          eq(monitor.public, true)
+          eq(monitor.public, true),
         ),
       });
       if (!_monitor) return undefined;
@@ -238,7 +237,7 @@ export const monitorRouter = createTRPCRouter({
         });
 
         const hasPageRelation = _page?.monitorsToPages.find(
-          ({ monitorId }) => _monitor.id === monitorId
+          ({ monitorId }) => _monitor.id === monitorId,
         );
 
         if (!hasPageRelation) return undefined;
@@ -252,10 +251,9 @@ export const monitorRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
-      const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
 
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       // the user is not allowed to use the cron job
       if (
@@ -314,8 +312,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .returning()
         .get();
@@ -330,7 +328,7 @@ export const monitorRouter = createTRPCRouter({
         (x) =>
           !currentMonitorNotifications
             .map(({ notificationId }) => notificationId)
-            ?.includes(x)
+            ?.includes(x),
       );
 
       if (addedNotifications.length > 0) {
@@ -354,9 +352,9 @@ export const monitorRouter = createTRPCRouter({
               eq(notificationsToMonitors.monitorId, currentMonitor.id),
               inArray(
                 notificationsToMonitors.notificationId,
-                removedNotifications
-              )
-            )
+                removedNotifications,
+              ),
+            ),
           )
           .run();
       }
@@ -371,7 +369,7 @@ export const monitorRouter = createTRPCRouter({
         (x) =>
           !currentMonitorTags
             .map(({ monitorTagId }) => monitorTagId)
-            ?.includes(x)
+            ?.includes(x),
       );
 
       if (addedTags.length > 0) {
@@ -393,8 +391,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               eq(monitorTagsToMonitors.monitorId, currentMonitor.id),
-              inArray(monitorTagsToMonitors.monitorTagId, removedTags)
-            )
+              inArray(monitorTagsToMonitors.monitorTagId, removedTags),
+            ),
           )
           .run();
       }
@@ -406,7 +404,7 @@ export const monitorRouter = createTRPCRouter({
         .all();
 
       const addedPages = pages.filter(
-        (x) => !currentMonitorPages.map(({ pageId }) => pageId)?.includes(x)
+        (x) => !currentMonitorPages.map(({ pageId }) => pageId)?.includes(x),
       );
 
       if (addedPages.length > 0) {
@@ -428,8 +426,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               eq(monitorsToPages.monitorId, currentMonitor.id),
-              inArray(monitorsToPages.pageId, removedPages)
-            )
+              inArray(monitorsToPages.pageId, removedPages),
+            ),
           )
           .run();
       }
@@ -440,7 +438,7 @@ export const monitorRouter = createTRPCRouter({
       insertMonitorSchema
         .pick({ public: true, active: true })
         .partial() // batched updates
-        .extend({ ids: z.number().array() }) // array of monitor ids to update
+        .extend({ ids: z.number().array() }), // array of monitor ids to update
     )
     .mutation(async (opts) => {
       const _monitors = await opts.ctx.db
@@ -450,8 +448,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             inArray(monitor.id, opts.input.ids),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         );
     }),
 
@@ -461,20 +459,20 @@ export const monitorRouter = createTRPCRouter({
         ids: z.number().array(),
         tagId: z.number(),
         action: z.enum(["add", "remove"]),
-      })
+      }),
     )
     .mutation(async (opts) => {
       const _monitorTag = await opts.ctx.db.query.monitorTag.findFirst({
         where: and(
           eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-          eq(monitorTag.id, opts.input.tagId)
+          eq(monitorTag.id, opts.input.tagId),
         ),
       });
 
       const _monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.ids)
+          inArray(monitor.id, opts.input.ids),
         ),
       });
 
@@ -492,7 +490,7 @@ export const monitorRouter = createTRPCRouter({
             opts.input.ids.map((id) => ({
               monitorId: id,
               monitorTagId: opts.input.tagId,
-            }))
+            })),
           )
           .onConflictDoNothing()
           .run();
@@ -504,8 +502,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               inArray(monitorTagsToMonitors.monitorId, opts.input.ids),
-              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId)
-            )
+              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId),
+            ),
           )
           .run();
       }
@@ -520,8 +518,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       if (!monitorToDelete) return;
@@ -560,8 +558,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             inArray(monitor.id, opts.input.ids),
-            eq(monitor.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .all();
 
@@ -601,7 +599,7 @@ export const monitorRouter = createTRPCRouter({
     const monitors = await opts.ctx.db.query.monitor.findMany({
       where: and(
         eq(monitor.workspaceId, opts.ctx.workspace.id),
-        isNull(monitor.deletedAt)
+        isNull(monitor.deletedAt),
       ),
       with: {
         monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -614,7 +612,7 @@ export const monitorRouter = createTRPCRouter({
           monitorTagsToMonitors: z
             .array(z.object({ monitorTag: selectMonitorTagSchema }))
             .default([]),
-        })
+        }),
       )
       .parse(monitors);
   }),
@@ -625,7 +623,7 @@ export const monitorRouter = createTRPCRouter({
       const _page = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id)
+          eq(page.workspaceId, opts.ctx.workspace.id),
         ),
       });
 
@@ -634,7 +632,7 @@ export const monitorRouter = createTRPCRouter({
       const monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt)
+          isNull(monitor.deletedAt),
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -650,14 +648,14 @@ export const monitorRouter = createTRPCRouter({
             monitorTagsToMonitors: z
               .array(z.object({ monitorTag: selectMonitorTagSchema }))
               .default([]),
-          })
+          }),
         )
         .parse(
           monitors.filter((monitor) =>
             monitor.monitorsToPages
               .map(({ pageId }) => pageId)
-              .includes(_page.id)
-          )
+              .includes(_page.id),
+          ),
         );
     }),
 
@@ -671,8 +669,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .get();
 
@@ -691,8 +689,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(monitor.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .run();
     }),
@@ -720,8 +718,8 @@ export const monitorRouter = createTRPCRouter({
           notification,
           and(
             eq(notificationsToMonitors.notificationId, notification.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(notification.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .where(eq(notificationsToMonitors.monitorId, opts.input.id))
         .all();
@@ -729,16 +727,46 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   isMonitorLimitReached: protectedProcedure.query(async (opts) => {
-    const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
+    const monitorLimit = opts.ctx.workspace.limits.monitors;
     const monitorNumbers = (
       await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt)
+          isNull(monitor.deletedAt),
         ),
       })
     ).length;
 
     return monitorNumbers >= monitorLimit;
   }),
+  getMonitorRelationsById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const _monitor = await opts.ctx.db.query.monitor.findFirst({
+        where: and(
+          eq(monitor.id, opts.input.id),
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          isNull(monitor.deletedAt),
+        ),
+        with: {
+          monitorTagsToMonitors: true,
+          monitorsToNotifications: true,
+          monitorsToPages: true,
+        },
+      });
+
+      const parsedMonitorNotification = _monitor?.monitorsToNotifications.map(
+        ({ notificationId }) => notificationId,
+      );
+      const parsedPages = _monitor?.monitorsToPages.map((val) => val.pageId);
+      const parsedTags = _monitor?.monitorTagsToMonitors.map(
+        ({ monitorTagId }) => monitorTagId,
+      );
+
+      return {
+        notificationIds: parsedMonitorNotification,
+        pageIds: parsedPages,
+        monitorTagIds: parsedTags,
+      };
+    }),
 });

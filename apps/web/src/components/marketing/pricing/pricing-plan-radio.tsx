@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
-import { allPlans, plans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 import { Label, RadioGroup, RadioGroupItem } from "@openstatus/ui";
+import { useRouter } from "next/navigation";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ export function PricingPlanRadio() {
         router.replace(`?${searchParams}`, { scroll: false });
       }}
     >
-      {plans.map((key) => (
+      {workspacePlans.map((key) => (
         <div key={key}>
           <RadioGroupItem value={key} id={key} className="peer sr-only" />
           <Label

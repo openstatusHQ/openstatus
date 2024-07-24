@@ -22,7 +22,6 @@ import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
   pages?: Page[];
 }
 

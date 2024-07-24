@@ -8,6 +8,7 @@ import {
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
+import { getRequestHeaderTimezone } from "@/lib/timezone";
 import { api } from "@/trpc/server";
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
@@ -21,6 +22,7 @@ type Props = {
 
 export default async function StatusPageLayout({ children, params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
+  const timeZone = getRequestHeaderTimezone();
 
   if (!page) return notFound();
 
@@ -33,22 +35,14 @@ export default async function StatusPageLayout({ children, params }: Props) {
       href: setPrefixUrl("/", params),
     },
     {
-      label: "Maintenances",
-      segment: "maintenances",
-      href: setPrefixUrl("/maintenances", params),
-      disabled: page.maintenances.length === 0,
-    },
-    {
-      label: "Incidents",
-      segment: "incidents",
-      href: setPrefixUrl("/incidents", params),
+      label: "Events",
+      segment: "events",
+      href: setPrefixUrl("/events", params),
     },
     {
       label: "Monitors",
       segment: "monitors",
       href: setPrefixUrl("/monitors", params),
-      disabled:
-        page.monitors.filter((monitor) => Boolean(monitor.public)).length === 0,
     },
   ];
 
@@ -64,12 +58,14 @@ export default async function StatusPageLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-3xl flex-col space-y-6 p-4 md:p-8">
+    <div className="relative mx-auto flex min-h-screen w-full max-w-4xl flex-col space-y-6 p-4 md:p-8">
       <Header navigation={navigation} plan={plan} page={page} />
       <main className="flex h-full w-full flex-1 flex-col">
-        <Shell className="mx-auto h-full flex-1 px-4 py-4">{children}</Shell>
+        <Shell className="mx-auto h-full flex-1 rounded-2xl px-4 py-4 md:p-8">
+          {children}
+        </Shell>
       </main>
-      <Footer plan={plan} />
+      <Footer plan={plan} timeZone={timeZone} />
     </div>
   );
 }

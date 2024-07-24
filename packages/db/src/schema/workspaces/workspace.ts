@@ -17,7 +17,7 @@ export const workspace = sqliteTable(
     plan: text("plan", { enum: workspacePlans }),
     endsAt: integer("ends_at", { mode: "timestamp" }),
     paidUntil: integer("paid_until", { mode: "timestamp" }),
-
+    limits: text("limits").default("{}").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
     ),

@@ -1,7 +1,17 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, gte, inArray, isNull, lte, or, sql } from "@openstatus/db";
+import {
+  and,
+  eq,
+  gte,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  or,
+  sql,
+} from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -10,13 +20,12 @@ import {
   monitorsToPages,
   monitorsToStatusReport,
   page,
-  pagesToStatusReports,
   selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
   workspace,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/plans";
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewPage } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -33,7 +42,7 @@ export const pageRouter = createTRPCRouter({
       })
     ).length;
 
-    const limit = allPlans[opts.ctx.workspace.plan].limits;
+    const limit = opts.ctx.workspace.limits;
 
     // the user has reached the status page number limits
     if (pageNumbers >= limit["status-pages"]) {
@@ -114,7 +123,7 @@ export const pageRouter = createTRPCRouter({
 
     const monitorIds = monitors?.map((item) => item.monitorId) || [];
 
-    const limit = allPlans[opts.ctx.workspace.plan].limits;
+    const limit = opts.ctx.workspace.limits;
 
     // the user is not eligible for password protection
     if (
@@ -260,46 +269,15 @@ export const pageRouter = createTRPCRouter({
         ({ monitors_to_pages }) => monitors_to_pages.monitorId,
       );
 
-      const monitorsToStatusReportResult =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(monitorsToStatusReport)
-              .where(inArray(monitorsToStatusReport.monitorId, monitorsId))
-              .all()
-          : [];
-
-      const statusReportsToPagesResult = await opts.ctx.db
-        .select()
-        .from(pagesToStatusReports)
-        .where(eq(pagesToStatusReports.pageId, result.id))
-        .all();
-
-      const monitorStatusReportIds = monitorsToStatusReportResult.map(
-        ({ statusReportId }) => statusReportId,
-      );
-
-      const pageStatusReportIds = statusReportsToPagesResult.map(
-        ({ statusReportId }) => statusReportId,
-      );
-
-      const statusReportIds = Array.from(
-        new Set([...monitorStatusReportIds, ...pageStatusReportIds]),
-      );
-
-      const statusReports =
-        statusReportIds.length > 0
-          ? await opts.ctx.db.query.statusReport.findMany({
-              where: or(inArray(statusReport.id, statusReportIds)),
-              with: {
-                statusReportUpdates: {
-                  orderBy: (reports, { desc }) => desc(reports.date),
-                },
-                monitorsToStatusReports: { with: { monitor: true } },
-                pagesToStatusReports: true,
-              },
-            })
-          : [];
+      const statusReports = await opts.ctx.db.query.statusReport.findMany({
+        where: eq(statusReport.pageId, result.id),
+        with: {
+          statusReportUpdates: {
+            orderBy: (reports, { desc }) => desc(reports.date),
+          },
+          monitorsToStatusReports: { with: { monitor: true } },
+        },
+      });
 
       // TODO: monitorsToPagesResult has the result already, no need to query again
       const monitors =
@@ -391,7 +369,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   isPageLimitReached: protectedProcedure.query(async (opts) => {
-    const pageLimit = allPlans[opts.ctx.workspace.plan].limits["status-pages"];
+    const pageLimit = opts.ctx.workspace.limits["status-pages"];
     const pageNumbers = (
       await opts.ctx.db.query.page.findMany({
         where: eq(monitor.workspaceId, opts.ctx.workspace.id),

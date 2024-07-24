@@ -4,6 +4,7 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { isNumberArray } from "../utils";
@@ -41,7 +42,7 @@ const postRoute = createRoute({
 export function registerPostPage(api: typeof pagesApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
     const input = c.req.valid("json");
 
     const count = (
@@ -52,14 +53,14 @@ export function registerPostPage(api: typeof pagesApi) {
         .all()
     )[0].count;
 
-    if (count >= workspacePlan.limits["status-pages"]) {
+    if (count >= getLimit(limits, "status-pages")) {
       throw new HTTPException(403, {
         message: "Upgrade for more status pages",
       });
     }
 
     if (
-      workspacePlan.limits["password-protection"] === false &&
+      getLimit(limits, "password-protection") === false &&
       input?.passwordProtected === true
     ) {
       throw new HTTPException(403, {
@@ -95,8 +96,8 @@ export function registerPostPage(api: typeof pagesApi) {
           and(
             inArray(monitor.id, monitorIds),
             eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt)
-          )
+            isNull(monitor.deletedAt),
+          ),
         )
         .all();
 

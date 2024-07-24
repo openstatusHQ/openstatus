@@ -30,7 +30,6 @@ export default async function EditPage({
 
   // default is request
   const search = searchParamsSchema.safeParse(searchParams);
-
   return (
     <MonitorForm
       defaultSection={search.success ? search.data.section : undefined}
@@ -40,20 +39,21 @@ export default async function EditPage({
         degradedAfter: monitor.degradedAfter ?? undefined,
         pages: pages
           .filter((page) =>
-            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id)
+            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id),
           )
           .map(({ id }) => id),
         notifications: monitorNotifications?.map(({ id }) => id),
         tags: tags
           .filter((tag) =>
-            tag.monitor.map(({ monitorId }) => monitorId).includes(id)
+            tag.monitor.map(({ monitorId }) => monitorId).includes(id),
           )
           .map(({ id }) => id),
       }}
-      plan={workspace?.plan}
+      limits={workspace.limits}
       notifications={notifications}
       tags={tags}
       pages={pages}
+      plan={workspace.plan}
     />
   );
 }

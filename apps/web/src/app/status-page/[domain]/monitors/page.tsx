@@ -6,6 +6,7 @@ import { z } from "zod";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
@@ -53,7 +54,7 @@ export default async function Page({
             });
 
             return { monitor, data };
-          })
+          }),
         )
       : undefined;
 
@@ -83,7 +84,7 @@ export default async function Page({
                 groupDataByTimestamp(
                   data.map((data) => ({ ...data, region: "ams" })),
                   period,
-                  quantile
+                  quantile,
                 );
               return (
                 <li key={monitor.id} className="grid gap-2">
@@ -111,9 +112,11 @@ export default async function Page({
           </ul>
         </div>
       ) : (
-        <p className="text-center font-light text-muted-foreground text-sm">
-          No public monitor.
-        </p>
+        <EmptyState
+          icon="activity"
+          title="No public monitors"
+          description="No public monitors have been added to this page."
+        />
       )}
     </div>
   );

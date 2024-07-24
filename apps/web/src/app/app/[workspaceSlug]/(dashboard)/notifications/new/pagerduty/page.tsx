@@ -1,8 +1,9 @@
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
-import { getLimit } from "@openstatus/plans";
+
 import { z } from "zod";
 
 // REMINDER: PagerDuty requires a different workflow, thus the separate page
@@ -29,9 +30,9 @@ export default async function PagerDutyPage({
     return <div>Invalid data</div>;
   }
 
-  const allowed = getLimit(workspace.plan, "pagerduty");
-
-  if (!allowed) return <ProFeatureAlert feature="SMS channel notification" />;
+  const allowed = getLimit(workspace.limits, "pagerduty");
+  if (!allowed)
+    return <ProFeatureAlert feature="PagerDuty channel notification" />;
 
   return (
     <>

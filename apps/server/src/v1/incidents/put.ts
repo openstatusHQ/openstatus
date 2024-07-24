@@ -59,8 +59,8 @@ export function registerPutIncident(app: typeof incidentsApi) {
       .where(
         and(
           eq(incidentTable.id, Number(id)),
-          eq(incidentTable.workspaceId, Number(workspaceId))
-        )
+          eq(incidentTable.workspaceId, Number(workspaceId)),
+        ),
       )
       .get();
 
