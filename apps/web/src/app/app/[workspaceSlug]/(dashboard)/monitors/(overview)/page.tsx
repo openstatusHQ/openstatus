@@ -49,7 +49,6 @@ export default async function MonitorPage({
     api.monitor.isMonitorLimitReached.query(),
   ]);
 
-
   if (monitors?.length === 0)
     return (
       <EmptyState
