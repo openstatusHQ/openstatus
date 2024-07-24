@@ -83,7 +83,7 @@ export function ContactForm({
       } else {
         handleSubmit?.();
         toast.success(
-          "Your message has been sent! We will get back to you soon."
+          "Your message has been sent! We will get back to you soon.",
         );
       }
     });
