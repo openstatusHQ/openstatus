@@ -42,13 +42,13 @@ export default async function MonitorPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
+  if (!search.success) return notFound();
 
   const [monitors, isLimitReached] = await Promise.all([
     api.monitor.getMonitorsByWorkspace.query(),
     api.monitor.isMonitorLimitReached.query()
   ])
 
-  if (!search.success) return notFound();
 
   if (monitors?.length === 0)
     return (
