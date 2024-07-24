@@ -15,7 +15,6 @@ browser = { binding = "MYBROWSER" }
 binding = "MY_BUCKET"
 bucket_name = "incident-screenshot"
 
-
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "my-database"
