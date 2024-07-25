@@ -21,10 +21,10 @@ export const monitorStatusTable = sqliteTable(
       .notNull(),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
   },
   (table) => {
@@ -32,10 +32,10 @@ export const monitorStatusTable = sqliteTable(
       primaryKey: primaryKey({ columns: [table.monitorId, table.region] }),
       monitorStatusIdx: index("monitor_status_idx").on(
         table.monitorId,
-        table.region
+        table.region,
       ),
     };
-  }
+  },
 );
 
 export const monitorStatusRelations = relations(
@@ -45,5 +45,5 @@ export const monitorStatusRelations = relations(
       fields: [monitorStatusTable.monitorId],
       references: [monitor.id],
     }),
-  })
+  }),
 );

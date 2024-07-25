@@ -27,10 +27,10 @@ export const statusReport = sqliteTable("status_report", {
   pageId: integer("page_id").references(() => page.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });
 
@@ -45,10 +45,10 @@ export const statusReportUpdate = sqliteTable("status_report_update", {
     .references(() => statusReport.id, { onDelete: "cascade" })
     .notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });
 
@@ -65,7 +65,7 @@ export const StatusReportRelations = relations(
       fields: [statusReport.workspaceId],
       references: [workspace.id],
     }),
-  })
+  }),
 );
 
 export const statusReportUpdateRelations = relations(
@@ -75,7 +75,7 @@ export const statusReportUpdateRelations = relations(
       fields: [statusReportUpdate.statusReportId],
       references: [statusReport.id],
     }),
-  })
+  }),
 );
 
 export const monitorsToStatusReport = sqliteTable(
@@ -88,12 +88,12 @@ export const monitorsToStatusReport = sqliteTable(
       .notNull()
       .references(() => statusReport.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`
+      sql`(strftime('%s', 'now'))`,
     ),
   },
   (t) => ({
     pk: primaryKey({ columns: [t.monitorId, t.statusReportId] }),
-  })
+  }),
 );
 
 export const monitorsToStatusReportRelations = relations(
@@ -107,7 +107,7 @@ export const monitorsToStatusReportRelations = relations(
       fields: [monitorsToStatusReport.statusReportId],
       references: [statusReport.id],
     }),
-  })
+  }),
 );
 
 // FIXME: We might have to drop foreign key constraints for the following tables
