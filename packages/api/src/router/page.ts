@@ -1,31 +1,19 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  isNull,
-  lte,
-  or,
-  sql,
-} from "@openstatus/db";
+import { and, eq, gte, inArray, isNull, lte, sql } from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
   maintenance,
   monitor,
   monitorsToPages,
-  monitorsToStatusReport,
   page,
   selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
   workspace,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewPage } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -75,7 +63,7 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
       });
 
@@ -105,7 +93,7 @@ export const pageRouter = createTRPCRouter({
       const firstPage = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
+          eq(page.workspaceId, opts.ctx.workspace.id)
         ),
         with: {
           monitorsToPages: {
@@ -142,8 +130,8 @@ export const pageRouter = createTRPCRouter({
       .where(
         and(
           eq(page.id, pageInput.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
-        ),
+          eq(page.workspaceId, opts.ctx.workspace.id)
+        )
       )
       .returning()
       .get();
@@ -154,7 +142,7 @@ export const pageRouter = createTRPCRouter({
         where: and(
           inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
       });
 
@@ -183,8 +171,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             inArray(monitorsToPages.monitorId, removedMonitors),
-            eq(monitorsToPages.pageId, currentPage.id),
-          ),
+            eq(monitorsToPages.pageId, currentPage.id)
+          )
         );
     }
 
@@ -212,8 +200,8 @@ export const pageRouter = createTRPCRouter({
         .where(
           and(
             eq(page.id, opts.input.id),
-            eq(page.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(page.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -225,7 +213,7 @@ export const pageRouter = createTRPCRouter({
         maintenancesToPages: {
           where: and(
             lte(maintenance.from, new Date()),
-            gte(maintenance.to, new Date()),
+            gte(maintenance.to, new Date())
           ),
         },
       },
@@ -240,33 +228,39 @@ export const pageRouter = createTRPCRouter({
     .query(async (opts) => {
       if (!opts.input.slug) return;
 
-      const result = await opts.ctx.db.query.page.findFirst({
-        where: sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`,
-      });
+      const result = await opts.ctx.db
+        .select()
+        .from(page)
+        .where(
+          sql`lower(${page.slug}) = ${opts.input.slug} OR  lower(${page.customDomain}) = ${opts.input.slug}`
+        )
+        .get();
 
       if (!result) {
         return;
       }
 
-      const workspaceResult = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.id, result.workspaceId))
-        .get();
+      const [workspaceResult, monitorsToPagesResult] = await Promise.all([
+        opts.ctx.db
+          .select()
+          .from(workspace)
+          .where(eq(workspace.id, result.workspaceId))
+          .get(),
+        opts.ctx.db
+          .select()
+          .from(monitorsToPages)
+          .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
+          .where(
+            // make sur only active monitors are returned!
+            and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true))
+          )
+          .all(),
+      ]);
 
       // FIXME: There is probably a better way to do this
-      const monitorsToPagesResult = await opts.ctx.db
-        .select()
-        .from(monitorsToPages)
-        .leftJoin(monitor, eq(monitorsToPages.monitorId, monitor.id))
-        .where(
-          // make sur only active monitors are returned!
-          and(eq(monitorsToPages.pageId, result.id), eq(monitor.active, true)),
-        )
-        .all();
 
       const monitorsId = monitorsToPagesResult.map(
-        ({ monitors_to_pages }) => monitors_to_pages.monitorId,
+        ({ monitors_to_pages }) => monitors_to_pages.monitorId
       );
 
       const statusReports = await opts.ctx.db.query.statusReport.findMany({
@@ -279,41 +273,41 @@ export const pageRouter = createTRPCRouter({
         },
       });
 
-      // TODO: monitorsToPagesResult has the result already, no need to query again
-      const monitors =
+      const monitorQuery =
         monitorsId.length > 0
-          ? await opts.ctx.db
+          ? opts.ctx.db
               .select()
               .from(monitor)
               .where(
                 and(
                   inArray(monitor.id, monitorsId),
                   eq(monitor.active, true),
-                  isNull(monitor.deletedAt),
-                ), // REMINDER: this is hardcoded
+                  isNull(monitor.deletedAt)
+                ) // REMINDER: this is hardcoded
               )
               .all()
           : [];
 
-      const incidents =
-        monitorsId.length > 0
-          ? await opts.ctx.db
-              .select()
-              .from(incidentTable)
-              .where(
-                inArray(
-                  incidentTable.monitorId,
-                  monitors.map((m) => m.id),
-                ),
-              )
-              .all()
-          : [];
-
-      const maintenances = await opts.ctx.db.query.maintenance.findMany({
+      const maintenancesQuery = opts.ctx.db.query.maintenance.findMany({
         where: eq(maintenance.pageId, result.id),
         with: { maintenancesToMonitors: true },
         orderBy: (maintenances, { desc }) => desc(maintenances.from),
       });
+
+      const incidentsQuery =
+        monitorsId.length > 0
+          ? await opts.ctx.db
+              .select()
+              .from(incidentTable)
+              .where(inArray(incidentTable.monitorId, monitorsId))
+              .all()
+          : [];
+      // TODO: monitorsToPagesResult has the result already, no need to query again
+      const [monitors, maintenances, incidents] = await Promise.all([
+        monitorQuery,
+        maintenancesQuery,
+        incidentsQuery,
+      ]);
 
       return selectPublicPageSchemaWithRelation.parse({
         ...result,
@@ -343,7 +337,7 @@ export const pageRouter = createTRPCRouter({
       // had filter on some words we want to keep for us
       if (
         ["api", "app", "www", "docs", "checker", "time", "help"].includes(
-          opts.input.slug,
+          opts.input.slug
         )
       ) {
         return false;
@@ -356,7 +350,7 @@ export const pageRouter = createTRPCRouter({
 
   addCustomDomain: protectedProcedure
     .input(
-      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() }),
+      z.object({ customDomain: z.string().toLowerCase(), pageId: z.number() })
     )
     .mutation(async (opts) => {
       // TODO Add some check ?

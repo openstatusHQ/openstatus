@@ -225,13 +225,18 @@ export const monitorRouter = createTRPCRouter({
     // otherwise, using `/public` we don't need to check
     .input(z.object({ id: z.number(), slug: z.string().optional() }))
     .query(async (opts) => {
-      const _monitor = await opts.ctx.db.query.monitor.findFirst({
-        where: and(
-          eq(monitor.id, opts.input.id),
-          isNull(monitor.deletedAt),
-          eq(monitor.public, true),
-        ),
-      });
+      const _monitor = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            isNull(monitor.deletedAt),
+            eq(monitor.public, true),
+          ),
+        )
+        .get();
+
       if (!_monitor) return undefined;
 
       if (opts.input.slug) {

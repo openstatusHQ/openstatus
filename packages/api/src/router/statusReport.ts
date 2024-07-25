@@ -311,7 +311,6 @@ export const statusReportRouter = createTRPCRouter({
       },
       orderBy: (statusReport, { desc }) => [desc(statusReport.updatedAt)],
     });
-    console.log(result);
     return z.array(selectStatusSchemaWithRelation).parse(result);
   }),
 
