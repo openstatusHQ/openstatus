@@ -159,7 +159,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -220,7 +220,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>
@@ -249,7 +249,7 @@ export function SectionAssertions({ form }: Props) {
             <div className="col-span-3" />
             <FormField
               control={form.control}
-              name={`statusAssertions.${i}.compare`}
+              name={`textBodyAssertions.${i}.compare`}
               render={({ field }) => (
                 <FormItem className="col-span-3 w-full">
                   <Select
@@ -267,7 +267,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        ),
+                        )
                       )}
                     </SelectContent>
                   </Select>

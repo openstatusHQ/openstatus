@@ -5,6 +5,7 @@ import {
   type Assertion,
   HeaderAssertion,
   StatusAssertion,
+  TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
@@ -24,7 +25,6 @@ import {
   selectNotificationSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewMonitor } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -90,6 +90,7 @@ export const monitorRouter = createTRPCRouter({
         tags,
         statusAssertions,
         headerAssertions,
+        textBodyAssertions,
         ...data
       } = opts.input;
 
@@ -99,6 +100,9 @@ export const monitorRouter = createTRPCRouter({
       }
       for (const a of headerAssertions ?? []) {
         assertions.push(new HeaderAssertion(a));
+      }
+      for (const a of textBodyAssertions ?? []) {
+        assertions.push(new TextBodyAssertion(a));
       }
 
       const newMonitor = await opts.ctx.db
@@ -288,6 +292,7 @@ export const monitorRouter = createTRPCRouter({
         tags,
         statusAssertions,
         headerAssertions,
+        textBodyAssertions,
         ...data
       } = opts.input;
 
@@ -297,6 +302,9 @@ export const monitorRouter = createTRPCRouter({
       }
       for (const a of headerAssertions ?? []) {
         assertions.push(new HeaderAssertion(a));
+      }
+      for (const a of textBodyAssertions ?? []) {
+        assertions.push(new TextBodyAssertion(a));
       }
 
       const currentMonitor = await opts.ctx.db
