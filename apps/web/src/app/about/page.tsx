@@ -1,6 +1,6 @@
 import { allUnrelateds } from "contentlayer/generated";
 
-import { Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
