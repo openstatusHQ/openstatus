@@ -91,7 +91,10 @@ export function MonitorForm({
       statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
-
+      textBodyAssertions: _assertions.filter(
+        (a) => a.type === "textBody",
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+      ) as any, // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
     },
@@ -165,8 +168,15 @@ export function MonitorForm({
 
   const pingEndpoint = async (region?: MonitorFlyRegion) => {
     try {
-      const { url, body, method, headers, statusAssertions, headerAssertions } =
-        form.getValues();
+      const {
+        url,
+        body,
+        method,
+        headers,
+        statusAssertions,
+        headerAssertions,
+        textBodyAssertions,
+      } = form.getValues();
 
       if (body && body !== "") {
         const validJSON = validateJSON(body);
@@ -194,6 +204,7 @@ export function MonitorForm({
         JSON.stringify([
           ...(statusAssertions || []),
           ...(headerAssertions || []),
+          ...(textBodyAssertions || []),
         ]),
       );
 
@@ -206,7 +217,7 @@ export function MonitorForm({
       if (as.length > 0) {
         for (const a of as) {
           const { success, message } = a.assert({
-            body: "", // data.body ?? "",
+            body: data.body ?? "",
             header: data.headers ?? {},
             status: data.status,
           });
