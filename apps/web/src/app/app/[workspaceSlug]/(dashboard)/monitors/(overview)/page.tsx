@@ -44,11 +44,7 @@ export default async function MonitorPage({
   const search = searchParamsSchema.safeParse(searchParams);
   if (!search.success) return notFound();
 
-  const [monitors, isLimitReached] = await Promise.all([
-    api.monitor.getMonitorsByWorkspace.query(),
-    api.monitor.isMonitorLimitReached.query(),
-  ]);
-
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
   if (monitors?.length === 0)
     return (
       <EmptyState
@@ -63,10 +59,11 @@ export default async function MonitorPage({
       />
     );
 
-  const [_incidents, tags, _maintenances] = await Promise.all([
+  const [_incidents, tags, _maintenances, isLimitReached] = await Promise.all([
     api.incident.getIncidentsByWorkspace.query(),
     api.monitorTag.getMonitorTagsByWorkspace.query(),
     api.maintenance.getLast7DaysByWorkspace.query(),
+    api.monitor.isMonitorLimitReached.query(),
   ]);
 
   // maybe not very efficient?
