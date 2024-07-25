@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default async function Changelog() {
   const changelogs = allChangelogs.sort(
     (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
   );
 
   return (

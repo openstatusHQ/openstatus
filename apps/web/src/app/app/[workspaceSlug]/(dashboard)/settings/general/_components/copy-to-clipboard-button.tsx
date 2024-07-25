@@ -2,8 +2,8 @@
 
 import * as React from "react";
 
-import { Button } from "@openstatus/ui/src/components/button";
 import type { ButtonProps } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Icons } from "@/components/icons";
 import { cn, copyToClipboard } from "@/lib/utils";
