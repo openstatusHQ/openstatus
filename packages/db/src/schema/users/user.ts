@@ -24,10 +24,10 @@ export const user = sqliteTable("user", {
   emailVerified: integer("emailVerified", { mode: "timestamp_ms" }),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });
 
@@ -46,12 +46,12 @@ export const usersToWorkspaces = sqliteTable(
       .references(() => workspace.id),
     role: text("role", { enum: workspaceRole }).notNull().default("member"),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
   },
   (t) => ({
-    pk: primaryKey(t.userId, t.workspaceId),
-  }),
+    pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
+  })
 );
 
 export const usersToWorkspaceRelations = relations(
@@ -65,7 +65,7 @@ export const usersToWorkspaceRelations = relations(
       fields: [usersToWorkspaces.userId],
       references: [user.id],
     }),
-  }),
+  })
 );
 
 // NEXT AUTH TABLES
@@ -91,7 +91,7 @@ export const account = sqliteTable(
     compoundKey: primaryKey({
       columns: [account.provider, account.providerAccountId],
     }),
-  }),
+  })
 );
 
 export const session = sqliteTable("session", {
@@ -111,5 +111,5 @@ export const verificationToken = sqliteTable(
   },
   (vt) => ({
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
-  }),
+  })
 );

@@ -17,10 +17,10 @@ export const notification = sqliteTable("notification", {
   data: text("data").default("{}"),
   workspaceId: integer("workspace_id").references(() => workspace.id),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });
 
@@ -34,12 +34,12 @@ export const notificationsToMonitors = sqliteTable(
       .notNull()
       .references(() => notification.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.notificationId),
-  }),
+    pk: primaryKey({ columns: [t.monitorId, t.notificationId] }),
+  })
 );
 
 export const notificationsToMonitorsRelation = relations(
@@ -53,7 +53,7 @@ export const notificationsToMonitorsRelation = relations(
       fields: [notificationsToMonitors.notificationId],
       references: [notification.id],
     }),
-  }),
+  })
 );
 
 export const notificationRelations = relations(
@@ -64,5 +64,5 @@ export const notificationRelations = relations(
       references: [workspace.id],
     }),
     monitor: many(notificationsToMonitors),
-  }),
+  })
 );

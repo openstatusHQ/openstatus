@@ -22,10 +22,10 @@ export const maintenance = sqliteTable("maintenance", {
   pageId: integer("page_id").references(() => page.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });
 
@@ -39,12 +39,12 @@ export const maintenancesToMonitors = sqliteTable(
       .notNull()
       .references(() => maintenance.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.maintenanceId),
-  }),
+    pk: primaryKey({ columns: [t.monitorId, t.maintenanceId] }),
+  })
 );
 
 export const maintenancesToMonitorsRelations = relations(
@@ -58,7 +58,7 @@ export const maintenancesToMonitorsRelations = relations(
       fields: [maintenancesToMonitors.maintenanceId],
       references: [maintenance.id],
     }),
-  }),
+  })
 );
 
 export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({

@@ -19,10 +19,10 @@ export const monitorTag = sqliteTable("monitor_tag", {
   color: text("color").notNull(),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });
 
@@ -36,12 +36,12 @@ export const monitorTagsToMonitors = sqliteTable(
       .notNull()
       .references(() => monitorTag.id, { onDelete: "cascade" }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.monitorTagId),
-  }),
+    pk: primaryKey({ columns: [t.monitorId, t.monitorTagId] }),
+  })
 );
 
 export const monitorTagsToMonitorsRelation = relations(
@@ -55,7 +55,7 @@ export const monitorTagsToMonitorsRelation = relations(
       fields: [monitorTagsToMonitors.monitorTagId],
       references: [monitorTag.id],
     }),
-  }),
+  })
 );
 
 export const monitorTagRelations = relations(monitorTag, ({ one, many }) => ({
