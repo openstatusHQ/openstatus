@@ -7,8 +7,6 @@ import type { PublicPage } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
-import { Shell } from "@/components/dashboard/shell";
-import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Menu } from "./menu";
@@ -53,7 +51,7 @@ export function Header({ navigation, plan, page }: Props) {
                 <Link
                   className={cn(
                     "h-9 rounded-full bg-transparent px-4 py-2 font-medium text-muted-foreground hover:bg-accent/50",
-                    { "text-foreground": active },
+                    { "text-foreground": active }
                   )}
                   {...{ href, disabled }}
                 >

@@ -5,7 +5,7 @@ import * as z from "zod";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
