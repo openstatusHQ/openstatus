@@ -2,7 +2,11 @@
 
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
-import { Label, RadioGroup, RadioGroupItem } from "@openstatus/ui";
+import { Label } from "@openstatus/ui/src/components/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/src/components/radio-group";
 import { useRouter } from "next/navigation";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";

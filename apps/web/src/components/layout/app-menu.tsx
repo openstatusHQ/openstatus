@@ -8,7 +8,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/collapsible";
 
 import type { Page } from "@/config/pages";
 import { AppSidebar } from "./app-sidebar";

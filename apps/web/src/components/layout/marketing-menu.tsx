@@ -9,13 +9,15 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  Button,
+} from "@openstatus/ui/src/components/accordion";
+import { Button } from "@openstatus/ui/src/components/button";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/sheet";
 
 import { marketingPagesConfig } from "@/config/pages";
 import { socialsConfig } from "@/config/socials";

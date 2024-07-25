@@ -11,7 +11,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/navigation-menu";
 
 import { marketingPagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
