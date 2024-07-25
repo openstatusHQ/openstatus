@@ -100,6 +100,7 @@ export const checkerSchema = z.object({
   headers: z.record(z.string()),
   time: z.number(),
   timing: timingSchema,
+  body: z.string().optional().nullable(),
 });
 
 export const cachedCheckerSchema = z.object({

@@ -94,7 +94,7 @@ export function MonitorForm({
       textBodyAssertions: _assertions.filter(
         (a) => a.type === "textBody",
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      ) as any, // TS considers a.type === "status"
+      ) as any, // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
     },
@@ -217,7 +217,7 @@ export function MonitorForm({
       if (as.length > 0) {
         for (const a of as) {
           const { success, message } = a.assert({
-            body: "", // data.body ?? "", // FIXME:
+            body: data.body ?? "",
             header: data.headers ?? {},
             status: data.status,
           });
