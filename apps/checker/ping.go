@@ -231,6 +231,16 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+
+	if err != nil {
+		return Response{
+			Latency: latency,
+			Timing:  timing,
+			Time:    start.UTC().UnixMilli(),
+			Error:   fmt.Sprintf("Cannot read response body: %s", err.Error()),
+		}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+	}
 
 	headers := make(map[string]string)
 	for key := range res.Header {
@@ -243,5 +253,6 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 		Headers: headers,
 		Timing:  timing,
 		Latency: latency,
+		Body:    string(body),
 	}, nil
 }
