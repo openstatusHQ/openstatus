@@ -13,10 +13,9 @@
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
-    "@clickhouse/client-web": "1.0.1",
-    "@libsql/client": "0.6.2",
+    "@libsql/client": "0.7.0",
     "@t3-oss/env-core": "0.7.0",
-    "drizzle-orm": "0.30.10",
+    "drizzle-orm": "0.32.1",
     "drizzle-zod": "0.5.1",
     "zod": "3.23.8"
   },
@@ -24,9 +23,9 @@
     "@openstatus/assertions": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.8.0",
-    "better-sqlite3": "10.0.0",
+    "better-sqlite3": "11.1.2",
     "bufferutil": "4.0.7",
-    "drizzle-kit": "0.21.2",
+    "drizzle-kit": "0.23.0",
     "encoding": "0.1.13",
     "next-auth": "5.0.0-beta.17",
     "typescript": "5.5.2",
