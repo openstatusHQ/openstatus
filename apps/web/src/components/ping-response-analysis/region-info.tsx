@@ -43,7 +43,7 @@ export function RegionInfo({
             <p className="text-muted-foreground">Error:</p>
           </div>
           <div className="col-span-3 sm:col-span-6">
-            <p className="font-medium text-destructive after:content-['_»'] before:content-['«_']">
+            <p className="font-medium text-destructive before:content-['«_'] after:content-['_»']">
               {error}
             </p>
           </div>

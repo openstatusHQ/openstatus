@@ -1,4 +1,4 @@
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 export function EnterpricePlan() {
   return (

@@ -7,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";

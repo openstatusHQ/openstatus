@@ -3,7 +3,7 @@ import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import {
   defaultMetadata,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default async function Post() {
   const posts = allPosts.sort(
     (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
   );
 
   return (

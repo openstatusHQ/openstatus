@@ -72,7 +72,7 @@ export function MarketingHeader({ className }: Props) {
                       {title}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent>
-                      <ul className="grid w-[400px] gap-3 p-4 lg:w-[600px] md:w-[500px] md:grid-cols-2">
+                      <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                         {children?.map((item) => {
                           const isExternal = item.href.startsWith("http");
                           const _externalProps = isExternal
@@ -121,7 +121,7 @@ const ListItem = React.forwardRef<
         <Link
           ref={ref}
           className={cn(
-            "flex select-none gap-3 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
+            "flex select-none gap-3 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className,
           )}
           {...props}

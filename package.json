@@ -12,10 +12,10 @@
     "test": "turbo run test"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.7.3",
+    "@biomejs/biome": "1.8.3",
     "@turbo/gen": "1.13.3",
     "@types/node": "20.8.0",
-    "knip": "^5.16.0",
+    "knip": "5.16.0",
     "turbo": "1.13.3",
     "typescript": "5.5.2"
   },

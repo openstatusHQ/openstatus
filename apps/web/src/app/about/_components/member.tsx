@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 import { cn } from "@openstatus/ui/src/lib/utils";
 
 import { Icons } from "@/components/icons";

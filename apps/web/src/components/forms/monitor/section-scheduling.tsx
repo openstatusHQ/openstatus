@@ -50,7 +50,7 @@ export function SectionScheduling({ form, limits, plan }: Props) {
         title="Schedule and Regions"
         description="Customize the period of time and the regions where your endpoint will be monitored."
       />
-      <div className="grid md:grid-cols-3 sm:grid-cols-2">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3">
         <FormField
           control={form.control}
           name="periodicity"

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
@@ -54,7 +54,7 @@ export default async function Page({
             });
 
             return { monitor, data };
-          }),
+          })
         )
       : undefined;
 
@@ -84,7 +84,7 @@ export default async function Page({
                 groupDataByTimestamp(
                   data.map((data) => ({ ...data, region: "ams" })),
                   period,
-                  quantile,
+                  quantile
                 );
               return (
                 <li key={monitor.id} className="grid gap-2">

@@ -6,16 +6,16 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 
 import type { Workspace } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  Skeleton,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/dropdown-menu";
+import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 
 import { api } from "@/trpc/client";
 

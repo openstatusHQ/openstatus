@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import type { Social } from "@/config/socials";
 import { Icons } from "../icons";

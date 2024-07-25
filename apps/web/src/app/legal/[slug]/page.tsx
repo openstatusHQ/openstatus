@@ -24,7 +24,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
   return (
     <>
       <BackButton href="/" />
-      <Shell className="md:py-12 sm:py-8">
+      <Shell className="sm:py-8 md:py-12">
         <article className="grid gap-8">
           <div className="mx-auto grid w-full max-w-prose gap-3">
             <h1 className="mb-5 font-cal text-3xl">{post.title}</h1>

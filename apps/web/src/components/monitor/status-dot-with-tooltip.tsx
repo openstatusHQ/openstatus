@@ -3,7 +3,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 import type { StatusDotProps } from "./status-dot";
 import { StatusDot } from "./status-dot";

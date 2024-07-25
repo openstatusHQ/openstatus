@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/monitor/form";
