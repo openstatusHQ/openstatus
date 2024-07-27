@@ -43,7 +43,7 @@ export const maintenancesToMonitors = sqliteTable(
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.maintenanceId),
+    pk: primaryKey({ columns: [t.monitorId, t.maintenanceId] }),
   }),
 );
 
