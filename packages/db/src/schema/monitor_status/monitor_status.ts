@@ -29,7 +29,7 @@ export const monitorStatusTable = sqliteTable(
   },
   (table) => {
     return {
-      primaryKey: primaryKey(table.monitorId, table.region),
+      primaryKey: primaryKey({ columns: [table.monitorId, table.region] }),
       monitorStatusIdx: index("monitor_status_idx").on(
         table.monitorId,
         table.region,

@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { HTTPException } from "hono/http-exception";
@@ -81,6 +81,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
       })
+      .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
 

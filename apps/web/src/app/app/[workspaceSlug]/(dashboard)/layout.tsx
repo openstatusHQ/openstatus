@@ -1,7 +1,5 @@
-import { InfoAlertDialog } from "@/components/dashboard/info-alert-dialog";
 import { AppHeader } from "@/components/layout/header/app-header";
 import { api } from "@/trpc/server";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
@@ -28,26 +26,6 @@ export default async function AppLayout({
         {children}
       </main>
       <WorkspaceClientCookie {...{ workspaceSlug }} />
-      <InfoAlertDialog
-        id="status-report-location-change"
-        title="An update on Status Reports"
-        expires={365} // 1 year - TODO: delete the block after 30 days
-        description={
-          <>
-            Each report is now saved within a{" "}
-            <span className="font-semibold text-foreground">Status Page</span>.
-            Select a page to view all reports for related to it.{" "}
-            <Link
-              href="/changelog/status-report-location-change"
-              className="underline underline-offset-4 hover:text-primary hover:no-underline"
-            >
-              Read changelog
-            </Link>
-            .
-          </>
-        }
-        workspaceSlug={workspaceSlug}
-      />
     </div>
   );
 }

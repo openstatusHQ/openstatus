@@ -5,6 +5,7 @@ import {
   type Assertion,
   HeaderAssertion,
   StatusAssertion,
+  TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
@@ -24,7 +25,6 @@ import {
   selectNotificationSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
 import { trackNewMonitor } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
@@ -34,10 +34,9 @@ export const monitorRouter = createTRPCRouter({
     .input(insertMonitorSchema)
     .output(selectMonitorSchema)
     .mutation(async (opts) => {
-      const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
-      const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+      const monitorLimit = opts.ctx.workspace.limits.monitors;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       const monitorNumbers = (
         await opts.ctx.db.query.monitor.findMany({
@@ -91,6 +90,7 @@ export const monitorRouter = createTRPCRouter({
         tags,
         statusAssertions,
         headerAssertions,
+        textBodyAssertions,
         ...data
       } = opts.input;
 
@@ -100,6 +100,9 @@ export const monitorRouter = createTRPCRouter({
       }
       for (const a of headerAssertions ?? []) {
         assertions.push(new HeaderAssertion(a));
+      }
+      for (const a of textBodyAssertions ?? []) {
+        assertions.push(new TextBodyAssertion(a));
       }
 
       const newMonitor = await opts.ctx.db
@@ -222,13 +225,18 @@ export const monitorRouter = createTRPCRouter({
     // otherwise, using `/public` we don't need to check
     .input(z.object({ id: z.number(), slug: z.string().optional() }))
     .query(async (opts) => {
-      const _monitor = await opts.ctx.db.query.monitor.findFirst({
-        where: and(
-          eq(monitor.id, opts.input.id),
-          isNull(monitor.deletedAt),
-          eq(monitor.public, true),
-        ),
-      });
+      const _monitor = await opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.id, opts.input.id),
+            isNull(monitor.deletedAt),
+            eq(monitor.public, true),
+          ),
+        )
+        .get();
+
       if (!_monitor) return undefined;
 
       if (opts.input.slug) {
@@ -252,10 +260,9 @@ export const monitorRouter = createTRPCRouter({
     .mutation(async (opts) => {
       if (!opts.input.id) return;
 
-      const periodicityLimit =
-        allPlans[opts.ctx.workspace.plan].limits.periodicity;
+      const periodicityLimit = opts.ctx.workspace.limits.periodicity;
 
-      const regionsLimit = allPlans[opts.ctx.workspace.plan].limits.regions;
+      const regionsLimit = opts.ctx.workspace.limits.regions;
 
       // the user is not allowed to use the cron job
       if (
@@ -290,6 +297,7 @@ export const monitorRouter = createTRPCRouter({
         tags,
         statusAssertions,
         headerAssertions,
+        textBodyAssertions,
         ...data
       } = opts.input;
 
@@ -299,6 +307,9 @@ export const monitorRouter = createTRPCRouter({
       }
       for (const a of headerAssertions ?? []) {
         assertions.push(new HeaderAssertion(a));
+      }
+      for (const a of textBodyAssertions ?? []) {
+        assertions.push(new TextBodyAssertion(a));
       }
 
       const currentMonitor = await opts.ctx.db
@@ -729,7 +740,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   isMonitorLimitReached: protectedProcedure.query(async (opts) => {
-    const monitorLimit = allPlans[opts.ctx.workspace.plan].limits.monitors;
+    const monitorLimit = opts.ctx.workspace.limits.monitors;
     const monitorNumbers = (
       await opts.ctx.db.query.monitor.findMany({
         where: and(

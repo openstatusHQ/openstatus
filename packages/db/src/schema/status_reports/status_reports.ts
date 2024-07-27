@@ -92,7 +92,7 @@ export const monitorsToStatusReport = sqliteTable(
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.statusReportId),
+    pk: primaryKey({ columns: [t.monitorId, t.statusReportId] }),
   }),
 );
 

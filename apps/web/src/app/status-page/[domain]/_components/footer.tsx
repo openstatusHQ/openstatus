@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function Footer({ plan, timeZone }: Props) {
-  const isWhiteLabel = allPlans[plan].limits["white-label"];
+  const isWhiteLabel = allPlans[plan].limits["white-label"]; // FIXME: use the workspace.limits
   return (
     <footer className="z-10 mx-auto grid w-full grid-cols-5 items-center justify-between gap-4">
       <p className="truncate font-light text-muted-foreground text-xs">

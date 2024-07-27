@@ -100,6 +100,7 @@ export const checkerSchema = z.object({
   headers: z.record(z.string()),
   time: z.number(),
   timing: timingSchema,
+  body: z.string().optional().nullable(),
 });
 
 export const cachedCheckerSchema = z.object({
@@ -166,17 +167,21 @@ export async function checkRegion(
   };
 }
 
+/**
+ * Used for the /play/checker page only
+ */
 export async function checkAllRegions(url: string, opts?: { method: Method }) {
   // TODO: settleAll
   return await Promise.all(
     flyRegions.map(async (region) => {
       const check = await checkRegion(url, region, opts);
+      // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
+      check.body = undefined;
       return check;
     }),
   );
 }
 
-// TODO: add opts: { method: Method }
 export async function setCheckerData(url: string, opts?: { method: Method }) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();

@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { PricingSlider } from "../marketing/pricing/pricing-slider";
 import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
 import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import Pre from "./pre";
@@ -64,6 +65,9 @@ export const components = {
         <MetricsCard {...props} />
       </div>
     );
+  },
+  PricingSlider: () => {
+    return <PricingSlider />;
   },
   SimpleChart: (props: SimpleChartProps) => {
     return (

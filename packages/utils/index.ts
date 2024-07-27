@@ -238,7 +238,6 @@ export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
     flag: "🇭🇰",
     continent: "Asia",
   },
-
   iad: {
     code: "iad",
     location: "Ashburn, Virginia, USA",
