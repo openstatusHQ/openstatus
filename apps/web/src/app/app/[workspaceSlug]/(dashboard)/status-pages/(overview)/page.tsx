@@ -11,9 +11,8 @@ import { api } from "@/trpc/server";
 
 export default async function MonitorPage() {
   const pages = await api.page.getPagesByWorkspace.query();
-  const isLimitReached = await api.page.isPageLimitReached.query();
 
-  if (pages?.length === 0)
+  if (pages?.length === 0) {
     return (
       <EmptyState
         icon="panel-top"
@@ -26,7 +25,8 @@ export default async function MonitorPage() {
         }
       />
     );
-
+  }
+  const isLimitReached = await api.page.isPageLimitReached.query();
   return (
     <>
       <DataTable columns={columns} data={pages} />

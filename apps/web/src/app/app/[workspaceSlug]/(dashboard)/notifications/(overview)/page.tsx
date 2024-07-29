@@ -11,11 +11,11 @@ import { api } from "@/trpc/server";
 import ChannelTable from "./_components/channel-table";
 
 export default async function NotificationPage() {
-  const workspace = await api.workspace.getWorkspace.query();
-  const notifications =
-    await api.notification.getNotificationsByWorkspace.query();
-  const isLimitReached =
-    await api.notification.isNotificationLimitReached.query();
+  const [workspace, notifications, isLimitReached] = await Promise.all([
+    api.workspace.getWorkspace.query(),
+    api.notification.getNotificationsByWorkspace.query(),
+    api.notification.isNotificationLimitReached.query(),
+  ]);
 
   if (notifications.length === 0) {
     return (

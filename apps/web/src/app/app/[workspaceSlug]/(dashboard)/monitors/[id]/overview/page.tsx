@@ -44,7 +44,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? [],
+          .filter((i) => flyRegions.includes(i as Region)) ?? []
     ),
 });
 
@@ -57,13 +57,17 @@ export default async function Page({
 }) {
   const id = params.id;
   const search = searchParamsSchema.safeParse(searchParams);
+
+  if (!search.success) {
+    return notFound();
+  }
   const preferredSettings = getPreferredSettings();
 
   const monitor = await api.monitor.getMonitorById.query({
     id: Number(id),
   });
 
-  if (!monitor || !search.success) {
+  if (!monitor) {
     return notFound();
   }
 
@@ -76,16 +80,16 @@ export default async function Page({
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const metrics = await tb.endpointMetrics(period)({ monitorId: id });
-
-  const data = await tb.endpointChart(period)({
-    monitorId: id,
-    interval: minutes,
-  });
-
-  const metricsByRegion = await tb.endpointMetricsByRegion(period)({
-    monitorId: id,
-  });
+  const [metrics, data, metricsByRegion] = await Promise.all([
+    tb.endpointMetrics(period)({ monitorId: id }),
+    tb.endpointChart(period)({
+      monitorId: id,
+      interval: minutes,
+    }),
+    tb.endpointMetricsByRegion(period)({
+      monitorId: id,
+    }),
+  ]);
 
   if (!data || !metrics || !metricsByRegion) return null;
 
