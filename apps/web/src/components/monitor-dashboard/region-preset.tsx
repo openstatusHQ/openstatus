@@ -5,8 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import type { Region } from "@openstatus/tinybird";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   Command,
   CommandEmpty,
   CommandGroup,
@@ -14,10 +14,12 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
+} from "@openstatus/ui/src/components/command";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/popover";
 import {
   type Continent,
   type RegionInfo,

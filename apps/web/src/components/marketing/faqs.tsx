@@ -7,7 +7,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/accordion";
 
 import { Mdx } from "../content/mdx";
 import {

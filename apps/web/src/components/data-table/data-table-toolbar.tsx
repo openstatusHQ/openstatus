@@ -4,7 +4,7 @@ import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { codesDict } from "@/data/code-dictionary";

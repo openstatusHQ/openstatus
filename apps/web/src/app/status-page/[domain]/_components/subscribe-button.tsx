@@ -4,17 +4,17 @@ import { Mail } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import {
-  Button,
-  Input,
-  Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/popover";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast } from "@/lib/toast";
 import { wait } from "@/lib/utils";
+import { Button } from "@openstatus/ui/src/components/button";
+import { Input } from "@openstatus/ui/src/components/input";
+import { Label } from "@openstatus/ui/src/components/label";
 import { handleSubscribe } from "./actions";
 
 interface Props {

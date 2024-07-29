@@ -3,13 +3,13 @@
 import { HelpCircle } from "lucide-react";
 import * as React from "react";
 
+import { Label } from "@openstatus/ui/src/components/label";
 import {
-  Label,
   Popover,
   PopoverContent,
   PopoverTrigger,
-  Separator,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/popover";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { intervals } from "@/lib/monitor/utils";
 import type { Interval } from "@/lib/monitor/utils";

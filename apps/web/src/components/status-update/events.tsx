@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import * as React from "react";
 
 import type { StatusReportUpdate } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Icons } from "@/components/icons";
 import { statusDict } from "@/data/incidents-dictionary";
@@ -59,7 +59,7 @@ export function Events({
             </div>
             <div className="mt-1 grid flex-1">
               {editable ? (
-                <div className="absolute top-2 right-2 hidden gap-2 group-active:flex group-hover:flex">
+                <div className="absolute top-2 right-2 hidden gap-2 group-hover:flex group-active:flex">
                   <EditStatusReportUpdateIconButton
                     statusReportId={update.statusReportId}
                     statusReportUpdate={update}

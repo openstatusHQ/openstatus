@@ -8,7 +8,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/collapsible";
 
 import type { Page } from "@/config/pages";
 import { AppSidebar } from "./app-sidebar";
@@ -30,7 +30,7 @@ export function AppMenu({ page }: { page?: Page }) {
         <span className="font-medium text-foreground">
           {activeChild?.title}
         </span>
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-md font-medium text-sm transition-colors disabled:pointer-events-none hover:bg-accent hover:text-accent-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-md font-medium text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
           <ChevronsUpDown className="h-4 w-4" />
         </span>
       </CollapsibleTrigger>

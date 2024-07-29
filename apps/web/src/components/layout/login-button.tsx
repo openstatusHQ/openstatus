@@ -3,8 +3,8 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-import type { ButtonProps } from "@openstatus/ui";
-import { Button } from "@openstatus/ui";
+import type { ButtonProps } from "@openstatus/ui/src/components/button";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { cn } from "@/lib/utils";
 

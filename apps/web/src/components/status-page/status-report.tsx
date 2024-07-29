@@ -8,7 +8,7 @@ import type {
   PublicMonitor,
   StatusReportWithUpdates,
 } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
 import { statusDict } from "@/data/incidents-dictionary";

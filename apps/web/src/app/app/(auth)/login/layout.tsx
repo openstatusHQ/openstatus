@@ -14,7 +14,7 @@ export default async function AuthLayout({
 
   return (
     <div className="grid min-h-screen grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
-      <aside className="col-span-1 flex w-full flex-col gap-4 border border-border p-4 backdrop-blur-[2px] xl:col-span-2 md:p-8">
+      <aside className="col-span-1 flex w-full flex-col gap-4 border border-border p-4 backdrop-blur-[2px] md:p-8 xl:col-span-2">
         <Link href="/" className="relative h-8 w-8">
           <Image
             src="/icon.png"

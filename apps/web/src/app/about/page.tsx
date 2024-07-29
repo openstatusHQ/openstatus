@@ -1,6 +1,6 @@
 import { allUnrelateds } from "contentlayer/generated";
 
-import { Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Mdx } from "@/components/content/mdx";
 import { Shell } from "@/components/dashboard/shell";
@@ -25,7 +25,7 @@ export default function AboutPage() {
           </p>
           <p className="italic">Made by developers for developers.</p>
         </div>
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-8 sm:gap-6">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 md:gap-8">
           {members.map((member) => (
             <li key={member.name}>
               <Member {...member} />
@@ -34,7 +34,7 @@ export default function AboutPage() {
           <li />
         </ul>
         <Separator className="my-2" />
-        <Shell className="mx-auto w-auto shadow dark:border-card-foreground/30 md:px-12 sm:px-8 md:py-12 sm:py-8">
+        <Shell className="mx-auto w-auto shadow sm:px-8 sm:py-8 md:px-12 md:py-12 dark:border-card-foreground/30">
           {story ? (
             <Mdx
               code={story.body.code}

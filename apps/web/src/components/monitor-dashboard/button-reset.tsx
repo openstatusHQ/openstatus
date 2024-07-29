@@ -3,13 +3,13 @@
 import { X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 export function ButtonReset() {
   const router = useRouter();

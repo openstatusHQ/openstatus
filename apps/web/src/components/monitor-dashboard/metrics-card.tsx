@@ -2,7 +2,7 @@ import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { Badge } from "@openstatus/ui"; // from @/components/ui/badge
+import { Badge } from "@openstatus/ui/src/components/badge"; // from @/components/ui/badge
 
 import { cn } from "@/lib/utils";
 

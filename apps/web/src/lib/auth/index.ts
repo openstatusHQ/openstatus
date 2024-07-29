@@ -4,9 +4,10 @@ import NextAuth from "next-auth";
 import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
-import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import { sendEmail } from "@openstatus/emails/emails/send";
 
 import { identifyUser } from "@/providers/posthog";
+import { WelcomeEmail } from "@openstatus/emails/emails/welcome";
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 

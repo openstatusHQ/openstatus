@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Shell } from "@/components/dashboard/shell";
 import { cn } from "@/lib/utils";
@@ -37,7 +37,7 @@ export function Card({
   return (
     <Shell
       className={cn(
-        "group flex flex-col gap-3 hover:dark:border-card-foreground/30 hover:shadow",
+        "group flex flex-col gap-3 hover:shadow hover:dark:border-card-foreground/30",
         shellClassName,
         className,
       )}

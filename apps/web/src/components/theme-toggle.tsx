@@ -3,13 +3,13 @@
 import { useTheme } from "next-themes";
 import * as React from "react";
 
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/dropdown-menu";
 
 import { Icons } from "@/components/icons";
 

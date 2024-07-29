@@ -1,7 +1,7 @@
 import Link from "next/link";
 import * as React from "react";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { columns } from "@/components/data-table/status-report/columns";
