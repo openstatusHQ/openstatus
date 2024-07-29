@@ -2,7 +2,8 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { Badge, Button } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { getGitHubStars } from "@/lib/github";
 import { cn, numberFormatter } from "@/lib/utils";

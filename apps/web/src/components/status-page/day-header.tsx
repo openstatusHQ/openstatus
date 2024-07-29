@@ -1,4 +1,5 @@
-import { Badge, Separator } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
+import { Separator } from "@openstatus/ui/src/components/separator";
 import { format } from "date-fns";
 
 export function DayHeader({ date }: { date: Date }) {

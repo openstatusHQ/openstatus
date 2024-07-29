@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 
 import { CopyToClipboardButton } from "./copy-to-clipboard-button";
 import { ResponseHeaderAnalysis } from "./response-header-analysis";

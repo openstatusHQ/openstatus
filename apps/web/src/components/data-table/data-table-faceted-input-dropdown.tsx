@@ -72,7 +72,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
       </Select>
       <Separator orientation="vertical" className="h-4" />
       <input
-        className="w-24 rounded-md bg-background px-3 py-2 disabled:cursor-not-allowed placeholder:text-muted-foreground disabled:opacity-50 focus:outline-none"
+        className="w-24 rounded-md bg-background px-3 py-2 placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         type="number"
         placeholder="4000"
         min={0}

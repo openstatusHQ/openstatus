@@ -36,7 +36,7 @@ export async function StatusWidget({ slug, href }: StatusWidgetProps) {
 
   return (
     <a
-      className="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-gray-700 text-sm dark:border-gray-800 dark:hover:bg-gray-900 hover:bg-gray-100 dark:hover:text-white dark:text-gray-300 hover:text-black"
+      className="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-gray-700 text-sm hover:bg-gray-100 hover:text-black dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white"
       href={href || `https://${slug}.openstatus.dev`}
       target="_blank"
       rel="noreferrer"
@@ -45,12 +45,12 @@ export async function StatusWidget({ slug, href }: StatusWidgetProps) {
       <span className="relative flex h-2 w-2">
         {status === "operational" ? (
           <span
-            // biome-ignore lint/nursery/useSortedClasses: <explanation>
+            // biome-ignore lint/nursery/useSortedClasses: color is a dynamic value
             className={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
           />
         ) : null}
         <span
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
+          // biome-ignore lint/nursery/useSortedClasses: color is a dynamic value
           className={`relative inline-flex h-2 w-2 rounded-full ${color}`}
         />
       </span>

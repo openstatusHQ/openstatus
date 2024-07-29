@@ -2,7 +2,11 @@
 
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
-import { Label, RadioGroup, RadioGroupItem } from "@openstatus/ui";
+import { Label } from "@openstatus/ui/src/components/label";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@openstatus/ui/src/components/radio-group";
 import { useRouter } from "next/navigation";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
@@ -26,7 +30,7 @@ export function PricingPlanRadio() {
           <Label
             htmlFor={key}
             className={cn(
-              "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 [&:has([data-state=checked])]:border-primary peer-data-[state=checked]:border-primary hover:bg-accent hover:text-accent-foreground",
+              "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary",
               key === "team" && "bg-muted/50",
             )}
           >

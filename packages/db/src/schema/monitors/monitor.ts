@@ -85,7 +85,7 @@ export const monitorsToPages = sqliteTable(
     order: integer("order").default(0),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.pageId),
+    pk: primaryKey({ columns: [t.monitorId, t.pageId] }),
   }),
 );
 

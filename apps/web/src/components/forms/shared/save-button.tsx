@@ -1,6 +1,6 @@
 import React from "react";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Kbd } from "../../kbd";
 import { LoadingAnimation } from "../../loading-animation";

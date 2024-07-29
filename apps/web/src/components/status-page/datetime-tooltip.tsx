@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { useState } from "react";

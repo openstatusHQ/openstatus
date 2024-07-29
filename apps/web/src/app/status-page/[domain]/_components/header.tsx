@@ -7,8 +7,6 @@ import type { PublicPage } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
-import { Shell } from "@/components/dashboard/shell";
-import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Menu } from "./menu";

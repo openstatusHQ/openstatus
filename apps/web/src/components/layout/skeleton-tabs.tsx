@@ -1,4 +1,4 @@
-import { Skeleton } from "@openstatus/ui";
+import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 
 interface SkeletonTabsProps {
   children?: React.ReactNode;

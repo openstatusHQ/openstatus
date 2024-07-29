@@ -34,7 +34,7 @@ export * from "./components/date-time-picker-popover";
 export * from "./components/sheet";
 export * from "./components/multi-select";
 export * from "./components/toggle";
-export * from "./components/collabsible";
+export * from "./components/collapsible";
 export * from "./components/sonner";
 export * from "./components/sortable";
 export * from "./components/navigation-menu";

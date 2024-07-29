@@ -50,7 +50,7 @@ export const usersToWorkspaces = sqliteTable(
     ),
   },
   (t) => ({
-    pk: primaryKey(t.userId, t.workspaceId),
+    pk: primaryKey({ columns: [t.userId, t.workspaceId] }),
   }),
 );
 

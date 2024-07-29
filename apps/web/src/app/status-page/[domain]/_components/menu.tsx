@@ -4,14 +4,14 @@ import { MenuIcon } from "lucide-react";
 import { usePathname, useSelectedLayoutSegment } from "next/navigation";
 import * as React from "react";
 
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/sheet";
 
 import { AppLink } from "@/components/layout/app-link";
 

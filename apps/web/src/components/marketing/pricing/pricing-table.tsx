@@ -6,9 +6,9 @@ import { Fragment } from "react";
 
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
+import { Badge } from "@openstatus/ui/src/components/badge";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Badge,
-  Button,
   Table,
   TableBody,
   TableCaption,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 import { pricingTableConfig } from "../../../config/pricing-table";
 
 import { LoadingAnimation } from "@/components/loading-animation";

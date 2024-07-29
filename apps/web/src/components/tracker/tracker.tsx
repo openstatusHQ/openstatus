@@ -20,17 +20,19 @@ import {
   startOfDay,
 } from "@openstatus/tracker";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-  Separator,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 import { cn } from "@/lib/utils";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui/src/components/hover-card";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
