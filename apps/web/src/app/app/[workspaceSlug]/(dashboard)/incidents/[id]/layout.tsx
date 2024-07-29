@@ -13,10 +13,12 @@ export default async function Layout({
 }) {
   const id = params.id;
 
-  const incidents = await api.incident.getIncidentsByWorkspace.query();
-  const incident = await api.incident.getIncidentById.query({
-    id: Number(id),
-  });
+  const [incidents, incident] = await Promise.all([
+    api.incident.getIncidentsByWorkspace.query(),
+    api.incident.getIncidentById.query({
+      id: Number(id),
+    }),
+  ]);
 
   if (!incident) {
     return notFound();

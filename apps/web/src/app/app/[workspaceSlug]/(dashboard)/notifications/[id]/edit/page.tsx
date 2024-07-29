@@ -6,12 +6,14 @@ export default async function EditPage({
 }: {
   params: { workspaceSlug: string; id: string };
 }) {
-  const workspace = await api.workspace.getWorkspace.query();
-  const monitors = await api.monitor.getMonitorsByWorkspace.query();
+  const [workspace, monitors, notification] = await Promise.all([
+    api.workspace.getWorkspace.query(),
+    api.monitor.getMonitorsByWorkspace.query(),
 
-  const notification = await api.notification.getNotificationById.query({
-    id: Number(params.id),
-  });
+    await api.notification.getNotificationById.query({
+      id: Number(params.id),
+    }),
+  ]);
 
   return (
     <NotificationForm
