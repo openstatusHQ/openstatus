@@ -62,6 +62,14 @@ type CheckerRequest struct {
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 }
 
+type TCPRequest struct {
+	WorkspaceID   string `json:"workspaceId"`
+	URL           string `json:"url"`
+	MonitorID     string `json:"monitorId"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Timeout       int64  `json:"timeout"`
+}
+
 type PingRequest struct {
 	RequestId   int64             `json:"requestId"`
 	WorkspaceId int64             `json:"workspaceId"`

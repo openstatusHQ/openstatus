@@ -23,7 +23,7 @@ type client struct {
 }
 
 func NewClient(httpClient *http.Client, apiKey string) Client {
-	return client{
+	return &client{
 		httpClient: httpClient,
 		apiKey:     apiKey,
 	}
