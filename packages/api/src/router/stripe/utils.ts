@@ -42,7 +42,7 @@ export const PLANS = [
       monthly: {
         priceIds: {
           test: "price_1OVHPlBXJcTfzsyJvPlB1kNb",
-          production: "price_1PdJ4eBXJcTfzsyJ0hsHMAxh",
+          production: "price_1PiBNnBXJcTfzsyJu65D9wfN",
         },
       },
     },
