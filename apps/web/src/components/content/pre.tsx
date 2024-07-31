@@ -30,7 +30,7 @@ export default function Pre({ children, ...props }: PreProps) {
   };
 
   return (
-    <div className="relative hidden overflow-hidden [&:has([data-theme='light'])]:block dark:[&:has([data-theme='dark'])]:block dark:[&:has([data-theme='light'])]:hidden">
+    <div className="relative hidden overflow-hidden dark:[&:has([data-theme='dark'])]:block [&:has([data-theme='light'])]:block dark:[&:has([data-theme='light'])]:hidden">
       <Button
         variant="outline"
         size="icon"
@@ -43,7 +43,7 @@ export default function Pre({ children, ...props }: PreProps) {
           <ClipboardCopy className="h-5 w-5" />
         )}
       </Button>
-      <pre  ref={ref} {...props}>
+      <pre ref={ref} {...props}>
         {children}
       </pre>
     </div>
