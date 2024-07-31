@@ -20,11 +20,10 @@ const searchParamsSchema = z.object({
 });
 
 export default async function Details({
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  params,
+  // params, // Commented out as not used to avoid biome-ignore
   searchParams,
 }: {
-  params: { id: string; workspaceSlug: string };
+  params?: { id: string; workspaceSlug: string };
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);

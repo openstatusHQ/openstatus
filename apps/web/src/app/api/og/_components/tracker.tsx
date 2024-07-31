@@ -2,6 +2,7 @@ import type { Monitor } from "@openstatus/tinybird";
 import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 
 import { cn, formatDate } from "@/lib/utils";
+import { nanoid } from "nanoid";
 
 export function Tracker({ data }: { data: Monitor[] }) {
   const tracker = new OSTracker({ data });
@@ -14,26 +15,28 @@ export function Tracker({ data }: { data: Monitor[] }) {
         </div>
         {/* Empty State */}
         <div tw="flex flex-row relative">
-          {new Array(data.length).fill(null).map((_, i) => {
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            return <div key={i} tw="h-16 w-3 rounded-full mr-1 bg-black/20" />;
+          {new Array(data.length).fill(null).map((_) => {
+            return (
+              <div
+                key={`placeholder-${nanoid(6)}`}
+                tw="h-16 w-3 rounded-full mr-1 bg-black/20"
+              />
+            );
           })}
           <div tw="flex flex-row-reverse absolute left-0">
-            {tracker.days.map((item, i) => {
+            {tracker.days.map((item, _i) => {
               const isBlackListed = Boolean(item.blacklist);
               if (isBlackListed) {
                 return (
                   <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                    key={i}
+                    key={`day-${item?.day}-${nanoid(6)}`}
                     tw="h-16 w-3 rounded-full mr-1 bg-status-operational/90"
                   />
                 );
               }
               return (
                 <div
-                  // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                  key={i}
+                  key={`day-${item?.day}-${nanoid(6)}`}
                   tw={cn(
                     "h-16 w-3 rounded-full mr-1",
                     classNames[item.variant],

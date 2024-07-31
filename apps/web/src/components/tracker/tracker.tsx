@@ -31,6 +31,7 @@ import {
 } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
+import { nanoid } from "nanoid";
 
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
@@ -100,9 +101,8 @@ export function Tracker({
       </div>
       <div className="relative h-full w-full">
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
-          {tracker.days.map((props, i) => {
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            return <Bar key={i} {...props} />;
+          {tracker.days.map((props) => {
+            return <Bar key={`tracker-${nanoid(6)}`} {...props} />;
           })}
         </div>
       </div>

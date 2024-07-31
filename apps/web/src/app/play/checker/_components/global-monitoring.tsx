@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/marketing/card";
 import { Globe } from "@/components/marketing/monitor/globe";
+import { nanoid } from "nanoid";
 
 const features: {
   icon: ValidIcon;
@@ -48,9 +49,8 @@ export const GlobalMonitoring = () => {
       <>
         <div className="mt-12">
           <div className="list-none space-y-4">
-            {features?.map((feature, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <CardFeature key={i} {...feature} />
+            {features?.map((feature) => (
+              <CardFeature key={`${feature.icon}-${nanoid(6)}`} {...feature} />
             ))}
           </div>
         </div>

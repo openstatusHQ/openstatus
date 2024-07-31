@@ -1,4 +1,5 @@
 import { Separator, Skeleton } from "@openstatus/ui";
+import { nanoid } from "nanoid";
 
 export default function Loading() {
   return (
@@ -6,16 +7,20 @@ export default function Loading() {
       <Skeleton className="h-10 w-[150px]" />
       <div className="grid gap-6">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-5 sm:grid-cols-4 md:gap-6">
-          {new Array(4).fill(0).map((_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <Skeleton key={i} className="h-16 w-full" />
+          {new Array(4).fill(0).map((_) => (
+            <Skeleton
+              key={`skeleton-loading-${nanoid(6)}`}
+              className="h-16 w-full"
+            />
           ))}
         </div>
         <div className="grid gap-4">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-5 sm:grid-cols-4 md:gap-6">
-            {new Array(5).fill(0).map((_, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <Skeleton key={i} className="h-16 w-full" />
+            {new Array(5).fill(0).map((_) => (
+              <Skeleton
+                key={`skeleton-loading-${nanoid(6)}`}
+                className="h-16 w-full"
+              />
             ))}
           </div>
           <Skeleton className="h-3 w-40" />

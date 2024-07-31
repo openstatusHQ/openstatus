@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@openstatus/ui";
+import { nanoid } from "nanoid";
 
 export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
   return (
@@ -26,11 +27,10 @@ export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {assertions.map((a, i) => {
+        {assertions.map((a) => {
           if (a.schema.type === "status") {
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <TableRow key={i}>
+              <TableRow key={`response-assertion-${nanoid(6)}`}>
                 <TableCell className="text-muted-foreground">
                   Status Code
                 </TableCell>
@@ -44,8 +44,7 @@ export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
           }
           if (a.schema.type === "header") {
             return (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <TableRow key={i}>
+              <TableRow key={`response-assertion-${nanoid(6)}`}>
                 <TableCell className="text-muted-foreground">Header</TableCell>
                 <TableCell className="font-mono">{a.schema.key}</TableCell>
                 <TableCell>

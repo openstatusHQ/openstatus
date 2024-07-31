@@ -23,8 +23,8 @@ import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants
 import type { z } from "zod";
 
 // EXAMPLE: get the type of the response of the endpoint
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
+// Commented out as not used to avoid biome-ignore
+// type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
 
 // FIXME: use proper type
 export type Monitor = {
