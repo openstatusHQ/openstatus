@@ -7,7 +7,10 @@ import type * as unified from "unified";
 const prettyCode: unified.Pluggable<any[]> = [
   rehypePrettyCode,
   {
-    theme: "github-light",
+    theme: {
+      dark: "github-dark-dimmed",
+      light: "github-light",
+    },
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     onVisitLine(node: any) {
       // Prevent lines from collapsing in `display: grid` mode, and
