@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/select";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 

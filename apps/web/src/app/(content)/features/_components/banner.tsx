@@ -1,5 +1,5 @@
 import { Shell } from "@/components/dashboard/shell";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 import Link from "next/link";
 
 export function Banner() {

@@ -10,7 +10,7 @@ export const RUMMetricCards = async ({ dsn }: { dsn: string }) => {
     period: "24h",
   });
   return (
-    <div className="grid grid-cols-1 gap-2 lg:grid-cols-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-5">
       <RUMCard event="CLS" value={data?.cls || 0} />
       <RUMCard event="FCP" value={data?.fcp || 0} />
       <RUMCard event="INP" value={data?.inp || 0} />

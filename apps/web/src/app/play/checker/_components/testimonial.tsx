@@ -4,7 +4,7 @@ export const Testimonial = () => {
   return (
     <div className="mx-auto max-w-2xl lg:max-w-4xl">
       <figure className="grid gap-4">
-        <blockquote className="text-center font-semibold text-xl leading-8 after:text-muted-foreground before:text-muted-foreground sm:text-2xl sm:leading-9 after:content-['”'] before:content-['“']">
+        <blockquote className="text-center font-semibold text-xl leading-8 before:text-muted-foreground before:content-['“'] after:text-muted-foreground after:content-['”'] sm:text-2xl sm:leading-9">
           Just don't give up on your users
         </blockquote>
         <figcaption className="flex items-center justify-center space-x-3 text-base">

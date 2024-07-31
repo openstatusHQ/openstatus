@@ -12,7 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/alert-dialog";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 

@@ -14,7 +14,7 @@ export function DataTableBadges({ names }: { names: string[] }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="flex max-w-[150px] gap-2 truncate font-medium lg:max-w-[250px] sm:max-w-[200px] xl:max-w-[350px]">
+      <span className="flex max-w-[150px] gap-2 truncate font-medium sm:max-w-[200px] lg:max-w-[250px] xl:max-w-[350px]">
         <Badge variant="outline">{first}</Badge>
         {second ? <Badge variant="outline">{second}</Badge> : null}
       </span>

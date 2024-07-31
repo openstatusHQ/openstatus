@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { InputWithAddons, Slider } from "@openstatus/ui";
+import { InputWithAddons } from "@openstatus/ui/src/components/input-with-addons";
+import { Slider } from "@openstatus/ui/src/components/slider";
 import { useMemo, useState } from "react";
 
 const MAX_REGIONS = 35;

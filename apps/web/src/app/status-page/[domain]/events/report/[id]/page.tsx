@@ -4,7 +4,7 @@ import { Header } from "@/components/dashboard/header";
 import { DateTimeTooltip } from "@/components/status-page/datetime-tooltip";
 import { StatusReportUpdates } from "@/components/status-page/status-report";
 import { api } from "@/trpc/server";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 import { CopyLinkButton } from "./_components/copy-link-button";
 
 export default async function IncidentPage({

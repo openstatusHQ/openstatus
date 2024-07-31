@@ -3,15 +3,15 @@
 import { useState } from "react";
 
 import type { InsertStatusReportUpdate } from "@openstatus/db/src/schema";
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/dialog";
 
 import { StatusReportUpdateForm } from "../forms/status-report-update/form";
 import { Icons } from "../icons";

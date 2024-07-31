@@ -44,7 +44,7 @@ export function Metrics({
 
   return (
     <div className="@container grid gap-6">
-      <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5 @xl:grid-cols-4 @3xl:gap-6">
+      <div className="grid @3xl:grid-cols-5 @xl:grid-cols-4 grid-cols-2 @3xl:gap-6 gap-4">
         <MetricsCard
           title="uptime"
           value={uptime * 100}
@@ -76,7 +76,7 @@ export function Metrics({
         <MetricsCard title="total pings" value={current.count} suffix="#" />
       </div>
       <div className="grid gap-4">
-        <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-5 @xl:grid-cols-4 @3xl:gap-6">
+        <div className="grid @3xl:grid-cols-5 @xl:grid-cols-4 grid-cols-2 @3xl:gap-6 gap-4">
           {metricsOrder.map((key) => {
             const value = current[key];
             const lastValue = last[key];

@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 import { nanoid } from "nanoid";
 
 export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {

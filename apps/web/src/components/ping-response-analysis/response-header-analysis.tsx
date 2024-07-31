@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/dialog";
 
 const allowedHeaders = [
   "Cache-Control",
@@ -46,7 +46,7 @@ export function ResponseHeaderAnalysis({
 
   return (
     <Dialog>
-      <DialogTrigger className="text-muted-foreground data-[state=open]:text-foreground hover:text-foreground">
+      <DialogTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
         <Info className="h-4 w-4" />
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl">

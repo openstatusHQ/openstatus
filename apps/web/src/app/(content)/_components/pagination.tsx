@@ -2,7 +2,7 @@ import type { Changelog } from "contentlayer/generated";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 export function Pagination({
   // prev, Commented out as not used to avoid biome-ignore

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import * as React from "react";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
@@ -11,9 +11,8 @@ import { api } from "@/trpc/server";
 
 export default async function MonitorPage() {
   const pages = await api.page.getPagesByWorkspace.query();
-  const isLimitReached = await api.page.isPageLimitReached.query();
 
-  if (pages?.length === 0)
+  if (pages?.length === 0) {
     return (
       <EmptyState
         icon="panel-top"
@@ -26,7 +25,8 @@ export default async function MonitorPage() {
         }
       />
     );
-
+  }
+  const isLimitReached = await api.page.isPageLimitReached.query();
   return (
     <>
       <DataTable columns={columns} data={pages} />

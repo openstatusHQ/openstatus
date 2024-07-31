@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 export function VisibleIconWithTooltip({ visible }: { visible: boolean }) {
   return (

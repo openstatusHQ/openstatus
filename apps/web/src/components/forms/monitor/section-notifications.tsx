@@ -47,7 +47,7 @@ export function SectionNotifications({ form, notifications }: Props) {
                   Select the notification channels you want to be informed.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {notifications?.map((item) => (
                   <FormField
                     key={item.id}

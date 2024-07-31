@@ -1,6 +1,6 @@
 "use client";
 import { auth } from "@/lib/auth";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 import { Redis } from "@upstash/redis";
 import { useState } from "react";
 import { RequestAccessToRum } from "./action";

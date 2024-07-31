@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Invitation, WorkspaceRole } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { formatDate } from "@/lib/utils";
 import { DataTableRowActions } from "./data-table-row-actions";
