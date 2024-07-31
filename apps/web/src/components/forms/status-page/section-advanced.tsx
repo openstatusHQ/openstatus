@@ -76,8 +76,9 @@ export function SectionAdvanced({ form }: Props) {
   };
 
   const handleCancel = () => {
-    // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-    inputFileRef.current?.value && (inputFileRef.current.value = "");
+    if (inputFileRef.current) {
+      inputFileRef.current.value = "";
+    }
   };
 
   const handleConfirm = async () => {
