@@ -55,8 +55,8 @@ app.post(
     const db = createDrizzleClient(env);
 
     const sessionId = await getRandomSession(env.MYBROWSER);
-    // biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
-    let browser;
+
+    let browser: puppeteer.Browser | undefined;
     if (sessionId) {
       try {
         browser = await puppeteer.connect(env.MYBROWSER, sessionId);
@@ -112,8 +112,10 @@ const getRandomSession = async (
   }
 
   const sessionId = sessionsIds[Math.floor(Math.random() * sessionsIds.length)];
+  if (!sessionId) {
+    throw new Error("No available session IDs");
+  }
 
-  // biome-ignore lint/style/noNonNullAssertion: <explanation>
-  return sessionId!;
+  return sessionId;
 };
 export default app;

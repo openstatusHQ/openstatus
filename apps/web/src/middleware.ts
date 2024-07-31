@@ -8,28 +8,31 @@ import { env } from "./env";
 
 export const getValidSubdomain = (host?: string | null) => {
   let subdomain: string | null = null;
-  if (!host && typeof window !== "undefined") {
-    // On client side, get the host from window
-    // biome-ignore lint: to fix later
-    host = window.location.host;
-  }
-  // we should improve here for custom vercel deploy page
-  if (host?.includes(".") && !host.includes(".vercel.app")) {
-    const candidate = host.split(".")[0];
+  // Used a local variable to avoid reassigning the parameter
+  // On client side, get the host from window
+  const resolvedHost =
+    host ?? (typeof window !== "undefined" ? window.location.host : null);
+
+  // We should improve here for custom Vercel deploy page
+  if (resolvedHost?.includes(".") && !resolvedHost.includes(".vercel.app")) {
+    const candidate = resolvedHost.split(".")[0];
     if (candidate && !candidate.includes("www")) {
       // Valid candidate
       subdomain = candidate;
     }
   }
-  if (host?.includes("ngrok-free.app")) {
+  if (resolvedHost?.includes("ngrok-free.app")) {
     return null;
   }
   // In case the host is a custom domain
   if (
-    host &&
-    !(host?.includes(env.NEXT_PUBLIC_URL) || host?.endsWith(".vercel.app"))
+    resolvedHost &&
+    !(
+      resolvedHost.includes(env.NEXT_PUBLIC_URL) ||
+      resolvedHost.endsWith(".vercel.app")
+    )
   ) {
-    subdomain = host;
+    subdomain = resolvedHost;
   }
   return subdomain;
 };

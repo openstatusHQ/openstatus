@@ -112,8 +112,8 @@ export function PasswordForm({ slug }: PasswordFormProps) {
                   type={inputType}
                   disabled={loading}
                   trailing={
-                    // biome-ignore lint/a11y/useButtonType: <explanation>
                     <button
+                      type="button"
                       onClick={() =>
                         setInputType((type) =>
                           type === "password" ? "text" : "password",
