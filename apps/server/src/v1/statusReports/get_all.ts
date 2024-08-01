@@ -48,7 +48,7 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
         ...r,
         statusReportUpdateIds: r.statusReportUpdates.map((u) => u.id),
         monitorIds: r.monitorsToStatusReports.map((m) => m.monitorId),
-      }))
+      })),
     );
 
     return c.json(data, 200);

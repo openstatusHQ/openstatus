@@ -1,6 +1,5 @@
 import { api } from "@/trpc/server";
-import { useSearchParams } from "next/navigation";
-import { use } from "react";
+
 import { DataTableWrapper } from "./data-table-wrapper";
 
 const SessionTable = async ({ dsn, path }: { dsn: string; path: string }) => {

@@ -2,17 +2,25 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-export function useCookieState(name: string, defaultValue?: string) {
-  const [state, setState] = useState<string>();
+export function useCookieState<T extends string>(
+  name: string,
+  defaultValue?: T,
+  config?: { expires?: number },
+) {
+  const [state, setState] = useState<T>();
 
   const handleChange = useCallback(
-    (value: string) => {
+    (value: T) => {
       if (document) {
-        document.cookie = `${name}=${value}; path=/`;
+        const date = new Date();
+        date.setTime(date.getTime() + 365 * 24 * 60 * 60 * 1000); // in one year
+        document.cookie = `${name}=${value}; path=/; expires=${
+          config?.expires ?? date.toUTCString()
+        }`;
         setState(value);
       }
     },
-    [name],
+    [name, config],
   );
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
@@ -25,7 +33,8 @@ export function useCookieState(name: string, defaultValue?: string) {
         setState(defaultValue);
         return;
       }
-      setState(cookie.split("=")[1]);
+      const value = cookie.split("=")[1] as T;
+      setState(value);
     }
   }, []);
 

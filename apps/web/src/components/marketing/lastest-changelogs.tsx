@@ -1,7 +1,7 @@
 import { allChangelogs } from "contentlayer/generated";
 import Link from "next/link";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { formatDate } from "@/lib/utils";
 import {

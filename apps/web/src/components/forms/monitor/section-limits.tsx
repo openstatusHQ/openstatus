@@ -60,7 +60,8 @@ export function SectionLimits({ form }: Props) {
             </Select>
             <FormDescription>
               When the response time exceeds this limit, the monitor is will be
-              considered as <span className="text-amber-500">degraded</span>.
+              considered as{" "}
+              <span className="text-status-degraded">degraded</span>.
             </FormDescription>
             <FormMessage />
           </FormItem>
@@ -91,7 +92,7 @@ export function SectionLimits({ form }: Props) {
             </Select>
             <FormDescription>
               When the response time exceeds this limit, the monitor is will be
-              considered as <span className="text-rose-500">failed</span>.
+              considered as <span className="text-status-down">failed</span>.
             </FormDescription>
             <FormMessage />
           </FormItem>

@@ -3,12 +3,12 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
-import { DataTableRowActions } from "./data-table-row-actions";
+import Link from "next/link";
 import { z } from "zod";
 import { DataTableBadges } from "../data-table-badges";
-import Link from "next/link";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 // TODO: use the getProviderMetaData function from the notification form to access the data
 

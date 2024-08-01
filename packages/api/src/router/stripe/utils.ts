@@ -20,7 +20,7 @@ export const PLANS = [
       monthly: {
         priceIds: {
           test: "price_1NdurjBXJcTfzsyJdAzIxXnT",
-          production: "price_1OUvJvBXJcTfzsyJMA07Uew7",
+          production: "price_1PdJ3lBXJcTfzsyJHgqcfVG9",
         },
       },
     },
@@ -31,7 +31,7 @@ export const PLANS = [
       monthly: {
         priceIds: {
           test: "price_1OVHQDBXJcTfzsyJjfiXl10Y",
-          production: "price_1OWM4TBXJcTfzsyJBdu71AhE",
+          production: "price_1PdJ5MBXJcTfzsyJqWXeMUEQ",
         },
       },
     },
@@ -42,7 +42,7 @@ export const PLANS = [
       monthly: {
         priceIds: {
           test: "price_1OVHPlBXJcTfzsyJvPlB1kNb",
-          production: "price_1OWM5kBXJcTfzsyJ6Z2bUWcQ",
+          production: "price_1PiBNnBXJcTfzsyJu65D9wfN",
         },
       },
     },

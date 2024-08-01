@@ -37,8 +37,8 @@ export function registerGetAllMonitors(app: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .all();
 

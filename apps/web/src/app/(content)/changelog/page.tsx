@@ -1,4 +1,6 @@
-
+import { allChangelogs } from "contentlayer/generated";
+import { Rss } from "lucide-react";
+import type { Metadata } from "next";
 import type { Metadata } from "next";
 import {
   defaultMetadata,

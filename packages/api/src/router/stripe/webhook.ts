@@ -6,6 +6,7 @@ import { analytics, trackAnalytics } from "@openstatus/analytics";
 import { eq } from "@openstatus/db";
 import { user, workspace } from "@openstatus/db/src/schema";
 
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
 import { createTRPCRouter, publicProcedure } from "../../trpc";
 import { stripe } from "./shared";
 import { getPlanFromPriceId } from "./utils";
@@ -67,6 +68,7 @@ export const webhookRouter = createTRPCRouter({
         subscriptionId: subscription.id,
         endsAt: new Date(subscription.current_period_end * 1000),
         paidUntil: new Date(subscription.current_period_end * 1000),
+        limits: JSON.stringify(getLimits(plan.plan)),
       })
       .where(eq(workspace.id, result.id))
       .run();

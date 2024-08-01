@@ -4,6 +4,8 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
+} from "@openstatus/ui/src/components/popover";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -11,7 +13,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 
 import { timingDict } from "./config";
 import type { Timing } from "./utils";
@@ -50,7 +52,7 @@ export function ResponseTimingTable({
                   <p className="text-muted-foreground">{short}</p>
                   {!hideInfo ? (
                     <Popover>
-                      <PopoverTrigger className="text-muted-foreground data-[state=open]:text-foreground hover:text-foreground">
+                      <PopoverTrigger className="text-muted-foreground hover:text-foreground data-[state=open]:text-foreground">
                         <Info className="mr-2 h-4 w-4" />
                       </PopoverTrigger>
                       <PopoverContent>

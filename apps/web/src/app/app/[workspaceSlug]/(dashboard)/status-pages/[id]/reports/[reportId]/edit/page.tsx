@@ -23,7 +23,7 @@ export default async function EditPage({
         {
           ...statusUpdate,
           monitors: statusUpdate?.monitorsToStatusReports.map(
-            ({ monitorId }) => monitorId
+            ({ monitorId }) => monitorId,
           ),
           message: "",
         }

@@ -9,13 +9,15 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  Button,
+} from "@openstatus/ui/src/components/accordion";
+import { Button } from "@openstatus/ui/src/components/button";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/sheet";
 
 import { marketingPagesConfig } from "@/config/pages";
 import { socialsConfig } from "@/config/socials";
@@ -131,8 +133,8 @@ const ListItem = React.forwardRef<
       <Link
         ref={ref}
         className={cn(
-          "flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors focus:bg-accent hover:bg-accent focus:text-accent-foreground hover:text-accent-foreground",
-          className
+          "flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+          className,
         )}
         {...props}
       >
@@ -156,7 +158,7 @@ const ListItemSingle = React.forwardRef<
         ref={ref}
         className={cn(
           "flex flex-1 items-center justify-between border-b py-4 font-medium transition-all hover:underline",
-          className
+          className,
         )}
         {...props}
       >

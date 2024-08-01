@@ -13,8 +13,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-  Button,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/alert-dialog";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";

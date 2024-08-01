@@ -1,8 +1,11 @@
 import { Redis } from "@upstash/redis";
 import { z } from "zod";
 
-import { flyRegions, monitorFlyRegionSchema } from "@openstatus/db/src/schema";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
+import {
+  flyRegions,
+  monitorFlyRegionSchema,
+} from "@openstatus/db/src/schema/constants";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 import { flyRegionsDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
@@ -15,7 +18,7 @@ export function timestampFormatter(timestamp: number) {
 
 export function regionFormatter(
   region: MonitorFlyRegion,
-  type: "short" | "long" = "short"
+  type: "short" | "long" = "short",
 ) {
   const { code, flag, location } = flyRegionsDict[region];
   if (type === "short") return `${code} ${flag}`;
@@ -97,6 +100,7 @@ export const checkerSchema = z.object({
   headers: z.record(z.string()),
   time: z.number(),
   timing: timingSchema,
+  body: z.string().optional().nullable(),
 });
 
 export const cachedCheckerSchema = z.object({
@@ -118,7 +122,7 @@ export async function checkRegion(
     method?: Method;
     headers?: { value: string; key: string }[];
     body?: string;
-  }
+  },
 ): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
@@ -152,7 +156,7 @@ export async function checkRegion(
   if (!data.success) {
     console.log(json);
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
     );
     throw new Error(data.error.message);
   }
@@ -163,17 +167,21 @@ export async function checkRegion(
   };
 }
 
+/**
+ * Used for the /play/checker page only
+ */
 export async function checkAllRegions(url: string, opts?: { method: Method }) {
   // TODO: settleAll
   return await Promise.all(
     flyRegions.map(async (region) => {
       const check = await checkRegion(url, region, opts);
+      // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
+      check.body = undefined;
       return check;
-    })
+    }),
   );
 }
 
-// TODO: add opts: { method: Method }
 export async function setCheckerData(url: string, opts?: { method: Method }) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();

@@ -38,7 +38,7 @@ export const notificationsToMonitors = sqliteTable(
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.notificationId),
+    pk: primaryKey({ columns: [t.monitorId, t.notificationId] }),
   }),
 );
 

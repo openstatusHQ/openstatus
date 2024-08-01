@@ -9,7 +9,7 @@ import {
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/context-menu";
 import Image from "next/image";
 
 export function BrandName() {

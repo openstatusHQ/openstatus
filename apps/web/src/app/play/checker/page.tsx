@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 
 import { BackButton } from "@/components/layout/back-button";
-import CheckerPlay from "./_components/checker-play";
-import { Testimonial } from "./_components/testimonial";
 import { BottomCTA } from "@/components/marketing/in-between-cta";
+import CheckerPlay from "./_components/checker-play";
 import { GlobalMonitoring } from "./_components/global-monitoring";
+import { Testimonial } from "./_components/testimonial";
 
 export const metadata: Metadata = {
   title: "Speed Checker",

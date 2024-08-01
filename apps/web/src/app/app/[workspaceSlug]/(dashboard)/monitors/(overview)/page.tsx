@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
@@ -29,7 +29,7 @@ const searchParamsSchema = z.object({
         if (v === "true") return true;
         if (v === "false") return false;
         return undefined;
-      })
+      }),
     )
     .optional(),
   pageSize: z.coerce.number().optional().default(10),
@@ -42,11 +42,9 @@ export default async function MonitorPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const search = searchParamsSchema.safeParse(searchParams);
-  const monitors = await api.monitor.getMonitorsByWorkspace.query();
-  const isLimitReached = await api.monitor.isMonitorLimitReached.query();
-
   if (!search.success) return notFound();
 
+  const monitors = await api.monitor.getMonitorsByWorkspace.query();
   if (monitors?.length === 0)
     return (
       <EmptyState
@@ -61,46 +59,58 @@ export default async function MonitorPage({
       />
     );
 
-  const _incidents = await api.incident.getIncidentsByWorkspace.query(); // TODO: filter by last 7 days
-  const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
-  const _maintenances = await api.maintenance.getLast7DaysByWorkspace.query();
+  const [_incidents, tags, _maintenances, isLimitReached] = await Promise.all([
+    api.incident.getIncidentsByWorkspace.query(),
+    api.monitorTag.getMonitorTagsByWorkspace.query(),
+    api.maintenance.getLast7DaysByWorkspace.query(),
+    api.monitor.isMonitorLimitReached.query(),
+  ]);
 
   // maybe not very efficient?
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
-      const metrics = await tb.endpointMetrics("1d")(
-        {
-          monitorId: String(monitor.id),
-        },
-        { cache: "no-store", revalidate: 0 }
-      );
-
-      const data = await tb.endpointStatusPeriod("7d")(
-        {
-          monitorId: String(monitor.id),
-        },
-        { cache: "no-store", revalidate: 0 }
-      );
+      const [metrics, data] = await Promise.all([
+        tb.endpointMetrics("1d")(
+          {
+            monitorId: String(monitor.id),
+          },
+          { cache: "no-store", revalidate: 0 },
+        ),
+        tb.endpointStatusPeriod("7d")(
+          {
+            monitorId: String(monitor.id),
+          },
+          { cache: "no-store", revalidate: 0 },
+        ),
+      ]);
 
       const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id
+        (incident) => incident.monitorId === monitor.id,
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag
+        ({ monitorTag }) => monitorTag,
       );
 
       const maintenances = _maintenances.filter((maintenance) =>
-        maintenance.monitors.includes(monitor.id)
+        maintenance.monitors.includes(monitor.id),
       );
 
-      return { monitor, metrics: current, data, incidents, maintenances, tags };
-    })
+      return {
+        monitor,
+        metrics: current,
+        data,
+        incidents,
+        maintenances,
+        tags,
+        isLimitReached,
+      };
+    }),
   );
 
   return (

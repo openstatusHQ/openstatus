@@ -2,16 +2,16 @@
 
 import { usePathname, useRouter } from "next/navigation";
 
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema";
-import { flyRegions } from "@openstatus/db/src/schema";
+import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { Label } from "@openstatus/ui/src/components/label";
 import {
-  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/select";
 
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { regionFormatter } from "./utils";

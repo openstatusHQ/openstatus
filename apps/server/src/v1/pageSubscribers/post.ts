@@ -49,7 +49,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .select()
       .from(page)
       .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId)))
+        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
       )
       .get();
 
@@ -63,8 +63,8 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .where(
         and(
           eq(pageSubscriber.email, input.email),
-          eq(pageSubscriber.pageId, Number(id))
-        )
+          eq(pageSubscriber.pageId, Number(id)),
+        ),
       )
       .get();
 

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import * as z from "zod";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { ResponseDetails } from "@/components/monitor-dashboard/response-details";
 import { api } from "@/trpc/server";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 //
 
 /**

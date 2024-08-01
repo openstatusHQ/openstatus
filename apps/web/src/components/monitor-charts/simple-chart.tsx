@@ -3,8 +3,8 @@
 import type { CustomTooltipProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 
-import { dataFormatter } from "./utils";
 import { cn } from "@/lib/utils";
+import { dataFormatter } from "./utils";
 
 export interface SimpleChartProps {
   data: { timestamp: string; [key: string]: string }[];
@@ -51,7 +51,7 @@ const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
               <div
                 className={cn(
                   "flex w-1 flex-col rounded",
-                  `bg-${category.color}-500`
+                  `bg-${category.color}-500`,
                 )}
               />
               <div className="flex flex-col gap-1">

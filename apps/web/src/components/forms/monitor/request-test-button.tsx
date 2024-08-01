@@ -5,11 +5,11 @@ import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import { deserialize } from "@openstatus/assertions";
-import type {
-  InsertMonitor,
-  MonitorFlyRegion,
-} from "@openstatus/db/src/schema";
-import { flyRegions } from "@openstatus/db/src/schema";
+import type { InsertMonitor } from "@openstatus/db/src/schema";
+import {
+  type MonitorFlyRegion,
+  flyRegions,
+} from "@openstatus/db/src/schema/constants";
 import {
   Button,
   Dialog,
@@ -33,16 +33,18 @@ import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
-import { getLimit } from "@openstatus/plans";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
+  limits: Limits;
   pingEndpoint(
-    region?: MonitorFlyRegion
+    region?: MonitorFlyRegion,
   ): Promise<{ data?: RegionChecker; error?: string }>;
 }
 
-export function RequestTestButton({ form, pingEndpoint }: Props) {
+export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
   const [check, setCheck] = React.useState<
     { data: RegionChecker; error?: string } | undefined
   >();
@@ -79,7 +81,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
 
   const { statusAssertions, headerAssertions } = form.getValues();
 
-  const regions = getLimit("free", "regions");
+  const regions = getLimit(limits, "regions");
 
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
@@ -144,7 +146,7 @@ export function RequestTestButton({ form, pingEndpoint }: Props) {
                 JSON.stringify([
                   ...(statusAssertions || []),
                   ...(headerAssertions || []),
-                ])
+                ]),
               )}
             />
           </div>

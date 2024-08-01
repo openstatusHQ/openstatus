@@ -8,15 +8,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 
 import {
   type ColumnDef,
-  getCoreRowModel,
-  useReactTable,
-  flexRender,
   type SortingState,
+  flexRender,
+  getCoreRowModel,
   getSortedRowModel,
+  useReactTable,
 } from "@tanstack/react-table";
 import { useState } from "react";
 

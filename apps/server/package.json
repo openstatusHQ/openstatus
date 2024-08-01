@@ -22,7 +22,6 @@
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
-    "@openstatus/plans": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",

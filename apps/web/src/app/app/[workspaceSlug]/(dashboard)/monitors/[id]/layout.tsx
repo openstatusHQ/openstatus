@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
@@ -54,7 +54,7 @@ export default async function Layout({
                 <span className="text-muted-foreground/50 text-xs">•</span>
                 <TagBadgeWithTooltip
                   tags={monitor.monitorTagsToMonitors.map(
-                    ({ monitorTag }) => monitorTag
+                    ({ monitorTag }) => monitorTag,
                   )}
                 />
               </>

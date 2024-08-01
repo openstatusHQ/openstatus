@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { OSTinybird } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
@@ -17,8 +17,8 @@ export async function TrackerExample() {
           <ExampleTracker />
         </Suspense>
       </div>
-      <Button asChild variant="outline" className="rounded-full">
-        <Link href="/play/status">Playground</Link>
+      <Button className="rounded-full" asChild>
+        <Link href="/features/status-page">Learn more</Link>
       </Button>
     </div>
   );
@@ -35,7 +35,7 @@ async function ExampleTracker() {
     },
     {
       revalidate: 600, // 10 minutes
-    }
+    },
   );
 
   if (!data) return null;

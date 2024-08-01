@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import * as z from "zod";
 
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema";
+import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import {
@@ -53,7 +53,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
     <Shell className="my-8 flex flex-col gap-8 md:my-16">
       <div className="flex justify-between gap-4">
         <div className="flex max-w-[calc(100%-50px)] flex-col gap-1">
-          <h1 className="truncate text-wrap font-semibold text-lg md:text-3xl sm:text-xl">
+          <h1 className="truncate text-wrap font-semibold text-lg sm:text-xl md:text-3xl">
             {data.url}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">

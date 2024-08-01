@@ -23,8 +23,8 @@ export const env = createEnv({
     CLICKHOUSE_URL: z.string(),
     CLICKHOUSE_USERNAME: z.string(),
     CLICKHOUSE_PASSWORD: z.string(),
-    PLAIN_API_KEY: z.string().optional(),
     PAGERDUTY_APP_ID: z.string().optional(),
+    SLACK_SUPPORT_WEBHOOK_URL: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
@@ -57,8 +57,8 @@ export const env = createEnv({
     CLICKHOUSE_URL: process.env.CLICKHOUSE_URL,
     CLICKHOUSE_USERNAME: process.env.CLICKHOUSE_USERNAME,
     CLICKHOUSE_PASSWORD: process.env.CLICKHOUSE_PASSWORD,
-    PLAIN_API_KEY: process.env.PLAIN_API_KEY,
     PAGERDUTY_APP_ID: process.env.PAGERDUTY_APP_ID,
+    SLACK_SUPPORT_WEBHOOK_URL: process.env.SLACK_SUPPORT_WEBHOOK_URL,
   },
   skipValidation: true,
 });

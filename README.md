@@ -74,7 +74,7 @@ Made with [Contrib.rocks](https://contrib.rocks)
 
 ![Alt](https://repobeats.axiom.co/api/embed/180eee159c0128f683a30f15f51ac35bdbd9fa44.svg "Repobeats analytics image")
 
-## Built with 🛠️
+## Tech stack 🥞
 
 - [Next.js](https://nextjs.org/)
 - [Tailwind CSS](https://tailwindcss.com/)
@@ -83,6 +83,8 @@ Made with [Contrib.rocks](https://contrib.rocks)
 - [turso](http://turso.tech/)
 - [drizzle](https://orm.drizzle.team/)
 - [Resend](https://resend.com/)
+
+[![Built with Depot](https://depot.dev/badges/built-with-depot.svg)](https://depot.dev/?utm_source=Opource=OpenStatus)
 
 ## Getting Started 🚀
 

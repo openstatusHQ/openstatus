@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 import * as z from "zod";
 
-import { flyRegions } from "@openstatus/db/src/schema";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -46,7 +46,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? []
+          .filter((i) => flyRegions.includes(i as Region)) ?? [],
     ),
 });
 
@@ -74,7 +74,6 @@ export default async function Page({
 
   const { period, quantile, interval, regions } = search.data;
 
-  console.log(regions.length);
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
   const periodicityMinutes = getMinutesByInterval(monitor.periodicity);
@@ -82,16 +81,16 @@ export default async function Page({
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const metrics = await tb.endpointMetrics(period)({ monitorId: id });
-
-  const data = await tb.endpointChart(period)({
-    monitorId: id,
-    interval: minutes,
-  });
-
-  const metricsByRegion = await tb.endpointMetricsByRegion(period)({
-    monitorId: id,
-  });
+  const [metrics, data, metricsByRegion] = await Promise.all([
+    tb.endpointMetrics(period)({ monitorId: id }),
+    tb.endpointChart(period)({
+      monitorId: id,
+      interval: minutes,
+    }),
+    tb.endpointMetricsByRegion(period)({
+      monitorId: id,
+    }),
+  ]);
 
   if (!data || !metrics || !metricsByRegion) return null;
 

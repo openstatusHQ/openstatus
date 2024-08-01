@@ -1,14 +1,13 @@
 import { subDays } from "date-fns";
 import { notFound } from "next/navigation";
 
-import { Separator } from "@openstatus/ui";
-
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
-import { MaintenanceBanner } from "@/components/status-page/maintenance-banner";
+import { Feed } from "@/components/status-page/feed";
 import { MonitorList } from "@/components/status-page/monitor-list";
 import { StatusCheck } from "@/components/status-page/status-check";
-import { StatusReportList } from "@/components/status-page/status-report-list";
 import { api } from "@/trpc/server";
+import { Separator } from "@openstatus/ui";
 
 type Props = {
   params: { domain: string };
@@ -21,14 +20,18 @@ export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 
-  const currentMaintenances = page.maintenances.filter(
-    (maintenance) =>
-      maintenance.to.getTime() > Date.now() &&
-      maintenance.from.getTime() < Date.now()
-  );
+  const lastMaintenances = page.maintenances.filter((maintenance) => {
+    return maintenance.from.getTime() > subDays(new Date(), 7).getTime();
+  });
+
+  const lastStatusReports = page.statusReports.filter((report) => {
+    return report.statusReportUpdates.some(
+      (update) => update.date.getTime() > subDays(new Date(), 7).getTime(),
+    );
+  });
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-8">
+    <div className="mx-auto flex w-full flex-col gap-12">
       <Header
         title={page.title}
         description={page.description}
@@ -39,34 +42,43 @@ export default async function Page({ params }: Props) {
         incidents={page.incidents}
         maintenances={page.maintenances}
       />
-      {currentMaintenances.length ? (
-        <div className="grid w-full gap-3">
-          {currentMaintenances.map((maintenance) => (
-            <MaintenanceBanner key={maintenance.id} {...maintenance} />
-          ))}
-        </div>
-      ) : null}
-      <MonitorList
-        monitors={page.monitors}
-        statusReports={page.statusReports}
-        incidents={page.incidents}
-        maintenances={page.maintenances}
-      />
-      <Separator />
-      <div className="grid gap-6">
-        <div>
-          <h2 className="font-semibold text-xl">Last updates</h2>
-          <p className="text-muted-foreground text-sm">
-            Reports of the last 7 days or incidents that have not been resolved
-            yet.
-          </p>
-        </div>
-        <StatusReportList
-          statusReports={page.statusReports}
+      {page.monitors.length ? (
+        <MonitorList
           monitors={page.monitors}
-          filter={{ date: subDays(Date.now(), 7), open: true }}
+          statusReports={page.statusReports}
+          incidents={page.incidents}
+          maintenances={page.maintenances}
         />
-      </div>
+      ) : (
+        <EmptyState
+          icon="activity"
+          title="No monitors"
+          description="The status page has no connected monitors."
+        />
+      )}
+      <Separator />
+      {lastStatusReports.length || lastMaintenances.length ? (
+        <Feed
+          monitors={page.monitors}
+          maintenances={lastMaintenances.filter((maintenance) => {
+            return (
+              maintenance.from.getTime() > subDays(new Date(), 7).getTime()
+            );
+          })}
+          statusReports={lastStatusReports.filter((report) => {
+            return report.statusReportUpdates.some(
+              (update) =>
+                update.date.getTime() > subDays(new Date(), 7).getTime(),
+            );
+          })}
+        />
+      ) : (
+        <EmptyState
+          icon="newspaper"
+          title="No recent notices"
+          description="There have been no reports within the last 7 days."
+        />
+      )}
     </div>
   );
 }

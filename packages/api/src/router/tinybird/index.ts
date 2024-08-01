@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { flyRegions } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
 

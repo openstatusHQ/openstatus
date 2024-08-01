@@ -43,8 +43,8 @@ export function registerGetNotification(api: typeof notificationsApi) {
       .where(
         and(
           eq(page.workspaceId, Number(workspaceId)),
-          eq(notification.id, Number(id))
-        )
+          eq(notification.id, Number(id)),
+        ),
       )
       .get();
 

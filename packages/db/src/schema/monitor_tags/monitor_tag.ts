@@ -40,7 +40,7 @@ export const monitorTagsToMonitors = sqliteTable(
     ),
   },
   (t) => ({
-    pk: primaryKey(t.monitorId, t.monitorTagId),
+    pk: primaryKey({ columns: [t.monitorId, t.monitorTagId] }),
   }),
 );
 

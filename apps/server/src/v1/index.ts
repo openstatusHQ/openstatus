@@ -1,10 +1,9 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { apiReference } from "@scalar/hono-api-reference";
 
-import type { Limits } from "@openstatus/plans/src/types";
-
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { handleError, handleZodError } from "../libs/errors";
 import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
@@ -22,8 +21,8 @@ export type Variables = {
     title: "Hobby" | "Starter" | "Growth" | "Pro";
     description: string;
     price: number;
-    limits: Limits;
   };
+  limits: Limits;
 };
 
 export const api = new OpenAPIHono<{ Variables: Variables }>({
@@ -48,7 +47,7 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
-  })
+  }),
 );
 /**
  * Authentification Middleware

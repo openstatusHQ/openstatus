@@ -22,7 +22,6 @@ import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
   pages?: Page[];
 }
 
@@ -67,7 +66,7 @@ export function SectionStatusPage({ form, pages }: Props) {
                   Select the pages where you want to display the monitor.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {pages?.map((item) => (
                   <FormField
                     key={item.id}

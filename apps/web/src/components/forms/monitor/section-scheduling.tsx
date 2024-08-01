@@ -3,11 +3,9 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
-import {
-  flyRegions,
-  monitorPeriodicitySchema,
-} from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/plans";
+import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+
 import {
   FormControl,
   FormDescription,
@@ -23,6 +21,7 @@ import {
 } from "@openstatus/ui";
 import { groupByContinent } from "@openstatus/utils";
 
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
 
@@ -38,20 +37,20 @@ const cronJobs = [
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
+  limits: Limits;
   plan: WorkspacePlan;
 }
 
-export function SectionScheduling({ form, plan }: Props) {
-  const periodicityLimit = getLimit(plan, "periodicity");
-  const regionsLimit = getLimit(plan, "regions");
-  console.log(form.getValues());
+export function SectionScheduling({ form, limits, plan }: Props) {
+  const periodicityLimit = getLimit(limits, "periodicity");
+  const regionsLimit = getLimit(limits, "regions");
   return (
     <div className="grid w-full gap-4">
       <SectionHeader
         title="Schedule and Regions"
         description="Customize the period of time and the regions where your endpoint will be monitored."
       />
-      <div className="grid md:grid-cols-3 sm:grid-cols-2">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3">
         <FormField
           control={form.control}
           name="periodicity"
@@ -120,7 +119,7 @@ export function SectionScheduling({ form, plan }: Props) {
                         <div className="grid grid-cols-3 grid-rows-1 gap-2 pt-1">
                           {current.regions
                             .sort((a, b) =>
-                              a.location.localeCompare(b.location)
+                              a.location.localeCompare(b.location),
                             )
                             .map((item) => {
                               return (
@@ -143,7 +142,7 @@ export function SectionScheduling({ form, plan }: Props) {
                                             id={item.code}
                                             name="region"
                                             checked={field.value?.includes(
-                                              item.code
+                                              item.code,
                                             )}
                                             onCheckedChange={(checked) => {
                                               console.log(field.value);
@@ -157,8 +156,8 @@ export function SectionScheduling({ form, plan }: Props) {
                                                 : field.onChange(
                                                     field.value?.filter(
                                                       (value) =>
-                                                        value !== item.code
-                                                    )
+                                                        value !== item.code,
+                                                    ),
                                                   );
                                             }}
                                           >

@@ -1,4 +1,4 @@
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 export function EnterpricePlan() {
   return (
@@ -6,7 +6,7 @@ export function EnterpricePlan() {
       <div className="flex-1">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="mb-2 font-cal text-xl">Custom</p>
+            <p className="mb-2 font-cal text-2xl">Custom</p>
             <p className="text-muted-foreground">
               Want more regions? Want to host it on your own server? Want
               something else? We can help you with that.
@@ -15,7 +15,7 @@ export function EnterpricePlan() {
         </div>
       </div>
       <div>
-        <Button asChild>
+        <Button className="rounded-full" asChild>
           <a
             href="https://cal.com/team/openstatus/30min"
             target="_blank"

@@ -33,14 +33,17 @@ export function InputSearch({
     const searchparams = inputValue
       .trim()
       .split(" ")
-      .reduce((prev, curr) => {
-        const [name, value] = curr.split(":");
-        if (value && name && curr !== currentWord) {
-          // TODO: support multiple value with value.split(",")
-          prev[name] = value;
-        }
-        return prev;
-      }, {} as Record<string, string>);
+      .reduce(
+        (prev, curr) => {
+          const [name, value] = curr.split(":");
+          if (value && name && curr !== currentWord) {
+            // TODO: support multiple value with value.split(",")
+            prev[name] = value;
+          }
+          return prev;
+        },
+        {} as Record<string, string>,
+      );
     onSearch(searchparams);
   }, [onSearch, inputValue, currentWord]);
 
@@ -61,9 +64,9 @@ export function InputSearch({
           status: (number | null)[];
           limit: number[];
           region: string[];
-        }
+        },
       ),
-    [events]
+    [events],
   );
 
   type SearchKey = keyof typeof search;
@@ -135,7 +138,7 @@ export function InputSearch({
                             const prefix = isStarting ? "" : " ";
                             const input = prev.replace(
                               `${prefix}${currentWord}`,
-                              `${prefix}${value}`
+                              `${prefix}${value}`,
                             );
                             return `${input}:`;
                           });

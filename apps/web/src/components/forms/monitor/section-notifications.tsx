@@ -22,11 +22,10 @@ import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
-  plan: WorkspacePlan;
   notifications?: Notification[];
 }
 
-export function SectionNotifications({ form, plan, notifications }: Props) {
+export function SectionNotifications({ form, notifications }: Props) {
   return (
     <div className="grid w-full gap-4">
       {/* <div className="grid gap-1">
@@ -49,7 +48,7 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                   Select the notification channels you want to be informed.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-4 md:grid-cols-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 grid-rows-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
                 {notifications?.map((item) => (
                   <FormField
                     key={item.id}
@@ -71,8 +70,8 @@ export function SectionNotifications({ form, plan, notifications }: Props) {
                                     ])
                                   : field.onChange(
                                       field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
+                                        (value) => value !== item.id,
+                                      ),
                                     );
                               }}
                             >

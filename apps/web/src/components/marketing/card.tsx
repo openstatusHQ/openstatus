@@ -1,4 +1,4 @@
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import type { FeatureDescription } from "@/config/features";
 import { cn } from "@/lib/utils";
