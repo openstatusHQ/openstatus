@@ -15,11 +15,11 @@ RUN rm -rf /app/packages/integrations/vercel
 #  Temp solution for bun
 RUN bun install --ignore-scripts
 
+WORKDIR /app/apps/server
+
 # Compile the TypeScript application
-RUN bun build --compile --sourcemap apps/server --outfile=app
+RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 EXPOSE 3000
-
-WORKDIR /app/apps/server
 
 CMD ["./app"]
