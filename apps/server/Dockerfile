@@ -16,7 +16,7 @@ RUN rm -rf /app/packages/integrations/vercel
 RUN bun install --ignore-scripts
 
 # Compile the TypeScript application
-RUN bun build --compile --sourcemap src/index.ts --outfile=app
+RUN bun build --compile --sourcemap apps/server --outfile=app
 
 EXPOSE 3000
 
