@@ -18,8 +18,9 @@ import type { Interval, Period, Quantile } from "@/lib/monitor/utils";
 import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
 import { Chart } from "./chart";
-import { RegionTable } from "./region-table";
 import { groupDataByTimestamp } from "./utils";
+import { DataTable } from "@/components/data-table/single-region/data-table";
+import { columns } from "@/components/data-table/single-region/columns";
 
 export function CombinedChartWrapper({
   data,
@@ -44,14 +45,26 @@ export function CombinedChartWrapper({
 }) {
   const chartData = useMemo(
     () => groupDataByTimestamp(data, period, quantile),
-    [data, period, quantile],
+    [data, period, quantile]
   );
 
   const [preferredSettings, setPreferredSettings] = usePreferredSettings(
-    defaultPreferredSettings,
+    defaultPreferredSettings
   );
 
   const combinedRegions = preferredSettings?.combinedRegions ?? false;
+
+  const tableData = useMemo(
+    () =>
+      regions
+        .map((region) => ({
+          region,
+          data: chartData.data,
+          metrics: metricsByRegion.find((metrics) => metrics.region === region),
+        }))
+        .filter((row) => !!row.metrics),
+    [regions, chartData, metricsByRegion]
+  );
 
   return (
     <>
@@ -82,15 +95,11 @@ export function CombinedChartWrapper({
           <IntervalPreset interval={interval} />
         </div>
       </div>
-      <div className="grid gap-3">
+      <div>
         {combinedRegions ? (
           <Chart data={chartData.data} regions={regions} />
         ) : (
-          <RegionTable
-            metricsByRegion={metricsByRegion}
-            regions={regions}
-            data={chartData}
-          />
+          <DataTable columns={columns} data={tableData} />
         )}
       </div>
     </>
