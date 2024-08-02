@@ -95,7 +95,7 @@ export default function ChangelogPage({
       <Shell className="flex flex-col gap-8 sm:py-8 md:gap-12 md:py-12">
         <ChangelogCard post={post} />
         <Separator className="mx-auto max-w-prose" />
-        <Pagination {...{ next, prev }} />
+        <Pagination {...{ prev, next }} />
       </Shell>
     </>
   );

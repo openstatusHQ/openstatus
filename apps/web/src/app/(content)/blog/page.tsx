@@ -1,10 +1,9 @@
+
 import { allPosts } from "contentlayer/generated";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-
-import { Button } from "@openstatus/ui/src/components/button";
-
+import { Button } from "@openstatus/ui";
 import {
   defaultMetadata,
   ogMetadata,
@@ -12,6 +11,8 @@ import {
 } from "@/app/shared-metadata";
 import { Timeline } from "@/components/content/timeline";
 import { Shell } from "@/components/dashboard/shell";
+import { ListPagination } from "../_components/list-pagination";
+import { z } from "zod";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -26,10 +27,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Post() {
-  const posts = allPosts.sort(
+const SearchParamsSchema = z.object({
+  page: z.string().optional().transform((val) => parseInt(val || "1", 10)),
+});
+
+export default function Post({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined }; }) {
+  const search = SearchParamsSchema.safeParse(searchParams);
+
+  const page = search.data?.page
+  const currentPage = !page ? 1 : page
+  const itemsPerPage = 10;
+
+  const sortedPosts = allPosts.sort(
     (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
+      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+  );
+
+  const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
+  const paginatedPosts = sortedPosts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
   );
 
   return (
@@ -46,7 +63,7 @@ export default async function Post() {
           </Button>
         }
       >
-        {posts.map((post) => (
+        {paginatedPosts.map((post) => (
           <Timeline.Article
             key={post.slug}
             publishedAt={post.publishedAt}
@@ -64,6 +81,9 @@ export default async function Post() {
             </div>
           </Timeline.Article>
         ))}
+        {currentPage && totalPages &&
+          <ListPagination current={currentPage} total={totalPages} />
+        }
       </Timeline>
     </Shell>
   );
