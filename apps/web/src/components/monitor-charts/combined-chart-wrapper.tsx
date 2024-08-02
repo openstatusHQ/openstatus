@@ -11,6 +11,8 @@ import type {
 } from "@openstatus/tinybird";
 import { Toggle } from "@openstatus/ui";
 
+import { columns } from "@/components/data-table/single-region/columns";
+import { DataTable } from "@/components/data-table/single-region/data-table";
 import { IntervalPreset } from "@/components/monitor-dashboard/interval-preset";
 import { QuantilePreset } from "@/components/monitor-dashboard/quantile-preset";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
@@ -18,7 +20,6 @@ import type { Interval, Period, Quantile } from "@/lib/monitor/utils";
 import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
 import { Chart } from "./chart";
-import { RegionTable } from "./region-table";
 import { groupDataByTimestamp } from "./utils";
 
 export function CombinedChartWrapper({
@@ -53,6 +54,18 @@ export function CombinedChartWrapper({
 
   const combinedRegions = preferredSettings?.combinedRegions ?? false;
 
+  const tableData = useMemo(
+    () =>
+      regions
+        .map((region) => ({
+          region,
+          data: chartData.data,
+          metrics: metricsByRegion.find((metrics) => metrics.region === region),
+        }))
+        .filter((row) => !!row.metrics),
+    [regions, chartData, metricsByRegion],
+  );
+
   return (
     <>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -82,15 +95,11 @@ export function CombinedChartWrapper({
           <IntervalPreset interval={interval} />
         </div>
       </div>
-      <div className="grid gap-3">
+      <div>
         {combinedRegions ? (
           <Chart data={chartData.data} regions={regions} />
         ) : (
-          <RegionTable
-            metricsByRegion={metricsByRegion}
-            regions={regions}
-            data={chartData}
-          />
+          <DataTable columns={columns} data={tableData} />
         )}
       </div>
     </>
