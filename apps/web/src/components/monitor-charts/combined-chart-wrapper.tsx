@@ -11,6 +11,8 @@ import type {
 } from "@openstatus/tinybird";
 import { Toggle } from "@openstatus/ui";
 
+import { columns } from "@/components/data-table/single-region/columns";
+import { DataTable } from "@/components/data-table/single-region/data-table";
 import { IntervalPreset } from "@/components/monitor-dashboard/interval-preset";
 import { QuantilePreset } from "@/components/monitor-dashboard/quantile-preset";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
@@ -19,8 +21,6 @@ import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
 import { Chart } from "./chart";
 import { groupDataByTimestamp } from "./utils";
-import { DataTable } from "@/components/data-table/single-region/data-table";
-import { columns } from "@/components/data-table/single-region/columns";
 
 export function CombinedChartWrapper({
   data,
@@ -45,11 +45,11 @@ export function CombinedChartWrapper({
 }) {
   const chartData = useMemo(
     () => groupDataByTimestamp(data, period, quantile),
-    [data, period, quantile]
+    [data, period, quantile],
   );
 
   const [preferredSettings, setPreferredSettings] = usePreferredSettings(
-    defaultPreferredSettings
+    defaultPreferredSettings,
   );
 
   const combinedRegions = preferredSettings?.combinedRegions ?? false;
@@ -63,7 +63,7 @@ export function CombinedChartWrapper({
           metrics: metricsByRegion.find((metrics) => metrics.region === region),
         }))
         .filter((row) => !!row.metrics),
-    [regions, chartData, metricsByRegion]
+    [regions, chartData, metricsByRegion],
   );
 
   return (

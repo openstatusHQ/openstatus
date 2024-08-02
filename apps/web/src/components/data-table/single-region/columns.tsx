@@ -1,10 +1,10 @@
 "use client";
 
-import type { ColumnDef } from "@tanstack/react-table";
-import type { Region, ResponseTimeMetricsByRegion } from "@openstatus/tinybird";
-import { flyRegionsDict } from "@openstatus/utils";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
+import type { Region, ResponseTimeMetricsByRegion } from "@openstatus/tinybird";
+import { flyRegionsDict } from "@openstatus/utils";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
 export interface RegionWithMetrics {
