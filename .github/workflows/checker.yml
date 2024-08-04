@@ -14,12 +14,51 @@ jobs:
   ci:
     name: Continuous Integration
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    services:
+      sqld:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        ports:
+          - 8080:8080
+
+    env:
+      DATABASE_URL: http://127.0.0.1:8080
+      DATABASE_AUTH_TOKEN: "any-token"
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.4
+
+      - name: Set up bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run database migrations
+        run: pnpm run migrate
+        working-directory: ./packages/db
+
+      - name: Build Docker image
+        run: docker build -t your-image-name --build-arg DATABASE_URL=${{ env.DATABASE_URL }} --build-arg DATABASE_AUTH_TOKEN=${{ env.DATABASE_AUTH_TOKEN }} .
+
+      - name: Run Go setup
+        uses: actions/setup-go@v5
         with:
           go-version: '>=1.22.0'
-      - name: Run test
+
+      - name: Run Go tests
         run: go test -timeout 30s -race -count=1 ./...
         working-directory: apps/checker

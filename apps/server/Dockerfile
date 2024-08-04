@@ -15,6 +15,12 @@ RUN rm -rf /app/packages/integrations/vercel
 #  Temp solution for bun
 RUN bun install --ignore-scripts
 
+# Run Database migrations
+WORKDIR /app/packages/db
+ENV DATABASE_URL=$DATABASE_URL
+ENV DATABASE_AUTH_TOKEN=$DATABASE_AUTH_TOKEN
+RUN bun run migrate
+
 EXPOSE 3000
 
 WORKDIR /app/apps/server
