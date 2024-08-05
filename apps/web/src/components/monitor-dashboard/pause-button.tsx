@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 
 import type { Monitor } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
@@ -70,19 +70,20 @@ export default async function MonitorPage({
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
-      const metrics = await tb.endpointMetrics("1d")(
-        {
-          monitorId: String(monitor.id),
-        },
-        { cache: "no-store", revalidate: 0 },
-      );
-
-      const data = await tb.endpointStatusPeriod("7d")(
-        {
-          monitorId: String(monitor.id),
-        },
-        { cache: "no-store", revalidate: 0 },
-      );
+      const [metrics, data] = await Promise.all([
+        tb.endpointMetrics("1d")(
+          {
+            monitorId: String(monitor.id),
+          },
+          { cache: "no-store", revalidate: 0 },
+        ),
+        tb.endpointStatusPeriod("7d")(
+          {
+            monitorId: String(monitor.id),
+          },
+          { cache: "no-store", revalidate: 0 },
+        ),
+      ]);
 
       const [current] = metrics?.sort((a, b) =>
         (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,

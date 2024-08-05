@@ -4,12 +4,12 @@ import { MessageCircle } from "lucide-react";
 import { useState } from "react";
 
 import {
-  Button,
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/popover";
 
+import { Button } from "@openstatus/ui/src/components/button";
 import { useSession } from "next-auth/react";
 import { ContactForm } from "./contact-form";
 

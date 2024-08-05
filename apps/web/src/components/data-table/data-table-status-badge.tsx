@@ -1,5 +1,5 @@
 import type { Ping } from "@openstatus/tinybird";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 

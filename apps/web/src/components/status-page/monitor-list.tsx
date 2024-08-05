@@ -20,7 +20,6 @@ export const MonitorList = ({
   incidents: Incident[];
   maintenances: Maintenance[];
 }) => {
-  console.log({ maintenances });
   return (
     <div className="grid gap-4">
       {monitors.map((monitor, _index) => {

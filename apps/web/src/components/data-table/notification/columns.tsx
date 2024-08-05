@@ -3,7 +3,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
-import { Badge } from "@openstatus/ui";
+import { Badge } from "@openstatus/ui/src/components/badge";
 
 import Link from "next/link";
 import { z } from "zod";

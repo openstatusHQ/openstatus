@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
+import { Button } from "@openstatus/ui/src/components/button";
 import {
-  Button,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 import { Icons } from "@/components/icons";
 import { copyToClipboard } from "@/lib/utils";

@@ -11,7 +11,7 @@ export default function AppearancePage() {
   const { setTheme, theme } = useTheme();
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
       <button type="button" onClick={() => setTheme("light")}>
         <LightModeCard active={theme === "light"} />
         <span className="mt-2 font-light text-muted-foreground text-sm">

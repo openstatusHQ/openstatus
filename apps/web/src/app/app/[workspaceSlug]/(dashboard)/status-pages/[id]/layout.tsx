@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 
 import { getBaseUrl } from "@/app/status-page/[domain]/utils";
 import { Header } from "@/components/dashboard/header";

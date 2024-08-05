@@ -7,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
@@ -23,13 +23,15 @@ export interface RegionTableProps {
   caption?: string;
 }
 
+/**
+ * @deprecated use the /region/data-table.tsx component instead, this is only used for the content blog posts
+ */
 export function RegionTable({
   regions,
   data,
   metricsByRegion,
   caption = "A list of all the selected regions.",
 }: RegionTableProps) {
-  // console.log(JSON.stringify({ regions, data, metricsByRegion }, null, 2));
   return (
     <Table>
       <TableCaption>{caption}</TableCaption>
@@ -81,12 +83,6 @@ export function RegionTable({
             );
           })}
       </TableBody>
-      {/* <TableFooter>
-        <TableRow>
-          <TableCell colSpan={4}>Total</TableCell>
-          <TableCell className="text-right">0</TableCell>
-        </TableRow>
-      </TableFooter> */}
     </Table>
   );
 }

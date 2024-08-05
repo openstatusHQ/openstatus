@@ -5,7 +5,7 @@ import * as z from "zod";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Separator } from "@openstatus/ui";
+import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -81,16 +81,16 @@ export default async function Page({
   const isQuantileDisabled = intervalMinutes <= periodicityMinutes;
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
-  const metrics = await tb.endpointMetrics(period)({ monitorId: id });
-
-  const data = await tb.endpointChart(period)({
-    monitorId: id,
-    interval: minutes,
-  });
-
-  const metricsByRegion = await tb.endpointMetricsByRegion(period)({
-    monitorId: id,
-  });
+  const [metrics, data, metricsByRegion] = await Promise.all([
+    tb.endpointMetrics(period)({ monitorId: id }),
+    tb.endpointChart(period)({
+      monitorId: id,
+      interval: minutes,
+    }),
+    tb.endpointMetricsByRegion(period)({
+      monitorId: id,
+    }),
+  ]);
 
   if (!data || !metrics || !metricsByRegion) return null;
 

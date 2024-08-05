@@ -41,7 +41,7 @@ export function SectionConnect({ form, monitors }: Props) {
                   will be displayed on the status page they are attached to.
                 </FormDescription>
               </div>
-              <div className="grid grid-cols-1 grid-rows-1 gap-6 md:grid-cols-3 sm:grid-cols-2">
+              <div className="grid grid-cols-1 grid-rows-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
                 {monitors?.map((item) => (
                   <FormField
                     key={item.id}

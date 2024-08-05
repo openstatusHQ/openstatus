@@ -11,7 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/table";
 
 export function ResponseAssertion({ assertions }: { assertions: Assertion[] }) {
   return (

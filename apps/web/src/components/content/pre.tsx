@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@openstatus/ui";
+import { Button } from "@openstatus/ui/src/components/button";
 import { Clipboard, ClipboardCopy } from "lucide-react";
 import React from "react";
 export interface PreProps extends React.HTMLAttributes<HTMLPreElement> {}

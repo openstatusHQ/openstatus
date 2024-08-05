@@ -1,11 +1,11 @@
 import type { MonitorTag } from "@openstatus/db/src/schema";
+import { Badge } from "@openstatus/ui/src/components/badge";
 import {
-  Badge,
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@openstatus/ui";
+} from "@openstatus/ui/src/components/tooltip";
 
 import { TagBadge } from "./tag-badge";
 
