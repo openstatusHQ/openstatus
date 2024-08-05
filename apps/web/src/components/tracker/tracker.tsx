@@ -143,7 +143,7 @@ export const Bar = ({
       prev +
       Math.abs(
         (curr.resolvedAt?.getTime() || new Date().getTime()) -
-          curr.startedAt?.getTime()
+          curr.startedAt?.getTime(),
       )
     );
   }, 0);
@@ -175,7 +175,7 @@ export const Bar = ({
               <div
                 className={cn(
                   rootClassName,
-                  "h-auto w-1 flex-none rounded-full"
+                  "h-auto w-1 flex-none rounded-full",
                 )}
               />
               <div className="grid flex-1 gap-1">
@@ -272,7 +272,7 @@ export function DowntimeText({
       Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false }
+        { format: ["days", "hours", "minutes", "seconds"], zero: false },
       )}
     </p>
   );
