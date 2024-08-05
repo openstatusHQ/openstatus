@@ -45,6 +45,10 @@ const tracker = cva("h-10 rounded-full flex-1", {
       false: "",
       true: classNames.degraded,
     },
+    incident: {
+      // only used to highlight incident that are 'light' (less than 10 minutes)
+      light: classNames.degraded,
+    },
   },
   defaultVariants: {
     variant: "empty",
@@ -133,9 +137,23 @@ export const Bar = ({
 }: BarProps) => {
   const [open, setOpen] = React.useState(false);
 
+  // total incident time in ms
+  const incidentLength = incidents.reduce((prev, curr) => {
+    return (
+      prev +
+      Math.abs(
+        (curr.resolvedAt?.getTime() || new Date().getTime()) -
+          curr.startedAt?.getTime()
+      )
+    );
+  }, 0);
+
+  const isLightIncident = incidentLength > 0 && incidentLength < 600_000; // 10 minutes in ms
+
   const rootClassName = tracker({
     report: statusReports.length > 0,
     variant: blacklist ? "blacklist" : variant,
+    incident: isLightIncident ? "light" : undefined,
   });
 
   return (
@@ -157,7 +175,7 @@ export const Bar = ({
               <div
                 className={cn(
                   rootClassName,
-                  "h-auto w-1 flex-none rounded-full",
+                  "h-auto w-1 flex-none rounded-full"
                 )}
               />
               <div className="grid flex-1 gap-1">
@@ -254,7 +272,7 @@ export function DowntimeText({
       Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false },
+        { format: ["days", "hours", "minutes", "seconds"], zero: false }
       )}
     </p>
   );
