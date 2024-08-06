@@ -39,6 +39,7 @@ export const statusDetails: Record<Status, StatusDetails> = {
   },
 };
 
+// TODO: include more variants especially for the '< 10 min' incidents e.g.
 // REMINDER: add `@openstatus/tracker/src/**/*.ts into tailwindcss content prop */
 export const classNames: Record<StatusVariant, string> = {
   up: "bg-status-operational/90 data-[state=open]:bg-status-operational border-status-operational",
