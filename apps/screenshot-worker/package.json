@@ -10,7 +10,7 @@
     "@libsql/client": "0.6.2",
     "@openstatus/db": "workspace:*",
     "drizzle-orm": "0.32.1",
-    "hono": "4.2.2",
+    "hono": "4.5.3",
     "zod": "3.23.8"
   },
   "devDependencies": {
