@@ -5,6 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui";
+import { nanoid } from "nanoid";
 
 export function DataTableBadges({ names }: { names: string[] }) {
   const [first, second, ...rest] = names;
@@ -26,9 +27,8 @@ export function DataTableBadges({ names }: { names: string[] }) {
               </Badge>
             </TooltipTrigger>
             <TooltipContent side="top" className="flex gap-2">
-              {rest.map((name, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                <Badge key={i} variant="outline">
+              {rest.map((name) => (
+                <Badge key={`${name}-${nanoid(6)}`} variant="outline">
                   {name}
                 </Badge>
               ))}

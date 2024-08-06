@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { Region } from "@openstatus/tinybird";
 
 import { cn } from "@/lib/utils";
+import { nanoid } from "nanoid";
 import { dataFormatter, regionFormatter } from "./utils";
 
 interface ChartProps {
@@ -66,14 +67,13 @@ const customTooltip = ({
         </p>
         {payload
           .filter((category) => category.type !== undefined) // tremor adds additional data to the payload, we don't want that
-          .map((category, idx) => {
+          .map((category) => {
             const isActive = value
               ? value.categoryClicked === category.dataKey
               : true;
             return (
               <div
-                // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                key={idx}
+                key={`custom-tooltip-${nanoid(6)}`}
                 className={cn("flex flex-1 gap-2", !isActive && "opacity-60")}
               >
                 <div

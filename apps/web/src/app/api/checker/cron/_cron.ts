@@ -32,9 +32,8 @@ export const isAuthorizedDomain = (url: string) => {
 
 export const cron = async ({
   periodicity,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  req,
-}: z.infer<typeof periodicityAvailable> & { req: NextRequest }) => {
+  // req, // Commented out as not used to avoid biome-ignore
+}: z.infer<typeof periodicityAvailable> & { req?: NextRequest }) => {
   const client = new CloudTasksClient({
     projectId: env.GCP_PROJECT_ID,
     credentials: {

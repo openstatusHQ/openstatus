@@ -28,5 +28,9 @@
   },
   "peerDependencies": {
     "react": "^18.0.0"
+  },
+  "dependencies": {
+    "clsx": "2.0.0",
+    "tailwind-merge": "1.14.0"
   }
 }

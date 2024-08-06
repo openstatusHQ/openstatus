@@ -22,6 +22,7 @@ import { pricingTableConfig } from "../../../config/pricing-table";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { cn } from "@/lib/utils";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import { nanoid } from "nanoid";
 
 export function PricingTable({
   plans = workspacePlans,
@@ -156,8 +157,7 @@ export function PricingTable({
 
                         return (
                           <TableCell
-                            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                            key={key + value + _i}
+                            key={`${key} ${value} ${nanoid(6)}`}
                             className={cn(
                               "p-3",
                               plan.key === "team" && "bg-muted/30",

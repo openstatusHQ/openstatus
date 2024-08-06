@@ -1,8 +1,8 @@
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import type { Options as RehypeAutolinkHeadingsOptions } from "rehype-autolink-headings";
 import type * as unified from "unified";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-const autolinkHeadings: unified.Pluggable<any[]> = [
+const autolinkHeadings: unified.Pluggable<RehypeAutolinkHeadingsOptions[]> = [
   rehypeAutolinkHeadings,
   {
     behavior: "append",

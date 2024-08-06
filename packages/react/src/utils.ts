@@ -1,3 +1,6 @@
+import type { ClassValue } from "clsx";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import type { Status } from "./widget";
 
 export const statusDictionary: Record<
@@ -33,3 +36,7 @@ export const statusDictionary: Record<
     color: "bg-blue-500",
   },
 } as const;
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}

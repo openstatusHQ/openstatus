@@ -39,9 +39,8 @@ export const sendAlert = async ({
   });
 
   try {
-    for await (const integrationKey of notificationData.integration_keys) {
-      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-      const { integration_key, type } = integrationKey;
+    for await (const _integrationKey of notificationData.integration_keys) {
+      // const { integration_key, type } = integrationKey; // Commented out as not used to avoid biome-ignore
 
       await fetch("https://events.pagerduty.com/v2/enqueue", {
         method: "POST",
@@ -86,9 +85,8 @@ export const sendDegraded = async ({
   });
 
   try {
-    for await (const integrationKey of notificationData.integration_keys) {
-      // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-      const { integration_key, type } = integrationKey;
+    for await (const _integrationKey of notificationData.integration_keys) {
+      //  const { integration_key, type } = integrationKey; // Commented out as not used to avoid biome-ignore
 
       await fetch("https://events.pagerduty.com/v2/enqueue", {
         method: "POST",
@@ -104,10 +102,7 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
+  // statusCode, message, // Commented out as not used to avoid biome-ignore
   incidentId,
 }: {
   monitor: Monitor;

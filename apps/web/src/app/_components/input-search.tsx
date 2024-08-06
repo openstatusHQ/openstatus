@@ -52,12 +52,13 @@ export function InputSearch({
     () =>
       events.reduce(
         (prev, curr) => {
-          return {
-            // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-            ...prev,
-            status: [...new Set([curr.statusCode, ...(prev.status || [])])],
-            region: [...new Set([curr.region, ...(prev.region || [])])],
-          };
+          if (!prev.status.includes(curr.statusCode)) {
+            prev.status.push(curr.statusCode);
+          }
+          if (!prev.region.includes(curr.region)) {
+            prev.region.push(curr.region);
+          }
+          return prev;
         },
         // defaultState
         { limit: [10, 25, 50], status: [], region: [] } as {

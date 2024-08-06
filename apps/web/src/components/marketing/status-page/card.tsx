@@ -1,4 +1,5 @@
 import { cardConfig } from "@/config/features";
+import { nanoid } from "nanoid";
 import {
   CardContainer,
   CardContent,
@@ -21,9 +22,8 @@ export function StatusPageCard() {
       <CardContent dir="rows">
         <TrackerExample />
         <CardFeatureContainer dir="cols">
-          {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <CardFeature key={i} {...feature} />
+          {features?.map((feature) => (
+            <CardFeature key={`status-page-card-${nanoid(6)}`} {...feature} />
           ))}
         </CardFeatureContainer>
       </CardContent>

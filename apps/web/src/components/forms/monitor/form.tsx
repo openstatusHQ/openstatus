@@ -87,14 +87,15 @@ export function MonitorForm({
       pages: defaultValues?.pages ?? [],
       tags: defaultValues?.tags ?? [],
       public: defaultValues?.public ?? false,
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      statusAssertions: _assertions.filter((a) => a.type === "status") as any, // TS considers a.type === "header"
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
+      statusAssertions: _assertions.filter(
+        (a): a is assertions.StatusAssertionType => a.type === "status",
+      ), // TS considers a.type === "header"
+      headerAssertions: _assertions.filter(
+        (a): a is assertions.AssertionType => a.type === "header",
+      ), // TS considers a.type === "status"
       textBodyAssertions: _assertions.filter(
-        (a) => a.type === "textBody",
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      ) as any, // TS considers a.type === "textBody"
+        (a): a is assertions.TextBodyAssertionType => a.type === "textBody",
+      ), // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
     },
@@ -211,8 +212,9 @@ export function MonitorForm({
       const data = (await res.json()) as RegionChecker;
 
       const _headers: Record<string, string> = {};
-      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-      res.headers.forEach((value, key) => (_headers[key] = value));
+      res.headers.forEach((value, key) => {
+        _headers[key] = value;
+      });
 
       if (as.length > 0) {
         for (const a of as) {

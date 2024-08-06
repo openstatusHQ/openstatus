@@ -2,27 +2,35 @@
 
 import * as React from "react";
 
+interface ScrollPosition {
+  x: number | null;
+  y: number | null;
+}
+
 export function useWindowScroll() {
-  const [state, setState] = React.useState<{
-    x: number | null;
-    y: number | null;
-  }>({
+  const [state, setState] = React.useState<ScrollPosition>({
     x: null,
     y: null,
   });
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  const scrollTo = React.useCallback((...args: any[]) => {
-    if (typeof args[0] === "object") {
-      window.scrollTo(args[0]);
-    } else if (typeof args[0] === "number" && typeof args[1] === "number") {
-      window.scrollTo(args[0], args[1]);
-    } else {
-      throw new Error(
-        "Invalid arguments passed to scrollTo. See here for more info. https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo",
-      );
-    }
-  }, []);
+  const scrollTo = React.useCallback(
+    (...args: [number, number] | [ScrollToOptions]) => {
+      if (args.length === 1 && typeof args[0] === "object") {
+        window.scrollTo(args[0] as ScrollToOptions);
+      } else if (
+        args.length === 2 &&
+        typeof args[0] === "number" &&
+        typeof args[1] === "number"
+      ) {
+        window.scrollTo(args[0], args[1]);
+      } else {
+        throw new Error(
+          "Invalid arguments passed to scrollTo. See here for more info. https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo",
+        );
+      }
+    },
+    [],
+  );
 
   React.useLayoutEffect(() => {
     const handleScroll = () => {

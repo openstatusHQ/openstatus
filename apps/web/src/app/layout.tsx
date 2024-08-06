@@ -38,14 +38,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const bodyClassName = `${inter.className} ${calSans.variable}`;
   return (
     <html lang="en">
-      <body
-        className={`${
-          inter.className
-          // biome-ignore lint/nursery/useSortedClasses: <explanation>
-        } ${calSans.variable}`}
-      >
+      <body className={bodyClassName}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
           <Toaster richColors />

@@ -65,43 +65,44 @@ export function Breadcrumbs() {
 }
 
 // This is a custom hook that returns the label of the current id
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-function useIdLabel() {
-  const params = useParams();
-  const selectedSegment = useSelectedLayoutSegment();
-  const selectedSegments = useSelectedLayoutSegments();
-  const [label, setLabel] = useState<string>();
 
-  // remove route groups like '(overview)' from the segments
-  const segmentsWithoutRouteGroup = selectedSegments.filter(
-    (segment) => !segment.startsWith("("),
-  );
+// The following function is commented out because it is not currently used in the codebase.
+// function useIdLabel() {
+//   const params = useParams();
+//   const selectedSegment = useSelectedLayoutSegment();
+//   const selectedSegments = useSelectedLayoutSegments();
+//   const [label, setLabel] = useState<string>();
 
-  const isRoot = segmentsWithoutRouteGroup.length <= 1;
+//   // remove route groups like '(overview)' from the segments
+//   const segmentsWithoutRouteGroup = selectedSegments.filter(
+//     (segment) => !segment.startsWith("("),
+//   );
 
-  useEffect(() => {
-    async function getInfos() {
-      const { id } = params;
-      if (!isRoot && id) {
-        if (selectedSegment === "monitors") {
-          const monitor = await api.monitor.getMonitorById.query({
-            id: Number(id),
-          });
-          if (monitor) setLabel(monitor.name);
-        }
-        if (selectedSegment === "status-pages") {
-          const statusPage = await api.page.getPageById.query({
-            id: Number(id),
-          });
-          if (statusPage) setLabel(statusPage.title);
-        }
-      }
-      if (isRoot && label) {
-        setLabel(undefined);
-      }
-    }
-    getInfos();
-  }, [params, selectedSegment, isRoot, label]);
+//   const isRoot = segmentsWithoutRouteGroup.length <= 1;
 
-  return label;
-}
+//   useEffect(() => {
+//     async function getInfos() {
+//       const { id } = params;
+//       if (!isRoot && id) {
+//         if (selectedSegment === "monitors") {
+//           const monitor = await api.monitor.getMonitorById.query({
+//             id: Number(id),
+//           });
+//           if (monitor) setLabel(monitor.name);
+//         }
+//         if (selectedSegment === "status-pages") {
+//           const statusPage = await api.page.getPageById.query({
+//             id: Number(id),
+//           });
+//           if (statusPage) setLabel(statusPage.title);
+//         }
+//       }
+//       if (isRoot && label) {
+//         setLabel(undefined);
+//       }
+//     }
+//     getInfos();
+//   }, [params, selectedSegment, isRoot, label]);
+
+//   return label;
+// }

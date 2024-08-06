@@ -10,20 +10,19 @@ export function parseCacheControlHeader(header: string): CacheControlInfo[] {
     .split(",")
     .map((directive) => directive.trim());
 
-  const cacheControlInfo: CacheControlInfo[] = [];
+  const cacheControlInfo: CacheControlInfo[] = cacheControlDirectives.map(
+    (directive) => {
+      const parts = directive.split("=");
 
-  // biome-ignore lint/complexity/noForEach: <explanation>
-  cacheControlDirectives.forEach((directive) => {
-    const parts = directive.split("=");
+      const name = parts[0].trim();
+      const value = !Number.isNaN(Number(parts[1]))
+        ? Number(parts[1])
+        : undefined;
+      const description = getDirectiveDescription(name);
 
-    const name = parts[0].trim();
-    const value = !Number.isNaN(Number(parts[1]))
-      ? Number(parts[1])
-      : undefined;
-    const description = getDirectiveDescription(name);
-
-    cacheControlInfo.push({ description, name, value, directive });
-  });
+      return { description, name, value, directive };
+    },
+  );
 
   return cacheControlInfo;
 }
