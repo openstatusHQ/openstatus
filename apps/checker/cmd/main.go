@@ -56,14 +56,13 @@ func main() {
 	}
 
 	router := gin.New()
-	router.POST("/checker", h.CheckerHandler)
-	router.GET("/checker/tcp",h.TCPHandler)
+	router.POST("/checker", h.HTTPCheckerHandler)
+	router.GET("/checker/tcp", h.TCPHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})
 	})
-
 
 	httpServer := &http.Server{
 		Addr:    fmt.Sprintf("0.0.0.0:%s", env("PORT", "8080")),

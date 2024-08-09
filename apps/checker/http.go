@@ -62,7 +62,7 @@ type Response struct {
 	Region      string            `json:"region"`
 }
 
-func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
+func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 	region := os.Getenv("FLY_REGION")
 	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))

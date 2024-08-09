@@ -20,8 +20,7 @@ func (s statusCode) IsSuccessful() bool {
 	return s >= 200 && s < 300
 }
 
-
-func (h Handler) CheckerHandler(c *gin.Context) {
+func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "ping_response__v8"
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
@@ -39,7 +38,7 @@ func (h Handler) CheckerHandler(c *gin.Context) {
 		}
 	}
 
-	var req request.CheckerRequest
+	var req request.HttpCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
@@ -62,7 +61,7 @@ func (h Handler) CheckerHandler(c *gin.Context) {
 	var called int
 	op := func() error {
 		called++
-		res, err := checker.Ping(ctx, requestClient, req)
+		res, err := checker.Http(ctx, requestClient, req)
 		if err != nil {
 			return fmt.Errorf("unable to ping: %w", err)
 		}

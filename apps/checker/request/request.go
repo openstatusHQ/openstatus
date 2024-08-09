@@ -45,7 +45,7 @@ type Assertion struct {
 	RawTarget     json.RawMessage `json:"target"`
 }
 
-type CheckerRequest struct {
+type HttpCheckerRequest struct {
 	WorkspaceID   string `json:"workspaceId"`
 	URL           string `json:"url"`
 	MonitorID     string `json:"monitorId"`
@@ -59,6 +59,16 @@ type CheckerRequest struct {
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
 	Status        string            `json:"status"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+}
+
+type TCPCheckerRequest struct {
+	WorkspaceID   string            `json:"workspaceId"`
+	URL           string            `json:"url"`
+	MonitorID     string            `json:"monitorId"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 }
 

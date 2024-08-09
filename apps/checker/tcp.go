@@ -7,21 +7,33 @@ import (
 	"time"
 )
 
-func PingTcp(timeout int, url string) (err error) {
+
+type TCPData struct {
+	WorkspaceID   string `json:"workspaceId"`
+	MonitorID     string `json:"monitorId"`
+	Timestamp     int64  `json:"timestamp"`
+}
+
+type TCPResponse struct {
+	TCPStart int64 `json:"tcpStart"`
+	TCPDone  int64 `json:"tcpDone"`
+}
+
+func PingTcp(timeout int, url string) ( TCPResponse, error) {
 	start := time.Now().UTC().UnixMilli()
 	conn, err := net.DialTimeout("tcp", url,
 		time.Duration(timeout)*time.Second)
 	if err != nil {
 		if e := err.(*net.OpError).Timeout(); e {
-			return fmt.Errorf("Timeout after %d ms", timeout*1000)
+			return TCPResponse{}, fmt.Errorf("Timeout after %d ms", timeout*1000)
 		}
 		if strings.Contains(err.Error(), "connection refused") {
-			return fmt.Errorf("Connection refused")
+			return TCPResponse{}, fmt.Errorf("Connection refused")
 		}
-		return fmt.Errorf("Dial Error: %v", err)
+		return TCPResponse{}, fmt.Errorf("Dial Error: %v", err)
 	}
 	stop := time.Now().UTC().UnixMilli()
 	defer conn.Close()
 	fmt.Println("Latency: ", stop-start, "ms")
-	return
+	return TCPResponse{TCPStart: start, TCPDone: stop},nil
 }
