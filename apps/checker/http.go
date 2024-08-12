@@ -62,6 +62,7 @@ type Response struct {
 	Region      string            `json:"region"`
 }
 
+// FIXME: This should only return the TCP Timing Data
 func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 	region := os.Getenv("FLY_REGION")
