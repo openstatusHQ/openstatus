@@ -11,8 +11,16 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func (h Handler) TCPHandler(c *gin.Context) {
+type TCPResponse struct {
+	WorkspaceID string                    `json:"workspaceId"`
+	MonitorID   string                    `json:"monitorId"`
+	Timestamp   int64                     `json:"timestamp"`
+	Timing      checker.TCPResponseTiming `json:"timing"`
+	Error       string                    `json:"error,omitempty"`
+	Region      string                    `json:"region"`
+}
 
+func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "tcp_response__v0"
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
@@ -35,11 +43,6 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
-	// res, err := checker.PingTcp(int(req.Timeout), req.URL)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
 
 	var called int
 	op := func() error {
@@ -49,7 +52,18 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			return fmt.Errorf("unable to check tcp", err)
 		}
 
-		if err := h.TbClient.SendEvent(ctx, res, dataSourceName); err != nil {
+		r := TCPResponse{
+			WorkspaceID: req.WorkspaceID,
+			Timestamp:   req.CronTimestamp,
+			Timing: checker.TCPResponseTiming{
+				TCPStart: res.TCPStart,
+				TCPDone:  res.TCPDone,
+			},
+			Region:    h.Region,
+			MonitorID: req.MonitorID,
+		}
+
+		if err := h.TbClient.SendEvent(ctx, r, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
@@ -57,7 +71,13 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		if err := h.TbClient.SendEvent(ctx, checker.TCPData{}, dataSourceName); err != nil {
+		if err := h.TbClient.SendEvent(ctx, TCPResponse{
+			WorkspaceID: req.WorkspaceID,
+			Timestamp:   req.CronTimestamp,
+			Error:       err.Error(),
+			Region:      h.Region,
+			MonitorID:   req.MonitorID,
+		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 

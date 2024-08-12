@@ -37,13 +37,13 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
-  jobType: monitorJobTypesSchema.default("other"),
+  jobType: monitorJobTypesSchema.default("http"),
   timeout: z.number().default(45),
   regions: regionsToArraySchema.default([]),
 }).extend({
