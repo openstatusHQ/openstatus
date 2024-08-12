@@ -57,8 +57,9 @@ func main() {
 
 	router := gin.New()
 	router.POST("/checker", h.HTTPCheckerHandler)
-	router.GET("/checker/tcp", h.TCPHandler)
+	router.POST("/checker/tcp", h.TCPHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
+	router.POST("/tcp/:region", h.TCPHandlerRegion)
 
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "pong", "fly_region": flyRegion})

@@ -63,12 +63,14 @@ type HttpCheckerRequest struct {
 }
 
 type TCPCheckerRequest struct {
+	RequestId     int64             `json:"requestId,omitempty"`
 	WorkspaceID   string            `json:"workspaceId"`
 	URL           string            `json:"url"`
 	MonitorID     string            `json:"monitorId"`
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Status        string            `json:"status"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 }
 
