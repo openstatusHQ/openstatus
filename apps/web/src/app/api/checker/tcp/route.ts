@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  MonitorFlyRegion,
+  type MonitorFlyRegion,
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
-import { checkRegion } from "@/components/ping-response-analysis/utils";
-import { payloadSchema } from "../schema";
 import { isAnInvalidTestUrl } from "../utils";
 import { tcpPayload, TCPResponse } from "./schema";
 
@@ -32,12 +30,8 @@ export async function POST(request: Request) {
     }
 
     const { url, region } = _valid.data;
-    // 🧑 for the smart one who want to create a loop hole
-    if (isAnInvalidTestUrl(url)) {
-      return NextResponse.json({ success: true }, { status: 200 });
-    }
 
-    const res = await checkRegion(url, region, { method, headers, body });
+    const res = await checkTCP(url, region);
 
     return NextResponse.json(res);
   } catch (e) {
@@ -45,8 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: false }, { status: 400 });
   }
 }
-
-export async function checkTCP(url: string, region: MonitorFlyRegion) {
+async function checkTCP(url: string, region: MonitorFlyRegion) {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/tcp/${region}`, {
     headers: {
@@ -68,7 +61,7 @@ export async function checkTCP(url: string, region: MonitorFlyRegion) {
   if (!data.success) {
     console.log(json);
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`
     );
     throw new Error(data.error.message);
   }
