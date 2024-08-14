@@ -25,12 +25,12 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
 	json.NewEncoder(payloadBuf).Encode(updateData)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
 	req.Header.Set("Authorization", basic)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: time.Second * 10}
-	if _, err = client.Do(req); err != nil {
+	if _, err := client.Do(req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
 	// Should we add a retry mechanism here?

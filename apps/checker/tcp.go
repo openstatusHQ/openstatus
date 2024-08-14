@@ -24,15 +24,14 @@ func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
 		time.Duration(timeout)*time.Second)
 	if err != nil {
 		if e := err.(*net.OpError).Timeout(); e {
-			return TCPResponseTiming{}, fmt.Errorf("Timeout after %d ms", timeout*1000)
+			return TCPResponseTiming{}, fmt.Errorf("timeout after %d ms", timeout*1000)
 		}
 		if strings.Contains(err.Error(), "connection refused") {
-			return TCPResponseTiming{}, fmt.Errorf("Connection refused")
+			return TCPResponseTiming{}, fmt.Errorf("connection refused")
 		}
-		return TCPResponseTiming{}, fmt.Errorf("Dial Error: %v", err)
+		return TCPResponseTiming{}, fmt.Errorf("dial error: %v", err)
 	}
 	stop := time.Now().UTC().UnixMilli()
 	defer conn.Close()
-	fmt.Println("Latency: ", stop-start, "ms")
 	return TCPResponseTiming{TCPStart: start, TCPDone: stop}, nil
 }

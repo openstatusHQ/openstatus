@@ -57,6 +57,7 @@ func main() {
 
 	router := gin.New()
 	router.POST("/checker", h.HTTPCheckerHandler)
+	router.POST("/checker/http", h.HTTPCheckerHandler)
 	router.POST("/checker/tcp", h.TCPHandler)
 	router.POST("/ping/:region", h.PingRegionHandler)
 	router.POST("/tcp/:region", h.TCPHandlerRegion)
