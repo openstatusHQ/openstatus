@@ -46,6 +46,9 @@ export const triggerNotifications = async ({
       console.log(`🤔 notification already sent for ${key}`);
       continue;
     }
+
+    await redis.expire(key, 60 * 60);
+
     console.log(
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
