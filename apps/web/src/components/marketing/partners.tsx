@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { Documenso } from "@/components/svg/documenso";
 import { Hanko } from "@/components/svg/hanko";
-import { Trigger } from "@/components/svg/trigger";
+import { Midday } from "@/components/svg/midday";
 
 export function Partners() {
   return (
@@ -35,12 +35,12 @@ export function Partners() {
         </div>
         <div className="flex items-center justify-center">
           <a
-            href="https://status.trigger.dev"
+            href="https://status.midday.ai"
             target="_blank"
             rel="noreferrer"
             className="group inline-flex items-center justify-center"
           >
-            <Trigger className="h-6 w-24 sm:h-8 sm:w-32" />
+            <Midday className="h-6 w-24 sm:h-8 sm:w-32" />
             <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
