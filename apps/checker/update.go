@@ -15,9 +15,9 @@ type UpdateData struct {
 	MonitorId     string `json:"monitorId"`
 	Status        string `json:"status"`
 	Message       string `json:"message,omitempty"`
-	StatusCode    int    `json:"statusCode,omitempty"`
 	Region        string `json:"region"`
 	CronTimestamp int64  `json:"cronTimestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) {
@@ -33,5 +33,6 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	if _, err := client.Do(req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
+	defer req.Body.Close()
 	// Should we add a retry mechanism here?
 }
