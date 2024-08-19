@@ -46,32 +46,32 @@ type Assertion struct {
 }
 
 type HttpCheckerRequest struct {
-	WorkspaceID   string `json:"workspaceId"`
-	URL           string `json:"url"`
-	MonitorID     string `json:"monitorId"`
-	Method        string `json:"method"`
-	CronTimestamp int64  `json:"cronTimestamp"`
-	Body          string `json:"body"`
-	Timeout       int64  `json:"timeout"`
-	DegradedAfter int64  `json:"degradedAfter,omitempty"`
-	Headers       []struct {
+	Headers []struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
-	Status        string            `json:"status"`
-	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
-}
-
-type TCPCheckerRequest struct {
-	RequestId     int64             `json:"requestId,omitempty"`
 	WorkspaceID   string            `json:"workspaceId"`
 	URL           string            `json:"url"`
 	MonitorID     string            `json:"monitorId"`
+	Method        string            `json:"method"`
+	Body          string            `json:"body"`
+	Status        string            `json:"status"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+}
+
+type TCPCheckerRequest struct {
 	Status        string            `json:"status"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URL           string            `json:"url"`
+	MonitorID     string            `json:"monitorId"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+	RequestId     int64             `json:"requestId,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
 }
 
 type TCPRequest struct {
@@ -83,10 +83,10 @@ type TCPRequest struct {
 }
 
 type PingRequest struct {
-	RequestId   int64             `json:"requestId"`
-	WorkspaceId int64             `json:"workspaceId"`
+	Headers     map[string]string `json:"headers"`
 	URL         string            `json:"url"`
 	Method      string            `json:"method"`
 	Body        string            `json:"body"`
-	Headers     map[string]string `json:"headers"`
+	RequestId   int64             `json:"requestId"`
+	WorkspaceId int64             `json:"workspaceId"`
 }

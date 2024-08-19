@@ -21,18 +21,18 @@ import (
 type PingData struct {
 	WorkspaceID   string `json:"workspaceId"`
 	MonitorID     string `json:"monitorId"`
-	Timestamp     int64  `json:"timestamp"`
-	StatusCode    int    `json:"statusCode,omitempty"`
-	Latency       int64  `json:"latency"`
-	CronTimestamp int64  `json:"cronTimestamp"`
 	URL           string `json:"url"`
 	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
 	Timing        string `json:"timing,omitempty"`
 	Headers       string `json:"headers,omitempty"`
-	Error         uint8  `json:"error"`
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
+	StatusCode    int    `json:"statusCode,omitempty"`
+	Latency       int64  `json:"latency"`
+	Timestamp     int64  `json:"timestamp"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Error         uint8  `json:"error"`
 }
 
 type Timing struct {
@@ -49,20 +49,20 @@ type Timing struct {
 }
 
 type Response struct {
+	Headers     map[string]string `json:"headers,omitempty"`
+	Body        string            `json:"body,omitempty"`
+	Error       string            `json:"error,omitempty"`
+	Region      string            `json:"region"`
+	Tags        []string          `json:"tags,omitempty"`
 	RequestId   int64             `json:"requestId,omitempty"`
 	WorkspaceId int64             `json:"workspaceId,omitempty"`
-	Status      int               `json:"status,omitempty"`
 	Latency     int64             `json:"latency"`
-	Body        string            `json:"body,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
 	Time        int64             `json:"time"`
+	Status      int               `json:"status,omitempty"`
 	Timing      Timing            `json:"timing"`
-	Error       string            `json:"error,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
-	Region      string            `json:"region"`
 }
 
-// FIXME: This should only return the TCP Timing Data
+// FIXME: This should only return the TCP Timing Data;
 func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 	region := os.Getenv("FLY_REGION")
@@ -233,7 +233,6 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 	}
 	defer res.Body.Close()
 	body, err := io.ReadAll(res.Body)
-
 	if err != nil {
 		return Response{
 			Latency: latency,

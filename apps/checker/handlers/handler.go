@@ -5,10 +5,10 @@ import (
 )
 
 type Handler struct {
+	TbClient      tinybird.Client
 	Secret        string
 	CloudProvider string
 	Region        string
-	TbClient      tinybird.Client
 }
 
 // Authorization could be handle by middleware

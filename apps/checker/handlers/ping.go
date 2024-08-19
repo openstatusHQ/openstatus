@@ -14,15 +14,15 @@ import (
 )
 
 type PingResponse struct {
-	RequestId   int64          `json:"requestId,omitempty"`
-	WorkspaceId int64          `json:"workspaceId,omitempty"`
-	Status      int            `json:"status,omitempty"`
-	Latency     int64          `json:"latency"`
 	Body        string         `json:"body,omitempty"`
 	Headers     string         `json:"headers,omitempty"`
-	Time        int64          `json:"time"`
-	Timing      checker.Timing `json:"timing"`
 	Region      string         `json:"region"`
+	RequestId   int64          `json:"requestId,omitempty"`
+	WorkspaceId int64          `json:"workspaceId,omitempty"`
+	Latency     int64          `json:"latency"`
+	Time        int64          `json:"time"`
+	Status      int            `json:"status,omitempty"`
+	Timing      checker.Timing `json:"timing"`
 }
 
 func (h Handler) PingRegionHandler(c *gin.Context) {
@@ -99,5 +99,6 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
+	return
 	c.JSON(http.StatusOK, res)
 }

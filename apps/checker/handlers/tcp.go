@@ -13,13 +13,13 @@ import (
 )
 
 type TCPResponse struct {
+	Error       string                    `json:"error,omitempty"`
+	Region      string                    `json:"region"`
 	RequestId   int64                     `json:"requestId,omitempty"`
 	WorkspaceID int64                     `json:"workspaceId"`
 	MonitorID   int64                     `json:"monitorId"`
 	Timestamp   int64                     `json:"timestamp"`
 	Timing      checker.TCPResponseTiming `json:"timing"`
-	Error       string                    `json:"error,omitempty"`
-	Region      string                    `json:"region"`
 }
 
 func (h Handler) TCPHandler(c *gin.Context) {
@@ -195,7 +195,6 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		}
 
 		if req.RequestId != 0 {
-
 			if err := h.TbClient.SendEvent(ctx, response, dataSourceName); err != nil {
 				log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 			}
@@ -214,7 +213,6 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
-
 	}
 	c.JSON(http.StatusOK, response)
 }
