@@ -59,8 +59,8 @@ checkerRoute.post("/updateStatus", async (c) => {
       and(
         eq(incidentTable.monitorId, Number(monitorId)),
         isNull(incidentTable.resolvedAt),
-        isNull(incidentTable.acknowledgedAt),
-      ),
+        isNull(incidentTable.acknowledgedAt)
+      )
     )
     .get();
 
@@ -87,15 +87,15 @@ checkerRoute.post("/updateStatus", async (c) => {
       // We add the new region to the set
       await redis.sadd(redisKey, region);
       // let's add an expire to the set
-      await redis.expire(redisKey, 60 * 60 * 24);
       // We get the number of regions affected
       const nbAffectedRegion = await redis.scard(redisKey);
+      await redis.expire(redisKey, 60 * 60 * 24);
 
       const monitor = selectMonitorSchema.parse(currentMonitor);
 
       const numberOfRegions = monitor.regions.length;
 
-      if (nbAffectedRegion > numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2) {
         await triggerNotifications({
           monitorId,
           statusCode,
@@ -126,9 +126,9 @@ checkerRoute.post("/updateStatus", async (c) => {
       // We add the new region to the set
       await redis.sadd(redisKey, region);
       // let's add an expire to the set
-      await redis.expire(redisKey, 60 * 60 * 24);
       // We get the number of regions affected
       const nbAffectedRegion = await redis.scard(redisKey);
+      await redis.expire(redisKey, 60 * 60 * 24);
 
       const currentMonitor = await db
         .select()
@@ -141,11 +141,11 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`,
+        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`
       );
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion > numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2) {
         // let's refetch the incident to avoid race condition
         const incident = await db
           .select()
@@ -155,8 +155,8 @@ checkerRoute.post("/updateStatus", async (c) => {
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
               isNull(incidentTable.acknowledgedAt),
-              eq(incidentTable.startedAt, new Date(cronTimestamp)),
-            ),
+              eq(incidentTable.startedAt, new Date(cronTimestamp))
+            )
           )
           .get();
 
@@ -218,9 +218,9 @@ checkerRoute.post("/updateStatus", async (c) => {
       //   // We add the new region to the set
       await redis.sadd(redisKey, region);
       //   // let's add an expire to the set
-      await redis.expire(redisKey, 60 * 60 * 24);
       //   // We get the number of regions affected
       const nbAffectedRegion = await redis.scard(redisKey);
+      await redis.expire(redisKey, 60 * 60 * 24);
 
       const currentMonitor = await db
         .select()
@@ -233,11 +233,11 @@ checkerRoute.post("/updateStatus", async (c) => {
       const numberOfRegions = monitor.regions.length;
 
       console.log(
-        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`,
+        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`
       );
       //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       //   // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion > numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2) {
         const incident = await db
           .select()
           .from(incidentTable)
@@ -245,8 +245,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt),
-            ),
+              isNull(incidentTable.acknowledgedAt)
+            )
           )
           .get();
         if (incident) {
@@ -259,6 +259,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .where(eq(incidentTable.id, incident.id))
             .run();
+
           await triggerNotifications({
             monitorId,
             statusCode,
