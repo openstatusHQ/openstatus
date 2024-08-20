@@ -15,9 +15,9 @@ type UpdateData struct {
 	MonitorId     string `json:"monitorId"`
 	Status        string `json:"status"`
 	Message       string `json:"message,omitempty"`
-	StatusCode    int    `json:"statusCode,omitempty"`
 	Region        string `json:"region"`
 	CronTimestamp int64  `json:"cronTimestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) {

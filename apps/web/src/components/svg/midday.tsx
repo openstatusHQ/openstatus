@@ -2,7 +2,12 @@ import type { SVGAttributes } from "react";
 
 export function Midday(props: SVGAttributes<SVGSVGElement>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 102 30"
+      fill="none"
+      {...props}
+    >
       <path
         fill="currentColor"
         fillRule="evenodd"

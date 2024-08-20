@@ -40,7 +40,7 @@ export function Partners() {
             rel="noreferrer"
             className="group inline-flex items-center justify-center"
           >
-            <Midday className="h-6 w-24 sm:h-8 sm:w-32" />
+            <Midday className="h-6 w-24 sm:h-8 sm:w-24" />
             <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
