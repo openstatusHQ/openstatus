@@ -26,15 +26,15 @@ type statusCode int
 
 // We should export it
 type PingResponse struct {
-	RequestId   int64          `json:"requestId,omitempty"`
-	WorkspaceId int64          `json:"workspaceId,omitempty"`
-	Status      int            `json:"status,omitempty"`
-	Latency     int64          `json:"latency"`
 	Body        string         `json:"body,omitempty"`
 	Headers     string         `json:"headers,omitempty"`
+	Region      string         `json:"region"`
+	RequestId   int64          `json:"requestId,omitempty"`
+	WorkspaceId int64          `json:"workspaceId,omitempty"`
+	Latency     int64          `json:"latency"`
 	Time        int64          `json:"time"`
 	Timing      checker.Timing `json:"timing"`
-	Region      string         `json:"region"`
+	Status      int            `json:"status,omitempty"`
 }
 
 func (s statusCode) IsSuccessful() bool {

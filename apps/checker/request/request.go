@@ -46,27 +46,27 @@ type Assertion struct {
 }
 
 type CheckerRequest struct {
-	WorkspaceID   string `json:"workspaceId"`
-	URL           string `json:"url"`
-	MonitorID     string `json:"monitorId"`
-	Method        string `json:"method"`
-	CronTimestamp int64  `json:"cronTimestamp"`
-	Body          string `json:"body"`
-	Timeout       int64  `json:"timeout"`
-	DegradedAfter int64  `json:"degradedAfter,omitempty"`
-	Headers       []struct {
+	Headers []struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
 	} `json:"headers,omitempty"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URL           string            `json:"url"`
+	MonitorID     string            `json:"monitorId"`
+	Method        string            `json:"method"`
 	Status        string            `json:"status"`
+	Body          string            `json:"body"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
 }
 
 type PingRequest struct {
-	RequestId   int64             `json:"requestId"`
-	WorkspaceId int64             `json:"workspaceId"`
+	Headers     map[string]string `json:"headers"`
 	URL         string            `json:"url"`
 	Method      string            `json:"method"`
 	Body        string            `json:"body"`
-	Headers     map[string]string `json:"headers"`
+	RequestId   int64             `json:"requestId"`
+	WorkspaceId int64             `json:"workspaceId"`
 }
