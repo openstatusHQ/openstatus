@@ -9,6 +9,8 @@ import type { RegionChecker } from "./utils";
 import type { Row } from "@tanstack/react-table";
 import { ResponseDetailTabs } from "./response-detail-tabs";
 import type { Region } from "@openstatus/tinybird";
+import { RegionsPreset } from "../monitor-dashboard/region-preset";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 export function MultiRegionTabs({
   regions,
@@ -19,12 +21,21 @@ export function MultiRegionTabs({
 }) {
   return (
     <Tabs defaultValue="table">
-      <TabsList>
-        <TabsTrigger value="table">Table</TabsTrigger>
-        <TabsTrigger value="chart">Chart</TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between">
+        <TabsList>
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="chart">Chart</TabsTrigger>
+        </TabsList>
+        <RegionsPreset
+          regions={flyRegions as unknown as Region[]}
+          selectedRegions={selectedRegions ?? []}
+          size="sm"
+        />
+      </div>
       <TabsContent value="chart">
-        <MultiRegionChart regions={regions} />
+        <MultiRegionChart
+          regions={regions.filter((i) => selectedRegions?.includes(i.region))}
+        />
       </TabsContent>
       <TabsContent value="table">
         <MultiRegionTable
@@ -32,7 +43,6 @@ export function MultiRegionTabs({
           columns={columns}
           getRowCanExpand={() => true}
           renderSubComponent={renderSubComponent}
-          selectedRegions={selectedRegions}
         />
       </TabsContent>
     </Tabs>

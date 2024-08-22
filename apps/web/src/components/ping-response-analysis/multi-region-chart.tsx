@@ -62,7 +62,6 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
           tickLine={false}
           tickMargin={10}
           axisLine={false}
-          tickFormatter={(value) => value}
           interval={0}
           tick={(props) => {
             const { x, y, payload } = props;

@@ -25,9 +25,6 @@ import {
 import { Fragment, useState } from "react";
 import { DataTableViewOptions } from "../data-table/data-table-view-options";
 import { DataTableCollapseButton } from "./data-table-collapse-button";
-import { RegionsPreset } from "../monitor-dashboard/region-preset";
-import type { Region } from "@openstatus/tinybird";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 // TBD: add the popover infos about timing details
 
@@ -37,7 +34,6 @@ interface DataTableProps<TData, TValue> {
   renderSubComponent(props: { row: Row<TData> }): React.ReactElement;
   getRowCanExpand(row: Row<TData>): boolean;
   autoResetExpanded?: boolean;
-  selectedRegions?: Region[];
 }
 
 export function MultiRegionTable<TData, TValue>({
@@ -46,7 +42,6 @@ export function MultiRegionTable<TData, TValue>({
   renderSubComponent,
   getRowCanExpand,
   autoResetExpanded,
-  selectedRegions,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
@@ -77,17 +72,12 @@ export function MultiRegionTable<TData, TValue>({
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex items-end justify-between gap-2">
         <p className="text-muted-foreground text-xs">
           Select a row to expand the response details.
         </p>
         <div className="flex items-center justify-end gap-2">
           <DataTableCollapseButton table={table} />
-          <RegionsPreset
-            regions={flyRegions as unknown as Region[]}
-            selectedRegions={selectedRegions ?? []}
-            size="sm"
-          />
           <DataTableViewOptions table={table} />
         </div>
       </div>

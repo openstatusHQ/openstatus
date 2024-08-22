@@ -82,7 +82,7 @@ export function RegionsPreset({
           {...props}
         >
           <Globe2 className="mr-2 h-4 w-4" />
-          <span>
+          <span className="whitespace-nowrap">
             <code>{selected.length}</code> Regions
           </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
