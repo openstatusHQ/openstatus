@@ -1,19 +1,51 @@
 "use client";
 
-import { BarChart } from "@tremor/react";
-
 import type { RegionChecker } from "./utils";
-import { getTimingPhases, latencyFormatter, regionFormatter } from "./utils";
+import { getTimingPhases, regionFormatter } from "./utils";
+
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@openstatus/ui/src/components/chart";
+
+const chartConfig = {
+  dns: {
+    label: "DNS",
+    color: "hsl(var(--chart-1))",
+  },
+  connection: {
+    label: "Connection",
+    color: "hsl(var(--chart-2))",
+  },
+  tls: {
+    label: "TLS",
+    color: "hsl(var(--chart-3))",
+  },
+  ttfb: {
+    label: "TTFB",
+    color: "hsl(var(--chart-4))",
+  },
+  transfer: {
+    label: "Transfer",
+    color: "hsl(var(--chart-5))",
+  },
+} satisfies ChartConfig;
 
 export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
-  const data = regions
-    .sort((a, b) => a.latency - b.latency)
+  const chartData = regions
+    .sort((a, b) => a.latency - b.latency) // FIXME: seems to be off
     .map((item) => {
       const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
-        item.timing,
+        item.timing
       );
       return {
-        region: regionFormatter(item.region),
+        region: item.region,
         dns,
         connection,
         tls,
@@ -22,16 +54,49 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
       };
     });
   return (
-    <BarChart
-      data={data}
-      index="region"
-      categories={["dns", "connection", "tls", "ttfb", "transfer"]}
-      colors={["blue", "teal", "amber", "slate", "indigo"]}
-      valueFormatter={latencyFormatter}
-      stack
-      layout="vertical"
-      yAxisWidth={65}
-      className="h-[64rem] w-full"
-    />
+    <ChartContainer config={chartConfig}>
+      <BarChart accessibilityLayer data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="region"
+          tickLine={false}
+          tickMargin={10}
+          axisLine={false}
+          tickFormatter={(value) => value}
+          interval={0}
+          tick={(props) => {
+            const { x, y, payload } = props;
+            return (
+              <g transform={`translate(${x},${y})`}>
+                <text
+                  x={0}
+                  y={0}
+                  dy={2}
+                  textAnchor="end"
+                  fill="#666"
+                  transform="rotate(-35)"
+                  className="font-mono"
+                >
+                  {payload.value}
+                </text>
+              </g>
+            );
+          }}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              labelFormatter={(label) => regionFormatter(label, "long")}
+            />
+          }
+        />
+        <ChartLegend content={<ChartLegendContent />} />
+        <Bar dataKey="dns" stackId="a" fill="var(--color-dns)" />
+        <Bar dataKey="connection" stackId="a" fill="var(--color-connection)" />
+        <Bar dataKey="tls" stackId="a" fill="var(--color-tls)" />
+        <Bar dataKey="ttfb" stackId="a" fill="var(--color-ttfb)" />
+        <Bar dataKey="transfer" stackId="a" fill="var(--color-transfer)" />
+      </BarChart>
+    </ChartContainer>
   );
 }

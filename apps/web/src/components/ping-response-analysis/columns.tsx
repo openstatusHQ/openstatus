@@ -16,10 +16,23 @@ import { format } from "date-fns";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
+    id: "key",
+    accessorFn: (row) => row.region,
+    header: "Key",
+    cell: ({ row }) => {
+      return <div className="font-mono">{row.original.region}</div>;
+    },
+    enableHiding: false,
+  },
+  {
     accessorKey: "region",
     header: "Region",
     cell: ({ row }) => {
-      return <div>{regionFormatter(row.original.region, "long")}</div>;
+      return (
+        <div className="text-muted-foreground">
+          {regionFormatter(row.original.region, "long")}
+        </div>
+      );
     },
   },
   {
