@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import type { Region } from "@openstatus/tinybird";
-import { Button } from "@openstatus/ui/src/components/button";
+import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
   Command,
   CommandEmpty,
@@ -29,15 +29,17 @@ import {
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
 
+interface RegionsPresetProps extends ButtonProps {
+  regions: Region[];
+  selectedRegions: Region[];
+}
+
 export function RegionsPreset({
   regions,
   selectedRegions,
   className,
-}: {
-  regions: Region[];
-  selectedRegions: Region[];
-  className?: string;
-}) {
+  ...props
+}: RegionsPresetProps) {
   const [selected, setSelected] = React.useState<Region[]>(selectedRegions);
   const router = useRouter();
   const pathname = usePathname();
@@ -67,7 +69,7 @@ export function RegionsPreset({
 
       return prev;
     },
-    {} as Record<Continent, RegionInfo[]>,
+    {} as Record<Continent, RegionInfo[]>
   );
 
   return (
@@ -77,6 +79,7 @@ export function RegionsPreset({
           size="lg"
           variant="outline"
           className={cn("px-3 shadow-none", className)}
+          {...props}
         >
           <Globe2 className="mr-2 h-4 w-4" />
           <span>
@@ -120,7 +123,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code),
+                              : prev.filter((r) => r !== code)
                           );
                         }}
                       >
@@ -129,7 +132,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible",
+                              : "opacity-50 [&_svg]:invisible"
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />

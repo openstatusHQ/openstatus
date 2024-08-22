@@ -6,7 +6,7 @@ import {
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
-import { flyRegionsDict } from "@openstatus/utils";
+import { continentDict, flyRegionsDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
@@ -16,13 +16,18 @@ export function timestampFormatter(timestamp: number) {
   return new Date(timestamp).toUTCString(); // GMT format
 }
 
+export function continentFormatter(region: MonitorFlyRegion) {
+  const continent = flyRegionsDict[region].continent;
+  return continentDict[continent].code;
+}
+
 export function regionFormatter(
   region: MonitorFlyRegion,
   type: "short" | "long" = "short",
 ) {
   const { code, flag, location } = flyRegionsDict[region];
   if (type === "short") return `${code} ${flag}`;
-  return `${location}`;
+  return `${location} ${flag}`;
 }
 
 export function getTotalLatency(timing: Timing) {
