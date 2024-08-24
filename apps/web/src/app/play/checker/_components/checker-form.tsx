@@ -23,6 +23,8 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { toast } from "@/lib/toast";
+import { regionFormatter } from "@/components/ping-response-analysis/utils";
 
 const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
 
@@ -45,15 +47,50 @@ export function CheckerForm() {
     startTransition(async () => {
       const { url, method } = data;
       try {
-        const res = await fetch("/play/checker/api", {
-          method: "POST",
-          body: JSON.stringify({ url, method }),
-        });
-        const { uuid } = (await res.json()) as { uuid?: string };
-        if (typeof uuid === "string") {
-          router.push(`/play/checker/${uuid}`);
+        async function fetchAndReadStream() {
+          const toastId = toast.loading("Loading data from regions...", {
+            duration: Number.POSITIVE_INFINITY,
+          });
+          try {
+            const response = await fetch("/play/checker/api", {
+              method: "POST",
+              body: JSON.stringify({ url, method }),
+            });
+            const reader = response?.body?.getReader();
+            const decoder = new TextDecoder();
+
+            let done = false;
+
+            while (!done && reader) {
+              const { value, done: streamDone } = await reader.read();
+              done = streamDone;
+              if (value) {
+                const decoded = decoder.decode(value);
+                // console.log(decoded);
+                const parsed = JSON.parse(decoded);
+                console.log(parsed);
+                if (parsed?.fetch === "pending") {
+                  toast.loading(
+                    `Checking ${regionFormatter(parsed.region, "long")} (${parsed.index})`,
+                    {
+                      id: toastId,
+                    }
+                  );
+                }
+              }
+            }
+            toast.success("Done!", { id: toastId, duration: 2000 });
+          } catch (e) {
+            console.log(e);
+            toast.error("Something went wrong", {
+              id: toastId,
+              duration: 2000,
+            });
+          }
         }
-      } catch {
+
+        await fetchAndReadStream();
+      } catch (e) {
         // TODO: better error handling, including e.g. toast
         form.setError("url", { message: "Something went wrong" });
       }
