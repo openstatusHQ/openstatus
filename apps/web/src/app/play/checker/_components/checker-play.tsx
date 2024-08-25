@@ -6,8 +6,14 @@ export default async function CheckerPlay() {
   return (
     <Shell className="flex flex-col gap-8">
       <HeaderPlay
-        title="Is your endpoint globally fast?"
-        description="Test your website and API performance across all continents. "
+        title="Global Speed Checker"
+        description={
+          <>
+            Is your{" "}
+            <span className="text-foreground">endpoint globally fast</span>?
+            Test your website and API performance across all continents.
+          </>
+        }
       />
       <div className="mx-auto grid w-full max-w-xl gap-6">
         <CheckerForm />

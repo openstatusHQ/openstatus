@@ -1,15 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import {
   Button,
+  Checkbox,
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +29,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -39,7 +45,8 @@ import {
 import { notEmpty } from "@/lib/utils";
 import { Icons } from "@/components/icons";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { Loader } from "lucide-react";
+import { Info, Loader } from "lucide-react";
+import Link from "next/link";
 
 /**
  * IDEA:
@@ -51,6 +58,7 @@ const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
 const formSchema = z.object({
   url: z.string().url(),
   method: z.enum(METHODS).default("GET"),
+  redirect: z.boolean().default(true),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -60,7 +68,7 @@ export function CheckerForm() {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
-    defaultValues: { method: "GET", url: "" }, // make the url a prop that can be passed via search param
+    defaultValues: { method: "GET", url: "", redirect: true }, // make the url a prop that can be passed via search param
   });
   const [result, setResult] = useState<RegionChecker[]>([]);
 
@@ -149,7 +157,7 @@ export function CheckerForm() {
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-3">
           <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
             <FormField
               control={form.control}
@@ -197,9 +205,44 @@ export function CheckerForm() {
               </Button>
             </div>
           </div>
+          {/* <div>
+            <FormField
+              control={form.control}
+              name="redirect"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-2 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Extended details</FormLabel>
+                    <FormDescription className="max-w-md">
+                      Redirects you to a detailed page with more information
+                      like response header, timing phases and charts.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div> */}
         </form>
       </Form>
       <TableResult result={result} loading={isPending} />
+      {!isPending && result.length ? (
+        <p className="text-center text-muted-foreground text-sm">
+          For more details regarding your speed check, click{" "}
+          <Link
+            href="#"
+            className="text-foreground underline underline-offset-4 hover:no-underline"
+          >
+            here
+          </Link>
+          .
+        </p>
+      ) : null}
     </>
   );
 }
@@ -246,7 +289,10 @@ function TableResult({
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={2} className="text-center">
+            <TableCell
+              colSpan={2}
+              className="border border-border border-dashed text-center"
+            >
               No data available
             </TableCell>
           </TableRow>

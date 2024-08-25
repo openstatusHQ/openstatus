@@ -53,7 +53,7 @@ export default async function PlayPage() {
 const playgrounds: CardProps[] = [
   {
     href: "/play/checker",
-    title: "Speed Checker",
+    title: "Global Speed Checker",
     description:
       "Get speed insights for your api, website from multiple regions. No account needed.",
     icon: Gauge,

@@ -93,7 +93,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const title = "Speed Checker";
+  const title = "Global Speed Checker";
   const description =
     "Get speed insights for your api, website from multiple regions.";
   return {
