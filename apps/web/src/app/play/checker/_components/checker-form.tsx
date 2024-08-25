@@ -118,10 +118,24 @@ export function CheckerForm() {
                 // console.log(decoded);
 
                 if (is32CharHex(decoded)) {
-                  if (redirect) router.push(`/play/checker/${decoded}`);
-                  else {
+                  if (redirect) {
+                    router.push(`/play/checker/${decoded}`);
+                    toast.success("Data is available! Redirecting...", {
+                      id: toastId,
+                      duration: 2000,
+                    });
+                  } else {
                     const searchParams = updateSearchParams({ id: decoded });
                     router.replace(`${pathname}?${searchParams}`);
+                    toast.success("Data is available!", {
+                      id: toastId,
+                      duration: 3000,
+                      description: "Click the button below to more.",
+                      action: {
+                        label: "Details",
+                        onClick: () => router.push(`/play/checker/${decoded}`),
+                      },
+                    });
                   }
                   continue;
                 }
@@ -142,10 +156,6 @@ export function CheckerForm() {
                 }
               }
             }
-            toast.success("Data is available!", {
-              id: toastId,
-              duration: 2000,
-            });
           } catch (e) {
             console.log(e);
             toast.error("Something went wrong", {
