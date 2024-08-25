@@ -253,12 +253,11 @@ export async function getCheckerDataById(id: string) {
     return null;
   }
 
-  console.log(res);
-
   const parsed = cachedCheckerSchema.safeParse({ ...res[0], checks: res[1] });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.message);
+    // throw new Error(parsed.error.message);
+    return null;
   }
 
   return parsed.data;
