@@ -1,12 +1,20 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { redirect, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import {
+  redirect,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
   Button,
   Checkbox,
   Form,
@@ -29,28 +37,25 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import { toast } from "@/lib/toast";
 import {
+  is32CharHex,
   latencyFormatter,
   type RegionChecker,
   regionFormatter,
 } from "@/components/ping-response-analysis/utils";
-import { notEmpty } from "@/lib/utils";
 import { Icons } from "@/components/icons";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { Info, Loader } from "lucide-react";
+import { Loader, FileSearch } from "lucide-react";
 import Link from "next/link";
+import useUpdateSearchParams from "@/hooks/use-update-search-params";
 
 /**
- * IDEA:
- * - add a 'redirect' button or allow user to have 'simple' analytics check instead of detailed page
+ * IDEA we can create a list of last requests and show them in a list, but
+ * we will have to sync both expiration dates, for redis and localStorage
  */
 
 const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
@@ -64,6 +69,7 @@ const formSchema = z.object({
 type FormSchema = z.infer<typeof formSchema>;
 
 export function CheckerForm() {
+  const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
@@ -71,10 +77,16 @@ export function CheckerForm() {
     defaultValues: { method: "GET", url: "", redirect: true }, // make the url a prop that can be passed via search param
   });
   const [result, setResult] = useState<RegionChecker[]>([]);
+  const updateSearchParams = useUpdateSearchParams();
+  const searchParams = useSearchParams();
+
+  const id = useMemo(() => {
+    return searchParams.get("id");
+  }, [searchParams]);
 
   function onSubmit(data: FormSchema) {
     startTransition(async () => {
-      const { url, method } = data;
+      const { url, method, redirect } = data;
       try {
         async function fetchAndReadStream() {
           // reset the array
@@ -104,6 +116,16 @@ export function CheckerForm() {
                 const decoded = decoder.decode(value, { stream: true });
                 // REMINDER: validation
                 // console.log(decoded);
+
+                if (is32CharHex(decoded)) {
+                  if (redirect) router.push(`/play/checker/${decoded}`);
+                  else {
+                    const searchParams = updateSearchParams({ id: decoded });
+                    router.replace(`${pathname}?${searchParams}`);
+                  }
+                  continue;
+                }
+
                 const _result = JSON.parse(decoded) as RegionChecker;
 
                 currentResult = [...currentResult, _result];
@@ -192,7 +214,7 @@ export function CheckerForm() {
               </Button>
             </div>
           </div>
-          {/* <div>
+          <div>
             <FormField
               control={form.control}
               name="redirect"
@@ -205,30 +227,33 @@ export function CheckerForm() {
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Extended details</FormLabel>
+                    <FormLabel>Redirect to extended details</FormLabel>
                     <FormDescription className="max-w-md">
-                      Redirects you to a detailed page with more information
-                      like response header, timing phases and charts.
+                      Get response header, timing phases and more.
                     </FormDescription>
                   </div>
                 </FormItem>
               )}
             />
-          </div> */}
+          </div>
         </form>
       </Form>
       <TableResult result={result} loading={isPending} />
-      {!isPending && result.length ? (
-        <p className="text-center text-muted-foreground text-sm">
-          For more details regarding your speed check, click{" "}
-          <Link
-            href="#"
-            className="text-foreground underline underline-offset-4 hover:no-underline"
-          >
-            here
-          </Link>
-          .
-        </p>
+
+      {!isPending && id ? (
+        <Alert>
+          <FileSearch className="h-4 w-4" />
+          <AlertTitle>Extended Details</AlertTitle>
+          <AlertDescription>
+            Check it out!{" "}
+            <Link
+              href={`/play/checker/${id}`}
+              className="font-mono text-foreground underline underline-offset-4 hover:no-underline"
+            >
+              {id}
+            </Link>
+          </AlertDescription>
+        </Alert>
       ) : null}
     </>
   );

@@ -262,3 +262,13 @@ export async function getCheckerDataById(id: string) {
 
   return parsed.data;
 }
+
+/**
+ * Simple function to validate crypto.randomUUID() format like "aec4e0ec3c4f4557b8ce46e55078fc95"
+ * @param uuid
+ * @returns
+ */
+export function is32CharHex(uuid: string) {
+  const hexRegex = /^[0-9a-fA-F]{32}$/;
+  return hexRegex.test(uuid);
+}

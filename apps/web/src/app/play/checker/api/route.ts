@@ -30,7 +30,7 @@ async function* makeIterator({
         check.body = undefined; // Drop the body to avoid storing it in Redis Cache
       }
 
-      // storeCheckerData({ check, id });
+      storeCheckerData({ check, id });
 
       return encoder.encode(
         `${JSON.stringify({
@@ -44,14 +44,19 @@ async function* makeIterator({
   });
 
   yield* yieldMany(promises);
+  // return the id as the last value
+  yield* generator(id);
+}
+
+async function* generator(id: string) {
+  yield await Promise.resolve(encoder.encode(id));
 }
 
 export async function POST(request: Request) {
   const json = await request.json();
   const { url, method } = json;
 
-  // const uuid = crypto.randomUUID().replace(/-/g, "");
-  const uuid = "aec4e0ec3c4f4557b8ce46e55078fc95";
+  const uuid = crypto.randomUUID().replace(/-/g, "");
   storeBaseCheckerData({ url, method, id: uuid });
 
   const iterator = makeIterator({ url, method, id: uuid });
