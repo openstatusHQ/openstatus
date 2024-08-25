@@ -187,36 +187,75 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
   );
 }
 
-export async function setCheckerData(url: string, opts?: { method: Method }) {
+export async function storeBaseCheckerData({
+  url,
+  method,
+  id,
+}: {
+  url: string;
+  method: Method;
+  id: string;
+}) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();
-  const checks = await checkAllRegions(url, opts);
-  const { method } = opts || {};
+  const cache = { url, method, time };
 
-  const cache = { time, url, checks, method };
-
-  const uuid = crypto.randomUUID().replace(/-/g, "");
-
-  const parsed = cachedCheckerSchema.safeParse(cache);
+  const parsed = cachedCheckerSchema
+    .pick({ url: true, method: true, time: true })
+    .safeParse(cache);
 
   if (!parsed.success) {
     throw new Error(parsed.error.message);
   }
 
-  await redis.set(uuid, JSON.stringify(parsed.data), { ex: 86_400 }); // 60 * 60 * 24 = 1d
+  await redis.hset(`check:base:${id}`, parsed.data); // 60 * 60 * 24 = 1d
+  await redis.expire(`check:base:${id}`, 86_400);
 
-  return uuid;
+  return id;
+}
+
+export async function storeCheckerData({
+  check,
+  id,
+}: {
+  check: RegionChecker;
+  id: string;
+}) {
+  const redis = Redis.fromEnv();
+
+  const parsed = cachedCheckerSchema
+    .pick({ checks: true })
+    .safeParse({ checks: [check] });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.message);
+  }
+
+  const first = parsed.data.checks?.[0];
+
+  if (first) await redis.sadd(`check:data:${id}`, first);
+
+  return id;
 }
 
 export async function getCheckerDataById(id: string) {
   const redis = Redis.fromEnv();
-  const cache = await redis.get(id);
+  const pipe = redis.pipeline();
+  pipe.hgetall(`check:base:${id}`);
+  pipe.smembers(`check:data:${id}`);
 
-  if (!cache) {
+  const res =
+    await pipe.exec<
+      [{ url: string; method: Method; time: number }, RegionChecker]
+    >();
+
+  if (!res) {
     return null;
   }
 
-  const parsed = cachedCheckerSchema.safeParse(cache);
+  console.log(res);
+
+  const parsed = cachedCheckerSchema.safeParse({ ...res[0], checks: res[1] });
 
   if (!parsed.success) {
     throw new Error(parsed.error.message);

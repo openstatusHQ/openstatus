@@ -1,38 +1,22 @@
 import {
   checkRegion,
   type Method,
-  setCheckerData,
+  storeBaseCheckerData,
+  storeCheckerData,
 } from "@/components/ping-response-analysis/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { mockCheckRegion } from "./mock";
+import { iteratorToStream, yieldMany } from "@/lib/stream";
 
 export const runtime = "edge";
 
 const encoder = new TextEncoder();
 
-function iteratorToStream(iterator: AsyncGenerator<unknown, void, unknown>) {
-  return new ReadableStream({
-    async pull(controller) {
-      try {
-        const { value, done } = await iterator.next();
-        if (done) {
-          controller.close();
-        } else {
-          controller.enqueue(value);
-        }
-      } catch (err) {
-        console.error("Stream error:", err);
-        controller.error(err); // Signal the stream has errored out
-      }
-    },
-    cancel(reason) {
-      console.log("Stream canceled:", reason);
-      // You might also want to do some cleanup here if necessary
-    },
-  });
-}
-
-async function* makeIterator(url: string, method: Method) {
+async function* makeIterator({
+  url,
+  method,
+  id,
+}: { url: string; method: Method; id: string }) {
   // Create an array to store all the promises
   const promises = flyRegions.map(async (region, index) => {
     try {
@@ -46,7 +30,7 @@ async function* makeIterator(url: string, method: Method) {
         check.body = undefined; // Drop the body to avoid storing it in Redis Cache
       }
 
-      console.log(check.region, check.latency);
+      // storeCheckerData({ check, id });
 
       return encoder.encode(
         `${JSON.stringify({
@@ -59,33 +43,18 @@ async function* makeIterator(url: string, method: Method) {
     }
   });
 
-  const generator = yieldMany(promises);
-
-  yield* generator;
+  yield* yieldMany(promises);
 }
+
 export async function POST(request: Request) {
   const json = await request.json();
   const { url, method } = json;
-  const iterator = makeIterator(url, method);
+
+  // const uuid = crypto.randomUUID().replace(/-/g, "");
+  const uuid = "aec4e0ec3c4f4557b8ce46e55078fc95";
+  storeBaseCheckerData({ url, method, id: uuid });
+
+  const iterator = makeIterator({ url, method, id: uuid });
   const stream = iteratorToStream(iterator);
   return new Response(stream);
-}
-
-async function* yieldMany(promises: Promise<unknown>[]) {
-  // Attach .then() handlers to the promises to remove them once they resolve
-  // REMINDER: DO NOT USE for await (const p of promises) as it will not work as expected
-  // biome-ignore lint/complexity/noForEach: <explanation>
-  promises.forEach((p) => {
-    p.then((value) => {
-      promises.splice(promises.indexOf(p), 1);
-      return value;
-    });
-  });
-
-  // Continue yielding the results of the promises as they resolve
-  while (promises.length > 0) {
-    yield await Promise.race(promises);
-  }
-
-  return "done";
 }

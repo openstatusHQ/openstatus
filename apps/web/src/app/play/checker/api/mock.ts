@@ -1,3 +1,4 @@
+import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { wait } from "@/lib/utils";
 import type { Region } from "@openstatus/tinybird";
 
@@ -10,7 +11,7 @@ export async function mockCheckRegion(region: Region) {
 
   await wait(response.latency);
 
-  return response;
+  return response as RegionChecker;
 }
 
 export const data = {

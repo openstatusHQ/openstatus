@@ -102,30 +102,17 @@ export function CheckerForm() {
               done = streamDone;
               if (value) {
                 const decoded = decoder.decode(value, { stream: true });
+                // REMINDER: validation
                 // console.log(decoded);
-                const _result = decoded
-                  .split("\n")
-                  .map((region) => {
-                    try {
-                      const parsed = JSON.parse(region) as RegionChecker;
-                      return parsed;
-                    } catch {
-                      return undefined;
-                    }
-                  })
-                  .filter(notEmpty);
+                const _result = JSON.parse(decoded) as RegionChecker;
 
-                console.log(_result?.map((r) => r.region));
-
-                currentResult = [...currentResult, ..._result];
+                currentResult = [...currentResult, _result];
                 // setResult((prev) => [...prev, ..._result]);
                 setResult(currentResult);
 
-                const _lastResult = _result[_result.length - 1];
-
-                if (_result.length) {
+                if (_result) {
                   toast.loading(
-                    `Checking ${regionFormatter(_lastResult.region, "long")} (${latencyFormatter(_lastResult.latency)})`,
+                    `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
                     {
                       id: toastId,
                     }
