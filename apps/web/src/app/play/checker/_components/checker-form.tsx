@@ -20,7 +20,13 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Separator,
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
@@ -43,7 +49,7 @@ import { Loader } from "lucide-react";
 const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
 
 const formSchema = z.object({
-  url: z.string().url(), // add pattern and use InputWithAddon `https://`
+  url: z.string().url(),
   method: z.enum(METHODS).default("GET"),
 });
 
@@ -54,7 +60,7 @@ export function CheckerForm() {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
-    defaultValues: { method: "GET", url: "" },
+    defaultValues: { method: "GET", url: "" }, // make the url a prop that can be passed via search param
   });
   const [result, setResult] = useState<RegionChecker[]>([]);
 
@@ -107,9 +113,11 @@ export function CheckerForm() {
                 // setResult((prev) => [...prev, ..._result]);
                 setResult(currentResult);
 
+                const _lastResult = _result[_result.length - 1];
+
                 if (_result.length) {
                   toast.loading(
-                    `Checking ${regionFormatter(_result[_result.length - 1].region, "long")} (${currentResult.length}/${flyRegions.length})`,
+                    `Checking ${regionFormatter(_lastResult.region, "long")} (${latencyFormatter(_lastResult.latency)})`,
                     {
                       id: toastId,
                     }
@@ -117,7 +125,10 @@ export function CheckerForm() {
                 }
               }
             }
-            toast.success("Done!", { id: toastId, duration: 2000 });
+            toast.success("Data is available!", {
+              id: toastId,
+              duration: 2000,
+            });
           } catch (e) {
             console.log(e);
             toast.error("Something went wrong", {
@@ -188,57 +199,59 @@ export function CheckerForm() {
           </div>
         </form>
       </Form>
-      <div>
-        <StatusIndicator loading={isPending} result={result} />
-        <Separator className="my-2" />
-        <ul className="grid gap-2">
-          {result.map((item) => (
-            <li
-              key={item.region}
-              className="flex items-center justify-between text-sm"
-            >
-              <p className="font-medium text-muted-foreground">
-                {regionFormatter(item.region, "long")}
-              </p>
-              <p className="font-mono">{latencyFormatter(item.latency)}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <TableResult result={result} loading={isPending} />
     </>
   );
 }
 
-function StatusIndicator({
-  loading,
+function TableResult({
   result,
+  loading,
 }: {
-  loading?: boolean;
-  result?: unknown[];
+  loading: boolean;
+  result: RegionChecker[];
 }) {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-between gap-2">
-        <p>
-          Loading{" "}
-          <span className="text-muted-foreground text-xs">
-            ({result?.length}/{flyRegions.length})
-          </span>
-        </p>
-        <Loader className="h-4 w-4 animate-spin" />
-      </div>
-    );
-  }
-  if (result?.length) {
-    return (
-      <div className="flex items-center justify-between gap-2">
-        <p>Loaded</p>
-        <div className="rounded-full bg-green-500 p-1">
-          <Icons.check className="h-3 w-3 text-background" />
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+  return (
+    <Table>
+      <TableCaption>A list of the regions latency.</TableCaption>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="flex w-[135px] items-center justify-between">
+            <p>
+              Region{" "}
+              <span className="font-normal text-xs tabular-nums">
+                ({result.length}/{flyRegions.length})
+              </span>
+            </p>
+            {loading ? (
+              <Loader className="ml-1 inline h-4 w-4 animate-spin" />
+            ) : result.length ? (
+              <Icons.check className="ml-1 inline h-4 w-4 text-green-500" />
+            ) : null}
+          </TableHead>
+          <TableHead className="w-[100px] text-right">Latency</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {result.length > 0 ? (
+          result.map((item) => (
+            <TableRow key={item.region}>
+              <TableCell className="font-medium">
+                {regionFormatter(item.region, "long")}
+              </TableCell>
+              <TableCell className="text-right">
+                {latencyFormatter(item.latency)}
+              </TableCell>
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={2} className="text-center">
+              No data available
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
 }
