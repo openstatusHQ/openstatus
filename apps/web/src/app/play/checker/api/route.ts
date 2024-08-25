@@ -8,9 +8,9 @@ import { mockCheckRegion } from "./mock";
 
 export const runtime = "edge";
 
-function iteratorToStream(
-  iterator: AsyncGenerator<Uint8Array, unknown, unknown>,
-) {
+const encoder = new TextEncoder();
+
+function iteratorToStream(iterator: AsyncGenerator<unknown, void, unknown>) {
   return new ReadableStream({
     async pull(controller) {
       try {
@@ -32,15 +32,10 @@ function iteratorToStream(
   });
 }
 
-const encoder = new TextEncoder();
-
 async function* makeIterator(url: string, method: Method) {
   // Create an array to store all the promises
-  const promises = flyRegions.map(async function* (region, index) {
+  const promises = flyRegions.map(async (region, index) => {
     try {
-      // Yield "pending" status
-      yield encoder.encode(JSON.stringify({ region, fetch: "pending", index }));
-
       // Perform the fetch operation
       const check =
         process.env.NODE_ENV === "production"
@@ -51,24 +46,22 @@ async function* makeIterator(url: string, method: Method) {
         check.body = undefined; // Drop the body to avoid storing it in Redis Cache
       }
 
-      console.log(check);
+      console.log(check.region, check.latency);
 
-      // Yield "done" status
-      yield encoder.encode(JSON.stringify({ ...check, fetch: "done", index }));
+      return encoder.encode(
+        `${JSON.stringify({
+          ...check,
+          index,
+        })}\n`,
+      );
     } catch (error) {
       console.error(error);
-      // Yield "failed" status
-      yield encoder.encode(JSON.stringify({ region, fetch: "failed", index }));
     }
   });
 
-  // Use Promise.all to run all promises concurrently
-  const results = await Promise.all(promises);
+  const generator = yieldMany(promises);
 
-  // Yield all results
-  for (const result of results) {
-    yield* result;
-  }
+  yield* generator;
 }
 export async function POST(request: Request) {
   const json = await request.json();
@@ -76,4 +69,23 @@ export async function POST(request: Request) {
   const iterator = makeIterator(url, method);
   const stream = iteratorToStream(iterator);
   return new Response(stream);
+}
+
+async function* yieldMany(promises: Promise<unknown>[]) {
+  // Attach .then() handlers to the promises to remove them once they resolve
+  // REMINDER: DO NOT USE for await (const p of promises) as it will not work as expected
+  // biome-ignore lint/complexity/noForEach: <explanation>
+  promises.forEach((p) => {
+    p.then((value) => {
+      promises.splice(promises.indexOf(p), 1);
+      return value;
+    });
+  });
+
+  // Continue yielding the results of the promises as they resolve
+  while (promises.length > 0) {
+    yield await Promise.race(promises);
+  }
+
+  return "done";
 }
