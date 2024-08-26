@@ -60,7 +60,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -161,7 +161,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -223,7 +223,11 @@ export function CheckerForm() {
                 <FormItem className="col-span-3">
                   <FormLabel className="sr-only">URL</FormLabel>
                   <FormControl>
-                    <Input placeholder="https://documenso.com" {...field} />
+                    <Input
+                      placeholder="https://documenso.com"
+                      className="bg-muted"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -291,7 +295,6 @@ function TableResult({
 }) {
   return (
     <Table>
-      <TableCaption>A list of the regions latency.</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead className="flex w-[135px] items-center justify-between">
