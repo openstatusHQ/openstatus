@@ -1,6 +1,7 @@
 import { Shell } from "@/components/dashboard/shell";
 import { HeaderPlay } from "../../_components/header-play";
 import { CheckerForm } from "./checker-form";
+import { Suspense } from "react";
 
 export default async function CheckerPlay() {
   return (
@@ -16,7 +17,9 @@ export default async function CheckerPlay() {
         }
       />
       <div className="mx-auto grid w-full max-w-xl gap-6">
-        <CheckerForm />
+        <Suspense fallback={null}>
+          <CheckerForm />
+        </Suspense>
       </div>
     </Shell>
   );

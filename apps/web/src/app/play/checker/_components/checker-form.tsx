@@ -159,6 +159,7 @@ export function CheckerForm() {
           } catch (e) {
             console.log(e);
             toast.error("Something went wrong", {
+              description: "Please try again",
               id: toastId,
               duration: 2000,
             });

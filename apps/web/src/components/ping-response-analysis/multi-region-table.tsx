@@ -43,7 +43,9 @@ export function MultiRegionTable<TData, TValue>({
   getRowCanExpand,
   autoResetExpanded,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "latency", desc: false },
+  ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
     DNS: false,
