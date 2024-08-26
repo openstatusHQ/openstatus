@@ -208,8 +208,9 @@ export async function storeBaseCheckerData({
     throw new Error(parsed.error.message);
   }
 
-  await redis.hset(`check:base:${id}`, parsed.data); // 60 * 60 * 24 = 1d
-  await redis.expire(`check:base:${id}`, 86_400);
+  await redis.hset(`check:base:${id}`, parsed.data);
+  const expire = 60 * 60 * 24 * 7; // 7days
+  await redis.expire(`check:base:${id}`, expire);
 
   return id;
 }

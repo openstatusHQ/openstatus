@@ -51,7 +51,17 @@ import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { FileSearch, Loader } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+const FloatingActionNoSSR = dynamic(
+  () =>
+    import("../_components/floating-action").then((mod) => mod.FloatingAction),
+  {
+    ssr: false,
+    loading: () => <></>,
+  }
+);
 
 /**
  * IDEA we can create a list of last requests and show them in a list, but
@@ -151,7 +161,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -250,6 +260,8 @@ export function CheckerForm() {
         </form>
       </Form>
       <TableResult result={result} loading={isPending} />
+
+      <FloatingActionNoSSR id={id} />
 
       {!isPending && id ? (
         <Alert>
