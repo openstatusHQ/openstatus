@@ -60,16 +60,18 @@ export function MetricsCard({
       <p className="font-light text-muted-foreground text-sm uppercase">
         {title}
       </p>
-      <div className="flex flex-1 items-center gap-2">
-        <p className="flex">
-          <code className="mr-1 font-mono font-semibold text-xl empty:mr-0">
-            {formatNumber(value)}
-          </code>
-          <span className="self-center text-muted-foreground text-xs">
-            {suffix}
-          </span>
-        </p>
-        {delta || delta === 0 ? <DeltaBadge value={delta} /> : null}
+      <div>
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <p className="flex">
+            <code className="mr-1 font-mono font-semibold text-xl empty:mr-0">
+              {formatNumber(value)}
+            </code>
+            <span className="self-center text-muted-foreground text-xs">
+              {suffix}
+            </span>
+          </p>
+          {delta || delta === 0 ? <DeltaBadge value={delta} /> : null}
+        </div>
       </div>
     </div>
   );
@@ -77,13 +79,15 @@ export function MetricsCard({
 
 export function formatNumber(value?: number | null) {
   return typeof value === "number"
-    ? new Intl.NumberFormat().format(value)
+    ? new Intl.NumberFormat(undefined, {
+        maximumFractionDigits: 2, // limit to max. 2 decimal places
+      }).format(value)
     : null;
 }
 
 // --- DeltaBadge.tsx ---
 
-const badgeVariants = cva("", {
+const badgeVariants = cva("px-1.5 text-[10px]", {
   variants: {
     variant: {
       default: "border-border",
