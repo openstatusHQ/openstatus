@@ -84,7 +84,7 @@ export function CheckerForm() {
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
-    defaultValues: { method: "GET", url: "", redirect: true }, // make the url a prop that can be passed via search param
+    defaultValues: { method: "GET", url: "", redirect: false }, // make the url a prop that can be passed via search param
   });
   const [result, setResult] = useState<RegionChecker[]>([]);
   const updateSearchParams = useUpdateSearchParams();

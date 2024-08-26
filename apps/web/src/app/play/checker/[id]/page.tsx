@@ -57,7 +57,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
   if (!data) redirect("/play/checker");
 
   return (
-    <Shell className="my-8 flex flex-col gap-8 md:my-16">
+    <Shell className="flex flex-col gap-8">
       <div className="flex justify-between gap-4">
         <div className="flex max-w-[calc(100%-50px)] flex-col gap-1">
           <h1 className="truncate text-wrap font-semibold text-lg sm:text-xl md:text-3xl">

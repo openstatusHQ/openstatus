@@ -1,10 +1,15 @@
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { Shell } from "@/components/dashboard/shell";
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
 import { getServerTimezoneFormat } from "@/lib/timezone";
-import { HeaderPlay } from "../../_components/header-play";
+import {
+  CardContainer,
+  CardDescription,
+  CardHeader,
+  CardIcon,
+  CardTitle,
+} from "@/components/marketing/card";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -15,18 +20,22 @@ export default async function StatusPlay() {
     },
     {
       revalidate: 600, // 10 minutes
-    },
+    }
   );
 
   const formattedServerDate = getServerTimezoneFormat();
 
   return (
-    <Shell>
+    <CardContainer>
+      <CardHeader>
+        <CardIcon icon="panel-top" />
+        <CardTitle>Status Page</CardTitle>
+        <CardDescription className="max-w-md">
+          Gain the trust of your users by showing them the uptime of your API or
+          website.
+        </CardDescription>
+      </CardHeader>
       <div className="relative grid gap-4">
-        <HeaderPlay
-          title="Status Page"
-          description="Gain the trust of your users by showing them the uptime of your API or website."
-        />
         <div className="mx-auto w-full max-w-md">
           {data && <Tracker data={data} name="Ping" description="Pong" />}
         </div>
@@ -35,6 +44,6 @@ export default async function StatusPlay() {
         </p>
         {/* REMINDER: more playground component  */}
       </div>
-    </Shell>
+    </CardContainer>
   );
 }
