@@ -2,18 +2,14 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
-import { Shell } from "@/components/dashboard/shell";
 import type { ValidIcon } from "@/components/icons";
 import {
   CardContainer,
-  CardContent,
   CardFeature,
-  CardFeatureContainer,
   CardHeader,
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
-import { Globe } from "@/components/marketing/monitor/globe";
 
 const features: {
   icon: ValidIcon;
@@ -21,40 +17,39 @@ const features: {
   description: string;
 }[] = [
   {
+    icon: "gauge",
+    catchline: "Speed Test for Websites",
+    description:
+      "Optimize your website’s performance with our global speed checker. Get insights on page load times across various regions, ensuring your site delivers a fast and seamless experience worldwide.",
+  },
+  {
     icon: "globe",
-    catchline: "Latency Monitoring.",
+    catchline: "Multi-Region Performance Monitoring",
     description:
-      "Monitor the latency of your endpoints from all over the world. We support 35 regions.",
-  },
-  {
-    icon: "play",
-    catchline: "Monitor anything.",
-    description:
-      "We can monitor your website, API, DNS, TCP or any other service you have running. ",
-  },
-  {
-    icon: "bot",
-    catchline: "Synthetic Monitoring.",
-    description: "Run your tests in your CI/CD pipeline, or on a schedule. ",
+      "Evaluate your website’s global latency with our multi-region speed test. Monitor performance in different regions to ensure quick load times for users across the planet.",
   },
 ];
 export const GlobalMonitoring = () => {
   return (
-    <Shell className="mx-auto">
+    <CardContainer>
       <CardHeader>
-        <CardIcon icon={"activity"} />
+        <CardIcon icon="activity" />
         <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
-      <>
-        <div className="mt-12">
-          <div className="list-none space-y-4">
-            {features?.map((feature, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              <CardFeature key={i} {...feature} />
-            ))}
-          </div>
-        </div>
-      </>
-    </Shell>
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {features?.map((feature, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+          <CardFeature key={i} {...feature} />
+        ))}
+      </ul>
+      <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
+        <Button variant="outline" className="rounded-full" asChild>
+          <Link href="/features/status-page">Status Page</Link>
+        </Button>
+        <Button className="rounded-full" asChild>
+          <Link href="/features/monitoring">Monitoring</Link>
+        </Button>
+      </div>
+    </CardContainer>
   );
 };
