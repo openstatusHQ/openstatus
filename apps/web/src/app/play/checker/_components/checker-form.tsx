@@ -60,7 +60,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -161,7 +161,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -263,7 +263,10 @@ export function CheckerForm() {
           </div>
         </form>
       </Form>
-      <TableResult result={result} loading={isPending} />
+      <div className="grid gap-4">
+        <TableResult result={result} loading={isPending} />
+        <DotLegend />
+      </div>
 
       <FloatingActionNoSSR id={id} />
 
@@ -317,8 +320,9 @@ function TableResult({
         {result.length > 0 ? (
           result.map((item) => (
             <TableRow key={item.region}>
-              <TableCell className="font-medium">
+              <TableCell className="flex items-center gap-2 font-medium">
                 {regionFormatter(item.region, "long")}
+                <StatusDot value={item.status} />
               </TableCell>
               <TableCell className="text-right">
                 {latencyFormatter(item.latency)}
@@ -338,4 +342,37 @@ function TableResult({
       </TableBody>
     </Table>
   );
+}
+
+function DotLegend() {
+  return (
+    <div className="flex items-center justify-center gap-3 text-center">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div
+          key={i}
+          className="flex items-center justify-between gap-2 font-mono text-muted-foreground text-xs"
+        >
+          <StatusDot value={i * 100} />
+          <span>{i}xx</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function StatusDot({ value }: { value: number }) {
+  switch (String(value).charAt(0)) {
+    case "1":
+      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+    case "2":
+      return <div className="h-1.5 w-1.5 rounded-full bg-green-500" />;
+    case "3":
+      return <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />;
+    case "4":
+      return <div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />;
+    case "5":
+      return <div className="h-1.5 w-1.5 rounded-full bg-red-500" />;
+    default:
+      return <div className="h-1.5 w-1.5 rounded-full bg-gray-500" />;
+  }
 }
