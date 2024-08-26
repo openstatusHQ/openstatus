@@ -1,5 +1,3 @@
-import { Suspense } from "react";
-import { CheckerForm } from "./checker-form";
 import {
   CardContainer,
   CardDescription,
@@ -7,6 +5,8 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import { Suspense } from "react";
+import { CheckerForm } from "./checker-form";
 
 export default async function CheckerPlay() {
   return (

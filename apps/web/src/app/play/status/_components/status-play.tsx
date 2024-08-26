@@ -1,8 +1,5 @@
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { Tracker } from "@/components/tracker/tracker";
-import { env } from "@/env";
-import { getServerTimezoneFormat } from "@/lib/timezone";
 import {
   CardContainer,
   CardDescription,
@@ -10,6 +7,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import { Tracker } from "@/components/tracker/tracker";
+import { env } from "@/env";
+import { getServerTimezoneFormat } from "@/lib/timezone";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -20,7 +20,7 @@ export default async function StatusPlay() {
     },
     {
       revalidate: 600, // 10 minutes
-    }
+    },
   );
 
   const formattedServerDate = getServerTimezoneFormat();

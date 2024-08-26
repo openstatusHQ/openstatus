@@ -35,7 +35,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
     )
     .pipe(monitorFlyRegionSchema.array().optional()),
 });
