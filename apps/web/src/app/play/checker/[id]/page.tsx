@@ -35,7 +35,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions
     )
     .pipe(monitorFlyRegionSchema.array().optional()),
 });
@@ -78,7 +78,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
       <Separator />
       <p className="text-muted-foreground text-sm">
         The data will be stored for{" "}
-        <span className="text-foreground">1 day</span>. If you want to persist
+        <span className="text-foreground">7 days</span>. If you want to persist
         the data,{" "}
         <Link
           href="/app/login"
