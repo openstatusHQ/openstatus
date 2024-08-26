@@ -9,10 +9,10 @@ import {
   timestampFormatter,
 } from "./utils";
 
+import { format } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
-import { utcToZonedTime } from "date-fns-tz";
-import { format } from "date-fns";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
@@ -130,7 +130,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     cell: ({ row }) => {
       const date = format(
         utcToZonedTime(row.original.time, "UTC"),
-        "MM LLL hh:mm a"
+        "MM LLL hh:mm a",
       );
 
       return <div className="whitespace-nowrap">{date}</div>;

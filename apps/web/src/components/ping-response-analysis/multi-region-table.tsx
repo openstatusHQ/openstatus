@@ -98,7 +98,7 @@ export function MultiRegionTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 );
@@ -121,7 +121,7 @@ export function MultiRegionTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -129,7 +129,7 @@ export function MultiRegionTable<TData, TValue>({
                 {row.getIsExpanded() && (
                   <TableRow
                     data-state="expanded"
-                    className="data-[state=expanded]:bg-muted/10 hover:bg-muted/10"
+                    className="hover:bg-muted/10 data-[state=expanded]:bg-muted/10"
                   >
                     {/* 2nd row is a custom 1 cell row */}
                     <TableCell colSpan={row.getVisibleCells().length}>

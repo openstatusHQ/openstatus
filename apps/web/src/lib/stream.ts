@@ -43,7 +43,7 @@ const decoder = new TextDecoder();
  */
 export async function POST(request: Request) {
   // extract your params from the request
-  const json = await request.json();
+  const _json = await request.json();
 
   const generator = yieldMany([
     new Promise((resolve) =>

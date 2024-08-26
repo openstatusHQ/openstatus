@@ -39,19 +39,19 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { Icons } from "@/components/icons";
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
 import {
+  type RegionChecker,
   is32CharHex,
   latencyFormatter,
-  type RegionChecker,
   regionFormatter,
 } from "@/components/ping-response-analysis/utils";
-import { Icons } from "@/components/icons";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { Loader, FileSearch } from "lucide-react";
-import Link from "next/link";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { toast } from "@/lib/toast";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { FileSearch, Loader } from "lucide-react";
+import Link from "next/link";
 
 /**
  * IDEA we can create a list of last requests and show them in a list, but
@@ -151,7 +151,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
                     {
                       id: toastId,
-                    }
+                    },
                   );
                 }
               }
@@ -167,7 +167,7 @@ export function CheckerForm() {
         }
 
         await fetchAndReadStream();
-      } catch (e) {
+      } catch (_e) {
         // TODO: better error handling, including e.g. toast
         form.setError("url", { message: "Something went wrong" });
       }

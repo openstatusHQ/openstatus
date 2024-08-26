@@ -1,12 +1,12 @@
 import {
-  checkRegion,
   type Method,
+  checkRegion,
   storeBaseCheckerData,
   storeCheckerData,
 } from "@/components/ping-response-analysis/utils";
+import { iteratorToStream, yieldMany } from "@/lib/stream";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { mockCheckRegion } from "./mock";
-import { iteratorToStream, yieldMany } from "@/lib/stream";
 
 export const runtime = "edge";
 

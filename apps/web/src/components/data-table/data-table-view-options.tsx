@@ -1,7 +1,7 @@
 "use client";
 
-import { Settings2 } from "lucide-react";
 import type { Table } from "@tanstack/react-table";
+import { Settings2 } from "lucide-react";
 
 import { Button } from "@openstatus/ui/src/components/button";
 import {
@@ -35,7 +35,7 @@ export function DataTableViewOptions<TData>({
           .getAllColumns()
           .filter(
             (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
+              typeof column.accessorFn !== "undefined" && column.getCanHide(),
           )
           .map((column) => {
             return (

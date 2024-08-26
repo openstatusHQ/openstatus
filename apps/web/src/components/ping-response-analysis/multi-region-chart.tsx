@@ -42,7 +42,7 @@ export function MultiRegionChart({ regions }: { regions: RegionChecker[] }) {
     .sort((a, b) => a.latency - b.latency) // FIXME: seems to be off
     .map((item) => {
       const { dns, connection, tls, ttfb, transfer } = getTimingPhases(
-        item.timing
+        item.timing,
       );
       return {
         region: item.region,

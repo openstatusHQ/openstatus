@@ -1,7 +1,7 @@
 import { Shell } from "@/components/dashboard/shell";
+import { Suspense } from "react";
 import { HeaderPlay } from "../../_components/header-play";
 import { CheckerForm } from "./checker-form";
-import { Suspense } from "react";
 
 export default async function CheckerPlay() {
   return (
