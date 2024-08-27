@@ -57,6 +57,7 @@ import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { FileSearch, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { notEmpty } from "@/lib/utils";
 
 const FloatingActionNoSSR = dynamic(
   () =>
@@ -64,7 +65,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -156,9 +157,20 @@ export function CheckerForm() {
                 if (!decoded) continue;
 
                 const array = decoded.split("\n").filter(Boolean);
-                const _result = array.map(
-                  (item) => JSON.parse(item) as RegionChecker,
-                );
+
+                console.log({ array });
+
+                const _result = array
+                  .map((item) => {
+                    try {
+                      const parsed = JSON.parse(item) as RegionChecker;
+                      return parsed;
+                    } catch (e) {
+                      console.error(e);
+                      return null;
+                    }
+                  })
+                  .filter(notEmpty);
 
                 console.log({ _result });
 
@@ -173,13 +185,15 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
             }
           } catch (e) {
             console.log(e);
+            const searchParams = updateSearchParams({ id: null });
+            router.replace(`${pathname}?${searchParams}`);
             toast.error("Something went wrong", {
               description: "Please try again",
               id: toastId,
