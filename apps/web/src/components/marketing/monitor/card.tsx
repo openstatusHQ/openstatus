@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
-import { Icons } from "@/components/icons";
 import { cardConfig } from "@/config/features";
 import {
   CardContainer,
@@ -14,6 +13,7 @@ import {
   CardTitle,
 } from "../card";
 import { Globe } from "./globe";
+import { SpeedCheckerButton } from "../speed-checker-button";
 
 export function MonitoringCard() {
   const { icon, title, features } = cardConfig.monitors;
@@ -34,11 +34,7 @@ export function MonitoringCard() {
             <Button variant="outline" className="rounded-full" asChild>
               <Link href="/features/monitoring">Learn more</Link>
             </Button>
-            <Button className="rounded-full" asChild>
-              <Link href="/play/checker">
-                Speed Checker <Icons.gauge className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
+            <SpeedCheckerButton />
           </div>
         </CardFeatureContainer>
       </CardContent>
