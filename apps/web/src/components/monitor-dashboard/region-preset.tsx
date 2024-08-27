@@ -40,7 +40,9 @@ export function RegionsPreset({
   className,
   ...props
 }: RegionsPresetProps) {
-  const [selected, setSelected] = React.useState<Region[]>(selectedRegions);
+  const [selected, setSelected] = React.useState<Region[]>(
+    selectedRegions.filter((r) => regions.includes(r))
+  ); // REMINDER: init without regions that failed to load
   const router = useRouter();
   const pathname = usePathname();
   const updateSearchParams = useUpdateSearchParams();
@@ -61,15 +63,20 @@ export function RegionsPreset({
     (prev, curr) => {
       const region = flyRegionsDict[curr];
 
-      if (prev[region.continent]) {
-        prev[region.continent].push(region);
+      const item = prev.find((r) => r.continent === region.continent);
+
+      if (item) {
+        item.data.push(region);
       } else {
-        prev[region.continent] = [region];
+        prev.push({
+          continent: region.continent,
+          data: [region],
+        });
       }
 
       return prev;
     },
-    {} as Record<Continent, RegionInfo[]>,
+    [] as { continent: Continent; data: RegionInfo[] }[]
   );
 
   return (
@@ -108,10 +115,10 @@ export function RegionsPreset({
               </CommandItem>
             </CommandGroup>
             <CommandSeparator />
-            {Object.entries(regionsByContinent).map(([key, regions]) => {
+            {regionsByContinent.map(({ continent, data }) => {
               return (
-                <CommandGroup key={key} heading={key}>
-                  {regions.map((region) => {
+                <CommandGroup key={continent} heading={continent}>
+                  {data.map((region) => {
                     const { code, flag, location, continent } = region;
                     const isSelected = selected.includes(code);
                     return (
@@ -123,7 +130,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code),
+                              : prev.filter((r) => r !== code)
                           );
                         }}
                       >
@@ -132,7 +139,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible",
+                              : "opacity-50 [&_svg]:invisible"
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />

@@ -53,7 +53,6 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
-import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { FileSearch, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -65,7 +64,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -158,7 +157,7 @@ export function CheckerForm() {
 
                 const array = decoded.split("\n").filter(Boolean);
                 const _result = array.map(
-                  (item) => JSON.parse(item) as RegionChecker,
+                  (item) => JSON.parse(item) as RegionChecker
                 );
 
                 console.log({ _result });
@@ -174,7 +173,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -338,6 +337,16 @@ function TableResult({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Not all regions where hit.</p>
+                    <p>
+                      Still{" "}
+                      <Link
+                        href={`/play/checker/${id}`}
+                        className="text-foreground underline underline-offset-4 hover:no-underline"
+                      >
+                        check the results
+                      </Link>
+                      ?
+                    </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

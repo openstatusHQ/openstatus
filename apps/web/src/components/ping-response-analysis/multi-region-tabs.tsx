@@ -2,7 +2,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
 import type { Row } from "@tanstack/react-table";
 import { RegionsPreset } from "../monitor-dashboard/region-preset";
@@ -27,7 +26,7 @@ export function MultiRegionTabs({
           <TabsTrigger value="chart">Chart</TabsTrigger>
         </TabsList>
         <RegionsPreset
-          regions={flyRegions as unknown as Region[]}
+          regions={regions.map((i) => i.region)}
           selectedRegions={selectedRegions ?? []}
           size="sm"
         />
