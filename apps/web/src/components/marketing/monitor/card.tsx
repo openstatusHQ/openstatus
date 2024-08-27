@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "../card";
 import { Globe } from "./globe";
+import { Icons } from "@/components/icons";
 
 export function MonitoringCard() {
   const { icon, title, features } = cardConfig.monitors;
@@ -31,10 +32,12 @@ export function MonitoringCard() {
           ))}
           <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
             <Button variant="outline" className="rounded-full" asChild>
-              <Link href="/play/checker">Playground</Link>
+              <Link href="/features/monitoring">Learn more</Link>
             </Button>
             <Button className="rounded-full" asChild>
-              <Link href="/features/monitoring">Learn more</Link>
+              <Link href="/play/checker">
+                Speed Checker <Icons.gauge className="ml-1 h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </CardFeatureContainer>
