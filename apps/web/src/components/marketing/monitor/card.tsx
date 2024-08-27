@@ -12,8 +12,8 @@ import {
   CardIcon,
   CardTitle,
 } from "../card";
-import { Globe } from "./globe";
 import { SpeedCheckerButton } from "../speed-checker-button";
+import { Globe } from "./globe";
 
 export function MonitoringCard() {
   const { icon, title, features } = cardConfig.monitors;
