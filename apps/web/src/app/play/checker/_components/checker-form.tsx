@@ -37,6 +37,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
@@ -50,9 +54,10 @@ import {
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { FileSearch, Loader } from "lucide-react";
+import { FileSearch, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { notEmpty } from "@/lib/utils";
 
 const FloatingActionNoSSR = dynamic(
   () =>
@@ -60,7 +65,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -125,7 +130,6 @@ export function CheckerForm() {
               if (value) {
                 const decoded = decoder.decode(value, { stream: true });
                 // REMINDER: validation
-                // console.log(decoded);
 
                 if (is32CharHex(decoded)) {
                   if (redirect) {
@@ -154,10 +158,12 @@ export function CheckerForm() {
 
                 const array = decoded.split("\n").filter(Boolean);
                 const _result = array.map(
-                  (item) => JSON.parse(item) as RegionChecker,
+                  (item) => JSON.parse(item) as RegionChecker
                 );
 
-                if (!_result) continue;
+                console.log({ _result });
+
+                if (!_result.length) continue;
 
                 currentResult = [...currentResult, ..._result];
                 // setResult((prev) => [...prev, ..._result]);
@@ -168,7 +174,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -271,7 +277,7 @@ export function CheckerForm() {
         </form>
       </Form>
       <div className="grid gap-4">
-        <TableResult result={result} loading={isPending} />
+        <TableResult result={result} loading={isPending} id={id} />
         <DotLegend />
       </div>
 
@@ -299,25 +305,42 @@ export function CheckerForm() {
 function TableResult({
   result,
   loading,
+  id,
 }: {
   loading: boolean;
   result: RegionChecker[];
+  id: string | null;
 }) {
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="flex w-[135px] items-center justify-between">
-            <p>
+          <TableHead className="flex items-center gap-1">
+            <p className="w-[95px]">
               Region{" "}
               <span className="font-normal text-xs tabular-nums">
                 ({result.length}/{flyRegions.length})
               </span>
             </p>
             {loading ? (
-              <Loader className="ml-1 inline h-4 w-4 animate-spin" />
+              <Loader className="inline h-4 w-4 animate-spin" />
             ) : result.length ? (
-              <Icons.check className="ml-1 inline h-4 w-4 text-green-500" />
+              <Icons.check className="inline h-4 w-4 text-green-500" />
+            ) : null}
+            {id &&
+            !loading &&
+            result.length > 0 &&
+            result.length !== flyRegions.length ? (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Not all regions where hit.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ) : null}
           </TableHead>
           <TableHead className="w-[100px] text-right">Latency</TableHead>
