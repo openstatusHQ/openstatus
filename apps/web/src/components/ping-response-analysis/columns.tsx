@@ -130,7 +130,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     cell: ({ row }) => {
       const date = format(
         utcToZonedTime(row.original.time, "UTC"),
-        "MM LLL hh:mm a",
+        "dd LLL hh:mm a"
       );
 
       return <div className="whitespace-nowrap">{date}</div>;
