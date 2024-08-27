@@ -53,11 +53,11 @@ import {
 } from "@/components/ping-response-analysis/utils";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
+import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { FileSearch, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { notEmpty } from "@/lib/utils";
 
 const FloatingActionNoSSR = dynamic(
   () =>
@@ -65,7 +65,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  }
+  },
 );
 
 /**
@@ -185,7 +185,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    }
+                    },
                   );
                 }
               }
