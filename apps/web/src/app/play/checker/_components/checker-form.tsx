@@ -65,7 +65,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -140,14 +140,14 @@ export function CheckerForm() {
                     try {
                       if (is32CharHex(item)) {
                         if (redirect) {
-                          router.push(`/play/checker/${decoded}`);
+                          router.push(`/play/checker/${item}`);
                           toast.success("Data is available! Redirecting...", {
                             id: toastId,
                             duration: 2000,
                           });
                         } else {
                           const searchParams = updateSearchParams({
-                            id: decoded,
+                            id: item,
                           });
                           router.replace(`${pathname}?${searchParams}`);
                           toast.success("Data is available!", {
@@ -157,7 +157,7 @@ export function CheckerForm() {
                             action: {
                               label: "Details",
                               onClick: () =>
-                                router.push(`/play/checker/${decoded}`),
+                                router.push(`/play/checker/${item}`),
                             },
                           });
                         }
@@ -184,7 +184,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
