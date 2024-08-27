@@ -40,6 +40,7 @@ async function* makeIterator({
       );
     } catch (error) {
       console.error(error);
+      return encoder.encode("");
     }
   });
 

@@ -60,7 +60,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -150,18 +150,25 @@ export function CheckerForm() {
                   continue;
                 }
 
-                const _result = JSON.parse(decoded) as RegionChecker;
+                if (!decoded) continue;
 
-                currentResult = [...currentResult, _result];
+                const array = decoded.split("\n").filter(Boolean);
+                const _result = array.map(
+                  (item) => JSON.parse(item) as RegionChecker
+                );
+
+                if (!_result) continue;
+
+                currentResult = [...currentResult, ..._result];
                 // setResult((prev) => [...prev, ..._result]);
                 setResult(currentResult);
 
                 if (_result) {
                   toast.loading(
-                    `Checking ${regionFormatter(_result.region, "long")} (${latencyFormatter(_result.latency)})`,
+                    `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
