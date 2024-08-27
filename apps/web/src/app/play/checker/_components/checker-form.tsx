@@ -335,8 +335,8 @@ function TableResult({
                   <TooltipTrigger>
                     <Info className="h-4 w-4 text-muted-foreground" />
                   </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Not all regions where hit.</p>
+                  <TooltipContent className="text-muted-foreground">
+                    <p>Not all regions were hit.</p>
                     <p>
                       Still{" "}
                       <Link
