@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
+import { Icons } from "@/components/icons";
 import { cardConfig } from "@/config/features";
 import {
   CardContainer,
@@ -13,7 +14,6 @@ import {
   CardTitle,
 } from "../card";
 import { Globe } from "./globe";
-import { Icons } from "@/components/icons";
 
 export function MonitoringCard() {
   const { icon, title, features } = cardConfig.monitors;
