@@ -64,7 +64,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  }
+  },
 );
 
 /**
@@ -157,7 +157,7 @@ export function CheckerForm() {
 
                 const array = decoded.split("\n").filter(Boolean);
                 const _result = array.map(
-                  (item) => JSON.parse(item) as RegionChecker
+                  (item) => JSON.parse(item) as RegionChecker,
                 );
 
                 console.log({ _result });
@@ -173,7 +173,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    }
+                    },
                   );
                 }
               }

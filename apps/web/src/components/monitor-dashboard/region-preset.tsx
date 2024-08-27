@@ -41,7 +41,7 @@ export function RegionsPreset({
   ...props
 }: RegionsPresetProps) {
   const [selected, setSelected] = React.useState<Region[]>(
-    selectedRegions.filter((r) => regions.includes(r))
+    selectedRegions.filter((r) => regions.includes(r)),
   ); // REMINDER: init without regions that failed to load
   const router = useRouter();
   const pathname = usePathname();
@@ -76,7 +76,7 @@ export function RegionsPreset({
 
       return prev;
     },
-    [] as { continent: Continent; data: RegionInfo[] }[]
+    [] as { continent: Continent; data: RegionInfo[] }[],
   );
 
   return (
@@ -130,7 +130,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code)
+                              : prev.filter((r) => r !== code),
                           );
                         }}
                       >
@@ -139,7 +139,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
+                              : "opacity-50 [&_svg]:invisible",
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />
