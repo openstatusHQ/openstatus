@@ -131,48 +131,47 @@ export function CheckerForm() {
                 const decoded = decoder.decode(value, { stream: true });
                 // REMINDER: validation
 
-                if (is32CharHex(decoded)) {
-                  if (redirect) {
-                    router.push(`/play/checker/${decoded}`);
-                    toast.success("Data is available! Redirecting...", {
-                      id: toastId,
-                      duration: 2000,
-                    });
-                  } else {
-                    const searchParams = updateSearchParams({ id: decoded });
-                    router.replace(`${pathname}?${searchParams}`);
-                    toast.success("Data is available!", {
-                      id: toastId,
-                      duration: 3000,
-                      description: "Click the button below to more.",
-                      action: {
-                        label: "Details",
-                        onClick: () => router.push(`/play/checker/${decoded}`),
-                      },
-                    });
-                  }
-                  continue;
-                }
-
                 if (!decoded) continue;
 
                 const array = decoded.split("\n").filter(Boolean);
 
-                console.log({ array });
-
                 const _result = array
                   .map((item) => {
                     try {
-                      const parsed = JSON.parse(item) as RegionChecker;
-                      return parsed;
+                      if (is32CharHex(item)) {
+                        if (redirect) {
+                          router.push(`/play/checker/${decoded}`);
+                          toast.success("Data is available! Redirecting...", {
+                            id: toastId,
+                            duration: 2000,
+                          });
+                        } else {
+                          const searchParams = updateSearchParams({
+                            id: decoded,
+                          });
+                          router.replace(`${pathname}?${searchParams}`);
+                          toast.success("Data is available!", {
+                            id: toastId,
+                            duration: 3000,
+                            description: "Click the button below to more.",
+                            action: {
+                              label: "Details",
+                              onClick: () =>
+                                router.push(`/play/checker/${decoded}`),
+                            },
+                          });
+                        }
+                      } else {
+                        const parsed = JSON.parse(item) as RegionChecker;
+                        return parsed;
+                      }
+                      return null;
                     } catch (e) {
                       console.error(e);
                       return null;
                     }
                   })
                   .filter(notEmpty);
-
-                console.log({ _result });
 
                 if (!_result.length) continue;
 
