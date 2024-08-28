@@ -7,8 +7,13 @@ import {
 } from "@/components/marketing/card";
 import { Suspense } from "react";
 import { CheckerForm } from "./checker-form";
+import type { CachedRegionChecker } from "@/components/ping-response-analysis/utils";
 
-export default async function CheckerPlay() {
+export default async function CheckerPlay({
+  data,
+}: {
+  data: CachedRegionChecker | null;
+}) {
   return (
     <CardContainer>
       <CardHeader>
@@ -23,7 +28,14 @@ export default async function CheckerPlay() {
 
       <div className="mx-auto grid w-full max-w-xl gap-6">
         <Suspense fallback={null}>
-          <CheckerForm />
+          <CheckerForm
+            defaultValues={
+              data
+                ? { redirect: false, ...data }
+                : { redirect: false, url: "", method: "GET" }
+            }
+            defaultData={data?.checks.sort((a, b) => a.latency - b.latency)}
+          />
         </Suspense>
       </div>
     </CardContainer>

@@ -119,6 +119,7 @@ export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
 export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
+export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 
 export async function checkRegion(
   url: string,

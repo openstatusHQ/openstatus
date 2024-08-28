@@ -65,7 +65,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -78,20 +78,25 @@ const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
 const formSchema = z.object({
   url: z.string().url(),
   method: z.enum(METHODS).default("GET"),
-  redirect: z.boolean().default(true),
+  redirect: z.boolean().default(false),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
-export function CheckerForm() {
+interface CheckerFormProps {
+  defaultValues?: FormSchema;
+  defaultData?: RegionChecker[];
+}
+
+export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
-    defaultValues: { method: "GET", url: "", redirect: false }, // make the url a prop that can be passed via search param
+    defaultValues,
   });
-  const [result, setResult] = useState<RegionChecker[]>([]);
+  const [result, setResult] = useState<RegionChecker[]>(defaultData || []);
   const updateSearchParams = useUpdateSearchParams();
   const searchParams = useSearchParams();
 
@@ -184,7 +189,7 @@ export function CheckerForm() {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
