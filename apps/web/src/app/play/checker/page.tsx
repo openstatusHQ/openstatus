@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 
 import { BottomCTA } from "@/components/marketing/in-between-cta";
+import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import CheckerPlay from "./_components/checker-play";
 import { GlobalMonitoring } from "./_components/global-monitoring";
 import { Testimonial } from "./_components/testimonial";
-import { z } from "zod";
-import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
-import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Global Speed Checker",

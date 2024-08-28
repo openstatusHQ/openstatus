@@ -5,9 +5,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import type { CachedRegionChecker } from "@/components/ping-response-analysis/utils";
 import { Suspense } from "react";
 import { CheckerForm } from "./checker-form";
-import type { CachedRegionChecker } from "@/components/ping-response-analysis/utils";
 
 export default async function CheckerPlay({
   data,
