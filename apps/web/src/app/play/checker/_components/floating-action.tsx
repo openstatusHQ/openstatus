@@ -10,12 +10,12 @@ export function FloatingAction({ id }: { id: string | null }) {
   return (
     <Portal.Root>
       <div className="fixed right-4 bottom-4 z-50 mx-auto w-fit px-4">
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-4 py-3 shadow">
-          <p className="text-muted-foreground text-sm">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-foreground px-4 py-3 shadow">
+          <p className="text-muted text-sm">
             Wanna learn more?{" "}
             <Link
               href={`/play/checker/${id}`}
-              className="text-foreground underline underline-offset-4 hover:no-underline"
+              className="text-background underline underline-offset-4 hover:no-underline"
             >
               Details
               <ArrowUpRight className="ml-1 inline h-4 w-4" />

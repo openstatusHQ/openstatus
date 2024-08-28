@@ -1,12 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  redirect,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -55,7 +50,7 @@ import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { FileSearch, Info, Loader } from "lucide-react";
+import { ChevronRight, FileSearch, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 
@@ -65,7 +60,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -189,7 +184,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -299,22 +294,6 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
       </div>
 
       <FloatingActionNoSSR id={id} />
-
-      {!isPending && id ? (
-        <Alert>
-          <FileSearch className="h-4 w-4" />
-          <AlertTitle>Extended Details</AlertTitle>
-          <AlertDescription>
-            Check it out!{" "}
-            <Link
-              href={`/play/checker/${id}`}
-              className="font-mono text-foreground underline underline-offset-4 hover:no-underline"
-            >
-              {id}
-            </Link>
-          </AlertDescription>
-        </Alert>
-      ) : null}
     </>
   );
 }
