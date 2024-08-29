@@ -1,5 +1,7 @@
 {
-  "editor.codeActionsOnSave": {},
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  },
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",

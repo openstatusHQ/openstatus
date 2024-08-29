@@ -7,6 +7,7 @@ import { Button } from "@openstatus/ui/src/components/button";
 
 import { getGitHubStars } from "@/lib/github";
 import { cn, numberFormatter } from "@/lib/utils";
+import { SpeedCheckerButton } from "./speed-checker-button";
 
 export function Hero() {
   return (
@@ -57,6 +58,9 @@ export function Hero() {
               </Suspense>
             </Link>
           </Button>
+        </div>
+        <div className="col-span-full">
+          <SpeedCheckerButton variant="ghost" className="w-48 sm:w-auto" />
         </div>
       </div>
     </div>

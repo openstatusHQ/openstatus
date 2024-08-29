@@ -1,36 +1,70 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
-import { type RegionChecker, latencyFormatter, regionFormatter } from "./utils";
+import {
+  type RegionChecker,
+  continentFormatter,
+  latencyFormatter,
+  regionFormatter,
+  timestampFormatter,
+} from "./utils";
 
+import { format } from "date-fns";
+import { utcToZonedTime } from "date-fns-tz";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
-    accessorKey: "region",
+    id: "key",
+    accessorFn: (row) => row.region,
+    header: "Key",
     cell: ({ row }) => {
-      return <div>{regionFormatter(row.original.region)}</div>;
+      return <div className="font-mono">{row.original.region}</div>;
     },
+    enableHiding: false,
+  },
+  {
+    accessorKey: "region",
+    header: "Region",
+    cell: ({ row }) => {
+      return (
+        <div className="text-muted-foreground">
+          {regionFormatter(row.original.region, "long")}
+        </div>
+      );
+    },
+  },
+  {
+    id: "continent",
+    accessorFn: (row) => continentFormatter(row.region),
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Region" />;
+      return <DataTableColumnHeader column={column} title="Continent" />;
+    },
+    cell: ({ row }) => {
+      return <div>{row.getValue("continent")}</div>;
     },
   },
   {
     accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Status" />;
-    },
+    header: "Status",
     cell: ({ row }) => {
       return <StatusCodeBadge statusCode={row.original.status} />;
     },
   },
   {
-    id: "dns",
+    id: "DNS",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="DNS" />;
     },
     accessorFn: (row) => `${row.timing.dnsDone - row.timing.dnsStart}`,
+    cell: ({ row, column }) => {
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
+    },
   },
   {
     id: "connect",
@@ -38,21 +72,43 @@ export const columns: ColumnDef<RegionChecker>[] = [
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="Connect" />;
     },
+    cell: ({ row, column }) => {
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
+    },
   },
   {
-    id: "tls",
+    id: "TLS",
+
     accessorFn: (row) =>
       `${row.timing.tlsHandshakeDone - row.timing.tlsHandshakeStart}`,
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="TLS" />;
     },
+    cell: ({ row, column }) => {
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
+    },
   },
   {
-    id: "ttfb",
+    id: "TTFB",
     accessorFn: (row) =>
       `${row.timing.firstByteDone - row.timing.firstByteStart}`,
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="TTFB" />;
+    },
+    cell: ({ row, column }) => {
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
     },
   },
   {
@@ -61,7 +117,23 @@ export const columns: ColumnDef<RegionChecker>[] = [
       return <DataTableColumnHeader column={column} title="Latency" />;
     },
     cell: ({ row }) => {
-      return <div>{latencyFormatter(row.original.latency)}</div>;
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.original.latency)}
+        </div>
+      );
+    },
+  },
+  {
+    id: "Time (UTC)",
+    accessorFn: (row) => row.time,
+    cell: ({ row }) => {
+      const date = format(
+        utcToZonedTime(row.original.time, "UTC"),
+        "dd LLL hh:mm a",
+      );
+
+      return <div className="whitespace-nowrap">{date}</div>;
     },
   },
 ];

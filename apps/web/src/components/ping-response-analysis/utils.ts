@@ -6,7 +6,7 @@ import {
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
-import { flyRegionsDict } from "@openstatus/utils";
+import { continentDict, flyRegionsDict } from "@openstatus/utils";
 
 export function latencyFormatter(value: number) {
   return `${new Intl.NumberFormat("us").format(value).toString()}ms`;
@@ -16,13 +16,18 @@ export function timestampFormatter(timestamp: number) {
   return new Date(timestamp).toUTCString(); // GMT format
 }
 
+export function continentFormatter(region: MonitorFlyRegion) {
+  const continent = flyRegionsDict[region].continent;
+  return continentDict[continent].code;
+}
+
 export function regionFormatter(
   region: MonitorFlyRegion,
   type: "short" | "long" = "short",
 ) {
   const { code, flag, location } = flyRegionsDict[region];
   if (type === "short") return `${code} ${flag}`;
-  return `${location}`;
+  return `${location} ${flag}`;
 }
 
 export function getTotalLatency(timing: Timing) {
@@ -114,6 +119,7 @@ export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 export type RegionChecker = Checker & { region: MonitorFlyRegion };
 export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
+export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 
 export async function checkRegion(
   url: string,
@@ -182,40 +188,89 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
   );
 }
 
-export async function setCheckerData(url: string, opts?: { method: Method }) {
+export async function storeBaseCheckerData({
+  url,
+  method,
+  id,
+}: {
+  url: string;
+  method: Method;
+  id: string;
+}) {
   const redis = Redis.fromEnv();
   const time = new Date().getTime();
-  const checks = await checkAllRegions(url, opts);
-  const { method } = opts || {};
+  const cache = { url, method, time };
 
-  const cache = { time, url, checks, method };
-
-  const uuid = crypto.randomUUID().replace(/-/g, "");
-
-  const parsed = cachedCheckerSchema.safeParse(cache);
+  const parsed = cachedCheckerSchema
+    .pick({ url: true, method: true, time: true })
+    .safeParse(cache);
 
   if (!parsed.success) {
     throw new Error(parsed.error.message);
   }
 
-  await redis.set(uuid, JSON.stringify(parsed.data), { ex: 86_400 }); // 60 * 60 * 24 = 1d
+  await redis.hset(`check:base:${id}`, parsed.data);
+  const expire = 60 * 60 * 24 * 7; // 7days
+  await redis.expire(`check:base:${id}`, expire);
 
-  return uuid;
+  return id;
+}
+
+export async function storeCheckerData({
+  check,
+  id,
+}: {
+  check: RegionChecker;
+  id: string;
+}) {
+  const redis = Redis.fromEnv();
+
+  const parsed = cachedCheckerSchema
+    .pick({ checks: true })
+    .safeParse({ checks: [check] });
+
+  if (!parsed.success) {
+    throw new Error(parsed.error.message);
+  }
+
+  const first = parsed.data.checks?.[0];
+
+  if (first) await redis.sadd(`check:data:${id}`, first);
+
+  return id;
 }
 
 export async function getCheckerDataById(id: string) {
   const redis = Redis.fromEnv();
-  const cache = await redis.get(id);
+  const pipe = redis.pipeline();
+  pipe.hgetall(`check:base:${id}`);
+  pipe.smembers(`check:data:${id}`);
 
-  if (!cache) {
+  const res =
+    await pipe.exec<
+      [{ url: string; method: Method; time: number }, RegionChecker]
+    >();
+
+  if (!res) {
     return null;
   }
 
-  const parsed = cachedCheckerSchema.safeParse(cache);
+  const parsed = cachedCheckerSchema.safeParse({ ...res[0], checks: res[1] });
 
   if (!parsed.success) {
-    throw new Error(parsed.error.message);
+    // throw new Error(parsed.error.message);
+    return null;
   }
 
   return parsed.data;
+}
+
+/**
+ * Simple function to validate crypto.randomUUID() format like "aec4e0ec3c4f4557b8ce46e55078fc95"
+ * @param uuid
+ * @returns
+ */
+export function is32CharHex(uuid: string) {
+  const hexRegex = /^[0-9a-fA-F]{32}$/;
+  return hexRegex.test(uuid);
 }
