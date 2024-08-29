@@ -35,7 +35,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions
     )
     .pipe(monitorFlyRegionSchema.array().optional()),
 });
@@ -49,8 +49,6 @@ export default async function CheckPage({ params, searchParams }: Props) {
   const search = searchParamsSchema.safeParse(searchParams);
 
   const selectedRegions = search.success ? search.data.regions : undefined;
-
-  console.log({ search, selectedRegions });
 
   const data = await getCheckerDataById(params.id);
 
