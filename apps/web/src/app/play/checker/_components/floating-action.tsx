@@ -1,7 +1,8 @@
 "use client";
 
+import { Button } from "@openstatus/ui";
 import * as Portal from "@radix-ui/react-portal";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export function FloatingAction({ id }: { id: string | null }) {
@@ -9,19 +10,14 @@ export function FloatingAction({ id }: { id: string | null }) {
 
   return (
     <Portal.Root>
-      <div className="fixed right-4 bottom-4 z-50 mx-auto w-fit px-4">
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-foreground px-4 py-3 shadow">
-          <p className="text-muted text-sm">
-            Wanna learn more?{" "}
-            <Link
-              href={`/play/checker/${id}`}
-              className="text-background underline underline-offset-4 hover:no-underline"
-            >
-              Details
-              <ArrowUpRight className="ml-1 inline h-4 w-4" />
-            </Link>
-          </p>
-        </div>
+      <div className="group fixed right-4 bottom-4 z-50 mx-auto w-fit">
+        <Button asChild>
+          <Link href={`/play/checker/${id}`}>
+            <span className="mr-1">Response Details</span>
+            <ArrowRight className="relative mb-[1px] inline h-4 w-0 transition-all group-hover:w-4" />
+            <ChevronRight className="relative mb-[1px] inline h-4 w-4 transition-all group-hover:w-0" />
+          </Link>
+        </Button>
       </div>
     </Portal.Root>
   );

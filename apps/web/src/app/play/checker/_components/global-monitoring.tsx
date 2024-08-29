@@ -20,13 +20,19 @@ const features: {
     icon: "gauge",
     catchline: "Speed Test for Websites",
     description:
-      "Optimize your website’s performance with our global speed checker. Get insights on page load times across various regions, ensuring your site delivers a fast and seamless experience worldwide.",
+      "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB) of the response.",
   },
   {
     icon: "globe",
-    catchline: "Multi-Region Performance Monitoring",
+    catchline: "Global Latency",
     description:
-      "Evaluate your website’s global latency with our multi-region speed test. Monitor performance in different regions to ensure quick load times for users across the planet.",
+      "Monitor performance in different regions to ensure quick load times for users across 35 regions around the world.",
+  },
+  {
+    icon: "link",
+    catchline: "Share the Results",
+    description:
+      "Quickly share the results of your website speed test with your team or clients. We share the results for 7 days, so you can easily collaborate on performance.",
   },
 ];
 export const GlobalMonitoring = () => {
@@ -36,7 +42,7 @@ export const GlobalMonitoring = () => {
         <CardIcon icon="activity" />
         <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
-      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
         {features?.map((feature, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <CardFeature key={i} {...feature} />
