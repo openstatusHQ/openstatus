@@ -6,7 +6,6 @@ import {
   continentFormatter,
   latencyFormatter,
   regionFormatter,
-  timestampFormatter,
 } from "./utils";
 
 import { format } from "date-fns";
