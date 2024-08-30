@@ -31,12 +31,12 @@ export function MultiRegionTabs({
           size="sm"
         />
       </div>
-      <TabsContent value="chart">
+      <TabsContent value="chart" className="mt-3">
         <MultiRegionChart
           regions={regions.filter((i) => selectedRegions?.includes(i.region))}
         />
       </TabsContent>
-      <TabsContent value="table">
+      <TabsContent value="table" className="mt-3">
         <MultiRegionTable
           data={regions.filter((i) => selectedRegions?.includes(i.region))}
           columns={columns}

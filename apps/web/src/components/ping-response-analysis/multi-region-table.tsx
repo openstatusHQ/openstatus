@@ -12,6 +12,7 @@ import {
 
 import {
   type ColumnDef,
+  ColumnFiltersState,
   type ExpandedState,
   type Row,
   type SortingState,
@@ -19,12 +20,14 @@ import {
   flexRender,
   getCoreRowModel,
   getExpandedRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Fragment, useState } from "react";
 import { DataTableViewOptions } from "../data-table/data-table-view-options";
 import { DataTableCollapseButton } from "./data-table-collapse-button";
+import { Input } from "@openstatus/ui";
 
 // TBD: add the popover infos about timing details
 
@@ -51,6 +54,7 @@ export function MultiRegionTable<TData, TValue>({
     continent: false,
     "Time (UTC)": false,
   });
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -58,24 +62,32 @@ export function MultiRegionTable<TData, TValue>({
     onSortingChange: setSorting,
     onExpandedChange: setExpanded,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getRowCanExpand,
     autoResetExpanded,
     state: {
       sorting,
       expanded,
       columnVisibility,
+      columnFilters,
     },
   });
 
   return (
     <div className="grid gap-4">
       <div className="flex items-end justify-between gap-2">
-        <p className="text-muted-foreground text-xs">
-          Select a row to expand the response details.
-        </p>
+        <Input
+          placeholder="Filter regions, continents, flags..."
+          value={(table.getColumn("region")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("region")?.setFilterValue(event.target.value)
+          }
+          className="h-8 max-w-[325px]"
+        />
         <div className="flex items-center justify-end gap-2">
           <DataTableCollapseButton table={table} />
           <DataTableViewOptions table={table} />
