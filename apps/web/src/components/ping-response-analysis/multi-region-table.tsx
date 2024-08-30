@@ -86,7 +86,7 @@ export function MultiRegionTable<TData, TValue>({
           onChange={(event) =>
             table.getColumn("region")?.setFilterValue(event.target.value)
           }
-          className="h-8 max-w-[325px]"
+          className="h-8 max-w-[325px] truncate"
         />
         <div className="flex items-center justify-end gap-2">
           <DataTableCollapseButton table={table} />

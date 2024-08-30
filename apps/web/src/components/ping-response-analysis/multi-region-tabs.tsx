@@ -20,10 +20,14 @@ export function MultiRegionTabs({
 }) {
   return (
     <Tabs defaultValue="table">
-      <div className="flex items-center justify-between">
-        <TabsList>
-          <TabsTrigger value="table">Table</TabsTrigger>
-          <TabsTrigger value="chart">Chart</TabsTrigger>
+      <div className="flex items-center justify-between gap-2">
+        <TabsList className="h-8 p-0.5">
+          <TabsTrigger value="table" className="h-7">
+            Table
+          </TabsTrigger>
+          <TabsTrigger value="chart" className="h-7">
+            Chart
+          </TabsTrigger>
         </TabsList>
         <RegionsPreset
           regions={regions.map((i) => i.region)}
