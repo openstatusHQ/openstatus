@@ -82,7 +82,6 @@ export const columns: ColumnDef<RegionChecker>[] = [
   },
   {
     id: "TLS",
-
     accessorFn: (row) =>
       `${row.timing.tlsHandshakeDone - row.timing.tlsHandshakeStart}`,
     header: ({ column }) => {
@@ -112,6 +111,21 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
   },
   {
+    accessorKey: "transfer",
+    accessorFn: (row) =>
+      `${row.timing.transferDone - row.timing.transferStart}`,
+    header: ({ column }) => {
+      return <DataTableColumnHeader column={column} title="Transfer" />;
+    },
+    cell: ({ row, column }) => {
+      return (
+        <div className="font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: "latency",
     header: ({ column }) => {
       return <DataTableColumnHeader column={column} title="Latency" />;
@@ -130,7 +144,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
     cell: ({ row }) => {
       const date = format(
         utcToZonedTime(row.original.time, "UTC"),
-        "dd LLL hh:mm a",
+        "dd LLL hh:mm a"
       );
 
       return <div className="whitespace-nowrap">{date}</div>;
