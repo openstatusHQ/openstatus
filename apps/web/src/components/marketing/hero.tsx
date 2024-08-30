@@ -29,7 +29,7 @@ export function Hero() {
         <h1
           className={cn(
             "font-cal text-4xl text-foreground md:text-6xl",
-            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent",
+            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
           )}
         >
           A better way to monitor your services.
@@ -58,9 +58,6 @@ export function Hero() {
               </Suspense>
             </Link>
           </Button>
-        </div>
-        <div className="col-span-full">
-          <SpeedCheckerButton variant="ghost" className="w-48 sm:w-auto" />
         </div>
       </div>
     </div>

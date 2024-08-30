@@ -48,10 +48,8 @@ export function MultiRegionTable<TData, TValue>({
   ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    DNS: false,
-    TLS: false,
-    TTFB: false,
-    connect: false,
+    continent: false,
+    "Time (UTC)": false,
   });
 
   const table = useReactTable({
@@ -98,7 +96,7 @@ export function MultiRegionTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                   </TableHead>
                 );
@@ -121,7 +119,7 @@ export function MultiRegionTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}

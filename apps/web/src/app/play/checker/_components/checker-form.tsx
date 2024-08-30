@@ -50,7 +50,13 @@ import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import { ChevronRight, FileSearch, Info, Loader } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronRight,
+  FileSearch,
+  Info,
+  Loader,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 
@@ -60,7 +66,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -184,7 +190,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -291,6 +297,15 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
       <div className="grid gap-4">
         <TableResult result={result} loading={isPending} id={id} />
         <DotLegend />
+        {id ? (
+          <Button variant="secondary" className="group" asChild>
+            <Link href={`/play/checker/${id}`}>
+              <span className="mr-1">Response Details</span>
+              <ArrowRight className="relative mb-[1px] inline h-4 w-0 transition-all group-hover:w-4" />
+              <ChevronRight className="relative mb-[1px] inline h-4 w-4 transition-all group-hover:w-0" />
+            </Link>
+          </Button>
+        ) : null}
       </div>
 
       <FloatingActionNoSSR id={id} />
