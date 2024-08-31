@@ -10,9 +10,10 @@ import {
   TableRow,
 } from "@openstatus/ui/src/components/table";
 
+import { Input } from "@openstatus/ui";
 import {
   type ColumnDef,
-  ColumnFiltersState,
+  type ColumnFiltersState,
   type ExpandedState,
   type Row,
   type SortingState,
@@ -27,7 +28,6 @@ import {
 import { Fragment, useState } from "react";
 import { DataTableViewOptions } from "../data-table/data-table-view-options";
 import { DataTableCollapseButton } from "./data-table-collapse-button";
-import { Input } from "@openstatus/ui";
 
 // TBD: add the popover infos about timing details
 
@@ -105,7 +105,7 @@ export function MultiRegionTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 );
@@ -128,7 +128,7 @@ export function MultiRegionTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

@@ -8,11 +8,11 @@ import {
   regionFormatter,
 } from "./utils";
 
+import { flyRegionsDict } from "@openstatus/utils";
 import { format } from "date-fns";
 import { utcToZonedTime } from "date-fns-tz";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
 import { StatusCodeBadge } from "../monitor/status-code-badge";
-import { flyRegionsDict } from "@openstatus/utils";
 
 export const columns: ColumnDef<RegionChecker>[] = [
   {
@@ -35,7 +35,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
-    filterFn: (row, id, filterValue) => {
+    filterFn: (row, _id, filterValue) => {
       const region = regionFormatter(row.original.region, "long").toLowerCase();
       const continent =
         flyRegionsDict[row.original.region].continent.toLocaleLowerCase();
@@ -56,14 +56,14 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="DNS"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     accessorFn: (row) => `${row.timing.dnsDone - row.timing.dnsStart}`,
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -80,13 +80,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="Connect"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -104,13 +104,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="TLS"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -128,13 +128,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="TTFB"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -152,13 +152,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="Transfer"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
@@ -174,13 +174,13 @@ export const columns: ColumnDef<RegionChecker>[] = [
         <DataTableColumnHeader
           column={column}
           title="Latency"
-          className="text-right pr-0"
+          className="pr-0 text-right"
         />
       );
     },
     cell: ({ row }) => {
       return (
-        <div className="font-mono text-right">
+        <div className="text-right font-mono">
           {latencyFormatter(row.original.latency)}
         </div>
       );

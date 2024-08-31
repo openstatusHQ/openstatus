@@ -1,7 +1,7 @@
 import type { Column } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-import { Button, ButtonProps } from "@openstatus/ui";
+import { Button, type ButtonProps } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export function DataTableColumnHeader<TData, TValue>({
             "-mb-0.5 h-3 w-3",
             column.getIsSorted() === "asc" || !column.getIsSorted()
               ? "text-accent-foreground"
-              : "text-muted-foreground/70"
+              : "text-muted-foreground/70",
           )}
         />
         <ChevronDown
@@ -45,7 +45,7 @@ export function DataTableColumnHeader<TData, TValue>({
             "-mt-0.5 h-3 w-3",
             column.getIsSorted() === "desc" || !column.getIsSorted()
               ? "text-accent-foreground"
-              : "text-muted-foreground/70"
+              : "text-muted-foreground/70",
           )}
         />
       </span>
