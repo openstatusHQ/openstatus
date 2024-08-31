@@ -50,10 +50,7 @@ export function MultiRegionTable<TData, TValue>({
     { id: "latency", desc: false },
   ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    continent: false,
-    "Time (UTC)": false,
-  });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({

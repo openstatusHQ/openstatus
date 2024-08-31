@@ -43,16 +43,6 @@ export const columns: ColumnDef<RegionChecker>[] = [
     },
   },
   {
-    id: "continent",
-    accessorFn: (row) => continentFormatter(row.region),
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Continent" />;
-    },
-    cell: ({ row }) => {
-      return <div>{row.getValue("continent")}</div>;
-    },
-  },
-  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
@@ -78,6 +68,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
+    meta: {
+      headerClassName: "text-right",
+    },
   },
   {
     id: "connect",
@@ -97,6 +90,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
@@ -119,6 +115,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
+    meta: {
+      headerClassName: "text-right",
+    },
   },
   {
     id: "TTFB",
@@ -139,6 +138,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
@@ -161,6 +163,9 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
+    meta: {
+      headerClassName: "text-right",
+    },
   },
   {
     accessorKey: "latency",
@@ -180,17 +185,8 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
-  },
-  {
-    id: "Time (UTC)",
-    accessorFn: (row) => row.time,
-    cell: ({ row }) => {
-      const date = format(
-        utcToZonedTime(row.original.time, "UTC"),
-        "dd LLL hh:mm a"
-      );
-
-      return <div className="whitespace-nowrap">{date}</div>;
+    meta: {
+      headerClassName: "text-right",
     },
   },
 ];
