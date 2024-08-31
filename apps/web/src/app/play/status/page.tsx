@@ -17,7 +17,7 @@ export const revalidate = 600;
 
 export default async function PlayPage() {
   return (
-    <div className="my-8 md:my-16">
+    <div className="w-full">
       <StatusPlay />
     </div>
   );

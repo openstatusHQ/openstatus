@@ -39,8 +39,18 @@ export function CardTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CardDescription({ children }: { children: React.ReactNode }) {
-  return <p className="text-center text-muted-foreground">{children}</p>;
+export function CardDescription({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <p className={cn("text-center text-muted-foreground", className)}>
+      {children}
+    </p>
+  );
 }
 
 export function CardContent({

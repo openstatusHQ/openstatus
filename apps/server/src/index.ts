@@ -32,7 +32,7 @@ app.route("/v1", api);
 app.route("/", checkerRoute);
 
 const isDev = process.env.NODE_ENV === "development";
-const port = isDev ? 3001 : 3000;
+const port = 3000;
 
 if (isDev) showRoutes(app, { verbose: true, colorize: true });
 

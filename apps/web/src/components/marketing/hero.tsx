@@ -7,6 +7,7 @@ import { Button } from "@openstatus/ui/src/components/button";
 
 import { getGitHubStars } from "@/lib/github";
 import { cn, numberFormatter } from "@/lib/utils";
+import { SpeedCheckerButton } from "./speed-checker-button";
 
 export function Hero() {
   return (
@@ -28,7 +29,7 @@ export function Hero() {
         <h1
           className={cn(
             "font-cal text-4xl text-foreground md:text-6xl",
-            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent",
+            "bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
           )}
         >
           A better way to monitor your services.

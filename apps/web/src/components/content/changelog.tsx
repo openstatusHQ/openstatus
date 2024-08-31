@@ -17,7 +17,7 @@ export function ChangelogCard({ post }: { post: Changelog }) {
             src={post.image}
             fill={true}
             alt={post.title}
-            className="object-contain"
+            className="object-cover"
           />
         </div>
       </div>

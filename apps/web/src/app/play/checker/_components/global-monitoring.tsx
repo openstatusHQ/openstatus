@@ -2,17 +2,15 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
-import { Shell } from "@/components/dashboard/shell";
 import type { ValidIcon } from "@/components/icons";
 import {
   CardContainer,
-  CardContent,
   CardFeature,
-  CardFeatureContainer,
   CardHeader,
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+
 import { Globe } from "@/components/marketing/monitor/globe";
 import { nanoid } from "nanoid";
 
@@ -22,39 +20,44 @@ const features: {
   description: string;
 }[] = [
   {
+    icon: "gauge",
+    catchline: "Speed Test for Websites",
+    description:
+      "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB) of the response.",
+  },
+  {
     icon: "globe",
-    catchline: "Latency Monitoring.",
+    catchline: "Global Latency",
     description:
-      "Monitor the latency of your endpoints from all over the world. We support 35 regions.",
+      "Monitor performance in different regions to ensure quick load times for users across 35 regions around the world.",
   },
   {
-    icon: "play",
-    catchline: "Monitor anything.",
+    icon: "link",
+    catchline: "Share the Results",
     description:
-      "We can monitor your website, API, DNS, TCP or any other service you have running. ",
-  },
-  {
-    icon: "bot",
-    catchline: "Synthetic Monitoring.",
-    description: "Run your tests in your CI/CD pipeline, or on a schedule. ",
+      "Quickly share the results of your website speed test with your team or clients. We share the results for 7 days, so you can easily collaborate on performance.",
   },
 ];
 export const GlobalMonitoring = () => {
   return (
-    <Shell className="mx-auto">
+    <CardContainer>
       <CardHeader>
-        <CardIcon icon={"activity"} />
+        <CardIcon icon="activity" />
         <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
-      <>
-        <div className="mt-12">
-          <div className="list-none space-y-4">
-            {features?.map((feature) => (
-              <CardFeature key={`${feature.icon}-${nanoid(6)}`} {...feature} />
-            ))}
-          </div>
-        </div>
-      </>
-    </Shell>
+      <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+        {features?.map((feature, i) => (
+          <CardFeature key={`${feature.icon}-${nanoid(6)}`} {...feature} />
+        ))}
+      </ul>
+      <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
+        <Button variant="outline" className="rounded-full" asChild>
+          <Link href="/features/status-page">Status Page</Link>
+        </Button>
+        <Button className="rounded-full" asChild>
+          <Link href="/features/monitoring">Monitoring</Link>
+        </Button>
+      </div>
+    </CardContainer>
   );
 };

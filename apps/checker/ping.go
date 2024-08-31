@@ -21,18 +21,18 @@ import (
 type PingData struct {
 	WorkspaceID   string `json:"workspaceId"`
 	MonitorID     string `json:"monitorId"`
-	Timestamp     int64  `json:"timestamp"`
-	StatusCode    int    `json:"statusCode,omitempty"`
-	Latency       int64  `json:"latency"`
-	CronTimestamp int64  `json:"cronTimestamp"`
 	URL           string `json:"url"`
 	Region        string `json:"region"`
 	Message       string `json:"message,omitempty"`
 	Timing        string `json:"timing,omitempty"`
 	Headers       string `json:"headers,omitempty"`
-	Error         uint8  `json:"error"`
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
+	Latency       int64  `json:"latency"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Timestamp     int64  `json:"timestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
+	Error         uint8  `json:"error"`
 }
 
 type Timing struct {
@@ -49,17 +49,17 @@ type Timing struct {
 }
 
 type Response struct {
+	Headers     map[string]string `json:"headers,omitempty"`
+	Error       string            `json:"error,omitempty"`
+	Body        string            `json:"body,omitempty"`
+	Region      string            `json:"region"`
+	Tags        []string          `json:"tags,omitempty"`
 	RequestId   int64             `json:"requestId,omitempty"`
 	WorkspaceId int64             `json:"workspaceId,omitempty"`
-	Status      int               `json:"status,omitempty"`
 	Latency     int64             `json:"latency"`
-	Body        string            `json:"body,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
 	Time        int64             `json:"time"`
 	Timing      Timing            `json:"timing"`
-	Error       string            `json:"error,omitempty"`
-	Tags        []string          `json:"tags,omitempty"`
-	Region      string            `json:"region"`
+	Status      int               `json:"status,omitempty"`
 }
 
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {

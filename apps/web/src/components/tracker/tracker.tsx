@@ -46,6 +46,10 @@ const tracker = cva("h-10 rounded-full flex-1", {
       false: "",
       true: classNames.degraded,
     },
+    incident: {
+      // only used to highlight incident that are 'light' (less than 10 minutes)
+      light: classNames.degraded,
+    },
   },
   defaultVariants: {
     variant: "empty",
@@ -133,9 +137,23 @@ export const Bar = ({
 }: BarProps) => {
   const [open, setOpen] = React.useState(false);
 
+  // total incident time in ms
+  const incidentLength = incidents.reduce((prev, curr) => {
+    return (
+      prev +
+      Math.abs(
+        (curr.resolvedAt?.getTime() || new Date().getTime()) -
+          curr.startedAt?.getTime(),
+      )
+    );
+  }, 0);
+
+  const isLightIncident = incidentLength > 0 && incidentLength < 600_000; // 10 minutes in ms
+
   const rootClassName = tracker({
     report: statusReports.length > 0,
     variant: blacklist ? "blacklist" : variant,
+    incident: isLightIncident ? "light" : undefined,
   });
 
   return (

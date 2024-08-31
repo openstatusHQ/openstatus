@@ -10,7 +10,7 @@ export type Feature = {
 export type FeatureDescription = {
   icon: ValidIcon;
   catchline: string;
-  description: string;
+  description: React.ReactNode;
   badge?: "Coming soon" | "New";
 };
 

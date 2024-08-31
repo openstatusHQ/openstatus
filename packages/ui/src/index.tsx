@@ -39,3 +39,4 @@ export * from "./components/sonner";
 export * from "./components/sortable";
 export * from "./components/navigation-menu";
 export * from "./components/slider";
+export * from "./components/chart";

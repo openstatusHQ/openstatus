@@ -13,6 +13,7 @@ import {
   CardIcon,
   CardTitle,
 } from "../card";
+import { SpeedCheckerButton } from "../speed-checker-button";
 import { Globe } from "./globe";
 
 export function MonitoringCard() {
@@ -31,11 +32,9 @@ export function MonitoringCard() {
           ))}
           <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
             <Button variant="outline" className="rounded-full" asChild>
-              <Link href="/play/checker">Playground</Link>
-            </Button>
-            <Button className="rounded-full" asChild>
               <Link href="/features/monitoring">Learn more</Link>
             </Button>
+            <SpeedCheckerButton />
           </div>
         </CardFeatureContainer>
       </CardContent>
