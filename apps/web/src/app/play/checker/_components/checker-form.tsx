@@ -67,7 +67,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  }
+  },
 );
 
 /**
@@ -176,7 +176,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                         return validation.data;
                       }
                       return null;
-                    } catch (e) {
+                    } catch (_e) {
                       return null;
                     }
                   })
@@ -193,12 +193,12 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    }
+                    },
                   );
                 }
               }
             }
-          } catch (e) {
+          } catch (_e) {
             const searchParams = updateSearchParams({ id: null });
             router.replace(`${pathname}?${searchParams}`);
             toast.error("Something went wrong", {
