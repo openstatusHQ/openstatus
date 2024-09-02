@@ -1,13 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "*",
+        "\\*",
         "RESEND_API_KEY",
-        "!NEXT_PUBLIC_GIT_*",
+        "\\!NEXT_PUBLIC_GIT_\\*",
         "DATABASE_URL",
         "TINY_BIRD_API_KEY",
         "NODE_ENV",

@@ -19,5 +19,12 @@
   },
   "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast"],
+  "gopls": {
+    "ui.diagnostic.analyses": {
+      "fieldalignment": true
+    }
   }
 }
