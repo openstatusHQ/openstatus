@@ -177,7 +177,6 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                       }
                       return null;
                     } catch (e) {
-                      // console.error(e);
                       return null;
                     }
                   })
@@ -200,7 +199,6 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
               }
             }
           } catch (e) {
-            console.log(e);
             const searchParams = updateSearchParams({ id: null });
             router.replace(`${pathname}?${searchParams}`);
             toast.error("Something went wrong", {
