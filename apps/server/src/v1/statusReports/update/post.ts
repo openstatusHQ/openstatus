@@ -6,7 +6,8 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { sendEmailHtml } from "@openstatus/emails";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
+import { sendBatchEmailHtml } from "@openstatus/emails/emails/send";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
@@ -48,7 +49,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
+    const limits = c.get("limits");
 
     const _statusReport = await db
       .update(statusReport)
@@ -76,7 +77,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .returning()
       .get();
 
-    if (workspacePlan.limits.notifications && _statusReport.pageId) {
+    if (getLimit(limits, "notifications") && _statusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)
@@ -93,16 +94,16 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .where(eq(page.id, _statusReport.pageId))
         .get();
       if (pageInfo) {
-        const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
-        );
-        await sendEmailHtml({
-          to: subscribersEmails,
-          subject: `New status update for ${pageInfo.title}`,
-          html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-        `,
-          from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+        const subscribersEmails = subscribers.map((subscriber) => {
+          return {
+            to: subscriber.email,
+            subject: `New status update for ${pageInfo.title}`,
+            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+          `,
+            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+          };
         });
+        await sendBatchEmailHtml(subscribersEmails);
       }
     }
 
