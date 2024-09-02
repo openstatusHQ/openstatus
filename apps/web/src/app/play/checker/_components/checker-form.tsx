@@ -66,7 +66,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -168,12 +168,13 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                           });
                         }
                       } else {
+                        // TODO: add schema validation!
                         const parsed = JSON.parse(item) as RegionChecker;
                         return parsed;
                       }
                       return null;
                     } catch (e) {
-                      console.error(e);
+                      // console.error(e);
                       return null;
                     }
                   })
@@ -190,7 +191,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
