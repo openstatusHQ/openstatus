@@ -11,7 +11,10 @@
         "DATABASE_URL",
         "TINY_BIRD_API_KEY",
         "NODE_ENV",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "TEAM_ID_VERCEL",
+        "PROJECT_ID_VERCEL",
+        "STRIPE_SECRET_KEY"
       ],
       "outputs": [".next/**", "!.next/cache/**"]
     },
