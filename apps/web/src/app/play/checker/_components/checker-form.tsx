@@ -44,6 +44,7 @@ import {
   type RegionChecker,
   is32CharHex,
   latencyFormatter,
+  regionCheckerSchema,
   regionFormatter,
 } from "@/components/ping-response-analysis/utils";
 import useUpdateSearchParams from "@/hooks/use-update-search-params";
@@ -168,12 +169,14 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                           });
                         }
                       } else {
-                        const parsed = JSON.parse(item) as RegionChecker;
-                        return parsed;
+                        const parsed = JSON.parse(item);
+                        const validation =
+                          regionCheckerSchema.safeParse(parsed);
+                        if (!validation.success) return null;
+                        return validation.data;
                       }
                       return null;
-                    } catch (e) {
-                      console.error(e);
+                    } catch (_e) {
                       return null;
                     }
                   })
@@ -195,8 +198,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 }
               }
             }
-          } catch (e) {
-            console.log(e);
+          } catch (_e) {
             const searchParams = updateSearchParams({ id: null });
             router.replace(`${pathname}?${searchParams}`);
             toast.error("Something went wrong", {
