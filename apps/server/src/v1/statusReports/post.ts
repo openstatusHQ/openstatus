@@ -11,7 +11,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { sendEmailHtml } from "@openstatus/emails";
+import { sendBatchEmailHtml } from "@openstatus/emails/emails/send";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { isoDate } from "../utils";
@@ -72,8 +72,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           and(
             eq(monitor.workspaceId, Number(workspaceId)),
             inArray(monitor.id, monitorIds),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .all();
 
@@ -89,8 +89,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(page.workspaceId, Number(workspaceId)),
-            eq(page.id, rest.pageId),
-          ),
+            eq(page.id, rest.pageId)
+          )
         )
         .all();
 
@@ -127,7 +127,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
               monitorId: id,
               statusReportId: _newStatusReport.id,
             };
-          }),
+          })
         )
         .returning();
     }
@@ -139,8 +139,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _newStatusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt),
-          ),
+            isNotNull(pageSubscriber.acceptedAt)
+          )
         )
         .all();
       const pageInfo = await db
@@ -149,16 +149,16 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .where(eq(page.id, _newStatusReport.pageId))
         .get();
       if (pageInfo) {
-        const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
-        );
-        await sendEmailHtml({
-          to: subscribersEmails,
-          subject: `New status update for ${pageInfo.title}`,
-          html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-        `,
-          from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+        const emails = subscribers.map((subscriber) => {
+          return {
+            to: subscriber.email,
+            subject: `New status update for ${pageInfo.title}`,
+            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+          `,
+            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+          };
         });
+        await sendBatchEmailHtml(emails);
       }
     }
 
