@@ -57,8 +57,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId))
-        )
+          eq(statusReport.workspaceId, Number(workspaceId)),
+        ),
       )
       .returning()
       .get();
@@ -84,8 +84,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         .where(
           and(
             eq(pageSubscriber.pageId, _statusReport.pageId),
-            isNotNull(pageSubscriber.acceptedAt)
-          )
+            isNotNull(pageSubscriber.acceptedAt),
+          ),
         )
         .all();
       const pageInfo = await db
