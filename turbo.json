@@ -14,7 +14,11 @@
         "VERCEL_URL",
         "TEAM_ID_VERCEL",
         "PROJECT_ID_VERCEL",
-        "STRIPE_SECRET_KEY"
+        "STRIPE_SECRET_KEY",
+        "UNKEY_TOKEN",
+        "UNKEY_API_ID",
+        "UPSTASH_REDIS_REST_URL",
+        "UPSTASH_REDIS_REST_TOKEN"
       ],
       "outputs": [".next/**", "!.next/cache/**"]
     },
