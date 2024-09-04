@@ -2,14 +2,14 @@
 
 import { Wand2, X } from "lucide-react";
 import * as React from "react";
-import { useFieldArray, useWatch } from "react-hook-form";
+import { useFieldArray } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
   monitorMethods,
   monitorMethodsSchema,
 } from "@openstatus/db/src/schema";
-import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
+import type { InsertMonitor } from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
@@ -31,6 +31,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { useEffect, useState } from "react";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
@@ -40,11 +41,21 @@ interface Props {
 // TODO: add Dialog with response informations when pingEndpoint!
 
 export function SectionRequests({ form }: Props) {
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, prepend, remove, update } = useFieldArray({
     name: "headers",
     control: form.control,
   });
+
   const watchMethod = form.watch("method");
+  const [content, setContent] = useState<string>("application/json");
+  useEffect(() => {
+    if (
+      watchMethod === "POST" &&
+      !fields.some((field) => field.key === "Content-Type")
+    ) {
+      prepend({ key: "Content-Type", value: "application/json" });
+    }
+  }, [watchMethod, prepend, fields]);
 
   const validateJSON = (value?: string) => {
     if (!value) return;
@@ -160,7 +171,9 @@ export function SectionRequests({ form }: Props) {
                 size="icon"
                 variant="ghost"
                 type="button"
-                onClick={() => remove(Number(field.id))}
+                onClick={() => {
+                  remove(index);
+                }}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -185,7 +198,43 @@ export function SectionRequests({ form }: Props) {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-end justify-between">
-                  <FormLabel>Body</FormLabel>
+                  <FormLabel className="flex items-center space-x-2">
+                    Body
+                    <Select
+                      defaultValue="application/json"
+                      onValueChange={(value: string) => {
+                        setContent(value);
+                        if (value === "none") {
+                          return;
+                        }
+
+                        const contentIndex = fields.findIndex(
+                          (field) => field.key === "Content-Type"
+                        );
+                        if (contentIndex >= 0) {
+                          update(contentIndex, { key: "Content-Type", value });
+                        }
+                      }}
+                    >
+                      <SelectTrigger
+                        variant={"ghost"}
+                        className="ml-2 text-muted-foreground"
+                      >
+                        <SelectValue placeholder="Theme" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="application/octet-stream">
+                          Binary File
+                        </SelectItem>
+                        <SelectItem value="application/json">JSON</SelectItem>
+                        <SelectItem value="application/xml">XML</SelectItem>
+                        <SelectItem value="application/yaml">YAML</SelectItem>
+                        <SelectItem value="application/edn">EDN</SelectItem>
+                        <SelectItem value="application/other">Other</SelectItem>
+                        <SelectItem value="none">None</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormLabel>
                   {watchMethod === "POST" &&
                     fields.some(
                       (field) =>
@@ -213,11 +262,16 @@ export function SectionRequests({ form }: Props) {
                 </div>
                 <FormControl>
                   {/* FIXME: cannot enter 'Enter' */}
-                  <Textarea
-                    rows={8}
-                    placeholder='{ "hello": "world" }'
-                    {...field}
-                  />
+                  {content === "application/octet-stream" ? (
+                    // FIXME: handle file upload
+                    <Input type="file" />
+                  ) : (
+                    <Textarea
+                      rows={8}
+                      placeholder='{ "hello": "world" }'
+                      {...field}
+                    />
+                  )}
                 </FormControl>
                 <FormDescription>Write your payload payload.</FormDescription>
                 <FormMessage />
