@@ -209,7 +209,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type"
+                          (field) => field.key === "Content-Type",
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -239,7 +239,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json"
+                        field.value === "application/json",
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
