@@ -198,7 +198,7 @@ export function SectionRequests({ form }: Props) {
             render={({ field }) => (
               <FormItem>
                 <div className="flex items-end justify-between">
-                  <FormLabel className="flex items-center space-x-2">
+                  <FormLabel className="flex h-10 items-center space-x-2">
                     Body
                     <Select
                       defaultValue="application/json"
