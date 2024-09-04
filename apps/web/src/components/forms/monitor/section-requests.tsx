@@ -2,7 +2,7 @@
 
 import { Wand2, X } from "lucide-react";
 import * as React from "react";
-import { useFieldArray } from "react-hook-form";
+import { useFieldArray, useWatch } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
@@ -186,23 +186,30 @@ export function SectionRequests({ form }: Props) {
               <FormItem>
                 <div className="flex items-end justify-between">
                   <FormLabel>Body</FormLabel>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={onPrettifyJSON}
-                        >
-                          <Wand2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Prettify JSON</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  {watchMethod === "POST" &&
+                    fields.some(
+                      (field) =>
+                        field.key === "Content-Type" &&
+                        field.value === "application/json"
+                    ) && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={onPrettifyJSON}
+                            >
+                              <Wand2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Prettify JSON</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
                 </div>
                 <FormControl>
                   {/* FIXME: cannot enter 'Enter' */}
@@ -212,13 +219,7 @@ export function SectionRequests({ form }: Props) {
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>
-                  Write your json payload. We automatically append{" "}
-                  <code>
-                    &quot;Content-Type&quot;: &quot;application/json&quot;
-                  </code>{" "}
-                  to the request header.
-                </FormDescription>
+                <FormDescription>Write your payload payload.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
