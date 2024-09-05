@@ -98,6 +98,8 @@ export default function Post({
                   {Array.from({ length: total }).map((_, index) => {
                     return (
                       <PaginationLink
+                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                        key={index}
                         href={`?page=${index + 1}`}
                         isActive={current === index + 1}
                       >
