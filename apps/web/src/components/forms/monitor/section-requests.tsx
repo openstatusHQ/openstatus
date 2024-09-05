@@ -1,7 +1,7 @@
 "use client";
 
 import { Wand2, X } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import { useFieldArray } from "react-hook-form";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -47,7 +47,10 @@ export function SectionRequests({ form }: Props) {
   });
 
   const watchMethod = form.watch("method");
-  const [content, setContent] = useState<string>("application/json");
+  // const [content, setContent] = useState<string>("application/json");
+
+  const watchHeaders = form.watch("headers");
+
   useEffect(() => {
     if (
       watchMethod === "POST" &&
@@ -68,6 +71,28 @@ export function SectionRequests({ form }: Props) {
         message: "Not a valid JSON object",
       });
       return false;
+    }
+  };
+
+  const uploadFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files?.[0]) {
+      const file = event.target.files[0];
+
+      // File too big, return error
+      const fileSize = file.size / 1024 / 1024; // in MiB
+      if (fileSize > 10) {
+        // Display error message
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result && typeof event.target.result === "string") {
+          form.setValue("body", event.target?.result);
+        }
+      };
+
+      reader.readAsDataURL(file);
     }
   };
 
@@ -203,7 +228,6 @@ export function SectionRequests({ form }: Props) {
                     <Select
                       defaultValue="application/json"
                       onValueChange={(value: string) => {
-                        setContent(value);
                         if (value === "none") {
                           return;
                         }
@@ -262,9 +286,12 @@ export function SectionRequests({ form }: Props) {
                 </div>
                 <FormControl>
                   {/* FIXME: cannot enter 'Enter' */}
-                  {content === "application/octet-stream" ? (
-                    // FIXME: handle file upload
-                    <Input type="file" />
+                  {watchHeaders?.some(
+                    (field) =>
+                      field.key === "Content-Type" &&
+                      field.value === "application/octet-stream"
+                  ) ? (
+                    <Input type="file" onChange={uploadFile} />
                   ) : (
                     <Textarea
                       rows={8}

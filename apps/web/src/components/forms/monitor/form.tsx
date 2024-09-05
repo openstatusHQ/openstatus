@@ -92,7 +92,7 @@ export function MonitorForm({
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
       textBodyAssertions: _assertions.filter(
-        (a) => a.type === "textBody",
+        (a) => a.type === "textBody"
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       ) as any, // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
@@ -148,7 +148,7 @@ export function MonitorForm({
         finally: () => {
           setPending(false);
         },
-      },
+      }
     );
   };
 
@@ -178,7 +178,13 @@ export function MonitorForm({
         textBodyAssertions,
       } = form.getValues();
 
-      if (body && body !== "") {
+      if (
+        body &&
+        body !== "" &&
+        headers?.some(
+          (h) => h.key === "Content-Type" && h.value === "application/json"
+        )
+      ) {
         const validJSON = validateJSON(body);
         if (!validJSON) {
           return { error: "Not a valid JSON object.", data: undefined };
@@ -205,7 +211,7 @@ export function MonitorForm({
           ...(statusAssertions || []),
           ...(headerAssertions || []),
           ...(textBodyAssertions || []),
-        ]),
+        ])
       );
 
       const data = (await res.json()) as RegionChecker;
@@ -241,7 +247,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT,
+            ABORT_TIMEOUT
           )}.`,
         };
       }

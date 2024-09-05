@@ -37,7 +37,7 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
@@ -57,6 +57,7 @@ const headersSchema = z
   .optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
+  name: z.string().min(1, "Name must be at least 1 character long"),
   periodicity: monitorPeriodicitySchema.default("10m"),
   url: z.string().url(), // find a better way to not always start with "https://" including the `InputWithAddons`
   status: monitorStatusSchema.default("active"),
