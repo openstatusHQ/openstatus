@@ -18,6 +18,7 @@ export * from "./components/hover-card";
 export * from "./components/input-with-addons";
 export * from "./components/input";
 export * from "./components/label";
+export * from "./components/pagination";
 export * from "./components/popover";
 export * from "./components/progress";
 export * from "./components/radio-group";
