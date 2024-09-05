@@ -19,7 +19,7 @@ export function Pagination({
         <div className="w-1/2 flex-1 text-left">
           <Button asChild variant="link">
             <Link href={`/changelog/${prev.slug}`} className="group">
-              <ChevronLeft className="text-muted-foreground group-hover:text-foreground mr-2 h-4 w-4" />
+              <ChevronLeft className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground" />
               <span className="truncate">{prev.title}</span>
             </Link>
           </Button>

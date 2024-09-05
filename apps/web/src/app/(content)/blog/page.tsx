@@ -1,13 +1,3 @@
-import { allPosts } from "contentlayer/generated";
-import { Rss } from "lucide-react";
-import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  Button,
-  Pagination,
-  PaginationContent,
-  PaginationLink,
-} from "@openstatus/ui";
 import {
   defaultMetadata,
   ogMetadata,
@@ -15,6 +5,16 @@ import {
 } from "@/app/shared-metadata";
 import { Timeline } from "@/components/content/timeline";
 import { Shell } from "@/components/dashboard/shell";
+import {
+  Button,
+  Pagination,
+  PaginationContent,
+  PaginationLink,
+} from "@openstatus/ui";
+import { allPosts } from "contentlayer/generated";
+import { Rss } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 import { z } from "zod";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ const searchParamsSchema = z.object({
   page: z
     .string()
     .optional()
-    .transform((val) => parseInt(val || "1", 10)),
+    .transform((val) => Number.parseInt(val || "1", 10)),
 });
 
 const ITEMS_PER_PAGE = 10;
@@ -53,7 +53,7 @@ export default function Post({
   const posts = allPosts
     .sort(
       (a, b) =>
-        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
     .slice((current - 1) * ITEMS_PER_PAGE, current * ITEMS_PER_PAGE);
 
