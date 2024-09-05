@@ -16,7 +16,7 @@ import {
   statusReportUpdate,
   workspace,
 } from "@openstatus/db/src/schema";
-import { sendEmailHtml } from "@openstatus/emails/emails/send";
+import { sendBatchEmailHtml } from "@openstatus/emails/emails/send";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -99,16 +99,19 @@ export const statusReportRouter = createTRPCRouter({
           .where(eq(page.id, _statusReport.pageId))
           .get();
         if (pageInfo) {
-          const subscribersEmails = subscribers.map(
-            (subscriber) => subscriber.email,
-          );
-          await sendEmailHtml({
-            to: subscribersEmails,
-            subject: `New status update for ${pageInfo.title}`,
-            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${updatedValue.status}</p><p>${updatedValue.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
+          const emails = subscribers.map((subscriber) => {
+            return {
+              to: subscriber.email,
+
+              subject: `New status update for ${pageInfo.title}`,
+              html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${updatedValue.status}</p><p>${updatedValue.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
         `,
-            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+              from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
+            };
           });
+          if (emails.length > 0) {
+            await sendBatchEmailHtml(emails);
+          }
         }
       }
       return updatedValue;

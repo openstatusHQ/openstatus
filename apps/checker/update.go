@@ -15,23 +15,27 @@ type UpdateData struct {
 	MonitorId     string `json:"monitorId"`
 	Status        string `json:"status"`
 	Message       string `json:"message,omitempty"`
-	StatusCode    int    `json:"statusCode,omitempty"`
 	Region        string `json:"region"`
 	CronTimestamp int64  `json:"cronTimestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	url := "https://openstatus-api.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(updateData)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
+	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
+		return
+	}
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
 	req.Header.Set("Authorization", basic)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{Timeout: time.Second * 10}
-	if _, err = client.Do(req); err != nil {
+	if _, err := client.Do(req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
+	defer req.Body.Close()
 	// Should we add a retry mechanism here?
 }

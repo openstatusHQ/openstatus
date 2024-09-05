@@ -6,8 +6,11 @@ import {
 } from "@openstatus/db/src/schema";
 
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import { Redis } from "@openstatus/upstash";
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
+
+const redis = Redis.fromEnv();
 
 export const triggerNotifications = async ({
   monitorId,
@@ -37,6 +40,15 @@ export const triggerNotifications = async ({
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
+    const key = `${monitorId}:${incidentId}:${notif.notification.provider}:${notifType}`;
+    const r = await redis.setnx(key, "1");
+    if (r === 0) {
+      console.log(`🤔 notification already sent for ${key}`);
+      continue;
+    }
+
+    await redis.expire(key, 60 * 60);
+
     console.log(
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
