@@ -1,9 +1,13 @@
-
 import { allPosts } from "contentlayer/generated";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@openstatus/ui";
+import {
+  Button,
+  Pagination,
+  PaginationContent,
+  PaginationLink,
+} from "@openstatus/ui";
 import {
   defaultMetadata,
   ogMetadata,
@@ -11,7 +15,6 @@ import {
 } from "@/app/shared-metadata";
 import { Timeline } from "@/components/content/timeline";
 import { Shell } from "@/components/dashboard/shell";
-import { ListPagination } from "../_components/list-pagination";
 import { z } from "zod";
 
 export const metadata: Metadata = {
@@ -27,27 +30,32 @@ export const metadata: Metadata = {
   },
 };
 
-const SearchParamsSchema = z.object({
-  page: z.string().optional().transform((val) => parseInt(val || "1", 10)),
+const searchParamsSchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .transform((val) => parseInt(val || "1", 10)),
 });
 
-export default function Post({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined }; }) {
-  const search = SearchParamsSchema.safeParse(searchParams);
+const ITEMS_PER_PAGE = 10;
 
-  const page = search.data?.page
-  const currentPage = !page ? 1 : page
-  const itemsPerPage = 10;
+export default function Post({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const search = searchParamsSchema.safeParse(searchParams);
 
-  const sortedPosts = allPosts.sort(
-    (a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-  );
+  const page = search.data?.page;
+  const current = !page ? 1 : page;
+  const total = Math.ceil(allPosts.length / ITEMS_PER_PAGE);
 
-  const totalPages = Math.ceil(sortedPosts.length / itemsPerPage);
-  const paginatedPosts = sortedPosts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const posts = allPosts
+    .sort(
+      (a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    )
+    .slice((current - 1) * ITEMS_PER_PAGE, current * ITEMS_PER_PAGE);
 
   return (
     <Shell>
@@ -63,7 +71,7 @@ export default function Post({ searchParams }: { searchParams: { [key: string]: 
           </Button>
         }
       >
-        {paginatedPosts.map((post) => (
+        {posts.map((post) => (
           <Timeline.Article
             key={post.slug}
             publishedAt={post.publishedAt}
@@ -81,9 +89,27 @@ export default function Post({ searchParams }: { searchParams: { [key: string]: 
             </div>
           </Timeline.Article>
         ))}
-        {currentPage && totalPages &&
-          <ListPagination current={currentPage} total={totalPages} />
-        }
+        {current && total && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
+            <div className="row-span-2" />
+            <div className="w-full md:order-2 md:col-span-4">
+              <Pagination>
+                <PaginationContent>
+                  {Array.from({ length: total }).map((_, index) => {
+                    return (
+                      <PaginationLink
+                        href={`?page=${index + 1}`}
+                        isActive={current === index + 1}
+                      >
+                        {index + 1}
+                      </PaginationLink>
+                    );
+                  })}
+                </PaginationContent>
+              </Pagination>
+            </div>
+          </div>
+        )}
       </Timeline>
     </Shell>
   );
