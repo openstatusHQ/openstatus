@@ -233,7 +233,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type"
+                          (field) => field.key === "Content-Type",
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -242,7 +242,7 @@ export function SectionRequests({ form }: Props) {
                     >
                       <SelectTrigger
                         variant={"ghost"}
-                        className="h-7 ml-1 text-xs text-muted-foreground"
+                        className="ml-1 h-7 text-muted-foreground text-xs"
                       >
                         <SelectValue placeholder="Theme" />
                       </SelectTrigger>
@@ -263,7 +263,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json"
+                        field.value === "application/json",
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
@@ -290,7 +290,7 @@ export function SectionRequests({ form }: Props) {
                   {watchHeaders?.some(
                     (field) =>
                       field.key === "Content-Type" &&
-                      field.value === "application/octet-stream"
+                      field.value === "application/octet-stream",
                   ) ? (
                     <Input type="file" onChange={uploadFile} />
                   ) : (
