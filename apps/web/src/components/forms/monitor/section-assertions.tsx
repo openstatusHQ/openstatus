@@ -159,7 +159,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -177,7 +177,7 @@ export function SectionAssertions({ form }: Props) {
               placeholder="200"
               className="col-span-3"
               onChange={(e) => {
-                const value = parseInt(e.target.value, 10);
+                const value = Number.parseInt(e.target.value, 10);
                 if (value > 599) {
                   e.target.value = 599;
                 }
@@ -228,7 +228,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -275,7 +275,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
