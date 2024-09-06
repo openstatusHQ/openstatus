@@ -54,10 +54,10 @@ export function SectionRequests({ form }: Props) {
   const [file, setFile] = useState<string | undefined>(value);
 
   const defaultContentType = fields.find(
-    (field) => field.key === "Content-Type"
+    (field) => field.key === "Content-Type",
   )?.value;
   const [content, setContent] = useState<string | undefined>(
-    defaultContentType
+    defaultContentType,
   );
   useEffect(() => {
     if (
@@ -256,7 +256,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type"
+                          (field) => field.key === "Content-Type",
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -286,7 +286,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json"
+                        field.value === "application/json",
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
