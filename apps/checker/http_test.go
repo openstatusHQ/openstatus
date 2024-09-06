@@ -17,19 +17,19 @@ func Test_ping(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    checker.PingData
+		want    checker.Response
 		wantErr bool
 	}{
 		{name: "200", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://openstat.us", CronTimestamp: 1, Headers: []struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
-		}{{Key: "", Value: ""}}}}, want: checker.PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
+		}{{Key: "", Value: ""}}}}, want: checker.Response{Status: 200}, wantErr: false},
 		{name: "200", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://openstat.us", CronTimestamp: 1, Headers: []struct {
 			Key   string `json:"key"`
 			Value string `json:"value"`
-		}{{Key: "Test", Value: ""}}}}, want: checker.PingData{URL: "https://openstat.us", StatusCode: 200}, wantErr: false},
-		{name: "500", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://openstat.us/500", CronTimestamp: 1}}, want: checker.PingData{URL: "https://openstat.us/500", StatusCode: 500}, wantErr: false},
-		{name: "500", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://somethingthatwillfail.ed", CronTimestamp: 1}}, want: checker.PingData{URL: "https://openstat.us/500", StatusCode: 0}, wantErr: true},
+		}{{Key: "Test", Value: ""}}}}, want: checker.Response{Status: 200}, wantErr: false},
+		{name: "500", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://openstat.us/500", CronTimestamp: 1}}, want: checker.Response{Status: 500}, wantErr: false},
+		{name: "500", args: args{client: &http.Client{}, inputData: request.HttpCheckerRequest{URL: "https://somethingthatwillfail.ed", CronTimestamp: 1}}, want: checker.Response{Status: 0}, wantErr: true},
 
 		// TODO: Add test cases.
 	}
@@ -41,7 +41,7 @@ func Test_ping(t *testing.T) {
 				t.Errorf("Ping() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.StatusCode != tt.want.StatusCode {
+			if got.Status != tt.want.Status {
 				t.Errorf("Ping() = %v, want %v", got, tt.want)
 			}
 		})

@@ -20,8 +20,8 @@ type TCPResponseTiming struct {
 
 func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
 	start := time.Now().UTC().UnixMilli()
-	conn, err := net.DialTimeout("tcp", url,
-		time.Duration(timeout)*time.Second)
+	conn, err := net.DialTimeout("tcp", url, time.Duration(timeout)*time.Second)
+
 	if err != nil {
 		if e := err.(*net.OpError).Timeout(); e {
 			return TCPResponseTiming{}, fmt.Errorf("timeout after %d ms", timeout*1000)
@@ -33,5 +33,6 @@ func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
 	}
 	stop := time.Now().UTC().UnixMilli()
 	defer conn.Close()
+
 	return TCPResponseTiming{TCPStart: start, TCPDone: stop}, nil
 }

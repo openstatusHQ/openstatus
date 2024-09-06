@@ -4,36 +4,17 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 )
-
-type PingData struct {
-	WorkspaceID   string `json:"workspaceId"`
-	MonitorID     string `json:"monitorId"`
-	URL           string `json:"url"`
-	Region        string `json:"region"`
-	Message       string `json:"message,omitempty"`
-	Timing        string `json:"timing,omitempty"`
-	Headers       string `json:"headers,omitempty"`
-	Assertions    string `json:"assertions"`
-	Body          string `json:"body,omitempty"`
-	Latency       int64  `json:"latency"`
-	CronTimestamp int64  `json:"cronTimestamp"`
-	Timestamp     int64  `json:"timestamp"`
-	StatusCode    int    `json:"statusCode,omitempty"`
-	Error         uint8  `json:"error"`
-}
 
 type Timing struct {
 	DnsStart          int64 `json:"dnsStart"`
@@ -49,27 +30,22 @@ type Timing struct {
 }
 
 type Response struct {
-	Headers     map[string]string `json:"headers,omitempty"`
-	Body        string            `json:"body,omitempty"`
-	Error       string            `json:"error,omitempty"`
-	Region      string            `json:"region"`
-	Tags        []string          `json:"tags,omitempty"`
-	RequestId   int64             `json:"requestId,omitempty"`
-	WorkspaceId int64             `json:"workspaceId,omitempty"`
-	Latency     int64             `json:"latency"`
-	Time        int64             `json:"time"`
-	Status      int               `json:"status,omitempty"`
-	Timing      Timing            `json:"timing"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Body      string            `json:"body,omitempty"`
+	Error     string            `json:"error,omitempty"`
+	Latency   int64             `json:"latency"`
+	Timestamp int64             `json:"timestamp"`
+	Status    int               `json:"status,omitempty"`
+	Timing    Timing            `json:"timing"`
 }
 
 // FIXME: This should only return the TCP Timing Data;
-func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (PingData, error) {
+func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (Response, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
-	region := os.Getenv("FLY_REGION")
 	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
-		return PingData{}, fmt.Errorf("unable to create req: %w", err)
+		return Response{}, fmt.Errorf("unable to create req: %w", err)
 	}
 	req.Header.Set("User-Agent", "OpenStatus/1.0")
 	for _, header := range inputData.Headers {
@@ -107,42 +83,30 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	timing.TransferDone = time.Now().UTC().UnixMilli()
 	latency := time.Since(start).Milliseconds()
 	if err != nil {
-		timingAsString, err2 := json.Marshal(timing)
-		if err2 != nil {
-			logger.Error().Err(err2).Msg("error while parsing timing data")
-		}
+
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			return PingData{
-				Latency:       latency,
-				MonitorID:     inputData.MonitorID,
-				Region:        region,
-				WorkspaceID:   inputData.WorkspaceID,
-				Timestamp:     start.UTC().UnixMilli(),
-				CronTimestamp: inputData.CronTimestamp,
-				URL:           inputData.URL,
-				Message:       fmt.Sprintf("Timeout after %d ms", latency),
-				Timing:        string(timingAsString),
+			return Response{
+				Latency:   latency,
+				Timing:    timing,
+				Timestamp: start.UTC().UnixMilli(),
+				Error:     fmt.Sprintf("Timeout after %d ms", latency),
 			}, nil
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
 
-		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
+		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return PingData{
-			Latency:       latency,
-			MonitorID:     inputData.MonitorID,
-			Region:        region,
-			WorkspaceID:   inputData.WorkspaceID,
-			Timestamp:     start.UTC().UnixMilli(),
-			CronTimestamp: inputData.CronTimestamp,
-			URL:           inputData.URL,
-			Message:       fmt.Sprintf("Cannot read response body: %s", err.Error()),
+		return Response{
+			Latency:   latency,
+			Timing:    timing,
+			Timestamp: start.UTC().UnixMilli(),
+			Error:     fmt.Sprintf("Cannot read response body: %s", err.Error()),
 		}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 
@@ -151,109 +115,13 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 		headers[key] = response.Header.Get(key)
 	}
 
-	// In TB we need to store them as string
-	timingAsString, err := json.Marshal(timing)
-	if err != nil {
-		return PingData{}, fmt.Errorf("error while parsing timing data %s: %w", inputData.URL, err)
-	}
-
-	headersAsString, err := json.Marshal(headers)
-	if err != nil {
-		return PingData{}, fmt.Errorf("error while parsing headers %s: %w", inputData.URL, err)
-	}
-
-	return PingData{
-		Latency:       latency,
-		StatusCode:    response.StatusCode,
-		MonitorID:     inputData.MonitorID,
-		Region:        region,
-		WorkspaceID:   inputData.WorkspaceID,
-		Timestamp:     start.UTC().UnixMilli(),
-		CronTimestamp: inputData.CronTimestamp,
-		URL:           inputData.URL,
-		Timing:        string(timingAsString),
-		Headers:       string(headersAsString),
-		Body:          string(body),
-	}, nil
-}
-
-func SinglePing(ctx context.Context, client *http.Client, inputData request.PingRequest) (Response, error) {
-	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
-
-	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
-	if err != nil {
-		logger.Error().Err(err).Msg("error while creating req")
-		return Response{}, fmt.Errorf("unable to create req: %w", err)
-	}
-
-	req.Header.Set("User-Agent", "OpenStatus/1.0")
-	for key, value := range inputData.Headers {
-		req.Header.Set(key, value)
-	}
-	if inputData.Method != http.MethodGet {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	timing := Timing{}
-
-	trace := &httptrace.ClientTrace{
-		DNSStart:          func(_ httptrace.DNSStartInfo) { timing.DnsStart = time.Now().UTC().UnixMilli() },
-		DNSDone:           func(_ httptrace.DNSDoneInfo) { timing.DnsDone = time.Now().UTC().UnixMilli() },
-		ConnectStart:      func(_, _ string) { timing.ConnectStart = time.Now().UTC().UnixMilli() },
-		ConnectDone:       func(_, _ string, _ error) { timing.ConnectDone = time.Now().UTC().UnixMilli() },
-		TLSHandshakeStart: func() { timing.TlsHandshakeStart = time.Now().UTC().UnixMilli() },
-		TLSHandshakeDone:  func(_ tls.ConnectionState, _ error) { timing.TlsHandshakeDone = time.Now().UTC().UnixMilli() },
-		GotConn: func(_ httptrace.GotConnInfo) {
-			timing.FirstByteStart = time.Now().UTC().UnixMilli()
-		},
-		GotFirstResponseByte: func() {
-			timing.FirstByteDone = time.Now().UTC().UnixMilli()
-			timing.TransferStart = time.Now().UTC().UnixMilli()
-		},
-	}
-
-	req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
-
-	start := time.Now()
-	res, err := client.Do(req)
-	timing.TransferDone = time.Now().UTC().UnixMilli()
-	latency := time.Since(start).Milliseconds()
-
-	if err != nil {
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) && urlErr.Timeout() {
-			return Response{
-				Latency: latency,
-				Timing:  timing,
-				Time:    start.UTC().UnixMilli(),
-				Error:   fmt.Sprintf("Timeout after %d ms", latency),
-			}, nil
-		}
-
-		logger.Error().Err(err).Msg("error while pinging")
-		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return Response{
-			Latency: latency,
-			Timing:  timing,
-			Time:    start.UTC().UnixMilli(),
-			Error:   fmt.Sprintf("Cannot read response body: %s", err.Error()),
-		}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
-	}
-
-	headers := make(map[string]string)
-	for key := range res.Header {
-		headers[key] = res.Header.Get(key)
-	}
-
 	return Response{
-		Time:    start.UTC().UnixMilli(),
-		Status:  res.StatusCode,
-		Headers: headers,
-		Timing:  timing,
-		Latency: latency,
-		Body:    string(body),
+		Timestamp: start.UTC().UnixMilli(),
+		Status:    response.StatusCode,
+		Headers:   headers,
+		Timing:    timing,
+		Latency:   latency,
+		Body:      string(body),
 	}, nil
+
 }

@@ -20,11 +20,30 @@ func (s statusCode) IsSuccessful() bool {
 	return s >= 200 && s < 300
 }
 
+type PingData struct {
+	WorkspaceID   string `json:"workspaceId"`
+	MonitorID     string `json:"monitorId"`
+	URL           string `json:"url"`
+	Region        string `json:"region"`
+	Message       string `json:"message,omitempty"`
+	Timing        string `json:"timing,omitempty"`
+	Headers       string `json:"headers,omitempty"`
+	Assertions    string `json:"assertions"`
+	Body          string `json:"body,omitempty"`
+	Latency       int64  `json:"latency"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Timestamp     int64  `json:"timestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
+	Error         uint8  `json:"error"`
+}
+
 func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "ping_response__v8"
+
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
 		return
 	}
 
@@ -34,6 +53,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		if region != "" && region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+
 			return
 		}
 	}
@@ -42,6 +62,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 	//  We need a new client for each request to avoid connection reuse.
@@ -54,6 +75,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	var i interface{} = req.RawAssertions
 	jsonBytes, _ := json.Marshal(i)
 	assertionAsString := string(jsonBytes)
+
 	if assertionAsString == "null" {
 		assertionAsString = ""
 	}
@@ -62,41 +84,71 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	op := func() error {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
+
 		if err != nil {
 			return fmt.Errorf("unable to ping: %w", err)
 		}
-		statusCode := statusCode(res.StatusCode)
+
+		// In TB we need to store them as string
+		timingAsString, err := json.Marshal(res.Timing)
+		if err != nil {
+			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+		}
+
+		headersAsString, err := json.Marshal(res.Headers)
+		if err != nil {
+			return fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
+		}
+
+		data := PingData{
+			Latency:       res.Latency,
+			StatusCode:    res.Status,
+			MonitorID:     req.MonitorID,
+			Region:        h.Region,
+			WorkspaceID:   req.WorkspaceID,
+			Timestamp:     res.Timestamp,
+			CronTimestamp: req.CronTimestamp,
+			URL:           req.URL,
+			Timing:        string(timingAsString),
+			Headers:       string(headersAsString),
+			Body:          string(res.Body),
+		}
+
+		statusCode := statusCode(res.Status)
 
 		var isSuccessfull bool = true
+
 		if len(req.RawAssertions) > 0 {
 			for _, a := range req.RawAssertions {
 				var assert request.Assertion
 				err = json.Unmarshal(a, &assert)
+
 				if err != nil {
 					// handle error
 					return fmt.Errorf("unable to unmarshal assertion: %w", err)
 				}
+
 				switch assert.AssertionType {
 				case request.AssertionHeader:
 					var target assertions.HeaderTarget
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
-					isSuccessfull = isSuccessfull && target.HeaderEvaluate(res.Headers)
+					isSuccessfull = isSuccessfull && target.HeaderEvaluate(data.Headers)
 
 				case request.AssertionTextBody:
 					var target assertions.StringTargetType
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
-					isSuccessfull = isSuccessfull && target.StringEvaluate(res.Body)
+					isSuccessfull = isSuccessfull && target.StringEvaluate(data.Body)
 
 				case request.AssertionStatus:
 					var target assertions.StatusTarget
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
-					isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.StatusCode))
+					isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.Status))
 				case request.AssertionJsonBody:
 					fmt.Println("assertion type", assert.AssertionType)
 				default:
@@ -109,28 +161,28 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		// let's retry at least once if the status code is not successful.
 		if !isSuccessfull && called < 2 {
-			return fmt.Errorf("unable to ping: %v with status %v", res, res.StatusCode)
+			return fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 		}
 
 		// it's in error if not successful
 		if isSuccessfull {
-			res.Error = 0
+			data.Error = 0
 			// Small trick to avoid sending the body at the moment to TB
-			res.Body = ""
+			data.Body = ""
 		} else {
-			res.Error = 1
+			data.Error = 1
 		}
 
-		res.Assertions = assertionAsString
+		data.Assertions = assertionAsString
 		// That part could be refactored
 		if !isSuccessfull && req.Status == "active" {
 			// Q: Why here we do not check if the status was previously active?
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "error",
-				StatusCode:    res.StatusCode,
+				StatusCode:    res.Status,
 				Region:        h.Region,
-				Message:       res.Message,
+				Message:       res.Error,
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
@@ -141,7 +193,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					MonitorId:     req.MonitorID,
 					Status:        "degraded",
 					Region:        h.Region,
-					StatusCode:    res.StatusCode,
+					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
@@ -153,7 +205,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				MonitorId:     req.MonitorID,
 				Status:        "active",
 				Region:        h.Region,
-				StatusCode:    res.StatusCode,
+				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
@@ -164,13 +216,13 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					MonitorId:     req.MonitorID,
 					Status:        "active",
 					Region:        h.Region,
-					StatusCode:    res.StatusCode,
+					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
 		}
 
-		if err := h.TbClient.SendEvent(ctx, res, dataSourceName); err != nil {
+		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
@@ -178,7 +230,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		if err := h.TbClient.SendEvent(ctx, checker.PingData{
+		if err := h.TbClient.SendEvent(ctx, PingData{
 			URL:           req.URL,
 			Region:        h.Region,
 			Message:       err.Error(),
@@ -206,4 +258,5 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+
 }
