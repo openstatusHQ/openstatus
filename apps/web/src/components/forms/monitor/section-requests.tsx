@@ -31,7 +31,8 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { useEffect, useState } from "react";
+import { set } from "date-fns";
+import { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
@@ -45,20 +46,37 @@ export function SectionRequests({ form }: Props) {
     name: "headers",
     control: form.control,
   });
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const watchMethod = form.watch("method");
-  // const [content, setContent] = useState<string>("application/json");
 
-  const watchHeaders = form.watch("headers");
+  const value = form.getValues("body") ? "payload" : undefined;
+  const [file, setFile] = useState<string | undefined>(value);
 
+  const defaultContentType = fields.find(
+    (field) => field.key === "Content-Type"
+  )?.value;
+  const [content, setContent] = useState<string | undefined>(
+    defaultContentType
+  );
   useEffect(() => {
     if (
       watchMethod === "POST" &&
-      !fields.some((field) => field.key === "Content-Type")
+      !fields.some((field) => field.key === "Content-Type") &&
+      content &&
+      content !== "none"
     ) {
-      prepend({ key: "Content-Type", value: "application/json" });
+      prepend({ key: "Content-Type", value: content });
+      return;
     }
-  }, [watchMethod, prepend, fields]);
+    if (
+      watchMethod === "POST" &&
+      fields.find((field) => field.key === "Content-Type")?.value &&
+      content === undefined
+    ) {
+      setContent(fields.find((field) => field.key === "Content-Type")?.value);
+    }
+  }, [watchMethod, prepend, fields, content]);
 
   const validateJSON = (value?: string) => {
     if (!value) return;
@@ -89,6 +107,7 @@ export function SectionRequests({ form }: Props) {
       reader.onload = (event) => {
         if (event.target?.result && typeof event.target.result === "string") {
           form.setValue("body", event.target?.result);
+          setFile(file.name);
         }
       };
 
@@ -122,6 +141,7 @@ export function SectionRequests({ form }: Props) {
                 onValueChange={(value) => {
                   field.onChange(monitorMethodsSchema.parse(value));
                   form.resetField("body", { defaultValue: "" });
+                  setContent(undefined);
                 }}
                 defaultValue={field.value}
               >
@@ -149,18 +169,12 @@ export function SectionRequests({ form }: Props) {
             <FormItem className="sm:col-span-6">
               <FormLabel>URL</FormLabel>
               <FormControl>
-                {/* <InputWithAddons
-                  leading="https://"
-                  placeholder="documenso.com/api/health"
-                  {...field}
-                /> */}
                 <Input
                   className="bg-muted"
                   placeholder="https://documenso.com/api/health"
                   {...field}
                 />
               </FormControl>
-              {/* <FormMessage /> */}
             </FormItem>
           )}
         />
@@ -221,19 +235,28 @@ export function SectionRequests({ form }: Props) {
             control={form.control}
             name="body"
             render={({ field }) => (
-              <FormItem className="space-y-0">
-                <div className="flex items-center justify-between">
-                  <FormLabel className="flex h-10 items-center space-x-2">
+              <FormItem>
+                <div className="flex items-end justify-between">
+                  <FormLabel className="flex items-center space-x-2">
                     Body
                     <Select
-                      defaultValue="application/json"
+                      defaultValue={
+                        fields.find((field) => field.key === "Content-Type")
+                          ?.value || "none"
+                      }
                       onValueChange={(value: string) => {
+                        if (content === "application/octet-stream") {
+                          form.setValue("body", "");
+                          setFile(undefined);
+                        }
+
+                        setContent(value);
                         if (value === "none") {
                           return;
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type",
+                          (field) => field.key === "Content-Type"
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -263,7 +286,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json",
+                        field.value === "application/json"
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
@@ -286,22 +309,42 @@ export function SectionRequests({ form }: Props) {
                     )}
                 </div>
                 <FormControl>
-                  {/* FIXME: cannot enter 'Enter' */}
-                  {watchHeaders?.some(
-                    (field) =>
-                      field.key === "Content-Type" &&
-                      field.value === "application/octet-stream",
-                  ) ? (
-                    <Input type="file" onChange={uploadFile} />
+                  {content === "application/octet-stream" ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          if (inputRef.current) {
+                            inputRef.current.click();
+                          }
+                        }}
+                      >
+                        {file ? <> {file}</> : <>Upload file</>}
+                      </Button>
+
+                      <input
+                        type="file"
+                        onChange={uploadFile}
+                        ref={inputRef}
+                        hidden
+                      />
+                    </>
                   ) : (
-                    <Textarea
-                      rows={8}
-                      placeholder='{ "hello": "world" }'
-                      {...field}
-                    />
+                    <>
+                      {content === "none" ? undefined : (
+                        <>
+                          <Textarea
+                            rows={8}
+                            placeholder='{ "hello": "world" }'
+                            {...field}
+                          />
+                          <FormDescription>Write your payload.</FormDescription>
+                        </>
+                      )}
+                    </>
                   )}
                 </FormControl>
-                <FormDescription>Write your payload payload.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
