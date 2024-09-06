@@ -6,7 +6,6 @@ import {
   monitorFlyRegionSchema,
 } from "@openstatus/db/src/schema/constants";
 
-import { isAnInvalidTestUrl } from "../utils";
 import { TCPResponse, tcpPayload } from "./schema";
 
 export const runtime = "edge";
@@ -61,7 +60,7 @@ async function checkTCP(url: string, region: MonitorFlyRegion) {
   if (!data.success) {
     console.log(json);
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`
     );
     throw new Error(data.error.message);
   }
