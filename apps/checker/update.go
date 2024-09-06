@@ -24,7 +24,10 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	url := "https://openstatus-api.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
-	json.NewEncoder(payloadBuf).Encode(updateData)
+	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
+		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
+		return
+	}
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, payloadBuf)
 	req.Header.Set("Authorization", basic)
 	req.Header.Set("Content-Type", "application/json")

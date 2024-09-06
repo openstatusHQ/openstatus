@@ -54,8 +54,8 @@ type HttpCheckerRequest struct {
 	URL           string            `json:"url"`
 	MonitorID     string            `json:"monitorId"`
 	Method        string            `json:"method"`
-	Body          string            `json:"body"`
 	Status        string            `json:"status"`
+	Body          string            `json:"body"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`

@@ -12,10 +12,10 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/utils": "workspace:^",
     "@t3-oss/env-core": "0.7.1",
-    "@upstash/qstash": "2.1.8",
+    "@upstash/qstash": "2.6.2",
     "drizzle-orm": "0.32.1",
-    "hono": "4.2.2",
-    "playwright": "1.43.0",
+    "hono": "4.5.3",
+    "playwright": "1.46.0",
     "zod": "3.23.8"
   },
   "devDependencies": {

@@ -28,10 +28,10 @@ type PingData struct {
 	Headers       string `json:"headers,omitempty"`
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
-	StatusCode    int    `json:"statusCode,omitempty"`
 	Latency       int64  `json:"latency"`
-	Timestamp     int64  `json:"timestamp"`
 	CronTimestamp int64  `json:"cronTimestamp"`
+	Timestamp     int64  `json:"timestamp"`
+	StatusCode    int    `json:"statusCode,omitempty"`
 	Error         uint8  `json:"error"`
 }
 
@@ -127,6 +127,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 		}
 
 		logger.Error().Err(err).Msg("error while pinging")
+
 		return PingData{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
 	defer response.Body.Close()

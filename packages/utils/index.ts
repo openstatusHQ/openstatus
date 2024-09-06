@@ -140,6 +140,16 @@ export type RegionInfo = {
   continent: Continent;
 };
 
+// TODO: we could think of doing the inverse and use "EU" as key
+export const continentDict: Record<Continent, { code: string }> = {
+  Europe: { code: "EU" },
+  "North America": { code: "NA" },
+  "South America": { code: "SA" },
+  Asia: { code: "AS" },
+  Africa: { code: "AF" },
+  Oceania: { code: "OC" },
+};
+
 export const flyRegionsDict: Record<MonitorFlyRegion, RegionInfo> = {
   ams: {
     code: "ams",

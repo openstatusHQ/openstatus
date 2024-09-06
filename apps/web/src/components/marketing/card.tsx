@@ -39,8 +39,18 @@ export function CardTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function CardDescription({ children }: { children: React.ReactNode }) {
-  return <p className="text-center text-muted-foreground">{children}</p>;
+export function CardDescription({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <p className={cn("text-center text-muted-foreground", className)}>
+      {children}
+    </p>
+  );
 }
 
 export function CardContent({
@@ -86,15 +96,15 @@ export function CardFeature(props: FeatureDescription) {
   const FeatureIcon = Icons[props.icon];
   return (
     <li>
-      <p className="flex flex-col">
-        <span>
-          <FeatureIcon className="mr-1.5 mb-1 inline-flex h-4 w-4 text-foreground/80" />
+      <div className="grid gap-1">
+        <p className="flex items-center gap-2">
+          <FeatureIcon className="h-4 w-4 text-foreground/80" />
           <span className="font-medium text-foreground">
             {props.catchline.replace(".", "")}
           </span>{" "}
-        </span>
+        </p>
         <span className="text-muted-foreground">{props.description}</span>
-      </p>
+      </div>
       {props.badge ? (
         <Badge variant="secondary" className="-ml-2 mt-1">
           {props.badge}

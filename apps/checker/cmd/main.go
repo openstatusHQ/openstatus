@@ -81,6 +81,7 @@ func main() {
 	<-ctx.Done()
 	if err := httpServer.Shutdown(ctx); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to shutdown http server")
+
 		return
 	}
 }
