@@ -221,8 +221,8 @@ export function SectionRequests({ form }: Props) {
             control={form.control}
             name="body"
             render={({ field }) => (
-              <FormItem>
-                <div className="flex items-end justify-between">
+              <FormItem className="space-y-0">
+                <div className="flex items-center justify-between">
                   <FormLabel className="flex h-10 items-center space-x-2">
                     Body
                     <Select
@@ -233,7 +233,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type",
+                          (field) => field.key === "Content-Type"
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -242,7 +242,7 @@ export function SectionRequests({ form }: Props) {
                     >
                       <SelectTrigger
                         variant={"ghost"}
-                        className="ml-2 text-muted-foreground"
+                        className="h-7 ml-1 text-xs text-muted-foreground"
                       >
                         <SelectValue placeholder="Theme" />
                       </SelectTrigger>
@@ -263,7 +263,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json",
+                        field.value === "application/json"
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
@@ -272,9 +272,10 @@ export function SectionRequests({ form }: Props) {
                               type="button"
                               variant="ghost"
                               size="icon"
+                              className="h-7 w-7"
                               onClick={onPrettifyJSON}
                             >
-                              <Wand2 className="h-4 w-4" />
+                              <Wand2 className="h-3 w-3" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -289,7 +290,7 @@ export function SectionRequests({ form }: Props) {
                   {watchHeaders?.some(
                     (field) =>
                       field.key === "Content-Type" &&
-                      field.value === "application/octet-stream",
+                      field.value === "application/octet-stream"
                   ) ? (
                     <Input type="file" onChange={uploadFile} />
                   ) : (

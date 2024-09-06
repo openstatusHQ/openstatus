@@ -14,14 +14,13 @@ const SelectGroup = SelectPrimitive.Group;
 const SelectValue = SelectPrimitive.Value;
 
 const selectVariants = cva(
-  "flex w-full items-center justify-between px-3 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+  "flex w-full h-10 items-center justify-between px-3 rounded-md border border-input ring-offset-background py-2 text-sm placeholder:text-muted-foreground focus:ring-ring focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        default:
-          "border-input h-10 ring-offset-background py-2 placeholder:text-muted-foreground focus:ring-ring rounded-md border bg-transparent ",
+        default: "bg-transparent",
 
-        ghost: "focus:ring-accent focus:ring-offset-accent space-x-2",
+        ghost: "border-none space-x-2",
       },
     },
     defaultVariants: {
