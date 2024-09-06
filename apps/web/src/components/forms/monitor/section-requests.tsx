@@ -289,7 +289,7 @@ export function SectionRequests({ form }: Props) {
                   {watchHeaders?.some(
                     (field) =>
                       field.key === "Content-Type" &&
-                      field.value === "application/octet-stream"
+                      field.value === "application/octet-stream",
                   ) ? (
                     <Input type="file" onChange={uploadFile} />
                   ) : (

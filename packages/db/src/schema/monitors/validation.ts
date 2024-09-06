@@ -37,7 +37,7 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([])
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
