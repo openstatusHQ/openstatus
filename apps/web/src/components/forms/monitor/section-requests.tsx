@@ -54,10 +54,10 @@ export function SectionRequests({ form }: Props) {
   const [file, setFile] = useState<string | undefined>(value);
 
   const defaultContentType = fields.find(
-    (field) => field.key === "Content-Type",
+    (field) => field.key === "Content-Type"
   )?.value;
   const [content, setContent] = useState<string | undefined>(
-    defaultContentType,
+    defaultContentType
   );
   useEffect(() => {
     if (
@@ -257,7 +257,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type",
+                          (field) => field.key === "Content-Type"
                         );
                         if (contentIndex >= 0) {
                           update(contentIndex, { key: "Content-Type", value });
@@ -288,7 +288,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json",
+                        field.value === "application/json"
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
@@ -310,44 +310,44 @@ export function SectionRequests({ form }: Props) {
                       </TooltipProvider>
                     )}
                 </div>
-                <FormControl>
-                  {content === "application/octet-stream" ? (
-                    <>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          if (inputRef.current) {
-                            inputRef.current.click();
-                          }
-                        }}
-                      >
-                        {file ? <> {file}</> : <>Upload file</>}
-                      </Button>
+                <div className="space-y-2">
+                  <FormControl>
+                    {content === "application/octet-stream" ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => inputRef.current?.click()}
+                        >
+                          {file ? <> {file}</> : <>Upload file</>}
+                        </Button>
 
-                      <input
-                        type="file"
-                        onChange={uploadFile}
-                        ref={inputRef}
-                        hidden
-                      />
-                    </>
-                  ) : (
-                    <>
-                      {content === "none" ? undefined : (
-                        <>
-                          <Textarea
-                            rows={8}
-                            placeholder='{ "hello": "world" }'
-                            {...field}
-                          />
-                          <FormDescription>Write your payload.</FormDescription>
-                        </>
-                      )}
-                    </>
-                  )}
-                </FormControl>
-                <FormMessage />
+                        <input
+                          type="file"
+                          onChange={uploadFile}
+                          ref={inputRef}
+                          hidden
+                        />
+                      </>
+                    ) : (
+                      <>
+                        {content === "none" ? undefined : (
+                          <>
+                            <Textarea
+                              rows={8}
+                              placeholder='{ "hello": "world" }'
+                              {...field}
+                            />
+                            <FormDescription>
+                              Write your payload.
+                            </FormDescription>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </div>
               </FormItem>
             )}
           />
