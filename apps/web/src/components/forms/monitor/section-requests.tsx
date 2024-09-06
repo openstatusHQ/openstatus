@@ -62,11 +62,15 @@ export function SectionRequests({ form }: Props) {
   useEffect(() => {
     if (
       watchMethod === "POST" &&
-      !fields.some((field) => field.key === "Content-Type") &&
-      content &&
-      content !== "none"
+      !fields.some((field) => field.key === "Content-Type")
     ) {
-      prepend({ key: "Content-Type", value: content });
+      if (content && content !== "none") {
+        prepend({ key: "Content-Type", value: content });
+      }
+      if (!content) {
+        prepend({ key: "Content-Type", value: "application/json" });
+        setContent("application/json");
+      }
       return;
     }
     if (
@@ -240,10 +244,7 @@ export function SectionRequests({ form }: Props) {
                   <FormLabel className="flex items-center space-x-2">
                     Body
                     <Select
-                      defaultValue={
-                        fields.find((field) => field.key === "Content-Type")
-                          ?.value || "none"
-                      }
+                      defaultValue={content}
                       onValueChange={(value: string) => {
                         if (content === "application/octet-stream") {
                           form.setValue("body", "");
@@ -267,7 +268,8 @@ export function SectionRequests({ form }: Props) {
                         variant={"ghost"}
                         className="ml-1 h-7 text-muted-foreground text-xs"
                       >
-                        <SelectValue placeholder="Theme" />
+                        {/* it's 💩 but my 🧠 is 🍤 */}
+                        <SelectValue placeholder="JSON" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="application/octet-stream">
