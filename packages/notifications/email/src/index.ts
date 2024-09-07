@@ -1,7 +1,7 @@
 import {
-  emailDataSchema,
   type Monitor,
   type Notification,
+  emailDataSchema,
 } from "@openstatus/db/src/schema";
 
 import { env } from "../env";

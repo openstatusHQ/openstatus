@@ -57,6 +57,6 @@ if (process.env.NODE_ENV === "development") {
   });
 
   await sendTestSlackMessage(
-    "https://hooks.slack.com/services/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"
+    "https://hooks.slack.com/services/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",
   );
 }
