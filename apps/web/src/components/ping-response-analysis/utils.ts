@@ -115,9 +115,13 @@ export const cachedCheckerSchema = z.object({
   checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
 });
 
+export const regionCheckerSchema = checkerSchema.extend({
+  region: monitorFlyRegionSchema,
+});
+
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
-export type RegionChecker = Checker & { region: MonitorFlyRegion };
+export type RegionChecker = z.infer<typeof regionCheckerSchema>;
 export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
 export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 

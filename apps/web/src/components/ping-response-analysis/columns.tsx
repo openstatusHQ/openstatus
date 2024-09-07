@@ -6,9 +6,9 @@ import {
   continentFormatter,
   latencyFormatter,
   regionFormatter,
-  timestampFormatter,
 } from "./utils";
 
+import { flyRegionsDict } from "@openstatus/utils";
 import { format } from "date-fns";
 import { utcToZonedTime } from "date-fns-tz";
 import { DataTableColumnHeader } from "../data-table/data-table-column-header";
@@ -26,6 +26,7 @@ export const columns: ColumnDef<RegionChecker>[] = [
   },
   {
     accessorKey: "region",
+    accessorFn: (row) => row.region,
     header: "Region",
     cell: ({ row }) => {
       return (
@@ -34,15 +35,11 @@ export const columns: ColumnDef<RegionChecker>[] = [
         </div>
       );
     },
-  },
-  {
-    id: "continent",
-    accessorFn: (row) => continentFormatter(row.region),
-    header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Continent" />;
-    },
-    cell: ({ row }) => {
-      return <div>{row.getValue("continent")}</div>;
+    filterFn: (row, _id, filterValue) => {
+      const region = regionFormatter(row.original.region, "long").toLowerCase();
+      const continent =
+        flyRegionsDict[row.original.region].continent.toLocaleLowerCase();
+      return `${region} ${continent}`.includes(filterValue.toLowerCase());
     },
   },
   {
@@ -55,45 +52,71 @@ export const columns: ColumnDef<RegionChecker>[] = [
   {
     id: "DNS",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="DNS" />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="DNS"
+          className="pr-0 text-right"
+        />
+      );
     },
     accessorFn: (row) => `${row.timing.dnsDone - row.timing.dnsStart}`,
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
     id: "connect",
     accessorFn: (row) => `${row.timing.connectDone - row.timing.connectStart}`,
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Connect" />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="Connect"
+          className="pr-0 text-right"
+        />
+      );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
     id: "TLS",
-
     accessorFn: (row) =>
       `${row.timing.tlsHandshakeDone - row.timing.tlsHandshakeStart}`,
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="TLS" />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="TLS"
+          className="pr-0 text-right"
+        />
+      );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
@@ -101,39 +124,69 @@ export const columns: ColumnDef<RegionChecker>[] = [
     accessorFn: (row) =>
       `${row.timing.firstByteDone - row.timing.firstByteStart}`,
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="TTFB" />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="TTFB"
+          className="pr-0 text-right"
+        />
+      );
     },
     cell: ({ row, column }) => {
       return (
-        <div className="font-mono">
+        <div className="text-right font-mono">
           {latencyFormatter(row.getValue(column.id))}
         </div>
       );
+    },
+    meta: {
+      headerClassName: "text-right",
+    },
+  },
+  {
+    accessorKey: "transfer",
+    accessorFn: (row) =>
+      `${row.timing.transferDone - row.timing.transferStart}`,
+    header: ({ column }) => {
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="Transfer"
+          className="pr-0 text-right"
+        />
+      );
+    },
+    cell: ({ row, column }) => {
+      return (
+        <div className="text-right font-mono">
+          {latencyFormatter(row.getValue(column.id))}
+        </div>
+      );
+    },
+    meta: {
+      headerClassName: "text-right",
     },
   },
   {
     accessorKey: "latency",
     header: ({ column }) => {
-      return <DataTableColumnHeader column={column} title="Latency" />;
+      return (
+        <DataTableColumnHeader
+          column={column}
+          title="Latency"
+          className="pr-0 text-right"
+        />
+      );
     },
     cell: ({ row }) => {
       return (
-        <div className="font-mono">
+        <div className="text-right font-mono">
           {latencyFormatter(row.original.latency)}
         </div>
       );
     },
-  },
-  {
-    id: "Time (UTC)",
-    accessorFn: (row) => row.time,
-    cell: ({ row }) => {
-      const date = format(
-        utcToZonedTime(row.original.time, "UTC"),
-        "dd LLL hh:mm a",
-      );
-
-      return <div className="whitespace-nowrap">{date}</div>;
+    meta: {
+      headerClassName: "text-right",
     },
   },
 ];
