@@ -31,9 +31,9 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { toast } from "@/lib/toast";
 import { useRef, useState } from "react";
 import { SectionHeader } from "../shared/section-header";
-import { toast } from "@/lib/toast";
 
 const contentTypes = [
   { value: "application/octet-stream", label: "Binary File" },
@@ -60,7 +60,7 @@ export function SectionRequests({ form }: Props) {
   const watchMethod = form.watch("method");
   const [file, setFile] = useState<string | undefined>(undefined);
   const [content, setContent] = useState<string | undefined>(
-    fields.find((field) => field.key === "Content-Type")?.value
+    fields.find((field) => field.key === "Content-Type")?.value,
   );
 
   const validateJSON = (value?: string) => {
@@ -236,7 +236,7 @@ export function SectionRequests({ form }: Props) {
                         }
 
                         const contentIndex = fields.findIndex(
-                          (field) => field.key === "Content-Type"
+                          (field) => field.key === "Content-Type",
                         );
 
                         if (contentIndex >= 0) {
@@ -272,7 +272,7 @@ export function SectionRequests({ form }: Props) {
                     fields.some(
                       (field) =>
                         field.key === "Content-Type" &&
-                        field.value === "application/json"
+                        field.value === "application/json",
                     ) && (
                       <TooltipProvider>
                         <Tooltip>
