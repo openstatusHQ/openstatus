@@ -31,9 +31,19 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
-import { set } from "date-fns";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { SectionHeader } from "../shared/section-header";
+import { toast } from "@/lib/toast";
+
+const contentTypes = [
+  { value: "application/octet-stream", label: "Binary File" },
+  { value: "application/json", label: "JSON" },
+  { value: "application/xml", label: "XML" },
+  { value: "application/yaml", label: "YAML" },
+  { value: "application/edn", label: "EDN" },
+  { value: "application/other", label: "Other" },
+  { value: "none", label: "None" },
+];
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -47,40 +57,11 @@ export function SectionRequests({ form }: Props) {
     control: form.control,
   });
   const inputRef = useRef<HTMLInputElement>(null);
-
   const watchMethod = form.watch("method");
-
-  const value = form.getValues("body") ? "payload" : undefined;
-  const [file, setFile] = useState<string | undefined>(value);
-
-  const defaultContentType = fields.find(
-    (field) => field.key === "Content-Type"
-  )?.value;
+  const [file, setFile] = useState<string | undefined>(undefined);
   const [content, setContent] = useState<string | undefined>(
-    defaultContentType
+    fields.find((field) => field.key === "Content-Type")?.value
   );
-  useEffect(() => {
-    if (
-      watchMethod === "POST" &&
-      !fields.some((field) => field.key === "Content-Type")
-    ) {
-      if (content && content !== "none") {
-        prepend({ key: "Content-Type", value: content });
-      }
-      if (!content) {
-        prepend({ key: "Content-Type", value: "application/json" });
-        setContent("application/json");
-      }
-      return;
-    }
-    if (
-      watchMethod === "POST" &&
-      fields.find((field) => field.key === "Content-Type")?.value &&
-      content === undefined
-    ) {
-      setContent(fields.find((field) => field.key === "Content-Type")?.value);
-    }
-  }, [watchMethod, prepend, fields, content]);
 
   const validateJSON = (value?: string) => {
     if (!value) return;
@@ -104,6 +85,7 @@ export function SectionRequests({ form }: Props) {
       const fileSize = file.size / 1024 / 1024; // in MiB
       if (fileSize > 10) {
         // Display error message
+        toast.error("File size is too big. Max 10MB allowed.");
         return;
       }
 
@@ -239,28 +221,35 @@ export function SectionRequests({ form }: Props) {
             control={form.control}
             name="body"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="space-y-1.5">
                 <div className="flex items-end justify-between">
                   <FormLabel className="flex items-center space-x-2">
                     Body
                     <Select
                       defaultValue={content}
-                      onValueChange={(value: string) => {
+                      onValueChange={(value) => {
+                        setContent(value);
+
                         if (content === "application/octet-stream") {
                           form.setValue("body", "");
                           setFile(undefined);
                         }
 
-                        setContent(value);
-                        if (value === "none") {
-                          return;
-                        }
-
                         const contentIndex = fields.findIndex(
                           (field) => field.key === "Content-Type"
                         );
+
                         if (contentIndex >= 0) {
-                          update(contentIndex, { key: "Content-Type", value });
+                          if (value === "none") {
+                            remove(contentIndex);
+                          } else {
+                            update(contentIndex, {
+                              key: "Content-Type",
+                              value,
+                            });
+                          }
+                        } else {
+                          prepend({ key: "Content-Type", value });
                         }
                       }}
                     >
@@ -268,19 +257,14 @@ export function SectionRequests({ form }: Props) {
                         variant={"ghost"}
                         className="ml-1 h-7 text-muted-foreground text-xs"
                       >
-                        {/* it's 💩 but my 🧠 is 🍤 */}
-                        <SelectValue placeholder="JSON" />
+                        <SelectValue placeholder="Content-Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="application/octet-stream">
-                          Binary File
-                        </SelectItem>
-                        <SelectItem value="application/json">JSON</SelectItem>
-                        <SelectItem value="application/xml">XML</SelectItem>
-                        <SelectItem value="application/yaml">YAML</SelectItem>
-                        <SelectItem value="application/edn">EDN</SelectItem>
-                        <SelectItem value="application/other">Other</SelectItem>
-                        <SelectItem value="none">None</SelectItem>
+                        {contentTypes.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormLabel>
@@ -318,10 +302,12 @@ export function SectionRequests({ form }: Props) {
                           type="button"
                           variant="outline"
                           onClick={() => inputRef.current?.click()}
+                          className="max-w-56"
                         >
-                          {file ? <> {file}</> : <>Upload file</>}
+                          <span className="truncate">
+                            {file || form.getValues("body") || "Upload file"}
+                          </span>
                         </Button>
-
                         <input
                           type="file"
                           onChange={uploadFile}
@@ -331,18 +317,12 @@ export function SectionRequests({ form }: Props) {
                       </>
                     ) : (
                       <>
-                        {content === "none" ? undefined : (
-                          <>
-                            <Textarea
-                              rows={8}
-                              placeholder='{ "hello": "world" }'
-                              {...field}
-                            />
-                            <FormDescription>
-                              Write your payload.
-                            </FormDescription>
-                          </>
-                        )}
+                        <Textarea
+                          rows={8}
+                          placeholder='{ "hello": "world" }'
+                          {...field}
+                        />
+                        <FormDescription>Write your payload.</FormDescription>
                       </>
                     )}
                   </FormControl>
