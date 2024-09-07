@@ -33,12 +33,8 @@ export const sendAlert = async ({
 
   try {
     await postToWebhook(
-      `Your monitor ${name} is down 🚨
-
-      Your monitor with url ${monitor.url} is down with ${
-        statusCode ? `status code ${statusCode}` : `error message ${message}`
-      }.`,
-      webhookUrl,
+      `**🚨 Alert [${name}](<${monitor.url}>)**\nStatus Code: ${statusCode || "_empty_"}\nMessage: ${message || "_empty_"}\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
+      webhookUrl
     );
   } catch (err) {
     console.error(err);
@@ -68,8 +64,8 @@ export const sendRecovery = async ({
 
   try {
     await postToWebhook(
-      `Your monitor ${name}|${monitor.url}  is up again 🎉`,
-      webhookUrl,
+      `**✅ Recovered [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
+      webhookUrl
     );
   } catch (err) {
     console.error(err);
@@ -99,8 +95,8 @@ export const sendDegraded = async ({
 
   try {
     await postToWebhook(
-      `Your monitor ${name}|${monitor.url} is degraded ⚠️`,
-      webhookUrl,
+      `**⚠️ Degraded [${name}](<${monitor.url}>)**\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n`,
+      webhookUrl
     );
   } catch (err) {
     console.error(err);
@@ -114,8 +110,8 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   }
   try {
     await postToWebhook(
-      "This is a test notification from OpenStatus. \nIf you see this, it means that your webhook is working! 🎉",
-      webhookUrl,
+      "**🧪 Test [OpenStatus](<https://www.openstatus.dev/>)**\nIf you can read this, your Slack webhook is functioning correctly!\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n",
+      webhookUrl
     );
     return true;
   } catch (_err) {

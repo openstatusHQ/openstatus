@@ -36,29 +36,31 @@ export const sendAlert = async ({
       {
         blocks: [
           {
+            type: "divider",
+          },
+          {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Your monitor <${monitor.url}/|${name}> with ${
-                statusCode
-                  ? `status code ${statusCode}`
-                  : `error message ${message}`
-              } 🚨  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+              text: `
+*🚨 Alert <${monitor.url}/|${name}>*\n\n
+Status Code: ${statusCode || "_empty_"}\n
+Message: ${message || "_empty_"}
+`,
             },
-            accessory: {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Open Monitor",
-                emoji: true,
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
               },
-              value: `monitor_url_${monitor.url}`,
-              url: monitor.url,
-            },
+            ],
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -91,26 +93,27 @@ export const sendRecovery = async ({
       {
         blocks: [
           {
+            type: "divider",
+          },
+          {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Your monitor <${monitor.url}/|${name}> is up again
-              🚀  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+              text: `*✅ Recovered <${monitor.url}/|${name}>*`,
             },
-            accessory: {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Open Monitor",
-                emoji: true,
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
               },
-              value: `monitor_url_${monitor.url}`,
-              url: monitor.url,
-            },
+            ],
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -140,26 +143,27 @@ export const sendDegraded = async ({
       {
         blocks: [
           {
+            type: "divider",
+          },
+          {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: `Your monitor <${monitor.url}/|${name}> is degraded
-              ⚠️  \n\n Powered by <https://www.openstatus.dev/|OpenStatus>.`,
+              text: `*⚠️ Degraded <${monitor.url}/|${name}>*`,
             },
-            accessory: {
-              type: "button",
-              text: {
-                type: "plain_text",
-                text: "Open Monitor",
-                emoji: true,
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
               },
-              value: `monitor_url_${monitor.url}`,
-              url: monitor.url,
-            },
+            ],
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -173,15 +177,27 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
       {
         blocks: [
           {
+            type: "divider",
+          },
+          {
             type: "section",
             text: {
               type: "mrkdwn",
-              text: "This is a test notification from <https://www.openstatus.dev/|OpenStatus>.\n If you can read this, your Slack webhook is functioning correctly!",
+              text: "*🧪 Test <https://www.openstatus.dev/|OpenStatus>*\n\nIf you can read this, your Slack webhook is functioning correctly!",
             },
+          },
+          {
+            type: "context",
+            elements: [
+              {
+                type: "mrkdwn",
+                text: "Check your <https://www.openstatus.dev/app|Dashboard>.",
+              },
+            ],
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
     return true;
   } catch (_err) {

@@ -1,15 +1,53 @@
-import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import {
+  emailDataSchema,
+  type Monitor,
+  type Notification,
+} from "@openstatus/db/src/schema";
 
 import { env } from "../env";
-import { EmailConfigurationSchema } from "./schema/config";
+
+async function send({
+  subject,
+  html,
+  email,
+  id,
+  type,
+}: {
+  subject: string;
+  html: string;
+  email: string;
+  id: number;
+  type: "recovered" | "alert" | "degraded";
+}) {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      to: email,
+      from: "Notifications <ping@openstatus.dev>",
+      subject,
+      html,
+    }),
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    console.log(data);
+    // return NextResponse.json(data);
+  }
+  if (!res.ok) {
+    console.log(`Error sending ${type} email ${id}`);
+  }
+}
 
 export const sendAlert = async ({
   monitor,
   notification,
   statusCode,
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -17,50 +55,31 @@ export const sendAlert = async ({
   message?: string;
   incidentId?: string;
 }) => {
-  // FIXME:
-  const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
-  const { email } = config;
+  const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      to: email,
-      from: "Notifications <ping@openstatus.dev>",
+  if (!config.success) return;
 
-      subject: `Your monitor ${monitor.name} is down 🚨`,
-      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is down. </p><p>URL : ${
-        monitor.url
-      }</p> ${
+  await send({
+    id: monitor.id,
+    type: "alert",
+    email: config.data.email,
+    subject: `🚨 Alert ${monitor.name}`,
+    html: `
+    <p>Hi,</p>
+    <p>Your monitor <strong>${monitor.name}</strong> is down.</p>
+    <p>URL: ${monitor.url}</p>
+      ${
         statusCode
           ? `<p>Status Code: ${statusCode}</p>`
           : `<p>Error message: ${message}</p>`
-      }<p>OpenStatus 🏓 </p>`,
-    }),
+      }
+    <p>OpenStatus 🏓</p>`,
   });
-
-  if (res.ok) {
-    const data = await res.json();
-    console.log(data);
-    // return NextResponse.json(data);
-  }
-  if (!res.ok) {
-    console.log(`Error sending recovery email ${monitor.id}`);
-  }
 };
 
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -68,73 +87,47 @@ export const sendRecovery = async ({
   message?: string;
   incidentId?: string;
 }) => {
-  // FIXME:
-  const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
-  const { email } = config;
+  const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      to: email,
-      from: "Notifications <ping@openstatus.dev>",
+  if (!config.success) return;
 
-      subject: `Your monitor ${monitor.name} is back up 🎉`,
-      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is up again  </p><p>URL : ${monitor.url}</p> <p>OpenStatus 🏓 </p>`,
-    }),
+  send({
+    id: monitor.id,
+    type: "recovered",
+    email: config.data.email,
+    subject: `✅ Recovered ${monitor.name}`,
+    html: `
+      <p>Hi,</p>
+      <p>Your monitor <strong>${monitor.name}</strong> is up again.</p>
+      <p>URL: ${monitor.url}</p>
+      <p>OpenStatus 🏓</p>
+    `,
   });
-
-  if (res.ok) {
-    const data = await res.json();
-    console.log(data);
-    // return NextResponse.json(data);
-  }
-  if (!res.ok) {
-    console.log(`Error sending recovery email ${monitor.id}`);
-  }
 };
 
 export const sendDegraded = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
 }) => {
-  // FIXME:
-  const config = EmailConfigurationSchema.parse(JSON.parse(notification.data));
-  const { email } = config;
+  const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      to: email,
-      from: "Notifications <ping@openstatus.dev>",
+  if (!config.success) return;
 
-      subject: `Your monitor ${monitor.name} is degraded ⚠️`,
-      html: `<p>Hi,<br><br>Your monitor ${monitor.name} is taking longer than expected to respond</p><p>URL : ${monitor.url}</p> <p>OpenStatus 🏓 </p>`,
-    }),
+  send({
+    id: monitor.id,
+    type: "degraded",
+    email: config.data.email,
+    subject: `⚠️ Degraded ${monitor.name}`,
+    html: `
+      <p>Hi,</p>
+      <p>Your monitor <strong>${monitor.name}</strong> is taking longer than expected to respond</p>
+      <p>URL: ${monitor.url}</p>
+      <p>OpenStatus 🏓</p>
+    `,
   });
-
-  if (res.ok) {
-    const data = await res.json();
-    console.log(data);
-    // return NextResponse.json(data);
-  }
-  if (!res.ok) {
-    console.log(`Error sending recovery email ${monitor.id}`);
-  }
 };
