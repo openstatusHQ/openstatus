@@ -10,8 +10,10 @@ import {
   TableRow,
 } from "@openstatus/ui/src/components/table";
 
+import { Input } from "@openstatus/ui";
 import {
   type ColumnDef,
+  type ColumnFiltersState,
   type ExpandedState,
   type Row,
   type SortingState,
@@ -19,6 +21,7 @@ import {
   flexRender,
   getCoreRowModel,
   getExpandedRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -47,10 +50,8 @@ export function MultiRegionTable<TData, TValue>({
     { id: "latency", desc: false },
   ]);
   const [expanded, setExpanded] = useState<ExpandedState>({});
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    continent: false,
-    "Time (UTC)": false,
-  });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -58,24 +59,32 @@ export function MultiRegionTable<TData, TValue>({
     onSortingChange: setSorting,
     onExpandedChange: setExpanded,
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     getRowCanExpand,
     autoResetExpanded,
     state: {
       sorting,
       expanded,
       columnVisibility,
+      columnFilters,
     },
   });
 
   return (
     <div className="grid gap-4">
       <div className="flex items-end justify-between gap-2">
-        <p className="text-muted-foreground text-xs">
-          Select a row to expand the response details.
-        </p>
+        <Input
+          placeholder="Filter regions, continents, flags..."
+          value={(table.getColumn("region")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("region")?.setFilterValue(event.target.value)
+          }
+          className="h-8 max-w-[325px] truncate"
+        />
         <div className="flex items-center justify-end gap-2">
           <DataTableCollapseButton table={table} />
           <DataTableViewOptions table={table} />
@@ -96,7 +105,7 @@ export function MultiRegionTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 );
@@ -119,7 +128,7 @@ export function MultiRegionTable<TData, TValue>({
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}

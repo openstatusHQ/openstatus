@@ -20,9 +20,9 @@ const features: {
 }[] = [
   {
     icon: "gauge",
-    catchline: "Speed Test for Websites",
+    catchline: "Speed Test",
     description:
-      "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB) of the response.",
+      "Enter your URL and get a website speed check. Get insights on page load, header details and timing phases (DNS, Connect, TLS, TTFB, Transfer) of the response.",
   },
   {
     icon: "globe",
@@ -34,7 +34,7 @@ const features: {
     icon: "link",
     catchline: "Share the Results",
     description:
-      "Quickly share the results of your website speed test with your team or clients. We share the results for 7 days, so you can easily collaborate on performance.",
+      "Quickly share the results of your website speed test with your team or clients. The results expire after 7 days, so you can easily collaborate on performance.",
   },
 ];
 export const GlobalMonitoring = () => {

@@ -15,15 +15,19 @@ export interface Emails {
 export type EmailHtml = {
   html: string;
   subject: string;
-  to: string[];
+  to: string;
   from: string;
 };
 export const sendEmail = async (email: Emails) => {
   await resend.emails.send(email);
 };
 
+export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
+  await resend.batch.send(emails);
+};
+
 export const sendEmailHtml = async (email: EmailHtml) => {
-  await fetch("https://api.resend.com/emails", {
+  await fetch("https://api.resend.com/emails/batch", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

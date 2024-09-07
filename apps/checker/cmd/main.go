@@ -309,7 +309,7 @@ func main() {
 
 			headersAsString, err := json.Marshal(r.Headers)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			tbData := PingResponse{
