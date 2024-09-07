@@ -11,10 +11,6 @@ export const monitorMethodsSchema = z.enum(monitorMethods);
 export const monitorStatusSchema = z.enum(monitorStatus);
 export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 
-// TODO: shared function
-// Below function is commented as not used to remove biome-ignore
-// function stringToArrayProcess<T>(_string: T) {}
-
 const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {
     return String(val).split(",");

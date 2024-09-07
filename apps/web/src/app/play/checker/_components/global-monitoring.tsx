@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/marketing/card";
 
-import { Globe } from "@/components/marketing/monitor/globe";
 import { nanoid } from "nanoid";
 
 const features: {
@@ -46,7 +45,7 @@ export const GlobalMonitoring = () => {
         <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
-        {features?.map((feature, i) => (
+        {features?.map((feature) => (
           <CardFeature key={`${feature.icon}-${nanoid(6)}`} {...feature} />
         ))}
       </ul>
