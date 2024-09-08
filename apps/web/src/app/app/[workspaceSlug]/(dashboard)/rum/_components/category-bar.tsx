@@ -10,6 +10,7 @@ import {
 } from "@openstatus/ui";
 
 import { cn } from "@/lib/utils";
+import { nanoid } from "nanoid";
 
 const MAX_VALUE_RATIO = 1.3; // avoiding Infinity as number
 
@@ -62,12 +63,11 @@ export function CategoryBar({ values, marker }: CategoryBarProps) {
         <div className="absolute bottom-0 left-0 flex items-center text-muted-foreground text-xs">
           0
         </div>
-        {valuesWithPercentage.slice(0, values.length - 1).map((value, i) => {
+        {valuesWithPercentage.slice(0, values.length - 1).map((value) => {
           const width = `${(value.percentage * 100).toFixed(2)}%`;
           return (
             <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-              key={i}
+              key={`category-bar-label-${nanoid(6)}`}
               className="flex items-center justify-end"
               style={{ width }}
             >
@@ -83,10 +83,15 @@ export function CategoryBar({ values, marker }: CategoryBarProps) {
         </div>
       </div>
       <div className="flex h-3 w-full overflow-hidden rounded-full">
-        {valuesWithPercentage.map((value, i) => {
+        {valuesWithPercentage.map((value) => {
           const width = `${(value.percentage * 100).toFixed(2)}%`;
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          return <div key={i} className={cn(value.color)} style={{ width }} />;
+          return (
+            <div
+              key={`category-bar-segment-${nanoid(6)}`}
+              className={cn(value.color)}
+              style={{ width }}
+            />
+          );
         })}
       </div>
       <div

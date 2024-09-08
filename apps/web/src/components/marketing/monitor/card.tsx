@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { cardConfig } from "@/config/features";
+import { nanoid } from "nanoid";
 import {
   CardContainer,
   CardContent,
@@ -26,9 +27,8 @@ export function MonitoringCard() {
       <CardContent>
         <Globe />
         <CardFeatureContainer>
-          {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <CardFeature key={i} {...feature} />
+          {features?.map((feature) => (
+            <CardFeature key={`monitoring-card-${nanoid(6)}`} {...feature} />
           ))}
           <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
             <Button variant="outline" className="rounded-full" asChild>

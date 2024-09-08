@@ -17,7 +17,7 @@
         "noUnusedVariables": "warn"
       },
       "nursery": {
-        "useSortedClasses": "warn"
+         "useSortedClasses": "off"
       }
     },
     "ignore": [

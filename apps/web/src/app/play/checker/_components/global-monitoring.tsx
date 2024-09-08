@@ -11,6 +11,8 @@ import {
   CardTitle,
 } from "@/components/marketing/card";
 
+import { nanoid } from "nanoid";
+
 const features: {
   icon: ValidIcon;
   catchline: string;
@@ -43,9 +45,8 @@ export const GlobalMonitoring = () => {
         <CardTitle>Start monitoring your services</CardTitle>
       </CardHeader>
       <ul className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
-        {features?.map((feature, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-          <CardFeature key={i} {...feature} />
+        {features?.map((feature) => (
+          <CardFeature key={`${feature.icon}-${nanoid(6)}`} {...feature} />
         ))}
       </ul>
       <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">

@@ -1,7 +1,28 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
-// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-const postToWebhook = async (body: any, webhookUrl: string) => {
+type WebhookBody = string | SlackMessage;
+
+interface SlackMessage {
+  blocks: Array<{
+    type: string;
+    text: {
+      type: string;
+      text: string;
+    };
+    accessory?: {
+      type: string;
+      text: {
+        type: string;
+        text: string;
+        emoji: boolean;
+      };
+      value: string;
+      url: string;
+    };
+  }>;
+}
+
+const postToWebhook = async (body: WebhookBody, webhookUrl: string) => {
   try {
     await fetch(webhookUrl, {
       method: "POST",
@@ -18,8 +39,7 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
+  // incidentId, // Commented out as not used to avoid biome-ignore
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -69,12 +89,7 @@ export const sendAlert = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  incidentId,
+  // statusCode,message,incidentId, // Commented out as not used to avoid biome-ignore
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -121,10 +136,7 @@ export const sendRecovery = async ({
 export const sendDegraded = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  message,
+  // statusCode, message, // Commented out as not used to avoid biome-ignore
 }: {
   monitor: Monitor;
   notification: Notification;

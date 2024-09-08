@@ -76,15 +76,15 @@ export function registerPostCheck(api: typeof checkAPI) {
             workspaceId: workspaceId,
             url: input.url,
             method: input.method,
-            headers: input.headers?.reduce((acc, { key, value }) => {
-              if (!key) return acc; // key === "" is an invalid header
+            headers: input.headers?.reduce<{ [key: string]: string }>(
+              (acc, { key, value }) => {
+                if (!key) return acc; // key === "" is an invalid header
 
-              return {
-                // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-                ...acc,
-                [key]: value,
-              };
-            }, {}),
+                acc[key] = value; // Directly assign to the accumulator
+                return acc;
+              },
+              {},
+            ),
             body: input.body ? input.body : undefined,
           }),
         });

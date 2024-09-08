@@ -1,10 +1,10 @@
 import rehypePrettyCode from "rehype-pretty-code";
+import type { Options as RehypePrettyCodeOptions } from "rehype-pretty-code";
+import type { CharsElement, LineElement } from "rehype-pretty-code";
 import type * as unified from "unified";
-
 // props to https://rehype-pretty-code.netlify.app/
 
-// biome-ignore lint/suspicious/noExplicitAny: ContentLayer
-const prettyCode: unified.Pluggable<any[]> = [
+const prettyCode: unified.Pluggable<RehypePrettyCodeOptions[]> = [
   rehypePrettyCode,
   {
     theme: {
@@ -19,12 +19,11 @@ const prettyCode: unified.Pluggable<any[]> = [
         node.children = [{ type: "text", value: " " }];
       }
     },
-    // biome-ignore lint/suspicious/noExplicitAny: ContentLayer
-    onVisitHighlightedLine(node: any) {
-      node.properties.className.push("highlighted");
+    onVisitHighlightedLine(node: LineElement) {
+      node?.properties?.className?.push("highlighted");
     },
-    // biome-ignore lint/suspicious/noExplicitAny: ContentLayer
-    onVisitHighlightedWord(node: any) {
+    // Changed the method below from onVisitHighlightedWord as it is not available in rehype-pretty-code
+    onVisitHighlightedChars(node: CharsElement) {
       node.properties.className = ["word"];
     },
   },

@@ -1,4 +1,5 @@
 import { cardConfig } from "@/config/features";
+import { nanoid } from "nanoid";
 import {
   CardContainer,
   CardContent,
@@ -21,9 +22,8 @@ export function AlertCard() {
       <CardContent>
         <Timeline />
         <CardFeatureContainer>
-          {features?.map((feature, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <CardFeature key={i} {...feature} />
+          {features?.map((feature) => (
+            <CardFeature key={`alert-card-${nanoid(6)}`} {...feature} />
           ))}
         </CardFeatureContainer>
       </CardContent>

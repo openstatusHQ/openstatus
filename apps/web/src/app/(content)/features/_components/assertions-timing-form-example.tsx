@@ -21,8 +21,7 @@ export function AssertionsTimingFormExample() {
       headerAssertions: assertions
         .deserialize(_assertions)
         .map((a) => a.schema)
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        .filter((a) => a.type === "header") as any,
+        .filter((a): a is assertions.AssertionType => a.type === "header"),
     },
   });
   return (

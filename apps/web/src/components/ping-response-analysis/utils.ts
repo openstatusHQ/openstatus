@@ -145,15 +145,15 @@ export async function checkRegion(
     body: JSON.stringify({
       url,
       method: opts?.method || "GET",
-      headers: opts?.headers?.reduce((acc, { key, value }) => {
-        if (!key) return acc; // key === "" is an invalid header
+      headers: opts?.headers?.reduce<{ [key: string]: string }>(
+        (acc, { key, value }) => {
+          if (!key) return acc; // key === "" is an invalid header
 
-        return {
-          // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-          ...acc,
-          [key]: value,
-        };
-      }, {}),
+          acc[key] = value; // Directly assign to the accumulator
+          return acc;
+        },
+        {},
+      ),
       body: opts?.body ? opts.body : undefined,
     }),
     next: { revalidate: 0 },

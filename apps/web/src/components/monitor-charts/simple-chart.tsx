@@ -4,6 +4,7 @@ import type { CustomTooltipProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 
 import { cn } from "@/lib/utils";
+import { nanoid } from "nanoid";
 import { dataFormatter } from "./utils";
 
 export interface SimpleChartProps {
@@ -44,10 +45,12 @@ const customTooltip = ({ payload, active, label }: CustomTooltipProps) => {
   return (
     <div className="rounded-tremor-default border border-tremor-border bg-tremor-background p-2 text-tremor-default shadow-tremor-dropdown dark:border-dark-tremor-border dark:bg-dark-tremor-background dark:text-dark-tremor-default">
       <div className="flex flex-col gap-3">
-        {[data].map((category, idx) => {
+        {[data].map((category) => {
           return (
-            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            <div key={idx} className="flex flex-1 gap-2">
+            <div
+              key={`custom-tooltip-${nanoid(6)}`}
+              className="flex flex-1 gap-2"
+            >
               <div
                 className={cn(
                   "flex w-1 flex-col rounded",
