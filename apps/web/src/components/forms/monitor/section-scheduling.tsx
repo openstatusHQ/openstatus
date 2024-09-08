@@ -24,6 +24,7 @@ import { groupByContinent } from "@openstatus/utils";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
+import { SelectRegion } from "./select-region";
 
 // TODO: centralize in a shared file!
 const cronJobs = [
@@ -95,16 +96,23 @@ export function SectionScheduling({ form, limits, plan }: Props) {
         render={({ field }) => {
           return (
             <FormItem>
-              <div className="mb-4">
-                <FormLabel className="text-base">Regions</FormLabel>
-                <FormDescription>
-                  Select the regions you want to monitor your endpoint from.{" "}
-                  <br />
-                  {plan === "free"
-                    ? "Only a few regions are available in the free plan. Upgrade to access all regions."
-                    : ""}
-                </FormDescription>
+              <FormLabel className="text-base">Regions</FormLabel>
+              <div>
+                <FormControl>
+                  <SelectRegion
+                    value={field.value}
+                    allowedRegions={regionsLimit}
+                    onChange={field.onChange}
+                  />
+                </FormControl>
               </div>
+              <FormDescription>
+                Select the regions you want to monitor your endpoint from.{" "}
+                <br />
+                {plan === "free"
+                  ? "Only a few regions are available in the free plan. Upgrade to access all regions."
+                  : ""}
+              </FormDescription>
               <div>
                 {Object.entries(groupByContinent)
                   .sort((a, b) => a[0].localeCompare(b[0]))
@@ -114,12 +122,13 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                   .map((current) => {
                     return (
                       <div key={current.continent} className="py-2">
-                        {current.continent}
-
-                        <div className="grid grid-cols-3 grid-rows-1 gap-2 pt-1">
+                        <p className="font-medium text-sm text-muted-foreground">
+                          {current.continent}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2">
                           {current.regions
                             .sort((a, b) =>
-                              a.location.localeCompare(b.location),
+                              a.location.localeCompare(b.location)
                             )
                             .map((item) => {
                               return (
@@ -142,7 +151,7 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                             id={item.code}
                                             name="region"
                                             checked={field.value?.includes(
-                                              item.code,
+                                              item.code
                                             )}
                                             onCheckedChange={(checked) => {
                                               console.log(field.value);
@@ -156,10 +165,11 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                                 : field.onChange(
                                                     field.value?.filter(
                                                       (value) =>
-                                                        value !== item.code,
-                                                    ),
+                                                        value !== item.code
+                                                    )
                                                   );
                                             }}
+                                            className="p-3"
                                           >
                                             {location} {flag}
                                           </CheckboxLabel>

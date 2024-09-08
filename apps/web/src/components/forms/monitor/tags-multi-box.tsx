@@ -96,7 +96,7 @@ export function TagsMultiBox({
     onChange(
       values?.includes(item.id)
         ? values.filter((v) => v !== item.id)
-        : [...values, item.id],
+        : [...values, item.id]
     );
     inputRef?.current?.focus();
   };
@@ -170,7 +170,7 @@ export function TagsMultiBox({
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          isActive ? "opacity-100" : "opacity-0",
+                          isActive ? "opacity-100" : "opacity-0"
                         )}
                       />
                       <div className="flex-1">{item.name}</div>
@@ -366,9 +366,11 @@ const DialogListItem = ({
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      You are about to delete the tag{" "}
-                      <TagBadge color={color} name={name} /> .
+                    <AlertDialogDescription asChild>
+                      <div>
+                        You are about to delete the tag{" "}
+                        <TagBadge color={color} name={name} /> .
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

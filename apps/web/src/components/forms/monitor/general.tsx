@@ -83,7 +83,7 @@ export function General({ form, tags }: Props) {
                   />
                 </FormControl>
                 <FormDescription>
-                  Easily categorize your monitors.
+                  Categorize your monitors. Create new tags by typing a name.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
