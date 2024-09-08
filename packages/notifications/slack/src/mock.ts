@@ -39,24 +39,29 @@ const notification: Notification = {
   provider: "slack",
 };
 
+const cronTimestamp = Date.now();
+
 if (process.env.NODE_ENV === "development") {
   await sendDegraded({
     monitor,
     notification,
+    cronTimestamp,
   });
 
   await sendAlert({
     monitor,
     notification,
     statusCode: 500,
+    cronTimestamp,
   });
 
   await sendRecovery({
     monitor,
     notification,
+    cronTimestamp,
   });
 
   await sendTestSlackMessage(
-    "https://hooks.slack.com/services/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",
+    "https://hooks.slack.com/services/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"
   );
 }

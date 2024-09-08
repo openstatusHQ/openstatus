@@ -39,24 +39,29 @@ const notification: Notification = {
   provider: "discord",
 };
 
+const cronTimestamp = Date.now();
+
 if (process.env.NODE_ENV === "development") {
   await sendDegraded({
     monitor,
     notification,
+    cronTimestamp,
   });
 
   await sendAlert({
     monitor,
     notification,
     statusCode: 500,
+    cronTimestamp,
   });
 
   await sendRecovery({
     monitor,
     notification,
+    cronTimestamp,
   });
 
   await sendTestDiscordMessage(
-    "https://discord.com/api/webhooks/1170398236247343286/h9Cpg6ewJ85RdFixMth_hUajZTeRgTLJ0ylzQTBbTNZEiWtU7oSeLIX6T7XgUdiPE8eG",
+    "https://discord.com/api/webhooks/1170398236247343286/h9Cpg6ewJ85RdFixMth_hUajZTeRgTLJ0ylzQTBbTNZEiWtU7oSeLIX6T7XgUdiPE8eG"
   );
 }

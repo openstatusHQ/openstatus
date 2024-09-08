@@ -48,12 +48,14 @@ export const sendAlert = async ({
   notification,
   statusCode,
   message,
+  cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
@@ -73,6 +75,7 @@ export const sendAlert = async ({
           ? `<p>Status Code: ${statusCode}</p>`
           : `<p>Error message: ${message}</p>`
       }
+    <p>Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})</p>
     <p>OpenStatus 🏓</p>`,
   });
 };
@@ -86,6 +89,7 @@ export const sendRecovery = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
@@ -113,6 +117,7 @@ export const sendDegraded = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
+  cronTimestamp: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 

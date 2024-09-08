@@ -20,12 +20,14 @@ export const sendAlert = async ({
   message,
   // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   incidentId,
+  cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -45,7 +47,8 @@ export const sendAlert = async ({
               text: `
 *🚨 Alert <${monitor.url}/|${name}>*\n\n
 Status Code: ${statusCode || "_empty_"}\n
-Message: ${message || "_empty_"}
+Message: ${message || "_empty_"}\n
+Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})
 `,
             },
           },
@@ -60,7 +63,7 @@ Message: ${message || "_empty_"}
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -83,6 +86,7 @@ export const sendRecovery = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -113,7 +117,7 @@ export const sendRecovery = async ({
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -133,6 +137,7 @@ export const sendDegraded = async ({
   notification: Notification;
   statusCode?: number;
   message?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = JSON.parse(notification.data);
   const { slack: webhookUrl } = notificationData; // webhook url
@@ -163,7 +168,7 @@ export const sendDegraded = async ({
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
   } catch (err) {
     console.log(err);
@@ -197,7 +202,7 @@ export const sendTestSlackMessage = async (webhookUrl: string) => {
           },
         ],
       },
-      webhookUrl,
+      webhookUrl
     );
     return true;
   } catch (_err) {

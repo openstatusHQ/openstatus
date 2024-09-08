@@ -34,20 +34,25 @@ const notification: Notification = {
   provider: "email",
 };
 
+const cronTimestamp = Date.now();
+
 if (process.env.NODE_ENV === "development") {
   sendDegraded({
     monitor,
     notification,
+    cronTimestamp,
   });
 
   sendAlert({
     monitor,
     notification,
     statusCode: 500,
+    cronTimestamp,
   });
 
   sendRecovery({
     monitor,
     notification,
+    cronTimestamp,
   });
 }

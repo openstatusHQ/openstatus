@@ -36,12 +36,14 @@ type SendNotification = ({
   statusCode,
   message,
   incidentId,
+  cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => Promise<void>;
 
 type Notif = {
@@ -49,6 +51,7 @@ type Notif = {
   sendRecovery: SendNotification;
   sendDegraded: SendNotification;
 };
+
 export const providerToFunction = {
   email: {
     sendAlert: sendEmailAlert,

@@ -18,6 +18,7 @@ export const sendAlert = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
@@ -65,6 +66,7 @@ export const sendDegraded = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
@@ -115,6 +117,7 @@ export const sendRecovery = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
 
