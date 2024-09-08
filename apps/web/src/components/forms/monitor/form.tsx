@@ -178,7 +178,13 @@ export function MonitorForm({
         textBodyAssertions,
       } = form.getValues();
 
-      if (body && body !== "") {
+      if (
+        body &&
+        body !== "" &&
+        headers?.some(
+          (h) => h.key === "Content-Type" && h.value === "application/json",
+        )
+      ) {
         const validJSON = validateJSON(body);
         if (!validJSON) {
           return { error: "Not a valid JSON object.", data: undefined };

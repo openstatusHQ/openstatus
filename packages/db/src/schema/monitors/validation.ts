@@ -57,6 +57,7 @@ const headersSchema = z
   .optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
+  name: z.string().min(1, "Name must be at least 1 character long"),
   periodicity: monitorPeriodicitySchema.default("10m"),
   url: z.string().url(), // find a better way to not always start with "https://" including the `InputWithAddons`
   status: monitorStatusSchema.default("active"),
