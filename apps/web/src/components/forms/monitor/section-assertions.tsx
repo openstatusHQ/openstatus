@@ -176,12 +176,6 @@ export function SectionAssertions({ form }: Props) {
               type="number"
               placeholder="200"
               className="col-span-3"
-              onChange={(e) => {
-                const value = parseInt(e.target.value, 10);
-                if (value > 599) {
-                  e.target.value = 599;
-                }
-              }}
             />
             <div className="col-span-1">
               <Button
