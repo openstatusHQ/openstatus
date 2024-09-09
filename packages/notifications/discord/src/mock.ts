@@ -32,7 +32,7 @@ const monitor: Monitor = {
 const notification: Notification = {
   id: 1,
   name: "Discord",
-  data: '{ "discord": "https://discord.com/api/webhooks/1170398236247343286/h9Cpg6ewJ85RdFixMth_hUajZTeRgTLJ0ylzQTBbTNZEiWtU7oSeLIX6T7XgUdiPE8eG" }',
+  data: `{ "discord": "${process.env.DISCORD_WEBHOOK}" }`,
   createdAt: null,
   updatedAt: null,
   workspaceId: 1,
@@ -61,7 +61,5 @@ if (process.env.NODE_ENV === "development") {
     cronTimestamp,
   });
 
-  await sendTestDiscordMessage(
-    "https://discord.com/api/webhooks/1170398236247343286/h9Cpg6ewJ85RdFixMth_hUajZTeRgTLJ0ylzQTBbTNZEiWtU7oSeLIX6T7XgUdiPE8eG",
-  );
+  await sendTestDiscordMessage(process.env.DISCORD_WEBHOOK);
 }

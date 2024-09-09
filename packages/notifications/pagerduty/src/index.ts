@@ -12,6 +12,7 @@ export const sendAlert = async ({
   statusCode,
   message,
   incidentId,
+  cronTimestamp,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -31,7 +32,7 @@ export const sendAlert = async ({
       summary: `${name} is down`,
       source: "Open Status",
       severity: "error",
-      timestamp: new Date().toISOString(),
+      timestamp: new Date(cronTimestamp).toISOString(),
       custom_details: {
         statusCode,
         message,

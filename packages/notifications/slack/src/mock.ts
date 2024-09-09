@@ -32,7 +32,7 @@ const monitor: Monitor = {
 const notification: Notification = {
   id: 1,
   name: "Slack",
-  data: '{ "slack": "https://hooks.slack.com/services/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" }',
+  data: `{ "slack": "${process.env.SLACK_WEBHOOK}" }`,
   createdAt: null,
   updatedAt: null,
   workspaceId: 1,
@@ -61,7 +61,5 @@ if (process.env.NODE_ENV === "development") {
     cronTimestamp,
   });
 
-  await sendTestSlackMessage(
-    "https://hooks.slack.com/services/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",
-  );
+  await sendTestSlackMessage(process.env.SLACK_WEBHOOK);
 }
