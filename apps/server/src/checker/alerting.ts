@@ -17,12 +17,14 @@ export const triggerNotifications = async ({
   statusCode,
   message,
   notifType,
+  cronTimestamp,
   incidentId,
 }: {
   monitorId: string;
   statusCode?: number;
   message?: string;
   notifType: "alert" | "recovery" | "degraded";
+  cronTimestamp: number;
   incidentId?: string;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
@@ -61,6 +63,7 @@ export const triggerNotifications = async ({
           statusCode,
           message,
           incidentId,
+          cronTimestamp,
         });
         break;
       case "recovery":
@@ -70,6 +73,7 @@ export const triggerNotifications = async ({
           statusCode,
           message,
           incidentId,
+          cronTimestamp,
         });
         break;
       case "degraded":
@@ -78,6 +82,7 @@ export const triggerNotifications = async ({
           notification: selectNotificationSchema.parse(notif.notification),
           statusCode,
           message,
+          cronTimestamp,
         });
         break;
     }

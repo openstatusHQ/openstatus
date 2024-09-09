@@ -16,6 +16,7 @@ export const sendAlert = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),
@@ -66,6 +67,7 @@ export const sendRecovery = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),
@@ -109,6 +111,7 @@ export const sendDegraded = async ({
   statusCode?: number;
   message?: string;
   incidentId?: string;
+  cronTimestamp: number;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),

@@ -36,12 +36,16 @@ export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
 export const emailSchema = z.string().email();
 export const urlSchema = z.string().url();
 
+export const emailDataSchema = z.object({ email: emailSchema });
+export const phoneDataSchema = z.object({ sms: phoneSchema });
+export const slackDataSchema = z.object({ slack: urlSchema });
+export const discordDataSchema = z.object({ discord: urlSchema });
+export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
+
 export const NotificationDataSchema = z.union([
-  z.object({ sms: phoneSchema }),
-  z.object({ email: emailSchema }),
-  z.object({ slack: urlSchema }),
-  z.object({ discord: urlSchema }),
-  z.object({
-    pagerduty: z.string(),
-  }),
+  emailDataSchema,
+  phoneDataSchema,
+  slackDataSchema,
+  discordDataSchema,
+  pagerdutyDataSchema,
 ]);
