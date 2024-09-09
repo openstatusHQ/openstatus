@@ -159,7 +159,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -222,7 +222,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
@@ -269,7 +269,7 @@ export function SectionAssertions({ form }: Props) {
                           <SelectItem key={key} value={key}>
                             {value}
                           </SelectItem>
-                        )
+                        ),
                       )}
                     </SelectContent>
                   </Select>
