@@ -51,30 +51,30 @@ export default async function MonitorPage({
           {
             monitorId: String(monitor.id),
           },
-          { cache: "no-store", revalidate: 0 }
+          { cache: "no-store", revalidate: 0 },
         ),
         tb.endpointStatusPeriod("7d")(
           {
             monitorId: String(monitor.id),
           },
-          { cache: "no-store", revalidate: 0 }
+          { cache: "no-store", revalidate: 0 },
         ),
       ]);
 
       const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id
+        (incident) => incident.monitorId === monitor.id,
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag
+        ({ monitorTag }) => monitorTag,
       );
 
       const maintenances = _maintenances.filter((maintenance) =>
-        maintenance.monitors.includes(monitor.id)
+        maintenance.monitors.includes(monitor.id),
       );
 
       return {
@@ -86,7 +86,7 @@ export default async function MonitorPage({
         tags,
         isLimitReached,
       };
-    })
+    }),
   );
 
   return (

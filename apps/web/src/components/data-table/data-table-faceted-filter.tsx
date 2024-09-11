@@ -42,7 +42,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   const [_, setValue] = useQueryState(column.id, { shallow: false });
   const facets = column.getFacetedUniqueValues();
   const selectedValues = new Set(
-    column.getFilterValue() as (string | number | boolean)[]
+    column.getFilterValue() as (string | number | boolean)[],
   );
 
   return (
@@ -105,7 +105,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                       }
                       const filterValues = Array.from(selectedValues);
                       column.setFilterValue(
-                        filterValues.length ? filterValues : undefined
+                        filterValues.length ? filterValues : undefined,
                       );
                       setValue(filterValues?.join(",") || null);
                     }}
@@ -115,7 +115,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
                           ? "bg-primary text-primary-foreground"
-                          : "opacity-50 [&_svg]:invisible"
+                          : "opacity-50 [&_svg]:invisible",
                       )}
                     >
                       <Check className={cn("h-4 w-4")} />

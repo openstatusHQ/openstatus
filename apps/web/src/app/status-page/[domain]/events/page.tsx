@@ -3,8 +3,8 @@ import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params
 import { Feed } from "@/components/status-page/feed";
 import { api } from "@/trpc/server";
 import { notFound } from "next/navigation";
-import { formatter } from "./utils";
 import { searchParamsCache } from "./search-params";
+import { formatter } from "./utils";
 
 type Props = {
   params: { domain: string };

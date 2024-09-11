@@ -29,7 +29,7 @@ export function PricingPlanRadio({
             htmlFor={key}
             className={cn(
               "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary",
-              key === "team" && "bg-muted/50"
+              key === "team" && "bg-muted/50",
             )}
           >
             <span className="text-sm capitalize">{allPlans[key].title}</span>

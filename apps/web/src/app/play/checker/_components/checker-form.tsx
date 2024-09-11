@@ -68,7 +68,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  }
+  },
 );
 
 /**
@@ -185,7 +185,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    }
+                    },
                   );
                 }
               }

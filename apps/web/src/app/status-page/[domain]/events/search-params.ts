@@ -2,7 +2,7 @@ import { createSearchParamsCache, parseAsStringLiteral } from "nuqs/server";
 
 export const searchParamsParsers = {
   filter: parseAsStringLiteral(["all", "maintenances", "reports"]).withDefault(
-    "all"
+    "all",
   ),
 };
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

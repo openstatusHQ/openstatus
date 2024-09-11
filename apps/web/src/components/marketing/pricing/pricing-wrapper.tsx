@@ -4,16 +4,16 @@ import { useSearchParams } from "next/navigation";
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
+import { workspacePlans } from "@openstatus/db/src/schema";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense } from "react";
 import { PricingPlanRadio } from "./pricing-plan-radio";
 import { PricingTable } from "./pricing-table";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { workspacePlans } from "@openstatus/db/src/schema";
 
 export function PricingWrapper() {
   const [plan, setPlan] = useQueryState(
     "plan",
-    parseAsStringLiteral(workspacePlans).withDefault("team")
+    parseAsStringLiteral(workspacePlans).withDefault("team"),
   );
   return (
     <div>

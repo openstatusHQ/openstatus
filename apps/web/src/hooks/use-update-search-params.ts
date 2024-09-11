@@ -26,7 +26,7 @@ export default function useUpdateSearchParams() {
 
       return newSearchParams.toString();
     },
-    [searchParams]
+    [searchParams],
   );
 
   return update;
