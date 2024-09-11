@@ -1,7 +1,6 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
@@ -11,18 +10,10 @@ import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
-import { quantiles } from "@/lib/monitor/utils";
 import { api } from "@/trpc/server";
+import { searchParamsCache } from "./search-params";
 
 // Add loading page
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  quantile: z.enum(quantiles).optional().default("p95"),
-  period: z.enum(["7d"]).optional().default("7d"),
-});
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
@@ -36,10 +27,9 @@ export default async function Page({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const search = searchParamsSchema.safeParse(searchParams);
-  if (!page || !search.success) notFound();
+  const { quantile, period } = searchParamsCache.parse(searchParams);
 
-  const { quantile, period } = search.data;
+  if (!page) notFound();
 
   // filter monitor by public or not
 
@@ -54,7 +44,7 @@ export default async function Page({
             });
 
             return { monitor, data };
-          }),
+          })
         )
       : undefined;
 
@@ -84,7 +74,7 @@ export default async function Page({
                 groupDataByTimestamp(
                   data.map((data) => ({ ...data, region: "ams" })),
                   period,
-                  quantile,
+                  quantile
                 );
               return (
                 <li key={monitor.id} className="grid gap-2">

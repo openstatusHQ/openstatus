@@ -50,6 +50,7 @@ export function DataTable<TData, TValue>({
   defaultColumnFilters = [],
   defaultPagination = { pageIndex: 0, pageSize: 10 },
 }: DataTableProps<TData, TValue>) {
+  console.log({ defaultColumnFilters });
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
     React.useState<ColumnFiltersState>(defaultColumnFilters);
@@ -94,7 +95,7 @@ export function DataTable<TData, TValue>({
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
-                            header.getContext(),
+                            header.getContext()
                           )}
                     </TableHead>
                   );
@@ -121,7 +122,7 @@ export function DataTable<TData, TValue>({
                       <TableCell key={cell.id}>
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                       </TableCell>
                     ))}

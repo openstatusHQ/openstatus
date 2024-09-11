@@ -7,22 +7,20 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@openstatus/ui/src/components/radio-group";
-import { useRouter } from "next/navigation";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 
-export function PricingPlanRadio() {
-  const updateSearchParams = useUpdateSearchParams();
-  const router = useRouter();
+export function PricingPlanRadio({
+  onChange,
+}: {
+  onChange(value: WorkspacePlan): void;
+}) {
   return (
     <RadioGroup
       defaultValue="team"
       className="grid grid-cols-4 gap-4"
-      onValueChange={(value) => {
-        const searchParams = updateSearchParams({ plan: value });
-        router.replace(`?${searchParams}`, { scroll: false });
-      }}
+      onValueChange={onChange}
     >
       {workspacePlans.map((key) => (
         <div key={key}>
@@ -31,10 +29,10 @@ export function PricingPlanRadio() {
             htmlFor={key}
             className={cn(
               "flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary",
-              key === "team" && "bg-muted/50",
+              key === "team" && "bg-muted/50"
             )}
           >
-            <span className="text-sm capitalize">{key}</span>
+            <span className="text-sm capitalize">{allPlans[key].title}</span>
             <span className="mt-1 font-light text-muted-foreground text-xs">
               {allPlans[key].price}€/month
             </span>

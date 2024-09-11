@@ -7,7 +7,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 import {
   Button,
@@ -18,7 +17,7 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
+import { parseAsInteger, useQueryStates } from "nuqs";
 
 // REMINDER: pageIndex pagination issue - jumping back to 0 after change
 
@@ -29,15 +28,10 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
-  const updateSearchParams = useUpdateSearchParams();
-  const router = useRouter();
-
-  const updatePageSearchParams = (
-    values: Record<string, number | string | null>,
-  ) => {
-    const newSearchParams = updateSearchParams(values);
-    router.replace(`?${newSearchParams}`, { scroll: false });
-  };
+  const [{ pageSize }, setSearchParams] = useQueryStates({
+    pageSize: parseAsInteger.withDefault(10),
+    // pageIndex: parseAsInteger.withDefault(0),
+  });
 
   return (
     <div className="flex flex-wrap-reverse items-center justify-between gap-4 px-2">
@@ -54,7 +48,7 @@ export function DataTablePagination<TData>({
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
-              updatePageSearchParams({ pageSize: value });
+              setSearchParams({ pageSize: Number(value) });
             }}
           >
             <SelectTrigger className="h-8 w-[70px]">

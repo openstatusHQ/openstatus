@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
@@ -11,38 +9,16 @@ import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
+import { searchParamsCache } from "./search-params";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  tags: z
-    .string()
-    .transform((v) => v?.split(","))
-    .optional(),
-  public: z
-    .string()
-    .transform((v) =>
-      v?.split(",").map((v) => {
-        if (v === "true") return true;
-        if (v === "false") return false;
-        return undefined;
-      }),
-    )
-    .optional(),
-  pageSize: z.coerce.number().optional().default(10),
-  pageIndex: z.coerce.number().optional().default(0),
-});
 
 export default async function MonitorPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  if (!search.success) return notFound();
+  const search = searchParamsCache.parse(searchParams);
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   if (monitors?.length === 0)
@@ -75,30 +51,30 @@ export default async function MonitorPage({
           {
             monitorId: String(monitor.id),
           },
-          { cache: "no-store", revalidate: 0 },
+          { cache: "no-store", revalidate: 0 }
         ),
         tb.endpointStatusPeriod("7d")(
           {
             monitorId: String(monitor.id),
           },
-          { cache: "no-store", revalidate: 0 },
+          { cache: "no-store", revalidate: 0 }
         ),
       ]);
 
       const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id,
+        (incident) => incident.monitorId === monitor.id
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag,
+        ({ monitorTag }) => monitorTag
       );
 
       const maintenances = _maintenances.filter((maintenance) =>
-        maintenance.monitors.includes(monitor.id),
+        maintenance.monitors.includes(monitor.id)
       );
 
       return {
@@ -110,22 +86,22 @@ export default async function MonitorPage({
         tags,
         isLimitReached,
       };
-    }),
+    })
   );
 
   return (
     <>
       <DataTable
         defaultColumnFilters={[
-          { id: "tags", value: search.data.tags },
-          { id: "public", value: search.data.public },
-        ].filter((v) => v.value !== undefined)}
+          { id: "tags", value: search.tags },
+          { id: "public", value: search.public },
+        ].filter((v) => v.value !== undefined || v.value !== null)}
         columns={columns}
         data={monitorsWithData}
         tags={tags}
         defaultPagination={{
-          pageIndex: search.data.pageIndex,
-          pageSize: search.data.pageSize,
+          pageIndex: search.pageIndex,
+          pageSize: search.pageSize,
         }}
       />
       {isLimitReached ? <Limit /> : null}

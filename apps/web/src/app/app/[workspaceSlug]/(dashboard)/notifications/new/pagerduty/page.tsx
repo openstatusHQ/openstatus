@@ -4,13 +4,9 @@ import { api } from "@/trpc/server";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
 
-import { z } from "zod";
+import { searchParamsCache } from "./search-params";
 
 // REMINDER: PagerDuty requires a different workflow, thus the separate page
-
-const searchParamsSchema = z.object({
-  config: z.string().optional(),
-});
 
 export default async function PagerDutyPage({
   searchParams,
@@ -19,7 +15,7 @@ export default async function PagerDutyPage({
 }) {
   const workspace = await api.workspace.getWorkspace.query();
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
-  const params = searchParamsSchema.parse(searchParams);
+  const params = searchParamsCache.parse(searchParams);
 
   if (!params.config) {
     return <div>Invalid data</div>;

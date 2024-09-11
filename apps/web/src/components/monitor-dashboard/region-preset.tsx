@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 
 import type { Region } from "@openstatus/tinybird";
@@ -26,8 +25,9 @@ import {
   flyRegionsDict,
 } from "@openstatus/utils";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
+import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 interface RegionsPresetProps extends ButtonProps {
   regions: Region[];
@@ -40,44 +40,39 @@ export function RegionsPreset({
   className,
   ...props
 }: RegionsPresetProps) {
-  const [selected, setSelected] = React.useState<Region[]>(
-    selectedRegions.filter((r) => regions.includes(r)),
-  ); // REMINDER: init without regions that failed to load
-  const router = useRouter();
-  const pathname = usePathname();
-  const updateSearchParams = useUpdateSearchParams();
+  // TODO: check with the RSC pages
+  const [selected, setSelected] = useQueryState(
+    "regions",
+    parseAsArrayOf(parseAsStringLiteral(flyRegions))
+      .withDefault(selectedRegions.filter((r) => regions?.includes(r)))
+      .withOptions({
+        shallow: false, // required for SSR to call the RSC
+      })
+  );
 
   const allSelected = regions.every((r) => selected.includes(r));
 
-  React.useEffect(() => {
-    if (!allSelected) {
-      const searchParams = updateSearchParams({ regions: selected.join(",") });
-      router.replace(`${pathname}?${searchParams}`, { scroll: false });
-    } else if (allSelected) {
-      const searchParams = updateSearchParams({ regions: null });
-      router.replace(`${pathname}?${searchParams}`, { scroll: false });
-    }
-  }, [allSelected, router, pathname, updateSearchParams, selected]);
+  const regionsByContinent = regions
+    .reduce(
+      (prev, curr) => {
+        const region = flyRegionsDict[curr];
 
-  const regionsByContinent = regions.reduce(
-    (prev, curr) => {
-      const region = flyRegionsDict[curr];
+        const item = prev.find((r) => r.continent === region.continent);
 
-      const item = prev.find((r) => r.continent === region.continent);
+        if (item) {
+          item.data.push(region);
+        } else {
+          prev.push({
+            continent: region.continent,
+            data: [region],
+          });
+        }
 
-      if (item) {
-        item.data.push(region);
-      } else {
-        prev.push({
-          continent: region.continent,
-          data: [region],
-        });
-      }
-
-      return prev;
-    },
-    [] as { continent: Continent; data: RegionInfo[] }[],
-  );
+        return prev;
+      },
+      [] as { continent: Continent; data: RegionInfo[] }[]
+    )
+    .sort((a, b) => a.continent.localeCompare(b.continent));
 
   return (
     <Popover>
@@ -130,7 +125,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code),
+                              : prev.filter((r) => r !== code)
                           );
                         }}
                       >
@@ -139,7 +134,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible",
+                              : "opacity-50 [&_svg]:invisible"
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />
