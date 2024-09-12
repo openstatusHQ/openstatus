@@ -33,13 +33,14 @@ export function SearchParamsPreset<T extends string>({
   formatter?(value: T): ReactNode;
   className?: string;
 }) {
-  const [_, setValue] = useQueryState(searchParam, { shallow: false });
+  const [value, setValue] = useQueryState(searchParam, { shallow: false });
 
   const Icon = icon ? Icons[icon] : undefined;
 
   return (
     <Select
       defaultValue={defaultValue}
+      value={value || defaultValue}
       onValueChange={setValue}
       disabled={disabled}
     >

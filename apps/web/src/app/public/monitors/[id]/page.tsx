@@ -86,11 +86,7 @@ export default async function Page({
         </div>
         <div className="flex items-center gap-2">
           {isDirty ? <ButtonReset /> : null}
-          <DatePickerPreset
-            key={`${isDirty}`} // HACK: resets value on reset
-            defaultValue={period}
-            values={periods}
-          />
+          <DatePickerPreset defaultValue={period} values={periods} />
         </div>
       </Shell>
       <Shell className="grid gap-4">

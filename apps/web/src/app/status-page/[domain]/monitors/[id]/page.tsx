@@ -77,11 +77,7 @@ export default async function Page({
     <div className="relative flex w-full flex-col gap-6">
       <Header title={monitor.name} description={monitor.url} />
       <div className="flex items-center justify-between gap-2">
-        <DatePickerPreset
-          key={`${isDirty}`} // HACK: resets value on reset
-          defaultValue={period}
-          values={periods}
-        />
+        <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
       </div>
       <Metrics metrics={metrics} period={period} />
