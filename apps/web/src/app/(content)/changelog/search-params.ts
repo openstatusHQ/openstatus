@@ -1,9 +1,9 @@
+import { allChangelogs } from "contentlayer/generated";
 import {
   createParser,
   createSearchParamsCache,
   parseAsInteger,
 } from "nuqs/server";
-import { allChangelogs } from "contentlayer/generated";
 
 const parseAsPageIndex = createParser({
   parse(queryValue) {

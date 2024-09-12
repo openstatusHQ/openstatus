@@ -1,9 +1,9 @@
+import { allPosts } from "contentlayer/generated";
 import {
   createParser,
   createSearchParamsCache,
   parseAsInteger,
 } from "nuqs/server";
-import { allPosts } from "contentlayer/generated";
 
 const parseAsPageIndex = createParser({
   parse(queryValue) {
