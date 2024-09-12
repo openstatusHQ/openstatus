@@ -170,6 +170,8 @@ export function SectionAssertions({ form }: Props) {
               {...form.register(`statusAssertions.${i}.target`, {
                 required: true,
                 valueAsNumber: true,
+                validate: (value) =>
+                  value <= 599 || "Value must be 599 or lower",
               })}
               type="number"
               placeholder="200"
