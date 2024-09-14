@@ -27,9 +27,10 @@ interface Props {
 
 export function SectionRequests({ form, type }: Props) {
   const jobType = form.getValues("jobType");
+  const [prevJobType, setPrevJobType] = React.useState(jobType);
 
-  React.useEffect(() => {
-    // REMINDER: resets the fields when switching between different jobTypes like HTTP and TCP
+  if (prevJobType !== jobType) {
+    setPrevJobType(jobType);
     if (type === "create") {
       form.resetField("url");
       form.resetField("method");
@@ -39,7 +40,7 @@ export function SectionRequests({ form, type }: Props) {
       form.resetField("statusAssertions");
       form.resetField("textBodyAssertions");
     }
-  }, [type, form.resetField]);
+  }
 
   return (
     <div className="grid w-full gap-4">
