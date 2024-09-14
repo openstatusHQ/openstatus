@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"net/http/httptrace"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -65,7 +67,27 @@ type Response struct {
 func Ping(ctx context.Context, client *http.Client, inputData request.CheckerRequest) (PingData, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 	region := os.Getenv("FLY_REGION")
-	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
+
+	b := []byte(inputData.Body)
+	for _, header := range inputData.Headers {
+		if header.Key == "Content-Type" && header.Value == "application/octet-stream" {
+
+			//  split the body by comma and convert it to bytes
+			data := strings.Split(inputData.Body, ",")
+			if len(data) == 2 {
+
+				decoded, err := base64.StdEncoding.DecodeString(data[1])
+				if err != nil {
+					return PingData{}, fmt.Errorf("error while decoding base64: %w", err)
+				}
+
+				b = decoded
+
+			}
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(b))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return PingData{}, fmt.Errorf("unable to create req: %w", err)
@@ -183,7 +205,24 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 func SinglePing(ctx context.Context, client *http.Client, inputData request.PingRequest) (Response, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
 
-	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
+	b := []byte(inputData.Body)
+	if inputData.Headers["Content-Type"] == "application/octet-stream" {
+
+		//  split the body by comma and convert it to bytes
+		data := strings.Split(inputData.Body, ",")
+		if len(data) == 2 {
+
+			decoded, err := base64.StdEncoding.DecodeString(data[1])
+			if err != nil {
+				return Response{}, fmt.Errorf("error while decoding base64: %w", err)
+			}
+
+			b = decoded
+
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(b))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return Response{}, fmt.Errorf("unable to create req: %w", err)
@@ -201,6 +240,8 @@ func SinglePing(ctx context.Context, client *http.Client, inputData request.Ping
 			// by default we set the content type to application/json if it's a POST request
 			req.Header.Set("Content-Type", "application/json")
 		}
+		// if the content type is octet-stream, we need to set the body as bytes
+
 	}
 
 	timing := Timing{}
