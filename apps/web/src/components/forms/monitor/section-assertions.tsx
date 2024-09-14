@@ -25,9 +25,9 @@ import {
   SelectValue,
 } from "@openstatus/ui";
 
+import { EmptyState } from "@/components/dashboard/empty-state";
 import { Icons } from "@/components/icons";
 import { SectionHeader } from "../shared/section-header";
-import { EmptyState } from "@/components/dashboard/empty-state";
 
 // IMPROVEMENT: use FormFields incl. error message (fixes the Select component)
 
@@ -164,7 +164,7 @@ export function SectionAssertions({ form }: Props) {
                             <SelectItem key={key} value={key}>
                               {value}
                             </SelectItem>
-                          )
+                          ),
                         )}
                       </SelectContent>
                     </Select>
@@ -225,7 +225,7 @@ export function SectionAssertions({ form }: Props) {
                             <SelectItem key={key} value={key}>
                               {value}
                             </SelectItem>
-                          )
+                          ),
                         )}
                       </SelectContent>
                     </Select>
@@ -272,7 +272,7 @@ export function SectionAssertions({ form }: Props) {
                             <SelectItem key={key} value={key}>
                               {value}
                             </SelectItem>
-                          )
+                          ),
                         )}
                       </SelectContent>
                     </Select>

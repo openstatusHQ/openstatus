@@ -122,13 +122,13 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                   .map((current) => {
                     return (
                       <div key={current.continent} className="py-2">
-                        <p className="font-medium text-sm text-muted-foreground">
+                        <p className="font-medium text-muted-foreground text-sm">
                           {current.continent}
                         </p>
                         <div className="grid grid-cols-3 gap-2">
                           {current.regions
                             .sort((a, b) =>
-                              a.location.localeCompare(b.location)
+                              a.location.localeCompare(b.location),
                             )
                             .map((item) => {
                               return (
@@ -151,7 +151,7 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                             id={item.code}
                                             name="region"
                                             checked={field.value?.includes(
-                                              item.code
+                                              item.code,
                                             )}
                                             onCheckedChange={(checked) => {
                                               console.log(field.value);
@@ -165,8 +165,8 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                                 : field.onChange(
                                                     field.value?.filter(
                                                       (value) =>
-                                                        value !== item.code
-                                                    )
+                                                        value !== item.code,
+                                                    ),
                                                   );
                                             }}
                                             className="p-3"

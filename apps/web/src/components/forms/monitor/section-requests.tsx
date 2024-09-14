@@ -13,10 +13,10 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 
+import { Alert, AlertDescription, AlertTitle, Badge } from "@openstatus/ui";
 import { SectionHeader } from "../shared/section-header";
 import { SectionRequestHTTP } from "./section-request-http";
 import { SectionRequestTCP } from "./section-request-tcp";
-import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -39,7 +39,7 @@ export function SectionRequests({ form, type }: Props) {
       form.resetField("statusAssertions");
       form.resetField("textBodyAssertions");
     }
-  }, [type, jobType]);
+  }, [type, form.resetField]);
 
   return (
     <div className="grid w-full gap-4">
@@ -87,7 +87,12 @@ export function SectionRequests({ form, type }: Props) {
         >
           <TabsList>
             <TabsTrigger value="http">HTTP</TabsTrigger>
-            <TabsTrigger value="tcp">TCP</TabsTrigger>
+            <TabsTrigger value="tcp" disabled={true}>
+              TCP{" "}
+              <Badge className="ml-2" variant="default">
+                Coming soon
+              </Badge>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="http">
             <SectionRequestHTTP {...{ form }} />
@@ -110,7 +115,7 @@ export function SectionRequests({ form, type }: Props) {
                     <AlertTitle>Missing Type</AlertTitle>
                     <AlertDescription>
                       The job type{" "}
-                      <span className="text-foreground font-mono uppercase">
+                      <span className="font-mono text-foreground uppercase">
                         {jobType}
                       </span>{" "}
                       is missing. Please select a valid job type.

@@ -92,7 +92,7 @@ export function MonitorForm({
       // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       headerAssertions: _assertions.filter((a) => a.type === "header") as any, // TS considers a.type === "status"
       textBodyAssertions: _assertions.filter(
-        (a) => a.type === "textBody"
+        (a) => a.type === "textBody",
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       ) as any, // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
@@ -106,7 +106,7 @@ export function MonitorForm({
   const [pingFailed, setPingFailed] = React.useState(false);
   const type = React.useMemo(
     () => (defaultValues ? "update" : "create"),
-    [defaultValues]
+    [defaultValues],
   );
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
@@ -153,7 +153,7 @@ export function MonitorForm({
         finally: () => {
           setPending(false);
         },
-      }
+      },
     );
   };
 
@@ -192,7 +192,7 @@ export function MonitorForm({
         body &&
         body !== "" &&
         headers?.some(
-          (h) => h.key === "Content-Type" && h.value === "application/json"
+          (h) => h.key === "Content-Type" && h.value === "application/json",
         )
       ) {
         const validJSON = validateJSON(body);
@@ -221,7 +221,7 @@ export function MonitorForm({
           ...(statusAssertions || []),
           ...(headerAssertions || []),
           ...(textBodyAssertions || []),
-        ])
+        ]),
       );
 
       const data = (await res.json()) as RegionChecker;
@@ -257,7 +257,7 @@ export function MonitorForm({
       if (error instanceof Error && error.name === "AbortError") {
         return {
           error: `Abort error: request takes more then ${formatDuration(
-            ABORT_TIMEOUT
+            ABORT_TIMEOUT,
           )}.`,
         };
       }

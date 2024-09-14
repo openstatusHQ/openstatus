@@ -47,7 +47,7 @@ export function SectionRequestTCP({ form }: Props) {
       </div>
       <div className="text-sm">
         <p>Examples:</p>
-        <ul className="text-muted-foreground list-disc list-inside">
+        <ul className="list-inside list-disc text-muted-foreground">
           <li>
             Domain: <code className="text-foreground">openstatus.dev:443</code>
           </li>

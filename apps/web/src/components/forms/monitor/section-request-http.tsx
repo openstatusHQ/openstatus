@@ -33,7 +33,6 @@ import {
 
 import { toast } from "@/lib/toast";
 import { useRef, useState } from "react";
-import { SectionHeader } from "../shared/section-header";
 
 const contentTypes = [
   { value: "application/octet-stream", label: "Binary File" },
