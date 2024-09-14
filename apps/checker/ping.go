@@ -69,20 +69,22 @@ func Ping(ctx context.Context, client *http.Client, inputData request.CheckerReq
 	region := os.Getenv("FLY_REGION")
 
 	b := []byte(inputData.Body)
-	for _, header := range inputData.Headers {
-		if header.Key == "Content-Type" && header.Value == "application/octet-stream" {
+	if inputData.Method == http.MethodPost {
+		for _, header := range inputData.Headers {
+			if header.Key == "Content-Type" && header.Value == "application/octet-stream" {
 
-			//  split the body by comma and convert it to bytes
-			data := strings.Split(inputData.Body, ",")
-			if len(data) == 2 {
+				//  split the body by comma and convert it to bytes
+				data := strings.Split(inputData.Body, ",")
+				if len(data) == 2 {
 
-				decoded, err := base64.StdEncoding.DecodeString(data[1])
-				if err != nil {
-					return PingData{}, fmt.Errorf("error while decoding base64: %w", err)
+					decoded, err := base64.StdEncoding.DecodeString(data[1])
+					if err != nil {
+						return PingData{}, fmt.Errorf("error while decoding base64: %w", err)
+					}
+
+					b = decoded
+
 				}
-
-				b = decoded
-
 			}
 		}
 	}
