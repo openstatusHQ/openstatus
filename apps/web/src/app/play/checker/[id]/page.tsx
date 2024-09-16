@@ -35,7 +35,7 @@ const searchParamsSchema = z.object({
         value
           ?.trim()
           ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
+          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions
     )
     .pipe(monitorFlyRegionSchema.array().optional()),
 });
@@ -62,7 +62,7 @@ export default async function CheckPage({ params, searchParams }: Props) {
             {data.url}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            {timestampFormatter(data.time)}
+            {timestampFormatter(data.timestamp)}
           </p>
         </div>
         <div>

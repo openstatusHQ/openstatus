@@ -16,7 +16,7 @@ export async function mockCheckRegion(region: Region) {
 
 export const data = {
   url: "https://openstatus.dev",
-  time: 1724415466600,
+  timestamp: 1724415466600,
   method: "GET",
   checks: [
     {
@@ -39,7 +39,7 @@ export const data = {
         "X-Vercel-Cache": "MISS",
         "X-Vercel-Id": "fra1::fra1::82mqm-1724415466843-d608bd28fa1c",
       },
-      time: 1724415466739,
+      timestamp: 1724415466739,
       timing: {
         dnsStart: 1724415466810,
         dnsDone: 1724415466812,
@@ -75,7 +75,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "arn1::fra1::9855t-1724415466874-b441298d1373",
       },
-      time: 1724415466771,
+      timestamp: 1724415466771,
       timing: {
         dnsStart: 1724415466822,
         dnsDone: 1724415466839,
@@ -111,7 +111,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::knlx7-1724415466923-6d8a2defb96b",
       },
-      time: 1724415466780,
+      timestamp: 1724415466780,
       timing: {
         dnsStart: 1724415466872,
         dnsDone: 1724415466874,
@@ -147,7 +147,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::zv2ml-1724415467303-bd78546dd164",
       },
-      time: 1724415466805,
+      timestamp: 1724415466805,
       timing: {
         dnsStart: 1724415467056,
         dnsDone: 1724415467130,
@@ -183,7 +183,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "bom1::fra1::24p8d-1724415467151-89ab94155a7b",
       },
-      time: 1724415466933,
+      timestamp: 1724415466933,
       timing: {
         dnsStart: 1724415467117,
         dnsDone: 1724415467144,
@@ -219,7 +219,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::89mxf-1724415466920-c57e2b6af701",
       },
-      time: 1724415466802,
+      timestamp: 1724415466802,
       timing: {
         dnsStart: 1724415466872,
         dnsDone: 1724415466885,
@@ -255,7 +255,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cdg1::fra1::g7g65-1724415467776-ef2e03e01f49",
       },
-      time: 1724415467743,
+      timestamp: 1724415467743,
       timing: {
         dnsStart: 1724415467766,
         dnsDone: 1724415467769,
@@ -291,7 +291,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::k8shj-1724415468145-cc12e589b9ec",
       },
-      time: 1724415467973,
+      timestamp: 1724415467973,
       timing: {
         dnsStart: 1724415468074,
         dnsDone: 1724415468075,
@@ -327,7 +327,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cle1::fra1::sxq92-1724415468662-2cd7c277d058",
       },
-      time: 1724415468380,
+      timestamp: 1724415468380,
       timing: {
         dnsStart: 1724415468552,
         dnsDone: 1724415468554,
@@ -363,7 +363,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::8dpsb-1724415468744-2a4aa1e3d5ab",
       },
-      time: 1724415468672,
+      timestamp: 1724415468672,
       timing: {
         dnsStart: 1724415468716,
         dnsDone: 1724415468721,
@@ -399,7 +399,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "gru1::fra1::g8pl7-1724415469119-c65e63554739",
       },
-      time: 1724415468749,
+      timestamp: 1724415468749,
       timing: {
         dnsStart: 1724415468984,
         dnsDone: 1724415469043,
@@ -434,7 +434,7 @@ export const data = {
         "X-Vercel-Cache": "MISS",
         "X-Vercel-Id": "fra1::fra1::kv28h-1724415468785-c9192137c9ed",
       },
-      time: 1724415468739,
+      timestamp: 1724415468739,
       timing: {
         dnsStart: 1724415468775,
         dnsDone: 1724415468779,
@@ -470,7 +470,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::jn45p-1724415470146-7160122c2733",
       },
-      time: 1724415469619,
+      timestamp: 1724415469619,
       timing: {
         dnsStart: 1724415469889,
         dnsDone: 1724415469947,
@@ -506,7 +506,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "gru1::fra1::df9rf-1724415469769-16109f11a918",
       },
-      time: 1724415469592,
+      timestamp: 1724415469592,
       timing: {
         dnsStart: 1724415469639,
         dnsDone: 1724415469748,
@@ -542,7 +542,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "gru1::fra1::ps6s8-1724415469878-6e2b2b9481e6",
       },
-      time: 1724415469642,
+      timestamp: 1724415469642,
       timing: {
         dnsStart: 1724415469762,
         dnsDone: 1724415469871,
@@ -578,7 +578,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "hkg1::fra1::fxvwk-1724415469898-52ddb6281608",
       },
-      time: 1724415469801,
+      timestamp: 1724415469801,
       timing: {
         dnsStart: 1724415469859,
         dnsDone: 1724415469892,
@@ -614,7 +614,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::lpxzz-1724415470208-6564146436d5",
       },
-      time: 1724415470173,
+      timestamp: 1724415470173,
       timing: {
         dnsStart: 1724415470193,
         dnsDone: 1724415470196,
@@ -650,7 +650,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cpt1::fra1::lnlth-1724415471275-cf922a128799",
       },
-      time: 1724415470963,
+      timestamp: 1724415470963,
       timing: {
         dnsStart: 1724415471216,
         dnsDone: 1724415471218,
@@ -686,7 +686,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::tpm8t-1724415471358-ec064b0eab3d",
       },
-      time: 1724415471269,
+      timestamp: 1724415471269,
       timing: {
         dnsStart: 1724415471325,
         dnsDone: 1724415471327,
@@ -722,7 +722,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "lhr1::fra1::7lf7n-1724415471374-7ef5cab51600",
       },
-      time: 1724415471324,
+      timestamp: 1724415471324,
       timing: {
         dnsStart: 1724415471360,
         dnsDone: 1724415471366,
@@ -758,7 +758,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cdg1::fra1::jszwl-1724415471627-5821aab52b06",
       },
-      time: 1724415471373,
+      timestamp: 1724415471373,
       timing: {
         dnsStart: 1724415471554,
         dnsDone: 1724415471556,
@@ -794,7 +794,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::jscbc-1724415472309-b6db76af787c",
       },
-      time: 1724415472154,
+      timestamp: 1724415472154,
       timing: {
         dnsStart: 1724415472239,
         dnsDone: 1724415472240,
@@ -830,7 +830,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "hnd1::fra1::kxkwr-1724415472423-82ba874bb590",
       },
-      time: 1724415472357,
+      timestamp: 1724415472357,
       timing: {
         dnsStart: 1724415472405,
         dnsDone: 1724415472410,
@@ -866,7 +866,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cle1::fra1::8zclb-1724415472414-c402d33465fc",
       },
-      time: 1724415472323,
+      timestamp: 1724415472323,
       timing: {
         dnsStart: 1724415472378,
         dnsDone: 1724415472380,
@@ -901,7 +901,7 @@ export const data = {
         "X-Vercel-Cache": "MISS",
         "X-Vercel-Id": "fra1::fra1::tjkng-1724415472738-a6c3d672835c",
       },
-      time: 1724415472487,
+      timestamp: 1724415472487,
       timing: {
         dnsStart: 1724415472627,
         dnsDone: 1724415472658,
@@ -937,7 +937,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::jn45p-1724415473337-466a2679cdf6",
       },
-      time: 1724415472895,
+      timestamp: 1724415472895,
       timing: {
         dnsStart: 1724415473151,
         dnsDone: 1724415473169,
@@ -973,7 +973,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::cfhm9-1724415474388-d835d118b121",
       },
-      time: 1724415473741,
+      timestamp: 1724415473741,
       timing: {
         dnsStart: 1724415474074,
         dnsDone: 1724415474203,
@@ -1009,7 +1009,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "gru1::fra1::dtczd-1724415474697-bc49fc211c26",
       },
-      time: 1724415474183,
+      timestamp: 1724415474183,
       timing: {
         dnsStart: 1724415474470,
         dnsDone: 1724415474578,
@@ -1045,7 +1045,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sfo1::fra1::wwf2m-1724415474188-b0c6f71df2db",
       },
-      time: 1724415474161,
+      timestamp: 1724415474161,
       timing: {
         dnsStart: 1724415474177,
         dnsDone: 1724415474180,
@@ -1081,7 +1081,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "pdx1::fra1::fdxft-1724415474318-e900cbf850a7",
       },
-      time: 1724415474239,
+      timestamp: 1724415474239,
       timing: {
         dnsStart: 1724415474291,
         dnsDone: 1724415474294,
@@ -1117,7 +1117,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "sin1::fra1::b8msv-1724415474849-b7ad6db342b4",
       },
-      time: 1724415474736,
+      timestamp: 1724415474736,
       timing: {
         dnsStart: 1724415474838,
         dnsDone: 1724415474840,
@@ -1153,7 +1153,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "syd1::fra1::p48zw-1724415475067-dce86bb55ee4",
       },
-      time: 1724415475023,
+      timestamp: 1724415475023,
       timing: {
         dnsStart: 1724415475058,
         dnsDone: 1724415475059,
@@ -1188,7 +1188,7 @@ export const data = {
         "X-Vercel-Cache": "MISS",
         "X-Vercel-Id": "fra1::fra1::dlk76-1724415475594-7c5b9c827a3d",
       },
-      time: 1724415475389,
+      timestamp: 1724415475389,
       timing: {
         dnsStart: 1724415475504,
         dnsDone: 1724415475527,
@@ -1224,7 +1224,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "iad1::fra1::dc8tg-1724415476028-5d259d762ec1",
       },
-      time: 1724415475892,
+      timestamp: 1724415475892,
       timing: {
         dnsStart: 1724415475952,
         dnsDone: 1724415475978,
@@ -1260,7 +1260,7 @@ export const data = {
         "X-Vercel-Execution-Region": "fra1",
         "X-Vercel-Id": "cle1::fra1::bckhc-1724415476215-f3c71058df41",
       },
-      time: 1724415476081,
+      timestamp: 1724415476081,
       timing: {
         dnsStart: 1724415476155,
         dnsDone: 1724415476157,
