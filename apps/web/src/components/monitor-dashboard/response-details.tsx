@@ -34,7 +34,7 @@ export async function ResponseDetails(props: ResponseDetailsParams) {
           latency: response.latency || 0,
           region: response.region,
           status: response.statusCode || 0,
-          time: response.cronTimestamp || 0,
+          timestamp: response.cronTimestamp || 0,
         }}
       />
       <Tabs defaultValue={defaultValue}>

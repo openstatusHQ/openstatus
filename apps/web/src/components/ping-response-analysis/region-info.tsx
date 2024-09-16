@@ -6,7 +6,7 @@ export function RegionInfo({
   check,
   error,
 }: {
-  check: Pick<RegionChecker, "region" | "time" | "latency" | "status">;
+  check: Pick<RegionChecker, "region" | "timestamp" | "latency" | "status">;
   error?: string;
 }) {
   return (
@@ -15,7 +15,7 @@ export function RegionInfo({
         <p className="text-muted-foreground">Time:</p>
       </div>
       <div className="col-span-3 sm:col-span-6">
-        <p>{timestampFormatter(check.time)}</p>
+        <p>{timestampFormatter(check.timestamp)}</p>
       </div>
       <div className="col-span-2">
         <p className="text-muted-foreground">Region:</p>

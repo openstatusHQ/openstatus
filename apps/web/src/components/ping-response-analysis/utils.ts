@@ -103,14 +103,14 @@ export const checkerSchema = z.object({
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
-  time: z.number(),
+  timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
 });
 
 export const cachedCheckerSchema = z.object({
   url: z.string(),
-  time: z.number(),
+  timestamp: z.number(),
   method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
   checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
 });
@@ -202,11 +202,11 @@ export async function storeBaseCheckerData({
   id: string;
 }) {
   const redis = Redis.fromEnv();
-  const time = new Date().getTime();
-  const cache = { url, method, time };
+  const timestamp = new Date().getTime();
+  const cache = { url, method, timestamp };
 
   const parsed = cachedCheckerSchema
-    .pick({ url: true, method: true, time: true })
+    .pick({ url: true, method: true, timestamp: true })
     .safeParse(cache);
 
   if (!parsed.success) {

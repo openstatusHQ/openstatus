@@ -70,7 +70,9 @@ export async function GET(req: Request) {
         {data?.url}
       </h2>
       {data && (
-        <p tw="text-slate-500 text-right">{timestampFormatter(data.time)}</p>
+        <p tw="text-slate-500 text-right">
+          {timestampFormatter(data.timestamp)}
+        </p>
       )}
       <div tw="flex">
         <div tw="flex flex-col flex-1">
