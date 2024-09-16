@@ -18,7 +18,7 @@ import { monitorJobTypes, monitorMethods, monitorStatus } from "./constants";
 export const monitor = sqliteTable("monitor", {
   id: integer("id").primaryKey(),
   jobType: text("job_type", { enum: monitorJobTypes })
-    .default("other")
+    .default("http")
     .notNull(),
   periodicity: text("periodicity", { enum: monitorPeriodicity })
     .default("other")
@@ -28,7 +28,7 @@ export const monitor = sqliteTable("monitor", {
 
   regions: text("regions").default("").notNull(),
 
-  url: text("url", { length: 2048 }).notNull(),
+  url: text("url", { length: 2048 }).notNull(), // URI
 
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),

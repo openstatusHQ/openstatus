@@ -4,7 +4,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "biome lint .",
-    "format": "pnpm biome format . --write && pnpm biome check . --apply-unsafe ",
+    "format": "pnpm biome format . --write && pnpm biome check . --write ",
     "lint:turbo": "turbo run lint",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dx": "turbo run dx",

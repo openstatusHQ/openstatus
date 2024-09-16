@@ -168,7 +168,7 @@ const createCronTask = async ({
         Authorization: `Basic ${env.CRON_SECRET}`,
       },
       httpMethod: "POST",
-      url: `https://openstatus-checker.fly.dev/checker?monitor_id=${row.id}`,
+      url: generateUrl({ row }),
       body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
@@ -179,3 +179,16 @@ const createCronTask = async ({
   const request = { parent: parent, task: newTask };
   return client.createTask(request);
 };
+
+function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
+  switch (row.jobType) {
+    case "http":
+    // FIXME: remove this after the migration
+    case "other":
+      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
+    case "tcp":
+      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;
+    default:
+      throw new Error("Invalid jobType");
+  }
+}
