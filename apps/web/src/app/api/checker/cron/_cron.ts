@@ -45,7 +45,7 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
   const timestamp = Date.now();
@@ -54,7 +54,7 @@ export const cron = async ({
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
     )
     .as("currentMaintenance");
 
@@ -63,7 +63,7 @@ export const cron = async ({
     .from(maintenancesToMonitors)
     .innerJoin(
       currentMaintenance,
-      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
     );
 
   const result = await db
@@ -73,17 +73,21 @@ export const cron = async ({
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
     )
     .all();
 
   console.log(`Start cron for ${periodicity}`);
 
-  const monitors = z.array(selectMonitorSchema).parse(result);
+  const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
+  if (!monitors.success) {
+    console.error(`Error while fetching the monitors ${monitors.error.errors}`);
+    throw new Error("Error while fetching the monitors");
+  }
 
-  for (const row of monitors) {
+  for (const row of monitors.data) {
     const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
@@ -91,11 +95,17 @@ export const cron = async ({
       .from(monitorStatusTable)
       .where(eq(monitorStatusTable.monitorId, row.id))
       .all();
-    const monitorStatus = z.array(selectMonitorStatusSchema).parse(result);
+    const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
+    if (!monitorStatus.success) {
+      console.error(
+        `Error while fetching the monitor status ${monitorStatus.error.errors}`
+      );
+      continue;
+    }
 
     for (const region of selectedRegions) {
       const status =
-        monitorStatus.find((m) => region === m.region)?.status || "active";
+        monitorStatus.data.find((m) => region === m.region)?.status || "active";
       const response = createCronTask({
         row,
         timestamp,
@@ -127,7 +137,7 @@ export const cron = async ({
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 };
 // timestamp needs to be in ms
