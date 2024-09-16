@@ -57,7 +57,10 @@ const headersSchema = z
   .optional();
 
 export const insertMonitorSchema = createInsertSchema(monitor, {
-  name: z.string().min(1, "Name must be at least 1 character long"),
+  name: z
+    .string()
+    .min(1, "Name must be at least 1 character long")
+    .max(255, "Name must be at most 255 characters long"),
   periodicity: monitorPeriodicitySchema.default("10m"),
   status: monitorStatusSchema.default("active"),
   regions: z.array(monitorRegionSchema).default([]).optional(),

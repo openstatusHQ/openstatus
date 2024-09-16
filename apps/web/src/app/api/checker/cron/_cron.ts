@@ -80,10 +80,14 @@ export const cron = async ({
 
   console.log(`Start cron for ${periodicity}`);
 
-  const monitors = z.array(selectMonitorSchema).parse(result);
+  const monitors = z.array(selectMonitorSchema).safeParse(result);
   const allResult = [];
+  if (!monitors.success) {
+    console.error(`Error while fetching the monitors ${monitors.error.errors}`);
+    throw new Error("Error while fetching the monitors");
+  }
 
-  for (const row of monitors) {
+  for (const row of monitors.data) {
     const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
     const result = await db
@@ -91,11 +95,17 @@ export const cron = async ({
       .from(monitorStatusTable)
       .where(eq(monitorStatusTable.monitorId, row.id))
       .all();
-    const monitorStatus = z.array(selectMonitorStatusSchema).parse(result);
+    const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
+    if (!monitorStatus.success) {
+      console.error(
+        `Error while fetching the monitor status ${monitorStatus.error.errors}`,
+      );
+      continue;
+    }
 
     for (const region of selectedRegions) {
       const status =
-        monitorStatus.find((m) => region === m.region)?.status || "active";
+        monitorStatus.data.find((m) => region === m.region)?.status || "active";
       const response = createCronTask({
         row,
         timestamp,
