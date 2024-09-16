@@ -97,12 +97,17 @@ export function MonitorForm({
       ) as any, // TS considers a.type === "textBody"
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
+      jobType: defaultValues?.jobType || "http",
     },
   });
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, setPending] = React.useState(false);
   const [pingFailed, setPingFailed] = React.useState(false);
+  const type = React.useMemo(
+    () => (defaultValues ? "update" : "create"),
+    [defaultValues],
+  );
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     if (defaultValues) {
@@ -176,7 +181,12 @@ export function MonitorForm({
         statusAssertions,
         headerAssertions,
         textBodyAssertions,
+        jobType,
       } = form.getValues();
+
+      // FIXME: add support for TCP
+      if (jobType !== "http")
+        return { error: "Only HTTP tests are supported. Coming soon..." };
 
       if (
         body &&
@@ -311,7 +321,7 @@ export function MonitorForm({
               ) : null}
             </TabsList>
             <TabsContent value="request">
-              <SectionRequests {...{ form, pingEndpoint }} />
+              <SectionRequests {...{ form, pingEndpoint, type }} />
             </TabsContent>
             <TabsContent value="assertions">
               <SectionAssertions {...{ form }} />

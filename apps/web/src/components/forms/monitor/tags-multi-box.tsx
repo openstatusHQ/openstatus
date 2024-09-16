@@ -366,9 +366,11 @@ const DialogListItem = ({
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      You are about to delete the tag{" "}
-                      <TagBadge color={color} name={name} /> .
+                    <AlertDialogDescription asChild>
+                      <div>
+                        You are about to delete the tag{" "}
+                        <TagBadge color={color} name={name} /> .
+                      </div>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

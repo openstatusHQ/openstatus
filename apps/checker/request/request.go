@@ -45,7 +45,7 @@ type Assertion struct {
 	RawTarget     json.RawMessage `json:"target"`
 }
 
-type CheckerRequest struct {
+type HttpCheckerRequest struct {
 	Headers []struct {
 		Key   string `json:"key"`
 		Value string `json:"value"`
@@ -60,6 +60,26 @@ type CheckerRequest struct {
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+}
+
+type TCPCheckerRequest struct {
+	Status        string            `json:"status"`
+	WorkspaceID   string            `json:"workspaceId"`
+	URL           string            `json:"url"`
+	MonitorID     string            `json:"monitorId"`
+	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
+	RequestId     int64             `json:"requestId,omitempty"`
+	CronTimestamp int64             `json:"cronTimestamp"`
+	Timeout       int64             `json:"timeout"`
+	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+}
+
+type TCPRequest struct {
+	WorkspaceID   string `json:"workspaceId"`
+	URL           string `json:"url"`
+	MonitorID     string `json:"monitorId"`
+	CronTimestamp int64  `json:"cronTimestamp"`
+	Timeout       int64  `json:"timeout"`
 }
 
 type PingRequest struct {
