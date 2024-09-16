@@ -39,7 +39,7 @@ importers:
         version: 5.3.0
       drizzle-orm:
         specifier: 0.32.1
-        version: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -192,7 +192,7 @@ importers:
         version: link:../../packages/utils
       '@scalar/hono-api-reference':
         specifier: 0.5.131
-        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.5.2)(zod@3.23.8)
@@ -615,17 +615,17 @@ importers:
   packages/db:
     dependencies:
       '@libsql/client':
-        specifier: 0.7.0
-        version: 0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+        specifier: 0.11.0
+        version: 0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
         specifier: 0.7.0
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
       drizzle-orm:
         specifier: 0.32.1
-        version: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -3264,20 +3264,25 @@ packages:
   '@lezer/yaml@1.0.3':
     resolution: {integrity: sha512-GuBLekbw9jDBDhGur82nuwkxKQ+a3W5H0GfaAthDXcAu+XdpS43VlnxA9E9hllkpSP5ellRDKjLLj7Lu9Wr6xA==}
 
+  '@libsql/client@0.11.0':
+    resolution: {integrity: sha512-IkMxBFI43JXBRf4K57m6zeoa8M6u0FFEI11vHh4/ObTCZFk20wJNO9hRa1Zq1BeVDqABxMRf02HPAr02pC06bQ==}
+
   '@libsql/client@0.6.2':
     resolution: {integrity: sha512-xRNfRLv/dOCbV4qd+M0baQwGmvuZpMd2wG2UAPs8XmcdaPvu5ErkcaeITkxlm3hDEJVabQM1cFhMBxsugWW9fQ==}
 
-  '@libsql/client@0.7.0':
-    resolution: {integrity: sha512-1aLDtWzsErr68GZ640TVyOLkL/+lB2YK8cYvJIfiI7Mt+DEPB22Jkoz2QfBDg5PVGX/efeRHog2j/oVbUhxO8Q==}
+  '@libsql/core@0.11.0':
+    resolution: {integrity: sha512-ksMxodOCXoU2tiQtlY7DzOLZ0xq8EWbXlmBk+56/8U7e7QMDrYmdt+XhOcCr4DAO5HSD9kMPqS4iVFBKGcWbBA==}
 
   '@libsql/core@0.6.2':
     resolution: {integrity: sha512-c2P4M+4u/4b2L02A0KjggO3UW51rGkhxr/7fzJO0fEAqsqrWGxuNj2YtRkina/oxfYvAof6xjp8RucNoIV/Odw==}
 
-  '@libsql/core@0.7.0':
-    resolution: {integrity: sha512-hCYfXa0S4t9CJtxZIWacboylrcx94ZQO0dEngH4f0f/LHg6ymHSZiubbojAwD7tNy94ahICoGPjEi6aEIyhlcQ==}
-
   '@libsql/darwin-arm64@0.3.10':
     resolution: {integrity: sha512-RaexEFfPAFogd6dJlqkpCkTxdr6K14Z0286lodIJ8Ny77mWuWyBkWKxf70OYWXXAMxMJFUW+6al1F3/Osf/pTg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@libsql/darwin-arm64@0.4.5':
+    resolution: {integrity: sha512-xLdnn0NrgSk6OMi716FFs/27Hs33jtSd2fkKi/72Ey/qBtPWcB1BMurDQekzi0yAcfQTjGqIz7tpOibyjiEPyQ==}
     cpu: [arm64]
     os: [darwin]
 
@@ -3286,8 +3291,16 @@ packages:
     cpu: [x64]
     os: [darwin]
 
+  '@libsql/darwin-x64@0.4.5':
+    resolution: {integrity: sha512-rZsEWj0H7oCqd5Y2pe0RzKmuQXC2OB1RbnFy4CvjeAjT6MP6mFp+Vx9mTCAUuJMhuoSVMsFPUJRpAQznl9E3Tg==}
+    cpu: [x64]
+    os: [darwin]
+
   '@libsql/hrana-client@0.6.0':
     resolution: {integrity: sha512-k+fqzdjqg3IvWfKmVJK5StsbjeTcyNAXFelUbXbGNz3yH1gEVT9mZ6kmhsIXP30ZSyVV0AE1Gi25p82mxC9hwg==}
+
+  '@libsql/hrana-client@0.6.2':
+    resolution: {integrity: sha512-MWxgD7mXLNf9FXXiM0bc90wCjZSpErWKr5mGza7ERy2FJNNMXd7JIOv+DepBA1FQTIfI8TFO4/QDYgaQC0goNw==}
 
   '@libsql/isomorphic-fetch@0.2.1':
     resolution: {integrity: sha512-Sv07QP1Aw8A5OOrmKgRUBKe2fFhF2hpGJhtHe3d1aRnTESZCGkn//0zDycMKTGamVWb3oLYRroOsCV8Ukes9GA==}
@@ -3300,8 +3313,18 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@libsql/linux-arm64-gnu@0.4.5':
+    resolution: {integrity: sha512-VR09iu6KWGJ6fauCn59u/jJ9OA+/A2yQ0dr2HDN2zkRueLC6D2oGYt4gPfLZPFKf+WJpVMtIhNfd+Ru9MMaFkA==}
+    cpu: [arm64]
+    os: [linux]
+
   '@libsql/linux-arm64-musl@0.3.10':
     resolution: {integrity: sha512-72SN1FUavLvzHddCS861ynSpQndcW5oLGKA3U8CyMfgIZIwJAPc7+48Uj1plW00htXBx4GBpcntFp68KKIx3YQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@libsql/linux-arm64-musl@0.4.5':
+    resolution: {integrity: sha512-74hvD5ej4rBshhxFGNYU16a3m8B/NjIPvhlZ/flG1Oeydfo6AuUXSSNFi+H5+zi9/uWuzyz5TLVeQcraoUV10A==}
     cpu: [arm64]
     os: [linux]
 
@@ -3310,13 +3333,28 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@libsql/linux-x64-gnu@0.4.5':
+    resolution: {integrity: sha512-gb5WObGO3+rbuG8h9font1N02iF+zgYAgY0wNa8BNiZ5A9UolZKFxiqGFS7eHaAYfemHJKKTT+aAt3X2p5TibA==}
+    cpu: [x64]
+    os: [linux]
+
   '@libsql/linux-x64-musl@0.3.10':
     resolution: {integrity: sha512-kNmIRxomVwt9S+cLyYS497F/3gXFF4r8wW12YSBQgxG75JYft07AHVd8J7HINg+oqRkLzT0s+mVX5dM6nk68EQ==}
     cpu: [x64]
     os: [linux]
 
+  '@libsql/linux-x64-musl@0.4.5':
+    resolution: {integrity: sha512-JfyE6OVC5X4Nr4cFF77VhB1o+hBRxAqYT9YdeqnWdAQSYc/ASi5HnRALLAQEsGacFPZZ32pixfraQmPE3iJFfw==}
+    cpu: [x64]
+    os: [linux]
+
   '@libsql/win32-x64-msvc@0.3.10':
     resolution: {integrity: sha512-c/6rjdtGULKrJkLgfLobFefObfOtxjXGmCfPxv6pr0epPCeUEssfDbDIeEH9fQUgzogIMWEHwT8so52UJ/iT1Q==}
+    cpu: [x64]
+    os: [win32]
+
+  '@libsql/win32-x64-msvc@0.4.5':
+    resolution: {integrity: sha512-57GGurNJhOhq3XIopLdGnCoQ4kQAcmbmzzFoC4tpvDE/KSbwZ/13zqJWhQA41nMGk/PKM1XKfKmbIybKx1+eqA==}
     cpu: [x64]
     os: [win32]
 
@@ -7608,6 +7646,11 @@ packages:
 
   libsql@0.3.10:
     resolution: {integrity: sha512-/8YMTbwWFPmrDWY+YFK3kYqVPFkMgQre0DGmBaOmjogMdSe+7GHm1/q9AZ61AWkEub/vHmi+bA4tqIzVhKnqzg==}
+    os: [darwin, linux, win32]
+
+  libsql@0.4.5:
+    resolution: {integrity: sha512-sorTJV6PNt94Wap27Sai5gtVLIea4Otb2LUiAUyr3p6BPOScGMKGt5F1b5X/XgkNtcsDKeX5qfeBDj+PdShclQ==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lie@3.1.1:
@@ -12663,10 +12706,6 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
 
-  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))':
-    dependencies:
-      tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
-
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))':
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
@@ -12802,6 +12841,29 @@ snapshots:
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.1
 
+  '@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+    dependencies:
+      '@libsql/core': 0.11.0
+      '@libsql/hrana-client': 0.6.2(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      js-base64: 3.7.5
+      libsql: 0.4.5
+      promise-limit: 2.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@libsql/client@0.11.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)':
+    dependencies:
+      '@libsql/core': 0.11.0
+      '@libsql/hrana-client': 0.6.2(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      js-base64: 3.7.5
+      libsql: 0.4.5
+      promise-limit: 2.7.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    optional: true
+
   '@libsql/client@0.6.2(bufferutil@4.0.8)(utf-8-validate@6.0.4)':
     dependencies:
       '@libsql/core': 0.6.2
@@ -12812,52 +12874,25 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+  '@libsql/core@0.11.0':
     dependencies:
-      '@libsql/core': 0.7.0
-      '@libsql/hrana-client': 0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
       js-base64: 3.7.5
-      libsql: 0.3.10
-      promise-limit: 2.7.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@libsql/client@0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)':
-    dependencies:
-      '@libsql/core': 0.7.0
-      '@libsql/hrana-client': 0.6.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
-      js-base64: 3.7.5
-      libsql: 0.3.10
-      promise-limit: 2.7.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-    optional: true
 
   '@libsql/core@0.6.2':
-    dependencies:
-      js-base64: 3.7.5
-
-  '@libsql/core@0.7.0':
     dependencies:
       js-base64: 3.7.5
 
   '@libsql/darwin-arm64@0.3.10':
     optional: true
 
+  '@libsql/darwin-arm64@0.4.5':
+    optional: true
+
   '@libsql/darwin-x64@0.3.10':
     optional: true
 
-  '@libsql/hrana-client@0.6.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
-    dependencies:
-      '@libsql/isomorphic-fetch': 0.2.1
-      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3)
-      js-base64: 3.7.5
-      node-fetch: 3.3.2
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
+  '@libsql/darwin-x64@0.4.5':
+    optional: true
 
   '@libsql/hrana-client@0.6.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)':
     dependencies:
@@ -12868,6 +12903,27 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@libsql/hrana-client@0.6.2(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+    dependencies:
+      '@libsql/isomorphic-fetch': 0.2.1
+      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      js-base64: 3.7.5
+      node-fetch: 3.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@libsql/hrana-client@0.6.2(bufferutil@4.0.8)(utf-8-validate@6.0.4)':
+    dependencies:
+      '@libsql/isomorphic-fetch': 0.2.1
+      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      js-base64: 3.7.5
+      node-fetch: 3.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+    optional: true
 
   '@libsql/isomorphic-fetch@0.2.1': {}
 
@@ -12890,16 +12946,31 @@ snapshots:
   '@libsql/linux-arm64-gnu@0.3.10':
     optional: true
 
+  '@libsql/linux-arm64-gnu@0.4.5':
+    optional: true
+
   '@libsql/linux-arm64-musl@0.3.10':
+    optional: true
+
+  '@libsql/linux-arm64-musl@0.4.5':
     optional: true
 
   '@libsql/linux-x64-gnu@0.3.10':
     optional: true
 
+  '@libsql/linux-x64-gnu@0.4.5':
+    optional: true
+
   '@libsql/linux-x64-musl@0.3.10':
     optional: true
 
+  '@libsql/linux-x64-musl@0.4.5':
+    optional: true
+
   '@libsql/win32-x64-msvc@0.3.10':
+    optional: true
+
+  '@libsql/win32-x64-msvc@0.4.5':
     optional: true
 
   '@manypkg/find-root@2.2.1':
@@ -14232,9 +14303,9 @@ snapshots:
     optionalDependencies:
       rollup: 2.78.0
 
-  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/draggable': 0.1.4(typescript@5.5.2)
@@ -14270,11 +14341,11 @@ snapshots:
       - typescript
       - vitest
 
-  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
       '@floating-ui/vue': 1.1.1(vue@3.4.31(typescript@5.5.2))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
-      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/oas-utils': 0.2.26(typescript@5.5.2)
       '@scalar/openapi-parser': 0.7.2
@@ -14359,9 +14430,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       hono: 4.5.3
     transitivePeerDependencies:
       - '@jest/globals'
@@ -16520,6 +16591,26 @@ snapshots:
       bun-types: 1.1.8
       react: 18.3.1
 
+  drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20240512.0
+      '@libsql/client': 0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@opentelemetry/api': 1.8.0
+      '@types/react': 18.3.3
+      better-sqlite3: 11.1.2
+      bun-types: 1.1.8
+      react: 18.3.1
+
+  drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20240512.0
+      '@libsql/client': 0.11.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
+      '@opentelemetry/api': 1.8.0
+      '@types/react': 18.3.3
+      better-sqlite3: 11.1.2
+      bun-types: 1.1.8
+      react: 18.3.1
+
   drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.6.2(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240512.0
@@ -16530,29 +16621,9 @@ snapshots:
       bun-types: 1.1.8
       react: 18.3.1
 
-  drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20240512.0
-      '@libsql/client': 0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
-      '@opentelemetry/api': 1.8.0
-      '@types/react': 18.3.3
-      better-sqlite3: 11.1.2
-      bun-types: 1.1.8
-      react: 18.3.1
-
-  drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20240512.0
-      '@libsql/client': 0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
-      '@opentelemetry/api': 1.8.0
-      '@types/react': 18.3.3
-      better-sqlite3: 11.1.2
-      bun-types: 1.1.8
-      react: 18.3.1
-
-  drizzle-zod@0.5.1(drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+      drizzle-orm: 0.32.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.11.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
       zod: 3.23.8
 
   duplexify@4.1.2:
@@ -18078,6 +18149,19 @@ snapshots:
       '@libsql/linux-x64-gnu': 0.3.10
       '@libsql/linux-x64-musl': 0.3.10
       '@libsql/win32-x64-msvc': 0.3.10
+
+  libsql@0.4.5:
+    dependencies:
+      '@neon-rs/load': 0.0.4
+      detect-libc: 2.0.2
+    optionalDependencies:
+      '@libsql/darwin-arm64': 0.4.5
+      '@libsql/darwin-x64': 0.4.5
+      '@libsql/linux-arm64-gnu': 0.4.5
+      '@libsql/linux-arm64-musl': 0.4.5
+      '@libsql/linux-x64-gnu': 0.4.5
+      '@libsql/linux-x64-musl': 0.4.5
+      '@libsql/win32-x64-msvc': 0.4.5
 
   lie@3.1.1:
     dependencies:

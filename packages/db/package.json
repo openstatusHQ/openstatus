@@ -13,7 +13,7 @@
     "dev": "turso dev --db-file ../../openstatus-dev.db"
   },
   "dependencies": {
-    "@libsql/client": "0.7.0",
+    "@libsql/client": "0.11.0",
     "@t3-oss/env-core": "0.7.0",
     "drizzle-orm": "0.32.1",
     "drizzle-zod": "0.5.1",
