@@ -95,7 +95,7 @@ checkerRoute.post("/updateStatus", async (c) => {
 
       const numberOfRegions = monitor.regions.length;
 
-      if (nbAffectedRegion >= numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
         await triggerNotifications({
           monitorId,
           statusCode,
@@ -146,7 +146,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       );
       // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion >= numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
         // let's refetch the incident to avoid race condition
         const incident = await db
           .select()
@@ -239,7 +239,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       );
       //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
       //   // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion >= numberOfRegions / 2) {
+      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
         const incident = await db
           .select()
           .from(incidentTable)
