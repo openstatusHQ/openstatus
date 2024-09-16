@@ -183,8 +183,6 @@ const createCronTask = async ({
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
     case "http":
-    // FIXME: remove this after the migration
-    case "other":
       return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}`;
     case "tcp":
       return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}`;

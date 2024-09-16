@@ -8,6 +8,4 @@ export const monitorJobTypes = [
   "udp",
   "dns",
   "ssl",
-  // FIXME: remove this after the migration
-  "other",
 ] as const;
