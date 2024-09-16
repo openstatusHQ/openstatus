@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptrace"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -42,7 +44,27 @@ type Response struct {
 // FIXME: This should only return the TCP Timing Data;
 func Http(ctx context.Context, client *http.Client, inputData request.HttpCheckerRequest) (Response, error) {
 	logger := log.Ctx(ctx).With().Str("monitor", inputData.URL).Logger()
-	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader([]byte(inputData.Body)))
+
+	b := []byte(inputData.Body)
+	if inputData.Method == http.MethodPost {
+		for _, header := range inputData.Headers {
+			if header.Key == "Content-Type" && header.Value == "application/octet-stream" {
+				//  split the body by comma and convert it to bytes it's data url base64
+				data := strings.Split(inputData.Body, ",")
+				if len(data) == 2 {
+					decoded, err := base64.StdEncoding.DecodeString(data[1])
+					if err != nil {
+						return Response{}, fmt.Errorf("error while decoding base64: %w", err)
+					}
+
+					b = decoded
+
+				}
+			}
+		}
+	}
+
+	req, err := http.NewRequestWithContext(ctx, inputData.Method, inputData.URL, bytes.NewReader(b))
 	if err != nil {
 		logger.Error().Err(err).Msg("error while creating req")
 		return Response{}, fmt.Errorf("unable to create req: %w", err)
@@ -53,8 +75,14 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 			req.Header.Set(header.Key, header.Value)
 		}
 	}
+
 	if inputData.Method != http.MethodGet {
-		req.Header.Set("Content-Type", "application/json")
+		head := req.Header
+		_, ok := head["Content-Type"]
+		if !ok {
+			// by default we set the content type to application/json if it's a POST request
+			req.Header.Set("Content-Type", "application/json")
+		}
 	}
 
 	timing := Timing{}
