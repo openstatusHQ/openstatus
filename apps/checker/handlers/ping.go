@@ -20,7 +20,7 @@ type PingResponse struct {
 	RequestId   int64          `json:"requestId,omitempty"`
 	WorkspaceId int64          `json:"workspaceId,omitempty"`
 	Latency     int64          `json:"latency"`
-	Time        int64          `json:"time"`
+	Timestamp   int64          `json:"timestamp"`
 	Status      int            `json:"status,omitempty"`
 	Timing      checker.Timing `json:"timing"`
 }
@@ -34,7 +34,7 @@ type Response struct {
 	RequestId   int64             `json:"requestId,omitempty"`
 	WorkspaceId int64             `json:"workspaceId,omitempty"`
 	Latency     int64             `json:"latency"`
-	Time        int64             `json:"time"`
+	Timestamp   int64             `json:"timestamp"`
 	Timing      checker.Timing    `json:"timing"`
 	Status      int               `json:"status,omitempty"`
 }
@@ -111,6 +111,11 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 			return fmt.Errorf("unable to ping: %w", err)
 		}
 
+		timingAsString, err := json.Marshal(r.Timing)
+		if err != nil {
+			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+		}
+
 		headersAsString, err := json.Marshal(r.Headers)
 		if err != nil {
 			return nil
@@ -123,8 +128,8 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 			Latency:     r.Latency,
 			Body:        r.Body,
 			Headers:     string(headersAsString),
-			Time:        r.Timestamp,
-			Timing:      r.Timing,
+			Timestamp:   r.Timestamp,
+			Timing:      string(timingAsString),
 			Region:      h.Region,
 		}
 

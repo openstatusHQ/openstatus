@@ -60,7 +60,9 @@ export function registerPostCheck(api: typeof checkAPI) {
       })
       .returning()
       .get();
+
     const result = [];
+
     for (let count = 0; count < input.runCount; count++) {
       const currentFetch = [];
       for (const region of input.regions) {
@@ -94,124 +96,101 @@ export function registerPostCheck(api: typeof checkAPI) {
       const allResults = await Promise.allSettled(currentFetch);
       result.push(...allResults);
     }
+
+    const fulfilledRequest: z.infer<typeof ResponseSchema>[] = [];
+
     const filteredResult = result.filter((r) => r.status === "fulfilled");
-    const fulfilledRequest = [];
     for await (const r of filteredResult) {
       if (r.status !== "fulfilled") throw new Error("No value");
 
       const json = await r.value.json();
-      fulfilledRequest.push(ResponseSchema.parse(json));
+      const parsed = ResponseSchema.safeParse(json);
+
+      if (!parsed.success) {
+        console.error(parsed.error.errors);
+        throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+      }
+
+      fulfilledRequest.push(parsed.data);
     }
 
     let aggregatedResponse = null;
+
     if (aggregated) {
-      // This is ugly
-      const dnsArray = fulfilledRequest.map(
-        (r) => r.timing.dnsDone - r.timing.dnsStart,
-      );
-      const connectArray = fulfilledRequest.map(
-        (r) => r.timing.connectDone - r.timing.connectStart,
-      );
-      const tlsArray = fulfilledRequest.map(
-        (r) => r.timing.tlsHandshakeDone - r.timing.tlsHandshakeStart,
-      );
-      const firstArray = fulfilledRequest.map(
-        (r) => r.timing.firstByteDone - r.timing.firstByteStart,
-      );
-      const transferArray = fulfilledRequest.map(
-        (r) => r.timing.transferDone - r.timing.transferStart,
-      );
-      const latencyArray = fulfilledRequest.map((r) => r.latency);
-
-      const dnsPercentile = percentile([50, 75, 95, 99], dnsArray) as number[];
-      const connectPercentile = percentile(
-        [50, 75, 95, 99],
-        connectArray,
-      ) as number[];
-      const tlsPercentile = percentile([50, 75, 95, 99], tlsArray) as number[];
-      const firstPercentile = percentile(
-        [50, 75, 95, 99],
-        firstArray,
-      ) as number[];
-
-      const transferPercentile = percentile(
-        [50, 75, 95, 99],
-        transferArray,
-      ) as number[];
-      const latencyPercentile = percentile(
-        [50, 75, 95, 99],
-        latencyArray,
-      ) as number[];
-
-      const aggregatedDNS = AggregatedResponseSchema.parse({
-        p50: dnsPercentile[0],
-        p75: dnsPercentile[1],
-        p95: dnsPercentile[2],
-        p99: dnsPercentile[3],
-        min: Math.min(...dnsArray),
-        max: Math.max(...dnsArray),
-      });
-      const aggregatedConnect = AggregatedResponseSchema.parse({
-        p50: connectPercentile[0],
-        p75: connectPercentile[1],
-        p95: connectPercentile[2],
-        p99: connectPercentile[3],
-        min: Math.min(...connectArray),
-        max: Math.max(...connectArray),
-      });
-      const aggregatedTls = AggregatedResponseSchema.parse({
-        p50: tlsPercentile[0],
-        p75: tlsPercentile[1],
-        p95: tlsPercentile[2],
-        p99: tlsPercentile[3],
-        min: Math.min(...tlsArray),
-        max: Math.max(...tlsArray),
-      });
-      const aggregatedFirst = AggregatedResponseSchema.parse({
-        p50: firstPercentile[0],
-        p75: firstPercentile[1],
-        p95: firstPercentile[2],
-        p99: firstPercentile[3],
-        min: Math.min(...firstArray),
-        max: Math.max(...firstArray),
-      });
-      const aggregatedTransfer = AggregatedResponseSchema.parse({
-        p50: transferPercentile[0],
-        p75: transferPercentile[1],
-        p95: transferPercentile[2],
-        p99: transferPercentile[3],
-        min: Math.min(...transferArray),
-        max: Math.max(...transferArray),
-      });
-
-      const aggregatedLatency = AggregatedResponseSchema.parse({
-        p50: latencyPercentile[0],
-        p75: latencyPercentile[1],
-        p95: latencyPercentile[2],
-        p99: latencyPercentile[3],
-        min: Math.min(...latencyArray),
-        max: Math.max(...latencyArray),
-      });
+      const { dns, connect, tls, firstByte, transfer, latency } =
+        getTiming(fulfilledRequest);
 
       aggregatedResponse = AggregatedResult.parse({
-        dns: aggregatedDNS,
-        connect: aggregatedConnect,
-        tls: aggregatedTls,
-        firstByte: aggregatedFirst,
-        transfer: aggregatedTransfer,
-        latency: aggregatedLatency,
+        dns: getAggregate(dns),
+        connect: getAggregate(connect),
+        tls: getAggregate(tls),
+        firstByte: getAggregate(firstByte),
+        transfer: getAggregate(transfer),
+        latency: getAggregate(latency),
       });
     }
+
     const allTimings = fulfilledRequest.map((r) => r.timing);
 
     const lastResponse = fulfilledRequest[fulfilledRequest.length - 1];
     const responseResult = CheckPostResponseSchema.parse({
       id: newCheck.id,
-      raw: allTimings,
+      raw: allTimings, // TODO: we should return the region here as well!
       response: lastResponse,
       aggregated: aggregatedResponse ? aggregatedResponse : undefined,
     });
 
     return c.json(responseResult, 200);
   });
+}
+
+// This is a helper function to get the timing of the request
+
+type ReturnGetTiming = Record<
+  "dns" | "connect" | "tls" | "firstByte" | "transfer" | "latency",
+  number[]
+>;
+
+function getTiming(data: z.infer<typeof ResponseSchema>[]): ReturnGetTiming {
+  return data.reduce(
+    (prev, curr) => {
+      prev.dns.push(curr.timing.dnsDone - curr.timing.dnsStart);
+      prev.connect.push(curr.timing.connectDone - curr.timing.connectStart);
+      prev.tls.push(
+        curr.timing.tlsHandshakeDone - curr.timing.tlsHandshakeStart
+      );
+      prev.firstByte.push(
+        curr.timing.firstByteDone - curr.timing.firstByteStart
+      );
+      prev.transfer.push(curr.timing.transferDone - curr.timing.transferStart);
+      prev.latency.push(curr.latency);
+      return prev;
+    },
+    {
+      dns: [],
+      connect: [],
+      tls: [],
+      firstByte: [],
+      transfer: [],
+      latency: [],
+    } as ReturnGetTiming
+  );
+}
+
+function getAggregate(data: number[]) {
+  const parsed = AggregatedResponseSchema.safeParse({
+    p50: percentile(50, data),
+    p75: percentile(75, data),
+    p95: percentile(95, data),
+    p99: percentile(99, data),
+    min: Math.min(...data),
+    max: Math.max(...data),
+  });
+
+  if (!parsed.success) {
+    console.error(parsed.error.errors);
+    throw new Error(`Failed to parse response: ${parsed.error.errors}`);
+  }
+
+  return parsed.data;
 }
