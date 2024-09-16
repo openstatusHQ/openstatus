@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@auth/core": "0.34.1",
-    "@auth/drizzle-adapter": "1.4.1",
+    "@auth/drizzle-adapter": "1.5.0",
     "@google-cloud/tasks": "5.0.0",
     "@headlessui/react": "1.7.17",
     "@hookform/resolvers": "3.3.1",
