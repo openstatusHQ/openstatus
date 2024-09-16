@@ -3,10 +3,10 @@ import type { Metadata } from "next";
 import { BottomCTA } from "@/components/marketing/in-between-cta";
 import { getCheckerDataById } from "@/components/ping-response-analysis/utils";
 import { redirect } from "next/navigation";
-import { z } from "zod";
 import CheckerPlay from "./_components/checker-play";
 import { GlobalMonitoring } from "./_components/global-monitoring";
 import { Testimonial } from "./_components/testimonial";
+import { searchParamsCache } from "./search-params";
 
 export const metadata: Metadata = {
   title: "Global Speed Checker",
@@ -19,18 +19,12 @@ export const metadata: Metadata = {
   },
 };
 
-const searchParamsSchema = z.object({
-  id: z.string().optional(),
-});
-
 export default async function PlayPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-
-  const id = search.success ? search.data.id : undefined;
+  const { id } = searchParamsCache.parse(searchParams);
 
   const data = id ? await getCheckerDataById(id) : null;
 

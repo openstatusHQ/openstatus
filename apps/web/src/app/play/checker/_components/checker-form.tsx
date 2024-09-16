@@ -1,8 +1,8 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -47,7 +47,6 @@ import {
   regionCheckerSchema,
   regionFormatter,
 } from "@/components/ping-response-analysis/utils";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
@@ -60,6 +59,8 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useQueryStates } from "nuqs";
+import { searchParamsParsers } from "../search-params";
 
 const FloatingActionNoSSR = dynamic(
   () =>
@@ -91,7 +92,6 @@ interface CheckerFormProps {
 }
 
 export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
-  const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const form = useForm<FormSchema>({
@@ -99,12 +99,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
     defaultValues,
   });
   const [result, setResult] = useState<RegionChecker[]>(defaultData || []);
-  const updateSearchParams = useUpdateSearchParams();
-  const searchParams = useSearchParams();
-
-  const id = useMemo(() => {
-    return searchParams.get("id");
-  }, [searchParams]);
+  const [{ id }, setSearchParams] = useQueryStates(searchParamsParsers);
 
   function onSubmit(data: FormSchema) {
     startTransition(async () => {
@@ -153,10 +148,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                             duration: 2000,
                           });
                         } else {
-                          const searchParams = updateSearchParams({
-                            id: item,
-                          });
-                          router.replace(`${pathname}?${searchParams}`);
+                          setSearchParams({ id: item });
                           toast.success("Data is available!", {
                             id: toastId,
                             duration: 3000,
@@ -199,8 +191,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
               }
             }
           } catch (_e) {
-            const searchParams = updateSearchParams({ id: null });
-            router.replace(`${pathname}?${searchParams}`);
+            setSearchParams({ id: null });
             toast.error("Something went wrong", {
               description: "Please try again",
               id: toastId,

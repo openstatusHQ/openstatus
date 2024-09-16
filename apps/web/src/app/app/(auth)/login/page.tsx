@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { z } from "zod";
 
 import { Button, Separator } from "@openstatus/ui";
 
@@ -8,23 +7,16 @@ import DevModeContainer from "@/components/dev-mode-container";
 import { Icons } from "@/components/icons";
 import { signIn } from "@/lib/auth";
 import MagicLinkForm from "./_components/magic-link-form";
+import { searchParamsCache } from "./search-params";
 
 const isDev = process.env.NODE_ENV === "development";
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  redirectTo: z.string().optional().default("/app"),
-});
 
 export default function Page({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  const redirectTo = search.success ? search.data.redirectTo : "/app";
+  const { redirectTo } = searchParamsCache.parse(searchParams);
 
   return (
     <Shell className="my-4 grid w-full max-w-xl gap-6 md:p-10">

@@ -4,19 +4,22 @@ import { useSearchParams } from "next/navigation";
 
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
+import { workspacePlans } from "@openstatus/db/src/schema";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense } from "react";
 import { PricingPlanRadio } from "./pricing-plan-radio";
 import { PricingTable } from "./pricing-table";
 
 export function PricingWrapper() {
-  const searchParams = useSearchParams();
+  const [plan, setPlan] = useQueryState(
+    "plan",
+    parseAsStringLiteral(workspacePlans).withDefault("team"),
+  );
   return (
     <div>
       <div className="flex flex-col gap-4 sm:hidden">
-        <PricingPlanRadio />
-        <PricingTable
-          plans={[(searchParams.get("plan") as WorkspacePlan) || "team"]}
-        />
+        <PricingPlanRadio onChange={setPlan} />
+        <PricingTable plans={[plan]} />
       </div>
       <div className="hidden sm:block">
         <PricingTable />

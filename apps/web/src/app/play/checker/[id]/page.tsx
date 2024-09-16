@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import * as z from "zod";
 
-import {
-  flyRegions,
-  monitorFlyRegionSchema,
-} from "@openstatus/db/src/schema/constants";
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import {
@@ -21,24 +17,7 @@ import {
   getCheckerDataById,
   timestampFormatter,
 } from "@/components/ping-response-analysis/utils";
-import type { Region } from "@openstatus/tinybird";
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  regions: z
-    .string()
-    .optional()
-    .transform(
-      (value) =>
-        value
-          ?.trim()
-          ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? flyRegions,
-    )
-    .pipe(monitorFlyRegionSchema.array().optional()),
-});
+import { searchParamsCache } from "./search-params";
 
 interface Props {
   params: { id: string };
@@ -46,9 +25,8 @@ interface Props {
 }
 
 export default async function CheckPage({ params, searchParams }: Props) {
-  const search = searchParamsSchema.safeParse(searchParams);
-
-  const selectedRegions = search.success ? search.data.regions : undefined;
+  const { regions } = searchParamsCache.parse(searchParams);
+  const selectedRegions = regions || [...flyRegions];
 
   const data = await getCheckerDataById(params.id);
 

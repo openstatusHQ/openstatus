@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
-import * as z from "zod";
 
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
@@ -12,41 +11,17 @@ import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { Metrics } from "@/components/monitor-dashboard/metrics";
 import { env } from "@/env";
-import {
-  getMinutesByInterval,
-  intervals,
-  periods,
-  quantiles,
-} from "@/lib/monitor/utils";
+import { getMinutesByInterval, periods } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
+import {
+  DEFAULT_INTERVAL,
+  DEFAULT_PERIOD,
+  DEFAULT_QUANTILE,
+  searchParamsCache,
+} from "./search-params";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
-
-const DEFAULT_QUANTILE = "p95";
-const DEFAULT_INTERVAL = "30m";
-const DEFAULT_PERIOD = "1d";
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  statusCode: z.coerce.number().optional(),
-  cronTimestamp: z.coerce.number().optional(),
-  quantile: z.enum(quantiles).optional().default(DEFAULT_QUANTILE),
-  interval: z.enum(intervals).optional().default(DEFAULT_INTERVAL),
-  period: z.enum(periods).optional().default(DEFAULT_PERIOD),
-  regions: z
-    .string()
-    .optional()
-    .transform(
-      (value) =>
-        value
-          ?.trim()
-          ?.split(",")
-          .filter((i) => flyRegions.includes(i as Region)) ?? [],
-    ),
-});
 
 export default async function Page({
   params,
@@ -56,22 +31,17 @@ export default async function Page({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const id = params.id;
-  const search = searchParamsSchema.safeParse(searchParams);
+  const search = searchParamsCache.parse(searchParams);
 
-  if (!search.success) {
-    return notFound();
-  }
   const preferredSettings = getPreferredSettings();
 
   const monitor = await api.monitor.getMonitorById.query({
     id: Number(id),
   });
 
-  if (!monitor) {
-    return notFound();
-  }
+  if (!monitor) return notFound();
 
-  const { period, quantile, interval, regions } = search.data;
+  const { period, quantile, interval, regions } = search;
 
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
@@ -97,7 +67,7 @@ export default async function Page({
     period !== DEFAULT_PERIOD ||
     quantile !== DEFAULT_QUANTILE ||
     interval !== DEFAULT_INTERVAL ||
-    regions.length > 0;
+    flyRegions.length !== regions.length;
 
   // GET VALUES FOR BLOG POST
   // console.log(

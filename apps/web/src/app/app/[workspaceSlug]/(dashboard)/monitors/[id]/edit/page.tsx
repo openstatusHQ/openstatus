@@ -1,11 +1,6 @@
-import { z } from "zod";
-
 import { MonitorForm } from "@/components/forms/monitor/form";
 import { api } from "@/trpc/server";
-
-const searchParamsSchema = z.object({
-  section: z.string().optional().default("request"),
-});
+import { searchParamsCache } from "./search-params";
 
 export default async function EditPage({
   params,
@@ -28,11 +23,11 @@ export default async function EditPage({
 
   const tags = await api.monitorTag.getMonitorTagsByWorkspace.query();
 
-  // default is request
-  const search = searchParamsSchema.safeParse(searchParams);
+  const { section } = searchParamsCache.parse(searchParams);
+
   return (
     <MonitorForm
-      defaultSection={search.success ? search.data.section : undefined}
+      defaultSection={section}
       defaultValues={{
         ...monitor,
         // FIXME - Why is this not working?

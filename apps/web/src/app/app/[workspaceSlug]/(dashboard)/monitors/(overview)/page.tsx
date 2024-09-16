@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { z } from "zod";
 
 import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
@@ -11,38 +9,16 @@ import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
+import { searchParamsCache } from "./search-params";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  tags: z
-    .string()
-    .transform((v) => v?.split(","))
-    .optional(),
-  public: z
-    .string()
-    .transform((v) =>
-      v?.split(",").map((v) => {
-        if (v === "true") return true;
-        if (v === "false") return false;
-        return undefined;
-      }),
-    )
-    .optional(),
-  pageSize: z.coerce.number().optional().default(10),
-  pageIndex: z.coerce.number().optional().default(0),
-});
 
 export default async function MonitorPage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  if (!search.success) return notFound();
+  const search = searchParamsCache.parse(searchParams);
 
   const monitors = await api.monitor.getMonitorsByWorkspace.query();
   if (monitors?.length === 0)
@@ -117,15 +93,15 @@ export default async function MonitorPage({
     <>
       <DataTable
         defaultColumnFilters={[
-          { id: "tags", value: search.data.tags },
-          { id: "public", value: search.data.public },
-        ].filter((v) => v.value !== undefined)}
+          { id: "tags", value: search.tags },
+          { id: "public", value: search.public },
+        ].filter((v) => v.value !== undefined || v.value !== null)}
         columns={columns}
         data={monitorsWithData}
         tags={tags}
         defaultPagination={{
-          pageIndex: search.data.pageIndex,
-          pageSize: search.data.pageSize,
+          pageIndex: search.pageIndex,
+          pageSize: search.pageSize,
         }}
       />
       {isLimitReached ? <Limit /> : null}

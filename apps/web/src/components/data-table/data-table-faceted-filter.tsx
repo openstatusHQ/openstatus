@@ -1,4 +1,4 @@
-import { useRouter } from "next/navigation";
+"use client";
 
 import {
   Badge,
@@ -18,8 +18,8 @@ import {
 import type { Column } from "@tanstack/react-table";
 import { Check, PlusCircle } from "lucide-react";
 
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { cn } from "@/lib/utils";
+import { useQueryState } from "nuqs";
 
 interface DataTableFacetedFilter<TData, TValue> {
   column?: Column<TData, TValue>;
@@ -36,20 +36,14 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
 }: DataTableFacetedFilter<TData, TValue>) {
-  const router = useRouter();
-  const updateSearchParams = useUpdateSearchParams();
+  // REMINDER: should have a default value for the column
+  if (!column) throw new Error("Column is required.");
 
-  const facets = column?.getFacetedUniqueValues();
+  const [_, setValue] = useQueryState(column.id, { shallow: false });
+  const facets = column.getFacetedUniqueValues();
   const selectedValues = new Set(
-    column?.getFilterValue() as (string | number | boolean)[],
+    column.getFilterValue() as (string | number | boolean)[],
   );
-
-  const updatePageSearchParams = (
-    values: Record<string, number | string | null>,
-  ) => {
-    const newSearchParams = updateSearchParams(values);
-    router.replace(`?${newSearchParams}`, { scroll: false });
-  };
 
   return (
     <Popover>
@@ -110,17 +104,10 @@ export function DataTableFacetedFilter<TData, TValue>({
                         selectedValues.add(option.value);
                       }
                       const filterValues = Array.from(selectedValues);
-                      column?.setFilterValue(
+                      column.setFilterValue(
                         filterValues.length ? filterValues : undefined,
                       );
-
-                      // update search params
-                      const key = column?.id;
-                      if (key) {
-                        updatePageSearchParams({
-                          [key]: filterValues?.join(",") || null,
-                        });
-                      }
+                      setValue(filterValues?.join(",") || null);
                     }}
                   >
                     <div
@@ -151,7 +138,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                 <CommandSeparator />
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => column?.setFilterValue(undefined)}
+                    onSelect={() => column.setFilterValue(undefined)}
                     className="justify-center text-center"
                   >
                     Clear filters

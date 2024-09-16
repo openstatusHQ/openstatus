@@ -1,28 +1,20 @@
-import { z } from "zod";
-
 import { Alert, AlertDescription, AlertTitle, Separator } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
 import { api } from "@/trpc/server";
 import { LinkCards } from "./_components/link-cards";
+import { searchParamsCache } from "./search-params";
 
 const AlertTriangle = Icons["alert-triangle"];
-
-/**
- * allowed URL search params
- */
-const searchParamsSchema = z.object({
-  token: z.string(),
-});
 
 export default async function InvitePage({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-  const { message, data } = search.success
-    ? await api.invitation.acceptInvitation.mutate({ token: search.data.token })
+  const { token } = searchParamsCache.parse(searchParams);
+  const { message, data } = token
+    ? await api.invitation.acceptInvitation.mutate({ token })
     : { message: "Unavailable invitation token.", data: undefined };
 
   const workspace = await api.workspace.getWorkspace.query();

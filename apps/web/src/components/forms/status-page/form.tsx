@@ -21,7 +21,6 @@ import {
   TabsTrigger,
 } from "@/components/dashboard/tabs";
 import { useDebounce } from "@/hooks/use-debounce";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { toast, toastAction } from "@/lib/toast";
 import { slugify } from "@/lib/utils";
 import { api } from "@/trpc/client";
@@ -80,7 +79,6 @@ export function StatusPageForm({
   const watchSlug = form.watch("slug");
   const watchTitle = form.watch("title");
   const debouncedSlug = useDebounce(watchSlug, 1000); // using debounce to not exhaust the server
-  const updateSearchParams = useUpdateSearchParams();
 
   const checkUniqueSlug = useCallback(async () => {
     const isUnique = await api.page.getSlugUniqueness.query({
@@ -125,9 +123,7 @@ export function StatusPageForm({
           if (defaultValues) {
             await api.page.update.mutate(props);
           } else {
-            const page = await api.page.create.mutate(props);
-            const id = page?.id || null;
-            router.replace(`?${updateSearchParams({ id })}`); // to stay on same page and enable 'Advanced' tab
+            await api.page.create.mutate(props);
           }
 
           toast.success("Saved successfully.", {

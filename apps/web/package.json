@@ -66,6 +66,7 @@
     "next-contentlayer": "0.3.4",
     "next-plausible": "3.12.0",
     "next-themes": "0.2.1",
+    "nuqs": "1.19.1",
     "posthog-js": "1.136.1",
     "posthog-node": "4.0.1",
     "random-word-slugs": "0.1.7",

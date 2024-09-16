@@ -1,12 +1,8 @@
 import { notFound } from "next/navigation";
-import { z } from "zod";
 
 import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
-
-const searchParamsSchema = z.object({
-  section: z.string().optional().default("monitors"),
-});
+import { searchParamsCache } from "./search-params";
 
 export default async function EditPage({
   params,
@@ -24,8 +20,7 @@ export default async function EditPage({
     return notFound();
   }
 
-  // default is request
-  const search = searchParamsSchema.safeParse(searchParams);
+  const { section } = searchParamsCache.parse(searchParams);
 
   return (
     <StatusPageForm
@@ -37,7 +32,7 @@ export default async function EditPage({
           order,
         })),
       }}
-      defaultSection={search.success ? search.data.section : undefined}
+      defaultSection={section}
       plan={workspace.plan}
       workspaceSlug={params.workspaceSlug}
     />

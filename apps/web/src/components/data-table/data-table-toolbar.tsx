@@ -2,13 +2,12 @@
 
 import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@openstatus/ui/src/components/button";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { codesDict } from "@/data/code-dictionary";
-import useUpdateSearchParams from "@/hooks/use-update-search-params";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableFacetedInputDropdown } from "./data-table-faceted-input-dropdown";
 
@@ -20,7 +19,7 @@ export function DataTableToolbar<TData>({
   table,
 }: DataTableToolbarProps<TData>) {
   const router = useRouter();
-  const updateSearchParams = useUpdateSearchParams();
+  const searchParams = useSearchParams();
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
@@ -75,17 +74,13 @@ export function DataTableToolbar<TData>({
           <Button
             variant="ghost"
             onClick={() => {
+              const period = searchParams.get("period");
               table.resetColumnFilters();
-
-              // reset filter search params (but not period e.g.)
-              const newSearchParams = updateSearchParams({
-                error: null,
-                statusCode: null,
-                region: null,
-              });
-              router.replace(`?${newSearchParams}`, {
-                scroll: false,
-              });
+              if (period) {
+                router.replace(`?period=${period}`, {
+                  scroll: false,
+                });
+              }
             }}
             className="h-8 px-2 lg:px-3"
           >

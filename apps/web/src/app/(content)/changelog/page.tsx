@@ -15,7 +15,11 @@ import {
 import { allChangelogs } from "contentlayer/generated";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
-import { z } from "zod";
+import {
+  ITEMS_PER_PAGE,
+  MAX_PAGE_INDEX,
+  searchParamsCache,
+} from "./search-params";
 
 export const metadata: Metadata = {
   ...defaultMetadata,
@@ -30,32 +34,19 @@ export const metadata: Metadata = {
   },
 };
 
-const searchParamsSchema = z.object({
-  page: z
-    .string()
-    .optional()
-    .transform((val) => Number.parseInt(val || "1", 10)),
-});
-
-const ITEMS_PER_PAGE = 10;
-
 export default function ChangelogClient({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const search = searchParamsSchema.safeParse(searchParams);
-
-  const page = search.data?.page;
-  const current = !page ? 1 : page;
-  const total = Math.ceil(allChangelogs.length / ITEMS_PER_PAGE);
+  const { pageIndex } = searchParamsCache.parse(searchParams);
 
   const changelogs = allChangelogs
     .sort(
       (a, b) =>
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
-    .slice((current - 1) * ITEMS_PER_PAGE, current * ITEMS_PER_PAGE);
+    .slice(pageIndex * ITEMS_PER_PAGE, (pageIndex + 1) * ITEMS_PER_PAGE);
 
   return (
     <Shell>
@@ -82,29 +73,27 @@ export default function ChangelogClient({
             <Mdx code={changelog.body.code} />
           </Timeline.Article>
         ))}
-        {current && total && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
-            <div className="row-span-2" />
-            <div className="w-full md:order-2 md:col-span-4">
-              <Pagination>
-                <PaginationContent>
-                  {Array.from({ length: total }).map((_, index) => {
-                    return (
-                      <PaginationLink
-                        // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                        key={index}
-                        href={`?page=${index + 1}`}
-                        isActive={current === index + 1}
-                      >
-                        {index + 1}
-                      </PaginationLink>
-                    );
-                  })}
-                </PaginationContent>
-              </Pagination>
-            </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
+          <div className="row-span-2" />
+          <div className="w-full md:order-2 md:col-span-4">
+            <Pagination>
+              <PaginationContent>
+                {Array.from({ length: MAX_PAGE_INDEX + 1 }).map((_, index) => {
+                  return (
+                    <PaginationLink
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                      key={index}
+                      href={`?pageIndex=${index}`}
+                      isActive={pageIndex === index}
+                    >
+                      {index + 1}
+                    </PaginationLink>
+                  );
+                })}
+              </PaginationContent>
+            </Pagination>
           </div>
-        )}
+        </div>
       </Timeline>
     </Shell>
   );

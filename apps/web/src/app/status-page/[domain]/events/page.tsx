@@ -3,12 +3,8 @@ import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params
 import { Feed } from "@/components/status-page/feed";
 import { api } from "@/trpc/server";
 import { notFound } from "next/navigation";
-import { z } from "zod";
+import { searchParamsCache } from "./search-params";
 import { formatter } from "./utils";
-
-const searchParamsSchema = z.object({
-  filter: z.enum(["all", "maintenances", "reports"]).optional().default("all"),
-});
 
 type Props = {
   params: { domain: string };
@@ -18,12 +14,10 @@ type Props = {
 export const revalidate = 120;
 
 export default async function Page({ params, searchParams }: Props) {
+  const { filter } = searchParamsCache.parse(searchParams);
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const search = searchParamsSchema.safeParse(searchParams);
 
   if (!page) return notFound();
-
-  const filter = search.success ? search.data.filter : "all";
 
   return (
     <div className="grid gap-8">

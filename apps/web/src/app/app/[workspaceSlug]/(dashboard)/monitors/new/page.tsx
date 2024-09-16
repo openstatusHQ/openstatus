@@ -1,12 +1,8 @@
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import { MonitorForm } from "@/components/forms/monitor/form";
 import { api } from "@/trpc/server";
-
-const searchParamsSchema = z.object({
-  section: z.string().optional().default("request"),
-});
+import { searchParamsCache } from "./search-params";
 
 export default async function Page({
   searchParams,
@@ -23,11 +19,11 @@ export default async function Page({
 
   if (isLimitReached) return redirect("./");
 
-  const search = searchParamsSchema.safeParse(searchParams);
+  const { section } = searchParamsCache.parse(searchParams);
 
   return (
     <MonitorForm
-      defaultSection={search.success ? search.data.section : undefined}
+      defaultSection={section}
       notifications={notifications}
       pages={pages}
       tags={tags}
