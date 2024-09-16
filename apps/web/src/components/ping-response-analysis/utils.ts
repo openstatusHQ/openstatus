@@ -23,7 +23,7 @@ export function continentFormatter(region: MonitorFlyRegion) {
 
 export function regionFormatter(
   region: MonitorFlyRegion,
-  type: "short" | "long" = "short",
+  type: "short" | "long" = "short"
 ) {
   const { code, flag, location } = flyRegionsDict[region];
   if (type === "short") return `${code} ${flag}`;
@@ -103,14 +103,14 @@ export const checkerSchema = z.object({
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
-  time: z.number(),
+  timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
 });
 
 export const cachedCheckerSchema = z.object({
   url: z.string(),
-  time: z.number(),
+  timestamp: z.number(),
   method: z.enum(["GET", "POST", "PUT", "DELETE"]).default("GET"),
   checks: checkerSchema.extend({ region: monitorFlyRegionSchema }).array(),
 });
@@ -132,7 +132,7 @@ export async function checkRegion(
     method?: Method;
     headers?: { value: string; key: string }[];
     body?: string;
-  },
+  }
 ): Promise<RegionChecker> {
   //
   const res = await fetch(`https://checker.openstatus.dev/ping/${region}`, {
@@ -166,7 +166,7 @@ export async function checkRegion(
   if (!data.success) {
     console.log(json);
     console.error(
-      `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
+      `something went wrong with result ${json} request to ${url} error ${data.error.message}`
     );
     throw new Error(data.error.message);
   }
@@ -188,7 +188,7 @@ export async function checkAllRegions(url: string, opts?: { method: Method }) {
       // REMINDER: dropping the body to avoid storing it within Redis Cache (Err max request size exceeded)
       check.body = undefined;
       return check;
-    }),
+    })
   );
 }
 
