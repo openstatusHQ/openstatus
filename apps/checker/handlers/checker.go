@@ -8,10 +8,11 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
 	"github.com/openstatushq/openstatus/apps/checker/request"
-	"github.com/rs/zerolog/log"
 )
 
 type statusCode int
@@ -134,20 +135,21 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
-					isSuccessfull = isSuccessfull && target.HeaderEvaluate(data.Headers)
 
+					isSuccessfull = isSuccessfull && target.HeaderEvaluate(data.Headers)
 				case request.AssertionTextBody:
 					var target assertions.StringTargetType
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
-					isSuccessfull = isSuccessfull && target.StringEvaluate(data.Body)
 
+					isSuccessfull = isSuccessfull && target.StringEvaluate(data.Body)
 				case request.AssertionStatus:
 					var target assertions.StatusTarget
 					if err := json.Unmarshal(a, &target); err != nil {
 						return fmt.Errorf("unable to unmarshal IntTarget: %w", err)
 					}
+
 					isSuccessfull = isSuccessfull && target.StatusEvaluate(int64(res.Status))
 				case request.AssertionJsonBody:
 					fmt.Println("assertion type", assert.AssertionType)
@@ -174,7 +176,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 
 		data.Assertions = assertionAsString
-		// That part could be refactored
+
 		if !isSuccessfull && req.Status == "active" {
 			// Q: Why here we do not check if the status was previously active?
 			checker.UpdateStatus(ctx, checker.UpdateData{
