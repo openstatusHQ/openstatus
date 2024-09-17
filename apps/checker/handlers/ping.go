@@ -72,6 +72,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 	requestClient := &http.Client{
 		Timeout: 45 * time.Second,
 	}
+
 	defer requestClient.CloseIdleConnections()
 
 	var req request.PingRequest

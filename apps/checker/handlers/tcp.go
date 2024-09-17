@@ -25,8 +25,10 @@ type TCPResponse struct {
 func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	dataSourceName := "tcp_response__v0"
+
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
 		return
 	}
 
@@ -36,23 +38,30 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		if region != "" && region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+
 			return
 		}
 	}
+
 	var req request.TCPCheckerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 
@@ -60,6 +69,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	op := func() error {
 		called++
 		res, err := checker.PingTcp(int(req.Timeout), req.URL)
+
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
 		}
@@ -75,6 +85,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			MonitorID: monitorId,
 		}
 		latency := res.TCPDone - res.TCPStart
+
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
@@ -83,6 +94,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
+
 		if req.Status == "degraded" && req.DegradedAfter > 0 && latency <= req.DegradedAfter {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
@@ -129,6 +141,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			})
 		}
 	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
 }
 
