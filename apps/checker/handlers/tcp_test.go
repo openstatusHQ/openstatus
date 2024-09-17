@@ -17,13 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type RoundTripFunc func(req *http.Request) *http.Response
-
-func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	return f(req), nil
-}
-
-func TestHandler_PingRegion(t *testing.T) {
+func TestHandler_TCP(t *testing.T) {
 
 	hclient := &http.Client{Transport: RoundTripFunc(func(req *http.Request) *http.Response {
 		return &http.Response{
@@ -43,15 +37,15 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		router.POST("/tcp/:region", h.TCPHandler)
 
 		w := httptest.NewRecorder()
 
-		data := request.PingRequest{
+		data := request.TCPCheckerRequest{
 			URL: "https://www.openstatus.dev",
 		}
 		dataJson, _ := json.Marshal(data)
-		req, _ := http.NewRequest(http.MethodPost, "/checker/"+region, strings.NewReader(string(dataJson)))
+		req, _ := http.NewRequest(http.MethodPost, "/tcp/"+region, strings.NewReader(string(dataJson)))
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, 401, w.Code)
@@ -67,7 +61,7 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		router.POST("/tcp/:region", h.PingRegionHandler)
 
 		w := httptest.NewRecorder()
 
@@ -75,7 +69,7 @@ func TestHandler_PingRegion(t *testing.T) {
 			URL: "https://www.openstatus.dev",
 		}
 		dataJson, _ := json.Marshal(data)
-		req, _ := http.NewRequest(http.MethodPost, "/checker/"+region, strings.NewReader(string(dataJson)))
+		req, _ := http.NewRequest(http.MethodPost, "/tcp/"+region, strings.NewReader(string(dataJson)))
 		req.Header.Set("Authorization", "Basic test")
 		router.ServeHTTP(w, req)
 
@@ -93,22 +87,21 @@ func TestHandler_PingRegion(t *testing.T) {
 			Region:        region,
 		}
 		router := gin.New()
-		router.POST("/checker/:region", h.PingRegionHandler)
+		router.POST("/tcp/:region", h.TCPHandler)
 
 		w := httptest.NewRecorder()
 
-		data := request.PingRequest{
-			URL:     "https://www.openstatus.dev",
-			Method:  "GET",
-			Headers: map[string]string{},
-			Body:    "",
+		data := request.TCPCheckerRequest{
+			URL:         "openstatus.dev:443",
+			WorkspaceID: "1",
+			MonitorID:   "1",
 		}
 		dataJson, _ := json.Marshal(data)
-		req, _ := http.NewRequest(http.MethodPost, "/checker/"+region, strings.NewReader(string(dataJson)))
+		req, _ := http.NewRequest(http.MethodPost, "/tcp/"+region, strings.NewReader(string(dataJson)))
 		req.Header.Set("Authorization", "Basic test")
 		router.ServeHTTP(w, req)
 
-		assert.Equal(t, 200, w.Code)
 		fmt.Println(w.Body.String())
+		assert.Equal(t, 200, w.Code)
 	})
 }

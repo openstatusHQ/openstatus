@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		return
 	}
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 
 	if err != nil {
@@ -57,6 +59,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		return
 	}
+
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
 
 	if err != nil {
@@ -64,6 +67,10 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		return
 	}
+
+	updateStatusClient := checker.NewClient(&http.Client{
+		Timeout: 10 * time.Second,
+	})
 
 	var called int
 	op := func() error {
@@ -87,7 +94,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		latency := res.TCPDone - res.TCPStart
 
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "degraded",
 				Region:        h.Region,
@@ -96,7 +103,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 
 		if req.Status == "degraded" && req.DegradedAfter > 0 && latency <= req.DegradedAfter {
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
 				Region:        h.Region,
@@ -105,7 +112,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 
 		if req.Status == "error" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
 				Region:        h.Region,
@@ -132,7 +139,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 
 		if req.Status == "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "error",
 				Message:       err.Error(),
@@ -152,11 +159,13 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	region := c.Param("region")
 	if region == "" {
 		c.String(http.StatusBadRequest, "region is required")
+
 		return
 	}
 
 	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+
 		return
 	}
 
@@ -166,32 +175,43 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		if region != "" && region != h.Region {
 			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
 			c.String(http.StatusAccepted, "Forwarding request to %s", region)
+
 			return
 		}
 	}
+
 	var req request.TCPCheckerRequest
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to decode checker request")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
+
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
+
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
 		return
 	}
 
 	var called int
+
 	var response TCPResponse
+
 	op := func() error {
 		called++
 		res, err := checker.PingTcp(int(req.Timeout), req.URL)
+
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
 		}
@@ -227,5 +247,6 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 	}
+
 	c.JSON(http.StatusOK, response)
 }

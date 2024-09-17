@@ -81,7 +81,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		assertionAsString = ""
 	}
 
+	updateStatusClient := checker.NewClient(&http.Client{
+		Timeout: 10 * time.Second,
+	})
+
 	var called int
+
 	op := func() error {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
@@ -179,7 +184,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		if !isSuccessfull && req.Status == "active" {
 			// Q: Why here we do not check if the status was previously active?
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "error",
 				StatusCode:    res.Status,
@@ -191,7 +196,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		// Check if the status is degraded
 		if isSuccessfull && req.Status == "active" {
 			if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
+				updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
 					Status:        "degraded",
 					Region:        h.Region,
@@ -203,7 +208,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		// We were in error and now we are successful don't check for degraded
 		if isSuccessfull && req.Status == "error" {
 			// Q: Why here we check the data before updating the status in this scenario?
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
 				Region:        h.Region,
@@ -214,7 +219,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		// if we were in degraded and now we are successful, we should update the status to active
 		if isSuccessfull && req.Status == "degraded" {
 			if req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
+				updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
 					Status:        "active",
 					Region:        h.Region,
@@ -248,7 +253,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 
 		if req.Status == "active" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
+			updateStatusClient.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "error",
 				Message:       err.Error(),
