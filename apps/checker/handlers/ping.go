@@ -14,15 +14,15 @@ import (
 )
 
 type PingResponse struct {
-	Body        string         `json:"body,omitempty"`
-	Headers     string         `json:"headers,omitempty"`
-	Region      string         `json:"region"`
-	RequestId   int64          `json:"requestId,omitempty"`
-	WorkspaceId int64          `json:"workspaceId,omitempty"`
-	Latency     int64          `json:"latency"`
-	Timestamp   int64          `json:"timestamp"`
-	Status      int            `json:"status,omitempty"`
-	Timing      checker.Timing `json:"timing"`
+	Body        string `json:"body,omitempty"`
+	Headers     string `json:"headers,omitempty"`
+	Region      string `json:"region"`
+	RequestId   int64  `json:"requestId,omitempty"`
+	WorkspaceId int64  `json:"workspaceId,omitempty"`
+	Latency     int64  `json:"latency"`
+	Timestamp   int64  `json:"timestamp"`
+	Status      int    `json:"status,omitempty"`
+	Timing      string `json:"timing,omitempty"`
 }
 
 type Response struct {
