@@ -1,6 +1,6 @@
 module github.com/openstatushq/openstatus/apps/checker
 
-go 1.22
+go 1.23.1
 
 require (
 	github.com/WilfredAlmeida/unkey-go v0.2.0
