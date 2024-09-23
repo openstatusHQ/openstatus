@@ -1,0 +1,32 @@
+ignore:
+  - node_modules
+  - /apps/docs
+  - /apps/screenshot-service
+  - /apps/web
+  - /packages/api
+  - /packages/integrations/vercel
+builders:
+  install:
+    fromImage: oven/bun
+    workdir: /app/apps/server
+    # Copy project
+    copy: . /app/
+    # Install dependencies
+    root:
+      run: 
+        - bun install --ignore-scripts --frozen-lockfile
+      cache:
+        - /root/.bun/install/cache
+  build:
+    fromBuilder: install
+    # Compile the TypeScript application
+    root:
+      run: bun build --compile --sourcemap src/index.ts --outfile=app
+fromImage: debian:bullseye-slim
+copy:
+  - fromBuilder: build
+    source: /app/apps/server/app
+    target: /bin/
+    chmod: "555"
+expose: 3000
+entrypoint: /bin/app
