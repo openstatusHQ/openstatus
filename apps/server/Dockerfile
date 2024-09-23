@@ -1,8 +1,7 @@
 FROM oven/bun AS deps
 WORKDIR /app
 
-# Copy only package.json and bun.lockb (if it exists)
-COPY package.json bun.lockb* ./
+COPY . .
 
 RUN bun install --frozen-lockfile --ignore-scripts
 
