@@ -7,7 +7,7 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    install:
+    build:
       fromImage:
         path: oven/bun
         digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
@@ -16,16 +16,56 @@ effective: |
       - paths:
         - .
         target: /app/
-      root:
-        run:
-        - bun install --ignore-scripts --frozen-lockfile
-        cache:
-        - target: /root/.bun/install/cache
-    build:
-      fromBuilder: install
-      root:
-        run:
-        - bun build --compile --sourcemap src/index.ts --outfile=app
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
+    install:
+      fromImage:
+        path: oven/bun
+        digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
+      workdir: /app/
+      run:
+      - bun install --production --ignore-scripts --frozen-lockfile --verbose
+      cache:
+      - target: /root/.bun/install/cache
+      bind:
+      - target: package.json
+        source: package.json
+      - target: apps/server/package.json
+        source: apps/server/package.json
+      - target: packages/analytics/package.json
+        source: packages/analytics/package.json
+      - target: packages/db/package.json
+        source: packages/db/package.json
+      - target: packages/emails/package.json
+        source: packages/emails/package.json
+      - target: packages/error/package.json
+        source: packages/error/package.json
+      - target: packages/notifications/discord/package.json
+        source: packages/notifications/discord/package.json
+      - target: packages/notifications/email/package.json
+        source: packages/notifications/email/package.json
+      - target: packages/notifications/pagerduty/package.json
+        source: packages/notifications/pagerduty/package.json
+      - target: packages/notifications/slack/package.json
+        source: packages/notifications/slack/package.json
+      - target: packages/notifications/twillio-sms/package.json
+        source: packages/notifications/twillio-sms/package.json
+      - target: packages/tinybird/package.json
+        source: packages/tinybird/package.json
+      - target: packages/tracker/package.json
+        source: packages/tracker/package.json
+      - target: packages/upstash/package.json
+        source: packages/upstash/package.json
+      - target: packages/utils/package.json
+        source: packages/utils/package.json
+      - target: packages/tsconfig/package.json
+        source: packages/tsconfig/package.json
+      - target: packages/assertions/package.json
+        source: packages/assertions/package.json
   fromImage:
     path: debian
     digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
@@ -51,5 +91,5 @@ images:
           digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
 resources:
   dofigen.yml:
-    hash: de7b73f37730fb3b9b2b7904c05d04cce840149ad25c0d7354c233b3b2782a10
-    content: "ignore:\n  - node_modules\n  - /apps/docs\n  - /apps/screenshot-service\n  - /apps/web\n  - /packages/api\n  - /packages/integrations/vercel\nbuilders:\n  install:\n    fromImage: oven/bun\n    workdir: /app/apps/server\n    # Copy project\n    copy: . /app/\n    # Install dependencies\n    root:\n      run: \n        - bun install --ignore-scripts --frozen-lockfile\n      cache:\n        - /root/.bun/install/cache\n  build:\n    fromBuilder: install\n    # Compile the TypeScript application\n    root:\n      run: bun build --compile --sourcemap src/index.ts --outfile=app\nfromImage: debian:bullseye-slim\ncopy:\n  - fromBuilder: build\n    source: /app/apps/server/app\n    target: /bin/\n    chmod: \"555\"\nexpose: 3000\nentrypoint: /bin/app\n"
+    hash: adf3f9674023b48f97b9d48996067d36db5da23a2ee73685c1d85079e1328320
+    content: "ignore:\n  - node_modules\n  - /apps/docs\n  - /apps/screenshot-service\n  - /apps/web\n  - /packages/api\n  - /packages/integrations/vercel\nbuilders:\n  install:\n    fromImage: oven/bun\n    workdir: /app/\n    # Copy project\n    bind:\n      - package.json\n      - apps/server/package.json\n      - packages/analytics/package.json\n      - packages/db/package.json\n      - packages/emails/package.json\n      - packages/error/package.json\n      - packages/notifications/discord/package.json\n      - packages/notifications/email/package.json\n      - packages/notifications/pagerduty/package.json\n      - packages/notifications/slack/package.json\n      - packages/notifications/twillio-sms/package.json\n      - packages/tinybird/package.json\n      - packages/tracker/package.json\n      - packages/upstash/package.json\n      - packages/utils/package.json\n      - packages/tsconfig/package.json\n      - packages/assertions/package.json\n    # Install dependencies\n    run: bun install --production --ignore-scripts --frozen-lockfile --verbose\n    cache:\n      - /root/.bun/install/cache\n  build:\n    fromImage: oven/bun\n    workdir: /app/apps/server\n    copy: \n      - . /app/\n      - fromBuilder: install\n        source: /app/node_modules\n        target: /app/node_modules\n    # Compile the TypeScript application\n    run: bun build --compile --sourcemap src/index.ts --outfile=app\nfromImage: debian:bullseye-slim\ncopy:\n  - fromBuilder: build\n    source: /app/apps/server/app\n    target: /bin/\n    chmod: \"555\"\nexpose: 3000\nentrypoint: /bin/app\n"

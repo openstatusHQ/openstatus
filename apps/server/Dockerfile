@@ -4,18 +4,38 @@
 
 # install
 FROM oven/bun@sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513 AS install
+WORKDIR /app/
+RUN \
+    --mount=type=bind,target=package.json,source=package.json \
+    --mount=type=bind,target=apps/server/package.json,source=apps/server/package.json \
+    --mount=type=bind,target=packages/analytics/package.json,source=packages/analytics/package.json \
+    --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
+    --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
+    --mount=type=bind,target=packages/error/package.json,source=packages/error/package.json \
+    --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
+    --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
+    --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
+    --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
+    --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \
+    --mount=type=bind,target=packages/tracker/package.json,source=packages/tracker/package.json \
+    --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
+    --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
+    --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
+    --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
+    --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
+    bun install --production --ignore-scripts --frozen-lockfile --verbose
+
+# build
+FROM oven/bun@sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513 AS build
 WORKDIR /app/apps/server
 COPY \
     --link \
     "." "/app/"
-USER 0:0
-RUN \
-    --mount=type=cache,target=/root/.bun/install/cache,uid=0,gid=0,sharing=locked \
-    bun install --ignore-scripts --frozen-lockfile
-
-# build
-FROM install AS build
-USER 0:0
+COPY \
+    --from=install \
+    --link \
+    "/app/node_modules" "/app/node_modules"
 RUN bun build --compile --sourcemap src/index.ts --outfile=app
 
 # runtime
