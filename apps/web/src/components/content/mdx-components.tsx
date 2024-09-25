@@ -24,6 +24,7 @@ import {
 import { PricingSlider } from "../marketing/pricing/pricing-slider";
 import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
 import { MetricsCard } from "../monitor-dashboard/metrics-card";
+import { Callout, type CalloutProps } from "./callout";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
@@ -73,6 +74,13 @@ export const components = {
     return (
       <div className="not-prose">
         <SimpleChart {...props} />
+      </div>
+    );
+  },
+  Callout: (props: CalloutProps) => {
+    return (
+      <div className="not-prose my-5">
+        <Callout {...props} />
       </div>
     );
   },

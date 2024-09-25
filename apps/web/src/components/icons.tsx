@@ -22,6 +22,7 @@ import {
   Hammer,
   Hourglass,
   Image,
+  Info,
   KeyRound,
   Laptop,
   LayoutDashboard,
@@ -122,6 +123,7 @@ export const Icons = {
   user: UserCircle,
   camera: Camera,
   "book-open-check": BookOpenCheck,
+  info: Info,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
