@@ -27,6 +27,7 @@ import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
+import { Callout, CalloutProps } from "./callout";
 
 export const components = {
   a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
@@ -73,6 +74,13 @@ export const components = {
     return (
       <div className="not-prose">
         <SimpleChart {...props} />
+      </div>
+    );
+  },
+  Callout: (props: CalloutProps) => {
+    return (
+      <div className="not-prose my-5">
+        <Callout {...props} />
       </div>
     );
   },
