@@ -1,0 +1,214 @@
+---
+title:
+    "Our Journey Building OpenStatus: From Idea to Reality"
+description: Reflecting on our first year of building OpenStatus, a synthetic monitoring platform that has grown to more than 6,000 GitHub stars and 5,000 users.
+author:
+  name: Thibault Le Ouay
+  url: https://bsky.app/profile/thibaultleouay.dev
+publishedAt: 2024-09-26
+image: /assets/posts/reflecting-1-year-building-openstatus/first-year.png
+---
+
+In one year, we've grown our product to more than 6,000 GitHub stars and 5,000 users. This article will reflect on our first year of building OpenStatus.
+
+<Image
+  alt="Total users on OpenStatus"
+  src="/assets/posts/reflecting-1-year-building-openstatus/users.png"
+  width={650}
+  height={575}
+/>
+
+
+
+We've written about OpenStatus's journey before:
+
+- Celebrated 48 hours of OpenStatus
+- Our 2023 year in review
+
+## The Beginning: A Twitter Connection 🤝
+
+It all started with a simple connection on Twitter. As members of the same developer community, we exchanged a couple of messages over the past few months.
+Our shared experiences and complementary skills led us to a decision: why not build something together?
+
+<Image
+  alt="Twitter"
+  src="/assets/posts/reflecting-1-year-building-openstatus/twitter.png"
+  width={650}
+  height={575}
+/>
+
+
+
+### Our Initial Goals
+
+1. Launch a viable product collaboratively
+2. Create a sustainable business.
+3. Build an open-source product
+4. Focus on developer tools
+
+## The Evolution of our Idea 💡
+
+Our journey began with a simple concept: a beautiful status page built with cutting-edge technology. We would populate this page with our own monitoring checks.
+
+This initial idea served as the seed from which our entire project would grow.
+
+ As we progressed, we talked to a lot of users, VC. We explored various directions, sometimes feeling a bit lost in the sea of possibilities:
+
+1. **Serverless monitoring**: Given that most of our users were Vercel customers, we considered specializing in this area.
+2. **Incident management**: Inspired by products like [incident.io](http://incident.io/), we contemplated starting with status pages and expanding into incident management. However, we realized this would target larger, Series B+ startups, involving longer sales processes and diverging from our core audience of small teams from bootstrapped businesses or Series A startups.
+3. **AI-enhanced alerting systems**: We briefly considered focusing on our product's alerting capabilities and incorporating AI for smart alerts. In retrospect, this seemed more like an attempt to capitalize on the AI trend rather than a strategic decision.
+4. **Real User Monitoring (RUM)**: We implemented this feature, but after discussions, we recognized the need to focus in our core strength: synthetic monitoring.
+
+Ultimately, these explorations helped us refine our focus and understand our unique value proposition in the market.
+
+**We want to build the best open-source synthetic monitoring platform.**
+
+In today's market, you'll find either closed-source products like Checkly and Datadog, or open-source solutions with poor user experience (such as Prometheus Blackbox Exporter).
+
+## Understanding our Market 🏇
+
+Prior to launching OpenStatus, we had experience with tools like:
+
+- Atlassian Statuspage
+- BetterStack
+- Datadog
+
+However, we weren't power users of these platforms. Our understanding of the ecosystem was broad but not deeply ingrained. This experience taught us a valuable lesson:
+
+**You don't need to be an expert in a field before starting. The key is to begin building—you'll learn along the way.**
+
+## Our Marketing Strategy 📈
+
+### Riding the OSS train
+
+We started at the right time where lots of Open-Source Software companies like our friends at [papermark.io](http://papermark.io), [uninbox.com](http://uninbox.com) or [documenso.com](http://documenso.com) flourished at the same time and made it into the oss-friends list by [formbricks.com](http://formbricks.com).
+
+**Sometimes, you have to be lucky! We were fortunate to be in the right place at the right time, gaining the visibility that helped set us apart.**
+
+### Leveraging Cutting-Edge Technology
+
+By utilizing the latest tech, we caught the attention of theirs developers, who shared our work on twitter bring us more visibility.
+
+We were early adopters of Turso, Next.js server actions, Bun, and Hono.
+
+Being early adopters meant we encountered some bugs, but we could also benefit from the hype surrounding other products.
+
+### Open-Source as a Marketing Tool
+
+We embraced open-source not just as a development philosophy but as a powerful marketing strategy.
+
+We were multiple times in the github trending repository both global and for typescript.
+
+To be in these lists you don’t only need to ship feature but you have to engage with your community on github.
+
+### Content Creation
+
+We lacked a formal SEO strategy, but some of our blog posts performed well:
+
+- https://www.openstatus.dev/blog/monitoring-latency-cf-workers-fly-koyeb-raylway-render
+- [Vercel to Fly for our Backend](https://www.openstatus.dev/blog/migration-backend-from-vercel-to-fly)
+
+Our content approach was straightforward:
+
+**Write articles we'd love to read ourselves and not targeting keyword.**
+
+### Organic Growth
+
+Our status pages served as an excellent marketing tool. Each time a user published one on their website, it created a valuable backlink for us
+
+### Tools and Components
+
+Additionally, creating tools and components people love is a great way to draw attention and leverage SEO: [time.openstatus.dev](http://time.openstatus.dev) - a shadcn time picker drives 3k visitors per month organically. Same goal is with [data-table.openstatus.dev](http://data-table.openstatus.dev) - an extensive data-table for your realtime data.
+
+**We want to show users we are here to build with and for you. And of course in the open.**
+
+## Our Initial Approach: YOLO 🤘
+
+In our early days , we adopted what we call a "YOLO" mindset.
+
+Our approach was characterized by:
+
+1. **Rapid iteration**: We moved swiftly from one idea to another, exploring various possibilities without getting bogged down in extensive planning.
+2. **Flexibility**: Being a small team of two without external constraints allowed us to pivot quickly and adapt to new insights or market demands.
+3. **Learning through action**: Instead of extensive market research, we learned by doing, gaining valuable insights through direct experience.
+
+While this approach was exciting and allowed for quick exploration, it also had its challenges:
+
+- **Lack of structure**: Our development process was often messy and lacked clear direction.
+- **Inconsistent focus**: We sometimes struggled to maintain sustained effort on a single initiative.
+
+Perfect example would be the RUM idea: after having that idea, the time and the will we build the MVP of that feature. But what happens next is that you have an additional infrastructure to maintain and suddenly a new product to market to sell, next to synthetic monitoring.
+
+While it was fun, we don’t want to spread out too much and want stay in one domain and improve and make our users happy in that one, especially for a small team like us.
+
+This yolo chaotic approach was sustainable while we were a small team with a limited user base.
+
+However, now that we've grown to around 5,000 users, we recognize the need for a more structured and strategic approach to continue scaling effectively and meeting our users' needs.
+
+**Our customers rely on us; we can’t be flaky anymore, even though it was okay when we launched.**
+
+### Project Management
+
+We experimented with GitHub Projects for our workflow, aiming to make everything open-source—including our ideas and tickets. However, this approach didn't quite fit our needs and we couldn’t dump everything into it.
+
+Now, we've re-initialized Linear and are documenting our upcoming features more thoroughly.
+
+It's our platform for brainstorming and iterating on ideas.
+
+## Personal Journeys 🧳
+
+### Max
+
+- Maintained a full-time job throughout 2023/2024 and still is at the time of writing
+- Plans to transition to OpenStatus at the end of the year
+
+> After working evenings and nights on OpenStatus for over a year, I had to make a personal decision to cut back on my 9-to-5 job. I've been neglecting other pillars in my life that I want to nurture again. While losing the income security, I'll free up mental space and open myself to new opportunities.
+>
+
+### Thibault
+
+- Left full-time employment in late February 2024
+- Welcomed a daughter in early March 2024
+
+Despite working remotely for most of the OpenStatus history, we finally met in mid-August. Max visited me, and we spent two great days:
+
+- Cooking together
+- Enjoying beers
+- Family time (with our partners and the lovely baby)
+
+<Image
+  alt="Us"
+  src="/assets/posts/reflecting-1-year-building-openstatus/us.png"
+  width={650}
+  height={575}
+/>
+
+
+
+This meeting reinforced our commitment to OpenStatus and our shared vision for its future. We didn't write a single line of code during that time—proving that you don't need to grind 24/7 to make progress.
+
+## The future 🚀
+
+We all know it: You have created a dedicated roadmap that you’re excited working on but finally you start building everything else. And that’s fine (at a certain degree). The most important thing is to build, to learn and enjoy it - so that the inner drive keeps moving. We have been doing a lot of stuff that came up in the moment and build it (SDD - Self Driven Development) that does include bug fixes, user requests, community support on a higher priority.
+
+As we reflect on our journey, we're excited about the road ahead. So how does our roadmap looks like (and we already know that it will not fully reflect the future - it’s a helpful path that provides us a North Star):
+
+- More checker types like TCP, UDP, ICMP,…
+- Improve the Single Checker experience via dashboard UI, config file, better use cases,…
+- Create an Alert Management Engine and improve the notification channels
+- Overall solidify the source code structure via tests, code splitting and staging environment
+- Being more integrated into your o11y stack
+
+> If you have ideas, requests or wanna chat feel free to contact us via [ping@openstatus.dev](mailto:ping@openstatus.dev) or join our Discord channel [https://www.openstatus.dev/discord](https://openstatus.dev/discord)
+>
+
+OpenStatus has grown from a simple idea into a promising open-source project with a dedicated user base. We're committed to continuing our innovation, engaging with our community, and building tools that developers love.
+
+Stay tuned for more updates as we continue to evolve and expand OpenStatus!
+
+<Image
+  alt="To infinity and beyond"
+  src="/assets/posts/reflecting-1-year-building-openstatus/image.png"
+  width={650}
+  height={575}
+/>
