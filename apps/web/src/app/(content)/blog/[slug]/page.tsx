@@ -43,7 +43,7 @@ export async function generateMetadata({
       url: `https://www.openstatus.dev/blog/${slug}`,
       images: [
         {
-          url: `https://openstatus.dev/api/og/post?title=${title}&description=&image=${image}`,
+          url: `https://openstatus.dev/api/og/post?title=${title}&image=${image}`,
         },
       ],
     },
@@ -52,7 +52,7 @@ export async function generateMetadata({
       title,
       description,
       images: [
-        `https://openstatus.dev/api/og/post?title=${title}&description=${description}&image=${image}`,
+        `https://openstatus.dev/api/og/post?title=${title}&image=${image}`,
       ],
     },
   };

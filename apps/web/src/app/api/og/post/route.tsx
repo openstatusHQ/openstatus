@@ -15,31 +15,33 @@ export const runtime = "edge";
 
 export async function GET(req: Request) {
   const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
-    [interRegular, interLight, calSemiBold],
+    [interRegular, interLight, calSemiBold]
   );
 
   const { searchParams } = new URL(req.url);
 
   const title =
     (searchParams.has("title") && searchParams.get("title")) || TITLE;
-  const description =
-    (searchParams.has("description") && searchParams.get("description")) ||
-    DESCRIPTION;
+  const description = searchParams.has("description")
+    ? searchParams.get("description")
+    : undefined;
   const image = searchParams.has("image")
     ? searchParams.get("image")
     : undefined;
 
   return new ImageResponse(
-    <BasicLayout title={title} description={description}>
-      {image ? (
-        <img
-          alt=""
-          style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
-          tw="flex w-full"
-          src={new URL(image, DEFAULT_URL).toString()}
-        />
-      ) : null}
-    </BasicLayout>,
+    (
+      <BasicLayout title={title} description={description}>
+        {image ? (
+          <img
+            alt=""
+            style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
+            tw="flex w-full"
+            src={new URL(image, DEFAULT_URL).toString()}
+          />
+        ) : null}
+      </BasicLayout>
+    ),
     {
       ...SIZE,
       fonts: [
@@ -62,6 +64,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    },
+    }
   );
 }
