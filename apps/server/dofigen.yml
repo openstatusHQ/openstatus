@@ -35,11 +35,12 @@ builders:
   build:
     fromImage: oven/bun
     workdir: /app/apps/server
-    copy: 
+    copy:
       - . /app/
       - fromBuilder: install
         source: /app/node_modules
         target: /app/node_modules
+      #  Should set env to production here
     # Compile the TypeScript application
     run: bun build --compile --sourcemap src/index.ts --outfile=app
 fromImage: debian:bullseye-slim
