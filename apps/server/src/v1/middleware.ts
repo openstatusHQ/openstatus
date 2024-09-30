@@ -5,6 +5,7 @@ import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
+import { env } from "../env";
 import type { Variables } from "./index";
 
 export async function middleware(
@@ -15,7 +16,7 @@ export async function middleware(
   if (!key) throw new HTTPException(401, { message: "Unauthorized" });
 
   const { error, result } =
-    process.env.NODE_ENV === "production"
+    env.NODE_ENV === "production"
       ? await verifyKey(key)
       : { result: { valid: true, ownerId: "1" }, error: null };
 
