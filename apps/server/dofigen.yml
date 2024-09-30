@@ -1,0 +1,52 @@
+ignore:
+  - node_modules
+  - /apps/docs
+  - /apps/screenshot-service
+  - /apps/web
+  - /packages/api
+  - /packages/integrations/vercel
+builders:
+  install:
+    fromImage: oven/bun
+    workdir: /app/
+    # Copy project
+    bind:
+      - package.json
+      - apps/server/package.json
+      - packages/analytics/package.json
+      - packages/db/package.json
+      - packages/emails/package.json
+      - packages/error/package.json
+      - packages/notifications/discord/package.json
+      - packages/notifications/email/package.json
+      - packages/notifications/pagerduty/package.json
+      - packages/notifications/slack/package.json
+      - packages/notifications/twillio-sms/package.json
+      - packages/tinybird/package.json
+      - packages/tracker/package.json
+      - packages/upstash/package.json
+      - packages/utils/package.json
+      - packages/tsconfig/package.json
+      - packages/assertions/package.json
+    # Install dependencies
+    run: bun install --production --ignore-scripts --frozen-lockfile --verbose
+    cache:
+      - /root/.bun/install/cache
+  build:
+    fromImage: oven/bun
+    workdir: /app/apps/server
+    copy: 
+      - . /app/
+      - fromBuilder: install
+        source: /app/node_modules
+        target: /app/node_modules
+    # Compile the TypeScript application
+    run: bun build --compile --sourcemap src/index.ts --outfile=app
+fromImage: debian:bullseye-slim
+copy:
+  - fromBuilder: build
+    source: /app/apps/server/app
+    target: /bin/
+    chmod: "555"
+expose: 3000
+entrypoint: /bin/app

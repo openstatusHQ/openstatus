@@ -530,13 +530,14 @@ importers:
         version: 5.5.2
 
   packages/assertions:
+    dependencies:
+      jsonpath-plus:
+        specifier: 7.2.0
+        version: 7.2.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      jsonpath-plus:
-        specifier: 7.2.0
-        version: 7.2.0
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -7261,7 +7262,6 @@ packages:
 
   libsql@0.4.5:
     resolution: {integrity: sha512-sorTJV6PNt94Wap27Sai5gtVLIea4Otb2LUiAUyr3p6BPOScGMKGt5F1b5X/XgkNtcsDKeX5qfeBDj+PdShclQ==}
-    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lie@3.1.1:
