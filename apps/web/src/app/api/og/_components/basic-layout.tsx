@@ -28,7 +28,7 @@ export function BasicLayout({
         <div
           tw={cn(
             "flex flex-col justify-center shadow-2xl mt-1 bg-white rounded-t-lg border-t-2 border-r-2 border-l-2 border-slate-200 px-12",
-            tw
+            tw,
           )}
         >
           {children}
