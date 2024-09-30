@@ -29,6 +29,7 @@ RUN \
 # build
 FROM oven/bun@sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513 AS build
 WORKDIR /app/apps/server
+ENV NODE_ENV production
 COPY \
     --link \
     "." "/app/"
