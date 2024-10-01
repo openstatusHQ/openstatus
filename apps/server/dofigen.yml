@@ -42,6 +42,8 @@ builders:
         target: /app/node_modules
       #  Should set env to production here
     # Compile the TypeScript application
+    env:
+      NODE_ENV: production
     run: bun build --compile --sourcemap src/index.ts --outfile=app
 fromImage: debian:bullseye-slim
 copy:

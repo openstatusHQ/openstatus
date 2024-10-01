@@ -7,21 +7,6 @@ effective: |
   - /packages/api
   - /packages/integrations/vercel
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
-      workdir: /app/apps/server
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
@@ -66,6 +51,23 @@ effective: |
         source: packages/tsconfig/package.json
       - target: packages/assertions/package.json
         source: packages/assertions/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
+      workdir: /app/apps/server
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
@@ -81,15 +83,70 @@ effective: |
   - port: 3000
 images:
   registry.hub.docker.com:443:
-    oven:
-      bun:
-        latest:
-          digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
     library:
       debian:
         bullseye-slim:
           digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
+    oven:
+      bun:
+        latest:
+          digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
 resources:
   dofigen.yml:
-    hash: adf3f9674023b48f97b9d48996067d36db5da23a2ee73685c1d85079e1328320
-    content: "ignore:\n  - node_modules\n  - /apps/docs\n  - /apps/screenshot-service\n  - /apps/web\n  - /packages/api\n  - /packages/integrations/vercel\nbuilders:\n  install:\n    fromImage: oven/bun\n    workdir: /app/\n    # Copy project\n    bind:\n      - package.json\n      - apps/server/package.json\n      - packages/analytics/package.json\n      - packages/db/package.json\n      - packages/emails/package.json\n      - packages/error/package.json\n      - packages/notifications/discord/package.json\n      - packages/notifications/email/package.json\n      - packages/notifications/pagerduty/package.json\n      - packages/notifications/slack/package.json\n      - packages/notifications/twillio-sms/package.json\n      - packages/tinybird/package.json\n      - packages/tracker/package.json\n      - packages/upstash/package.json\n      - packages/utils/package.json\n      - packages/tsconfig/package.json\n      - packages/assertions/package.json\n    # Install dependencies\n    run: bun install --production --ignore-scripts --frozen-lockfile --verbose\n    cache:\n      - /root/.bun/install/cache\n  build:\n    fromImage: oven/bun\n    workdir: /app/apps/server\n    copy: \n      - . /app/\n      - fromBuilder: install\n        source: /app/node_modules\n        target: /app/node_modules\n    # Compile the TypeScript application\n    run: bun build --compile --sourcemap src/index.ts --outfile=app\nfromImage: debian:bullseye-slim\ncopy:\n  - fromBuilder: build\n    source: /app/apps/server/app\n    target: /bin/\n    chmod: \"555\"\nexpose: 3000\nentrypoint: /bin/app\n"
+    hash: 06641706a075437d0d038b10609949fde32ab3340f6eb081add0b1e0a1889d8b
+    content: |
+      ignore:
+        - node_modules
+        - /apps/docs
+        - /apps/screenshot-service
+        - /apps/web
+        - /packages/api
+        - /packages/integrations/vercel
+      builders:
+        install:
+          fromImage: oven/bun
+          workdir: /app/
+          # Copy project
+          bind:
+            - package.json
+            - apps/server/package.json
+            - packages/analytics/package.json
+            - packages/db/package.json
+            - packages/emails/package.json
+            - packages/error/package.json
+            - packages/notifications/discord/package.json
+            - packages/notifications/email/package.json
+            - packages/notifications/pagerduty/package.json
+            - packages/notifications/slack/package.json
+            - packages/notifications/twillio-sms/package.json
+            - packages/tinybird/package.json
+            - packages/tracker/package.json
+            - packages/upstash/package.json
+            - packages/utils/package.json
+            - packages/tsconfig/package.json
+            - packages/assertions/package.json
+          # Install dependencies
+          run: bun install --production --ignore-scripts --frozen-lockfile --verbose
+          cache:
+            - /root/.bun/install/cache
+        build:
+          fromImage: oven/bun
+          workdir: /app/apps/server
+          copy:
+            - . /app/
+            - fromBuilder: install
+              source: /app/node_modules
+              target: /app/node_modules
+            #  Should set env to production here
+          # Compile the TypeScript application
+          env:
+            NODE_ENV: production
+          run: bun build --compile --sourcemap src/index.ts --outfile=app
+      fromImage: debian:bullseye-slim
+      copy:
+        - fromBuilder: build
+          source: /app/apps/server/app
+          target: /bin/
+          chmod: "555"
+      expose: 3000
+      entrypoint: /bin/app
