@@ -25,7 +25,7 @@ export const triggerNotifications = async ({
   message?: string;
   notifType: "alert" | "recovery" | "degraded";
   cronTimestamp: number;
-  incidentId?: string;
+  incidentId: string;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db

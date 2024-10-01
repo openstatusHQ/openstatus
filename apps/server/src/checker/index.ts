@@ -102,6 +102,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           message,
           notifType: "degraded",
           cronTimestamp,
+          incidentId: `${cronTimestamp}`,
         });
       }
     }
@@ -178,6 +179,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             message,
             notifType: "alert",
             cronTimestamp,
+            incidentId: String(newIncident[0].id),
           });
 
           if (newIncident.length > 0) {
@@ -268,6 +270,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             message,
             notifType: "recovery",
             cronTimestamp,
+            incidentId: String(incident.id),
           });
 
           const monitor = await db
