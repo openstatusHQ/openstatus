@@ -222,6 +222,17 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					CronTimestamp: req.CronTimestamp,
 				})
 			}
+
+			// This happens when we don't have a degradedAfter
+			if isSuccessfull && req.DegradedAfter == 0 {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:     req.MonitorID,
+					Status:        "active",
+					Region:        h.Region,
+					StatusCode:    res.Status,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
 		}
 
 		if req.Status == "degraded" {

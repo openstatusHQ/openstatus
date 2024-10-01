@@ -179,7 +179,9 @@ checkerRoute.post("/updateStatus", async (c) => {
             message,
             notifType: "alert",
             cronTimestamp,
-            incidentId: String(newIncident[0].id),
+            incidentId: newIncident.length
+              ? String(newIncident[0]?.id)
+              : `${cronTimestamp}`,
           });
 
           if (newIncident.length > 0) {
