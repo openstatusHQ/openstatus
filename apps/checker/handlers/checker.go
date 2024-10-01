@@ -177,20 +177,20 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		data.Assertions = assertionAsString
 
-		if !isSuccessfull && req.Status == "active" {
-			// Q: Why here we do not check if the status was previously active?
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "error",
-				StatusCode:    res.Status,
-				Region:        h.Region,
-				Message:       res.Error,
-				CronTimestamp: req.CronTimestamp,
-			})
-		}
-		// Check if the status is degraded
-		if isSuccessfull && req.Status == "active" {
-			if req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+		if req.Status == "active" {
+			if !isSuccessfull {
+				// Q: Why here we do not check if the status was previously active?
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:     req.MonitorID,
+					Status:        "error",
+					StatusCode:    res.Status,
+					Region:        h.Region,
+					Message:       res.Error,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
+			// Check if the status is degraded
+			if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
 					Status:        "degraded",
@@ -200,23 +200,46 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				})
 			}
 		}
-		// We were in error and now we are successful don't check for degraded
-		if isSuccessfull && req.Status == "error" {
-			// Q: Why here we check the data before updating the status in this scenario?
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "active",
-				Region:        h.Region,
-				StatusCode:    res.Status,
-				CronTimestamp: req.CronTimestamp,
-			})
-		}
-		// if we were in degraded and now we are successful, we should update the status to active
-		if isSuccessfull && req.Status == "degraded" {
-			if req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
+
+		// We were in error
+		if req.Status == "error" {
+			if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:     req.MonitorID,
+					Status:        "degraded",
+					Region:        h.Region,
+					StatusCode:    res.Status,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
+
+			if isSuccessfull && req.DegradedAfter > 0 && res.Latency < req.DegradedAfter {
 				checker.UpdateStatus(ctx, checker.UpdateData{
 					MonitorId:     req.MonitorID,
 					Status:        "active",
+					Region:        h.Region,
+					StatusCode:    res.Status,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
+		}
+
+		if req.Status == "degraded" {
+			// if we were in degraded and now we are successful, we should update the status to active
+			if isSuccessfull && req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:     req.MonitorID,
+					Status:        "active",
+					Region:        h.Region,
+					StatusCode:    res.Status,
+					CronTimestamp: req.CronTimestamp,
+				})
+			}
+
+			if !isSuccessfull {
+				checker.UpdateStatus(ctx, checker.UpdateData{
+					MonitorId:     req.MonitorID,
+					Status:        "error",
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
