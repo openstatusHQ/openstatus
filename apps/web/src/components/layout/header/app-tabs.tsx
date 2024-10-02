@@ -3,10 +3,10 @@
 import { useParams, useSelectedLayoutSegment } from "next/navigation";
 
 import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";
-import { pagesConfig } from "@/config/pages";
-import { useEffect, useState } from "react";
-import { api } from "@/trpc/client";
 import { StatusDot } from "@/components/monitor/status-dot";
+import { pagesConfig } from "@/config/pages";
+import { api } from "@/trpc/client";
+import { useEffect, useState } from "react";
 
 export function AppTabs() {
   const params = useParams();
