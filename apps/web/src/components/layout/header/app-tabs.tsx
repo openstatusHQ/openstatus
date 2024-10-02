@@ -28,7 +28,7 @@ export function AppTabs() {
               className="relative"
             >
               {title}
-              {segment === "incidents" ? <IncidentsDot /> : null}
+              {/* {segment === "incidents" ? <IncidentsDot /> : null} */}
             </TabsLink>
           );
         })}
