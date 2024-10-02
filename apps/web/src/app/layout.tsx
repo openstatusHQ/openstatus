@@ -48,7 +48,7 @@ export default function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <Background>{children}</Background>
-          <Toaster richColors />
+          <Toaster richColors closeButton />
           <TailwindIndicator />
         </ThemeProvider>
       </body>

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, schema } from "@openstatus/db";
+import { and, eq, isNull, schema } from "@openstatus/db";
 import { selectIncidentSchema } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -50,6 +50,19 @@ export const incidentRouter = createTRPCRouter({
         monitorName: result?.monitor?.name,
       });
     }),
+
+  getOpenIncidents: protectedProcedure.query(async (opts) => {
+    return await opts.ctx.db
+      .select()
+      .from(schema.incidentTable)
+      .where(
+        and(
+          eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+          isNull(schema.incidentTable.resolvedAt),
+        ),
+      )
+      .all();
+  }),
 
   acknowledgeIncident: protectedProcedure
     .input(z.object({ id: z.number() }))
