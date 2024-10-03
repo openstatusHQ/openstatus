@@ -4,6 +4,7 @@ import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { JobTypeIconWithTooltip } from "@/components/monitor/job-type-icon-with-tooltip";
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
@@ -63,6 +64,8 @@ export default async function Layout({
             <span className="text-sm">
               every <code>{monitor.periodicity}</code>
             </span>
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <JobTypeIconWithTooltip jobType={monitor.jobType} />
             {monitor.public ? (
               <>
                 <span className="text-muted-foreground/50 text-xs">•</span>
