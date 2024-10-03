@@ -157,10 +157,10 @@ function getTiming(data: z.infer<typeof ResponseSchema>[]): ReturnGetTiming {
       prev.dns.push(curr.timing.dnsDone - curr.timing.dnsStart);
       prev.connect.push(curr.timing.connectDone - curr.timing.connectStart);
       prev.tls.push(
-        curr.timing.tlsHandshakeDone - curr.timing.tlsHandshakeStart
+        curr.timing.tlsHandshakeDone - curr.timing.tlsHandshakeStart,
       );
       prev.firstByte.push(
-        curr.timing.firstByteDone - curr.timing.firstByteStart
+        curr.timing.firstByteDone - curr.timing.firstByteStart,
       );
       prev.transfer.push(curr.timing.transferDone - curr.timing.transferStart);
       prev.latency.push(curr.latency);
@@ -173,7 +173,7 @@ function getTiming(data: z.infer<typeof ResponseSchema>[]): ReturnGetTiming {
       firstByte: [],
       transfer: [],
       latency: [],
-    } as ReturnGetTiming
+    } as ReturnGetTiming,
   );
 }
 
