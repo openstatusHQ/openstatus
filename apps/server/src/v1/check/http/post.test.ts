@@ -30,7 +30,7 @@ test("Create a single check  ", async () => {
     ),
   );
 
-  const res = await api.request("/check", {
+  const res = await api.request("/check/http", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
