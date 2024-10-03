@@ -135,6 +135,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		}
 
 		res = r
+		res.Region = h.Region
 
 		if tbData.RequestId != 0 {
 			if err := h.TbClient.SendEvent(ctx, tbData, dataSourceName); err != nil {
