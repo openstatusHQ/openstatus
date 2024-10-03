@@ -1,12 +1,12 @@
-import { Monitor } from "@openstatus/db/src/schema";
+import { cn } from "@/lib/utils";
+import type { Monitor } from "@openstatus/db/src/schema";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/src/components/tooltip";
-import { IconProps, Icons, type ValidIcon } from "../icons";
-import { cn } from "@/lib/utils";
+import { type IconProps, Icons, type ValidIcon } from "../icons";
 
 // TODO: extend once we have more job types
 function getIcon(jobType: Monitor["jobType"]): ValidIcon {

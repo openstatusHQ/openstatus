@@ -4,8 +4,8 @@ import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
-import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { JobTypeIconWithTooltip } from "@/components/monitor/job-type-icon-with-tooltip";
+import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
 
