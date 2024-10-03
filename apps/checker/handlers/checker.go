@@ -281,7 +281,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
-		if req.Status == "active" {
+		if req.Status != "error" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "error",

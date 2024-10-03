@@ -35,6 +35,7 @@ type Response struct {
 	Headers   map[string]string `json:"headers,omitempty"`
 	Body      string            `json:"body,omitempty"`
 	Error     string            `json:"error,omitempty"`
+	Region    string            `json:"region"`
 	Latency   int64             `json:"latency"`
 	Timestamp int64             `json:"timestamp"`
 	Status    int               `json:"status,omitempty"`

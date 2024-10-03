@@ -37,7 +37,7 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
@@ -49,7 +49,8 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
 }).extend({
   headers: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
-  method: monitorMethodsSchema.default("GET"),
+  // for tcp monitors the method is not needed
+  method: monitorMethodsSchema.default("GET").optional(),
 });
 
 const headersSchema = z

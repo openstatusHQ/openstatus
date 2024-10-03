@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
-import type { payloadSchema } from "../schema";
+import type { httpPayloadSchema, tpcPayloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -45,7 +45,7 @@ export const cron = async ({
   const parent = client.queuePath(
     env.GCP_PROJECT_ID,
     env.GCP_LOCATION,
-    periodicity,
+    periodicity
   );
 
   const timestamp = Date.now();
@@ -54,7 +54,7 @@ export const cron = async ({
     .select({ id: maintenance.id })
     .from(maintenance)
     .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
+      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date()))
     )
     .as("currentMaintenance");
 
@@ -63,7 +63,7 @@ export const cron = async ({
     .from(maintenancesToMonitors)
     .innerJoin(
       currentMaintenance,
-      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id),
+      eq(maintenancesToMonitors.maintenanceId, currentMaintenance.id)
     );
 
   const result = await db
@@ -73,8 +73,8 @@ export const cron = async ({
       and(
         eq(monitor.periodicity, periodicity),
         eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
+        notInArray(monitor.id, currentMaintenanceMonitors)
+      )
     )
     .all();
 
@@ -98,7 +98,7 @@ export const cron = async ({
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
       console.error(
-        `Error while fetching the monitor status ${monitorStatus.error.errors}`,
+        `Error while fetching the monitor status ${monitorStatus.error.errors}`
       );
       continue;
     }
@@ -137,7 +137,7 @@ export const cron = async ({
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron for ${periodicity} with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 };
 // timestamp needs to be in ms
@@ -156,19 +156,42 @@ const createCronTask = async ({
   status: MonitorStatus;
   region: string;
 }) => {
-  const payload: z.infer<typeof payloadSchema> = {
-    workspaceId: String(row.workspaceId),
-    monitorId: String(row.id),
-    url: row.url,
-    method: row.method || "GET",
-    cronTimestamp: timestamp,
-    body: row.body,
-    headers: row.headers,
-    status: status,
-    assertions: row.assertions ? JSON.parse(row.assertions) : null,
-    degradedAfter: row.degradedAfter,
-    timeout: row.timeout,
-  };
+  let payload:
+    | z.infer<typeof httpPayloadSchema>
+    | z.infer<typeof tpcPayloadSchema>
+    | null = null;
+  //
+  if (row.jobType === "http") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      method: row.method || "GET",
+      cronTimestamp: timestamp,
+      body: row.body,
+      headers: row.headers,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+    };
+  }
+  if (row.jobType === "tcp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      cronTimestamp: timestamp,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+    };
+  }
+
+  if (!payload) {
+    throw new Error("Invalid jobType");
+  }
 
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {

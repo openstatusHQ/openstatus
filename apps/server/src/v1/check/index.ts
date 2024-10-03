@@ -3,12 +3,12 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import type { Variables } from "../index";
 
 import { handleZodError } from "../../libs/errors";
-import { registerPostCheck } from "./post";
+import { registerHTTPPostCheck } from "./http/post";
 
 const checkAPI = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
 });
 
-registerPostCheck(checkAPI);
+registerHTTPPostCheck(checkAPI);
 
 export { checkAPI };

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 
 import { checkRegion } from "@/components/ping-response-analysis/utils";
-import { payloadSchema } from "../../schema";
+import { httpPayloadSchema } from "../../schema";
 import { isAnInvalidTestUrl } from "../../utils";
 
 export const runtime = "edge";
@@ -19,7 +19,7 @@ export function GET() {
 export async function POST(request: Request) {
   try {
     const json = await request.json();
-    const _valid = payloadSchema
+    const _valid = httpPayloadSchema
       .pick({ url: true, method: true, headers: true, body: true })
       .merge(z.object({ region: monitorFlyRegionSchema.default("ams") }))
       .safeParse(json);

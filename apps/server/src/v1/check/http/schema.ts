@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MonitorSchema } from "../monitors/schema";
+import { MonitorSchema } from "../../monitors/schema";
 
 export const CheckSchema = MonitorSchema.pick({
   url: true,
