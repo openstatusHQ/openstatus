@@ -42,6 +42,7 @@ import {
   Plug,
   Puzzle,
   Ratio,
+  RefreshCcw,
   Search,
   SearchCheck,
   Server,
@@ -127,6 +128,7 @@ export const Icons = {
   "book-open-check": BookOpenCheck,
   info: Info,
   server: Server,
+  "refresh-ccw": RefreshCcw,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path

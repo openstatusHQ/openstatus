@@ -3,20 +3,13 @@ import { z } from "zod";
 
 import { flyRegions } from "../../db/src/schema/constants";
 
-import type { tbIngestWebVitalsArray } from "./validation";
-import {
-  responseRumPageQuery,
-  sessionRumPageQuery,
-  tbIngestWebVitals,
-} from "./validation";
-
 const isProd = process.env.NODE_ENV === "production";
 
 const DEV_CACHE = 3_600; // 1h
 
 const MIN_CACHE = isProd ? 60 : DEV_CACHE; // 60s
 const DEFAULT_CACHE = isProd ? 120 : DEV_CACHE; // 2min
-const _MAX_CACHE = 86_400; // 1d
+const MAX_CACHE = 86_400; // 1d
 
 const VERSION = "v1";
 
@@ -118,7 +111,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      }, // RETHINK: not the best way to handle it
+      } // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -178,7 +171,7 @@ export class OSTinybird {
 
   endpointStatusPeriod(
     period: "7d" | "45d",
-    timezone: "UTC" = "UTC", // "EST" | "PST" | "CET"
+    timezone: "UTC" = "UTC" // "EST" | "PST" | "CET"
   ) {
     const parameters = z.object({ monitorId: z.string() });
 
@@ -187,7 +180,7 @@ export class OSTinybird {
       opts?: {
         cache?: RequestCache | undefined;
         revalidate: number | undefined;
-      }, // RETHINK: not the best way to handle it
+      } // RETHINK: not the best way to handle it
     ) => {
       try {
         const res = await this.tb.buildPipe({
@@ -339,117 +332,48 @@ export class OSTinybird {
       }
     };
   }
-  ingestWebVitals(data: z.infer<typeof tbIngestWebVitalsArray>) {
-    return this.tb.buildIngestEndpoint({
-      datasource: "web_vitals__v0",
-      event: tbIngestWebVitals,
-    })(data);
-  }
 
-  applicationRUMMetrics() {
+  endpointSingleCheckList() {
     const parameters = z.object({
-      dsn: z.string(),
-      period: z.enum(["24h", "7d", "30d"]),
+      workspaceId: z.number(),
     });
 
     return async (props: z.infer<typeof parameters>) => {
       try {
         const res = await this.tb.buildPipe({
-          pipe: "rum_total_query",
+          pipe: `single_checks_get__${VERSION}`,
           parameters,
           data: z.object({
-            cls: z.number(),
-            fcp: z.number(),
-            // fid: z.number(),
-            lcp: z.number(),
-            inp: z.number(),
-            ttfb: z.number(),
+            requestId: z.number(),
+            headers: z
+              .string()
+              .nullable()
+              .transform((val) => {
+                if (!val) return null;
+                const value = z
+                  .record(z.string(), z.string())
+                  .safeParse(JSON.parse(val));
+                if (value.success) return value.data;
+                return null;
+              }),
+            body: z.string().nullable().optional(),
+            workspaceId: z.number(),
+            latency: z.number().int(),
+            // REMINDER: we should call it statusCode to stay consistent
+            status: z.number().int().nullable().default(null),
+            // url: z.string().url(),
+            timestamp: z.number().int().optional(),
+            region: z.enum(flyRegions),
+            timing: z
+              .string()
+              .transform((val) => JSON.parse(val))
+              .pipe(timingSchema),
           }),
           opts: {
-            next: {
-              revalidate: MIN_CACHE,
-            },
-          },
-        })(props);
-        return res.data[0];
-      } catch (e) {
-        console.error(e);
-      }
-    };
-  }
-  applicationRUMMetricsPerPage() {
-    const parameters = z.object({
-      dsn: z.string(),
-      period: z.enum(["24h", "7d", "30d"]),
-    });
-    return async (props: z.infer<typeof parameters>) => {
-      try {
-        const res = await this.tb.buildPipe({
-          pipe: "rum_page_query",
-          parameters,
-          data: responseRumPageQuery,
-          opts: {
-            next: {
-              revalidate: MIN_CACHE,
-            },
+            cache: "no-store",
           },
         })(props);
         return res.data;
-      } catch (e) {
-        console.error(e);
-      }
-    };
-  }
-  applicationSessionMetricsPerPath() {
-    const parameters = z.object({
-      dsn: z.string(),
-      period: z.enum(["24h", "7d", "30d"]),
-      path: z.string(),
-    });
-    return async (props: z.infer<typeof parameters>) => {
-      try {
-        const res = await this.tb.buildPipe({
-          pipe: "rum_page_query_per_path",
-          parameters,
-          data: sessionRumPageQuery,
-          opts: {
-            next: {
-              revalidate: MIN_CACHE,
-            },
-          },
-        })(props);
-        return res.data;
-      } catch (e) {
-        console.error(e);
-      }
-    };
-  }
-  applicationRUMMetricsForPath() {
-    const parameters = z.object({
-      dsn: z.string(),
-      path: z.string(),
-      period: z.enum(["24h", "7d", "30d"]),
-    });
-    return async (props: z.infer<typeof parameters>) => {
-      try {
-        const res = await this.tb.buildPipe({
-          pipe: "rum_total_query_per_path",
-          parameters,
-          data: z.object({
-            cls: z.number(),
-            fcp: z.number(),
-            // fid: z.number(),
-            lcp: z.number(),
-            inp: z.number(),
-            ttfb: z.number(),
-          }),
-          opts: {
-            next: {
-              revalidate: MIN_CACHE,
-            },
-          },
-        })(props);
-        return res.data[0];
       } catch (e) {
         console.error(e);
       }

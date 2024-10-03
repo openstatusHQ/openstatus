@@ -7,6 +7,7 @@ import { StatusDot } from "@/components/monitor/status-dot";
 import { pagesConfig } from "@/config/pages";
 import { api } from "@/trpc/client";
 import { useEffect, useState } from "react";
+import { Badge } from "@openstatus/ui";
 
 export function AppTabs() {
   const params = useParams();
@@ -17,7 +18,7 @@ export function AppTabs() {
   return (
     <div className="-mb-3">
       <TabsContainer>
-        {pagesConfig.map(({ title, segment, href }) => {
+        {pagesConfig.map(({ title, segment, href, badge }) => {
           const active = segment === selectedSegment;
           return (
             <TabsLink
@@ -28,6 +29,11 @@ export function AppTabs() {
               className="relative"
             >
               {title}
+              {badge ? (
+                <Badge className="ml-2 px-1.5 font-normal" variant="secondary">
+                  {badge}
+                </Badge>
+              ) : null}
               {/* {segment === "incidents" ? <IncidentsDot /> : null} */}
             </TabsLink>
           );

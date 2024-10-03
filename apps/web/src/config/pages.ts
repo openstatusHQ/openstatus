@@ -1,4 +1,5 @@
 import type { ValidIcon } from "@/components/icons";
+import { BadgeProps } from "@openstatus/ui";
 
 export type Page = {
   title: string;
@@ -9,6 +10,8 @@ export type Page = {
   disabled?: boolean;
   segment: string;
   children?: Page[];
+  /** add a "beta" or "new" badge to the page */
+  badge?: string;
 };
 
 export const settingsPagesConfig: Page[] = [
@@ -167,6 +170,14 @@ export const pagesConfig = [
     children: monitorPagesConfig,
   },
   {
+    title: "Single Checks",
+    description: "Where you can seel all your single checks",
+    href: "/checks",
+    icon: "refresh-ccw",
+    segment: "checks",
+    badge: "beta",
+  },
+  {
     title: "Incidents",
     description: "All your incidents.",
     href: "/incidents",
@@ -198,7 +209,7 @@ export const pagesConfig = [
     segment: "settings",
     children: settingsPagesConfig,
   },
-] as const satisfies readonly Page[];
+] satisfies Page[];
 
 type MarketingPageType = Page;
 
@@ -289,7 +300,7 @@ export const marketingPagesConfig = [
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig,
+  currentPage: readonly Page[] = pagesConfig
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);

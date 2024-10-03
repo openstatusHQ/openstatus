@@ -1,51 +1,8 @@
 import * as z from "zod";
 import { monitorFlyRegionSchema } from "../../db/src/schema/constants";
 import type { flyRegions } from "../../db/src/schema/constants";
+import { timingSchema } from "./os-client";
 
-export const tbIngestWebVitals = z.object({
-  dsn: z.string(),
-  href: z.string(),
-  speed: z.string(),
-  path: z.string(),
-  screen: z.string(),
-  name: z.string(),
-  rating: z.string().optional(),
-  value: z.number(),
-  id: z.string(),
-  session_id: z.string(),
-  browser: z.string().default(""),
-  city: z.string().default(""),
-  country: z.string().default(""),
-  continent: z.string().default(""),
-  device: z.string().default(""),
-  region_code: z.string().default(""),
-  timezone: z.string().default(""),
-  os: z.string(),
-  timestamp: z.number().int(),
-});
-
-export const responseRumPageQuery = z.object({
-  path: z.string(),
-  totalSession: z.number(),
-  cls: z.number(),
-  fcp: z.number(),
-  // fid: z.number(),
-  inp: z.number(),
-  lcp: z.number(),
-  ttfb: z.number(),
-});
-
-export const sessionRumPageQuery = z.object({
-  session_id: z.string(),
-  cls: z.number(),
-  fcp: z.number(),
-  // fid: z.number(),
-  inp: z.number(),
-  lcp: z.number(),
-  ttfb: z.number(),
-});
-
-export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
 /**
  * Values for the datasource ping_response
  */
@@ -108,6 +65,23 @@ export const tbParameterResponseList = z.object({
   limit: z.number().int().optional().default(7500), // one day has 2448 pings (17 (regions) * 6 (per hour) * 24) * 3 days for historical data
   region: monitorFlyRegionSchema.optional(),
   cronTimestamp: z.number().int().optional(),
+});
+
+/**
+ * Values from the pipe single_checker
+ */
+export const tbBuildSingleChecker = z.object({
+  requestId: z.number(),
+  headers: z.record(z.string(), z.string()).nullable().optional(),
+  body: z.string().nullable().optional(),
+  workspaceId: z.number(),
+  latency: z.number().int(),
+  // REMINDER: we should call it statusCode
+  status: z.number().int().nullable().default(null),
+  // url: z.string().url(),
+  timestamp: z.number().int().optional(),
+  timing: timingSchema,
+  region: monitorFlyRegionSchema,
 });
 
 /**
@@ -283,6 +257,7 @@ export const tbBuildResponseTimeMetricsByRegion = z
   })
   .merge(latencyMetrics);
 
+export type SingleChecker = z.infer<typeof tbBuildSingleChecker>;
 export type Ping = z.infer<typeof tbBuildResponseList>;
 export type Region = (typeof flyRegions)[number]; // TODO: rename type AvailabeRegion
 export type Monitor = z.infer<typeof tbBuildMonitorList>;
