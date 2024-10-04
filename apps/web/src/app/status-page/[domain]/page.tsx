@@ -14,7 +14,7 @@ type Props = {
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
-export const revalidate = 120;
+export const revalidate = 0;
 
 export default async function Page({ params }: Props) {
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
