@@ -15,6 +15,13 @@ const nextConfig = {
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
+    /**
+     * The default stale revalidate time for SWR requests is 1year.
+     * We can't rely on the default because the status pages will always return the
+     * STALE data before revalidate.
+     * @link https://nextjs.org/docs/app/api-reference/next-config-js/swrDelta
+     */
+    swrDelta: 120,
   },
   logging: {
     fetches: {
