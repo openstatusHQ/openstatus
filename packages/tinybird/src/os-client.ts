@@ -336,6 +336,8 @@ export class OSTinybird {
   endpointSingleCheckList() {
     const parameters = z.object({
       workspaceId: z.number(),
+      pageSize: z.number().optional(),
+      page: z.number().optional(),
     });
 
     return async (props: z.infer<typeof parameters>) => {

@@ -9,7 +9,6 @@ import { Client } from "./client";
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 type Props = {
-  params: { domain: string };
   searchParams: { [key: string]: string | string[] | undefined };
 };
 
@@ -21,8 +20,6 @@ export default async function Page({ searchParams }: Props) {
     page,
     pageSize,
   });
-
-  console.log({ data: data?.length, page, pageSize });
 
   return (
     <div>
