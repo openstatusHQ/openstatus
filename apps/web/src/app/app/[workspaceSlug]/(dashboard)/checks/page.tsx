@@ -3,13 +3,31 @@ import { DataTable } from "@/components/data-table/single-check/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { OSTinybird } from "@openstatus/tinybird";
+import { searchParamsCache } from "./search-params";
+import { Client } from "./client";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
-export default async function Page() {
+type Props = {
+  params: { domain: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
+export default async function Page({ searchParams }: Props) {
+  const { page, pageSize } = searchParamsCache.parse(searchParams);
   const workspace = await api.workspace.getWorkspace.query();
   const data = await tb.endpointSingleCheckList()({
     workspaceId: workspace.id,
+    page,
+    pageSize,
   });
-  return <div>{data ? <DataTable columns={columns} data={data} /> : null}</div>;
+
+  console.log({ data: data?.length, page, pageSize });
+
+  return (
+    <div>
+      {data ? <DataTable columns={columns} data={data} /> : null}
+      <Client totalRows={data?.length || 0} />
+    </div>
+  );
 }
