@@ -3,7 +3,7 @@ import { z } from "zod";
 import { base } from "@openstatus/assertions";
 import { monitorMethods, monitorStatus } from "@openstatus/db/src/schema";
 
-export const payloadSchema = z.object({
+export const httpPayloadSchema = z.object({
   workspaceId: z.string(),
   monitorId: z.string(),
   method: z.enum(monitorMethods),
@@ -17,4 +17,15 @@ export const payloadSchema = z.object({
   degradedAfter: z.number().nullable(),
 });
 
-export type Payload = z.infer<typeof payloadSchema>;
+export type HttpPayload = z.infer<typeof httpPayloadSchema>;
+
+export const tpcPayloadSchema = z.object({
+  status: z.enum(monitorStatus),
+  workspaceId: z.string(),
+  url: z.string(),
+  monitorId: z.string(),
+  assertions: z.array(base).nullable(),
+  cronTimestamp: z.number(),
+  timeout: z.number().default(45000),
+  degradedAfter: z.number().nullable(),
+});

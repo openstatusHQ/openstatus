@@ -3,9 +3,9 @@ import { createRoute, type z } from "@hono/zod-openapi";
 import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
-import { env } from "../../env";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import type { checkAPI } from "./index";
+import { env } from "../../../env";
+import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
+import type { checkAPI } from "../index";
 import {
   AggregatedResponseSchema,
   AggregatedResult,
@@ -18,7 +18,7 @@ const postRoute = createRoute({
   method: "post",
   tags: ["page"],
   description: "Run a single check",
-  path: "/",
+  path: "/http",
   request: {
     body: {
       description: "The run request to create",
@@ -42,7 +42,7 @@ const postRoute = createRoute({
   },
 });
 
-export function registerPostCheck(api: typeof checkAPI) {
+export function registerHTTPPostCheck(api: typeof checkAPI) {
   return api.openapi(postRoute, async (c) => {
     const data = c.req.valid("json");
     const workspaceId = Number(c.get("workspaceId"));

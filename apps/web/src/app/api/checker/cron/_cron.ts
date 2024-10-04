@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
-import type { payloadSchema } from "../schema";
+import type { httpPayloadSchema, tpcPayloadSchema } from "../schema";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -156,19 +156,42 @@ const createCronTask = async ({
   status: MonitorStatus;
   region: string;
 }) => {
-  const payload: z.infer<typeof payloadSchema> = {
-    workspaceId: String(row.workspaceId),
-    monitorId: String(row.id),
-    url: row.url,
-    method: row.method || "GET",
-    cronTimestamp: timestamp,
-    body: row.body,
-    headers: row.headers,
-    status: status,
-    assertions: row.assertions ? JSON.parse(row.assertions) : null,
-    degradedAfter: row.degradedAfter,
-    timeout: row.timeout,
-  };
+  let payload:
+    | z.infer<typeof httpPayloadSchema>
+    | z.infer<typeof tpcPayloadSchema>
+    | null = null;
+  //
+  if (row.jobType === "http") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      method: row.method || "GET",
+      cronTimestamp: timestamp,
+      body: row.body,
+      headers: row.headers,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+    };
+  }
+  if (row.jobType === "tcp") {
+    payload = {
+      workspaceId: String(row.workspaceId),
+      monitorId: String(row.id),
+      url: row.url,
+      status: status,
+      assertions: row.assertions ? JSON.parse(row.assertions) : null,
+      cronTimestamp: timestamp,
+      degradedAfter: row.degradedAfter,
+      timeout: row.timeout,
+    };
+  }
+
+  if (!payload) {
+    throw new Error("Invalid jobType");
+  }
 
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {

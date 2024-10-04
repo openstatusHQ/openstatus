@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { api } from "../../index";
 
 import { afterEach, mock } from "bun:test";
 
@@ -30,7 +30,7 @@ test("Create a single check  ", async () => {
     ),
   );
 
-  const res = await api.request("/check", {
+  const res = await api.request("/check/http", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",

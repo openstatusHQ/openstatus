@@ -49,6 +49,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
 }).extend({
   headers: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
+  // for tcp monitors the method is not needed
   method: monitorMethodsSchema.default("GET"),
 });
 
