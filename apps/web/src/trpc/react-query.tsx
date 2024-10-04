@@ -2,11 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { loggerLink } from "@trpc/client";
-import React, { useState } from "react";
+import type React from "react";
+import { useState } from "react";
 import { endingLink } from "./shared";
 
+import type { AppRouter } from "@openstatus/api";
 import { createTRPCReact } from "@trpc/react-query";
-import { AppRouter } from "@openstatus/api";
 import SuperJSON from "superjson";
 
 export const api = createTRPCReact<AppRouter>();
@@ -32,7 +33,7 @@ export function TRPCReactQueryProvider({
           },
         }),
       ],
-    })
+    }),
   );
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>

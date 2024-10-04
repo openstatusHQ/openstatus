@@ -13,8 +13,8 @@ import {
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
-import Background from "./_components/background";
 import { TRPCReactQueryProvider } from "@/trpc/react-query";
+import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
 
