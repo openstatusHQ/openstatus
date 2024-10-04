@@ -1,13 +1,11 @@
 import { createTRPCProxyClient, loggerLink } from "@trpc/client";
 import { headers } from "next/headers";
-import superjson from "superjson";
 
 import type { AppRouter } from "@openstatus/api";
 
 import { endingLink } from "./shared";
 
 export const api = createTRPCProxyClient<AppRouter>({
-  transformer: superjson,
   links: [
     loggerLink({
       enabled: (opts) =>

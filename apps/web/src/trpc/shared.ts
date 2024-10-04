@@ -2,6 +2,7 @@ import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink } from "@trpc/client";
 
 import type { AppRouter } from "@openstatus/api";
+import superjson from "superjson";
 
 const getBaseUrl = () => {
   if (typeof window !== "undefined") return "";
@@ -18,7 +19,8 @@ export const endingLink = (opts?: {
   ((runtime) => {
     const sharedOpts = {
       headers: opts?.headers, // REMINDER: fails when trying to `getTotalActiveMonitors()`
-    } satisfies Partial<HTTPBatchLinkOptions>;
+      transformer: superjson,
+    } satisfies Partial<HTTPBatchLinkOptions<any>>;
 
     const edgeLink = httpBatchLink({
       ...sharedOpts,

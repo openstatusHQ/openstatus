@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { loggerLink } from "@trpc/client";
 import type React from "react";
 import { useState } from "react";
@@ -8,7 +9,6 @@ import { endingLink } from "./shared";
 
 import type { AppRouter } from "@openstatus/api";
 import { createTRPCReact } from "@trpc/react-query";
-import SuperJSON from "superjson";
 
 export const api = createTRPCReact<AppRouter>();
 
@@ -20,7 +20,6 @@ export function TRPCReactQueryProvider({
   const [queryClient] = useState(() => new QueryClient());
   const [trpcClient] = useState(() =>
     api.createClient({
-      transformer: SuperJSON,
       links: [
         loggerLink({
           enabled: (opts) =>
@@ -33,11 +32,14 @@ export function TRPCReactQueryProvider({
           },
         }),
       ],
-    }),
+    })
   );
   return (
     <api.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
     </api.Provider>
   );
 }
