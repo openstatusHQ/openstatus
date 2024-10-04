@@ -26,7 +26,7 @@ type TCPResponse struct {
 // Only used for Tinybird
 type TCPData struct {
 	Timing       string `json:"timing"`
-	ErrorMessage string `json:"error"`
+	ErrorMessage string `json:"errorMessage"`
 	Region       string `json:"region"`
 
 	RequestId   int64 `json:"requestId,omitempty"`
@@ -35,7 +35,7 @@ type TCPData struct {
 	Timestamp   int64 `json:"timestamp"`
 	Latency     int64 `json:"latency"`
 
-	Error uint8 `json:"errorMessage"`
+	Error uint8 `json:"error"`
 }
 
 func (h Handler) TCPHandler(c *gin.Context) {
