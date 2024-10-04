@@ -5,7 +5,6 @@ import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
 
 import { Toaster } from "@/components/ui/sonner";
-import { OpenStatusProvider } from "@openstatus/next-monitoring";
 
 import {
   defaultMetadata,
@@ -15,6 +14,7 @@ import {
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import Background from "./_components/background";
+import { TRPCReactQueryProvider } from "@/trpc/react-query";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -47,9 +47,11 @@ export default function RootLayout({
         } ${calSans.variable}`}
       >
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <Background>{children}</Background>
-          <Toaster richColors closeButton />
-          <TailwindIndicator />
+          <TRPCReactQueryProvider>
+            <Background>{children}</Background>
+            <Toaster richColors closeButton />
+            <TailwindIndicator />
+          </TRPCReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>

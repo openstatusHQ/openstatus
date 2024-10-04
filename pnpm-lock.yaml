@@ -124,7 +124,7 @@ importers:
         version: link:../../packages/utils
       '@scalar/hono-api-reference':
         specifier: 0.5.131
-        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.5.2)(zod@3.23.8)
@@ -204,9 +204,6 @@ importers:
       '@openstatus/header-analysis':
         specifier: workspace:*
         version: link:../../packages/header-analysis
-      '@openstatus/next-monitoring':
-        specifier: 0.0.4
-        version: 0.0.4(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@openstatus/notification-discord':
         specifier: workspace:*
         version: link:../../packages/notifications/discord
@@ -258,6 +255,9 @@ importers:
       '@tailwindcss/typography':
         specifier: 0.5.10
         version: 0.5.10(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
+      '@tanstack/react-query':
+        specifier: '4'
+        version: 4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tanstack/react-table':
         specifier: 8.10.3
         version: 8.10.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -269,10 +269,10 @@ importers:
         version: 10.45.2(@trpc/server@10.45.2)
       '@trpc/next':
         specifier: 10.45.2
-        version: 10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/react-query@10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/server@10.45.2)(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/react-query@10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/server@10.45.2)(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/react-query':
         specifier: 10.45.2
-        version: 10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/server':
         specifier: 10.45.2
         version: 10.45.2
@@ -3254,12 +3254,6 @@ packages:
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
-  '@openstatus/next-monitoring@0.0.4':
-    resolution: {integrity: sha512-/UXWRt6hKfgGtuqvO9umBgBHDMIgs/Pkrrlt/3SWPGywkW7N5j7GGSCBwMzjs4SthPWBQRL1++lERZvaGkgEyA==}
-    peerDependencies:
-      next: '>=14.0.0'
-      react: '>=18.2.0'
-
   '@opentelemetry/api-logs@0.39.1':
     resolution: {integrity: sha512-9BJ8lMcOzEN0lu+Qji801y707oFO4xT3db6cosPvl+k7ItUHKN5ofWqtSbM9gbt1H4JJ/4/2TVrqI9Rq7hNv6Q==}
     engines: {node: '>=14'}
@@ -4718,13 +4712,20 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders'
 
-  '@tanstack/query-core@5.36.1':
-    resolution: {integrity: sha512-BteWYEPUcucEu3NBcDAgKuI4U25R9aPrHSP6YSf2NvaD2pSlIQTdqOfLRsxH9WdRYg7k0Uom35Uacb6nvbIMJg==}
+  '@tanstack/query-core@4.36.1':
+    resolution: {integrity: sha512-DJSilV5+ytBP1FbFcEJovv4rnnm/CokuVvrBEtW/Va9DvuJ3HksbXUJEpI0aV1KtuL4ZoO9AVE6PyNLzF7tLeA==}
 
-  '@tanstack/react-query@5.37.1':
-    resolution: {integrity: sha512-EhtBNA8GL3XFeSx6VYUjXQ96n44xe3JGKZCzBINrCYlxbZP6UwBafv7ti4eSRWc2Fy+fybQre0w17gR6lMzULA==}
+  '@tanstack/react-query@4.36.1':
+    resolution: {integrity: sha512-y7ySVHFyyQblPl3J3eQBWpXZkliroki3ARnBKsdJchlgt7yJLRDUcf4B8soufgiYt3pEQIkBWBx1N9/ZPIeUWw==}
     peerDependencies:
-      react: ^18.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-native: '*'
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
 
   '@tanstack/react-table@8.10.3':
     resolution: {integrity: sha512-Qya1cJ+91arAlW7IRDWksRDnYw28O446jJ/ljkRSc663EaftJoBCAU10M+VV1K6MpCBLrXq1BD5IQc1zj/ZEjA==}
@@ -12094,6 +12095,10 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
 
+  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))':
+    dependencies:
+      tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
+
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))':
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
@@ -12528,11 +12533,6 @@ snapshots:
       '@octokit/openapi-types': 18.1.1
 
   '@one-ini/wasm@0.1.1': {}
-
-  '@openstatus/next-monitoring@0.0.4(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      next: 14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
 
   '@opentelemetry/api-logs@0.39.1':
     dependencies:
@@ -13644,9 +13644,9 @@ snapshots:
     optionalDependencies:
       rollup: 2.78.0
 
-  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/draggable': 0.1.4(typescript@5.5.2)
@@ -13682,11 +13682,11 @@ snapshots:
       - typescript
       - vitest
 
-  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
       '@floating-ui/vue': 1.1.1(vue@3.4.31(typescript@5.5.2))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
-      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/oas-utils': 0.2.26(typescript@5.5.2)
       '@scalar/openapi-parser': 0.7.2
@@ -13771,9 +13771,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       hono: 4.5.3
     transitivePeerDependencies:
       - '@jest/globals'
@@ -14488,12 +14488,15 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
 
-  '@tanstack/query-core@5.36.1': {}
+  '@tanstack/query-core@4.36.1': {}
 
-  '@tanstack/react-query@5.37.1(react@18.3.1)':
+  '@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.36.1
+      '@tanstack/query-core': 4.36.1
       react: 18.3.1
+      use-sync-external-store: 1.2.0(react@18.3.1)
+    optionalDependencies:
+      react-dom: 18.3.1(react@18.3.1)
 
   '@tanstack/react-table@8.10.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -14567,19 +14570,19 @@ snapshots:
     dependencies:
       '@trpc/server': 10.45.2
 
-  '@trpc/next@10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/react-query@10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/server@10.45.2)(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@trpc/next@10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/react-query@10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/server@10.45.2)(next@14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tanstack/react-query': 5.37.1(react@18.3.1)
+      '@tanstack/react-query': 4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/client': 10.45.2(@trpc/server@10.45.2)
-      '@trpc/react-query': 10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@trpc/react-query': 10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/server': 10.45.2
       next: 14.2.4(@opentelemetry/api@1.4.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@trpc/react-query@10.45.2(@tanstack/react-query@5.37.1(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@trpc/react-query@10.45.2(@tanstack/react-query@4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@trpc/client@10.45.2(@trpc/server@10.45.2))(@trpc/server@10.45.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@tanstack/react-query': 5.37.1(react@18.3.1)
+      '@tanstack/react-query': 4.36.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@trpc/client': 10.45.2(@trpc/server@10.45.2)
       '@trpc/server': 10.45.2
       react: 18.3.1
