@@ -42,7 +42,7 @@ type Response struct {
 func (h Handler) PingRegionHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	dataSourceName := "check_response__v1"
+	dataSourceName := "check_response_http__v0"
 	region := c.Param("region")
 
 	if region == "" {
