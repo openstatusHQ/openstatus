@@ -1,10 +1,10 @@
-import { createTRPCProxyClient, loggerLink } from "@trpc/client";
+import { createTRPCClient, loggerLink } from "@trpc/client";
 
 import type { AppRouter } from "@openstatus/api";
 
 import { endingLink } from "./shared";
 
-export const api = createTRPCProxyClient<AppRouter>({
+export const api = createTRPCClient<AppRouter>({
   links: [
     loggerLink({
       enabled: (opts) =>
