@@ -17,15 +17,16 @@ export function getTimingColor(timing: string) {
 
 export function getTimingPercentage(
   timing: Record<string, number>,
-  latency?: number
+  latency?: number,
 ): Record<string, number | string> {
   const total =
     latency || Object.values(timing).reduce((acc, curr) => acc + curr, 0);
   const percentage: Record<string, number | string> = { ...timing };
+  // biome-ignore lint/complexity/noForEach: <explanation>
   Object.entries(timing).forEach(([key, value]) => {
     const pValue = Math.round((value / total) * 1000) / 1000;
     percentage[key as keyof typeof timing] = /^0\.00[0-9]+/.test(
-      pValue.toString()
+      pValue.toString(),
     )
       ? "<1%"
       : `${(pValue * 100).toFixed(1)}%`;

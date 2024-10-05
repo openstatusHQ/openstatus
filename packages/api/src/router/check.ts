@@ -24,8 +24,8 @@ export const checkRouter = createTRPCRouter({
         .where(
           and(
             eq(check.id, opts.input.id),
-            eq(check.workspaceId, opts.ctx.workspace.id)
-          )
+            eq(check.workspaceId, opts.ctx.workspace.id),
+          ),
         )
         .get();
       return selectCheckSchema.parse(_check);

@@ -21,14 +21,14 @@ export function Client({ totalRows }: { totalRows: number }) {
             // page: search.page + 1
             pageSize: search.pageSize + 10,
           },
-          { shallow: false }
+          { shallow: false },
         );
       }
     }
 
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
-  }, [search]);
+  }, [search, setSearch, totalRows]);
 
   return null;
 }

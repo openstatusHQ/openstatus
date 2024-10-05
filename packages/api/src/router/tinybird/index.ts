@@ -29,7 +29,7 @@ export const tinybirdRouter = createTRPCRouter({
         url: z.string().url().optional(),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.endpointResponseDetails("7d")(opts.input);

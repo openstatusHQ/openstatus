@@ -90,7 +90,7 @@ export function SectionRequests({ form, type }: Props) {
             <TabsTrigger value="http">HTTP</TabsTrigger>
             <TabsTrigger value="tcp" disabled={true}>
               TCP{" "}
-              <Badge className="ml-2" variant="default">
+              <Badge className="ml-2" variant="secondary">
                 Coming soon
               </Badge>
             </TabsTrigger>

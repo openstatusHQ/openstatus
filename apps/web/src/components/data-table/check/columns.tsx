@@ -1,10 +1,11 @@
 "use client";
 
+import { Pill } from "@/components/pill";
+import type { Check } from "@openstatus/db/src/schema";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { Check } from "@openstatus/db/src/schema";
-import { DataTableBadges } from "../data-table-badges";
 import { Minus } from "lucide-react";
+import { DataTableBadges } from "../data-table-badges";
 
 export const columns: ColumnDef<Check>[] = [
   {
@@ -27,7 +28,26 @@ export const columns: ColumnDef<Check>[] = [
     accessorKey: "url",
     header: "URL",
     cell: ({ row }) => {
-      return <div>{row.getValue("url")}</div>;
+      return (
+        <div className="max-w-[350px] truncate">{row.getValue("url")}</div>
+      );
+    },
+  },
+  {
+    accessorKey: "metadata",
+    header: "Metadata",
+    cell: ({ row }) => {
+      const metadata = row.original.metadata;
+      if (!Object.keys(metadata).length) return null;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {Object.entries(metadata).map(([key, value]) => (
+            <Pill key={key} label={key}>
+              {value}
+            </Pill>
+          ))}
+        </div>
+      );
     },
   },
   {

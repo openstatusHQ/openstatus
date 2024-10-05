@@ -1,0 +1,1 @@
+ALTER TABLE `check` ADD `metadata` text DEFAULT '';

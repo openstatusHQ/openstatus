@@ -15,14 +15,14 @@ import { UserNav } from "./user-nav";
 const lastChangelog = allChangelogs
   .sort(
     (a, b) =>
-      new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime()
+      new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime(),
   )
   .pop();
 
 export function AppHeader() {
   const [lastViewed, setLastViewed] = useCookieState(
     "last-viewed-changelog",
-    new Date(0).toISOString()
+    new Date(0).toISOString(),
   );
 
   const show =

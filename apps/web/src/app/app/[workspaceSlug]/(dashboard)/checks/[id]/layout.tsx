@@ -23,7 +23,7 @@ export default async function Layout({
     <AppPageLayout>
       <Header
         title={`Check #${check.id}`}
-        description={<div className="font-mono">{check.url}</div>}
+        description={<div className="font-mono truncate">{check.url}</div>}
         actions={<RequestDetailsDialog check={check} />}
       />
       {children}

@@ -134,6 +134,7 @@ export const MonitorSchema = z
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
+        if (typeof val === "object") return JSON.stringify(val);
         return String(val);
       }, z.string())
       .nullish()

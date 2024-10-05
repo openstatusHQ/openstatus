@@ -19,6 +19,14 @@ export const CheckSchema = MonitorSchema.pick({
       .boolean()
       .optional()
       .openapi({ description: "Whether to aggregate the results or not" }),
+    metadata: z
+      .record(z.string())
+      .optional()
+      .openapi({
+        description:
+          "The metadata of the check. Makes it easier to search for checks",
+        example: { env: "production", platform: "github" },
+      }),
     //   webhook: z
     //     .string()
     //     .optional()

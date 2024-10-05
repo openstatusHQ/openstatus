@@ -48,7 +48,7 @@ export function registerPostCheck(api: typeof checkAPI) {
     const workspaceId = Number(c.get("workspaceId"));
     const input = c.req.valid("json");
 
-    const { headers, regions, runCount, aggregated, ...rest } = data;
+    const { headers, metadata, regions, runCount, aggregated, ...rest } = data;
 
     const newCheck = await db
       .insert(check)
@@ -56,6 +56,8 @@ export function registerPostCheck(api: typeof checkAPI) {
         workspaceId: Number(workspaceId),
         regions: regions.join(","),
         countRequests: runCount,
+        headers: headers?.length ? JSON.stringify(headers) : undefined,
+        metadata: metadata ? JSON.stringify(metadata) : undefined,
         ...rest,
       })
       .returning()

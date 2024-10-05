@@ -12,10 +12,14 @@ export const check = sqliteTable("check", {
 
   regions: text("regions").default("").notNull(),
   countRequests: integer("count_requests").default(1),
+  /**
+   *  @example '{ env: "production", platform: "github" }'
+   */
+  metadata: text("metadata").default(""),
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });
