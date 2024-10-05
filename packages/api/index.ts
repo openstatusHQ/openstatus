@@ -8,6 +8,7 @@ export { createTRPCContext, createInnerTRPCContext } from "./src/trpc";
 export { t } from "./src/trpc";
 
 export type { AppRouter } from "./src/root";
+export { appRouter } from "./src/root";
 
 /**
  * Inference helpers for input types
