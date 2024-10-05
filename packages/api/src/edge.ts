@@ -1,3 +1,4 @@
+import { checkRouter } from "./router/check";
 import { domainRouter } from "./router/domain";
 import { incidentRouter } from "./router/incident";
 import { integrationRouter } from "./router/integration";
@@ -30,4 +31,5 @@ export const edgeRouter = createTRPCRouter({
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
+  check: checkRouter,
 });

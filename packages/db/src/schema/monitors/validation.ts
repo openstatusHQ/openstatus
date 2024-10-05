@@ -15,7 +15,7 @@ export const monitorJobTypesSchema = z.enum(monitorJobTypes);
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>
 function stringToArrayProcess<T>(_string: T) {}
 
-const regionsToArraySchema = z.preprocess((val) => {
+export const regionsToArraySchema = z.preprocess((val) => {
   if (String(val).length > 0) {
     return String(val).split(",");
   }
@@ -37,7 +37,7 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
