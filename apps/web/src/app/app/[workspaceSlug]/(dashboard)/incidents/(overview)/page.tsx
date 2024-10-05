@@ -12,8 +12,6 @@ export default async function IncidentPage() {
     api.statusReport.getStatusReportByWorkspace.query(),
   ]);
 
-  console.log(statusReports);
-
   if (incidents?.length === 0)
     return (
       <>
