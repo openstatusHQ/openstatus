@@ -58,7 +58,7 @@ export function PricingSlider() {
               max={MAX_REGIONS}
               step={1}
               trailing="regions"
-              className="text-right font-mono"
+              className="text-right font-mono bg-background"
               value={inputValue}
               onChange={(e) =>
                 setInputValue(Number.parseInt(e.target.value) || 0)
