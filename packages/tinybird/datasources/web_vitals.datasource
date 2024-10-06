@@ -1,0 +1,25 @@
+VERSION 0
+
+SCHEMA >
+    `browser` String `json:$.browser`,
+    `city` String `json:$.city`,
+    `continent` String `json:$.continent`,
+    `country` String `json:$.country`,
+    `device` String `json:$.device`,
+    `dsn` String `json:$.dsn`,
+    `href` String `json:$.href`,
+    `id` String `json:$.id`,
+    `name` String `json:$.name`,
+    `os` String `json:$.os`,
+    `path` String `json:$.path`,
+    `rating` String `json:$.rating`,
+    `region_code` String `json:$.region_code`,
+    `screen` String `json:$.screen`,
+    `session_id` String `json:$.session_id`,
+    `speed` String `json:$.speed`,
+    `timezone` String `json:$.timezone`,
+    `value` Float32 `json:$.value`,
+    `timestamp` Nullable(DateTime) `json:$.timestamp`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "session_id, speed, timezone"

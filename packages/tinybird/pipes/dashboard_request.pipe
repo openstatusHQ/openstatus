@@ -1,0 +1,17 @@
+VERSION 0
+NODE dashboard_request_0
+SQL >
+
+    %
+    SELECT * FROM monitor_request_count_7d_mv
+    WHERE monitorId = {{ String(monitorId, '1') }}
+        {% if defined(url) %} AND url = {{ String(url) }} {% end %}
+
+
+
+NODE dashboard_request_1
+SQL >
+
+    SELECT * FROM dashboard_request_0
+
+

@@ -45,7 +45,7 @@ export function Callout({
   const Icon = Icons[getIconName(variant)];
   return (
     <div className={cn(calloutVariants({ variant, className }))} {...props}>
-      <Icon className="h-4 w-4 mr-2 my-1.5 shrink-0" />
+      <Icon className="my-1.5 mr-2 h-4 w-4 shrink-0" />
       <p>{children}</p>
     </div>
   );
