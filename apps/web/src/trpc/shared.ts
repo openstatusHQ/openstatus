@@ -20,6 +20,7 @@ export const endingLink = (opts?: {
     const sharedOpts = {
       headers: opts?.headers, // REMINDER: fails when trying to `getTotalActiveMonitors()`
       transformer: superjson,
+      // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
     } satisfies Partial<HTTPBatchLinkOptions<any>>;
 
     const edgeLink = httpBatchLink({
