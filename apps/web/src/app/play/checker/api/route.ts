@@ -5,6 +5,7 @@ import {
   storeCheckerData,
 } from "@/components/ping-response-analysis/utils";
 import { iteratorToStream, yieldMany } from "@/lib/stream";
+import { wait } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { mockCheckRegion } from "./mock";
 
@@ -50,6 +51,9 @@ async function* makeIterator({
 }
 
 async function* generator(id: string) {
+  // wait for 200ms to avoid racing condition with the last check
+  await wait(200);
+
   yield await Promise.resolve(encoder.encode(id));
 }
 

@@ -111,6 +111,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
 
           const toastId = toast.loading("Loading data from regions...", {
             duration: Number.POSITIVE_INFINITY,
+            closeButton: false,
           });
 
           try {
