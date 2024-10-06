@@ -150,7 +150,7 @@
         },
         {
           "group": "Check",
-          "pages": ["api-reference/check/post-check"]
+          "pages": ["api-reference/check/http/post-http"]
         },
         {
           "group": "Status Page",

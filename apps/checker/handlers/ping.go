@@ -17,12 +17,12 @@ type PingResponse struct {
 	Body        string `json:"body,omitempty"`
 	Headers     string `json:"headers,omitempty"`
 	Region      string `json:"region"`
+	Timing      string `json:"timing,omitempty"`
 	RequestId   int64  `json:"requestId,omitempty"`
 	WorkspaceId int64  `json:"workspaceId,omitempty"`
 	Latency     int64  `json:"latency"`
 	Timestamp   int64  `json:"timestamp"`
-	Status      int    `json:"status,omitempty"`
-	Timing      string `json:"timing,omitempty"`
+	StatusCode  int    `json:"statusCode,omitempty"`
 }
 
 type Response struct {
@@ -42,7 +42,7 @@ type Response struct {
 func (h Handler) PingRegionHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	dataSourceName := "check_response__v1"
+	dataSourceName := "check_response_http__v0"
 	region := c.Param("region")
 
 	if region == "" {
@@ -125,7 +125,7 @@ func (h Handler) PingRegionHandler(c *gin.Context) {
 		tbData := PingResponse{
 			RequestId:   req.RequestId,
 			WorkspaceId: req.WorkspaceId,
-			Status:      r.Status,
+			StatusCode:  r.Status,
 			Latency:     r.Latency,
 			Body:        r.Body,
 			Headers:     string(headersAsString),
