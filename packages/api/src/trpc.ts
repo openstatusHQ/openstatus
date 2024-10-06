@@ -1,4 +1,4 @@
-import { TRPCError, type inferAsyncReturnType, initTRPC } from "@trpc/server";
+import { TRPCError, initTRPC } from "@trpc/server";
 import type { NextRequest } from "next/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -65,7 +65,7 @@ export const createTRPCContext = async (opts: {
   });
 };
 
-export type Context = inferAsyncReturnType<typeof createTRPCContext>;
+export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
 
 /**
  * 2. INITIALIZATION
@@ -190,7 +190,7 @@ export const formdataMiddleware = t.middleware(async (opts) => {
   if (!formData) throw new TRPCError({ code: "BAD_REQUEST" });
 
   return opts.next({
-    rawInput: formData,
+    input: formData,
   });
 });
 /**
