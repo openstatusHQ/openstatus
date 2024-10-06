@@ -5,10 +5,10 @@ import {
   Gauge,
   Palette,
   PanelTop,
+  Table,
 } from "lucide-react";
 import type { Metadata } from "next";
 
-import { BackButton } from "@/components/layout/back-button";
 import type { CardProps } from "@/components/play/card";
 import { Card } from "@/components/play/card";
 import {
@@ -91,5 +91,12 @@ const playgrounds: CardProps[] = [
     description:
       "Use the endpoint to return the desired error code for testing purposes.",
     icon: FileCode,
+  },
+  {
+    href: "https://logs.run",
+    title: "Data Table Demo",
+    description:
+      "Tanstack table with sorting, filtering, and infinite scroll. Combined with cmdk.",
+    icon: Table,
   },
 ];
