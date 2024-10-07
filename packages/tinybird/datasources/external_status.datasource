@@ -1,0 +1,12 @@
+
+SCHEMA >
+    `description` String `json:$.description`,
+    `fetched_at` Int64 `json:$.fetched_at`,
+    `indicator` String `json:$.indicator`,
+    `name` String `json:$.name`,
+    `time_zone` String `json:$.time_zone`,
+    `updated_at` Int64 `json:$.updated_at`,
+    `url` String `json:$.url`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "description, time_zone, updated_at, url"

@@ -1,0 +1,38 @@
+VERSION 1
+TOKEN "__ttl_45d_statuspage_get_endpoint_read_1959" READ
+
+NODE __ttl_45d_statuspage_get_0
+SQL >
+
+    %
+    SELECT
+        toDateTime(cronTimestamp / 1000, 'UTC') AS day,
+        -- only for debugging purposes
+        toTimezone(day, {{ String(timezone, 'Europe/London') }}) as with_timezone,
+        toStartOfDay(with_timezone) as start_of_day,
+        statusCode
+        -- latency
+    FROM __ttl_45d_mv
+    WHERE monitorId = {{ String(monitorId, '4') }}
+
+
+
+NODE __ttl_7d_statuspage_get_1
+SQL >
+
+    %
+    SELECT
+        start_of_day as day,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM __ttl_45d_statuspage_get_0
+    GROUP BY start_of_day
+    ORDER BY start_of_day DESC
+    WITH FILL
+    FROM
+        toStartOfDay(toTimezone(now(), {{ String(timezone, 'Europe/London') }}))
+        TO toStartOfDay(
+            toTimezone(date_sub(DAY, 46, now()), {{ String(timezone, 'Europe/London') }})
+        ) STEP INTERVAL -1 DAY
+
+
