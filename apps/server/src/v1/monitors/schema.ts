@@ -199,10 +199,10 @@ export const MonitorSchema = z
       .boolean()
       .default(false)
       .openapi({ description: "If the monitor is public" }),
-    degradedAfter: z.number().optional().openapi({
+    degradedAfter: z.number().nullish().openapi({
       description: "The time after the monitor is considered degraded",
     }),
-    timeout: z.number().optional().openapi({
+    timeout: z.number().nullish().openapi({
       description: "The timeout of the request",
     }),
   })
