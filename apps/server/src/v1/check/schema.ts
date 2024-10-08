@@ -4,7 +4,6 @@ import { MonitorSchema } from "../monitors/schema";
 export const CheckSchema = MonitorSchema.pick({
   url: true,
   body: true,
-  headers: true,
   method: true,
   regions: true,
 })
@@ -27,6 +26,9 @@ export const CheckSchema = MonitorSchema.pick({
           "The metadata of the check. Makes it easier to search for checks",
         example: { env: "production", platform: "github" },
       }),
+    headers: z.record(z.string()).optional().openapi({
+      description: "The headers to send with the request",
+    }),
     //   webhook: z
     //     .string()
     //     .optional()
@@ -140,6 +142,7 @@ export const AggregatedResult = z.object({
 
 export const CheckPostResponseSchema = z.object({
   id: z.number().int().openapi({ description: "The id of the check" }),
+  // TBD: include the region + more (e.g. statusCode, latency, ... ) in here!
   raw: z.array(TimingSchema).openapi({
     description: "The raw data of the check",
   }),

@@ -56,7 +56,7 @@ export function registerPostCheck(api: typeof checkAPI) {
         workspaceId: Number(workspaceId),
         regions: regions.join(","),
         countRequests: runCount,
-        headers: headers?.length ? JSON.stringify(headers) : undefined,
+        headers: headers ? JSON.stringify(headers) : undefined,
         metadata: metadata ? JSON.stringify(metadata) : undefined,
         ...rest,
       })
@@ -80,16 +80,8 @@ export function registerPostCheck(api: typeof checkAPI) {
             workspaceId: workspaceId,
             url: input.url,
             method: input.method,
-            headers: input.headers?.reduce((acc, { key, value }) => {
-              if (!key) return acc; // key === "" is an invalid header
-
-              return {
-                // biome-ignore lint/performance/noAccumulatingSpread: <explanation>
-                ...acc,
-                [key]: value,
-              };
-            }, {}),
-            body: input.body ? input.body : undefined,
+            headers: input.headers ?? undefined,
+            body: input.body ?? undefined,
           }),
         });
         currentFetch.push(r);
@@ -159,10 +151,10 @@ function getTiming(data: z.infer<typeof ResponseSchema>[]): ReturnGetTiming {
       prev.dns.push(curr.timing.dnsDone - curr.timing.dnsStart);
       prev.connect.push(curr.timing.connectDone - curr.timing.connectStart);
       prev.tls.push(
-        curr.timing.tlsHandshakeDone - curr.timing.tlsHandshakeStart,
+        curr.timing.tlsHandshakeDone - curr.timing.tlsHandshakeStart
       );
       prev.firstByte.push(
-        curr.timing.firstByteDone - curr.timing.firstByteStart,
+        curr.timing.firstByteDone - curr.timing.firstByteStart
       );
       prev.transfer.push(curr.timing.transferDone - curr.timing.transferStart);
       prev.latency.push(curr.latency);
@@ -175,7 +167,7 @@ function getTiming(data: z.infer<typeof ResponseSchema>[]): ReturnGetTiming {
       firstByte: [],
       transfer: [],
       latency: [],
-    } as ReturnGetTiming,
+    } as ReturnGetTiming
   );
 }
 
