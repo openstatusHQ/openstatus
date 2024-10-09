@@ -113,7 +113,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.enum(flyRegions))
+        z.array(z.enum(flyRegions)),
       )
       .default([])
       .openapi({
@@ -161,7 +161,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([])
+        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
       )
       .nullish()
       .openapi({

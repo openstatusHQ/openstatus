@@ -20,7 +20,7 @@ export const numberCompare = z.enum(["eq", "not_eq", "gt", "gte", "lt", "lte"]);
 function evaluateNumber(
   value: number,
   compare: z.infer<typeof numberCompare>,
-  target: number
+  target: number,
 ): AssertionResult {
   switch (compare) {
     case "eq":
@@ -78,7 +78,7 @@ function evaluateNumber(
 function evaluateString(
   value: string,
   compare: z.infer<typeof stringCompare>,
-  target: string
+  target: string,
 ): AssertionResult {
   switch (compare) {
     case "contains":
@@ -170,7 +170,7 @@ export const statusAssertion = base.merge(
     type: z.literal("status"),
     compare: numberCompare,
     target: z.number().int().positive(),
-  })
+  }),
 );
 
 export const headerAssertion = base.merge(
@@ -179,7 +179,7 @@ export const headerAssertion = base.merge(
     compare: stringCompare,
     key: z.string(),
     target: z.string(),
-  })
+  }),
 );
 
 export const textBodyAssertion = base.merge(
@@ -187,7 +187,7 @@ export const textBodyAssertion = base.merge(
     type: z.literal("textBody"),
     compare: stringCompare,
     target: z.string(),
-  })
+  }),
 );
 
 export const jsonBodyAssertion = base.merge(
@@ -196,7 +196,7 @@ export const jsonBodyAssertion = base.merge(
     path: z.string(), // https://www.npmjs.com/package/jsonpath-plus
     compare: stringCompare,
     target: z.string(),
-  })
+  }),
 );
 
 export const assertion = z.discriminatedUnion("type", [
@@ -217,7 +217,7 @@ export class StatusAssertion implements Assertion {
     const { success, message } = evaluateNumber(
       req.status,
       this.schema.compare,
-      this.schema.target
+      this.schema.target,
     );
     if (success) {
       return { success };
@@ -237,7 +237,7 @@ export class HeaderAssertion {
     const { success, message } = evaluateString(
       req.header[this.schema.key],
       this.schema.compare,
-      this.schema.target
+      this.schema.target,
     );
     if (success) {
       return { success };
@@ -257,7 +257,7 @@ export class TextBodyAssertion {
     const { success, message } = evaluateString(
       req.body,
       this.schema.compare,
-      this.schema.target
+      this.schema.target,
     );
     if (success) {
       return { success };
@@ -279,7 +279,7 @@ export class JsonBodyAssertion implements Assertion {
       const { success, message } = evaluateString(
         value,
         this.schema.compare,
-        this.schema.target
+        this.schema.target,
       );
       if (success) {
         return { success };
