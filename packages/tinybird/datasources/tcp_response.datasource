@@ -9,8 +9,8 @@ SCHEMA >
     `workspaceId` Int32 `json:$.workspaceId`,
     `latency` Int64 `json:$.latency`,
     `errorMessage` Nullable(String) `json:$.errorMessage`,
-    `error` Int16 `json:$.error`
-    `trigger` Nullable(String) `json:$.trigger`,
+    `error` Int16 `json:$.error`,
+    `trigger` Nullable(String) `json:$.trigger`
 
 
 ENGINE "MergeTree"
