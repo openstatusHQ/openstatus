@@ -46,6 +46,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
+    console.log("input", input);
     if (!limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
@@ -80,13 +81,13 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
+        timeout: input.timeout || 45000,
       })
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
 
     const data = MonitorSchema.parse(_newMonitor);
-
     return c.json(data, 200);
   });
 }

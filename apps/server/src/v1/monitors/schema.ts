@@ -113,7 +113,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.enum(flyRegions)),
+        z.array(z.enum(flyRegions))
       )
       .default([])
       .openapi({
@@ -161,7 +161,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).default([])
       )
       .nullish()
       .openapi({
@@ -170,6 +170,7 @@ export const MonitorSchema = z
       }),
     assertions: z
       .preprocess((val) => {
+        console.log("val", val);
         try {
           if (Array.isArray(val)) return val;
           if (String(val).length > 0) {
@@ -202,7 +203,7 @@ export const MonitorSchema = z
     degradedAfter: z.number().nullish().openapi({
       description: "The time after the monitor is considered degraded",
     }),
-    timeout: z.number().nullish().openapi({
+    timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request",
     }),
   })
