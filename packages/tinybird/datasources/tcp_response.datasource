@@ -4,11 +4,14 @@ SCHEMA >
     `monitorId` Int32 `json:$.monitorId`,
     `region` String `json:$.region`,
     `timestamp` Int64 `json:$.timestamp`,
+    `cronTimestamp` Int64 `json:$.timestamp`,
     `timing` String `json:$.timing`,
     `workspaceId` Int32 `json:$.workspaceId`,
     `latency` Int64 `json:$.latency`,
     `errorMessage` Nullable(String) `json:$.errorMessage`,
     `error` Int16 `json:$.error`
+    `trigger` Nullable(String) `json:$.trigger`,
+
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(timestamp))"

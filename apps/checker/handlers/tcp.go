@@ -28,12 +28,14 @@ type TCPData struct {
 	Timing       string `json:"timing"`
 	ErrorMessage string `json:"errorMessage"`
 	Region       string `json:"region"`
+	Trigger      string `json:"trigger"`
 
-	RequestId   int64 `json:"requestId,omitempty"`
-	WorkspaceID int64 `json:"workspaceId"`
-	MonitorID   int64 `json:"monitorId"`
-	Timestamp   int64 `json:"timestamp"`
-	Latency     int64 `json:"latency"`
+	RequestId     int64 `json:"requestId,omitempty"`
+	WorkspaceID   int64 `json:"workspaceId"`
+	MonitorID     int64 `json:"monitorId"`
+	Timestamp     int64 `json:"timestamp"`
+	Latency       int64 `json:"latency"`
+	CronTimestamp int64 `json:"cronTimestamp"`
 
 	Error uint8 `json:"error"`
 }
@@ -101,14 +103,16 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		latency := res.TCPDone - res.TCPStart
 
 		data := TCPData{
-			WorkspaceID:  workspaceId,
-			Timestamp:    req.CronTimestamp,
-			Error:        0,
-			ErrorMessage: "",
-			Region:       h.Region,
-			MonitorID:    monitorId,
-			Timing:       string(timingAsString),
-			Latency:      latency,
+			WorkspaceID:   workspaceId,
+			Timestamp:     res.TCPStart,
+			Error:         0,
+			ErrorMessage:  "",
+			Region:        h.Region,
+			MonitorID:     monitorId,
+			Timing:        string(timingAsString),
+			Latency:       latency,
+			CronTimestamp: req.CronTimestamp,
+			Trigger:       "cron",
 		}
 
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
@@ -159,12 +163,13 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
 		if err := h.TbClient.SendEvent(ctx, TCPData{
-			WorkspaceID:  workspaceId,
-			Timestamp:    req.CronTimestamp,
-			ErrorMessage: err.Error(),
-			Region:       h.Region,
-			MonitorID:    monitorId,
-			Error:        1,
+			WorkspaceID:   workspaceId,
+			CronTimestamp: req.CronTimestamp,
+			ErrorMessage:  err.Error(),
+			Region:        h.Region,
+			MonitorID:     monitorId,
+			Error:         1,
+			Trigger:       "cron",
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
@@ -265,15 +270,17 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		latency := res.TCPDone - res.TCPStart
 
 		data := TCPData{
-			WorkspaceID:  workspaceId,
-			Timestamp:    req.CronTimestamp,
-			Error:        0,
-			ErrorMessage: "",
-			Region:       h.Region,
-			MonitorID:    monitorId,
-			Timing:       string(timingAsString),
-			Latency:      latency,
-			RequestId:    req.RequestId,
+			WorkspaceID:   workspaceId,
+			CronTimestamp: req.CronTimestamp,
+			Timestamp:     res.TCPStart,
+			Error:         0,
+			ErrorMessage:  "",
+			Region:        h.Region,
+			MonitorID:     monitorId,
+			Timing:        string(timingAsString),
+			Latency:       latency,
+			RequestId:     req.RequestId,
+			Trigger:       "API",
 		}
 
 		if req.RequestId != 0 {
@@ -287,13 +294,14 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil && req.RequestId != 0 {
 		if err := h.TbClient.SendEvent(ctx, TCPData{
-			WorkspaceID:  workspaceId,
-			Timestamp:    req.CronTimestamp,
-			ErrorMessage: err.Error(),
-			Region:       h.Region,
-			MonitorID:    monitorId,
-			Error:        1,
-			RequestId:    req.RequestId,
+			WorkspaceID:   workspaceId,
+			CronTimestamp: req.CronTimestamp,
+			ErrorMessage:  err.Error(),
+			Region:        h.Region,
+			MonitorID:     monitorId,
+			Error:         1,
+			RequestId:     req.RequestId,
+			Trigger:       "api",
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
