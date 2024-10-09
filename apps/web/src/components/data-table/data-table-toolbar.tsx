@@ -1,7 +1,7 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { X } from "lucide-react";
+import { Clock, Network, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@openstatus/ui/src/components/button";
@@ -62,14 +62,26 @@ export function DataTableToolbar<TData>({
             ]}
           />
         )}
-        <DataTableFacetedInputDropdown
-          title="Latency"
-          column={table.getColumn("latency")}
-          options={[
-            { value: "min", label: "Min." },
-            { value: "max", label: "Max." },
-          ]}
-        />
+        {table.getColumn("latency") && (
+          <DataTableFacetedInputDropdown
+            title="Latency"
+            column={table.getColumn("latency")}
+            options={[
+              { value: "min", label: "Min." },
+              { value: "max", label: "Max." },
+            ]}
+          />
+        )}
+        {table.getColumn("trigger") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("trigger")}
+            title="Trigger"
+            options={[
+              { value: "cron", label: "Cronjob", icon: Clock },
+              { value: "api", label: "API", icon: Network },
+            ]}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

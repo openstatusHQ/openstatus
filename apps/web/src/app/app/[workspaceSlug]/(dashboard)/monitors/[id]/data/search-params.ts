@@ -1,4 +1,4 @@
-import { periods } from "@/lib/monitor/utils";
+import { periods, triggers } from "@/lib/monitor/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import {
   createSearchParamsCache,
@@ -18,5 +18,6 @@ export const searchParamsParsers = {
   regions: parseAsArrayOf(parseAsStringLiteral(flyRegions)),
   pageSize: parseAsInteger.withDefault(10),
   pageIndex: parseAsInteger.withDefault(0),
+  trigger: parseAsArrayOf(parseAsStringLiteral(triggers)),
 };
 export const searchParamsCache = createSearchParamsCache(searchParamsParsers);

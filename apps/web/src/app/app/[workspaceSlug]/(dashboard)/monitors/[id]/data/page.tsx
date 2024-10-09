@@ -52,6 +52,7 @@ export default async function Page({
           { id: "statusCode", value: search.statusCode },
           { id: "region", value: search.regions },
           { id: "error", value: search.error },
+          { id: "trigger", value: search.trigger },
         ].filter((v) => v.value !== null)}
         pagination={{
           pageIndex: search.pageIndex,

@@ -21,6 +21,7 @@ import { ResponseDetailTabs } from "@/components/ping-response-analysis/response
 import { api } from "@/trpc/client";
 import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { z } from "zod";
+import type { Trigger } from "@/lib/monitor/utils";
 
 // EXAMPLE: get the type of the response of the endpoint
 // biome-ignore lint/correctness/noUnusedVariables: <explanation>
@@ -38,6 +39,7 @@ export type Monitor = {
   cronTimestamp: number | null;
   error: boolean;
   assertions?: string | null;
+  trigger: Trigger;
 };
 
 export function DataTableWrapper({
@@ -82,7 +84,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       url: row.original.url,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    }),
+    })
   );
 
   if (!data || data.length === 0) return <p>Something went wrong</p>;
