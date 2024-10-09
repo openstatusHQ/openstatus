@@ -88,6 +88,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
+        timeout: input.timeout || 45000,
       })
       .returning()
       .get();
