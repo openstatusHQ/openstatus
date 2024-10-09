@@ -28,6 +28,7 @@ type TCPData struct {
 	Timing       string `json:"timing"`
 	ErrorMessage string `json:"errorMessage"`
 	Region       string `json:"region"`
+	Trigger      string `json:"trigger"`
 
 	RequestId     int64 `json:"requestId,omitempty"`
 	WorkspaceID   int64 `json:"workspaceId"`
@@ -111,6 +112,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Timing:        string(timingAsString),
 			Latency:       latency,
 			CronTimestamp: req.CronTimestamp,
+			Trigger:       "cron",
 		}
 
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
@@ -167,6 +169,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Region:        h.Region,
 			MonitorID:     monitorId,
 			Error:         1,
+			Trigger:       "cron",
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
@@ -277,6 +280,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			Timing:        string(timingAsString),
 			Latency:       latency,
 			RequestId:     req.RequestId,
+			Trigger:       "API",
 		}
 
 		if req.RequestId != 0 {
@@ -297,6 +301,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			MonitorID:     monitorId,
 			Error:         1,
 			RequestId:     req.RequestId,
+			Trigger:       "api",
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}

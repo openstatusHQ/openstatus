@@ -10,6 +10,8 @@ SCHEMA >
     `latency` Int64 `json:$.latency`,
     `errorMessage` Nullable(String) `json:$.errorMessage`,
     `error` Int16 `json:$.error`
+    `trigger` Nullable(String) `json:$.trigger`,
+
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(fromUnixTimestamp64Milli(timestamp))"
