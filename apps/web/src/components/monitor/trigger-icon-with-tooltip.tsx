@@ -1,3 +1,4 @@
+import type { Trigger } from "@/lib/monitor/utils";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
@@ -6,7 +7,6 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/src/components/tooltip";
 import { type IconProps, Icons, type ValidIcon } from "../icons";
-import { Trigger } from "@/lib/monitor/utils";
 
 function getIcon(type: Trigger): ValidIcon {
   switch (type) {

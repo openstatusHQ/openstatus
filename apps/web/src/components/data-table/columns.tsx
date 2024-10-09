@@ -13,10 +13,10 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
+import type { Trigger } from "@/lib/monitor/utils";
+import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
-import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
-import type { Trigger } from "@/lib/monitor/utils";
 
 export const columns: ColumnDef<Ping>[] = [
   {
