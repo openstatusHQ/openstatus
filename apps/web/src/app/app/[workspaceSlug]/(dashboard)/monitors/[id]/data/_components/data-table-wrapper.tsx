@@ -84,7 +84,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       url: row.original.url,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    })
+    }),
   );
 
   if (!data || data.length === 0) return <p>Something went wrong</p>;
