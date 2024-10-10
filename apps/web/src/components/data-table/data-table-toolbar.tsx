@@ -1,7 +1,7 @@
 "use client";
 
 import type { Table } from "@tanstack/react-table";
-import { Clock, Network, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { Button } from "@openstatus/ui/src/components/button";
@@ -10,6 +10,8 @@ import { flyRegionsDict } from "@openstatus/utils";
 import { codesDict } from "@/data/code-dictionary";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableFacetedInputDropdown } from "./data-table-faceted-input-dropdown";
+import { triggerDict } from "@/data/trigger-dictionary";
+import { Icons } from "@/components/icons";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
@@ -76,10 +78,14 @@ export function DataTableToolbar<TData>({
           <DataTableFacetedFilter
             column={table.getColumn("trigger")}
             title="Trigger"
-            options={[
-              { value: "cron", label: "Cronjob", icon: Clock },
-              { value: "api", label: "API", icon: Network },
-            ]}
+            options={(["cron", "api"] as const).map((key) => {
+              const { label, icon, value } = triggerDict[key];
+              return {
+                label,
+                value,
+                icon: Icons[icon],
+              };
+            })}
           />
         )}
         {isFiltered && (

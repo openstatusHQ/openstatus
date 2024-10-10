@@ -6,18 +6,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/src/components/tooltip";
-import { type IconProps, Icons, type ValidIcon } from "../icons";
 
-function getIcon(type: Trigger): ValidIcon {
-  switch (type) {
-    case "cron":
-      return "clock";
-    case "api":
-      return "network";
-    default:
-      return "cog";
-  }
-}
+import { type IconProps, Icons } from "@/components/icons";
+import { triggerDict } from "@/data/trigger-dictionary";
 
 interface TriggerIconWithTooltipProps extends IconProps {
   triggerType: Trigger;
@@ -28,8 +19,8 @@ export function TriggerIconWithTooltip({
   className,
   ...props
 }: TriggerIconWithTooltipProps) {
-  const icon = getIcon(triggerType);
-  const Icon = Icons[icon];
+  const config = triggerDict[triggerType];
+  const Icon = Icons[config.icon];
   return (
     <TooltipProvider delayDuration={50}>
       <Tooltip>
@@ -37,7 +28,7 @@ export function TriggerIconWithTooltip({
           <Icon className={cn("h-4 w-4", className)} {...props} />
         </TooltipTrigger>
         <TooltipContent>
-          <p className="uppercase">{triggerType}</p>
+          <p>{config.label}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
