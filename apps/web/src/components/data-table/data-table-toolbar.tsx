@@ -7,11 +7,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@openstatus/ui/src/components/button";
 import { flyRegionsDict } from "@openstatus/utils";
 
+import { Icons } from "@/components/icons";
 import { codesDict } from "@/data/code-dictionary";
+import { triggerDict } from "@/data/trigger-dictionary";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableFacetedInputDropdown } from "./data-table-faceted-input-dropdown";
-import { triggerDict } from "@/data/trigger-dictionary";
-import { Icons } from "@/components/icons";
 
 interface DataTableToolbarProps<TData> {
   table: Table<TData>;
