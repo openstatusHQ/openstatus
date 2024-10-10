@@ -7,7 +7,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@openstatus/ui/src/components/button";
 import { flyRegionsDict } from "@openstatus/utils";
 
+import { Icons } from "@/components/icons";
 import { codesDict } from "@/data/code-dictionary";
+import { triggerDict } from "@/data/trigger-dictionary";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableFacetedInputDropdown } from "./data-table-faceted-input-dropdown";
 
@@ -62,14 +64,30 @@ export function DataTableToolbar<TData>({
             ]}
           />
         )}
-        <DataTableFacetedInputDropdown
-          title="Latency"
-          column={table.getColumn("latency")}
-          options={[
-            { value: "min", label: "Min." },
-            { value: "max", label: "Max." },
-          ]}
-        />
+        {table.getColumn("latency") && (
+          <DataTableFacetedInputDropdown
+            title="Latency"
+            column={table.getColumn("latency")}
+            options={[
+              { value: "min", label: "Min." },
+              { value: "max", label: "Max." },
+            ]}
+          />
+        )}
+        {table.getColumn("trigger") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("trigger")}
+            title="Trigger"
+            options={(["cron", "api"] as const).map((key) => {
+              const { label, icon, value } = triggerDict[key];
+              return {
+                label,
+                value,
+                icon: Icons[icon],
+              };
+            })}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

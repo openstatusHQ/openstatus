@@ -18,6 +18,7 @@ import { columns } from "@/components/data-table/columns";
 import { DataTable } from "@/components/data-table/data-table";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
+import type { Trigger } from "@/lib/monitor/utils";
 import { api } from "@/trpc/client";
 import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { z } from "zod";
@@ -38,6 +39,7 @@ export type Monitor = {
   cronTimestamp: number | null;
   error: boolean;
   assertions?: string | null;
+  trigger: Trigger | null;
 };
 
 export function DataTableWrapper({

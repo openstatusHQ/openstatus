@@ -95,6 +95,7 @@ export const tbBuildResponseList = z.object({
   region: monitorFlyRegionSchema,
   message: z.string().nullable().optional(),
   assertions: z.string().nullable().optional(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });
 
 /**

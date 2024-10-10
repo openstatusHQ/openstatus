@@ -13,6 +13,8 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
+import type { Trigger } from "@/lib/monitor/utils";
+import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
@@ -102,6 +104,17 @@ export const columns: ColumnDef<Ping>[] = [
           </span>
         </div>
       );
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
+    },
+  },
+  {
+    accessorKey: "trigger",
+    header: () => null,
+    cell: ({ row }) => {
+      const value = row.getValue("trigger") as Trigger;
+      return <TriggerIconWithTooltip triggerType={value} />;
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));

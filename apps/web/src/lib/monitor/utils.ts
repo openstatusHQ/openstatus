@@ -12,10 +12,12 @@ import type { MonitorPeriodicity } from "@openstatus/db/src/schema";
 export const periods = ["1h", "1d", "3d", "7d", "14d"] as const; // If neeeded (e.g. Pro plans), "7d", "30d"
 export const quantiles = ["p99", "p95", "p90", "p75", "p50"] as const;
 export const intervals = ["1m", "10m", "30m", "1h"] as const;
+export const triggers = ["cron", "api"] as const;
 
 export type Period = (typeof periods)[number];
 export type Quantile = (typeof quantiles)[number];
 export type Interval = (typeof intervals)[number];
+export type Trigger = (typeof triggers)[number];
 
 export function getDateByPeriod(period: Period) {
   switch (period) {

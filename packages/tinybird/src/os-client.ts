@@ -239,6 +239,11 @@ export class OSTinybird {
             workspaceId: z.string(),
             cronTimestamp: z.number().int().nullable().default(Date.now()),
             assertions: z.string().nullable().optional(),
+            trigger: z
+              .enum(["cron", "api"])
+              .optional()
+              .nullable()
+              .default("cron"),
           }),
           opts: {
             cache: "no-store",
