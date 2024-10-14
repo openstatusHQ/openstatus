@@ -10,6 +10,6 @@ export const monitorRun = sqliteTable("monitor_run", {
   monitorId: integer("monitor_id").references(() => monitor.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });
