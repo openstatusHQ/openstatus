@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { and, eq, isNull } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { monitorRunTable } from "@openstatus/db/src/schema";
+import { monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
@@ -82,7 +82,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     }
 
     const newRun = await db
-      .insert(monitorRunTable)
+      .insert(monitorRun)
       .values({ monitorId: row.id, workspaceId: row.workspaceId })
       .returning();
 

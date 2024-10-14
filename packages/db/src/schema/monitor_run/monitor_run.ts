@@ -3,7 +3,7 @@ import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { monitor } from "../monitors";
 import { workspace } from "../workspaces/workspace";
 
-export const monitorRunTable = sqliteTable("monitor_run", {
+export const monitorRun = sqliteTable("monitor_run", {
   id: integer("id").primaryKey(),
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
