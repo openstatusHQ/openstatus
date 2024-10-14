@@ -14,3 +14,4 @@ export * from "./monitor_tags";
 export * from "./applications";
 export * from "./maintenances";
 export * from "./check";
+export * from "./monitor_run";

@@ -124,7 +124,7 @@ importers:
         version: link:../../packages/utils
       '@scalar/hono-api-reference':
         specifier: 0.5.131
-        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.5.2)(zod@3.23.8)
@@ -1084,6 +1084,9 @@ importers:
 
   packages/utils:
     devDependencies:
+      '@openstatus/assertions':
+        specifier: workspace:*
+        version: link:../assertions
       '@openstatus/db':
         specifier: workspace:*
         version: link:../db
@@ -1093,6 +1096,9 @@ importers:
       typescript:
         specifier: 5.5.2
         version: 5.5.2
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
 
 packages:
 
@@ -12105,10 +12111,6 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
 
-  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))':
-    dependencies:
-      tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
-
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))':
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
@@ -13654,9 +13656,9 @@ snapshots:
     optionalDependencies:
       rollup: 2.78.0
 
-  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/draggable': 0.1.4(typescript@5.5.2)
@@ -13692,11 +13694,11 @@ snapshots:
       - typescript
       - vitest
 
-  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
       '@floating-ui/vue': 1.1.1(vue@3.4.31(typescript@5.5.2))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
-      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/oas-utils': 0.2.26(typescript@5.5.2)
       '@scalar/openapi-parser': 0.7.2
@@ -13781,9 +13783,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
       hono: 4.5.3
     transitivePeerDependencies:
       - '@jest/globals'

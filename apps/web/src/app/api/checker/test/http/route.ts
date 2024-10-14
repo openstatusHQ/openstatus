@@ -4,7 +4,7 @@ import { z } from "zod";
 import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 
 import { checkRegion } from "@/components/ping-response-analysis/utils";
-import { httpPayloadSchema } from "../../schema";
+import { httpPayloadSchema } from "@openstatus/utils";
 import { isAnInvalidTestUrl } from "../../utils";
 
 export const runtime = "edge";
