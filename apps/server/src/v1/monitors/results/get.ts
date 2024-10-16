@@ -1,18 +1,30 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
-import { monitorRun } from "@openstatus/db/src/schema";
+import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
-import { Redis } from "@openstatus/upstash";
 
+import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { HTTPException } from "hono/http-exception";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import { isoDate } from "../../utils";
 import type { monitorsApi } from "../index";
 import { ParamsSchema } from "../schema";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+
+const timingSchema = z.object({
+  dnsStart: z.number(),
+  dnsDone: z.number(),
+  connectStart: z.number(),
+  connectDone: z.number(),
+  tlsHandshakeStart: z.number(),
+  tlsHandshakeDone: z.number(),
+  firstByteStart: z.number(),
+  firstByteDone: z.number(),
+  transferStart: z.number(),
+  transferDone: z.number(),
+});
 
 const getMonitorStats = createRoute({
   method: "get",
@@ -31,7 +43,29 @@ const getMonitorStats = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.string(),
+            data: z.object({
+              latency: z.number().int(), // in ms
+              statusCode: z.number().int().nullable().default(null),
+              monitorId: z.string().default(""),
+              url: z.string().url().optional(),
+              error: z
+                .number()
+                .default(0)
+                .transform((val) => val !== 0),
+              region: z.enum(flyRegions),
+              cronTimestamp: z.number().int().optional(),
+              message: z.string().nullable().optional(),
+              timing: z
+                .string()
+                .nullable()
+                .optional()
+                .transform((val) => {
+                  if (!val) return null;
+                  const value = timingSchema.safeParse(JSON.parse(val));
+                  if (value.success) return value.data;
+                  return null;
+                }),
+            }),
           }),
         },
       },
@@ -46,26 +80,41 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     const workspaceId = c.get("workspaceId");
     const { id, resultId } = c.req.valid("param");
 
-    const _monitor = await db
+    const _monitorRun = await db
       .select()
       .from(monitorRun)
       .where(
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
+      .get();
+
+    if (!_monitorRun || !_monitorRun?.runnedAt) {
+      throw new HTTPException(404, { message: "Not Found" });
+    }
+
+    const _monitor = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, Number(id)))
       .get();
 
     if (!_monitor) {
       throw new HTTPException(404, { message: "Not Found" });
     }
-
     // Fetch result from tb pipe
-
+    const data = await tb.getResultForOnDemandCheckHttp()({
+      monitorId: _monitor.id,
+      timestamp: _monitorRun.runnedAt?.getTime(),
+      url: _monitor.url,
+    });
     // return array of results
-
-    return c.json({ data: "undefined" }, 200);
+    if (!data) {
+      throw new HTTPException(404, { message: "Not Found" });
+    }
+    return c.json({ data }, 200);
   });
 }
