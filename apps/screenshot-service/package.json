@@ -13,7 +13,7 @@
     "@openstatus/utils": "workspace:^",
     "@t3-oss/env-core": "0.7.1",
     "@upstash/qstash": "2.6.2",
-    "drizzle-orm": "0.35.1",
+    "drizzle-orm": "0.34.1",
     "hono": "4.5.3",
     "playwright": "1.46.0",
     "zod": "3.23.8"
