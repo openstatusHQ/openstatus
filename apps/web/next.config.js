@@ -12,6 +12,7 @@ const nextConfig = {
       "@react-email/render",
       "@google-cloud/tasks",
       "@libsql/client",
+      "@libsql/hrana-client"
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
