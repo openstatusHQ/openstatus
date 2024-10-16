@@ -11,7 +11,7 @@ const nextConfig = {
       "@react-email/components",
       "@react-email/render",
       "@google-cloud/tasks",
-      // "@libsql/client",
+      "@libsql/client",
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
