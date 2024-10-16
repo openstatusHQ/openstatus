@@ -9,7 +9,9 @@ export const monitorRun = sqliteTable("monitor_run", {
   workspaceId: integer("workspace_id").references(() => workspace.id),
   monitorId: integer("monitor_id").references(() => monitor.id),
 
+  runnedAt: integer("runned_at", { mode: "timestamp" }),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });

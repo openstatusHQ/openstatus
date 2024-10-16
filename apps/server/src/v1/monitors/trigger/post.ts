@@ -49,8 +49,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 
@@ -81,16 +81,20 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
+    const timestamp = Date.now();
+
     const newRun = await db
       .insert(monitorRun)
-      .values({ monitorId: row.id, workspaceId: row.workspaceId })
+      .values({
+        monitorId: row.id,
+        workspaceId: row.workspaceId,
+        runnedAt: new Date(timestamp),
+      })
       .returning();
 
-    if (!newRun[0].createdAt) {
+    if (!newRun[0]) {
       throw new HTTPException(400, { message: "Something went wrong" });
     }
-
-    const timestamp = newRun[0].createdAt.getTime();
 
     const allResult = [];
     for (const region of monitorData.regions) {
