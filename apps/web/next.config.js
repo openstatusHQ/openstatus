@@ -7,12 +7,12 @@ const nextConfig = {
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
     serverComponentsExternalPackages: [
-      "libsql",
+      // "libsql",
       "@react-email/components",
       "@react-email/render",
       "@google-cloud/tasks",
-      "@libsql/client",
-      "@libsql/hrana-client",
+      // "@libsql/client",
+      // "@libsql/hrana-client",
       // "better-sqlite3"
     ],
     optimizePackageImports: ["@tremor/react"],
