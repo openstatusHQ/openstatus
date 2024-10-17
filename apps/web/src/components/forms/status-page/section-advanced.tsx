@@ -33,8 +33,8 @@ import {
 } from "@openstatus/ui";
 
 import { BarDescription } from "@/components/tracker/tracker";
-import { SectionHeader } from "../shared/section-header";
 import { MousePointer2 } from "lucide-react";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertPage>;
