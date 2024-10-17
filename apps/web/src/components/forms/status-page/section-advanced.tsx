@@ -34,6 +34,7 @@ import {
 
 import { BarDescription } from "@/components/tracker/tracker";
 import { SectionHeader } from "../shared/section-header";
+import { MousePointer2 } from "lucide-react";
 
 interface Props {
   form: UseFormReturn<InsertPage>;
@@ -165,54 +166,53 @@ export function SectionAdvanced({ form }: Props) {
           </FormItem>
         )}
       />
-      <SectionHeader
-        title="Bar Settings"
-        description="You can display or hide the amount of scheduled request an entpoint gets per day."
-        className="md:col-span-full"
-      />
-      <FormField
-        control={form.control}
-        name="passwordProtected" // FIXME: change to displayNumbers
-        render={({ field }) => (
-          <FormItem className="flex flex-row items-start space-x-3 space-y-0 md:col-span-2">
-            <FormControl>
-              <Checkbox
-                disabled={field.disabled}
-                checked={field.value ?? false}
-                onCheckedChange={field.onChange}
-              />
-            </FormControl>
-            <div className="space-y-1 leading-none">
-              <FormLabel>Show number of request</FormLabel>
-              <FormDescription>
-                Share the total and failed amount of scheduled request to your
-                endpoint.
-              </FormDescription>
-            </div>
-          </FormItem>
-        )}
-      />
-      <TooltipProvider>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <div className="w-auto max-w-[16rem] md:ml-auto">
-              <BarDescription
-                label="Operational"
-                day={new Date().toISOString()}
-                count={5600}
-                ok={5569}
-                // FIXME: rename to `displayValues`
-                displayNumbers={!!form.getValues("passwordProtected")}
-                barClassName="bg-status-operational"
-                className="md:col-span-1 bg-popover text-popover-foreground rounded-md border p-2 shadow-md"
-              />
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="left">
-            <p>Hover Example</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className="grid w-full gap-4 md:grid-rows-2 md:grid-cols-3 md:col-span-full">
+        <SectionHeader
+          title="Bar Settings"
+          description="You can display or hide the amount of scheduled request an entpoint gets per day."
+          className="md:col-span-2"
+        />
+        <div className="group md:row-span-2 flex flex-col justify-center gap-1 border border-dashed rounded-md p-3">
+          <div className="flex flex-row gap-2 items-center justify-center text-muted-foreground group-hover:text-foreground">
+            <MousePointer2 className="h-3 w-3" />
+            <p className="text-sm">Hover State</p>
+          </div>
+          <div className="max-w-[15rem] mx-auto">
+            <BarDescription
+              label="Operational"
+              day={new Date().toISOString()}
+              count={5600}
+              ok={5569}
+              // FIXME: rename to `displayValues`
+              displayNumbers={!!form.getValues("passwordProtected")}
+              barClassName="bg-status-operational"
+              className="md:col-span-1 bg-popover text-popover-foreground rounded-md border p-2 shadow-md"
+            />
+          </div>
+        </div>
+        <FormField
+          control={form.control}
+          name="passwordProtected" // FIXME: change to displayNumbers
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0 md:col-span-2">
+              <FormControl>
+                <Checkbox
+                  disabled={field.disabled}
+                  checked={field.value ?? false}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Show number of request</FormLabel>
+                <FormDescription>
+                  Share the total and failed amount of scheduled request to your
+                  endpoint.
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
       <AlertDialog open={open} onOpenChange={(value) => setOpen(value)}>
         <AlertDialogContent>
           <AlertDialogHeader>
