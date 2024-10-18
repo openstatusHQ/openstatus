@@ -8,7 +8,6 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: [
       "libsql",
-      "@libsql",
       "@react-email/components",
       "@react-email/render",
       "@google-cloud/tasks",
