@@ -54,7 +54,7 @@ importers:
         version: 2.6.2
       drizzle-orm:
         specifier: 0.35.2
-        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -552,16 +552,16 @@ importers:
     dependencies:
       '@libsql/client':
         specifier: 0.14.0
-        version: 0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
         specifier: 0.7.0
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
       drizzle-orm:
         specifier: 0.35.2
-        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -576,11 +576,11 @@ importers:
         specifier: 20.8.0
         version: 20.8.0
       better-sqlite3:
-        specifier: 11.1.2
-        version: 11.1.2
+        specifier: 11.4.0
+        version: 11.4.0
       bufferutil:
-        specifier: 4.0.7
-        version: 4.0.7
+        specifier: 4.0.8
+        version: 4.0.8
       drizzle-kit:
         specifier: 0.26.2
         version: 0.26.2
@@ -5437,8 +5437,8 @@ packages:
   before-after-hook@2.2.3:
     resolution: {integrity: sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==}
 
-  better-sqlite3@11.1.2:
-    resolution: {integrity: sha512-gujtFwavWU4MSPT+h9B+4pkvZdyOUkH54zgLdIrMmmmd4ZqiBIrRNBzNzYVFO417xo882uP5HBu4GjOfaSrIQw==}
+  better-sqlite3@11.4.0:
+    resolution: {integrity: sha512-B7C9y2aSvtTwDJIz34iUxMjQWmbAYFmpq0Rwf9weYTtx6jUYsUKVt5ePPYlGyLVBoySppPa41PBrzl1ipMhG7A==}
 
   bignumber.js@9.1.2:
     resolution: {integrity: sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==}
@@ -5498,10 +5498,6 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
-
-  bufferutil@4.0.7:
-    resolution: {integrity: sha512-kukuqc39WOHtdxtw4UScxF/WVnMFVSQVKhtx3AjZJzhd0RGZZldcrfSEbVsWWe6KNH253574cq5F+wpv0G9pJw==}
-    engines: {node: '>=6.14.2'}
 
   bufferutil@4.0.8:
     resolution: {integrity: sha512-4T53u4PdgsXqKaIctwF8ifXlRTTmEPJ8iEPWFdGZvcf7sbwYo6FKFEX9eNNAnzFZ7EzJAQ3CJeOtCRA4rDp7Pw==}
@@ -12284,10 +12280,10 @@ snapshots:
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.1
 
-  '@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+  '@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)':
     dependencies:
       '@libsql/core': 0.14.0
-      '@libsql/hrana-client': 0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@libsql/hrana-client': 0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       js-base64: 3.7.5
       libsql: 0.4.5
       promise-limit: 2.7.0
@@ -12316,10 +12312,10 @@ snapshots:
   '@libsql/darwin-x64@0.4.5':
     optional: true
 
-  '@libsql/hrana-client@0.7.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+  '@libsql/hrana-client@0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)':
     dependencies:
       '@libsql/isomorphic-fetch': 0.3.1
-      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       js-base64: 3.7.5
       node-fetch: 3.3.2
     transitivePeerDependencies:
@@ -12338,10 +12334,10 @@ snapshots:
 
   '@libsql/isomorphic-fetch@0.3.1': {}
 
-  '@libsql/isomorphic-ws@0.1.5(bufferutil@4.0.7)(utf-8-validate@6.0.3)':
+  '@libsql/isomorphic-ws@0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.3)':
     dependencies:
       '@types/ws': 8.5.10
-      ws: 8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      ws: 8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -15306,7 +15302,7 @@ snapshots:
 
   before-after-hook@2.2.3: {}
 
-  better-sqlite3@11.1.2:
+  better-sqlite3@11.4.0:
     dependencies:
       bindings: 1.5.0
       prebuild-install: 7.1.1
@@ -15388,14 +15384,9 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
-  bufferutil@4.0.7:
-    dependencies:
-      node-gyp-build: 4.6.1
-
   bufferutil@4.0.8:
     dependencies:
       node-gyp-build: 4.8.1
-    optional: true
 
   builtins@5.0.1:
     dependencies:
@@ -15957,29 +15948,29 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240512.0
-      '@libsql/client': 0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3)
+      '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@opentelemetry/api': 1.8.0
       '@types/react': 18.3.3
-      better-sqlite3: 11.1.2
+      better-sqlite3: 11.4.0
       bun-types: 1.1.8
       react: 18.3.1
 
-  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240512.0
       '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
       '@opentelemetry/api': 1.8.0
       '@types/react': 18.3.3
-      better-sqlite3: 11.1.2
+      better-sqlite3: 11.4.0
       bun-types: 1.1.8
       react: 18.3.1
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.7)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.1.2)(bun-types@1.1.8)(react@18.3.1)
+      drizzle-orm: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       zod: 3.23.8
 
   duplexify@4.1.2:
@@ -18667,8 +18658,7 @@ snapshots:
 
   node-gyp-build@4.6.1: {}
 
-  node-gyp-build@4.8.1:
-    optional: true
+  node-gyp-build@4.8.1: {}
 
   node-plop@0.26.3:
     dependencies:
@@ -20860,9 +20850,9 @@ snapshots:
       imurmurhash: 0.1.4
       signal-exit: 3.0.7
 
-  ws@8.17.0(bufferutil@4.0.7)(utf-8-validate@6.0.3):
+  ws@8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.3):
     optionalDependencies:
-      bufferutil: 4.0.7
+      bufferutil: 4.0.8
       utf-8-validate: 6.0.3
 
   ws@8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.4):
