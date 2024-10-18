@@ -19,6 +19,7 @@ export default async function AppLayout({
   if (workspaces.find((w) => w.slug === workspaceSlug) === undefined)
     return notFound();
 
+  // TODO: create a WorkspaceContext to store the `Workspace` object including the `slug` and `plan.limits`
   return (
     <div className="container relative mx-auto flex min-h-screen w-full flex-col items-center justify-center gap-6 p-4">
       <AppHeader />
