@@ -9,7 +9,13 @@ export async function createUser(data: AdapterUser) {
 
   const newUser = await db
     .insert(user)
-    .values({ email: rest.email, photoUrl: rest.image, name: rest.name })
+    .values({
+      email: rest.email,
+      photoUrl: rest.image,
+      name: rest.name,
+      firstName: rest.firstName,
+      lastName: rest.lastName,
+    })
     .returning({
       id: user.id,
       email: user.email,
