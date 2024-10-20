@@ -1,0 +1,1 @@
+ALTER TABLE `page` ADD `display_request_numbers` integer DEFAULT true;

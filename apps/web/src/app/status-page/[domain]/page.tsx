@@ -48,7 +48,7 @@ export default async function Page({ params }: Props) {
           statusReports={page.statusReports}
           incidents={page.incidents}
           maintenances={page.maintenances}
-          displayNumbers={undefined} // FIXME: page.displayNumbers OR return page
+          displayNumbers={!!page.displayRequestNumbers}
         />
       ) : (
         <EmptyState

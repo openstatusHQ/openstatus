@@ -110,7 +110,7 @@ export function Tracker({
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {tracker.days.map((props, i) => {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            return <Bar key={i} {...props} />;
+            return <Bar key={i} displayNumbers={displayNumbers} {...props} />;
           })}
         </div>
       </div>
@@ -170,7 +170,7 @@ export const Bar = ({
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div className={cn(rootClassName, className)} />
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-auto max-w-[16rem] p-2">
+      <HoverCardContent side="top" className="w-auto p-2">
         {blacklist ? (
           <p className="text-muted-foreground text-sm">{blacklist}</p>
         ) : (
@@ -221,7 +221,7 @@ export function BarDescription({
 }) {
   return (
     <div className={cn("flex gap-2", className)}>
-      <div className={cn("h-auto w-1 flex-none rounded-full", barClassName)} />
+      <div className={cn(barClassName, "h-auto w-1 flex-none")} />
       <div className="grid flex-1 gap-1">
         <div className="flex justify-between gap-8 text-sm">
           <p className="font-semibold">{label}</p>
