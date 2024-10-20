@@ -8,7 +8,7 @@ import { AppLink } from "./app-link";
 
 function replacePlaceholders(
   template: string,
-  values: { [key: string]: string },
+  values: { [key: string]: string }
 ): string {
   return template.replace(/\[([^\]]+)\]/g, (_, key) => {
     return values[key] || `[${key}]`;
@@ -22,7 +22,7 @@ export function AppSidebar({ page }: { page?: Page }) {
   if (!page) return null;
 
   return (
-    <div className="flex h-full flex-col justify-between">
+    <div className="flex h-full flex-col justify-between gap-2">
       <div className="grid gap-2">
         <p className="hidden px-3 font-medium text-foreground text-lg lg:block">
           {page?.title}
