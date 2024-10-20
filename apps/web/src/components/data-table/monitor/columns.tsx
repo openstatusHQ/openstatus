@@ -174,7 +174,12 @@ export const columns: ColumnDef<{
       return (
         <div className="flex w-24 gap-1">
           {tracker.days?.map((tracker) => (
-            <Bar key={tracker.day} className="h-5" {...tracker} />
+            <Bar
+              key={tracker.day}
+              className="h-5"
+              displayNumbers={true}
+              {...tracker}
+            />
           ))}
         </div>
       );
