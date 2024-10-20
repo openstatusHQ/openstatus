@@ -95,7 +95,7 @@ export default async function MonitorPage({
         defaultColumnFilters={[
           { id: "tags", value: search.tags },
           { id: "public", value: search.public },
-        ].filter((v) => v.value !== undefined || v.value !== null)}
+        ].filter((v) => v.value !== null)}
         columns={columns}
         data={monitorsWithData}
         tags={tags}
