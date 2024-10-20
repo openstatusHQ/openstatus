@@ -3,6 +3,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { ThemeIcon } from "@/components/theme/theme-icon";
 import {
   Avatar,
   AvatarFallback,
@@ -22,7 +23,6 @@ import {
   DropdownMenuTrigger,
   Skeleton,
 } from "@openstatus/ui";
-import { ThemeIcon } from "@/components/theme/theme-icon";
 
 export function UserNav() {
   const session = useSession();

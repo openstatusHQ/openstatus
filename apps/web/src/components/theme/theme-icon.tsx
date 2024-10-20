@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { IconProps, Icons, type ValidIcon } from "../icons";
+import { type IconProps, Icons, type ValidIcon } from "../icons";
 
 function mapThemeToIconName(theme: string): ValidIcon {
   switch (theme) {
