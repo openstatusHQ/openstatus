@@ -4,7 +4,7 @@ import Link from "next/link";
 import { socialsConfig } from "@/config/socials";
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
-import { ThemeToggle } from "../theme-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { BrandName } from "./brand-name";
 import { SocialIconButton } from "./social-icon-button";
 import { StatusWidgetContainer } from "./status-widget-suspense";
