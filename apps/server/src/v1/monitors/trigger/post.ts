@@ -1,5 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { and, eq, isNull, sql } from "@openstatus/db";
+import { and, eq, gte, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
@@ -44,11 +44,18 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     const { id } = c.req.valid("param");
     const limits = c.get("limits");
 
+    const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
+
     const count = (
       await db
         .select({ count: sql<number>`count(*)` })
         .from(monitorRun)
-        .where(and(eq(monitorRun.workspaceId, Number(workspaceId))))
+        .where(
+          and(
+            eq(monitorRun.workspaceId, Number(workspaceId)),
+            gte(monitorRun.createdAt, new Date(lastMonth))
+          )
+        )
         .all()
     )[0].count;
 
@@ -65,8 +72,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 
