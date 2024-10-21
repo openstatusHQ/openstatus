@@ -7,8 +7,8 @@ const nextConfig = {
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
     serverComponentsExternalPackages: [
-      "libsql",
-      "@libsql",
+      // "libsql",
+      // "@libsql",
       "@react-email/components",
       "@react-email/render",
       "@google-cloud/tasks",
