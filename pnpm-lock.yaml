@@ -53,8 +53,8 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       drizzle-orm:
-        specifier: 0.35.2
-        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+        specifier: 0.34.1
+        version: 0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -557,11 +557,11 @@ importers:
         specifier: 0.7.0
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
       drizzle-orm:
-        specifier: 0.35.2
-        version: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+        specifier: 0.34.1
+        version: 0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -582,8 +582,8 @@ importers:
         specifier: 4.0.8
         version: 4.0.8
       drizzle-kit:
-        specifier: 0.26.2
-        version: 0.26.2
+        specifier: 0.26.1
+        version: 0.26.1
       encoding:
         specifier: 0.1.13
         version: 0.1.13
@@ -6055,12 +6055,12 @@ packages:
     resolution: {integrity: sha512-IPzF4w4/Rd94bA9imS68tZBaYyBWSCE47V1RGuMrB94iyTOIEwRmVL2x/4An+6mETpLrKJ5hQkB8W4kFAadeIQ==}
     engines: {node: '>=12'}
 
-  drizzle-kit@0.26.2:
-    resolution: {integrity: sha512-cMq8omEKywjIy5KcqUo6LvEFxkl8/zYHsgYjFVXjmPWWtuW4blcz+YW9+oIhoaALgs2ebRjzXwsJgN9i6P49Dw==}
+  drizzle-kit@0.26.1:
+    resolution: {integrity: sha512-5/e1tzOPicPDooCm/uJIU9mWK3eD5dhW5EY61TQyVVo29xYxFLmZpXlBdOYlbfDHBsNhVzhb0XjWFmAAj7d7WA==}
     hasBin: true
 
-  drizzle-orm@0.35.2:
-    resolution: {integrity: sha512-bLQtRchl8QvRo2MyG6kcZC90UDzR7Ubir4YwOHV3cZPdJbF+4jU/Yt0QOczsoXe25wLRt6CtCWLXtSDQKft3yg==}
+  drizzle-orm@0.34.1:
+    resolution: {integrity: sha512-t+zCwyWWt8xTqtYV4doE/xYmT7hpv1L8pQ66zddEz+3VWyedBBtctjMAp22mAJPfyWurRQXUJ1nrTtqLq+DqNA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=3'
@@ -15939,7 +15939,7 @@ snapshots:
 
   dotenv@16.3.1: {}
 
-  drizzle-kit@0.26.2:
+  drizzle-kit@0.26.1:
     dependencies:
       '@drizzle-team/brocli': 0.10.1
       '@esbuild-kit/esm-loader': 2.6.5
@@ -15948,7 +15948,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240512.0
       '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
@@ -15958,7 +15958,7 @@ snapshots:
       bun-types: 1.1.8
       react: 18.3.1
 
-  drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20240512.0
       '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4)
@@ -15968,9 +15968,9 @@ snapshots:
       bun-types: 1.1.8
       react: 18.3.1
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.35.2(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+      drizzle-orm: 0.34.1(@cloudflare/workers-types@4.20240512.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
       zod: 3.23.8
 
   duplexify@4.1.2:
