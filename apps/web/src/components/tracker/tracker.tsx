@@ -63,6 +63,7 @@ interface TrackerProps {
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
   incidents?: Incident[];
   maintenances?: Maintenance[];
+  showValues?: boolean;
 }
 
 export function Tracker({
@@ -72,6 +73,7 @@ export function Tracker({
   reports,
   incidents,
   maintenances,
+  showValues,
 }: TrackerProps) {
   const tracker = new OSTracker({
     data,
@@ -108,7 +110,7 @@ export function Tracker({
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {tracker.days.map((props, i) => {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            return <Bar key={i} {...props} />;
+            return <Bar key={i} showValues={showValues} {...props} />;
           })}
         </div>
       </div>
@@ -122,6 +124,7 @@ export function Tracker({
 
 type BarProps = OSTracker["days"][number] & {
   className?: string;
+  showValues?: boolean;
 };
 
 export const Bar = ({
@@ -133,6 +136,7 @@ export const Bar = ({
   blacklist,
   statusReports,
   incidents,
+  showValues,
   className,
 }: BarProps) => {
   const [open, setOpen] = React.useState(false);
@@ -166,37 +170,19 @@ export const Bar = ({
       <HoverCardTrigger onClick={() => setOpen(true)} asChild>
         <div className={cn(rootClassName, className)} />
       </HoverCardTrigger>
-      <HoverCardContent side="top" className="w-auto max-w-[16rem] p-2">
+      <HoverCardContent side="top" className="w-auto p-2">
         {blacklist ? (
           <p className="text-muted-foreground text-sm">{blacklist}</p>
         ) : (
           <div>
-            <div className="flex gap-2">
-              <div
-                className={cn(
-                  rootClassName,
-                  "h-auto w-1 flex-none rounded-full",
-                )}
-              />
-              <div className="grid flex-1 gap-1">
-                <div className="flex justify-between gap-8 text-sm">
-                  <p className="font-semibold">{label}</p>
-                  <p className="flex-shrink-0 text-muted-foreground">
-                    {format(new Date(day), "MMM d")}
-                  </p>
-                </div>
-                <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
-                  <p>
-                    <code className="text-status-operational">{count}</code>{" "}
-                    requests
-                  </p>
-                  <p>
-                    <code className="text-status-down">{count - ok}</code>{" "}
-                    failed
-                  </p>
-                </div>
-              </div>
-            </div>
+            <BarDescription
+              label={label}
+              day={day}
+              count={count}
+              ok={ok}
+              barClassName={rootClassName}
+              showValues={showValues}
+            />
             {statusReports && statusReports.length > 0 ? (
               <>
                 <Separator className="my-1.5" />
@@ -215,6 +201,48 @@ export const Bar = ({
     </HoverCard>
   );
 };
+
+export function BarDescription({
+  label,
+  day,
+  count,
+  ok,
+  showValues,
+  barClassName,
+  className,
+}: {
+  label: string;
+  day: string;
+  count: number;
+  ok: number;
+  showValues?: boolean;
+  barClassName?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex gap-2", className)}>
+      <div className={cn(barClassName, "h-auto w-1 flex-none")} />
+      <div className="grid flex-1 gap-1">
+        <div className="flex justify-between gap-8 text-sm">
+          <p className="font-semibold">{label}</p>
+          <p className="flex-shrink-0 text-muted-foreground">
+            {format(new Date(day), "MMM d")}
+          </p>
+        </div>
+        {showValues ? (
+          <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
+            <p>
+              <code className="text-status-operational">{count}</code> requests
+            </p>
+            <p>
+              <code className="text-status-down">{count - ok}</code> failed
+            </p>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function StatusReportList({ reports }: { reports: StatusReport[] }) {
   return (
