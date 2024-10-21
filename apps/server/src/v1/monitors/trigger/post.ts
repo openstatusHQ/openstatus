@@ -1,11 +1,12 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { and, eq, isNull } from "@openstatus/db";
+import { and, eq, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitorRun } from "@openstatus/db/src/schema";
 import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/monitor_status";
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
+import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
@@ -41,6 +42,21 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
   return api.openapi(triggerMonitor, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id } = c.req.valid("param");
+    const limits = c.get("limits");
+
+    const count = (
+      await db
+        .select({ count: sql<number>`count(*)` })
+        .from(monitorRun)
+        .where(and(eq(monitorRun.workspaceId, Number(workspaceId))))
+        .all()
+    )[0].count;
+
+    if (count >= getLimit(limits, "synthetic-checks")) {
+      throw new HTTPException(403, {
+        message: "Upgrade for more checks",
+      });
+    }
 
     const monitorData = await db
       .select()
@@ -49,8 +65,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 

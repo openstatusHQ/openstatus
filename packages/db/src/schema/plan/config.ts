@@ -17,7 +17,7 @@ export const allPlans: Record<
     price: 0,
     limits: {
       monitors: 1,
-      "synthetic-checks": 1000,
+      "synthetic-checks": 30,
       periodicity: ["10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 6,
@@ -44,7 +44,7 @@ export const allPlans: Record<
     price: 30,
     limits: {
       monitors: 5,
-      "synthetic-checks": 10000,
+      "synthetic-checks": 100,
       periodicity: ["1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,
@@ -107,7 +107,7 @@ export const allPlans: Record<
     price: 100,
     limits: {
       monitors: 15,
-      "synthetic-checks": 50000,
+      "synthetic-checks": 300,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,
@@ -170,7 +170,7 @@ export const allPlans: Record<
     price: 300,
     limits: {
       monitors: 50,
-      "synthetic-checks": 150000,
+      "synthetic-checks": 500,
       periodicity: ["30s", "1m", "5m", "10m", "30m", "1h"],
       "multi-region": true,
       "max-regions": 35,
