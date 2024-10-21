@@ -1,5 +1,5 @@
 import type { WorkspacePlan } from "../workspaces/validation";
-import type { Limits, LimitsV1, LimitsV2 } from "./schema";
+import type { Limits } from "./schema";
 
 // TODO: rename to `planConfig`
 export const allPlans: Record<
@@ -8,7 +8,7 @@ export const allPlans: Record<
     title: "Hobby" | "Starter" | "Growth" | "Pro";
     description: string;
     price: number;
-    limits: Limits & { "private-locations": boolean };
+    limits: Limits;
   }
 > = {
   free: {

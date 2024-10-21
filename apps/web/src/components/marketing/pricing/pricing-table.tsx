@@ -112,7 +112,7 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value, badge }, _i) => {
+                {features.map(({ label, value, badge, monthly }, _i) => {
                   return (
                     <TableRow key={key + label}>
                       <TableCell className="gap-1">
@@ -122,7 +122,8 @@ export function PricingTable({
                         ) : null}
                       </TableCell>
                       {selectedPlans.map((plan, _i) => {
-                        const limitValue = plan.limits[value];
+                        const limitValue =
+                          plan.limits[value as keyof typeof plan.limits];
                         function renderContent() {
                           if (typeof limitValue === "boolean") {
                             if (limitValue) {
@@ -137,13 +138,9 @@ export function PricingTable({
                             );
                           }
                           if (typeof limitValue === "number") {
-                            return (
-                              <span className="font-mono">
-                                {new Intl.NumberFormat("us")
-                                  .format(limitValue)
-                                  .toString()}
-                              </span>
-                            );
+                            return new Intl.NumberFormat("us")
+                              .format(limitValue)
+                              .toString();
                           }
                           if (
                             Array.isArray(limitValue) &&
@@ -159,11 +156,12 @@ export function PricingTable({
                             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
                             key={key + value + _i}
                             className={cn(
-                              "p-3",
+                              "p-3 font-mono",
                               plan.key === "team" && "bg-muted/30",
                             )}
                           >
                             {renderContent()}
+                            {monthly ? "/mo" : ""}
                           </TableCell>
                         );
                       })}
