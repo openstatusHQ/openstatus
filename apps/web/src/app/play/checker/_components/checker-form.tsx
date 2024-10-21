@@ -50,13 +50,7 @@ import {
 import { toast } from "@/lib/toast";
 import { notEmpty } from "@/lib/utils";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
-import {
-  ArrowRight,
-  ChevronRight,
-  FileSearch,
-  Info,
-  Loader,
-} from "lucide-react";
+import { ArrowRight, ChevronRight, Gauge, Info, Loader } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useQueryStates } from "nuqs";
@@ -259,8 +253,15 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
               )}
             />
             <div className="col-span-full mt-2 sm:col-span-1">
-              <Button disabled={isPending} className="h-10 w-full">
-                {isPending ? <LoadingAnimation /> : "Check"}
+              <Button disabled={isPending} className="h-10 w-full group">
+                {isPending ? (
+                  <LoadingAnimation />
+                ) : (
+                  <>
+                    Check{" "}
+                    <Gauge className="ml-1 h-4 w-4 [&>*:first-child]:transition-transform [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:-rotate-90 [&>*:first-child]:group-hover:rotate-0 [&>*:first-child]:duration-500 [&>*:first-child]:ease-out" />
+                  </>
+                )}
               </Button>
             </div>
           </div>
