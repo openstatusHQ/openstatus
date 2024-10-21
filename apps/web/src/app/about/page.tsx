@@ -67,7 +67,7 @@ const members: MemberProps[] = [
     socials: [
       {
         label: "Twitter",
-        href: "https://twitter.com/thibaultleouay",
+        href: "https://bsky.app/profile/thibaultleouay.dev",
         icon: "twitter",
       },
     ],
