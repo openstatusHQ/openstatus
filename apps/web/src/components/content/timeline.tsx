@@ -51,7 +51,7 @@ function Article({
   return (
     <article className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">
       <div className="relative row-span-2">
-        <div className="sticky top-2">
+        <div className="sticky top-20">
           <time className="order-2 font-mono text-muted-foreground text-sm md:order-1 md:col-span-1">
             {formatDate(new Date(publishedAt))}
           </time>
