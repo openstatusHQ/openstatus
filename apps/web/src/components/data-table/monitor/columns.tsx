@@ -177,7 +177,7 @@ export const columns: ColumnDef<{
             <Bar
               key={tracker.day}
               className="h-5"
-              displayNumbers={true}
+              showValues={true}
               {...tracker}
             />
           ))}

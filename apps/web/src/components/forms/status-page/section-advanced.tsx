@@ -178,7 +178,7 @@ export function SectionAdvanced({ form }: Props) {
               day={new Date().toISOString()}
               count={5600}
               ok={5569}
-              displayNumbers={!!form.getValues("displayRequestNumbers")}
+              showValues={!!form.getValues("showMonitorValues")}
               barClassName="bg-status-operational"
               className="md:col-span-1 bg-popover text-popover-foreground rounded-md border p-2 shadow-md"
             />
@@ -186,7 +186,7 @@ export function SectionAdvanced({ form }: Props) {
         </div>
         <FormField
           control={form.control}
-          name="displayRequestNumbers"
+          name="showMonitorValues"
           render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0 md:col-span-2">
               <FormControl>

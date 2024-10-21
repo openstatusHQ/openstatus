@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "085ab8c6-eb64-404d-9f8c-e90ce4c3fa34",
+  "id": "09d93b56-dcc3-4148-934a-a490ab04bab9",
   "prevId": "7321a546-31be-4313-8e3f-235db16ddee4",
   "tables": {
     "status_report_to_monitors": {
@@ -388,8 +388,8 @@
           "autoincrement": false,
           "default": false
         },
-        "display_request_numbers": {
-          "name": "display_request_numbers",
+        "show_monitor_values": {
+          "name": "show_monitor_values",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,

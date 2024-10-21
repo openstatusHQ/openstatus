@@ -28,7 +28,7 @@ export const page = sqliteTable("page", {
   /**
    * Displays the total and failed request numbers for each monitor
    */
-  displayRequestNumbers: integer("display_request_numbers", {
+  showMonitorValues: integer("show_monitor_values", {
     mode: "boolean",
   }).default(true),
 

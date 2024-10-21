@@ -63,7 +63,7 @@ interface TrackerProps {
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
   incidents?: Incident[];
   maintenances?: Maintenance[];
-  displayNumbers?: boolean;
+  showValues?: boolean;
 }
 
 export function Tracker({
@@ -73,7 +73,7 @@ export function Tracker({
   reports,
   incidents,
   maintenances,
-  displayNumbers,
+  showValues,
 }: TrackerProps) {
   const tracker = new OSTracker({
     data,
@@ -110,7 +110,7 @@ export function Tracker({
         <div className="flex flex-row-reverse gap-px sm:gap-0.5">
           {tracker.days.map((props, i) => {
             // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-            return <Bar key={i} displayNumbers={displayNumbers} {...props} />;
+            return <Bar key={i} showValues={showValues} {...props} />;
           })}
         </div>
       </div>
@@ -124,7 +124,7 @@ export function Tracker({
 
 type BarProps = OSTracker["days"][number] & {
   className?: string;
-  displayNumbers?: boolean;
+  showValues?: boolean;
 };
 
 export const Bar = ({
@@ -136,7 +136,7 @@ export const Bar = ({
   blacklist,
   statusReports,
   incidents,
-  displayNumbers,
+  showValues,
   className,
 }: BarProps) => {
   const [open, setOpen] = React.useState(false);
@@ -181,7 +181,7 @@ export const Bar = ({
               count={count}
               ok={ok}
               barClassName={rootClassName}
-              displayNumbers={displayNumbers}
+              showValues={showValues}
             />
             {statusReports && statusReports.length > 0 ? (
               <>
@@ -207,7 +207,7 @@ export function BarDescription({
   day,
   count,
   ok,
-  displayNumbers,
+  showValues,
   barClassName,
   className,
 }: {
@@ -215,7 +215,7 @@ export function BarDescription({
   day: string;
   count: number;
   ok: number;
-  displayNumbers?: boolean;
+  showValues?: boolean;
   barClassName?: string;
   className?: string;
 }) {
@@ -229,7 +229,7 @@ export function BarDescription({
             {format(new Date(day), "MMM d")}
           </p>
         </div>
-        {displayNumbers ? (
+        {showValues ? (
           <div className="flex justify-between gap-8 font-light text-muted-foreground text-xs">
             <p>
               <code className="text-status-operational">{count}</code> requests
