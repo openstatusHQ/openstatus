@@ -1,10 +1,15 @@
-import type { LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
+import type { LimitsV1, LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
 
 export const pricingTableConfig: Record<
   string,
   {
     label: string;
-    features: { value: keyof LimitsV2; label: string; badge?: string }[];
+    features: {
+      value: keyof LimitsV1 | keyof LimitsV2;
+      label: string;
+      badge?: string;
+      monthly?: boolean;
+    }[];
   }
 > = {
   monitors: {
@@ -32,7 +37,8 @@ export const pricingTableConfig: Record<
     features: [
       {
         value: "synthetic-checks",
-        label: "Number of synthetic API checks",
+        label: "Number of on-demand checks",
+        monthly: true,
       },
       { value: "private-locations", label: "Private Locations" },
     ],
