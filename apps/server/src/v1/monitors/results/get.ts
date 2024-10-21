@@ -53,7 +53,7 @@ const getMonitorStats = createRoute({
                 .default(0)
                 .transform((val) => val !== 0),
               region: z.enum(flyRegions),
-              cronTimestamp: z.number().int().optional(),
+              timestamp: z.number().int().optional(),
               message: z.string().nullable().optional(),
               timing: z
                 .string()
@@ -87,8 +87,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
