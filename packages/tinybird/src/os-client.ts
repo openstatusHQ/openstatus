@@ -460,6 +460,53 @@ export class OSTinybird {
       }
     };
   }
+
+  getResultForOnDemandCheckHttp() {
+    const parameters = z.object({
+      monitorId: z.number().int(),
+      timestamp: z.number(),
+      url: z.string(),
+    });
+    return async (props: z.infer<typeof parameters>) => {
+      try {
+        const res = await this.tb.buildPipe({
+          pipe: "get_result_for_on_demand_check_http",
+          parameters,
+          data: z.object({
+            latency: z.number().int(), // in ms
+            statusCode: z.number().int().nullable().default(null),
+            monitorId: z.string().default(""),
+            url: z.string().url().optional(),
+            error: z
+              .number()
+              .default(0)
+              .transform((val) => val !== 0),
+            region: z.enum(flyRegions),
+            timestamp: z.number().int().optional(),
+            message: z.string().nullable().optional(),
+            timing: z
+              .string()
+              .nullable()
+              .optional()
+              .transform((val) => {
+                if (!val) return null;
+                const value = timingSchema.safeParse(JSON.parse(val));
+                if (value.success) return value.data;
+                return null;
+              }),
+          }),
+          opts: {
+            next: {
+              revalidate: MIN_CACHE,
+            },
+          },
+        })(props);
+        return res.data[0];
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
 }
 
 /**

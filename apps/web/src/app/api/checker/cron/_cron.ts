@@ -15,7 +15,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
-import type { httpPayloadSchema, tpcPayloadSchema } from "../schema";
+import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 

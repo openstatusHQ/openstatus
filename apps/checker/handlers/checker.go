@@ -31,6 +31,7 @@ type PingData struct {
 	Headers       string `json:"headers,omitempty"`
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
+	Trigger       string `json:"trigger,omitempty"`
 	Latency       int64  `json:"latency"`
 	CronTimestamp int64  `json:"cronTimestamp"`
 	Timestamp     int64  `json:"timestamp"`
@@ -81,7 +82,13 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		assertionAsString = ""
 	}
 
+	var trigger = "cron"
+	if req.Trigger != "" {
+		trigger = req.Trigger
+	}
+
 	var called int
+
 	op := func() error {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
@@ -113,6 +120,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Timing:        string(timingAsString),
 			Headers:       string(headersAsString),
 			Body:          string(res.Body),
+			Trigger:       trigger,
 		}
 
 		statusCode := statusCode(res.Status)
@@ -277,6 +285,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Error:         1,
 			Assertions:    assertionAsString,
 			Body:          "",
+			Trigger:       trigger,
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
@@ -294,5 +303,4 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "ok"})
-
 }

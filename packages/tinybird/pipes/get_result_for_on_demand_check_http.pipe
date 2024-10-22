@@ -1,0 +1,23 @@
+VERSION 0
+
+NODE get_result_for_on_demand_check_http_0
+SQL >
+
+    %
+    SELECT
+        latency,
+        monitorId,
+        error,
+        region,
+        statusCode,
+        timestamp,
+        url,
+        workspaceId,
+        timing
+    FROM __ttl_45d_all_mv__v1
+    where
+        cronTimestamp = {{ String(cronTimestamp, '1') }}
+        and monitorId = {{ String(monitorId, '1') }}
+        and url = {{ String(url , 'https://www.openstatus.dev') }}
+
+
