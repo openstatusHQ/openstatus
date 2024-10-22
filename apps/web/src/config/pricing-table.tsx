@@ -77,6 +77,13 @@ export const pricingTableConfig: Record<
         label: "Maintenance status",
       },
       {
+        value: "monitor-values-visibility",
+        label: "Toggle numbers visibility",
+        description: renderChangelogDescription(
+          "status-page-monitor-values-visibility"
+        ),
+      },
+      {
         value: "status-subscribers",
         label: "Subscribers",
       },
@@ -88,14 +95,7 @@ export const pricingTableConfig: Record<
         value: "password-protection",
         label: "Password-protected",
         description: renderChangelogDescription(
-          "password-protected-status-page",
-        ),
-      },
-      {
-        value: "monitor-values-visibility",
-        label: "Toggle numbers visibility",
-        description: renderChangelogDescription(
-          "status-page-monitor-values-visibility",
+          "password-protected-status-page"
         ),
       },
       {
