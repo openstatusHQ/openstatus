@@ -18,11 +18,13 @@ export const Monitor = async ({
   statusReports,
   incidents,
   maintenances,
+  showValues,
 }: {
   monitor: PublicMonitor;
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
   maintenances: Maintenance[];
+  showValues?: boolean;
 }) => {
   const data = await tb.endpointStatusPeriod("45d")({
     monitorId: String(monitor.id),
@@ -38,6 +40,7 @@ export const Monitor = async ({
       reports={statusReports}
       incidents={incidents}
       maintenances={maintenances}
+      showValues={showValues}
       {...monitor}
     />
   );

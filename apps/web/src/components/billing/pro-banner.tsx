@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Rocket, X } from "lucide-react";
+import { ArrowRight, ChevronRight, Rocket, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,21 +43,28 @@ export function ProBanner() {
   if (hidden) return null;
 
   return (
-    <div className="grid gap-2 rounded-md border border-border p-2">
+    <div className="grid gap-2 rounded-md border border-border p-3">
       <div className="flex items-center justify-between">
         <p className="inline-flex items-center font-medium text-sm">
           OpenStatus Pro <Rocket className="ml-2 h-4 w-4" />
         </p>
-        <Button variant="ghost" size="icon" onClick={onClick}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClick}
+          className="w-7 h-7"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-muted-foreground text-sm">
         Unlock custom domains, teams, 1 min. checks and more.
       </p>
       <Button variant="secondary" size="sm" asChild>
-        <Link href={`/app/${workspaceSlug}/settings/billing`}>
-          Upgrade <ArrowRight className="ml-2 h-4 w-4" />
+        <Link href={`/app/${workspaceSlug}/settings/billing`} className="group">
+          <span className="mr-0.5">Upgrade</span>{" "}
+          <ArrowRight className="relative inline h-4 w-0 transition-all group-hover:w-4" />
+          <ChevronRight className="relative inline h-4 w-4 transition-all group-hover:w-0" />
         </Link>
       </Button>
     </div>

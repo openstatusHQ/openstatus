@@ -66,9 +66,9 @@ const members: MemberProps[] = [
     image: { src: "/assets/authors/thibault.jpeg" },
     socials: [
       {
-        label: "Twitter",
-        href: "https://twitter.com/thibaultleouay",
-        icon: "twitter",
+        label: "Bluesky",
+        href: "https://bsky.app/profile/thibaultleouay.dev",
+        icon: "bluesky",
       },
     ],
   },

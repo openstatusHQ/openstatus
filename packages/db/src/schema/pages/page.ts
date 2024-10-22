@@ -25,6 +25,13 @@ export const page = sqliteTable("page", {
     false,
   ),
 
+  /**
+   * Displays the total and failed request numbers for each monitor
+   */
+  showMonitorValues: integer("show_monitor_values", {
+    mode: "boolean",
+  }).default(true),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),

@@ -67,6 +67,7 @@ export function StatusPageForm({
       icon: defaultValues?.icon || "",
       password: defaultValues?.password || "",
       passwordProtected: defaultValues?.passwordProtected || false,
+      showMonitorValues: defaultValues?.showMonitorValues || true,
       monitors:
         checkAllMonitors && allMonitors
           ? allMonitors.map(({ id }) => ({ monitorId: id, order: 0 }))

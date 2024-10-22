@@ -56,9 +56,9 @@ export function AppHeader() {
               </li>
               <li className="w-full">
                 <Button variant="link" asChild>
-                  <Link href="/docs" target="_blank">
+                  <Link href="/docs" target="_blank" className="group">
                     Docs
-                    <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
+                    <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
                   </Link>
                 </Button>
               </li>

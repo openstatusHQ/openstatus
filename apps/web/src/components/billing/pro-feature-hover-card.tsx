@@ -5,6 +5,8 @@ import { useState } from "react";
 import { workspacePlanHierarchy } from "@openstatus/db/src/schema";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@openstatus/ui";
+import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 
 function upgradePlan(current: WorkspacePlan, required: WorkspacePlan) {
   return workspacePlanHierarchy[current] < workspacePlanHierarchy[required];
@@ -33,7 +35,7 @@ export function ProFeatureHoverCard({
     <HoverCard openDelay={0} open={open} onOpenChange={setOpen}>
       <HoverCardTrigger
         onClick={() => setOpen(true)}
-        className="opacity-70"
+        className="opacity-70 cursor-not-allowed"
         asChild
       >
         {children}
@@ -45,15 +47,14 @@ export function ProFeatureHoverCard({
           plan.
         </p>
         <p className="text-sm">
-          <a
+          <Link
             href={`/app/${workspaceSlug}/settings/billing`}
             target="_blank"
-            className="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
-            rel="noreferrer"
+            className="group inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
           >
             Upgrade now
-          </a>
-          .
+            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+          </Link>
         </p>
       </HoverCardContent>
     </HoverCard>

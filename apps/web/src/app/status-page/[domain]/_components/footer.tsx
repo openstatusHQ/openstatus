@@ -1,7 +1,7 @@
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface Props {
   plan: WorkspacePlan;

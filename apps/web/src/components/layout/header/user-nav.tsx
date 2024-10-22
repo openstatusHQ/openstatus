@@ -3,6 +3,7 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { ThemeIcon } from "@/components/theme/theme-icon";
 import {
   Avatar,
   AvatarFallback,
@@ -72,7 +73,13 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>Switch theme</DropdownMenuSubTrigger>
+            {/* REMINDER: consider using that the data-state styles as default */}
+            <DropdownMenuSubTrigger className="gap-1 [&_svg]:data-[state=open]:text-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:text-muted-foreground">
+              <div className="w-full flex flex-row items-center justify-between">
+                <span>Switch theme</span>
+                <ThemeIcon theme={theme} />
+              </div>
+            </DropdownMenuSubTrigger>
             <DropdownMenuPortal>
               <DropdownMenuSubContent>
                 <DropdownMenuLabel>Appearance</DropdownMenuLabel>
@@ -81,9 +88,10 @@ export function UserNav() {
                     key={option}
                     checked={theme === option}
                     onClick={() => setTheme(option)}
-                    className="capitalize"
+                    className="capitalize justify-between [&_svg]:data-[state=open]:text-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:text-muted-foreground"
                   >
                     {option}
+                    <ThemeIcon theme={option} />
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuSubContent>

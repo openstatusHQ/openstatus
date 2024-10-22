@@ -117,6 +117,7 @@ export function SectionVisibility({ form, plan, workspaceSlug }: Props) {
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-foreground">{link} </p>
+                {/* TODO: think of building a better shadcn like "CopyToClipboardButton" */}
                 <CopyToClipboardButton
                   text={link}
                   tooltipText="Copy to clipboard"
