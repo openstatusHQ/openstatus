@@ -405,7 +405,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  },
+  }
 );
 
 export const vercelRegions = [
@@ -445,6 +445,7 @@ export const httpPayloadSchema = z.object({
   assertions: z.array(base).nullable(),
   timeout: z.number().default(45000),
   degradedAfter: z.number().nullable(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;
@@ -458,4 +459,5 @@ export const tpcPayloadSchema = z.object({
   cronTimestamp: z.number(),
   timeout: z.number().default(45000),
   degradedAfter: z.number().nullable(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });

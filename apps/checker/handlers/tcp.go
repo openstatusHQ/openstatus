@@ -280,7 +280,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			Timing:        string(timingAsString),
 			Latency:       latency,
 			RequestId:     req.RequestId,
-			Trigger:       "API",
+			Trigger:       "api",
 		}
 
 		if req.RequestId != 0 {
