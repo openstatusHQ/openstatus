@@ -80,7 +80,7 @@ export const pricingTableConfig: Record<
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
         description: renderChangelogDescription(
-          "status-page-monitor-values-visibility"
+          "status-page-monitor-values-visibility",
         ),
       },
       {
@@ -95,7 +95,7 @@ export const pricingTableConfig: Record<
         value: "password-protection",
         label: "Password-protected",
         description: renderChangelogDescription(
-          "password-protected-status-page"
+          "password-protected-status-page",
         ),
       },
       {
