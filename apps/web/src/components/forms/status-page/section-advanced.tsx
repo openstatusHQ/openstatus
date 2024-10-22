@@ -163,8 +163,18 @@ export function SectionAdvanced({ form }: Props) {
       />
       <div className="grid w-full gap-4 md:grid-rows-2 md:grid-cols-3 md:col-span-full">
         <SectionHeader
-          title="Bar Settings"
-          description="You can display or hide the amount of scheduled request an entpoint gets per day."
+          title="Monitor Values Visibility"
+          description={
+            <>
+              Toggle the visibility of the values on the status page. Share your{" "}
+              <span className="font-medium text-foreground">uptime</span> and
+              the{" "}
+              <span className="font-medium text-foreground">
+                number of request
+              </span>{" "}
+              to your endpoint.
+            </>
+          }
           className="md:col-span-2"
         />
         <div className="group md:row-span-2 flex flex-col justify-center gap-1 border border-dashed rounded-md p-3">
@@ -197,10 +207,9 @@ export function SectionAdvanced({ form }: Props) {
                 />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Show number of request</FormLabel>
+                <FormLabel>Show values</FormLabel>
                 <FormDescription>
-                  Share the total and failed amount of scheduled request to your
-                  endpoint.
+                  Share the numbers to your users.
                 </FormDescription>
               </div>
             </FormItem>

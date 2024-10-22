@@ -188,7 +188,7 @@ export function StatusPageForm({
             <SectionMonitor form={form} monitors={allMonitors} />
           </TabsContent>
           <TabsContent value="advanced">
-            <SectionAdvanced form={form} />
+            <SectionAdvanced {...{ form }} />
           </TabsContent>
           <TabsContent value="visibility">
             <SectionVisibility {...{ form, plan, workspaceSlug }} />

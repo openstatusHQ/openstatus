@@ -33,6 +33,7 @@ export type LimitsV1 = z.infer<typeof limitsV1>;
 export const limitsV2 = limitsV1.extend({
   version: z.literal("v2"),
   "private-locations": z.boolean(),
+  "monitor-values-visibility": z.boolean(),
 });
 
 export type LimitsV2 = z.infer<typeof limitsV2>;
@@ -44,6 +45,7 @@ export function migrateFromV1ToV2({ data }: { data: LimitsV1 }) {
     version: "v2",
     ...data,
     "private-locations": true,
+    "monitor-values-visibility": true,
   };
 }
 

@@ -102,7 +102,7 @@ export function Tracker({
             </TooltipProvider>
           ) : null}
         </div>
-        {!isMissing ? (
+        {!isMissing && showValues ? (
           <p className="shrink-0 font-light text-muted-foreground">{uptime}%</p>
         ) : null}
       </div>

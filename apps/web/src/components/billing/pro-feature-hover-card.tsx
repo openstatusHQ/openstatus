@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 
-import { workspacePlanHierarchy } from "@openstatus/db/src/schema";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@openstatus/ui";
+import {
+  Badge,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@openstatus/ui";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-
-function upgradePlan(current: WorkspacePlan, required: WorkspacePlan) {
-  return workspacePlanHierarchy[current] < workspacePlanHierarchy[required];
-}
+import { upgradePlan } from "./utils";
 
 // TBD: we could useParams() to access workspaceSlug
 
@@ -25,17 +26,18 @@ export function ProFeatureHoverCard({
   minRequiredPlan: WorkspacePlan;
   workspaceSlug: string;
 }) {
-  console.log({ workspaceSlug, plan, minRequiredPlan });
   const [open, setOpen] = useState(false);
   const shouldUpgrade = upgradePlan(plan, minRequiredPlan);
 
   if (!shouldUpgrade) return children;
 
+  // TODO: add a <Badge /> component to display the plan name
+
   return (
     <HoverCard openDelay={0} open={open} onOpenChange={setOpen}>
       <HoverCardTrigger
         onClick={() => setOpen(true)}
-        className="opacity-70 cursor-not-allowed"
+        className="opacity-70 cursor-not-allowed relative"
         asChild
       >
         {children}

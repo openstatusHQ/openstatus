@@ -8,7 +8,6 @@ import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscrib
 import { MaintenanceContainer } from "@/components/status-page/maintenance";
 import { StatusCheck } from "@/components/status-page/status-check";
 import { StatusReport } from "@/components/status-page/status-report";
-import { Tracker } from "@/components/tracker/tracker";
 import { marketingProductPagesConfig } from "@/config/pages";
 import { Button, InputWithAddons } from "@openstatus/ui";
 import type { Metadata } from "next";
@@ -16,7 +15,8 @@ import Link from "next/link";
 import { Banner } from "../_components/banner";
 import { Hero } from "../_components/hero";
 import { InteractiveFeature } from "../_components/interactive-feature";
-import { maintenanceData, mockTrackerData, statusReportData } from "../mock";
+import { TrackerWithVisibilityToggle } from "../_components/tracker-example";
+import { maintenanceData, statusReportData } from "../mock";
 
 const { description, subtitle } = marketingProductPagesConfig[1];
 
@@ -61,15 +61,7 @@ export default function FeaturePage() {
         iconText="Simple by default"
         title="Status page."
         subTitle="Connect your monitors and inform your users about the uptime."
-        component={
-          <div className="my-auto">
-            <Tracker
-              data={mockTrackerData}
-              name="OpenStatus"
-              description="Website Health"
-            />
-          </div>
-        }
+        component={<TrackerWithVisibilityToggle />}
         col={2}
         position={"left"}
       />
