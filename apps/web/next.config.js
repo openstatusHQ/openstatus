@@ -7,7 +7,7 @@ const nextConfig = {
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
   experimental: {
     outputFileTracingIncludes: {
-      '/': ['./node_modules/@google-cloud/tasks/build/esm/src/**/*.json'],
+      "/": ["./node_modules/@google-cloud/tasks/build/esm/src/**/*.json"],
     },
     serverComponentsExternalPackages: [
       // "libsql",
