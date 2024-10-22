@@ -17,7 +17,7 @@ const nextConfig = {
       // "@libsql",
       "@react-email/components",
       "@react-email/render",
-      // "@google-cloud/tasks",
+      "@google-cloud/tasks",
       // "@libsql/client",
       // "@libsql/hrana-client",
       // "better-sqlite3"
