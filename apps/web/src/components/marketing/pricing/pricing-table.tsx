@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Fragment } from "react";
 
@@ -22,6 +22,12 @@ import { pricingTableConfig } from "../../../config/pricing-table";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { cn } from "@/lib/utils";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@openstatus/ui";
 
 export function PricingTable({
   plans = workspacePlans,
@@ -112,62 +118,78 @@ export function PricingTable({
                     {label}
                   </TableCell>
                 </TableRow>
-                {features.map(({ label, value, badge, monthly }, _i) => {
-                  return (
-                    <TableRow key={key + label}>
-                      <TableCell className="gap-1">
-                        {label}{" "}
-                        {badge ? (
-                          <Badge variant="secondary">{badge}</Badge>
-                        ) : null}
-                      </TableCell>
-                      {selectedPlans.map((plan, _i) => {
-                        const limitValue =
-                          plan.limits[value as keyof typeof plan.limits];
-                        function renderContent() {
-                          if (typeof limitValue === "boolean") {
-                            if (limitValue) {
+                {features.map(
+                  ({ label, value, badge, monthly, description }, _i) => {
+                    return (
+                      <TableRow key={key + label}>
+                        <TableCell>
+                          <div className="flex gap-2 items-center">
+                            {label}
+                            {badge ? (
+                              <Badge variant="secondary">{badge}</Badge>
+                            ) : null}
+                            {description ? (
+                              <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                  <TooltipTrigger className="ml-auto data-[state=closed]:text-muted-foreground">
+                                    <Info className="w-4 h-4" />
+                                  </TooltipTrigger>
+                                  <TooltipContent className="w-64">
+                                    {description}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        {selectedPlans.map((plan, _i) => {
+                          const limitValue =
+                            plan.limits[value as keyof typeof plan.limits];
+                          function renderContent() {
+                            if (typeof limitValue === "boolean") {
+                              if (limitValue) {
+                                return (
+                                  <Check className="h-4 w-4 text-foreground" />
+                                );
+                              }
                               return (
-                                <Check className="h-4 w-4 text-foreground" />
+                                <span className="text-muted-foreground/50">
+                                  &#8208;
+                                </span>
                               );
                             }
-                            return (
-                              <span className="text-muted-foreground/50">
-                                &#8208;
-                              </span>
-                            );
+                            if (typeof limitValue === "number") {
+                              return new Intl.NumberFormat("us")
+                                .format(limitValue)
+                                .toString();
+                            }
+                            if (
+                              Array.isArray(limitValue) &&
+                              limitValue.length > 0
+                            ) {
+                              return limitValue[0];
+                            }
+                            return limitValue;
                           }
-                          if (typeof limitValue === "number") {
-                            return new Intl.NumberFormat("us")
-                              .format(limitValue)
-                              .toString();
-                          }
-                          if (
-                            Array.isArray(limitValue) &&
-                            limitValue.length > 0
-                          ) {
-                            return limitValue[0];
-                          }
-                          return limitValue;
-                        }
 
-                        return (
-                          <TableCell
-                            // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                            key={key + value + _i}
-                            className={cn(
-                              "p-3 font-mono",
-                              plan.key === "team" && "bg-muted/30",
-                            )}
-                          >
-                            {renderContent()}
-                            {monthly ? "/mo" : ""}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })}
+                          return (
+                            <TableCell
+                              // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                              key={key + value + _i}
+                              className={cn(
+                                "p-3 font-mono",
+                                plan.key === "team" && "bg-muted/30",
+                              )}
+                            >
+                              {renderContent()}
+                              {monthly ? "/mo" : ""}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  },
+                )}
               </Fragment>
             );
           },

@@ -6,7 +6,7 @@ import * as React from "react";
 import { useRef } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import type { InsertPage } from "@openstatus/db/src/schema";
+import type { InsertPage, WorkspacePlan } from "@openstatus/db/src/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,15 +27,18 @@ import {
   Input,
 } from "@openstatus/ui";
 
+import { ProFeatureHoverCard } from "@/components/billing/pro-feature-hover-card";
 import { BarDescription } from "@/components/tracker/tracker";
 import { MousePointer2 } from "lucide-react";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertPage>;
+  plan: WorkspacePlan;
+  workspaceSlug: string;
 }
 
-export function SectionAdvanced({ form }: Props) {
+export function SectionAdvanced({ form, plan, workspaceSlug }: Props) {
   const inputFileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
@@ -178,34 +181,45 @@ export function SectionAdvanced({ form }: Props) {
               day={new Date().toISOString()}
               count={5600}
               ok={5569}
-              showValues={!!form.getValues("showMonitorValues")}
+              showValues={
+                plan === "free" || !!form.getValues("showMonitorValues")
+              }
               barClassName="bg-status-operational"
               className="md:col-span-1 bg-popover text-popover-foreground rounded-md border p-2 shadow-md"
             />
           </div>
         </div>
-        <FormField
-          control={form.control}
-          name="showMonitorValues"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0 md:col-span-2">
-              <FormControl>
-                <Checkbox
-                  disabled={field.disabled}
-                  checked={field.value ?? false}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                <FormLabel>Show number of request</FormLabel>
-                <FormDescription>
-                  Share the total and failed amount of scheduled request to your
-                  endpoint.
-                </FormDescription>
-              </div>
-            </FormItem>
-          )}
-        />
+        <ProFeatureHoverCard
+          plan={plan}
+          workspaceSlug={workspaceSlug}
+          minRequiredPlan="starter"
+        >
+          <div className="md:col-span-2">
+            <FormField
+              control={form.control}
+              name="showMonitorValues"
+              disabled={plan === "free"}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      disabled={field.disabled}
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Show number of request</FormLabel>
+                    <FormDescription>
+                      Share the total and failed amount of scheduled request to
+                      your endpoint.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+        </ProFeatureHoverCard>
       </div>
       <AlertDialog open={open} onOpenChange={(value) => setOpen(value)}>
         <AlertDialogContent>
