@@ -68,6 +68,15 @@ export const PageSchema = z.object({
     })
     .optional()
     .nullish(),
+  showMonitorValues: z
+    .boolean()
+    .openapi({
+      description:
+        "Displays the total and failed request numbers for each monitor",
+      example: true,
+    })
+    .optional()
+    .nullish(),
   monitors: z
     .array(z.number())
     .openapi({
