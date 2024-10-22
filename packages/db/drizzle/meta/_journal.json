@@ -260,13 +260,6 @@
       "when": 1723459608109,
       "tag": "0036_gifted_deathbird",
       "breakpoints": true
-    },
-    {
-      "idx": 37,
-      "version": "6",
-      "when": 1729085109326,
-      "tag": "0037_oval_sunfire",
-      "breakpoints": true
     }
   ]
 }
