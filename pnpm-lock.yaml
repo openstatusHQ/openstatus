@@ -172,8 +172,8 @@ importers:
         specifier: 1.7.0
         version: 1.7.0
       '@google-cloud/tasks':
-        specifier: 5.0.0
-        version: 5.0.0(encoding@0.1.13)
+        specifier: 4.0.1
+        version: 4.0.1(encoding@0.1.13)
       '@headlessui/react':
         specifier: 1.7.17
         version: 1.7.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2867,9 +2867,9 @@ packages:
   '@floating-ui/vue@1.1.1':
     resolution: {integrity: sha512-cyawjk9etPZPl/RVtMRnWrwtAhWbPVSrRVYARgOzhLIqxr0k2up1APrrFjqP9QwRQ0AwjKSvbWg4YC6jESutow==}
 
-  '@google-cloud/tasks@5.0.0':
-    resolution: {integrity: sha512-vwj0jzkHNgY/WvqrNt763QfO3mRHIO1GSFW22scOneI5pcu5sMb/JPN+P+cDPTEXRNPdZCaZ/HicLHZNxbseyA==}
-    engines: {node: '>=v14'}
+  '@google-cloud/tasks@4.0.1':
+    resolution: {integrity: sha512-cluHSN52WgaNoDPVguxCeXZq4rTBHqJntXFB9aI9zG8n8MJukf6V0H7yoAXpKXQxyeXv4LRy108kAgLPgXP3yA==}
+    engines: {node: '>=14.0.0'}
 
   '@grpc/grpc-js@1.9.7':
     resolution: {integrity: sha512-yMaA/cIsRhGzW3ymCNpdlPcInXcovztlgu/rirThj2b87u3RzWUszliOqZ/pldy7yhmJPS8uwog+kZSTa4A0PQ==}
@@ -12121,7 +12121,7 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
-  '@google-cloud/tasks@5.0.0(encoding@0.1.13)':
+  '@google-cloud/tasks@4.0.1(encoding@0.1.13)':
     dependencies:
       google-gax: 4.0.5(encoding@0.1.13)
     transitivePeerDependencies:
