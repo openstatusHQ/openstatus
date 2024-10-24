@@ -12,6 +12,6 @@ export const monitorRun = sqliteTable("monitor_run", {
   runnedAt: integer("runned_at", { mode: "timestamp_ms" }),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`
+    sql`(strftime('%s', 'now'))`,
   ),
 });
