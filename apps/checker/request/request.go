@@ -68,6 +68,7 @@ type TCPCheckerRequest struct {
 	WorkspaceID   string            `json:"workspaceId"`
 	URL           string            `json:"url"`
 	MonitorID     string            `json:"monitorId"`
+	Trigger       string            `json:"trigger,omitempty"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
 	RequestId     int64             `json:"requestId,omitempty"`
 	CronTimestamp int64             `json:"cronTimestamp"`

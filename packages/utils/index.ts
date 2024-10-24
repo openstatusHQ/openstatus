@@ -445,6 +445,7 @@ export const httpPayloadSchema = z.object({
   assertions: z.array(base).nullable(),
   timeout: z.number().default(45000),
   degradedAfter: z.number().nullable(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;
@@ -452,10 +453,11 @@ export type HttpPayload = z.infer<typeof httpPayloadSchema>;
 export const tpcPayloadSchema = z.object({
   status: z.enum(monitorStatus),
   workspaceId: z.string(),
-  url: z.string(),
+  uri: z.string(),
   monitorId: z.string(),
   assertions: z.array(base).nullable(),
   cronTimestamp: z.number(),
   timeout: z.number().default(45000),
   degradedAfter: z.number().nullable(),
+  trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });

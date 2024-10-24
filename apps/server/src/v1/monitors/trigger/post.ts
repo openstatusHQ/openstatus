@@ -13,8 +13,9 @@ import type { monitorsApi } from "..";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import { ParamsSchema } from "../schema";
+
 const triggerMonitor = createRoute({
-  method: "get",
+  method: "post",
   tags: ["monitor"],
   description: "Trigger a monitor check",
   path: "/:id/trigger",
@@ -143,18 +144,20 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
           assertions: row.assertions ? JSON.parse(row.assertions) : null,
           degradedAfter: row.degradedAfter,
           timeout: row.timeout,
+          trigger: "api",
         };
       }
       if (row.jobType === "tcp") {
         payload = {
           workspaceId: String(row.workspaceId),
           monitorId: String(row.id),
-          url: row.url,
+          uri: row.url,
           status: status,
           assertions: row.assertions ? JSON.parse(row.assertions) : null,
           cronTimestamp: timestamp,
           degradedAfter: row.degradedAfter,
           timeout: row.timeout,
+          trigger: "api",
         };
       }
 
