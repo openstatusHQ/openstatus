@@ -54,8 +54,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitorRun.workspaceId, Number(workspaceId)),
-            gte(monitorRun.createdAt, new Date(lastMonth)),
-          ),
+            gte(monitorRun.createdAt, new Date(lastMonth))
+          )
         )
         .all()
     )[0].count;
@@ -73,8 +73,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 
@@ -121,7 +121,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     }
 
     const allResult = [];
-    for (const region of monitorData.regions) {
+    for (const region of parseMonitor.data.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
       // Trigger the monitor
