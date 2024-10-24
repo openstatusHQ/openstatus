@@ -18,6 +18,11 @@ export const socialsConfig: Social[] = [
     icon: "github",
   },
   {
+    title: "Bluesky",
+    href: "https://bsky.app/profile/openstatus.dev",
+    icon: "bluesky",
+  },
+  {
     title: "Twitter",
     href: "/twitter",
     icon: "twitter",
@@ -27,9 +32,4 @@ export const socialsConfig: Social[] = [
     href: "/linkedin",
     icon: "linkedin",
   },
-  // {
-  //   title: "YouTube",
-  //   href: "/youtube",
-  //   icon: "youtube",
-  // },
 ];
