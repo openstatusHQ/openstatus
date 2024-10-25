@@ -33,7 +33,7 @@ const getMonitorStats = createRoute({
   path: "/:id/result/:resultId",
   request: {
     params: ParamsSchema.extend({
-      resultId: z.number().int().openapi({
+      resultId: z.string().openapi({
         description: "The id of the result",
       }),
     }),
