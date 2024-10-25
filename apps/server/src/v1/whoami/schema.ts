@@ -11,7 +11,7 @@ export const schema = z.object({
     .string()
     .openapi({ description: "The current workspace name" })
     .optional(),
-  slub: z.string().openapi({ description: "The current workspace slug" }),
+  slug: z.string().openapi({ description: "The current workspace slug" }),
   plan: z
     .enum(workspacePlans)
     .nullable()
