@@ -75,7 +75,7 @@ const getMonitorStats = createRoute({
   },
 });
 
-export function registerGetMonitorSummary(api: typeof monitorsApi) {
+export function registerGetMonitorResult(api: typeof monitorsApi) {
   return api.openapi(getMonitorStats, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id, resultId } = c.req.valid("param");
@@ -87,8 +87,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
