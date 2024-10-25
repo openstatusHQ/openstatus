@@ -48,7 +48,7 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
-  })
+  }),
 );
 /**
  * Authentification Middleware
