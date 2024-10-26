@@ -43,29 +43,31 @@ const getMonitorStats = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.object({
-              latency: z.number().int(), // in ms
-              statusCode: z.number().int().nullable().default(null),
-              monitorId: z.string().default(""),
-              url: z.string().url().optional(),
-              error: z
-                .number()
-                .default(0)
-                .transform((val) => val !== 0),
-              region: z.enum(flyRegions),
-              timestamp: z.number().int().optional(),
-              message: z.string().nullable().optional(),
-              timing: z
-                .string()
-                .nullable()
-                .optional()
-                .transform((val) => {
-                  if (!val) return null;
-                  const value = timingSchema.safeParse(JSON.parse(val));
-                  if (value.success) return value.data;
-                  return null;
-                }),
-            }),
+            data: z.array(
+              z.object({
+                latency: z.number().int(), // in ms
+                statusCode: z.number().int().nullable().default(null),
+                monitorId: z.string().default(""),
+                url: z.string().url().optional(),
+                error: z
+                  .number()
+                  .default(0)
+                  .transform((val) => val !== 0),
+                region: z.enum(flyRegions),
+                timestamp: z.number().int().optional(),
+                message: z.string().nullable().optional(),
+                timing: z
+                  .string()
+                  .nullable()
+                  .optional()
+                  .transform((val) => {
+                    if (!val) return null;
+                    const value = timingSchema.safeParse(JSON.parse(val));
+                    if (value.success) return value.data;
+                    return null;
+                  }),
+              })
+            ),
           }),
         },
       },
@@ -87,8 +89,8 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
