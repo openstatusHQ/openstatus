@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-import { monitorMethods } from "@openstatus/db/src/schema";
+import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   monitorPeriodicitySchema,
@@ -205,6 +205,9 @@ export const MonitorSchema = z
     }),
     timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request",
+    }),
+    jobType: z.enum(monitorJobTypes).openapi({
+      description: "The type of the monitor",
     }),
   })
   .openapi({
