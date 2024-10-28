@@ -5,12 +5,6 @@ import { format } from "date-fns";
 import * as z from "zod";
 
 import type { Ping } from "@openstatus/tinybird";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import type { Trigger } from "@/lib/monitor/utils";
@@ -18,7 +12,9 @@ import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
 
-export const columns: ColumnDef<Ping>[] = [
+export const columns: ColumnDef<
+  Omit<Ping, "assertions" | "message" | "url">
+>[] = [
   {
     accessorKey: "error",
     header: () => null,
@@ -50,26 +46,12 @@ export const columns: ColumnDef<Ping>[] = [
     cell: ({ row }) => {
       const unsafe_StatusCode = row.getValue("statusCode");
       const statusCode = z.number().nullable().parse(unsafe_StatusCode);
-      const message = row.original.message;
 
       if (statusCode !== null) {
         return <DataTableStatusBadge {...{ statusCode }} />;
       }
 
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <DataTableStatusBadge {...{ statusCode }} />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs text-muted-foreground sm:max-w-sm">
-                {message}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+      return <div className="text-muted-foreground">N/A</div>;
     },
     filterFn: (row, id, value) => {
       // get the first digit of the status code

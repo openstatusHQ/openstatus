@@ -11,7 +11,7 @@ import { openApiErrorResponses } from "../../../libs/errors/openapi-error-respon
 import type { monitorsApi } from "../index";
 import { ParamsSchema } from "../schema";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 const timingSchema = z.object({
   dnsStart: z.number(),
@@ -87,8 +87,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
@@ -106,15 +106,15 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
     // Fetch result from tb pipe
-    const data = await tb.getResultForOnDemandCheckHttp()({
+    const data = await tb.getResultForOnDemandCheckHttp({
       monitorId: _monitor.id,
       timestamp: _monitorRun.runnedAt?.getTime(),
       url: _monitor.url,
     });
     // return array of results
-    if (!data) {
+    if (!data || data.data.length === 0) {
       throw new HTTPException(404, { message: "Not Found" });
     }
-    return c.json({ data }, 200);
+    return c.json({ data: data.data[0] }, 200);
   });
 }

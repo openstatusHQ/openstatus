@@ -1,0 +1,28 @@
+VERSION 0
+
+TAGS http
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        error,
+        region,
+        trigger,
+        statusCode,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        workspaceId
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_7d__v0
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(7)"
+
+

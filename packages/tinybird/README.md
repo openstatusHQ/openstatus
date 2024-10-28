@@ -33,3 +33,20 @@ tb pipe rm tb_datasource_union.pipe --yes
 
 Link to the [issue](https://github.com/openstatusHQ/openstatus/issues/278) from
 Gonzalo as reference.
+
+
+<!-- FIXME: more content -->
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install tinybird-cli
+tb auth -i
+```
+
+```bash
+tb pull
+tb push aggregate_*.pipe --populate
+tb push endpoint_*.pipe
+...
+```

@@ -1,15 +1,12 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { OSTinybird } from "@openstatus/tinybird";
-
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
 import { searchParamsCache } from "./search-params";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+import { prepareListByPeriod } from "@/lib/tb";
 
 export default async function Page({
   params,
@@ -27,12 +24,17 @@ export default async function Page({
 
   if (!monitor) return notFound();
 
-  const allowedPeriods = ["1h", "1d", "3d", "7d"] as const;
+  // FIXME: make it dynamic based on the workspace plan
+  const allowedPeriods = ["1d", "7d", "14d"] as const;
   const period = allowedPeriods.find((i) => i === search.period) || "1d";
 
-  const data = await tb.endpointList(period)({ monitorId: id });
+  // FIXME: we expect data to be HTTP monitor data
+  // Create a `DataTableWrapper` specific for tcp monitors
+  const res = await prepareListByPeriod(period).getData({
+    monitorId: id,
+  });
 
-  if (!data) return null;
+  if (!res.data) return null;
 
   return (
     <div className="grid gap-4">
@@ -47,7 +49,7 @@ export default async function Page({
       </div>
       {/* FIXME: we display all the regions even though a user might not have all supported in their plan */}
       <DataTableWrapper
-        data={data}
+        data={res.data}
         filters={[
           { id: "statusCode", value: search.statusCode },
           { id: "region", value: search.regions },

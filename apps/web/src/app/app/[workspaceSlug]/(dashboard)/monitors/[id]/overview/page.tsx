@@ -3,7 +3,6 @@ import * as React from "react";
 
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import type { Region } from "@openstatus/tinybird";
-import { OSTinybird } from "@openstatus/tinybird";
 import { Separator } from "@openstatus/ui";
 
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -20,8 +19,11 @@ import {
   DEFAULT_QUANTILE,
   searchParamsCache,
 } from "./search-params";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+import {
+  prepareMetricByIntervalByPeriod,
+  prepareMetricByRegionByPeriod,
+  prepareMetricsByPeriod,
+} from "@/lib/tb";
 
 export default async function Page({
   params,
@@ -51,12 +53,12 @@ export default async function Page({
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const [metrics, data, metricsByRegion] = await Promise.all([
-    tb.endpointMetrics(period)({ monitorId: id }),
-    tb.endpointChart(period)({
+    prepareMetricsByPeriod(period).getData({ monitorId: id }),
+    prepareMetricByIntervalByPeriod(period).getData({
       monitorId: id,
       interval: minutes,
     }),
-    tb.endpointMetricsByRegion(period)({
+    prepareMetricByRegionByPeriod(period).getData({
       monitorId: id,
     }),
   ]);
@@ -84,17 +86,17 @@ export default async function Page({
         <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}
       </div>
-      <Metrics metrics={metrics} period={period} showErrorLink />
+      <Metrics metrics={metrics.data} period={period} showErrorLink />
       <Separator className="my-8" />
       <CombinedChartWrapper
-        data={data}
+        data={data.data}
         period={period}
         quantile={quantile}
         interval={interval}
         regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
         monitor={monitor}
         isQuantileDisabled={isQuantileDisabled}
-        metricsByRegion={metricsByRegion}
+        metricsByRegion={metricsByRegion.data}
         preferredSettings={preferredSettings}
       />
     </div>

@@ -11,7 +11,6 @@ import type {
 import { Suspense, use } from "react";
 
 import * as assertions from "@openstatus/assertions";
-import type { OSTinybird } from "@openstatus/tinybird";
 
 import { CopyToClipboardButton } from "@/components/dashboard/copy-to-clipboard-button";
 import { columns } from "@/components/data-table/columns";
@@ -23,14 +22,9 @@ import { api } from "@/trpc/client";
 import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { z } from "zod";
 
-// EXAMPLE: get the type of the response of the endpoint
-// biome-ignore lint/correctness/noUnusedVariables: <explanation>
-type T = Awaited<ReturnType<ReturnType<OSTinybird["endpointList"]>>>;
-
 // FIXME: use proper type
 export type Monitor = {
   monitorId: string;
-  url: string;
   latency: number;
   region: z.infer<typeof monitorFlyRegionSchema>;
   statusCode: number | null;
@@ -38,7 +32,6 @@ export type Monitor = {
   workspaceId: string;
   cronTimestamp: number | null;
   error: boolean;
-  assertions?: string | null;
   trigger: Trigger | null;
 };
 
@@ -81,22 +74,20 @@ function Details({ row }: { row: Row<Monitor> }) {
   const data = use(
     api.tinybird.responseDetails.query({
       monitorId: row.original.monitorId,
-      url: row.original.url,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    }),
+    })
   );
 
-  if (!data || data.length === 0) return <p>Something went wrong</p>;
+  if (!data.data || data.data.length === 0) return <p>Something went wrong</p>;
 
-  const first = data?.[0];
+  const first = data.data?.[0];
 
   // FIXME: ugly hack
   const url = new URL(window.location.href.replace("/data", "/details"));
   url.searchParams.set("monitorId", row.original.monitorId);
   url.searchParams.set("region", row.original.region);
   url.searchParams.set("cronTimestamp", String(row.original.cronTimestamp));
-  url.searchParams.set("url", row.original.url);
 
   return (
     <div className="relative">

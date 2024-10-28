@@ -8,13 +8,13 @@ import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export const runtime = "edge";
 
 export async function GET(req: Request) {
   const [interRegularData, interLightData, calSemiBoldData] = await Promise.all(
-    [interRegular, interLight, calSemiBold],
+    [interRegular, interLight, calSemiBold]
   );
 
   const { searchParams } = new URL(req.url);
@@ -29,21 +29,23 @@ export async function GET(req: Request) {
   const monitorId =
     (searchParams.has("id") && searchParams.get("id")) || undefined;
 
-  const data =
-    (monitorId &&
-      (await tb.endpointStatusPeriod("45d")({
-        monitorId,
-      }))) ||
-    [];
+  // TODO: we need to pass the monitor type here
+
+  const res = (monitorId &&
+    (await tb.httpStatus45d({
+      monitorId,
+    }))) || { data: [] };
 
   return new ImageResponse(
-    <BasicLayout
-      title={title}
-      description={description}
-      tw={data.length === 0 ? "mt-32" : undefined}
-    >
-      {data.length ? <Tracker data={data} /> : null}
-    </BasicLayout>,
+    (
+      <BasicLayout
+        title={title}
+        description={description}
+        tw={res.data.length === 0 ? "mt-32" : undefined}
+      >
+        {res.data.length ? <Tracker data={res.data} /> : null}
+      </BasicLayout>
+    ),
     {
       ...SIZE,
       fonts: [
@@ -66,6 +68,6 @@ export async function GET(req: Request) {
           weight: 600,
         },
       ],
-    },
+    }
   );
 }

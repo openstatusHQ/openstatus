@@ -2,82 +2,8 @@ import * as z from "zod";
 import { monitorFlyRegionSchema } from "../../db/src/schema/constants";
 import type { flyRegions } from "../../db/src/schema/constants";
 
-export const tbIngestWebVitals = z.object({
-  dsn: z.string(),
-  href: z.string(),
-  speed: z.string(),
-  path: z.string(),
-  screen: z.string(),
-  name: z.string(),
-  rating: z.string().optional(),
-  value: z.number(),
-  id: z.string(),
-  session_id: z.string(),
-  browser: z.string().default(""),
-  city: z.string().default(""),
-  country: z.string().default(""),
-  continent: z.string().default(""),
-  device: z.string().default(""),
-  region_code: z.string().default(""),
-  timezone: z.string().default(""),
-  os: z.string(),
-  timestamp: z.number().int(),
-});
-
-export const responseRumPageQuery = z.object({
-  path: z.string(),
-  totalSession: z.number(),
-  cls: z.number(),
-  fcp: z.number(),
-  // fid: z.number(),
-  inp: z.number(),
-  lcp: z.number(),
-  ttfb: z.number(),
-});
-
-export const sessionRumPageQuery = z.object({
-  session_id: z.string(),
-  cls: z.number(),
-  fcp: z.number(),
-  // fid: z.number(),
-  inp: z.number(),
-  lcp: z.number(),
-  ttfb: z.number(),
-});
-
-export const tbIngestWebVitalsArray = z.array(tbIngestWebVitals);
 /**
- * Values for the datasource ping_response
- */
-export const tbIngestPingResponse = z.object({
-  workspaceId: z.string(),
-  monitorId: z.string(),
-  timestamp: z.number().int(),
-  statusCode: z.number().int().nullable().optional(),
-  latency: z.number(), // in ms
-  cronTimestamp: z.number().int().optional().nullable().default(Date.now()),
-  url: z.string().url(),
-  region: z.string().min(3).max(4), // REMINDER: won't work on fy
-  message: z.string().nullable().optional(),
-  headers: z.record(z.string(), z.string()).nullable().optional(),
-  timing: z
-    .object({
-      dnsStart: z.number().int(),
-      dnsDone: z.number().int(),
-      connectStart: z.number().int(),
-      connectDone: z.number().int(),
-      tlsHandshakeStart: z.number().int(),
-      tlsHandshakeDone: z.number().int(),
-      firstByteStart: z.number().int(),
-      firstByteDone: z.number().int(),
-      transferStart: z.number().int(),
-      transferDone: z.number().int(),
-    })
-    .nullable()
-    .optional(),
-});
-
-/**
+ * FIXME: remove const
  * Values from the pipe response_list
  */
 export const tbBuildResponseList = z.object({

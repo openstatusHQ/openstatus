@@ -12,10 +12,15 @@ import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
+import {
+  prepareMetricByIntervalByPeriod,
+  prepareMetricByRegionByPeriod,
+  prepareMetricsByPeriod,
+} from "@/lib/tb";
 
 // Add loading page
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export const revalidate = 120;
 
@@ -39,12 +44,13 @@ export default async function Page({
     publicMonitors.length > 0
       ? await Promise.all(
           publicMonitors?.map(async (monitor) => {
-            const data = await tb.endpointChartAllRegions(period)({
+            const data = await prepareMetricByIntervalByPeriod(period).getData({
               monitorId: String(monitor.id),
+              interval: 60,
             });
 
             return { monitor, data };
-          }),
+          })
         )
       : undefined;
 
@@ -70,12 +76,7 @@ export default async function Page({
           <ul className="grid gap-6">
             {monitorsWithData?.map(({ monitor, data }) => {
               const group =
-                data &&
-                groupDataByTimestamp(
-                  data.map((data) => ({ ...data, region: "ams" })),
-                  period,
-                  quantile,
-                );
+                data.data && groupDataByTimestamp(data.data, period, quantile);
               return (
                 <li key={monitor.id} className="grid gap-2">
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">

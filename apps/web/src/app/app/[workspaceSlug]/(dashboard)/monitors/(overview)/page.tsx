@@ -11,7 +11,7 @@ import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export default async function MonitorPage({
   searchParams,
@@ -42,51 +42,47 @@ export default async function MonitorPage({
     api.monitor.isMonitorLimitReached.query(),
   ]);
 
+  // TODO: TCP
+
   // maybe not very efficient?
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
       const [metrics, data] = await Promise.all([
-        tb.endpointMetrics("1d")(
-          {
-            monitorId: String(monitor.id),
-          },
-          { cache: "no-store", revalidate: 0 },
-        ),
-        tb.endpointStatusPeriod("7d")(
-          {
-            monitorId: String(monitor.id),
-          },
-          { cache: "no-store", revalidate: 0 },
-        ),
+        tb.httpMetricsDaily({
+          monitorId: String(monitor.id),
+        }),
+        tb.httpStatusWeekly({
+          monitorId: String(monitor.id),
+        }),
       ]);
 
-      const [current] = metrics?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+      const [current] = metrics.data?.sort((a, b) =>
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id,
+        (incident) => incident.monitorId === monitor.id
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag,
+        ({ monitorTag }) => monitorTag
       );
 
       const maintenances = _maintenances.filter((maintenance) =>
-        maintenance.monitors.includes(monitor.id),
+        maintenance.monitors.includes(monitor.id)
       );
 
       return {
         monitor,
         metrics: current,
-        data,
+        data: data.data,
         incidents,
         maintenances,
         tags,
         isLimitReached,
       };
-    }),
+    })
   );
 
   return (

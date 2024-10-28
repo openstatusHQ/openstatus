@@ -10,8 +10,9 @@ import { OSTinybird } from "@openstatus/tinybird";
 
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
+import { prepareStatusByPeriod } from "@/lib/tb";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export const Monitor = async ({
   monitor,
@@ -26,17 +27,17 @@ export const Monitor = async ({
   maintenances: Maintenance[];
   showValues?: boolean;
 }) => {
-  const data = await tb.endpointStatusPeriod("45d")({
+  const res = await prepareStatusByPeriod("45d").getData({
     monitorId: String(monitor.id),
   });
 
   // TODO: we could handle the `statusReports` here instead of passing it down to the tracker
 
-  if (!data) return <div>Something went wrong</div>;
+  if (!res.data) return <div>Something went wrong</div>;
 
   return (
     <Tracker
-      data={data}
+      data={res.data}
       reports={statusReports}
       incidents={incidents}
       maintenances={maintenances}

@@ -1,6 +1,5 @@
 // TODO: move to `ping-response-analysis`
 
-import { OSTinybird } from "@openstatus/tinybird";
 import type { ResponseDetailsParams } from "@openstatus/tinybird";
 
 import {
@@ -12,16 +11,15 @@ import {
 import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseHeaderTable } from "@/components/ping-response-analysis/response-header-table";
 import { ResponseTimingTable } from "@/components/ping-response-analysis/response-timing-table";
-import { env } from "@/env";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+import { prepareGetByPeriod } from "@/lib/tb";
 
 export async function ResponseDetails(props: ResponseDetailsParams) {
-  const details = await tb.endpointResponseDetails("45d")(props);
+  // FIXME: this has to be dynamic
+  const details = await prepareGetByPeriod("30d").getData(props);
 
-  if (!details || details?.length === 0) return null;
+  if (!details.data || details.data.length === 0) return null;
 
-  const response = details[0];
+  const response = details.data[0];
 
   const { timing, headers, message, statusCode } = response;
 

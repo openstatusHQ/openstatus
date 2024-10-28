@@ -11,7 +11,7 @@ export const DEFAULT_QUANTILE = "p95";
 export const DEFAULT_INTERVAL = "30m";
 export const DEFAULT_PERIOD = "1d";
 
-export const periods = ["1d", "7d"] as const;
+export const periods = ["1d", "7d", "14d"] as const;
 
 export const searchParamsParsers = {
   statusCode: parseAsInteger,
