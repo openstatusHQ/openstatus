@@ -48,6 +48,7 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
+    baseServerURL: "https://api.openstatus.dev/v1",
   }),
 );
 /**
