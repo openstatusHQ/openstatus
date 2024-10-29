@@ -3,8 +3,8 @@ import Link from "next/link";
 
 import { periodFormatter } from "@/lib/monitor/utils";
 import type { Period } from "@/lib/monitor/utils";
+import type { ResponseTimeMetrics } from "@/lib/tb";
 import { MetricsCard } from "./metrics-card";
-import { ResponseTimeMetrics } from "@/lib/tb";
 
 const metricsOrder = [
   "p50Latency",
@@ -26,7 +26,7 @@ export function Metrics({
   if (!metrics || metrics.length === 0) return null;
 
   const [current, last] = metrics.sort((a, b) =>
-    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
   );
 
   const isEmpty = current.count === 0;

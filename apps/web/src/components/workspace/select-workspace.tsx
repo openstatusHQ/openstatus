@@ -17,8 +17,8 @@ import {
 } from "@openstatus/ui/src/components/dropdown-menu";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 
-import { api } from "@/trpc/client";
 import { copyToClipboard } from "@/lib/utils";
+import { api } from "@/trpc/client";
 
 export function SelectWorkspace() {
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);

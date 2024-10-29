@@ -29,7 +29,7 @@ export const Monitor = async ({
 }) => {
   const res = await prepareStatusByPeriod(
     "45d",
-    monitor.jobType as "http" | "tcp"
+    monitor.jobType as "http" | "tcp",
   ).getData({
     monitorId: String(monitor.id),
   });

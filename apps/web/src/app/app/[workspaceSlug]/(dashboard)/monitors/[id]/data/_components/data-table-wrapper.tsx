@@ -82,7 +82,7 @@ function Details({ row }: { row: Row<Monitor> }) {
       monitorId: row.original.monitorId,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,
-    })
+    }),
   );
 
   if (!data.data || data.data.length === 0) return <p>Something went wrong</p>;

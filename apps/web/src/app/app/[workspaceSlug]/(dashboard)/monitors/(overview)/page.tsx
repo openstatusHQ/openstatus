@@ -8,9 +8,9 @@ import { Limit } from "@/components/dashboard/limit";
 import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
+import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
-import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
@@ -58,19 +58,19 @@ export default async function MonitorPage({
       ]);
 
       const [current] = metrics.data?.sort((a, b) =>
-        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
+        (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
       ) || [undefined];
 
       const incidents = _incidents.filter(
-        (incident) => incident.monitorId === monitor.id
+        (incident) => incident.monitorId === monitor.id,
       );
 
       const tags = monitor.monitorTagsToMonitors.map(
-        ({ monitorTag }) => monitorTag
+        ({ monitorTag }) => monitorTag,
       );
 
       const maintenances = _maintenances.filter((maintenance) =>
-        maintenance.monitors.includes(monitor.id)
+        maintenance.monitors.includes(monitor.id),
       );
 
       return {
@@ -82,7 +82,7 @@ export default async function MonitorPage({
         tags,
         isLimitReached,
       };
-    })
+    }),
   );
 
   return (

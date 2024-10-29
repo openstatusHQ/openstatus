@@ -17,7 +17,7 @@ export const tinybirdRouter = createTRPCRouter({
         monitorId: z.string(),
         region: z.enum(flyRegions).optional(),
         cronTimestamp: z.number().int().optional(),
-      })
+      }),
     )
     .query(async (opts) => {
       return await tb.httpGetMonthly(opts.input);

@@ -5,8 +5,8 @@ import { LineChart } from "@tremor/react";
 import { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { dataFormatter, regionFormatter } from "./utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
+import { dataFormatter, regionFormatter } from "./utils";
 
 interface ChartProps {
   data: { timestamp: string; [key: string]: string | number }[];
@@ -78,7 +78,7 @@ const customTooltip = ({
                 <div
                   className={cn(
                     "flex w-1 flex-col rounded",
-                    `bg-${category.color}-500`
+                    `bg-${category.color}-500`,
                   )}
                 />
                 <div className="flex w-full justify-between gap-2">

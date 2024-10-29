@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
+import { prepareListByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
 import { searchParamsCache } from "./search-params";
-import { prepareListByPeriod } from "@/lib/tb";
 
 export default async function Page({
   params,

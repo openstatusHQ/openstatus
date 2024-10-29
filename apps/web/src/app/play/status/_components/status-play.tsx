@@ -7,8 +7,8 @@ import {
 } from "@/components/marketing/card";
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
-import { getServerTimezoneFormat } from "@/lib/timezone";
 import { prepareStatusByPeriod } from "@/lib/tb";
+import { getServerTimezoneFormat } from "@/lib/timezone";
 
 export default async function StatusPlay() {
   const res = await prepareStatusByPeriod("45d").getData({ monitorId: "1" });

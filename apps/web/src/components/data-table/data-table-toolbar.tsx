@@ -29,7 +29,9 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-1 flex-wrap items-center gap-2">
         {table.getColumn("statusCode") &&
           // TCP statusCode column is not visible
-          table.getColumn("statusCode")?.getIsVisible() && (
+          table
+            .getColumn("statusCode")
+            ?.getIsVisible() && (
             <DataTableFacetedFilter
               column={table.getColumn("statusCode")}
               title="Status Code"

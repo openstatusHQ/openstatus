@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
+import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";
@@ -10,6 +10,11 @@ import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-pre
 import { Metrics } from "@/components/monitor-dashboard/metrics";
 import { getMinutesByInterval, periods } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
+import {
+  prepareMetricByIntervalByPeriod,
+  prepareMetricByRegionByPeriod,
+  prepareMetricsByPeriod,
+} from "@/lib/tb";
 import { api } from "@/trpc/server";
 import {
   DEFAULT_INTERVAL,
@@ -17,11 +22,6 @@ import {
   DEFAULT_QUANTILE,
   searchParamsCache,
 } from "./search-params";
-import {
-  prepareMetricByIntervalByPeriod,
-  prepareMetricByRegionByPeriod,
-  prepareMetricsByPeriod,
-} from "@/lib/tb";
 
 export default async function Page({
   params,

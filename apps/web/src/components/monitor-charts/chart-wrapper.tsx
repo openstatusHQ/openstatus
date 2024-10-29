@@ -1,7 +1,7 @@
 import type { Period, Quantile } from "@/lib/monitor/utils";
+import type { ResponseGraph } from "@/lib/tb";
 import { Chart } from "./chart";
 import { groupDataByTimestamp } from "./utils";
-import { ResponseGraph } from "@/lib/tb";
 
 export function ChartWrapper({
   data,

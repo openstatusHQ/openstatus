@@ -10,9 +10,9 @@ import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
+import { prepareMetricByIntervalByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
-import { prepareMetricByIntervalByPeriod } from "@/lib/tb";
 
 // Add loading page
 
@@ -43,14 +43,14 @@ export default async function Page({
             const type = monitor.jobType as "http" | "tcp";
             const data = await prepareMetricByIntervalByPeriod(
               period,
-              type
+              type,
             ).getData({
               monitorId: String(monitor.id),
               interval: 60,
             });
 
             return { monitor, data };
-          })
+          }),
         )
       : undefined;
 

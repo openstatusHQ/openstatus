@@ -2,6 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
+import type { Region } from "@openstatus/db/src/schema/constants";
 import type { Row } from "@tanstack/react-table";
 import { RegionsPreset } from "../monitor-dashboard/region-preset";
 import { columns } from "./columns";
@@ -9,7 +10,6 @@ import { MultiRegionChart } from "./multi-region-chart";
 import { MultiRegionTable } from "./multi-region-table";
 import { ResponseDetailTabs } from "./response-detail-tabs";
 import type { RegionChecker } from "./utils";
-import type { Region } from "@openstatus/db/src/schema/constants";
 
 export function MultiRegionTabs({
   regions,

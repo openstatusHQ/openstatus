@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/src/components/tooltip";
 
+import type { ResponseStatusTracker } from "@/lib/tb";
 import { cn } from "@/lib/utils";
 import {
   HoverCard,
@@ -32,7 +33,6 @@ import {
   HoverCardTrigger,
 } from "@openstatus/ui/src/components/hover-card";
 import { Separator } from "@openstatus/ui/src/components/separator";
-import type { ResponseStatusTracker } from "@/lib/tb";
 
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
@@ -147,7 +147,7 @@ export const Bar = ({
       prev +
       Math.abs(
         (curr.resolvedAt?.getTime() || new Date().getTime()) -
-          curr.startedAt?.getTime()
+          curr.startedAt?.getTime(),
       )
     );
   }, 0);
@@ -300,7 +300,7 @@ export function DowntimeText({
       Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false }
+        { format: ["days", "hours", "minutes", "seconds"], zero: false },
       )}
     </p>
   );

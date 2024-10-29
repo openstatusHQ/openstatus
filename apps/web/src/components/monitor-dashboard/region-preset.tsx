@@ -25,7 +25,7 @@ import {
 } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
+import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {
@@ -46,7 +46,7 @@ export function RegionsPreset({
       .withDefault(selectedRegions.filter((r) => regions?.includes(r)))
       .withOptions({
         shallow: false, // required for SSR to call the RSC
-      })
+      }),
   );
 
   const allSelected = regions.every((r) => selected.includes(r));
@@ -69,7 +69,7 @@ export function RegionsPreset({
 
         return prev;
       },
-      [] as { continent: Continent; data: RegionInfo[] }[]
+      [] as { continent: Continent; data: RegionInfo[] }[],
     )
     .sort((a, b) => a.continent.localeCompare(b.continent));
 
@@ -124,7 +124,7 @@ export function RegionsPreset({
                           setSelected((prev) =>
                             !prev.includes(checked as Region)
                               ? [...prev, code]
-                              : prev.filter((r) => r !== code)
+                              : prev.filter((r) => r !== code),
                           );
                         }}
                       >
@@ -133,7 +133,7 @@ export function RegionsPreset({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible"
+                              : "opacity-50 [&_svg]:invisible",
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />

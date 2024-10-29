@@ -3,8 +3,8 @@ import { format } from "date-fns";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
-import { ResponseGraph } from "@/lib/tb";
-import { Region } from "@openstatus/db/src/schema/constants";
+import type { ResponseGraph } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 /**
  *
@@ -15,7 +15,7 @@ import { Region } from "@openstatus/db/src/schema/constants";
 export function groupDataByTimestamp(
   data: ResponseGraph[],
   period: Period,
-  quantile: Quantile
+  quantile: Quantile,
 ) {
   let currentTimestamp = 0;
   const regions: Record<
@@ -48,7 +48,7 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<Region, string>> & { timestamp: string })[]
+    [] as (Partial<Record<Region, string>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code

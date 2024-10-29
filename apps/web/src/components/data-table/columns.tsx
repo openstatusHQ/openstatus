@@ -2,15 +2,15 @@
 
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import * as z from "zod";
+import type * as z from "zod";
 
 import { flyRegionsDict } from "@openstatus/utils";
 
 import type { Trigger } from "@/lib/monitor/utils";
+import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import { TriggerIconWithTooltip } from "../monitor/trigger-icon-with-tooltip";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableStatusBadge } from "./data-table-status-badge";
-import { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 
 export type Check = {
   type: "http" | "tcp";

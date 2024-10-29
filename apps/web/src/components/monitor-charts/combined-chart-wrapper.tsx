@@ -15,10 +15,10 @@ import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import type { Interval, Period, Quantile } from "@/lib/monitor/utils";
 import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
+import type { ResponseGraph, ResponseTimeMetricsByRegion } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { Chart } from "./chart";
 import { groupDataByTimestamp } from "./utils";
-import { ResponseGraph, ResponseTimeMetricsByRegion } from "@/lib/tb";
-import { Region } from "@openstatus/db/src/schema/constants";
 
 export function CombinedChartWrapper({
   data,
@@ -43,11 +43,11 @@ export function CombinedChartWrapper({
 }) {
   const chartData = useMemo(
     () => groupDataByTimestamp(data, period, quantile),
-    [data, period, quantile]
+    [data, period, quantile],
   );
 
   const [preferredSettings, setPreferredSettings] = usePreferredSettings(
-    defaultPreferredSettings
+    defaultPreferredSettings,
   );
 
   const combinedRegions = preferredSettings?.combinedRegions ?? false;
@@ -61,7 +61,7 @@ export function CombinedChartWrapper({
           metrics: metricsByRegion.find((metrics) => metrics.region === region),
         }))
         .filter((row) => !!row.metrics),
-    [regions, chartData, metricsByRegion]
+    [regions, chartData, metricsByRegion],
   );
 
   return (
