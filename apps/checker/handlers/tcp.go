@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
@@ -14,13 +15,15 @@ import (
 )
 
 type TCPResponse struct {
-	Error       string                    `json:"error,omitempty"`
-	Region      string                    `json:"region"`
-	RequestId   int64                     `json:"requestId,omitempty"`
-	WorkspaceID int64                     `json:"workspaceId"`
-	MonitorID   int64                     `json:"monitorId"`
-	Timestamp   int64                     `json:"timestamp"`
-	Timing      checker.TCPResponseTiming `json:"timing"`
+	Region       string                    `json:"region"`
+	ErrorMessage string                    `json:"errorMessage"`
+	RequestId    int64                     `json:"requestId,omitempty"`
+	WorkspaceID  int64                     `json:"workspaceId"`
+	MonitorID    int64                     `json:"monitorId"`
+	Timestamp    int64                     `json:"timestamp"`
+	Latency      int64                     `json:"latency"`
+	Timing       checker.TCPResponseTiming `json:"timing"`
+	Error        uint8                     `json:"error,omitempty"`
 }
 
 // Only used for Tinybird.
@@ -233,26 +236,13 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		return
 	}
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
-	}
-
-	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
-	}
-
 	var called int
 
 	var response TCPResponse
 
 	op := func() error {
 		called++
+		timestamp := time.Now().UTC().UnixMilli()
 		res, err := checker.PingTcp(int(req.Timeout), req.URL)
 
 		if err != nil {
@@ -260,14 +250,13 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		}
 
 		response = TCPResponse{
-			WorkspaceID: workspaceId,
-			Timestamp:   req.CronTimestamp,
+			Timestamp: timestamp,
 			Timing: checker.TCPResponseTiming{
 				TCPStart: res.TCPStart,
 				TCPDone:  res.TCPDone,
 			},
-			Region:    h.Region,
-			MonitorID: monitorId,
+			Latency: res.TCPDone - res.TCPStart,
+			Region:  h.Region,
 		}
 
 		timingAsString, err := json.Marshal(res)
@@ -278,13 +267,11 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		latency := res.TCPDone - res.TCPStart
 
 		data := TCPData{
-			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
 			Timestamp:     res.TCPStart,
 			Error:         0,
 			ErrorMessage:  "",
 			Region:        h.Region,
-			MonitorID:     monitorId,
 			Timing:        string(timingAsString),
 			Latency:       latency,
 			RequestId:     req.RequestId,
@@ -301,20 +288,10 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		return nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil && req.RequestId != 0 {
-		if err := h.TbClient.SendEvent(ctx, TCPData{
-			WorkspaceID:   workspaceId,
-			CronTimestamp: req.CronTimestamp,
-			ErrorMessage:  err.Error(),
-			Region:        h.Region,
-			MonitorID:     monitorId,
-			Error:         1,
-			RequestId:     req.RequestId,
-			Trigger:       "api",
-			URI:           req.URL,
-		}, dataSourceName); err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
-		}
+	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+
+		return
 	}
 
 	c.JSON(http.StatusOK, response)
