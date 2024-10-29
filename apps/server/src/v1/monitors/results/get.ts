@@ -66,7 +66,7 @@ const getMonitorStats = createRoute({
                     if (value.success) return value.data;
                     return null;
                   }),
-              })
+              }),
             ),
           }),
         },
@@ -89,8 +89,8 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId))
-        )
+          eq(monitorRun.workspaceId, Number(workspaceId)),
+        ),
       )
       .get();
 
