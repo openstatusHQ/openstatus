@@ -113,7 +113,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.enum(flyRegions)),
+        z.array(z.enum(flyRegions))
       )
       .default([])
       .openapi({
@@ -161,7 +161,7 @@ export const MonitorSchema = z
             ]);
           }
         },
-        z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+        z.array(z.object({ key: z.string(), value: z.string() })).default([])
       )
       .nullish()
       .openapi({
@@ -206,9 +206,13 @@ export const MonitorSchema = z
     timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request",
     }),
-    jobType: z.enum(monitorJobTypes).openapi({
-      description: "The type of the monitor",
-    }),
+    jobType: z
+      .enum(monitorJobTypes)
+      .openapi({
+        description: "The type of the monitor",
+      })
+      .default("http")
+      .optional(),
   })
   .openapi({
     description: "The monitor",
