@@ -6,13 +6,9 @@ import type {
   PublicMonitor,
   selectPublicStatusReportSchemaWithRelation,
 } from "@openstatus/db/src/schema";
-import { OSTinybird } from "@openstatus/tinybird";
 
 import { Tracker } from "@/components/tracker/tracker";
-import { env } from "@/env";
 import { prepareStatusByPeriod } from "@/lib/tb";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export const Monitor = async ({
   monitor,

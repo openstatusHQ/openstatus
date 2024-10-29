@@ -60,7 +60,7 @@ export const columns: ColumnDef<Check>[] = [
         | null
         | undefined;
 
-      if (!!statusCode) {
+      if (statusCode) {
         return <DataTableStatusBadge {...{ statusCode }} />;
       }
 

@@ -27,23 +27,19 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-1 flex-wrap items-center gap-2">
-        {table.getColumn("statusCode") &&
-          // TCP statusCode column is not visible
-          table
-            .getColumn("statusCode")
-            ?.getIsVisible() && (
-            <DataTableFacetedFilter
-              column={table.getColumn("statusCode")}
-              title="Status Code"
-              options={Object.keys(codesDict).map((key) => {
-                const typedKey = key as keyof typeof codesDict;
-                return {
-                  label: codesDict[typedKey].label,
-                  value: codesDict[typedKey].prefix,
-                };
-              })}
-            />
-          )}
+        {table.getColumn("statusCode")?.getIsVisible() && (
+          <DataTableFacetedFilter
+            column={table.getColumn("statusCode")}
+            title="Status Code"
+            options={Object.keys(codesDict).map((key) => {
+              const typedKey = key as keyof typeof codesDict;
+              return {
+                label: codesDict[typedKey].label,
+                value: codesDict[typedKey].prefix,
+              };
+            })}
+          />
+        )}
         {table.getColumn("region") && (
           <DataTableFacetedFilter
             column={table.getColumn("region")}

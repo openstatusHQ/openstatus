@@ -1,18 +1,14 @@
 import Link from "next/link";
 
-import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
 import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
-import { env } from "@/env";
 import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
-
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export default async function MonitorPage({
   searchParams,

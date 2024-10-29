@@ -7,9 +7,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
   Button,
   Checkbox,
   Form,
@@ -27,7 +24,6 @@ import {
   SelectValue,
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -253,13 +249,13 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
               )}
             />
             <div className="col-span-full mt-2 sm:col-span-1">
-              <Button disabled={isPending} className="h-10 w-full group">
+              <Button disabled={isPending} className="group h-10 w-full">
                 {isPending ? (
                   <LoadingAnimation />
                 ) : (
                   <>
                     Check{" "}
-                    <Gauge className="ml-1 h-4 w-4 [&>*:first-child]:transition-transform [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:-rotate-90 [&>*:first-child]:group-hover:rotate-0 [&>*:first-child]:duration-500 [&>*:first-child]:ease-out" />
+                    <Gauge className="[&>*:first-child]:-rotate-90 ml-1 h-4 w-4 [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:transition-transform [&>*:first-child]:duration-500 [&>*:first-child]:ease-out [&>*:first-child]:group-hover:rotate-0" />
                   </>
                 )}
               </Button>

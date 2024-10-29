@@ -73,14 +73,14 @@ export function SelectWorkspace() {
           <DropdownMenuItem key={workspace.id} asChild>
             <a
               href={`/app/${workspace.slug}/monitors`}
-              className="justify-between group"
+              className="group justify-between"
             >
               <span className="truncate">{workspace.slug}</span>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 mx-0.5 hidden group-hover:block"
+                className="mx-0.5 hidden h-5 w-5 group-hover:block"
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();

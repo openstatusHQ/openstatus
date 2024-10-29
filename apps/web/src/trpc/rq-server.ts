@@ -9,7 +9,7 @@ import { cache } from "react";
 import { makeQueryClient } from "./query-client";
 
 const createContextCached = cache(
-  async (...args: unknown[]): Promise<Context> => {
+  async (..._args: unknown[]): Promise<Context> => {
     const session = await auth();
 
     return {
