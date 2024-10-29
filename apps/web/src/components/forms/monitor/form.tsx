@@ -185,8 +185,8 @@ export function MonitorForm({
       } = form.getValues();
 
       // FIXME: add support for TCP
-      if (jobType !== "http")
-        return { error: "Only HTTP tests are supported. Coming soon..." };
+      // if (jobType !== "http")
+      //   return { error: "Only HTTP tests are supported. Coming soon..." };
 
       if (
         body &&
@@ -201,7 +201,7 @@ export function MonitorForm({
         }
       }
 
-      const res = await fetch("/api/checker/test", {
+      const res = await fetch(`/api/checker/test/${jobType}`, {
         method: "POST",
         headers: new Headers({
           "Content-Type": "application/json",

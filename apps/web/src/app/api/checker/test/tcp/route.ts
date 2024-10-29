@@ -21,6 +21,7 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     const _valid = tcpPayload
+      .pick({ url: true })
       .merge(z.object({ region: monitorFlyRegionSchema.default("ams") }))
       .safeParse(json);
 
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
 }
 async function checkTCP(url: string, region: MonitorFlyRegion) {
   //
-  const res = await fetch(`https://checker.openstatus.dev/ping/tcp/${region}`, {
+  const res = await fetch(`https://checker.openstatus.dev/tcp/${region}`, {
     headers: {
       Authorization: `Basic ${process.env.CRON_SECRET}`,
       "Content-Type": "application/json",
@@ -58,7 +59,6 @@ async function checkTCP(url: string, region: MonitorFlyRegion) {
   const data = TCPResponse.safeParse(json);
 
   if (!data.success) {
-    console.log(json);
     console.error(
       `something went wrong with result ${json} request to ${url} error ${data.error.message}`,
     );
