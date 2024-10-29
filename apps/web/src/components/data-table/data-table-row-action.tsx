@@ -4,7 +4,6 @@ import type { Row } from "@tanstack/react-table";
 import { MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
-import { tbBuildResponseList } from "@openstatus/tinybird";
 import {
   Button,
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@openstatus/ui";
+import { z } from "zod";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -21,7 +21,13 @@ export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   // FIXME: DRY - this is a duplicate of the OSTinybird endpoint
-  const ping = tbBuildResponseList.parse(row.original);
+  const ping = z
+    .object({
+      monitorId: z.string(),
+      cronTimestamp: z.number(),
+      region: z.string(),
+    })
+    .parse(row.original);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

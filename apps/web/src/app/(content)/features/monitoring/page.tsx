@@ -8,8 +8,7 @@ import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import { marketingProductPagesConfig } from "@/config/pages";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import type { Region } from "@openstatus/tinybird";
+import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
 import { Button } from "@openstatus/ui/src/components/button";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 import { allUnrelateds } from "contentlayer/generated";
@@ -24,7 +23,7 @@ import { mockChartData, mockResponseData } from "../mock";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block",
+  (unrelated) => unrelated.slug === "ci-cd-features-block"
 );
 
 export const metadata: Metadata = {

@@ -1,11 +1,10 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import Link from "next/link";
 
-import type { LatencyMetric, ResponseTimeMetrics } from "@openstatus/tinybird";
-
 import { periodFormatter } from "@/lib/monitor/utils";
 import type { Period } from "@/lib/monitor/utils";
 import { MetricsCard } from "./metrics-card";
+import { ResponseTimeMetrics } from "@/lib/tb";
 
 const metricsOrder = [
   "p50Latency",
@@ -13,7 +12,7 @@ const metricsOrder = [
   "p90Latency",
   "p95Latency",
   "p99Latency",
-] satisfies LatencyMetric[];
+] as const;
 
 export function Metrics({
   metrics,
@@ -27,7 +26,7 @@ export function Metrics({
   if (!metrics || metrics.length === 0) return null;
 
   const [current, last] = metrics.sort((a, b) =>
-    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
+    (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1
   );
 
   const isEmpty = current.count === 0;

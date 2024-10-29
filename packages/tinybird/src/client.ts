@@ -1,74 +1,35 @@
-import { Tinybird as Client } from "@chronark/zod-bird";
+import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
-import {
-  tbBuildHomeStats,
-  tbBuildMonitorList,
-  tbBuildPublicStatus,
-  tbParameterHomeStats,
-  tbParameterMonitorList,
-  tbParameterPublicStatus,
-} from "./validation";
 import { flyRegions } from "../../db/src/schema/constants";
-import {
-  headersSchema,
-  httpTimingSchema,
-  timingSchema,
-  triggers,
-} from "./schema";
-
-/**
- * @deprecated but still used in server
- */
-export function getMonitorList(tb: Client) {
-  return tb.buildPipe({
-    pipe: "status_timezone__v1",
-    parameters: tbParameterMonitorList,
-    data: tbBuildMonitorList,
-    opts: {
-      // cache: "no-store",
-      next: {
-        revalidate: 600, // 10 min cache
-      },
-    },
-  });
-}
-
-/**
- * Homepage stats used for our marketing page
- */
-export function getHomeStats(tb: Client) {
-  return tb.buildPipe({
-    pipe: "home_stats__v0",
-    parameters: tbParameterHomeStats,
-    data: tbBuildHomeStats,
-    opts: {
-      next: {
-        revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
-      },
-    },
-  });
-}
-
-export function getPublicStatus(tb: Client) {
-  return tb.buildPipe({
-    pipe: "public_status__v0",
-    parameters: tbParameterPublicStatus,
-    data: tbBuildPublicStatus,
-  });
-}
-
-/**
- * LEARNINGS AND FINDINGS FOR LATER
- * - the `interval` makes it impossible to aggregate the data in tb
- *   this will allow us to even more reduce processed data
- * - TCP endpoints only have biweekly data as of now
- */
+import { headersSchema, timingSchema, triggers } from "./schema";
 
 export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
+    // if (process.env.NODE_ENV === "development") {
+    //   this.tb = new NoopTinybird();
+    // } else {
     this.tb = new Client({ token });
+    // }
+  }
+
+  public get homeStats() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__stats_global__v0",
+      parameters: z.object({
+        cronTimestamp: z.number().int().optional(),
+        period: z.enum(["total", "1h", "10m"]).optional(),
+      }),
+      data: z.object({
+        count: z.number().int(),
+      }),
+      opts: {
+        next: {
+          revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
+        },
+      },
+    });
   }
 
   public get httpListDaily() {
@@ -406,16 +367,7 @@ export class OSTinybird {
         region: z.enum(flyRegions),
         timestamp: z.number().int().optional(),
         message: z.string().nullable().optional(),
-        timing: z
-          .string()
-          .nullable()
-          .optional()
-          .transform((val) => {
-            if (!val) return null;
-            const value = httpTimingSchema.safeParse(JSON.parse(val));
-            if (value.success) return value.data;
-            return null;
-          }),
+        timing: timingSchema,
         // TODO: make sure to include all data!
       }),
       opts: { cache: "no-store" },

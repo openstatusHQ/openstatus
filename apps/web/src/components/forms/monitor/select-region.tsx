@@ -3,7 +3,6 @@
 import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
 import * as React from "react";
 
-import type { Region } from "@openstatus/tinybird";
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
   Command,
@@ -26,7 +25,7 @@ import {
 } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
 
 interface SelectRegionProps extends Omit<ButtonProps, "onChange"> {
   allowedRegions: Region[];
@@ -58,7 +57,7 @@ export function SelectRegion({
 
       return prev;
     },
-    [] as { continent: Continent; data: RegionInfo[] }[],
+    [] as { continent: Continent; data: RegionInfo[] }[]
   );
 
   return (
@@ -114,7 +113,7 @@ export function SelectRegion({
                             "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                             isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "opacity-50 [&_svg]:invisible",
+                              : "opacity-50 [&_svg]:invisible"
                           )}
                         >
                           <Check className={cn("h-4 w-4")} />

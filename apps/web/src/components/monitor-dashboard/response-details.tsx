@@ -1,7 +1,5 @@
 // TODO: move to `ping-response-analysis`
 
-import type { Region } from "@openstatus/tinybird";
-
 import {
   Tabs,
   TabsContent,
@@ -12,6 +10,7 @@ import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseHeaderTable } from "@/components/ping-response-analysis/response-header-table";
 import { ResponseTimingTable } from "@/components/ping-response-analysis/response-timing-table";
 import { prepareGetByPeriod } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 interface ResponseDetailsProps {
   monitorId: string;

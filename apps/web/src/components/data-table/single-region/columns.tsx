@@ -2,10 +2,11 @@
 
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
-import type { Region, ResponseTimeMetricsByRegion } from "@openstatus/tinybird";
 import { flyRegionsDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
+import type { Region } from "@openstatus/db/src/schema/constants";
+import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
 
 export interface RegionWithMetrics {
   data: (Partial<Record<Region, string>> & { timestamp: string })[];

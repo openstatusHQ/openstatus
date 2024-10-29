@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import type { Region } from "@openstatus/tinybird";
+import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui/src/components/separator";
 
 import { Header } from "@/components/dashboard/header";
@@ -10,7 +9,6 @@ import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart
 import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { Metrics } from "@/components/monitor-dashboard/metrics";
-import { env } from "@/env";
 import { getMinutesByInterval } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";

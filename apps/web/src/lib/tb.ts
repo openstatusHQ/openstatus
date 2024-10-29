@@ -1,20 +1,6 @@
-import type { HomeStatsParams } from "@openstatus/tinybird";
-import { OSTinybird, Tinybird, getHomeStats } from "@openstatus/tinybird";
+import { OSTinybird } from "@openstatus/tinybird";
 
 import { env } from "@/env";
-
-// @depreciated in favor to use the OSTinybird client directly
-const _tb = new Tinybird({ token: env.TINY_BIRD_API_KEY });
-
-export async function getHomeStatsData(props: Partial<HomeStatsParams>) {
-  try {
-    const res = await getHomeStats(_tb)(props);
-    return res.data;
-  } catch (e) {
-    console.error(e);
-  }
-  return;
-}
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
@@ -214,3 +200,20 @@ export function prepareGetByPeriod(period: "30d", type: Type = "http") {
     }
   }
 }
+
+// FOR MIGRATION
+export type ResponseTimeMetrics = Awaited<
+  ReturnType<OSTinybird["httpMetricsDaily"]>
+>["data"][number];
+
+export type ResponseTimeMetricsByRegion = Awaited<
+  ReturnType<OSTinybird["httpMetricsByRegionDaily"]>
+>["data"][number];
+
+export type ResponseGraph = Awaited<
+  ReturnType<OSTinybird["httpMetricsByIntervalDaily"]>
+>["data"][number];
+
+export type ResponseStatusTracker = Awaited<
+  ReturnType<OSTinybird["httpStatusWeekly"]>
+>["data"][number];

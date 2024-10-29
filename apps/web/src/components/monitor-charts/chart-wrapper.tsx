@@ -1,8 +1,7 @@
-import type { ResponseGraph } from "@openstatus/tinybird";
-
 import type { Period, Quantile } from "@/lib/monitor/utils";
 import { Chart } from "./chart";
 import { groupDataByTimestamp } from "./utils";
+import { ResponseGraph } from "@/lib/tb";
 
 export function ChartWrapper({
   data,

@@ -1,6 +1,6 @@
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { wait } from "@/lib/utils";
-import type { Region } from "@openstatus/tinybird";
+import { Region } from "@openstatus/db/src/schema/constants";
 
 export async function mockCheckRegion(region: Region) {
   const response = data.checks.find((check) => check.region === region);

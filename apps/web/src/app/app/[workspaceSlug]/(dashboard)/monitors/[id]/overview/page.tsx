@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import type { Region } from "@openstatus/tinybird";
+import { flyRegions, type Region } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart-wrapper";

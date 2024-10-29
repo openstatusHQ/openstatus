@@ -12,7 +12,6 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import type { Monitor } from "@openstatus/tinybird";
 import {
   Tracker as OSTracker,
   classNames,
@@ -33,6 +32,7 @@ import {
   HoverCardTrigger,
 } from "@openstatus/ui/src/components/hover-card";
 import { Separator } from "@openstatus/ui/src/components/separator";
+import type { ResponseStatusTracker } from "@/lib/tb";
 
 const tracker = cva("h-10 rounded-full flex-1", {
   variants: {
@@ -57,7 +57,7 @@ const tracker = cva("h-10 rounded-full flex-1", {
 });
 
 interface TrackerProps {
-  data: Monitor[];
+  data: ResponseStatusTracker[];
   name: string;
   description?: string;
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];
@@ -147,7 +147,7 @@ export const Bar = ({
       prev +
       Math.abs(
         (curr.resolvedAt?.getTime() || new Date().getTime()) -
-          curr.startedAt?.getTime(),
+          curr.startedAt?.getTime()
       )
     );
   }, 0);
@@ -300,7 +300,7 @@ export function DowntimeText({
       Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false },
+        { format: ["days", "hours", "minutes", "seconds"], zero: false }
       )}
     </p>
   );
