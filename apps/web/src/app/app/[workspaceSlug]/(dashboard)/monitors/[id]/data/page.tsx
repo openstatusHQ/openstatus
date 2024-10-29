@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import * as React from "react";
 
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
-import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
 import { searchParamsCache } from "./search-params";
@@ -24,17 +23,17 @@ export default async function Page({
 
   if (!monitor) return notFound();
 
+  const type = monitor.jobType as "http" | "tcp";
+
   // FIXME: make it dynamic based on the workspace plan
   const allowedPeriods = ["1d", "7d", "14d"] as const;
   const period = allowedPeriods.find((i) => i === search.period) || "1d";
 
-  // FIXME: we expect data to be HTTP monitor data
-  // Create a `DataTableWrapper` specific for tcp monitors
-  const res = await prepareListByPeriod(period).getData({
+  const res = await prepareListByPeriod(period, type).getData({
     monitorId: id,
   });
 
-  if (!res.data) return null;
+  if (!res.data || res.data.length === 0) return null;
 
   return (
     <div className="grid gap-4">

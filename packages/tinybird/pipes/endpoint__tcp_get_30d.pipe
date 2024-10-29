@@ -1,0 +1,18 @@
+VERSION 0
+
+TAGS tcp
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT *
+    FROM mv__tcp_full_30d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+        AND cronTimestamp = {{ Int64(cronTimestamp, 1709477432205, required=True) }}
+        AND region = {{ String(region, 'ams', required=True) }}
+    ORDER BY cronTimestamp DESC
+
+
+

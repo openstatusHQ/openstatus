@@ -27,7 +27,10 @@ export const Monitor = async ({
   maintenances: Maintenance[];
   showValues?: boolean;
 }) => {
-  const res = await prepareStatusByPeriod("45d").getData({
+  const res = await prepareStatusByPeriod(
+    "45d",
+    monitor.jobType as "http" | "tcp"
+  ).getData({
     monitorId: String(monitor.id),
   });
 

@@ -14,7 +14,7 @@ export const tbBuildResponseList = z.object({
     .number()
     .default(0)
     .transform((val) => val !== 0),
-  statusCode: z.number().int().nullable().default(null),
+  statusCode: z.number().int().nullable().optional().default(null),
   latency: z.number().int(), // in ms
   cronTimestamp: z.number().int().nullable().default(Date.now()),
   url: z.string().url(),

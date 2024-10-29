@@ -11,7 +11,7 @@ const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 // WORK IN PROGRESS - we can create a tb router to call it via TRPC server and client
 
 export const tinybirdRouter = createTRPCRouter({
-  responseDetails: protectedProcedure
+  httpGetMonthly: protectedProcedure
     .input(
       z.object({
         monitorId: z.string(),

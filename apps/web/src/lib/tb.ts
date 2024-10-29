@@ -21,80 +21,196 @@ const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 // REMINDER: we could extend the limits (WorkspacePlan) by
 // knowing which plan the user is on and disable some periods
 const periods = ["1d", "7d", "14d"] as const;
+const types = ["http", "tcp"] as const;
+
+// FIXME: check we we can also use Period from elswhere
+type Period = (typeof periods)[number];
+// FIMXE: use JobType instead!
+type Type = (typeof types)[number];
 
 // REMINDER: extend if needed
-export function prepareListByPeriod(period: (typeof periods)[number]) {
+export function prepareListByPeriod(period: Period, type: Type = "http") {
   switch (period) {
-    case "1d":
-      return { getData: tb.httpListDaily };
-    case "7d":
-      return { getData: tb.httpListWeekly };
-    case "14d":
-      return { getData: tb.httpListBiweekly };
-    default:
-      return { getData: tb.httpListDaily };
+    case "1d": {
+      const getData = {
+        http: tb.httpListDaily,
+        tcp: tb.tcpListDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "7d": {
+      const getData = {
+        http: tb.httpListWeekly,
+        tcp: tb.tcpListWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "14d": {
+      const getData = {
+        http: tb.httpListBiweekly,
+        tcp: tb.tcpListBiweekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpListDaily,
+        tcp: tb.tcpListDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }
 
-export function prepareMetricsByPeriod(period: (typeof periods)[number]) {
+export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
   switch (period) {
-    case "1d":
-      return { getData: tb.httpMetricsDaily };
-    case "7d":
-      return { getData: tb.httpMetricsWeekly };
-    case "14d":
-      return { getData: tb.httpMetricsBiweekly };
-    default:
-      return { getData: tb.httpMetricsDaily };
+    case "1d": {
+      const getData = {
+        http: tb.httpMetricsDaily,
+        tcp: tb.tcpMetricsDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "7d": {
+      const getData = {
+        http: tb.httpMetricsWeekly,
+        tcp: tb.tcpMetricsWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "14d": {
+      const getData = {
+        http: tb.httpMetricsBiweekly,
+        tcp: tb.tcpMetricsBiweekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpMetricsDaily,
+        tcp: tb.tcpMetricsDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }
 
 export function prepareMetricByRegionByPeriod(
-  period: (typeof periods)[number]
+  period: Period,
+  type: Type = "http"
 ) {
   switch (period) {
-    case "1d":
-      return { getData: tb.httpMetricsByRegionDaily };
-    case "7d":
-      return { getData: tb.httpMetricsByRegionWeekly };
-    case "14d":
-      return { getData: tb.httpMetricsByRegionBiweekly };
-    default:
-      return { getData: tb.httpMetricsByRegionDaily };
+    case "1d": {
+      const getData = {
+        http: tb.httpMetricsByRegionDaily,
+        tcp: tb.tcpMetricsByRegionDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "7d": {
+      const getData = {
+        http: tb.httpMetricsByRegionWeekly,
+        tcp: tb.tcpMetricsByRegionWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "14d": {
+      const getData = {
+        http: tb.httpMetricsByRegionBiweekly,
+        tcp: tb.tcpMetricsByRegionBiweekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpMetricsByRegionDaily,
+        tcp: tb.tcpMetricsByRegionDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }
 
 export function prepareMetricByIntervalByPeriod(
-  period: (typeof periods)[number]
+  period: Period,
+  type: Type = "http"
 ) {
   switch (period) {
-    case "1d":
-      return { getData: tb.httpMetricsByIntervalDaily };
-    case "7d":
-      return { getData: tb.httpMetricsByIntervalWeekly };
-    case "14d":
-      return { getData: tb.httpMetricsByIntervalBiweekly };
-    default:
-      return { getData: tb.httpMetricsByIntervalDaily };
+    case "1d": {
+      const getData = {
+        http: tb.httpMetricsByIntervalDaily,
+        tcp: tb.tcpMetricsByIntervalDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "7d": {
+      const getData = {
+        http: tb.httpMetricsByIntervalWeekly,
+        tcp: tb.tcpMetricsByIntervalWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "14d": {
+      const getData = {
+        http: tb.httpMetricsByIntervalBiweekly,
+        tcp: tb.tcpMetricsByIntervalBiweekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpMetricsByIntervalDaily,
+        tcp: tb.tcpMetricsByIntervalDaily,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }
 
-export function prepareStatusByPeriod(period: "7d" | "45d") {
+export function prepareStatusByPeriod(
+  period: "7d" | "45d",
+  type: Type = "http"
+) {
   switch (period) {
-    case "7d":
-      return { getData: tb.httpStatusWeekly };
-    case "45d":
-      return { getData: tb.httpStatus45d };
-    default:
-      return { getData: tb.httpStatusWeekly };
+    case "7d": {
+      const getData = {
+        http: tb.httpStatusWeekly,
+        tcp: tb.tcpStatusWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    case "45d": {
+      const getData = {
+        http: tb.httpStatus45d,
+        tcp: tb.tcpStatus45d,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpStatusWeekly,
+        tcp: tb.tcpStatusWeekly,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }
 
-export function prepareGetByPeriod(period: "30d") {
+export function prepareGetByPeriod(period: "30d", type: Type = "http") {
   switch (period) {
-    case "30d":
-      return { getData: tb.httpGetMonthly };
-    default:
-      return { getData: tb.httpGetMonthly };
+    case "30d": {
+      const getData = {
+        http: tb.httpGetMonthly,
+        tcp: tb.tcpGetMonthly,
+      } as const;
+      return { getData: getData[type] };
+    }
+    default: {
+      const getData = {
+        http: tb.httpGetMonthly,
+        tcp: tb.tcpGetMonthly,
+      } as const;
+      return { getData: getData[type] };
+    }
   }
 }

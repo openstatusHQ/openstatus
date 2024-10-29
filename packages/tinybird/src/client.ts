@@ -145,11 +145,11 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
         count: z.number().int(),
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
@@ -166,11 +166,11 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
         count: z.number().int(),
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
@@ -187,11 +187,11 @@ export class OSTinybird {
         monitorId: z.string(),
       }),
       data: z.object({
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
         count: z.number().int(),
         ok: z.number().int(),
         lastTimestamp: z.number().int().nullable(),
@@ -210,11 +210,11 @@ export class OSTinybird {
       data: z.object({
         region: z.enum(flyRegions),
         timestamp: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -230,11 +230,11 @@ export class OSTinybird {
       data: z.object({
         region: z.enum(flyRegions),
         timestamp: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -250,11 +250,11 @@ export class OSTinybird {
       data: z.object({
         region: z.enum(flyRegions),
         timestamp: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -270,11 +270,11 @@ export class OSTinybird {
         region: z.enum(flyRegions),
         count: z.number().int(),
         ok: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -290,11 +290,11 @@ export class OSTinybird {
         region: z.enum(flyRegions),
         count: z.number().int(),
         ok: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -310,11 +310,11 @@ export class OSTinybird {
         region: z.enum(flyRegions),
         count: z.number().int(),
         ok: z.number().int(),
-        p50Latency: z.number(),
-        p75Latency: z.number(),
-        p90Latency: z.number(),
-        p95Latency: z.number(),
-        p99Latency: z.number(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
       }),
       opts: { cache: "no-store" },
     });
@@ -422,4 +422,309 @@ export class OSTinybird {
     });
   }
   // TODO: add tcpChartDaily, tcpChartWeekly
+
+  public get tcpListDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        workspaceId: z.coerce.string(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpListWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        workspaceId: z.coerce.string(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        latency: z.number().int(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        workspaceId: z.coerce.string(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_1d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int(),
+        ok: z.number().int(),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_7d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int(),
+        ok: z.number().int(),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_14d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+        count: z.number().int(),
+        ok: z.number().int(),
+        lastTimestamp: z.number().int().nullable(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByIntervalDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_interval_1d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByIntervalWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_interval_7d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByIntervalBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_interval_14d__v0",
+      parameters: z.object({
+        interval: z.number().int().optional(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        timestamp: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByRegionDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_region_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        count: z.number().int(),
+        ok: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByRegionWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_region_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        count: z.number().int(),
+        ok: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpMetricsByRegionBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_metrics_by_region_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        region: z.enum(flyRegions),
+        count: z.number().int(),
+        ok: z.number().int(),
+        p50Latency: z.number().nullable().default(0),
+        p75Latency: z.number().nullable().default(0),
+        p90Latency: z.number().nullable().default(0),
+        p95Latency: z.number().nullable().default(0),
+        p99Latency: z.number().nullable().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpStatusWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_45d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().default(0),
+        ok: z.number().default(0),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get tcpGetMonthly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_get_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        region: z.enum(flyRegions).optional(),
+        cronTimestamp: z.number().int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("tcp").default("tcp"),
+        latency: z.number().int(),
+        monitorId: z.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(flyRegions),
+        cronTimestamp: z.number().int(),
+        trigger: z.enum(triggers).nullable().default("cron"),
+        timestamp: z.number(),
+        workspaceId: z.string(),
+      }),
+      opts: { cache: "no-store" },
+    });
+  }
 }

@@ -10,6 +10,7 @@ import { DataTable } from "@/components/data-table/monitor/data-table";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
+import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
@@ -42,17 +43,16 @@ export default async function MonitorPage({
     api.monitor.isMonitorLimitReached.query(),
   ]);
 
-  // TODO: TCP
-
   // maybe not very efficient?
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
+      const type = monitor.jobType as "http" | "tcp";
       const [metrics, data] = await Promise.all([
-        tb.httpMetricsDaily({
+        prepareMetricsByPeriod("1d", type).getData({
           monitorId: String(monitor.id),
         }),
-        tb.httpStatusWeekly({
+        prepareStatusByPeriod("7d", type).getData({
           monitorId: String(monitor.id),
         }),
       ]);

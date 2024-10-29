@@ -1,6 +1,6 @@
 // TODO: move to `ping-response-analysis`
 
-import type { ResponseDetailsParams } from "@openstatus/tinybird";
+import type { Region } from "@openstatus/tinybird";
 
 import {
   Tabs,
@@ -13,13 +13,27 @@ import { ResponseHeaderTable } from "@/components/ping-response-analysis/respons
 import { ResponseTimingTable } from "@/components/ping-response-analysis/response-timing-table";
 import { prepareGetByPeriod } from "@/lib/tb";
 
-export async function ResponseDetails(props: ResponseDetailsParams) {
+interface ResponseDetailsProps {
+  monitorId: string;
+  url?: string | undefined;
+  region?: Region;
+  cronTimestamp?: number | undefined;
+  type: "http" | "tcp";
+}
+
+export async function ResponseDetails({
+  type,
+  ...props
+}: ResponseDetailsProps) {
   // FIXME: this has to be dynamic
-  const details = await prepareGetByPeriod("30d").getData(props);
+  const details = await prepareGetByPeriod("30d", type).getData(props);
 
   if (!details.data || details.data.length === 0) return null;
 
   const response = details.data[0];
+
+  // FIXME: return the proper infos regarding TCP - but there are non right now anyways
+  if (response.type === "tcp") return null;
 
   const { timing, headers, message, statusCode } = response;
 

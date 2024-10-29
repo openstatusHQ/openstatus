@@ -48,6 +48,7 @@ export default async function Page({
   if (!monitor) return notFound();
 
   const { period, quantile, interval, regions } = search;
+  const type = monitor.jobType as "http" | "tcp";
 
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
@@ -57,12 +58,12 @@ export default async function Page({
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const [metrics, data, metricsByRegion] = await Promise.all([
-    prepareMetricsByPeriod(period).getData({ monitorId: id }),
-    prepareMetricByIntervalByPeriod(period).getData({
+    prepareMetricsByPeriod(period, type).getData({ monitorId: id }),
+    prepareMetricByIntervalByPeriod(period, type).getData({
       monitorId: id,
       interval: minutes,
     }),
-    prepareMetricByRegionByPeriod(period).getData({
+    prepareMetricByRegionByPeriod(period, type).getData({
       monitorId: id,
     }),
   ]);

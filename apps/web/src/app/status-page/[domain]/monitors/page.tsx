@@ -12,11 +12,7 @@ import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
 import { env } from "@/env";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
-import {
-  prepareMetricByIntervalByPeriod,
-  prepareMetricByRegionByPeriod,
-  prepareMetricsByPeriod,
-} from "@/lib/tb";
+import { prepareMetricByIntervalByPeriod } from "@/lib/tb";
 
 // Add loading page
 
@@ -44,7 +40,11 @@ export default async function Page({
     publicMonitors.length > 0
       ? await Promise.all(
           publicMonitors?.map(async (monitor) => {
-            const data = await prepareMetricByIntervalByPeriod(period).getData({
+            const type = monitor.jobType as "http" | "tcp";
+            const data = await prepareMetricByIntervalByPeriod(
+              period,
+              type
+            ).getData({
               monitorId: String(monitor.id),
               interval: 60,
             });

@@ -24,10 +24,11 @@ import type { z } from "zod";
 
 // FIXME: use proper type
 export type Monitor = {
+  type: "http" | "tcp";
   monitorId: string;
   latency: number;
   region: z.infer<typeof monitorFlyRegionSchema>;
-  statusCode: number | null;
+  statusCode?: number | null;
   timestamp: number;
   workspaceId: string;
   cronTimestamp: number | null;
@@ -48,10 +49,14 @@ export function DataTableWrapper({
     <DataTable
       columns={columns}
       data={data}
-      getRowCanExpand={() => true}
+      // REMINDER: we currently only support HTTP monitors with more details
+      getRowCanExpand={(row) => row.original.type === "http"}
       renderSubComponent={renderSubComponent}
       defaultColumnFilters={filters}
       defaultPagination={pagination}
+      defaultVisibility={
+        data.length && data[0].type === "tcp" ? { statusCode: false } : {}
+      }
     />
   );
 }
@@ -70,9 +75,10 @@ function renderSubComponent({ row }: { row: Row<Monitor> }) {
   );
 }
 
+// REMINDER: only HTTP monitors have more details
 function Details({ row }: { row: Row<Monitor> }) {
   const data = use(
-    api.tinybird.responseDetails.query({
+    api.tinybird.httpGetMonthly.query({
       monitorId: row.original.monitorId,
       region: row.original.region,
       cronTimestamp: row.original.cronTimestamp || undefined,

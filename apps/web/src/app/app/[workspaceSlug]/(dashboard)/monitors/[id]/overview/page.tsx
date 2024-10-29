@@ -9,7 +9,6 @@ import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart
 import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { Metrics } from "@/components/monitor-dashboard/metrics";
-import { env } from "@/env";
 import { getMinutesByInterval, periods } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
 import { api } from "@/trpc/server";
@@ -44,6 +43,7 @@ export default async function Page({
   if (!monitor) return notFound();
 
   const { period, quantile, interval, regions } = search;
+  const type = monitor.jobType as "http" | "tcp";
 
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
@@ -53,12 +53,14 @@ export default async function Page({
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const [metrics, data, metricsByRegion] = await Promise.all([
-    prepareMetricsByPeriod(period).getData({ monitorId: id }),
-    prepareMetricByIntervalByPeriod(period).getData({
+    prepareMetricsByPeriod(period, type).getData({
+      monitorId: id,
+    }),
+    prepareMetricByIntervalByPeriod(period, type).getData({
       monitorId: id,
       interval: minutes,
     }),
-    prepareMetricByRegionByPeriod(period).getData({
+    prepareMetricByRegionByPeriod(period, type).getData({
       monitorId: id,
     }),
   ]);
