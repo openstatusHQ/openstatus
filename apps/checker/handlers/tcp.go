@@ -95,6 +95,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	var called int
+	var response TCPResponse
 
 	op := func() error {
 		called++
@@ -123,6 +124,16 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			CronTimestamp: req.CronTimestamp,
 			Trigger:       trigger,
 			URI:           req.URL,
+		}
+
+		response = TCPResponse{
+			Timestamp: res.TCPStart,
+			Timing: checker.TCPResponseTiming{
+				TCPStart: res.TCPStart,
+				TCPDone:  res.TCPDone,
+			},
+			Latency: latency,
+			Region:  h.Region,
 		}
 
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
@@ -196,7 +207,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+	c.JSON(http.StatusOK, response)
 }
 
 func (h Handler) TCPHandlerRegion(c *gin.Context) {

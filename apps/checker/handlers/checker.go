@@ -88,6 +88,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	var called int
+	var result checker.Response
 
 	op := func() error {
 		called++
@@ -174,6 +175,9 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 		}
 
+		result = res
+		result.Region = h.Region
+
 		// it's in error if not successful
 		if isSuccessfull {
 			data.Error = 0
@@ -181,6 +185,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			data.Body = ""
 		} else {
 			data.Error = 1
+			result.Error = "Error"
 		}
 
 		data.Assertions = assertionAsString
@@ -302,5 +307,5 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+	c.JSON(http.StatusOK, result)
 }

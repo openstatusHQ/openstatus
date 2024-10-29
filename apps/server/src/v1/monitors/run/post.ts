@@ -12,13 +12,13 @@ import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import { ParamsSchema } from "../schema";
+import { HTTPTriggerResult, ParamsSchema } from "../schema";
 
 const triggerMonitor = createRoute({
   method: "post",
   tags: ["monitor"],
-  description: "Trigger a monitor check",
-  path: "/:id/trigger",
+  description: "Run a monitor check",
+  path: "/:id/run",
   request: {
     params: ParamsSchema,
   },
@@ -26,11 +26,7 @@ const triggerMonitor = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            resultId: z
-              .number()
-              .openapi({ description: "the id of your check result" }),
-          }),
+          schema: z.array(HTTPTriggerResult),
         },
       },
       description: "All the historical metrics",
@@ -177,9 +173,14 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       allResult.push(result);
     }
 
-    await Promise.all(allResult);
+    const result = await Promise.all(allResult);
+    const data = z.array(HTTPTriggerResult).safeParse(result);
 
-    return c.json({ resultId: newRun[0].id }, 200);
+    if (!data.success) {
+      throw new HTTPException(400, { message: "Something went wrong" });
+    }
+
+    return c.json(data.data, 200);
   });
 }
 
