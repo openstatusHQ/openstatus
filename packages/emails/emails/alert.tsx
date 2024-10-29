@@ -50,9 +50,7 @@ const Alert = ({ data }: { data: z.infer<typeof EmailDataSchema> }) => {
 
             <Section className="mt-[32px] mb-[32px] text-center">
               <Button
-                pX={20}
-                pY={12}
-                className="rounded bg-[#000000] text-center font-semibold text-[14px] text-white no-underline"
+                className="rounded bg-[#000000] px-5 py-3 text-center font-semibold text-[14px] text-white no-underline"
                 href="https://www.openstatus.dev/app"
               >
                 See incident

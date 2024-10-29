@@ -1,4 +1,4 @@
-import type { Post } from "contentlayer/generated";
+import type { Post } from "content-collections";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -41,14 +41,14 @@ export function Article({ post }: { post: Post }) {
               {post.author.name}
             </Link>
             <p>
-              {formatDate(new Date(post.publishedAt))}
+              {formatDate(post.publishedAt)}
               <span className="mx-1 text-muted-foreground/70">&bull;</span>
               {post.readingTime}
             </p>
           </div>
         </div>
       </div>
-      <Mdx code={post.body.code} />
+      <Mdx code={post.mdx} />
     </article>
   );
 }

@@ -26,7 +26,7 @@
       "dist",
       ".wrangler",
       ".react-email",
-      ".contentlayer",
+      ".content-collections",
       "meta"
     ]
   },
@@ -42,7 +42,7 @@
       ".nuxt",
       ".wrangler",
       ".react-email",
-      ".contentlayer",
+      ".content-collections",
       "meta"
     ]
   },
@@ -55,7 +55,7 @@
       ".nuxt",
       ".wrangler",
       ".react-email",
-      ".contentlayer"
+      ".content-collections"
     ]
   }
 }

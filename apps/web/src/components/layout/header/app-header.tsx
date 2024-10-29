@@ -1,6 +1,6 @@
 "use client";
 
-import { allChangelogs } from "contentlayer/generated";
+import { allChangelogs } from "content-collections";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 

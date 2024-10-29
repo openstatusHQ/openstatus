@@ -1,4 +1,4 @@
-import type { Changelog } from "contentlayer/generated";
+import type { Changelog } from "content-collections";
 import Image from "next/image";
 
 import { Mdx } from "@/components/content/mdx";
@@ -21,7 +21,7 @@ export function ChangelogCard({ post }: { post: Changelog }) {
           />
         </div>
       </div>
-      <Mdx code={post.body.code} />
+      <Mdx code={post.mdx} />
     </article>
   );
 }

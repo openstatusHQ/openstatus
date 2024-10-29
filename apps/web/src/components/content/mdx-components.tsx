@@ -101,5 +101,6 @@ export const components = {
   td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
     <TableCell {...props} />
   ),
+  // FIXME: file duplication (not related to content-collections)
   pre: (props: HTMLAttributes<HTMLPreElement>) => <Pre {...props} />,
 };

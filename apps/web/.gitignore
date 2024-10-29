@@ -33,8 +33,8 @@ yarn-error.log*
 # vercel
 .vercel
 
-# contentlayer
-.contentlayer
+# content-collections
+.content-collections
 
 # Sentry Auth Token
 .sentryclirc

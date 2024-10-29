@@ -1,4 +1,4 @@
-import { getMDXComponent } from "next-contentlayer/hooks";
+import { MDXContent } from "@content-collections/mdx/react";
 
 import { cn } from "@/lib/utils";
 import { components } from "./mdx-components";
@@ -9,8 +9,6 @@ interface MdxProps {
 }
 
 export function Mdx({ code, className }: MdxProps) {
-  const MDXComponent = getMDXComponent(code);
-
   return (
     // FIXME: weird behaviour when `prose-headings:font-cal` and on mouse movement font gets bigger
     <div
@@ -19,7 +17,7 @@ export function Mdx({ code, className }: MdxProps) {
         className,
       )}
     >
-      <MDXComponent components={{ ...components }} />
+      <MDXContent code={code} components={components} />
     </div>
   );
 }

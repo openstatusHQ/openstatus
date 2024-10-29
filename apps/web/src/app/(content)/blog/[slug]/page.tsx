@@ -1,4 +1,4 @@
-import { allPosts } from "contentlayer/generated";
+import { allPosts } from "content-collections";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -28,7 +28,7 @@ export async function generateMetadata({
   if (!post) {
     return;
   }
-  const { title, publishedAt: publishedTime, description, slug, image } = post;
+  const { title, publishedAt, description, slug, image } = post;
 
   return {
     ...defaultMetadata,
@@ -39,7 +39,7 @@ export async function generateMetadata({
       title,
       description,
       type: "article",
-      publishedTime,
+      publishedTime: publishedAt.toISOString(),
       url: `https://www.openstatus.dev/blog/${slug}`,
       images: [
         {

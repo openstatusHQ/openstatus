@@ -1,4 +1,4 @@
-import { allChangelogs } from "contentlayer/generated";
+import { allChangelogs } from "content-collections";
 import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
