@@ -46,7 +46,6 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    console.log("input", input);
     if (!limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
