@@ -170,7 +170,6 @@ export const MonitorSchema = z
       }),
     assertions: z
       .preprocess((val) => {
-        console.log("val", val);
         try {
           if (Array.isArray(val)) return val;
           if (String(val).length > 0) {

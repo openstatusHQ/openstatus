@@ -42,33 +42,29 @@ const getMonitorStats = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            data: z.array(
-              z.object({
-                latency: z.number().int(), // in ms
-                statusCode: z.number().int().nullable().default(null),
-                monitorId: z.string().default(""),
-                url: z.string().url().optional(),
-                error: z
-                  .number()
-                  .default(0)
-                  .transform((val) => val !== 0),
-                region: z.enum(flyRegions),
-                timestamp: z.number().int().optional(),
-                message: z.string().nullable().optional(),
-                timing: z
-                  .string()
-                  .nullable()
-                  .optional()
-                  .transform((val) => {
-                    if (!val) return null;
-                    const value = timingSchema.safeParse(JSON.parse(val));
-                    if (value.success) return value.data;
-                    return null;
-                  }),
-              }),
-            ),
-          }),
+          schema: z.array(
+            z.object({
+              latency: z.number().int(), // in ms
+              statusCode: z.number().int().nullable().default(null),
+              monitorId: z.string().default(""),
+              url: z.string().url().optional(),
+              error: z
+                .number()
+                .default(0)
+                .transform((val) => val !== 0),
+              region: z.enum(flyRegions),
+              timestamp: z.number().int().optional(),
+              message: z.string().nullable().optional(),
+              timing: z
+                .preprocess((val) => {
+                  if (!val) return null;
+                  const value = timingSchema.safeParse(JSON.parse(String(val)));
+                  if (value.success) return value.data;
+                  return null;
+                }, timingSchema.nullable())
+                .optional(),
+            }),
+          ),
         },
       },
       description: "All the metrics for the monitor",
@@ -117,6 +113,6 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
     if (!data) {
       throw new HTTPException(404, { message: "Not Found" });
     }
-    return c.json({ data }, 200);
+    return c.json(data, 200);
   });
 }
