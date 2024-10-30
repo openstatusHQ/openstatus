@@ -21,6 +21,17 @@ const triggerMonitor = createRoute({
   path: "/:id/run",
   request: {
     params: ParamsSchema,
+    query: z
+      .object({
+        "no-wait": z
+          .boolean()
+          .optional()
+          .openapi({
+            description: "Don't wait for the result",
+          })
+          .default(false),
+      })
+      .openapi({}),
   },
   responses: {
     200: {
@@ -35,12 +46,12 @@ const triggerMonitor = createRoute({
   },
 });
 
-export function registerTriggerMonitor(api: typeof monitorsApi) {
+export function registerRunMonitor(api: typeof monitorsApi) {
   return api.openapi(triggerMonitor, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id } = c.req.valid("param");
     const limits = c.get("limits");
-
+    const { "no-wait": noWait } = c.req.valid("query");
     const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
 
     const count = (
@@ -171,6 +182,10 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         body: JSON.stringify(payload),
       });
       allResult.push(result);
+    }
+
+    if (noWait) {
+      return c.json([], 200);
     }
 
     const result = await Promise.all(allResult);
