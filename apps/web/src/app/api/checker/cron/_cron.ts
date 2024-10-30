@@ -174,18 +174,20 @@ const createCronTask = async ({
       assertions: row.assertions ? JSON.parse(row.assertions) : null,
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
+      trigger: "cron",
     };
   }
   if (row.jobType === "tcp") {
     payload = {
       workspaceId: String(row.workspaceId),
       monitorId: String(row.id),
-      url: row.url,
+      uri: row.url,
       status: status,
       assertions: row.assertions ? JSON.parse(row.assertions) : null,
       cronTimestamp: timestamp,
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
+      trigger: "cron",
     };
   }
 

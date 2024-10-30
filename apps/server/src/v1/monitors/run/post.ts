@@ -12,25 +12,32 @@ import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import { ParamsSchema } from "../schema";
+import { HTTPTriggerResult, ParamsSchema } from "../schema";
 
 const triggerMonitor = createRoute({
   method: "post",
   tags: ["monitor"],
-  description: "Trigger a monitor check",
-  path: "/:id/trigger",
+  description: "Run a monitor check",
+  path: "/:id/run",
   request: {
     params: ParamsSchema,
+    query: z
+      .object({
+        "no-wait": z.coerce
+          .boolean()
+          .optional()
+          .openapi({
+            description: "Don't wait for the result",
+          })
+          .default(false),
+      })
+      .openapi({}),
   },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            resultId: z
-              .number()
-              .openapi({ description: "the id of your check result" }),
-          }),
+          schema: z.array(HTTPTriggerResult),
         },
       },
       description: "All the historical metrics",
@@ -39,12 +46,12 @@ const triggerMonitor = createRoute({
   },
 });
 
-export function registerTriggerMonitor(api: typeof monitorsApi) {
+export function registerRunMonitor(api: typeof monitorsApi) {
   return api.openapi(triggerMonitor, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id } = c.req.valid("param");
     const limits = c.get("limits");
-
+    const { "no-wait": noWait } = c.req.valid("query");
     const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
 
     const count = (
@@ -102,6 +109,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       .array(selectMonitorStatusSchema)
       .safeParse(monitorStatusData);
     if (!monitorStatus.success) {
+      console.log(monitorStatus.error);
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
@@ -177,9 +185,23 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       allResult.push(result);
     }
 
-    await Promise.all(allResult);
+    if (noWait) {
+      return c.json([], 200);
+    }
 
-    return c.json({ resultId: newRun[0].id }, 200);
+    const result = await Promise.all(allResult);
+    // console.log(result);
+
+    const bodies = await Promise.all(result.map((r) => r.json()));
+    console.log(bodies);
+    const data = z.array(HTTPTriggerResult).safeParse(bodies);
+
+    if (!data.success) {
+      console.log(data.error);
+      throw new HTTPException(400, { message: "Something went wrong" });
+    }
+
+    return c.json(data.data, 200);
   });
 }
 

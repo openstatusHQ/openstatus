@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-import { monitorMethods } from "@openstatus/db/src/schema";
+import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   monitorPeriodicitySchema,
@@ -170,7 +170,6 @@ export const MonitorSchema = z
       }),
     assertions: z
       .preprocess((val) => {
-        console.log("val", val);
         try {
           if (Array.isArray(val)) return val;
           if (String(val).length > 0) {
@@ -206,6 +205,13 @@ export const MonitorSchema = z
     timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request",
     }),
+    jobType: z
+      .enum(monitorJobTypes)
+      .openapi({
+        description: "The type of the monitor",
+      })
+      .default("http")
+      .optional(),
   })
   .openapi({
     description: "The monitor",
@@ -213,3 +219,48 @@ export const MonitorSchema = z
   });
 
 export type MonitorSchema = z.infer<typeof MonitorSchema>;
+
+const timingSchema = z.object({
+  dnsStart: z.number(),
+  dnsDone: z.number(),
+  connectStart: z.number(),
+  connectDone: z.number(),
+  tlsHandshakeStart: z.number(),
+  tlsHandshakeDone: z.number(),
+  firstByteStart: z.number(),
+  firstByteDone: z.number(),
+  transferStart: z.number(),
+  transferDone: z.number(),
+});
+
+export const HTTPTriggerResult = z.object({
+  status: z.number(),
+  latency: z.number(),
+  region: z.enum(flyRegions),
+  timestamp: z.number(),
+  timing: timingSchema,
+  body: z.string().optional().nullable(),
+  error: z.string().optional().nullable(),
+});
+
+export const ResultRun = z.object({
+  latency: z.number().int(), // in ms
+  statusCode: z.number().int().nullable().default(null),
+  monitorId: z.string().default(""),
+  url: z.string().url().optional(),
+  error: z
+    .number()
+    .default(0)
+    .transform((val) => val !== 0),
+  region: z.enum(flyRegions),
+  timestamp: z.number().int().optional(),
+  message: z.string().nullable().optional(),
+  timing: z
+    .preprocess((val) => {
+      if (!val) return null;
+      const value = timingSchema.safeParse(JSON.parse(String(val)));
+      if (value.success) return value.data;
+      return null;
+    }, timingSchema.nullable())
+    .optional(),
+});

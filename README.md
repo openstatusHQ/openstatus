@@ -8,7 +8,7 @@
   </a>
   </p>
 
-  <p align="center">The Open-Source performance monitoring platform.
+  <p align="center">The Open-Source synthetic monitoring platform.
     <br />
     <a href="https://www.openstatus.dev"><strong>Learn more »</strong></a>
     <br />
@@ -18,19 +18,15 @@
     <a href="https://www.openstatus.dev">Website</a>
     ·
     <a href="https://github.com/openstatushq/openstatus/issues">Issues</a>
-    ·
-    <a href="https://openstatus.productlane.com/roadmap">Roadmap</a>
   </p>
 </p>
 
 ## About OpenStatus 🏓
 
-OpenStatus is open-source performance monitoring platform.
+OpenStatus is open-source synthetic monitoring monitoring platform.
 
-- **Synthetic monitoring**: Monitor your website and APIs worldwide and receive
+- **Synthetic monitoring**: Monitor your website and APIs globally and receive
   notifications when they are down or slow.
-- **Real User Monitoring**: Understand how your users are experiencing your
-  website with core web vitals metrics.
 
 ## Recognitions 🏆
 
@@ -133,24 +129,6 @@ Made with [Contrib.rocks](https://contrib.rocks)
 - open [http://localhost:3001/ping](http://localhost:3001/ping) for the api
   server health check
 - open [http://localhost:3002](http://localhost:3002) for the docs
-
-[Tunnelmole](https://github.com/robbie-cahill/tunnelmole-client), an open source
-tunnelling tool or ngrok, a popular closed source tunnelling tool.
-
-### Using Tunnelmole
-
-1. Install Tunnelmole with
-   `curl -O https://install.tunnelmole.com/384HK/install && sudo bash install`.
-   (On Windows, download
-   [tmole.exe](https://tunnelmole.com/downloads/tmole.exe))
-2. Run `tmole 3000`. In the output, you'll see two URLs, one HTTP, and an HTTPS
-   URL. It's best to use the HTTPS URL for privacy and security.
-
-```
-➜  ~ tmole 3000
-http://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
-https://bvdo5f-ip-49-183-170-144.tunnelmole.net is forwarding to localhost:3000
-```
 
 ### Videos
 

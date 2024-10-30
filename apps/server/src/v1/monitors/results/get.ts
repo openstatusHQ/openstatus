@@ -9,22 +9,9 @@ import { HTTPException } from "hono/http-exception";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "../index";
-import { ParamsSchema } from "../schema";
+import { ParamsSchema, ResultRun } from "../schema";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
-
-const timingSchema = z.object({
-  dnsStart: z.number(),
-  dnsDone: z.number(),
-  connectStart: z.number(),
-  connectDone: z.number(),
-  tlsHandshakeStart: z.number(),
-  tlsHandshakeDone: z.number(),
-  firstByteStart: z.number(),
-  firstByteDone: z.number(),
-  transferStart: z.number(),
-  transferDone: z.number(),
-});
 
 const getMonitorStats = createRoute({
   method: "get",
@@ -33,7 +20,7 @@ const getMonitorStats = createRoute({
   path: "/:id/result/:resultId",
   request: {
     params: ParamsSchema.extend({
-      resultId: z.number().int().openapi({
+      resultId: z.string().openapi({
         description: "The id of the result",
       }),
     }),
@@ -42,31 +29,7 @@ const getMonitorStats = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            data: z.object({
-              latency: z.number().int(), // in ms
-              statusCode: z.number().int().nullable().default(null),
-              monitorId: z.string().default(""),
-              url: z.string().url().optional(),
-              error: z
-                .number()
-                .default(0)
-                .transform((val) => val !== 0),
-              region: z.enum(flyRegions),
-              timestamp: z.number().int().optional(),
-              message: z.string().nullable().optional(),
-              timing: z
-                .string()
-                .nullable()
-                .optional()
-                .transform((val) => {
-                  if (!val) return null;
-                  const value = timingSchema.safeParse(JSON.parse(val));
-                  if (value.success) return value.data;
-                  return null;
-                }),
-            }),
-          }),
+          schema: z.array(ResultRun),
         },
       },
       description: "All the metrics for the monitor",
@@ -75,7 +38,7 @@ const getMonitorStats = createRoute({
   },
 });
 
-export function registerGetMonitorSummary(api: typeof monitorsApi) {
+export function registerGetMonitorResult(api: typeof monitorsApi) {
   return api.openapi(getMonitorStats, async (c) => {
     const workspaceId = c.get("workspaceId");
     const { id, resultId } = c.req.valid("param");
@@ -87,8 +50,8 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
-        ),
+          eq(monitorRun.workspaceId, Number(workspaceId))
+        )
       )
       .get();
 
@@ -115,6 +78,6 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
     if (!data || data.data.length === 0) {
       throw new HTTPException(404, { message: "Not Found" });
     }
-    return c.json({ data: data.data[0] }, 200);
+    return c.json(data, 200);
   });
 }

@@ -14,6 +14,7 @@ import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { statusReportsApi } from "./statusReports";
+import { whoamiApi } from "./whoami";
 
 export type Variables = {
   workspaceId: string;
@@ -47,6 +48,7 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
+    baseServerURL: "https://api.openstatus.dev/v1",
   }),
 );
 /**
@@ -66,3 +68,5 @@ api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/check", checkAPI);
+
+api.route("/whoami", whoamiApi);
