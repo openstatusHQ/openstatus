@@ -78,6 +78,6 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
     if (!data || data.data.length === 0) {
       throw new HTTPException(404, { message: "Not Found" });
     }
-    return c.json(data, 200);
+    return c.json(data.data, 200);
   });
 }
