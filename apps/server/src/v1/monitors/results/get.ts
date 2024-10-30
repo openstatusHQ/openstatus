@@ -9,22 +9,9 @@ import { HTTPException } from "hono/http-exception";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "../index";
-import { ParamsSchema } from "../schema";
+import { ParamsSchema, ResultRun } from "../schema";
 
 const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
-
-const timingSchema = z.object({
-  dnsStart: z.number(),
-  dnsDone: z.number(),
-  connectStart: z.number(),
-  connectDone: z.number(),
-  tlsHandshakeStart: z.number(),
-  tlsHandshakeDone: z.number(),
-  firstByteStart: z.number(),
-  firstByteDone: z.number(),
-  transferStart: z.number(),
-  transferDone: z.number(),
-});
 
 const getMonitorStats = createRoute({
   method: "get",
@@ -42,29 +29,7 @@ const getMonitorStats = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(
-            z.object({
-              latency: z.number().int(), // in ms
-              statusCode: z.number().int().nullable().default(null),
-              monitorId: z.string().default(""),
-              url: z.string().url().optional(),
-              error: z
-                .number()
-                .default(0)
-                .transform((val) => val !== 0),
-              region: z.enum(flyRegions),
-              timestamp: z.number().int().optional(),
-              message: z.string().nullable().optional(),
-              timing: z
-                .preprocess((val) => {
-                  if (!val) return null;
-                  const value = timingSchema.safeParse(JSON.parse(String(val)));
-                  if (value.success) return value.data;
-                  return null;
-                }, timingSchema.nullable())
-                .optional(),
-            }),
-          ),
+          schema: z.array(ResultRun),
         },
       },
       description: "All the metrics for the monitor",
