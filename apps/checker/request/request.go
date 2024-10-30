@@ -66,7 +66,7 @@ type HttpCheckerRequest struct {
 type TCPCheckerRequest struct {
 	Status        string            `json:"status"`
 	WorkspaceID   string            `json:"workspaceId"`
-	URL           string            `json:"url"`
+	URI           string            `json:"uri"`
 	MonitorID     string            `json:"monitorId"`
 	Trigger       string            `json:"trigger,omitempty"`
 	RawAssertions []json.RawMessage `json:"assertions,omitempty"`
