@@ -60,6 +60,16 @@ export function DataTableToolbar<TData>({
             ]}
           />
         )}
+        {table.getColumn("jobType") && (
+          <DataTableFacetedFilter
+            column={table.getColumn("jobType")}
+            title="Type"
+            options={[
+              { label: "HTTP", value: "http" },
+              { label: "TCP", value: "tcp" },
+            ]}
+          />
+        )}
         {isFiltered && (
           <Button
             variant="ghost"

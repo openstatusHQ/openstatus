@@ -47,6 +47,15 @@ export const columns: ColumnDef<{
     accessorFn: (row) => row.monitor.id,
   },
   {
+    id: "jobType",
+    accessorKey: "jobType",
+    accessorFn: (row) => row.monitor.jobType,
+    filterFn: (row, _id, value) => {
+      if (!Array.isArray(value)) return true;
+      return value.includes(row.original.monitor.jobType);
+    },
+  },
+  {
     id: "select",
     header: ({ table }) => (
       <Checkbox
