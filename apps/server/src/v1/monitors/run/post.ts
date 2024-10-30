@@ -61,8 +61,8 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitorRun.workspaceId, Number(workspaceId)),
-            gte(monitorRun.createdAt, new Date(lastMonth))
-          )
+            gte(monitorRun.createdAt, new Date(lastMonth)),
+          ),
         )
         .all()
     )[0].count;
@@ -80,8 +80,8 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .get();
 
