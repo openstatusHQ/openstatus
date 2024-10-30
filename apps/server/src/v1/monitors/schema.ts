@@ -236,7 +236,6 @@ const timingSchema = z.object({
 export const HTTPTriggerResult = z.object({
   status: z.number(),
   latency: z.number(),
-  headers: z.record(z.string()),
   timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),

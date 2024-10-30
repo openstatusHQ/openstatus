@@ -23,7 +23,7 @@ const triggerMonitor = createRoute({
     params: ParamsSchema,
     query: z
       .object({
-        "no-wait": z
+        "no-wait": z.coerce
           .boolean()
           .optional()
           .openapi({
@@ -109,6 +109,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       .array(selectMonitorStatusSchema)
       .safeParse(monitorStatusData);
     if (!monitorStatus.success) {
+      console.log(monitorStatus.error);
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
@@ -192,6 +193,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     const data = z.array(HTTPTriggerResult).safeParse(result);
 
     if (!data.success) {
+      console.log(data.error);
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
