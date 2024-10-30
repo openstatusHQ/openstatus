@@ -236,6 +236,7 @@ const timingSchema = z.object({
 export const HTTPTriggerResult = z.object({
   status: z.number(),
   latency: z.number(),
+  region: z.enum(flyRegions),
   timestamp: z.number(),
   timing: timingSchema,
   body: z.string().optional().nullable(),
