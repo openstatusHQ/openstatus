@@ -20,6 +20,7 @@ export const data = {
   method: "GET",
   checks: [
     {
+      type: "http",
       status: 200,
       latency: 889,
       headers: {
@@ -55,6 +56,7 @@ export const data = {
       region: "ams",
     },
     {
+      type: "http",
       status: 200,
       latency: 1602,
       headers: {
@@ -91,6 +93,7 @@ export const data = {
       region: "arn",
     },
     {
+      type: "http",
       status: 200,
       latency: 823,
       headers: {
@@ -127,6 +130,7 @@ export const data = {
       region: "atl",
     },
     {
+      type: "http",
       status: 200,
       latency: 1198,
       headers: {
@@ -163,6 +167,7 @@ export const data = {
       region: "bog",
     },
     {
+      type: "http",
       status: 200,
       latency: 1423,
       headers: {
@@ -199,6 +204,7 @@ export const data = {
       region: "bom",
     },
     {
+      type: "http",
       status: 200,
       latency: 1134,
       headers: {
@@ -235,6 +241,7 @@ export const data = {
       region: "bos",
     },
     {
+      type: "http",
       status: 200,
       latency: 812,
       headers: {
@@ -271,6 +278,7 @@ export const data = {
       region: "cdg",
     },
     {
+      type: "http",
       status: 200,
       latency: 1081,
       headers: {
@@ -307,6 +315,7 @@ export const data = {
       region: "den",
     },
     {
+      type: "http",
       status: 200,
       latency: 1329,
       headers: {
@@ -343,6 +352,7 @@ export const data = {
       region: "dfw",
     },
     {
+      type: "http",
       status: 200,
       latency: 380,
       headers: {
@@ -379,6 +389,7 @@ export const data = {
       region: "ewr",
     },
     {
+      type: "http",
       status: 200,
       latency: 802,
       headers: {
@@ -415,6 +426,7 @@ export const data = {
       region: "eze",
     },
     {
+      type: "http",
       status: 200,
       latency: 615,
       headers: {
@@ -450,6 +462,7 @@ export const data = {
       region: "fra",
     },
     {
+      type: "http",
       status: 200,
       latency: 1481,
       headers: {
@@ -486,6 +499,7 @@ export const data = {
       region: "gdl",
     },
     {
+      type: "http",
       status: 200,
       latency: 768,
       headers: {
@@ -522,6 +536,7 @@ export const data = {
       region: "gig",
     },
     {
+      type: "http",
       status: 200,
       latency: 662,
       headers: {
@@ -558,6 +573,7 @@ export const data = {
       region: "gru",
     },
     {
+      type: "http",
       status: 200,
       latency: 1543,
       headers: {
@@ -594,6 +610,7 @@ export const data = {
       region: "hkg",
     },
     {
+      type: "http",
       status: 200,
       latency: 369,
       headers: {
@@ -630,6 +647,7 @@ export const data = {
       region: "iad",
     },
     {
+      type: "http",
       status: 200,
       latency: 1264,
       headers: {
@@ -666,6 +684,7 @@ export const data = {
       region: "jnb",
     },
     {
+      type: "http",
       status: 200,
       latency: 642,
       headers: {
@@ -702,6 +721,7 @@ export const data = {
       region: "lax",
     },
     {
+      type: "http",
       status: 200,
       latency: 627,
       headers: {
@@ -738,6 +758,7 @@ export const data = {
       region: "lhr",
     },
     {
+      type: "http",
       status: 200,
       latency: 951,
       headers: {
@@ -774,6 +795,7 @@ export const data = {
       region: "mad",
     },
     {
+      type: "http",
       status: 200,
       latency: 808,
       headers: {
@@ -810,6 +832,7 @@ export const data = {
       region: "mia",
     },
     {
+      type: "http",
       status: 200,
       latency: 1301,
       headers: {
@@ -846,6 +869,7 @@ export const data = {
       region: "nrt",
     },
     {
+      type: "http",
       status: 200,
       latency: 1079,
       headers: {
@@ -882,6 +906,7 @@ export const data = {
       region: "ord",
     },
     {
+      type: "http",
       status: 200,
       latency: 1349,
       headers: {
@@ -917,6 +942,7 @@ export const data = {
       region: "otp",
     },
     {
+      type: "http",
       status: 200,
       latency: 970,
       headers: {
@@ -953,6 +979,7 @@ export const data = {
       region: "phx",
     },
     {
+      type: "http",
       status: 200,
       latency: 1539,
       headers: {
@@ -989,6 +1016,7 @@ export const data = {
       region: "qro",
     },
     {
+      type: "http",
       status: 200,
       latency: 1347,
       headers: {
@@ -1025,6 +1053,7 @@ export const data = {
       region: "scl",
     },
     {
+      type: "http",
       status: 200,
       latency: 400,
       headers: {
@@ -1061,6 +1090,7 @@ export const data = {
       region: "sjc",
     },
     {
+      type: "http",
       status: 200,
       latency: 883,
       headers: {
@@ -1097,6 +1127,7 @@ export const data = {
       region: "sea",
     },
     {
+      type: "http",
       status: 200,
       latency: 825,
       headers: {
@@ -1133,6 +1164,7 @@ export const data = {
       region: "sin",
     },
     {
+      type: "http",
       status: 200,
       latency: 526,
       headers: {
@@ -1169,6 +1201,7 @@ export const data = {
       region: "syd",
     },
     {
+      type: "http",
       status: 200,
       latency: 869,
       headers: {
@@ -1204,6 +1237,7 @@ export const data = {
       region: "waw",
     },
     {
+      type: "http",
       status: 200,
       latency: 1133,
       headers: {
@@ -1240,6 +1274,7 @@ export const data = {
       region: "yul",
     },
     {
+      type: "http",
       status: 200,
       latency: 447,
       headers: {
