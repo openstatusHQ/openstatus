@@ -56,8 +56,9 @@ export function DataTable<TData, TValue>({
     React.useState<ColumnFiltersState>(defaultColumnFilters);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
-      public: false, // default is true
-      id: false, // we hide the id column
+      public: false,
+      id: false,
+      jobType: false,
     });
 
   const [pagination, setPagination] =
