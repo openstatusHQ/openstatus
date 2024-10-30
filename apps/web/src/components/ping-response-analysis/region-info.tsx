@@ -1,12 +1,17 @@
 import { StatusCodeBadge } from "@/components/monitor/status-code-badge";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { latencyFormatter, regionFormatter, timestampFormatter } from "./utils";
-import type { RegionChecker } from "./utils";
 
 export function RegionInfo({
   check,
   error,
 }: {
-  check: Pick<RegionChecker, "region" | "timestamp" | "latency" | "status">;
+  check: {
+    region: Region;
+    timestamp: number;
+    latency: number;
+    status?: number;
+  };
   error?: string;
 }) {
   return (
@@ -31,12 +36,16 @@ export function RegionInfo({
           <code>{latencyFormatter(check.latency)}</code>
         </p>
       </div>
-      <div className="col-span-2">
-        <p className="text-muted-foreground">Status:</p>
-      </div>
-      <div className="col-span-3 sm:col-span-6">
-        <StatusCodeBadge statusCode={check.status} />
-      </div>
+      {check.status ? (
+        <>
+          <div className="col-span-2">
+            <p className="text-muted-foreground">Status:</p>
+          </div>
+          <div className="col-span-3 sm:col-span-6">
+            <StatusCodeBadge statusCode={check.status} />
+          </div>
+        </>
+      ) : null}
       {error ? (
         <>
           <div className="col-span-2">
