@@ -99,7 +99,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 	op := func() error {
 		called++
-		res, err := checker.PingTcp(int(req.Timeout), req.URL)
+		res, err := checker.PingTcp(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
@@ -107,7 +107,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -123,7 +123,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Latency:       latency,
 			CronTimestamp: req.CronTimestamp,
 			Trigger:       trigger,
-			URI:           req.URL,
+			URI:           req.URI,
 		}
 
 		response = TCPResponse{
@@ -191,7 +191,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			MonitorID:     monitorId,
 			Error:         1,
 			Trigger:       trigger,
-			URI:           req.URL,
+			URI:           req.URI,
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
@@ -254,7 +254,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	op := func() error {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
-		res, err := checker.PingTcp(int(req.Timeout), req.URL)
+		res, err := checker.PingTcp(int(req.Timeout), req.URI)
 
 		if err != nil {
 			return fmt.Errorf("unable to check tcp %s", err)
@@ -272,7 +272,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URL, err)
+			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -287,7 +287,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			Latency:       latency,
 			RequestId:     req.RequestId,
 			Trigger:       "api",
-			URI:           req.URL,
+			URI:           req.URI,
 		}
 
 		if req.RequestId != 0 {

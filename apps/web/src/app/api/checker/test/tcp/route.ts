@@ -49,7 +49,7 @@ async function checkTCP(url: string, region: MonitorFlyRegion) {
     },
     method: "POST",
     body: JSON.stringify({
-      url,
+      uri: url,
     }),
     next: { revalidate: 0 },
   });
