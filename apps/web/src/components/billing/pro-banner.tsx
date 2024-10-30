@@ -52,7 +52,7 @@ export function ProBanner() {
           variant="ghost"
           size="icon"
           onClick={onClick}
-          className="w-7 h-7"
+          className="h-7 w-7"
         >
           <X className="h-4 w-4" />
         </Button>

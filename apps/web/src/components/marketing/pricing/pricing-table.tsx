@@ -123,7 +123,7 @@ export function PricingTable({
                     return (
                       <TableRow key={key + label}>
                         <TableCell>
-                          <div className="flex gap-2 items-center">
+                          <div className="flex items-center gap-2">
                             {label}
                             {badge ? (
                               <Badge variant="secondary">{badge}</Badge>
@@ -132,7 +132,7 @@ export function PricingTable({
                               <TooltipProvider delayDuration={200}>
                                 <Tooltip>
                                   <TooltipTrigger className="ml-auto data-[state=closed]:text-muted-foreground">
-                                    <Info className="w-4 h-4" />
+                                    <Info className="h-4 w-4" />
                                   </TooltipTrigger>
                                   <TooltipContent className="w-64">
                                     {description}

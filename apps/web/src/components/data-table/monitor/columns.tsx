@@ -10,10 +10,6 @@ import type {
   Monitor,
   MonitorTag,
 } from "@openstatus/db/src/schema";
-import type {
-  Monitor as MonitorTracker,
-  ResponseTimeMetrics,
-} from "@openstatus/tinybird";
 import { Tracker } from "@openstatus/tracker";
 import {
   Badge,
@@ -29,15 +25,18 @@ import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip
 import { Bar } from "@/components/tracker/tracker";
 import { isActiveMaintenance } from "@/lib/maintenances/utils";
 
+import type { ResponseStatusTracker, ResponseTimeMetrics } from "@/lib/tb";
 import { Eye, EyeOff, Radio, View } from "lucide-react";
 import type { ReactNode } from "react";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { DataTableRowActions } from "./data-table-row-actions";
 
+// EXAMPLE: get the type of the response of the endpoint
+
 export const columns: ColumnDef<{
   monitor: Monitor;
   metrics?: ResponseTimeMetrics;
-  data?: MonitorTracker[];
+  data?: ResponseStatusTracker[];
   incidents?: Incident[];
   maintenances?: Maintenance[];
   tags?: MonitorTag[];

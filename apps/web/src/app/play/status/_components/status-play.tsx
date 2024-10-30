@@ -1,5 +1,3 @@
-import { OSTinybird } from "@openstatus/tinybird";
-
 import {
   CardContainer,
   CardDescription,
@@ -9,20 +7,11 @@ import {
 } from "@/components/marketing/card";
 import { Tracker } from "@/components/tracker/tracker";
 import { env } from "@/env";
+import { prepareStatusByPeriod } from "@/lib/tb";
 import { getServerTimezoneFormat } from "@/lib/timezone";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
-
 export default async function StatusPlay() {
-  const data = await tb.endpointStatusPeriod("45d")(
-    {
-      monitorId: "1",
-    },
-    {
-      revalidate: 600, // 10 minutes
-    },
-  );
-
+  const res = await prepareStatusByPeriod("45d").getData({ monitorId: "1" });
   const formattedServerDate = getServerTimezoneFormat();
 
   return (
@@ -37,7 +26,9 @@ export default async function StatusPlay() {
       </CardHeader>
       <div className="relative grid gap-4">
         <div className="mx-auto w-full max-w-md">
-          {data && <Tracker data={data} name="Ping" description="Pong" />}
+          {res.data && (
+            <Tracker data={res.data} name="Ping" description="Pong" />
+          )}
         </div>
         <p className="text-center text-muted-foreground text-sm">
           {formattedServerDate}

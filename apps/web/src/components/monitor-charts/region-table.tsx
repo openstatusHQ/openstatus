@@ -1,4 +1,3 @@
-import type { Region, ResponseTimeMetricsByRegion } from "@openstatus/tinybird";
 import {
   Table,
   TableBody,
@@ -11,6 +10,8 @@ import {
 import { flyRegionsDict } from "@openstatus/utils";
 
 import { formatNumber } from "@/components/monitor-dashboard/metrics-card";
+import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { SimpleChart } from "./simple-chart";
 
 export interface RegionTableProps {

@@ -1,0 +1,27 @@
+VERSION 0
+
+TAGS tcp
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        latency,
+        error,
+        region,
+        trigger,
+        timestamp,
+        cronTimestamp,
+        monitorId,
+        workspaceId
+    FROM tcp_response__v0
+
+TYPE materialized
+DATASOURCE mv__tcp_30d__v0
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(30)"
+
+

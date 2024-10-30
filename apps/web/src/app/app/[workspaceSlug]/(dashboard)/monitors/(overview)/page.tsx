@@ -1,17 +1,14 @@
 import Link from "next/link";
 
-import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Limit } from "@/components/dashboard/limit";
 import { columns } from "@/components/data-table/monitor/columns";
 import { DataTable } from "@/components/data-table/monitor/data-table";
-import { env } from "@/env";
+import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export default async function MonitorPage({
   searchParams,
@@ -46,22 +43,17 @@ export default async function MonitorPage({
   // use Suspense and Client call instead?
   const monitorsWithData = await Promise.all(
     monitors.map(async (monitor) => {
+      const type = monitor.jobType as "http" | "tcp";
       const [metrics, data] = await Promise.all([
-        tb.endpointMetrics("1d")(
-          {
-            monitorId: String(monitor.id),
-          },
-          { cache: "no-store", revalidate: 0 },
-        ),
-        tb.endpointStatusPeriod("7d")(
-          {
-            monitorId: String(monitor.id),
-          },
-          { cache: "no-store", revalidate: 0 },
-        ),
+        prepareMetricsByPeriod("1d", type).getData({
+          monitorId: String(monitor.id),
+        }),
+        prepareStatusByPeriod("7d", type).getData({
+          monitorId: String(monitor.id),
+        }),
       ]);
 
-      const [current] = metrics?.sort((a, b) =>
+      const [current] = metrics.data?.sort((a, b) =>
         (a.lastTimestamp || 0) - (b.lastTimestamp || 0) < 0 ? 1 : -1,
       ) || [undefined];
 
@@ -80,7 +72,7 @@ export default async function MonitorPage({
       return {
         monitor,
         metrics: current,
-        data,
+        data: data.data,
         incidents,
         maintenances,
         tags,

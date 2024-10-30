@@ -1,0 +1,23 @@
+VERSION 0
+DESCRIPTION >
+	Stores all the data from the http_response table for the last 30 days, mainly used for accessing the data details.
+
+
+TAGS http, full
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        *
+    FROM ping_response__v8
+
+TYPE materialized
+DATASOURCE mv__http_full_30d__v0
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(30)"
+
+

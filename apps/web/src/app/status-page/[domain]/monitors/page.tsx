@@ -2,20 +2,17 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Header } from "@/components/dashboard/header";
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
 import { groupDataByTimestamp } from "@/components/monitor-charts/utils";
-import { env } from "@/env";
+import { prepareMetricByIntervalByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
 // Add loading page
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export const revalidate = 120;
 
@@ -39,8 +36,13 @@ export default async function Page({
     publicMonitors.length > 0
       ? await Promise.all(
           publicMonitors?.map(async (monitor) => {
-            const data = await tb.endpointChartAllRegions(period)({
+            const type = monitor.jobType as "http" | "tcp";
+            const data = await prepareMetricByIntervalByPeriod(
+              period,
+              type,
+            ).getData({
               monitorId: String(monitor.id),
+              interval: 60,
             });
 
             return { monitor, data };
@@ -70,12 +72,7 @@ export default async function Page({
           <ul className="grid gap-6">
             {monitorsWithData?.map(({ monitor, data }) => {
               const group =
-                data &&
-                groupDataByTimestamp(
-                  data.map((data) => ({ ...data, region: "ams" })),
-                  period,
-                  quantile,
-                );
+                data.data && groupDataByTimestamp(data.data, period, quantile);
               return (
                 <li key={monitor.id} className="grid gap-2">
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">

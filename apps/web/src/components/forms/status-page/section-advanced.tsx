@@ -161,7 +161,7 @@ export function SectionAdvanced({ form }: Props) {
           </FormItem>
         )}
       />
-      <div className="grid w-full gap-4 md:grid-rows-2 md:grid-cols-3 md:col-span-full">
+      <div className="grid w-full gap-4 md:col-span-full md:grid-cols-3 md:grid-rows-2">
         <SectionHeader
           title="Monitor Values Visibility"
           description={
@@ -177,12 +177,12 @@ export function SectionAdvanced({ form }: Props) {
           }
           className="md:col-span-2"
         />
-        <div className="group md:row-span-2 flex flex-col justify-center gap-1 border border-dashed rounded-md p-3">
-          <div className="flex flex-row gap-2 items-center justify-center text-muted-foreground group-hover:text-foreground">
+        <div className="group flex flex-col justify-center gap-1 rounded-md border border-dashed p-3 md:row-span-2">
+          <div className="flex flex-row items-center justify-center gap-2 text-muted-foreground group-hover:text-foreground">
             <MousePointer2 className="h-3 w-3" />
             <p className="text-sm">Hover State</p>
           </div>
-          <div className="max-w-[15rem] mx-auto">
+          <div className="mx-auto max-w-[15rem]">
             <BarDescription
               label="Operational"
               day={new Date().toISOString()}
@@ -190,7 +190,7 @@ export function SectionAdvanced({ form }: Props) {
               ok={5569}
               showValues={!!form.getValues("showMonitorValues")}
               barClassName="bg-status-operational"
-              className="md:col-span-1 bg-popover text-popover-foreground rounded-md border p-2 shadow-md"
+              className="rounded-md border bg-popover p-2 text-popover-foreground shadow-md md:col-span-1"
             />
           </div>
         </div>

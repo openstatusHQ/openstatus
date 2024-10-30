@@ -12,9 +12,9 @@ export const tcpPayload = z.object({
 });
 
 export const TCPResponse = z.object({
-  requestId: z.string().optional(),
-  workspaceId: z.string(),
-  monitorId: z.string(),
+  requestId: z.number().optional(),
+  workspaceId: z.number().optional(),
+  monitorId: z.number().optional(),
   timestamp: z.number(),
   timing: z.object({
     tcpStart: z.number(),

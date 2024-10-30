@@ -1,10 +1,9 @@
 import { formatDistanceToNowStrict } from "date-fns";
 import Link from "next/link";
 
-import type { LatencyMetric, ResponseTimeMetrics } from "@openstatus/tinybird";
-
 import { periodFormatter } from "@/lib/monitor/utils";
 import type { Period } from "@/lib/monitor/utils";
+import type { ResponseTimeMetrics } from "@/lib/tb";
 import { MetricsCard } from "./metrics-card";
 
 const metricsOrder = [
@@ -13,7 +12,7 @@ const metricsOrder = [
   "p90Latency",
   "p95Latency",
   "p99Latency",
-] satisfies LatencyMetric[];
+] as const;
 
 export function Metrics({
   metrics,

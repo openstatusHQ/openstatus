@@ -1,0 +1,38 @@
+VERSION 0
+
+TAGS http
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        round(quantile(0.50)(latency)) as p50Latency,
+        round(quantile(0.75)(latency)) as p75Latency,
+        round(quantile(0.90)(latency)) as p90Latency,
+        round(quantile(0.95)(latency)) as p95Latency,
+        round(quantile(0.99)(latency)) as p99Latency,
+        count() as count,
+        count(if(error = 0, 1, NULL)) AS ok,
+        max(cronTimestamp) AS lastTimestamp
+    FROM mv__http_1d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+        AND time >= toDateTime64(now() - INTERVAL 1 DAY, 3)
+    UNION ALL
+    SELECT
+        round(quantile(0.50)(latency)) AS p50Latency,
+        round(quantile(0.75)(latency)) AS p75Latency,
+        round(quantile(0.90)(latency)) AS p90Latency,
+        round(quantile(0.95)(latency)) AS p95Latency,
+        round(quantile(0.99)(latency)) AS p99Latency,
+        count() as count,
+        count(if(error = 0, 1, NULL)) AS ok,
+        NULL as lastTimestamp  -- no need to query the `lastTimestamp` as not relevant
+    FROM mv__http_7d__v0 -- REMINDER: this will increase the processed data compared to 3d
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+        AND time >= toDateTime64(now() - INTERVAL 2 DAY, 3)
+        AND time < toDateTime64(now() - INTERVAL 1 DAY, 3)
+
+

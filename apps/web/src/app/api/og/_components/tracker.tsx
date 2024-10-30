@@ -1,9 +1,13 @@
-import type { Monitor } from "@openstatus/tinybird";
 import { Tracker as OSTracker, classNames } from "@openstatus/tracker";
 
+import type { ResponseStatusTracker } from "@/lib/tb";
 import { cn, formatDate } from "@/lib/utils";
 
-export function Tracker({ data }: { data: Monitor[] }) {
+interface TrackerProps {
+  data: ResponseStatusTracker[];
+}
+
+export function Tracker({ data }: TrackerProps) {
   const tracker = new OSTracker({ data });
 
   return (

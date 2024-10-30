@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Copy, CopyCheck, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
@@ -17,12 +17,22 @@ import {
 } from "@openstatus/ui/src/components/dropdown-menu";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 
+import { copyToClipboard } from "@/lib/utils";
 import { api } from "@/trpc/client";
 
 export function SelectWorkspace() {
   const [workspaces, setWorkspaces] = React.useState<Workspace[]>([]);
   const [active, setActive] = React.useState<string>();
   const pathname = usePathname();
+  const [hasCopied, setHasCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    if (hasCopied) {
+      setTimeout(() => {
+        setHasCopied(false);
+      }, 2000);
+    }
+  }, [hasCopied]);
 
   React.useEffect(() => {
     if (pathname?.split("/")?.[2] && workspaces.length > 0) {
@@ -63,11 +73,29 @@ export function SelectWorkspace() {
           <DropdownMenuItem key={workspace.id} asChild>
             <a
               href={`/app/${workspace.slug}/monitors`}
-              className="justify-between"
+              className="group justify-between"
             >
               <span className="truncate">{workspace.slug}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="mx-0.5 hidden h-5 w-5 group-hover:block"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  copyToClipboard(workspace.slug);
+                  setHasCopied(true);
+                }}
+              >
+                {!hasCopied ? (
+                  <Copy className="h-3 w-3" />
+                ) : (
+                  <CopyCheck className="h-3 w-3" />
+                )}
+              </Button>
               {active === workspace.slug ? (
-                <Check className="ml-2 h-4 w-4" />
+                <Check className="ml-2 h-4 w-4 shrink-0" />
               ) : null}
             </a>
           </DropdownMenuItem>

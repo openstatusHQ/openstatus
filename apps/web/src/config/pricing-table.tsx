@@ -12,7 +12,7 @@ function renderChangelogDescription(slug: Changelog["slug"]) {
       {changelog?.description}{" "}
       <Link
         href={`/changelog/${changelog.slug}`}
-        className="underline underline-offset-4 text-nowrap"
+        className="text-nowrap underline underline-offset-4"
       >
         Learn more
       </Link>

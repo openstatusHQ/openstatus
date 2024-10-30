@@ -12,7 +12,6 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import type { Monitor } from "@openstatus/tinybird";
 import {
   Tracker as OSTracker,
   classNames,
@@ -26,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/src/components/tooltip";
 
+import type { ResponseStatusTracker } from "@/lib/tb";
 import { cn } from "@/lib/utils";
 import {
   HoverCard,
@@ -57,7 +57,7 @@ const tracker = cva("h-10 rounded-full flex-1", {
 });
 
 interface TrackerProps {
-  data: Monitor[];
+  data: ResponseStatusTracker[];
   name: string;
   description?: string;
   reports?: (StatusReport & { statusReportUpdates: StatusReportUpdate[] })[];

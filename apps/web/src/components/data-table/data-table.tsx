@@ -7,6 +7,7 @@ import type {
   PaginationState,
   Row,
   SortingState,
+  VisibilityState,
 } from "@tanstack/react-table";
 import {
   flexRender,
@@ -28,6 +29,7 @@ import {
   TableRow,
 } from "@openstatus/ui";
 
+import { cn } from "@/lib/utils";
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-toolbar";
 
@@ -39,6 +41,8 @@ interface DataTableProps<TData, TValue> {
   autoResetExpanded?: boolean;
   defaultColumnFilters?: ColumnFiltersState;
   defaultPagination?: PaginationState;
+  defaultVisibility?: VisibilityState;
+  // allowedPeriods?: Period[]; REMIDNER: disabled unallowed periods
 }
 
 export function DataTable<TData, TValue>({
@@ -49,6 +53,7 @@ export function DataTable<TData, TValue>({
   autoResetExpanded,
   defaultColumnFilters = [],
   defaultPagination = { pageIndex: 0, pageSize: 10 },
+  defaultVisibility = {},
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] =
@@ -56,6 +61,8 @@ export function DataTable<TData, TValue>({
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [pagination, setPagination] =
     React.useState<PaginationState>(defaultPagination);
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>(defaultVisibility);
 
   const table = useReactTable({
     data,
@@ -69,6 +76,7 @@ export function DataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onExpandedChange: setExpanded,
     getExpandedRowModel: getExpandedRowModel(),
+    onColumnVisibilityChange: setColumnVisibility,
     getRowCanExpand,
     autoResetExpanded,
     state: {
@@ -76,6 +84,7 @@ export function DataTable<TData, TValue>({
       columnFilters,
       expanded,
       pagination,
+      columnVisibility,
     },
   });
 
@@ -111,11 +120,12 @@ export function DataTable<TData, TValue>({
                       (row.getIsSelected() || row.getIsExpanded()) && "selected"
                     }
                     onClick={() => {
+                      if (!row.getCanExpand()) return;
                       // REMINDER: this is a workaround for single row expansion
                       if (!row.getIsExpanded()) table.resetExpanded();
                       row.toggleExpanded();
                     }}
-                    className="cursor-pointer"
+                    className={cn(row.getCanExpand() && "cursor-pointer")}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id}>

@@ -74,8 +74,8 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuSub>
             {/* REMINDER: consider using that the data-state styles as default */}
-            <DropdownMenuSubTrigger className="gap-1 [&_svg]:data-[state=open]:text-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:text-muted-foreground">
-              <div className="w-full flex flex-row items-center justify-between">
+            <DropdownMenuSubTrigger className="gap-1 [&_svg]:text-muted-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:data-[state=open]:text-foreground">
+              <div className="flex w-full flex-row items-center justify-between">
                 <span>Switch theme</span>
                 <ThemeIcon theme={theme} />
               </div>
@@ -88,7 +88,7 @@ export function UserNav() {
                     key={option}
                     checked={theme === option}
                     onClick={() => setTheme(option)}
-                    className="capitalize justify-between [&_svg]:data-[state=open]:text-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:text-muted-foreground"
+                    className="justify-between capitalize [&_svg]:text-muted-foreground [&_svg]:data-[highlighted]:text-foreground [&_svg]:data-[state=open]:text-foreground"
                   >
                     {option}
                     <ThemeIcon theme={option} />

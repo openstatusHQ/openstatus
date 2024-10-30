@@ -4,7 +4,6 @@ import type {
   StatusReport,
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
-import type { Monitor } from "@openstatus/tinybird";
 
 import { isInBlacklist } from "./blacklist";
 import { classNames, statusDetails } from "./config";
@@ -12,7 +11,11 @@ import type { StatusDetails, StatusVariant } from "./types";
 import { Status } from "./types";
 import { endOfDay, isSameDay, startOfDay } from "./utils";
 
-type Monitors = Monitor[];
+type Monitor = {
+  count: number;
+  ok: number;
+  day: string;
+};
 type StatusReports = (StatusReport & {
   statusReportUpdates?: StatusReportUpdate[];
 })[];
@@ -26,13 +29,13 @@ type Maintenances = Maintenance[];
  * StatusPage with multiple Monitors.
  */
 export class Tracker {
-  private data: Monitors = [];
+  private data: Monitor[] = [];
   private statusReports: StatusReports = [];
   private incidents: Incidents = [];
   private maintenances: Maintenances = [];
 
   constructor(arg: {
-    data?: Monitors;
+    data?: Monitor[];
     statusReports?: StatusReports;
     incidents?: Incidents;
     maintenances?: Maintenance[];

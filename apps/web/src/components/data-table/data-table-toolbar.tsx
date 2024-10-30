@@ -27,7 +27,7 @@ export function DataTableToolbar<TData>({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-1 flex-wrap items-center gap-2">
-        {table.getColumn("statusCode") && (
+        {table.getColumn("statusCode")?.getIsVisible() && (
           <DataTableFacetedFilter
             column={table.getColumn("statusCode")}
             title="Status Code"

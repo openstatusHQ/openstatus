@@ -8,7 +8,7 @@ import { BasicLayout } from "../_components/basic-layout";
 import { Tracker } from "../_components/tracker";
 import { SIZE, calSemiBold, interLight, interRegular } from "../utils";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export const runtime = "edge";
 
@@ -29,20 +29,20 @@ export async function GET(req: Request) {
   const monitorId =
     (searchParams.has("id") && searchParams.get("id")) || undefined;
 
-  const data =
-    (monitorId &&
-      (await tb.endpointStatusPeriod("45d")({
-        monitorId,
-      }))) ||
-    [];
+  // TODO: we need to pass the monitor type here
+
+  const res = (monitorId &&
+    (await tb.httpStatus45d({
+      monitorId,
+    }))) || { data: [] };
 
   return new ImageResponse(
     <BasicLayout
       title={title}
       description={description}
-      tw={data.length === 0 ? "mt-32" : undefined}
+      tw={res.data.length === 0 ? "mt-32" : undefined}
     >
-      {data.length ? <Tracker data={data} /> : null}
+      {res.data.length ? <Tracker data={res.data} /> : null}
     </BasicLayout>,
     {
       ...SIZE,

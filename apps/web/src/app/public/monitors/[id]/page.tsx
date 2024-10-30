@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 import * as React from "react";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
-import type { Region } from "@openstatus/tinybird";
-import { OSTinybird } from "@openstatus/tinybird";
+import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { Separator } from "@openstatus/ui";
 
 import { Shell } from "@/components/dashboard/shell";
@@ -11,9 +9,13 @@ import { CombinedChartWrapper } from "@/components/monitor-charts/combined-chart
 import { ButtonReset } from "@/components/monitor-dashboard/button-reset";
 import { DatePickerPreset } from "@/components/monitor-dashboard/date-picker-preset";
 import { Metrics } from "@/components/monitor-dashboard/metrics";
-import { env } from "@/env";
 import { getMinutesByInterval } from "@/lib/monitor/utils";
 import { getPreferredSettings } from "@/lib/preferred-settings/server";
+import {
+  prepareMetricByIntervalByPeriod,
+  prepareMetricByRegionByPeriod,
+  prepareMetricsByPeriod,
+} from "@/lib/tb";
 import { api } from "@/trpc/server";
 import {
   DEFAULT_INTERVAL,
@@ -22,8 +24,6 @@ import {
   periods,
   searchParamsCache,
 } from "./search-params";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
 
 export default async function Page({
   params,
@@ -43,6 +43,7 @@ export default async function Page({
   if (!monitor) return notFound();
 
   const { period, quantile, interval, regions } = search;
+  const type = monitor.jobType as "http" | "tcp";
 
   // TODO: work it out easier
   const intervalMinutes = getMinutesByInterval(interval);
@@ -52,12 +53,14 @@ export default async function Page({
   const minutes = isQuantileDisabled ? periodicityMinutes : intervalMinutes;
 
   const [metrics, data, metricsByRegion] = await Promise.all([
-    tb.endpointMetrics(period)({ monitorId: id }),
-    await tb.endpointChart(period)({
+    prepareMetricsByPeriod(period, type).getData({
+      monitorId: id,
+    }),
+    prepareMetricByIntervalByPeriod(period, type).getData({
       monitorId: id,
       interval: minutes,
     }),
-    tb.endpointMetricsByRegion(period)({
+    prepareMetricByRegionByPeriod(period, type).getData({
       monitorId: id,
     }),
   ]);
@@ -90,17 +93,17 @@ export default async function Page({
         </div>
       </Shell>
       <Shell className="grid gap-4">
-        <Metrics metrics={metrics} period={period} />
+        <Metrics metrics={metrics.data} period={period} />
         <Separator className="my-8" />
         <CombinedChartWrapper
-          data={data}
+          data={data.data}
           period={period}
           quantile={quantile}
           interval={interval}
           regions={regions.length ? (regions as Region[]) : monitor.regions} // FIXME: not properly reseted after filtered
           monitor={monitor}
           isQuantileDisabled={isQuantileDisabled}
-          metricsByRegion={metricsByRegion}
+          metricsByRegion={metricsByRegion.data}
           preferredSettings={preferredSettings}
         />
       </Shell>

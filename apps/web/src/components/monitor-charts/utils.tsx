@@ -1,9 +1,10 @@
 import { format } from "date-fns";
 
-import type { Region, ResponseGraph } from "@openstatus/tinybird";
 import { flyRegionsDict } from "@openstatus/utils";
 
 import type { Period, Quantile } from "@/lib/monitor/utils";
+import type { ResponseGraph } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 
 /**
  *

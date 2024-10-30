@@ -3,7 +3,6 @@
 import { Check, ChevronsUpDown, Globe2 } from "lucide-react";
 import * as React from "react";
 
-import type { Region } from "@openstatus/tinybird";
 import { Button, type ButtonProps } from "@openstatus/ui/src/components/button";
 import {
   Command,
@@ -26,7 +25,7 @@ import {
 } from "@openstatus/utils";
 
 import { cn } from "@/lib/utils";
-import { flyRegions } from "@openstatus/db/src/schema/constants";
+import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { parseAsArrayOf, parseAsStringLiteral, useQueryState } from "nuqs";
 
 interface RegionsPresetProps extends ButtonProps {

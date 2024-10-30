@@ -1,0 +1,24 @@
+VERSION 0
+
+TAGS http, statuspage
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        monitorId,
+        countState() AS count,
+        countState(if(error = 0, 1, NULL)) AS ok
+    FROM ping_response__v8
+    GROUP BY
+        time,
+        monitorId
+
+TYPE materialized
+DATASOURCE mv__http_status_7d__v0
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(7)"
+

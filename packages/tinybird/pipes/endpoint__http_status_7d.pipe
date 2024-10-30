@@ -1,0 +1,22 @@
+VERSION 0
+
+TAGS http
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT time as day, countMerge(count) as count, countMerge(ok) as ok
+    FROM mv__http_status_7d__v0
+    WHERE
+        monitorId = {{ String(monitorId, '1', required=True) }}
+    GROUP BY day
+    ORDER BY day DESC
+    WITH FILL
+    FROM
+        toStartOfDay(toStartOfDay(toTimeZone(now(), 'UTC')))
+        TO toStartOfDay(
+            date_sub(DAY, 7, now())
+        ) STEP INTERVAL -1 DAY
+
+

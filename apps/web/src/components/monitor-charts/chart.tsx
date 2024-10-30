@@ -4,9 +4,8 @@ import type { CustomTooltipProps, EventProps } from "@tremor/react";
 import { LineChart } from "@tremor/react";
 import { useState } from "react";
 
-import type { Region } from "@openstatus/tinybird";
-
 import { cn } from "@/lib/utils";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { dataFormatter, regionFormatter } from "./utils";
 
 interface ChartProps {

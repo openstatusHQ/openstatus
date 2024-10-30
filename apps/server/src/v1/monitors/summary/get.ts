@@ -12,7 +12,7 @@ import { isoDate } from "../../utils";
 import type { monitorsApi } from "../index";
 import { ParamsSchema } from "../schema";
 
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 const redis = Redis.fromEnv();
 
 const dailyStatsSchema = z.object({
@@ -82,17 +82,14 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
       return c.json({ data: cache }, 200);
     }
 
-    // FIXME: we should use the OSTinybird client
     console.log("fetching from tinybird");
-    const res = await tb.endpointStatusPeriod("45d")({
-      monitorId: id,
-    });
+    const res = await tb.httpStatus45d({ monitorId: id });
 
-    if (res === undefined) {
+    if (!res || res.data.length === 0) {
       throw new HTTPException(404, { message: "Not Found" });
     }
     await redis.set(`${id}-daily-stats`, res, { ex: 600 });
 
-    return c.json({ data: res }, 200);
+    return c.json({ data: res.data }, 200);
   });
 }

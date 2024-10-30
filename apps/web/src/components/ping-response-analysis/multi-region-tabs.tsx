@@ -2,7 +2,7 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@openstatus/ui";
 
-import type { Region } from "@openstatus/tinybird";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import type { Row } from "@tanstack/react-table";
 import { RegionsPreset } from "../monitor-dashboard/region-preset";
 import { columns } from "./columns";

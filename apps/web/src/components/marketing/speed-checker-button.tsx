@@ -5,10 +5,10 @@ import { Icons } from "../icons";
 
 export function SpeedCheckerButton({ className, ...props }: ButtonProps) {
   return (
-    <Button className={cn("rounded-full group", className)} asChild {...props}>
+    <Button className={cn("group rounded-full", className)} asChild {...props}>
       <Link href="/play/checker">
         Speed Checker{" "}
-        <Icons.gauge className="ml-1 h-4 w-4 [&>*:first-child]:transition-transform [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:-rotate-90 [&>*:first-child]:group-hover:rotate-0 [&>*:first-child]:duration-500 [&>*:first-child]:ease-out" />
+        <Icons.gauge className="[&>*:first-child]:-rotate-90 ml-1 h-4 w-4 [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:transition-transform [&>*:first-child]:duration-500 [&>*:first-child]:ease-out [&>*:first-child]:group-hover:rotate-0" />
       </Link>
     </Button>
   );

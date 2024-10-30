@@ -23,7 +23,7 @@ export default async function Details({
     await api.monitor.getMonitorById.query({
       id: Number.parseInt(search.monitorId),
     });
-    return <ResponseDetails {...search} />;
+    return <ResponseDetails type="http" {...search} />;
   } catch (_e) {
     return <PageEmptyState />;
   }

@@ -1,13 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { OSTinybird } from "@openstatus/tinybird";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { Tracker } from "@/components/tracker/tracker";
-import { env } from "@/env";
-
-const tb = new OSTinybird({ token: env.TINY_BIRD_API_KEY });
+import { prepareStatusByPeriod } from "@/lib/tb";
 
 export async function TrackerExample() {
   return (
@@ -29,15 +26,10 @@ function ExampleTrackerFallback() {
 }
 
 async function ExampleTracker() {
-  const data = await tb.endpointStatusPeriod("45d")(
-    {
-      monitorId: "1",
-    },
-    {
-      revalidate: 600, // 10 minutes
-    },
-  );
+  const res = await prepareStatusByPeriod("45d").getData({
+    monitorId: "1",
+  });
 
-  if (!data) return null;
-  return <Tracker data={data} name="Ping" description="Pong" />;
+  if (!res.data) return null;
+  return <Tracker data={res.data} name="Ping" description="Pong" />;
 }

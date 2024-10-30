@@ -37,7 +37,7 @@ export function ProFeatureHoverCard({
     <HoverCard openDelay={0} open={open} onOpenChange={setOpen}>
       <HoverCardTrigger
         onClick={() => setOpen(true)}
-        className="opacity-70 cursor-not-allowed relative"
+        className="relative cursor-not-allowed opacity-70"
         asChild
       >
         {children}

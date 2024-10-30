@@ -4,11 +4,7 @@ import { LineChart } from "lucide-react";
 import { useMemo } from "react";
 
 import type { Monitor, PublicMonitor } from "@openstatus/db/src/schema";
-import type {
-  Region,
-  ResponseGraph,
-  ResponseTimeMetricsByRegion,
-} from "@openstatus/tinybird";
+
 import { Toggle } from "@openstatus/ui";
 
 import { columns } from "@/components/data-table/single-region/columns";
@@ -19,6 +15,8 @@ import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import type { Interval, Period, Quantile } from "@/lib/monitor/utils";
 import { usePreferredSettings } from "@/lib/preferred-settings/client";
 import type { PreferredSettings } from "@/lib/preferred-settings/server";
+import type { ResponseGraph, ResponseTimeMetricsByRegion } from "@/lib/tb";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { Chart } from "./chart";
 import { groupDataByTimestamp } from "./utils";
 
