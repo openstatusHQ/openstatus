@@ -109,6 +109,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       .array(selectMonitorStatusSchema)
       .safeParse(monitorStatusData);
     if (!monitorStatus.success) {
+      console.log(monitorStatus.error);
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
@@ -140,9 +141,9 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       //
       if (row.jobType === "http") {
         payload = {
-          workspaceId: "1",
-          monitorId: "2260",
-          url: "https://www.openstatus.dev/api/ping/edge",
+          workspaceId: String(row.workspaceId),
+          monitorId: String(row.id),
+          url: row.url,
           method: row.method || "GET",
           cronTimestamp: timestamp,
           body: row.body,
@@ -176,7 +177,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         headers: {
           "Content-Type": "application/json",
           "fly-prefer-region": region, // Specify the region you want the request to be sent to
-          Authorization: "Basic ILoveCronJobs",
+          Authorization: `Basic ${env.CRON_SECRET}`,
         },
         method: "POST",
         body: JSON.stringify(payload),
@@ -189,12 +190,14 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     }
 
     const result = await Promise.all(allResult);
+    // console.log(result);
 
     const bodies = await Promise.all(result.map((r) => r.json()));
+    console.log(bodies);
     const data = z.array(HTTPTriggerResult).safeParse(bodies);
 
     if (!data.success) {
-      console.error(data.error);
+      console.log(data.error);
       throw new HTTPException(400, { message: "Something went wrong" });
     }
 
