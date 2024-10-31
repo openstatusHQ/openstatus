@@ -186,11 +186,14 @@ checkerRoute.post("/updateStatus", async (c) => {
 
           if (newIncident.length > 0) {
             const monitor = await db
-              .select({ url: schema.monitor.url })
+              .select({
+                url: schema.monitor.url,
+                jobType: schema.monitor.jobType,
+              })
               .from(schema.monitor)
               .where(eq(schema.monitor.id, Number(monitorId)))
               .get();
-            if (monitor) {
+            if (monitor && monitor.jobType === "http") {
               await triggerScreenshot({
                 data: {
                   url: monitor.url,
@@ -276,11 +279,14 @@ checkerRoute.post("/updateStatus", async (c) => {
           });
 
           const monitor = await db
-            .select({ url: schema.monitor.url })
+            .select({
+              url: schema.monitor.url,
+              jobType: schema.monitor.jobType,
+            })
             .from(schema.monitor)
             .where(eq(schema.monitor.id, Number(monitorId)))
             .get();
-          if (monitor) {
+          if (monitor && monitor.jobType === "http") {
             await triggerScreenshot({
               data: {
                 url: monitor.url,
