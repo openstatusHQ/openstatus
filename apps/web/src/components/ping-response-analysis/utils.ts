@@ -100,6 +100,7 @@ export const timingSchema = z.object({
 });
 
 export const checkerSchema = z.object({
+  type: z.literal("http").default("http"),
   status: z.number(),
   latency: z.number(),
   headers: z.record(z.string()),
@@ -121,6 +122,7 @@ export const regionCheckerSchema = checkerSchema.extend({
 
 export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
+// FIXME: does not include TCP!
 export type RegionChecker = z.infer<typeof regionCheckerSchema>;
 export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
 export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;

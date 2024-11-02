@@ -12,6 +12,7 @@ export const tcpPayload = z.object({
 });
 
 export const TCPResponse = z.object({
+  type: z.literal("tcp").default("tcp"),
   requestId: z.number().optional(),
   workspaceId: z.number().optional(),
   monitorId: z.number().optional(),
@@ -22,6 +23,7 @@ export const TCPResponse = z.object({
   }),
   error: z.string().optional(),
   region: monitorFlyRegionSchema,
+  latency: z.number().optional(),
 });
 
 export type tcpPayload = z.infer<typeof tcpPayload>;

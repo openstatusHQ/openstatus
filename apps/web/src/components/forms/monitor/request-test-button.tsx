@@ -138,17 +138,19 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
         {check ? (
           <div className="grid gap-8">
             <RegionInfo check={check.data} error={check.error} />
-            <ResponseDetailTabs
-              timing={check.data.timing}
-              headers={check.data.headers}
-              status={check.data.status}
-              assertions={deserialize(
-                JSON.stringify([
-                  ...(statusAssertions || []),
-                  ...(headerAssertions || []),
-                ]),
-              )}
-            />
+            {check.data.type === "http" ? (
+              <ResponseDetailTabs
+                timing={check.data.timing}
+                headers={check.data.headers}
+                status={check.data.status}
+                assertions={deserialize(
+                  JSON.stringify([
+                    ...(statusAssertions || []),
+                    ...(headerAssertions || []),
+                  ]),
+                )}
+              />
+            ) : null}
           </div>
         ) : null}
       </DialogContent>

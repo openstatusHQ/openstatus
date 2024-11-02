@@ -184,10 +184,6 @@ export function MonitorForm({
         jobType,
       } = form.getValues();
 
-      // FIXME: add support for TCP
-      // if (jobType !== "http")
-      //   return { error: "Only HTTP tests are supported. Coming soon..." };
-
       if (
         body &&
         body !== "" &&
