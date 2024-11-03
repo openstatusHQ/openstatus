@@ -11,7 +11,7 @@ import { marketingProductPagesConfig } from "@/config/pages";
 import { type Region, flyRegions } from "@openstatus/db/src/schema/constants";
 import { Button } from "@openstatus/ui/src/components/button";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
-import { allUnrelateds } from "contentlayer/generated";
+import { allUnrelateds } from "content-collections";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -128,7 +128,7 @@ export default function FeaturePage() {
         component={
           code ? (
             <Mdx
-              code={code.body.code}
+              code={code.mdx}
               className="max-w-none prose-pre:overflow-hidden"
             />
           ) : (

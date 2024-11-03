@@ -1,4 +1,4 @@
-import type { Changelog } from "contentlayer/generated";
+import type { Changelog } from "content-collections";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 

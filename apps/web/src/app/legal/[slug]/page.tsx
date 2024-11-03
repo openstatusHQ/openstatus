@@ -1,4 +1,4 @@
-import { allLegalPosts } from "contentlayer/generated";
+import { allLegals } from "content-collections";
 import { notFound } from "next/navigation";
 
 import { Mdx } from "@/components/content/mdx";
@@ -8,13 +8,13 @@ import { BackButton } from "@/components/layout/back-button";
 // export const dynamic = "force-static";
 
 export async function generateStaticParams() {
-  return allLegalPosts.map((post) => ({
+  return allLegals.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export default function PostPage({ params }: { params: { slug: string } }) {
-  const post = allLegalPosts.find((post) => post.slug === params.slug);
+  const post = allLegals.find((post) => post.slug === params.slug);
 
   if (!post) {
     notFound();
@@ -30,7 +30,7 @@ export default function PostPage({ params }: { params: { slug: string } }) {
             <h1 className="mb-5 font-cal text-3xl">{post.title}</h1>
           </div>
           <div className="mx-auto max-w-prose">
-            <Mdx code={post.body.code} />
+            <Mdx code={post.mdx} />
           </div>
         </article>
       </Shell>

@@ -2,7 +2,7 @@ import type { LimitsV1, LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
 import Link from "next/link";
 import type React from "react";
 
-import { type Changelog, allChangelogs } from "contentlayer/generated";
+import { type Changelog, allChangelogs } from "content-collections";
 
 function renderChangelogDescription(slug: Changelog["slug"]) {
   const changelog = allChangelogs.find((c) => c.slug === slug);

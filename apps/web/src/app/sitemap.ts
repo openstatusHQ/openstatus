@@ -1,4 +1,4 @@
-import { allChangelogs, allPosts } from "contentlayer/generated";
+import { allChangelogs, allPosts } from "content-collections";
 import type { MetadataRoute } from "next";
 
 const addPathToBaseURL = (path: string) => `https://www.openstatus.dev${path}`;

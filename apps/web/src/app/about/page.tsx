@@ -1,4 +1,4 @@
-import { allUnrelateds } from "contentlayer/generated";
+import { allUnrelateds } from "content-collections";
 
 import { Separator } from "@openstatus/ui/src/components/separator";
 
@@ -37,7 +37,7 @@ export default function AboutPage() {
         <Shell className="mx-auto w-auto shadow sm:px-8 sm:py-8 md:px-12 md:py-12 dark:border-card-foreground/30">
           {story ? (
             <Mdx
-              code={story.body.code}
+              code={story.mdx}
               className="sm:prose-lg mx-auto prose-li:my-0"
             />
           ) : null}

@@ -1,4 +1,4 @@
-import { allChangelogs } from "contentlayer/generated";
+import { allChangelogs } from "content-collections";
 import RSS from "rss";
 
 export async function GET() {

@@ -11,7 +11,7 @@ import {
   PaginationContent,
   PaginationLink,
 } from "@openstatus/ui";
-import { allPosts } from "contentlayer/generated";
+import { allPosts } from "content-collections";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";

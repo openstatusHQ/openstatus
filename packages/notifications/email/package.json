@@ -7,8 +7,8 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
-    "@react-email/components": "0.0.7",
-    "@react-email/render": "0.0.7",
+    "@react-email/components": "0.0.11",
+    "@react-email/render": "0.0.9",
     "@t3-oss/env-core": "0.7.0",
     "resend": "4.0.0",
     "zod": "3.23.8"

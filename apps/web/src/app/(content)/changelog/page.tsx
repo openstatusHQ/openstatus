@@ -12,7 +12,7 @@ import {
   PaginationContent,
   PaginationLink,
 } from "@openstatus/ui";
-import { allChangelogs } from "contentlayer/generated";
+import { allChangelogs } from "content-collections";
 import { Rss } from "lucide-react";
 import type { Metadata } from "next";
 import {
@@ -70,7 +70,7 @@ export default function ChangelogClient({
             title={changelog.title}
             href={`./changelog/${changelog.slug}`}
           >
-            <Mdx code={changelog.body.code} />
+            <Mdx code={changelog.mdx} />
           </Timeline.Article>
         ))}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-6">

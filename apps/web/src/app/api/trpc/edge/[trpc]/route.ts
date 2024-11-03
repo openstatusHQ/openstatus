@@ -11,7 +11,6 @@ const handler = (req: NextRequest) =>
     endpoint: "/api/trpc/edge",
     router: edgeRouter,
     req: req,
-    // @ts-expect-error
     createContext: () => createTRPCContext({ req }),
     onError: ({ error }) => {
       console.log("Error in tRPC handler (edge)");

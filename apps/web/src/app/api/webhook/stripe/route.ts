@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
     /**
      * Forward to tRPC API to handle the webhook event
      */
-    // @ts-expect-error FIXME
     const ctx = await createTRPCContext({ req });
     const caller = lambdaRouter.createCaller(ctx);
 
