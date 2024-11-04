@@ -1,6 +1,6 @@
 VERSION 0
 
-NODE get_result_for_on_demand_check_http_0
+NODE endpoint
 SQL >
 
     %
@@ -13,11 +13,13 @@ SQL >
         timestamp,
         url,
         workspaceId,
-        timing
-    FROM __ttl_45d_all_mv__v1
+        timing,
+        cronTimestamp
+    FROM mv__http_full_30d
     where
-        cronTimestamp = {{ String(cronTimestamp, '1') }}
-        and monitorId = {{ String(monitorId, '1') }}
-        and url = {{ String(url , 'https://www.openstatus.dev') }}
+         cronTimestamp = {{ String(timestamp, '1729871694536') }} and 
+         monitorId = {{ String(monitorId, '2260') }}
+        and url = {{ String(url , 'https://www.openstatus.dev/api/ping/edge') }}
+        order by cronTimestamp desc
 
 

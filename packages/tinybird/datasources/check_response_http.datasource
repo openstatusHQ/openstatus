@@ -1,0 +1,15 @@
+VERSION 0
+
+SCHEMA >
+    `body` String `json:$.body`,
+    `headers` String `json:$.headers`,
+    `latency` Int32 `json:$.latency`,
+    `region` String `json:$.region`,
+    `requestId` Int16 `json:$.requestId`,
+    `statusCode` Int16 `json:$.statusCode`,
+    `timestamp` Int64 `json:$.timestamp`,
+    `timing` String `json:$.timing`,
+    `workspaceId` Int16 `json:$.workspaceId`
+
+ENGINE "MergeTree"
+ENGINE_SORTING_KEY "timestamp, timing, workspaceId"

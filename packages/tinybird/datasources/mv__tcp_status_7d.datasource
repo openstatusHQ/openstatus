@@ -1,0 +1,13 @@
+VERSION 0
+# Data Source created from Pipe 'aggregate__tcp_status_7d__v0'
+
+SCHEMA >
+    `time` DateTime('UTC'),
+    `monitorId` Int32,
+    `count` AggregateFunction(count),
+    `ok` AggregateFunction(count, Nullable(UInt8))
+
+ENGINE "AggregatingMergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(7)"

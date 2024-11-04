@@ -1,16 +1,16 @@
-# Data Source created from Pipe '__ttl_1d__v0'
 VERSION 0
+# Data Source created from Pipe 'aggregate__tcp_1d__v0'
 
 SCHEMA >
     `time` DateTime,
     `latency` Int64,
-    `monitorId` String,
-    `region` LowCardinality(String),
-    `statusCode` Nullable(Int16),
-    `url` String,
-    `workspaceId` String,
+    `error` Int16,
+    `region` String,
+    `trigger` Nullable(String),
     `timestamp` Int64,
-    `cronTimestamp` Int64
+    `cronTimestamp` Int64,
+    `monitorId` Int32,
+    `workspaceId` Int32
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

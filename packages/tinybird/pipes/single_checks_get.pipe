@@ -1,0 +1,16 @@
+VERSION 1
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT *
+    from check_response_http
+    WHERE
+        workspaceId = {{ Int16(workspaceId, 1) }}
+        {% if defined(requestId) %} AND requestId = {{ Int16(requestId) }} {% end %}
+    ORDER BY timestamp DESC
+    LIMIT {{ Int32(pageSize, 10) }}
+    OFFSET {{ Int32(page, 0) * Int32(pageSize, 10) }}
+
+
