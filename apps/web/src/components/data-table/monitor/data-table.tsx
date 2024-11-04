@@ -118,7 +118,10 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   return (
                     // FIXME: className="[&:has(svg)]:w-4" takes the svg of the button > checkbox  into account
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      className={header.column.columnDef.meta?.headerClassName}
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -139,7 +142,10 @@ export function DataTable<TData, TValue>({
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+                    <TableCell
+                      key={cell.id}
+                      className={cell.column.columnDef.meta?.cellClassName}
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext(),
