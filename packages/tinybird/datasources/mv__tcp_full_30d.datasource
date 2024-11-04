@@ -1,0 +1,21 @@
+VERSION 0
+# Data Source created from Pipe 'aggregate__tcp_full_30d__v0'
+
+SCHEMA >
+    `time` DateTime,
+    `monitorId` Int32,
+    `region` String,
+    `timestamp` Int64,
+    `cronTimestamp` Int64,
+    `timing` String,
+    `workspaceId` Int32,
+    `latency` Int64,
+    `errorMessage` Nullable(String),
+    `error` Int16,
+    `trigger` Nullable(String),
+    `uri` Nullable(String)
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(30)"

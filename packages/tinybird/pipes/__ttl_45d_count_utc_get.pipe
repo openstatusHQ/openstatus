@@ -1,11 +1,12 @@
 VERSION 1
+TOKEN "__ttl_45d_count_utc_get__v1_endpoint_read_7956" READ
 
 NODE __ttl_45d_count_utc_get_0
 SQL >
 
     %
     SELECT time as day, countMerge(count) as count, countMerge(ok) as ok
-    FROM __ttl_45d_count_utc_mv__v1
+    FROM mv__http_status_45d
     WHERE
         monitorId = {{ String(monitorId, '4') }}
     GROUP BY day
@@ -14,7 +15,7 @@ SQL >
     FROM
         toStartOfDay(toStartOfDay(toTimeZone(now(), 'UTC')))
         TO toStartOfDay(
-            date_sub(DAY, 7, now())
+            date_sub(DAY, 45, now())
         ) STEP INTERVAL -1 DAY
 
 

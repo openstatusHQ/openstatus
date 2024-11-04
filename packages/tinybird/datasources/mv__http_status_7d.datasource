@@ -1,5 +1,5 @@
-# Data Source created from Pipe '__ttl_7d_count_utc__v1'
-VERSION 1
+VERSION 0
+# Data Source created from Pipe 'aggregate__http_status_7d__v0'
 
 SCHEMA >
     `time` DateTime('UTC'),

@@ -153,7 +153,6 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                                               item.code,
                                             )}
                                             onCheckedChange={(checked) => {
-                                              console.log(field.value);
                                               return checked
                                                 ? field.onChange([
                                                     ...(field.value

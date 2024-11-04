@@ -1,0 +1,19 @@
+VERSION 0
+# Data Source created from Pipe 'aggregate__http_30d__v0'
+
+SCHEMA >
+    `time` DateTime,
+    `latency` Int64,
+    `error` Int8,
+    `region` LowCardinality(String),
+    `trigger` Nullable(String),
+    `statusCode` Nullable(Int16),
+    `timestamp` Int64,
+    `cronTimestamp` Int64,
+    `monitorId` String,
+    `workspaceId` String
+
+ENGINE "MergeTree"
+ENGINE_PARTITION_KEY "toYYYYMM(time)"
+ENGINE_SORTING_KEY "monitorId, time"
+ENGINE_TTL "time + toIntervalDay(30)"

@@ -6,12 +6,12 @@ SCHEMA >
     `timestamp` Int64 `json:$.timestamp`,
     `cronTimestamp` Int64 `json:$.timestamp`,
     `timing` String `json:$.timing`,
-    `uri` String `json:$.uri`,
     `workspaceId` Int32 `json:$.workspaceId`,
     `latency` Int64 `json:$.latency`,
     `errorMessage` Nullable(String) `json:$.errorMessage`,
-    `error` Int16 `json:$.error`
+    `error` Int16 `json:$.error`,
     `trigger` Nullable(String) `json:$.trigger`,
+    `uri` Nullable(String) `json:$.uri`,
 
 
 ENGINE "MergeTree"
