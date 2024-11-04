@@ -80,11 +80,7 @@ export const columns: ColumnDef<{
   {
     accessorKey: "active",
     accessorFn: (row) => row.monitor.active,
-    header: () => (
-      <div className="w-4">
-        <Radio className="h-4 w-4" />
-      </div>
-    ),
+    header: () => <Radio className="h-4 w-4" />,
     cell: ({ row }) => {
       const { active, status } = row.original.monitor;
       const maintenance = isActiveMaintenance(row.original.maintenances);
@@ -101,6 +97,9 @@ export const columns: ColumnDef<{
     filterFn: (row, _id, value) => {
       if (!Array.isArray(value)) return true;
       return value.includes(row.original.monitor.active);
+    },
+    meta: {
+      headerClassName: "w-4",
     },
   },
   {
@@ -130,6 +129,8 @@ export const columns: ColumnDef<{
     header: "Tags",
     cell: ({ row }) => {
       const { tags } = row.original;
+      if (!tags?.length)
+        return <span className="text-muted-foreground">-</span>;
       return <TagBadgeWithTooltip tags={tags} />;
     },
     filterFn: (row, _id, value) => {

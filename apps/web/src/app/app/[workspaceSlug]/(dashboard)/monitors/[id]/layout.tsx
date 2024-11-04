@@ -5,6 +5,7 @@ import { Badge } from "@openstatus/ui/src/components/badge";
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { JobTypeIconWithTooltip } from "@/components/monitor/job-type-icon-with-tooltip";
+import { NotificationIconWithTooltip } from "@/components/monitor/notification-icon-with-tooltip";
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
 import { TagBadgeWithTooltip } from "@/components/monitor/tag-badge-with-tooltip";
 import { api } from "@/trpc/server";
@@ -72,6 +73,12 @@ export default async function Layout({
                 <Badge variant="secondary">public</Badge>
               </>
             ) : null}
+            <span className="text-muted-foreground/50 text-xs">•</span>
+            <NotificationIconWithTooltip
+              notifications={monitor.monitorsToNotifications.map(
+                ({ notification }) => notification,
+              )}
+            />
           </div>
         }
       />

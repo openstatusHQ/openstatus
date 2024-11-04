@@ -190,6 +190,7 @@ export const monitorRouter = createTRPCRouter({
             with: { maintenance: true },
             where: eq(maintenancesToMonitors.monitorId, opts.input.id),
           },
+          monitorsToNotifications: { with: { notification: true } },
         },
       });
 
@@ -201,6 +202,11 @@ export const monitorRouter = createTRPCRouter({
             })
             .array(),
           maintenance: z.boolean().default(false).optional(),
+          monitorsToNotifications: z
+            .object({
+              notification: selectNotificationSchema,
+            })
+            .array(),
         })
         .safeParse({
           ..._monitor,
