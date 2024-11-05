@@ -1,4 +1,5 @@
 const { withContentCollections } = require("@content-collections/next");
+const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -54,12 +55,8 @@ const nextConfig = {
   },
 };
 
-// Injected content via Sentry wizard below
-
-const { withSentryConfig } = require("@sentry/nextjs");
-
 module.exports = withSentryConfig(
-  withContentCollections(nextConfig),
+  async () => await withContentCollections(nextConfig),
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
