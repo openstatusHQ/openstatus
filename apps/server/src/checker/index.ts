@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { and, db, eq, isNull, schema } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema";
+import { incidentTable, workspace } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,
   selectMonitorSchema,
@@ -189,18 +189,26 @@ checkerRoute.post("/updateStatus", async (c) => {
               .select({
                 url: schema.monitor.url,
                 jobType: schema.monitor.jobType,
+                workspaceId: schema.monitor.workspaceId,
               })
               .from(schema.monitor)
               .where(eq(schema.monitor.id, Number(monitorId)))
               .get();
-            if (monitor && monitor.jobType === "http") {
-              await triggerScreenshot({
-                data: {
-                  url: monitor.url,
-                  incidentId: newIncident[0].id,
-                  kind: "incident",
-                },
-              });
+            if (monitor && monitor.jobType === "http" && monitor.workspaceId) {
+              const currentWorkspace = await db
+                .select()
+                .from(workspace)
+                .where(eq(workspace.id, monitor.workspaceId))
+                .get();
+              if (currentWorkspace?.plan !== "free") {
+                await triggerScreenshot({
+                  data: {
+                    url: monitor.url,
+                    incidentId: newIncident[0].id,
+                    kind: "incident",
+                  },
+                });
+              }
             }
           }
         }
@@ -282,18 +290,27 @@ checkerRoute.post("/updateStatus", async (c) => {
             .select({
               url: schema.monitor.url,
               jobType: schema.monitor.jobType,
+              workspaceId: schema.monitor.workspaceId,
             })
             .from(schema.monitor)
             .where(eq(schema.monitor.id, Number(monitorId)))
             .get();
-          if (monitor && monitor.jobType === "http") {
-            await triggerScreenshot({
-              data: {
-                url: monitor.url,
-                incidentId: incident.id,
-                kind: "recovery",
-              },
-            });
+          if (monitor && monitor.jobType === "http" && monitor.workspaceId) {
+            const currentWorkspace = await db
+              .select()
+              .from(workspace)
+              .where(eq(workspace.id, monitor.workspaceId))
+              .get();
+
+            if (currentWorkspace?.plan !== "free") {
+              await triggerScreenshot({
+                data: {
+                  url: monitor.url,
+                  incidentId: incident.id,
+                  kind: "recovery",
+                },
+              });
+            }
           }
         }
       }

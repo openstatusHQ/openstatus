@@ -1,4 +1,8 @@
-import type { LimitsV1, LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  LimitsV1,
+  LimitsV2,
+  LimitsV3,
+} from "@openstatus/db/src/schema/plan/schema";
 import Link from "next/link";
 import type React from "react";
 
@@ -26,7 +30,7 @@ export const pricingTableConfig: Record<
   {
     label: string;
     features: {
-      value: keyof LimitsV1 | keyof LimitsV2;
+      value: keyof LimitsV1 | keyof LimitsV2 | keyof LimitsV3;
       label: string;
       description?: React.ReactNode; // tooltip informations
       badge?: string;
@@ -52,6 +56,7 @@ export const pricingTableConfig: Record<
       { value: "max-regions", label: "Number of Regions" },
 
       { value: "data-retention", label: "Data retention" },
+      { value: "screenshots", label: "Screenshots upon failure" },
     ],
   },
   "synthetic-checks": {
