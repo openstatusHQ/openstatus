@@ -36,9 +36,19 @@ export const limitsV2 = limitsV1.extend({
   "monitor-values-visibility": z.boolean(),
 });
 
-export type LimitsV2 = z.infer<typeof limitsV2>;
+export const limitsV3 = limitsV2.extend({
+  version: z.literal("v3"),
+  screenshots: z.boolean(),
+});
 
-const unknownLimit = z.discriminatedUnion("version", [limitsV1, limitsV2]);
+export type LimitsV2 = z.infer<typeof limitsV2>;
+export type LimitsV3 = z.infer<typeof limitsV3>;
+
+const unknownLimit = z.discriminatedUnion("version", [
+  limitsV1,
+  limitsV2,
+  limitsV3,
+]);
 
 export function migrateFromV1ToV2({ data }: { data: LimitsV1 }) {
   return {
@@ -49,9 +59,30 @@ export function migrateFromV1ToV2({ data }: { data: LimitsV1 }) {
   };
 }
 
+export function migrateFromV2ToV3({ data }: { data: LimitsV2 }) {
+  return {
+    ...data,
+    version: "v3",
+    screenshots: true,
+  };
+}
+
+export function migrateFromV1ToV3({ data }: { data: LimitsV1 }) {
+  return {
+    ...data,
+    version: "v3",
+    screenshots: true,
+    "private-locations": true,
+    "monitor-values-visibility": true,
+  };
+}
+
 export const limitSchema = unknownLimit.transform((val) => {
   if (!val.version) {
-    return migrateFromV1ToV2({ data: val });
+    return migrateFromV1ToV3({ data: val });
+  }
+  if (val.version === "v2") {
+    return migrateFromV2ToV3({ data: val });
   }
   return val;
 });

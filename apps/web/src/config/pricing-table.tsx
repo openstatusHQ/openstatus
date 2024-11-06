@@ -1,4 +1,8 @@
-import type { LimitsV1, LimitsV2 } from "@openstatus/db/src/schema/plan/schema";
+import type {
+  LimitsV1,
+  LimitsV2,
+  LimitsV3,
+} from "@openstatus/db/src/schema/plan/schema";
 import Link from "next/link";
 import type React from "react";
 
@@ -26,7 +30,7 @@ export const pricingTableConfig: Record<
   {
     label: string;
     features: {
-      value: keyof LimitsV1 | keyof LimitsV2;
+      value: keyof LimitsV1 | keyof LimitsV2 | keyof LimitsV3;
       label: string;
       description?: React.ReactNode; // tooltip informations
       badge?: string;
@@ -80,7 +84,7 @@ export const pricingTableConfig: Record<
         value: "monitor-values-visibility",
         label: "Toggle numbers visibility",
         description: renderChangelogDescription(
-          "status-page-monitor-values-visibility",
+          "status-page-monitor-values-visibility"
         ),
       },
       {
@@ -95,7 +99,7 @@ export const pricingTableConfig: Record<
         value: "password-protection",
         label: "Password-protected",
         description: renderChangelogDescription(
-          "password-protected-status-page",
+          "password-protected-status-page"
         ),
       },
       {
