@@ -171,15 +171,6 @@ importers:
       '@auth/drizzle-adapter':
         specifier: 1.7.0
         version: 1.7.0
-      '@content-collections/core':
-        specifier: 0.7.3
-        version: 0.7.3(typescript@5.5.2)
-      '@content-collections/mdx':
-        specifier: 0.2.0
-        version: 0.2.0(@content-collections/core@0.7.3(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@content-collections/next':
-        specifier: 0.2.3
-        version: 0.2.3(@content-collections/core@0.7.3(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@google-cloud/tasks':
         specifier: 4.0.1
         version: 4.0.1(encoding@0.1.13)
@@ -409,6 +400,15 @@ importers:
         specifier: 3.23.8
         version: 3.23.8
     devDependencies:
+      '@content-collections/core':
+        specifier: 0.7.3
+        version: 0.7.3(typescript@5.5.2)
+      '@content-collections/mdx':
+        specifier: 0.2.0
+        version: 0.2.0(@content-collections/core@0.7.3(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@content-collections/next':
+        specifier: 0.2.3
+        version: 0.2.3(@content-collections/core@0.7.3(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@headlessui/tailwindcss':
         specifier: 0.2.0
         version: 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))

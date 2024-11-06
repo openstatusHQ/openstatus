@@ -12,9 +12,6 @@
   "dependencies": {
     "@auth/core": "0.34.1",
     "@auth/drizzle-adapter": "1.7.0",
-    "@content-collections/core": "0.7.3",
-    "@content-collections/mdx": "0.2.0",
-    "@content-collections/next": "0.2.3",
     "@google-cloud/tasks": "4.0.1",
     "@headlessui/react": "1.7.17",
     "@hookform/resolvers": "3.3.1",
@@ -93,6 +90,9 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@content-collections/core": "0.7.3",
+    "@content-collections/mdx": "0.2.0",
+    "@content-collections/next": "0.2.3",
     "@headlessui/tailwindcss": "0.2.0",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "20.14.8",
