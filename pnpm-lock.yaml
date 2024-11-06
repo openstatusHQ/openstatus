@@ -171,6 +171,15 @@ importers:
       '@auth/drizzle-adapter':
         specifier: 1.7.0
         version: 1.7.0
+      '@content-collections/core':
+        specifier: 0.7.3
+        version: 0.7.3(typescript@5.5.2)
+      '@content-collections/mdx':
+        specifier: 0.2.0
+        version: 0.2.0(@content-collections/core@0.7.3(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@content-collections/next':
+        specifier: 0.2.3
+        version: 0.2.3(@content-collections/core@0.7.3(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@google-cloud/tasks':
         specifier: 4.0.1
         version: 4.0.1(encoding@0.1.13)
@@ -400,15 +409,6 @@ importers:
         specifier: 3.23.8
         version: 3.23.8
     devDependencies:
-      '@content-collections/core':
-        specifier: 0.7.2
-        version: 0.7.2(typescript@5.5.2)
-      '@content-collections/mdx':
-        specifier: 0.2.0
-        version: 0.2.0(@content-collections/core@0.7.2(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@content-collections/next':
-        specifier: 0.2.3
-        version: 0.2.3(@content-collections/core@0.7.2(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       '@headlessui/tailwindcss':
         specifier: 0.2.0
         version: 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
@@ -2169,8 +2169,8 @@ packages:
     peerDependencies:
       commander: 9.4.x
 
-  '@content-collections/core@0.7.2':
-    resolution: {integrity: sha512-jOpQV6etstGF477CoMXdh4Cwl4fEbgZhty/WKxPsP3akx1LE4Ds8w89WZVsy8pttnR6KC4psrjCtlwa9WNS+rg==}
+  '@content-collections/core@0.7.3':
+    resolution: {integrity: sha512-eqrQ/59BdorWQFFLF1sGPtIKzsn1OPSomok8e6MevYAaZ2knkhI3ddTQqo8OMrW/zA5H71Pbg0cgxbCN0pOVsg==}
     peerDependencies:
       typescript: ^5.0.2
 
@@ -11478,7 +11478,7 @@ snapshots:
     dependencies:
       commander: 9.4.1
 
-  '@content-collections/core@0.7.2(typescript@5.5.2)':
+  '@content-collections/core@0.7.3(typescript@5.5.2)':
     dependencies:
       '@parcel/watcher': 2.4.1
       camelcase: 8.0.0
@@ -11493,13 +11493,13 @@ snapshots:
       yaml: 2.4.5
       zod: 3.23.8
 
-  '@content-collections/integrations@0.2.1(@content-collections/core@0.7.2(typescript@5.5.2))':
+  '@content-collections/integrations@0.2.1(@content-collections/core@0.7.3(typescript@5.5.2))':
     dependencies:
-      '@content-collections/core': 0.7.2(typescript@5.5.2)
+      '@content-collections/core': 0.7.3(typescript@5.5.2)
 
-  '@content-collections/mdx@0.2.0(@content-collections/core@0.7.2(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@content-collections/mdx@0.2.0(@content-collections/core@0.7.3(typescript@5.5.2))(acorn@8.11.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@content-collections/core': 0.7.2(typescript@5.5.2)
+      '@content-collections/core': 0.7.3(typescript@5.5.2)
       esbuild: 0.21.5
       mdx-bundler: 10.0.3(acorn@8.11.3)(esbuild@0.21.5)
       react: 18.3.1
@@ -11509,10 +11509,10 @@ snapshots:
       - acorn
       - supports-color
 
-  '@content-collections/next@0.2.3(@content-collections/core@0.7.2(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
+  '@content-collections/next@0.2.3(@content-collections/core@0.7.3(typescript@5.5.2))(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))':
     dependencies:
-      '@content-collections/core': 0.7.2(typescript@5.5.2)
-      '@content-collections/integrations': 0.2.1(@content-collections/core@0.7.2(typescript@5.5.2))
+      '@content-collections/core': 0.7.3(typescript@5.5.2)
+      '@content-collections/integrations': 0.2.1(@content-collections/core@0.7.3(typescript@5.5.2))
       next: 14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   '@cspotcode/source-map-support@0.8.1':
