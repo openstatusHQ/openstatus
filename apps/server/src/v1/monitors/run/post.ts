@@ -12,7 +12,7 @@ import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import { HTTPTriggerResult, ParamsSchema } from "../schema";
+import { HTTPTriggerResult, ParamsSchema, TCPTriggerResult } from "../schema";
 
 const triggerMonitor = createRoute({
   method: "post",
@@ -37,7 +37,7 @@ const triggerMonitor = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(HTTPTriggerResult),
+          schema: z.array(HTTPTriggerResult).or(z.array(TCPTriggerResult)),
         },
       },
       description: "All the historical metrics",
@@ -193,8 +193,17 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     // console.log(result);
 
     const bodies = await Promise.all(result.map((r) => r.json()));
-    console.log(bodies);
-    const data = z.array(HTTPTriggerResult).safeParse(bodies);
+    let data = null;
+    if (row.jobType === "http") {
+      data = z.array(HTTPTriggerResult).safeParse(bodies);
+    }
+    if (row.jobType === "tcp") {
+      data = z.array(TCPTriggerResult).safeParse(bodies);
+    }
+
+    if (!data) {
+      throw new HTTPException(400, { message: "Something went wrong" });
+    }
 
     if (!data.success) {
       console.log(data.error);
