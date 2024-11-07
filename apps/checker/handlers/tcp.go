@@ -136,6 +136,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			},
 			Latency: latency,
 			Region:  h.Region,
+			JobType: "tcp",
 		}
 
 		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
