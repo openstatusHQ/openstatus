@@ -54,8 +54,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitorRun.workspaceId, Number(workspaceId)),
-            gte(monitorRun.createdAt, new Date(lastMonth)),
-          ),
+            gte(monitorRun.createdAt, new Date(lastMonth))
+          )
         )
         .all()
     )[0].count;
@@ -73,8 +73,8 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 
@@ -186,9 +186,9 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api`;
+      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api&data=true`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api`;
+      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api&data=true`;
     default:
       throw new Error("Invalid jobType");
   }

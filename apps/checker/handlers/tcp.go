@@ -210,6 +210,13 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 	}
 
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, response)
+
+		return
+	}
+
 	c.JSON(http.StatusOK, response)
 }
 
