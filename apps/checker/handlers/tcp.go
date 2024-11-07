@@ -222,7 +222,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "check_tcp_respo…nse__v1"
+	dataSourceName := "check_tcp_response__v1"
 
 	region := c.Param("region")
 	if region == "" {
