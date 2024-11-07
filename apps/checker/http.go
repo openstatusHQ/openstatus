@@ -36,6 +36,7 @@ type Response struct {
 	Body      string            `json:"body,omitempty"`
 	Error     string            `json:"error,omitempty"`
 	Region    string            `json:"region"`
+	JobType   string            `json:"jobType"`
 	Latency   int64             `json:"latency"`
 	Timestamp int64             `json:"timestamp"`
 	Status    int               `json:"status,omitempty"`
@@ -80,6 +81,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	if inputData.Method != http.MethodGet {
 		head := req.Header
 		_, ok := head["Content-Type"]
+
 		if !ok {
 			// by default we set the content type to application/json if it's a POST request
 			req.Header.Set("Content-Type", "application/json")
@@ -127,6 +129,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 
 		return Response{}, fmt.Errorf("error with monitorURL %s: %w", inputData.URL, err)
 	}
+
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)

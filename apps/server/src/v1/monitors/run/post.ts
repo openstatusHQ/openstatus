@@ -12,7 +12,12 @@ import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
-import { HTTPTriggerResult, ParamsSchema, TCPTriggerResult } from "../schema";
+import {
+  HTTPTriggerResult,
+  ParamsSchema,
+  TCPTriggerResult,
+  TriggerResult,
+} from "../schema";
 
 const triggerMonitor = createRoute({
   method: "post",
@@ -61,8 +66,8 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         .where(
           and(
             eq(monitorRun.workspaceId, Number(workspaceId)),
-            gte(monitorRun.createdAt, new Date(lastMonth)),
-          ),
+            gte(monitorRun.createdAt, new Date(lastMonth))
+          )
         )
         .all()
     )[0].count;
@@ -80,8 +85,8 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+          isNull(monitor.deletedAt)
+        )
       )
       .get();
 
@@ -193,13 +198,9 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     // console.log(result);
 
     const bodies = await Promise.all(result.map((r) => r.json()));
-    let data = null;
-    if (row.jobType === "http") {
-      data = z.array(HTTPTriggerResult).safeParse(bodies);
-    }
-    if (row.jobType === "tcp") {
-      data = z.array(TCPTriggerResult).safeParse(bodies);
-    }
+    // let data = null;
+
+    const data = z.array(TriggerResult).safeParse(bodies);
 
     if (!data) {
       throw new HTTPException(400, { message: "Something went wrong" });

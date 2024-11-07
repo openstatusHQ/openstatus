@@ -200,7 +200,10 @@ checkerRoute.post("/updateStatus", async (c) => {
                 .from(workspace)
                 .where(eq(workspace.id, monitor.workspaceId))
                 .get();
-              if (currentWorkspace?.plan !== "free") {
+              if (
+                !!currentWorkspace?.plan &&
+                currentWorkspace?.plan !== "free"
+              ) {
                 await triggerScreenshot({
                   data: {
                     url: monitor.url,
@@ -302,7 +305,7 @@ checkerRoute.post("/updateStatus", async (c) => {
               .where(eq(workspace.id, monitor.workspaceId))
               .get();
 
-            if (currentWorkspace?.plan !== "free") {
+            if (!!currentWorkspace?.plan && currentWorkspace?.plan !== "free") {
               await triggerScreenshot({
                 data: {
                   url: monitor.url,

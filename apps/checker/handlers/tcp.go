@@ -17,6 +17,7 @@ import (
 type TCPResponse struct {
 	Region       string                    `json:"region"`
 	ErrorMessage string                    `json:"errorMessage"`
+	JobType      string                    `json:"jobType"`
 	RequestId    int64                     `json:"requestId,omitempty"`
 	WorkspaceID  int64                     `json:"workspaceId"`
 	MonitorID    int64                     `json:"monitorId"`
@@ -95,6 +96,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	var called int
+
 	var response TCPResponse
 
 	op := func() error {
@@ -268,6 +270,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			},
 			Latency: res.TCPDone - res.TCPStart,
 			Region:  h.Region,
+			JobType: "tcp",
 		}
 
 		timingAsString, err := json.Marshal(res)
