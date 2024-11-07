@@ -243,6 +243,20 @@ export const HTTPTriggerResult = z.object({
   error: z.string().optional().nullable(),
 });
 
+const tcptimingSchema = z.object({
+  tcpStart: z.number(),
+  tcpDone: z.number(),
+});
+
+export const TCPTriggerResult = z.object({
+  latency: z.number(),
+  region: z.enum(flyRegions),
+  timestamp: z.number(),
+  timing: tcptimingSchema,
+  error: z.number().optional().nullable(),
+  errorMessage: z.string().optional().nullable(),
+});
+
 export const ResultRun = z.object({
   latency: z.number().int(), // in ms
   statusCode: z.number().int().nullable().default(null),
