@@ -88,6 +88,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	var called int
+
 	var result checker.Response
 
 	op := func() error {
@@ -177,6 +178,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		result = res
 		result.Region = h.Region
+		result.JobType = "http"
 
 		// it's in error if not successful
 		if isSuccessfull {

@@ -234,6 +234,7 @@ const timingSchema = z.object({
 });
 
 export const HTTPTriggerResult = z.object({
+  jobType: z.literal("http"),
   status: z.number(),
   latency: z.number(),
   region: z.enum(flyRegions),
@@ -249,6 +250,7 @@ const tcptimingSchema = z.object({
 });
 
 export const TCPTriggerResult = z.object({
+  jobType: z.literal("tcp"),
   latency: z.number(),
   region: z.enum(flyRegions),
   timestamp: z.number(),
@@ -256,6 +258,11 @@ export const TCPTriggerResult = z.object({
   error: z.number().optional().nullable(),
   errorMessage: z.string().optional().nullable(),
 });
+
+export const TriggerResult = z.discriminatedUnion("jobType", [
+  HTTPTriggerResult,
+  TCPTriggerResult,
+]);
 
 export const ResultRun = z.object({
   latency: z.number().int(), // in ms
