@@ -1,0 +1,11 @@
+{
+  "name": "@openstatus/docs-old",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm dlx mintlify@latest dev --port 3002",
+    "verify": "pnpm dlx mintlify@latest  broken-links"
+  },
+  "keywords": [],
+  "author": "OpenStatus"
+}

@@ -1,0 +1,54 @@
+---
+title: Status page
+description: "How to create your first status page 🔥"
+---
+
+In order to create your status page, you need to create at least one monitor.
+
+  <img
+    src="/images/status-page/status-page-empty.png"
+    alt="Create your status page"
+  />
+
+## What is a status page 🧑‍🏫
+
+A status page is a public page that displays the status and performance of your
+services. It shows the current status of your services and the history of
+incidents.
+
+## Status Page Badge 🏷️
+
+You can embed the status page badge on your website or GitHub README to show the
+current status of your services.
+
+<a href="https://status.openstatus.dev">
+  <img src="https://status.openstatus.dev/badge" />
+</a>
+
+Copy the following code and paste it into your website or GitHub README:
+
+```html
+<img src="https://YOUR-SLUG.openstatus.dev/badge" />
+```
+
+If you want the dark version of the badge, you can use the following URL:
+
+```html
+<img src="https://YOUR-SLUG.openstatus.dev/badge?theme=dark" />
+```
+
+You can also customize the size of the badge by adding a `size` parameter:
+
+- `sm`
+- `md`
+- `lg`
+- `xl`
+
+
+```html
+<img src="https://YOUR-SLUG.openstatus.dev/badge?theme=dark&size=xl" />
+```
+
+##  Add monitors metrics 📊
+
+If you make your <a href="/synthetic/features/monitor#public-monitor">monitor public</a>, you can display the metrics on your status page.
