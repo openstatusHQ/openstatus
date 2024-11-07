@@ -42,7 +42,7 @@ const triggerMonitor = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(HTTPTriggerResult).or(z.array(TCPTriggerResult)),
+          schema: z.array(TriggerResult),
         },
       },
       description: "All the historical metrics",
@@ -218,9 +218,9 @@ export function registerRunMonitor(api: typeof monitorsApi) {
 function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
   switch (row.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api`;
+      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api&data=true`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api`;
+      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api&data=true`;
     default:
       throw new Error("Invalid jobType");
   }

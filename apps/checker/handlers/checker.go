@@ -309,5 +309,12 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	}
 
-	c.JSON(http.StatusOK, result)
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, result)
+
+		return
+	}
+
+	c.JSON(http.StatusOK, nil)
 }
