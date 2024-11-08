@@ -337,6 +337,8 @@ export const monitorRouter = createTRPCRouter({
         .returning()
         .get();
 
+      console.log({ currentMonitor });
+
       const currentMonitorNotifications = await opts.ctx.db
         .select()
         .from(notificationsToMonitors)

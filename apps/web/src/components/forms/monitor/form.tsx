@@ -111,6 +111,7 @@ export function MonitorForm({
 
   const handleDataUpdateOrInsertion = async (props: InsertMonitor) => {
     if (defaultValues) {
+      console.log(props);
       await api.monitor.update.mutate(props);
     } else {
       await api.monitor.create.mutate(props);
