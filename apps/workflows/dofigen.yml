@@ -1,0 +1,51 @@
+ignore:
+  - node_modules
+  - /apps/docs
+  - /apps/screenshot-service
+  - /apps/server
+  - /apps/web
+  - /packages/analytics
+  - /packages/assertions
+  - /packages/api
+  - /packages/error
+  - /packages/notifications
+  - /packages/tinybird
+  - /packages/tracker
+  - /packages/upstash
+builders:
+  install:
+    fromImage: oven/bun
+    workdir: /app/
+    # Copy project
+    bind:
+      - package.json
+      - apps/workflows/package.json
+      - packages/db/package.json
+      - packages/emails/package.json
+      - packages/utils/package.json
+      - packages/tsconfig/package.json
+    # Install dependencies
+    run: bun install --production --ignore-scripts --frozen-lockfile --verbose
+    cache:
+      - /root/.bun/install/cache
+  build:
+    fromImage: oven/bun
+    workdir: /app/apps/workflows
+    copy:
+      - . /app/
+      - fromBuilder: install
+        source: /app/node_modules
+        target: /app/node_modules
+      #  Should set env to production here
+    # Compile the TypeScript application
+    env:
+      NODE_ENV: production
+    run: bun build --compile --sourcemap src/index.ts --outfile=app
+fromImage: debian:bullseye-slim
+copy:
+  - fromBuilder: build
+    source: /app/apps/workflows/app
+    target: /bin/
+    chmod: "555"
+expose: 3000
+entrypoint: /bin/app
