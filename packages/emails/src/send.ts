@@ -26,7 +26,6 @@ export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
   await resend.batch.send(emails);
 };
 
-
 // TODO: delete in favor of sendBatchEmailHtml
 export const sendEmailHtml = async (emails: EmailHtml[]) => {
   await fetch("https://api.resend.com/emails/batch", {
