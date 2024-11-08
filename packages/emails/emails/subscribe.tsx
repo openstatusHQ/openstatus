@@ -1,6 +1,8 @@
+/** @jsxImportSource react */
+
 import { Body, Head, Html, Link, Preview } from "@react-email/components";
 
-const SubscribeEmail = ({
+export const SubscribeEmail = ({
   token,
   page,
   domain,
@@ -36,5 +38,3 @@ const SubscribeEmail = ({
     </Html>
   );
 };
-
-export default SubscribeEmail;

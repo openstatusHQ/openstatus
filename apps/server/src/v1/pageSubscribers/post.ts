@@ -4,7 +4,7 @@ import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
-import { sendEmail } from "@openstatus/emails/emails/send";
+import { sendEmail } from "@openstatus/emails/src/send";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { pageSubscribersApi } from "./index";
@@ -42,8 +42,15 @@ const postRouteSubscriber = createRoute({
 export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
   return api.openapi(postRouteSubscriber, async (c) => {
     const workspaceId = c.get("workspaceId");
+    const limits = c.get("limits");
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
+
+    if (!limits.notifications) {
+      throw new HTTPException(403, {
+        message: "Upgrade for status page subscribers",
+      });
+    }
 
     const _page = await db
       .select()

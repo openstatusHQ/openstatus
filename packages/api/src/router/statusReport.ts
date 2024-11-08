@@ -16,7 +16,7 @@ import {
   statusReportUpdate,
   workspace,
 } from "@openstatus/db/src/schema";
-import { sendBatchEmailHtml } from "@openstatus/emails/emails/send";
+import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 

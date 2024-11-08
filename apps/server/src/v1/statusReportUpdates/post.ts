@@ -47,8 +47,8 @@ export function registerPostStatusReportUpdate(
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
     const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
     const input = c.req.valid("json");
+    const limits = c.get("limits");
 
     const _statusReport = await db
       .select()
@@ -80,7 +80,7 @@ export function registerPostStatusReportUpdate(
 
     // send email
 
-    if (workspacePlan.limits.notifications && _statusReport.pageId) {
+    if (limits.notifications && _statusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)
@@ -98,18 +98,15 @@ export function registerPostStatusReportUpdate(
         .where(eq(page.id, _statusReport.pageId))
         .get();
       if (pageInfo) {
-        const subscribersEmails = subscribers.map(
-          (subscriber) => subscriber.email,
-        );
-
-        // TODO: verify if we leak any email data here
-        await sendEmailHtml({
-          to: subscribersEmails,
+        const subscribersEmails = subscribers.map((subscriber) => ({
+          to: subscriber.email,
           subject: `New status update for ${pageInfo.title}`,
           html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-          `,
+            `,
           from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
-        });
+        }));
+
+        await sendEmailHtml(subscribersEmails);
       }
     }
 

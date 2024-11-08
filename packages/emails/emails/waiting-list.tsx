@@ -1,6 +1,8 @@
+/** @jsxImportSource react */
+
 import { Body, Head, Html, Link, Preview } from "@react-email/components";
 
-const WaitingList = () => {
+export const WaitingList = () => {
   return (
     <Html>
       <Head>
@@ -29,5 +31,3 @@ const WaitingList = () => {
     </Html>
   );
 };
-
-export default WaitingList;

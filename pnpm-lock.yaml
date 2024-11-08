@@ -54,7 +54,7 @@ importers:
         version: 2.6.2
       drizzle-orm:
         specifier: 0.35.3
-        version: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1)
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -124,7 +124,7 @@ importers:
         version: link:../../packages/utils
       '@scalar/hono-api-reference':
         specifier: 0.5.131
-        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+        version: 0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       '@t3-oss/env-core':
         specifier: 0.7.1
         version: 0.7.1(typescript@5.5.2)(zod@3.23.8)
@@ -452,6 +452,34 @@ importers:
         specifier: 10.1.2
         version: 10.1.2
 
+  apps/workflows:
+    dependencies:
+      '@google-cloud/tasks':
+        specifier: 4.0.1
+        version: 4.0.1(encoding@0.1.13)
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@openstatus/emails':
+        specifier: workspace:*
+        version: link:../../packages/emails
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      hono:
+        specifier: 4.5.3
+        version: 4.5.3
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../packages/tsconfig
+      '@types/bun':
+        specifier: latest
+        version: 1.1.13
+
   packages/analytics:
     dependencies:
       '@jitsu/js':
@@ -561,10 +589,10 @@ importers:
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
       drizzle-orm:
         specifier: 0.35.3
-        version: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+        version: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1))(zod@3.23.8)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -614,6 +642,9 @@ importers:
       '@react-email/html':
         specifier: 0.0.4
         version: 0.0.4
+      '@react-email/render':
+        specifier: 0.0.9
+        version: 0.0.9
       '@react-email/tailwind':
         specifier: 0.0.9
         version: 0.0.9(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
@@ -706,7 +737,7 @@ importers:
         version: link:../../tinybird
       '@react-email/components':
         specifier: 0.0.11
-        version: 0.0.11(@types/react@18.3.3)(react@18.2.0)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
+        version: 0.0.11(@types/react@18.3.3)(react@18.3.1)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
       '@react-email/render':
         specifier: 0.0.9
         version: 0.0.9
@@ -715,7 +746,7 @@ importers:
         version: 0.7.0(typescript@5.5.2)(zod@3.23.8)
       resend:
         specifier: 4.0.0
-        version: 4.0.0(react-dom@18.3.1(react@18.2.0))(react@18.2.0)
+        version: 4.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -734,7 +765,7 @@ importers:
         version: 18.3.0
       next:
         specifier: 14.2.15
-        version: 14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.2.0))(react@18.2.0)
+        version: 14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       typescript:
         specifier: 5.5.2
         version: 5.5.2
@@ -4870,6 +4901,9 @@ packages:
   '@types/body-parser@1.19.5':
     resolution: {integrity: sha512-fB3Zu92ucau0iQ0JMCFQE7b/dv8Ot07NI3KaZIkIUNXq82k4eBAqUaneXfleGY9JWskeS9y+u0nXMyspcuQrCg==}
 
+  '@types/bun@1.1.13':
+    resolution: {integrity: sha512-KmQxSBgVWCl6RSuerlLGZlIWfdxkKqat0nxN61+qu4y1KDn0Ll3j7v1Pl8GnaL3a/U6GGWVTJh75ap62kR1E8Q==}
+
   '@types/caseless@0.12.4':
     resolution: {integrity: sha512-2in/lrHRNmDvHPgyormtEralhPcN3An1gLjJzj2Bw145VBxkQ75JEXW6CTdMAwShiHQcYsl2d10IjQSdJSJz4g==}
 
@@ -5485,8 +5519,8 @@ packages:
   bun-types@1.0.8:
     resolution: {integrity: sha512-2dNB+dBwAcFW7RSd4y5vKycRjouKVklSwPk4EjBKWvcMYUBOqZGGNzV7+b2tfKBG3BeRXnozbnegVKR1azuATg==}
 
-  bun-types@1.1.8:
-    resolution: {integrity: sha512-dwhfuUKSGK8hm5Llcvb5+ejRh+4mIt8ibObJVKhZBsi0ScpXmt+AlaS1eDW6uRXCHj084Qt0kIqAJ08/7ZGC9Q==}
+  bun-types@1.1.34:
+    resolution: {integrity: sha512-br5QygTEL/TwB4uQOb96Ky22j4Gq2WxWH/8Oqv20fk5HagwKXo/akB+LiYgSfzexCt6kkcUaVm+bKiPl71xPvw==}
 
   bundle-require@4.0.2:
     resolution: {integrity: sha512-jwzPOChofl67PSTW2SGubV9HBQAhhR2i6nskiOThauo9dzwDUgOWQScFVaJkjEfYX+UXiD+LEx8EblQMc2wIag==}
@@ -11956,6 +11990,10 @@ snapshots:
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
 
+  '@headlessui/tailwindcss@0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))':
+    dependencies:
+      tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
+
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))':
     dependencies:
       tailwindcss: 3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2))
@@ -13321,10 +13359,6 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.23.2
 
-  '@react-email/body@0.0.4(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/body@0.0.4(react@18.3.1)':
     dependencies:
       react: 18.3.1
@@ -13333,45 +13367,13 @@ snapshots:
     dependencies:
       react: 18.2.0
 
-  '@react-email/button@0.0.11(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/button@0.0.11(react@18.3.1)':
     dependencies:
       react: 18.3.1
 
-  '@react-email/column@0.0.8(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/column@0.0.8(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@react-email/components@0.0.11(@types/react@18.3.3)(react@18.2.0)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))':
-    dependencies:
-      '@react-email/body': 0.0.4(react@18.2.0)
-      '@react-email/button': 0.0.11(react@18.2.0)
-      '@react-email/column': 0.0.8(react@18.2.0)
-      '@react-email/container': 0.0.10(react@18.2.0)
-      '@react-email/font': 0.0.4(react@18.2.0)
-      '@react-email/head': 0.0.6(react@18.2.0)
-      '@react-email/heading': 0.0.9(@types/react@18.3.3)
-      '@react-email/hr': 0.0.6(react@18.2.0)
-      '@react-email/html': 0.0.6(react@18.2.0)
-      '@react-email/img': 0.0.6(react@18.2.0)
-      '@react-email/link': 0.0.6(react@18.2.0)
-      '@react-email/preview': 0.0.7(react@18.2.0)
-      '@react-email/render': 0.0.9
-      '@react-email/row': 0.0.6(react@18.2.0)
-      '@react-email/section': 0.0.10(react@18.2.0)
-      '@react-email/tailwind': 0.0.12(react@18.2.0)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
-      '@react-email/text': 0.0.6(react@18.2.0)
-      react: 18.2.0
-    transitivePeerDependencies:
-      - '@types/react'
-      - ts-node
 
   '@react-email/components@0.0.11(@types/react@18.3.3)(react@18.3.1)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))':
     dependencies:
@@ -13397,27 +13399,15 @@ snapshots:
       - '@types/react'
       - ts-node
 
-  '@react-email/container@0.0.10(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/container@0.0.10(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@react-email/font@0.0.4(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
 
   '@react-email/font@0.0.4(react@18.3.1)':
     dependencies:
       react: 18.3.1
 
   '@react-email/head@0.0.5':
-    dependencies:
-      react: 18.2.0
-
-  '@react-email/head@0.0.6(react@18.2.0)':
     dependencies:
       react: 18.2.0
 
@@ -13432,43 +13422,23 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@react-email/hr@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/hr@0.0.6(react@18.3.1)':
     dependencies:
       react: 18.3.1
 
   '@react-email/html@0.0.4': {}
 
-  '@react-email/html@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/html@0.0.6(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@react-email/img@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
 
   '@react-email/img@0.0.6(react@18.3.1)':
     dependencies:
       react: 18.3.1
 
-  '@react-email/link@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/link@0.0.6(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@react-email/preview@0.0.7(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
 
   '@react-email/preview@0.0.7(react@18.3.1)':
     dependencies:
@@ -13480,14 +13450,6 @@ snapshots:
       pretty: 2.0.0
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-
-  '@react-email/render@0.0.17(react-dom@18.3.1(react@18.2.0))(react@18.2.0)':
-    dependencies:
-      html-to-text: 9.0.5
-      js-beautify: 1.15.1
-      react: 18.2.0
-      react-dom: 18.3.1(react@18.2.0)
-      react-promise-suspense: 0.3.4
 
   '@react-email/render@0.0.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -13504,29 +13466,13 @@ snapshots:
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
 
-  '@react-email/row@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/row@0.0.6(react@18.3.1)':
     dependencies:
       react: 18.3.1
 
-  '@react-email/section@0.0.10(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
-
   '@react-email/section@0.0.10(react@18.3.1)':
     dependencies:
       react: 18.3.1
-
-  '@react-email/tailwind@0.0.12(react@18.2.0)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))':
-    dependencies:
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      tw-to-css: 0.0.12(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
-    transitivePeerDependencies:
-      - ts-node
 
   '@react-email/tailwind@0.0.12(react@18.3.1)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))':
     dependencies:
@@ -13544,10 +13490,6 @@ snapshots:
       tw-to-css: 0.0.11(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2))
     transitivePeerDependencies:
       - ts-node
-
-  '@react-email/text@0.0.6(react@18.2.0)':
-    dependencies:
-      react: 18.2.0
 
   '@react-email/text@0.0.6(react@18.3.1)':
     dependencies:
@@ -13578,9 +13520,9 @@ snapshots:
     optionalDependencies:
       rollup: 2.78.0
 
-  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-client@2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))
+      '@headlessui/tailwindcss': 0.2.0(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/draggable': 0.1.4(typescript@5.5.2)
@@ -13616,11 +13558,11 @@ snapshots:
       - typescript
       - vitest
 
-  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/api-reference@1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
       '@floating-ui/vue': 1.1.1(vue@3.4.31(typescript@5.5.2))
       '@headlessui/vue': 1.7.22(vue@3.4.31(typescript@5.5.2))
-      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-client': 2.0.45(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       '@scalar/components': 0.12.28(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(typescript@5.5.2)
       '@scalar/oas-utils': 0.2.26(typescript@5.5.2)
       '@scalar/openapi-parser': 0.7.2
@@ -13705,9 +13647,9 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)':
+  '@scalar/hono-api-reference@0.5.131(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)':
     dependencies:
-      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.14.8)(typescript@5.5.2)))(typescript@5.5.2)
+      '@scalar/api-reference': 1.24.70(postcss@8.4.38)(storybook@8.2.1(@babel/preset-env@7.24.8(@babel/core@7.24.8))(bufferutil@4.0.8)(utf-8-validate@6.0.4))(tailwindcss@3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.5.2)))(typescript@5.5.2)
       hono: 4.5.3
     transitivePeerDependencies:
       - '@jest/globals'
@@ -14579,6 +14521,10 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/node': 20.14.8
 
+  '@types/bun@1.1.13':
+    dependencies:
+      bun-types: 1.1.34
+
   '@types/caseless@0.12.4': {}
 
   '@types/connect@3.4.38':
@@ -14694,7 +14640,6 @@ snapshots:
   '@types/node@20.12.12':
     dependencies:
       undici-types: 5.26.5
-    optional: true
 
   '@types/node@20.14.8':
     dependencies:
@@ -15271,11 +15216,10 @@ snapshots:
 
   bun-types@1.0.8: {}
 
-  bun-types@1.1.8:
+  bun-types@1.1.34:
     dependencies:
       '@types/node': 20.12.12
       '@types/ws': 8.5.10
-    optional: true
 
   bundle-require@4.0.2(esbuild@0.18.20):
     dependencies:
@@ -15796,7 +15740,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1):
     dependencies:
       '@libsql/client-wasm': 0.14.0
     optionalDependencies:
@@ -15805,10 +15749,10 @@ snapshots:
       '@opentelemetry/api': 1.8.0
       '@types/react': 18.3.3
       better-sqlite3: 11.4.0
-      bun-types: 1.1.8
+      bun-types: 1.1.34
       react: 18.3.1
 
-  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1):
+  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.4))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1):
     dependencies:
       '@libsql/client-wasm': 0.14.0
     optionalDependencies:
@@ -15817,12 +15761,12 @@ snapshots:
       '@opentelemetry/api': 1.8.0
       '@types/react': 18.3.3
       better-sqlite3: 11.4.0
-      bun-types: 1.1.8
+      bun-types: 1.1.34
       react: 18.3.1
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.8)(react@18.3.1)
+      drizzle-orm: 0.35.3(@cloudflare/workers-types@4.20240512.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.8.0)(@types/react@18.3.3)(better-sqlite3@11.4.0)(bun-types@1.1.34)(react@18.3.1)
       zod: 3.23.8
 
   duplexify@4.1.2:
@@ -18290,32 +18234,6 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.2.0))(react@18.2.0):
-    dependencies:
-      '@next/env': 14.2.15
-      '@swc/helpers': 0.5.5
-      busboy: 1.6.0
-      caniuse-lite: 1.0.30001641
-      graceful-fs: 4.2.11
-      postcss: 8.4.31
-      react: 18.2.0
-      react-dom: 18.3.1(react@18.2.0)
-      styled-jsx: 5.1.1(react@18.2.0)
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 14.2.15
-      '@next/swc-darwin-x64': 14.2.15
-      '@next/swc-linux-arm64-gnu': 14.2.15
-      '@next/swc-linux-arm64-musl': 14.2.15
-      '@next/swc-linux-x64-gnu': 14.2.15
-      '@next/swc-linux-x64-musl': 14.2.15
-      '@next/swc-win32-arm64-msvc': 14.2.15
-      '@next/swc-win32-ia32-msvc': 14.2.15
-      '@next/swc-win32-x64-msvc': 14.2.15
-      '@opentelemetry/api': 1.8.0
-    transitivePeerDependencies:
-      - '@babel/core'
-      - babel-plugin-macros
-
   next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@next/env': 14.2.15
@@ -18996,12 +18914,6 @@ snapshots:
       react: 18.3.1
       scheduler: 0.23.2
 
-  react-dom@18.3.1(react@18.2.0):
-    dependencies:
-      loose-envify: 1.4.0
-      react: 18.2.0
-      scheduler: 0.23.2
-
   react-dom@18.3.1(react@18.3.1):
     dependencies:
       loose-envify: 1.4.0
@@ -19427,13 +19339,6 @@ snapshots:
 
   require-from-string@2.0.2: {}
 
-  resend@4.0.0(react-dom@18.3.1(react@18.2.0))(react@18.2.0):
-    dependencies:
-      '@react-email/render': 0.0.17(react-dom@18.3.1(react@18.2.0))(react@18.2.0)
-    transitivePeerDependencies:
-      - react
-      - react-dom
-
   resend@4.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@react-email/render': 0.0.17(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -19830,11 +19735,6 @@ snapshots:
   style-to-object@1.0.8:
     dependencies:
       inline-style-parser: 0.2.4
-
-  styled-jsx@5.1.1(react@18.2.0):
-    dependencies:
-      client-only: 0.0.1
-      react: 18.2.0
 
   styled-jsx@5.1.1(react@18.3.1):
     dependencies:

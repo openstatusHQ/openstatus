@@ -1,0 +1,18 @@
+{
+  "name": "workflows",
+  "scripts": {
+    "dev": "NODE_ENV=development bun run --hot src/index.ts"
+  },
+  "dependencies": {
+    "@google-cloud/tasks": "4.0.1",
+    "@openstatus/db": "workspace:*",
+    "@openstatus/emails": "workspace:*",
+    "@openstatus/utils": "workspace:*",
+    "hono": "4.5.3",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/bun": "latest"
+  }
+}
