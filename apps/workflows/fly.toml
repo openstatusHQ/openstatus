@@ -1,0 +1,42 @@
+# fly.toml app configuration file generated for openstatus-workflows on 2024-11-09T11:20:33+01:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'openstatus-workflows'
+primary_region = 'ams'
+
+[build]
+  dockerfile = "./Dockerfile"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+[http_service.concurrency]
+    type = "requests"
+    hard_limit = 1000
+    soft_limit = 500
+
+[deploy]
+  strategy = "bluegreen"
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "15s"
+  method = "GET"
+  timeout = "5s"
+  path = "/ping"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
