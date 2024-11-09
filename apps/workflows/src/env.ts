@@ -4,7 +4,7 @@ export const env = () =>
   z
     .object({
       NODE_ENV: z.string().default("development"),
-      PORT: z.number().default(3000),
+      PORT: z.coerce.number().default(3000),
       GCP_PROJECT_ID: z.string().default(""),
       GCP_CLIENT_EMAIL: z.string().default(""),
       GCP_PRIVATE_KEY: z.string().default(""),
