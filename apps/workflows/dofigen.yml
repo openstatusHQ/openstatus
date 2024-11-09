@@ -5,7 +5,6 @@ ignore:
   - /apps/server
   - /apps/web
   - /packages/analytics
-  - /packages/assertions
   - /packages/api
   - /packages/error
   - /packages/notifications
@@ -20,6 +19,7 @@ builders:
     bind:
       - package.json
       - apps/workflows/package.json
+      - packages/assertions/package.json
       - packages/db/package.json
       - packages/emails/package.json
       - packages/utils/package.json

@@ -6,7 +6,6 @@ effective: |
   - /apps/server
   - /apps/web
   - /packages/analytics
-  - /packages/assertions
   - /packages/api
   - /packages/error
   - /packages/notifications
@@ -28,6 +27,8 @@ effective: |
         source: package.json
       - target: apps/workflows/package.json
         source: apps/workflows/package.json
+      - target: packages/assertions/package.json
+        source: packages/assertions/package.json
       - target: packages/db/package.json
         source: packages/db/package.json
       - target: packages/emails/package.json
@@ -78,7 +79,7 @@ images:
           digest: sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e
 resources:
   dofigen.yml:
-    hash: 822431b25b0cf3d5a1b3c1140e6337ce6fc768715b64e889d436178f8277b280
+    hash: d232b15ff842b392611e64b97bf65d642ca573052072490c2f54ea2f4dc4481e
     content: |
       ignore:
         - node_modules
@@ -87,7 +88,6 @@ resources:
         - /apps/server
         - /apps/web
         - /packages/analytics
-        - /packages/assertions
         - /packages/api
         - /packages/error
         - /packages/notifications
@@ -102,6 +102,7 @@ resources:
           bind:
             - package.json
             - apps/workflows/package.json
+            - packages/assertions/package.json
             - packages/db/package.json
             - packages/emails/package.json
             - packages/utils/package.json

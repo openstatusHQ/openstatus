@@ -8,6 +8,7 @@ WORKDIR /app/
 RUN \
     --mount=type=bind,target=package.json,source=package.json \
     --mount=type=bind,target=apps/workflows/package.json,source=apps/workflows/package.json \
+    --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \

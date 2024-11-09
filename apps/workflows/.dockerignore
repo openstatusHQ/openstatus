@@ -7,7 +7,6 @@ node_modules
 /apps/server
 /apps/web
 /packages/analytics
-/packages/assertions
 /packages/api
 /packages/error
 /packages/notifications
