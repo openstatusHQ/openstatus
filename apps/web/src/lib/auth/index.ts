@@ -36,6 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             photoUrl: params.profile.picture,
             // keep the name in sync
             name: `${params.profile.given_name} ${params.profile.family_name}`,
+            updatedAt: new Date(),
           })
           .where(eq(user.id, Number(params.user.id)))
           .run();
@@ -49,7 +50,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .set({
             name: params.profile.name,
             photoUrl: String(params.profile.avatar_url),
+            updatedAt: new Date(),
           })
+          .where(eq(user.id, Number(params.user.id)))
+          .run();
+      }
+
+      // REMINDER: only used in dev mode
+      if (params.account?.provider === "resend") {
+        await db
+          .update(user)
+          .set({ updatedAt: new Date() })
           .where(eq(user.id, Number(params.user.id)))
           .run();
       }
