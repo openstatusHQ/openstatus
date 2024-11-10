@@ -60,6 +60,6 @@ export default {
             },
         },
     },
-},
-plugins: [starlightPlugin()],
+
+    plugins: [starlightPlugin()],
 };
