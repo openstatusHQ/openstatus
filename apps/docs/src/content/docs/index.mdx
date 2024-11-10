@@ -1,36 +1,37 @@
 ---
-title: Welcome to Starlight
+title: OpenStatus Documentation
 description: Get started building your docs site with Starlight.
-template: splash
+template: doc
+topic: docs
+next: false
 hero:
   tagline: Congrats on setting up a new Starlight project!
   image:
     file: ../../assets/houston.webp
   actions:
-    - text: Example Guide
+    - text: Start Monitoring
       link: /guides/introduction/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
-      icon: external
-      variant: minimal
+	  variant: primary
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
 
-<CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+<CardGrid >
+	<Card title="Synthetic Monitoring" icon="open-book">
+		Learn how to create your first monitor with OpenStatus.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Guides " icon="rocket">
+		Read our guides to discover what you can do with OpenStatus
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
+	<Card title="CLI" icon="seti:shell">
+		Learn more about our [CLI](/cli) to manage and run your synthetic check.
 	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+		<Card title="API Reference" icon="puzzle">
+		Use our API to build amazing things on top of OpenStatus
+	</Card>
+	<Card title="Open Source" icon="seti:github">
+		Checkout our [GitHub repository](https://www.github.com/openstatushq/openstatus) to contribute or report issues.
 	</Card>
 </CardGrid>
