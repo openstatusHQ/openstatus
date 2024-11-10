@@ -80,7 +80,7 @@ export function registerPostStatusReportUpdate(
 
     // send email
 
-    if (limits.notifications && _statusReport.pageId) {
+    if (limits["status-subscribers"] && _statusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)

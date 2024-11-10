@@ -14,5 +14,6 @@ export const env = () =>
       DATABASE_URL: z.string().default("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().default(""),
       RESEND_API_KEY: z.string().default(""),
+      TINY_BIRD_API_KEY: z.string().default(""),
     })
     .parse(process.env);

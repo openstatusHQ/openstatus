@@ -46,7 +46,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
 
-    if (!limits.notifications) {
+    if (!limits["status-subscribers"]) {
       throw new HTTPException(403, {
         message: "Upgrade for status page subscribers",
       });
