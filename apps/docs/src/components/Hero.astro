@@ -1,0 +1,46 @@
+---
+import type { Props } from "@astrojs/starlight/props";
+
+const { data } = Astro.props.entry;
+const { title = data.title, tagline, image, actions = [] } = data.hero || {};
+import { LinkButton } from "@astrojs/starlight/components";
+---
+
+<div
+  class="my-10 flex w-full flex-col justify-center gap-1 px-3 py-4 text-center md:my-20 md:p-6"
+>
+  <div class="flex flex-col gap-6">
+    <h1
+      class="font-cal text-4xl  md:text-6xl bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-transparent"
+      data-page-title
+      set:html={title}
+    />
+    {
+      tagline && (
+        <p
+          class="mx-auto max-w-md text-lg text-muted-foreground md:max-w-xl md:text-xl"
+          set:html={tagline}
+        />
+      )
+    }
+  </div>
+  <div class="my-4 grid gap-2 sm:grid-cols-2">
+
+    <div class="text-center sm:block sm:text-left">
+		{
+			actions.length > 0 && (
+				<div class="sl-flex actions">
+					{actions.map(
+						({ attrs: { class: className, ...attrs } = {}, icon, link: href, text, variant }) => (
+							<LinkButton {href} {variant} icon={icon?.name} class:list={[className]} {...attrs}>
+								{text}
+								{icon?.html && <Fragment set:html={icon.html} />}
+							</LinkButton>
+						)
+					)}
+				</div>
+			)
+		}
+    </div>
+  </div>
+</div>
