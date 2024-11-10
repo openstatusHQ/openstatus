@@ -80,14 +80,17 @@ export default defineConfig({
 								},
 								{
 									label: "Status Page",
-									items: [],
+									autogenerate: { directory: 'status-page' },
 								},
-								{ label: "Incidents", items: [] },
+								{ label: "Incidents", autogenerate: { directory: 'incident' } },
 								{
 									label: "Alerting", items: [
 										{ label: "Overview", slug: "alerting/overview" },
 										{ label: "Notification Channels", autogenerate: { directory: 'alerting/providers' } },
 									]
+								},
+								{
+									label: "Tools", autogenerate: { directory: 'tools' }
 								},
 								{
 									label: "Support", items: [{

@@ -3,6 +3,9 @@ title: Public Status Widget
 description: "How to add a public status widget to your website."
 ---
 
+import { Aside } from '@astrojs/starlight/components';
+
+
 We have added a public endpoint where you can access the status of your status
 page. To access it, you only need the unique `:slug` you have chosen for your
 page.
@@ -11,11 +14,11 @@ page.
 curl https://api.openstatus.dev/public/status/:slug
 ```
 
-<Callout type="info">
+<Aside>
   We have released an `@openstatus/react` npm package that allows you to easily
   integrate the pre-typed status into your React projects or use the default
   widget. Read more [here](/packages/react).
-</Callout>
+</Aside>
 
 The response is a JSON object with the following structure:
 
