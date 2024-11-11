@@ -2,7 +2,7 @@ import { db, eq } from "@openstatus/db";
 import { type WorkspacePlan, workspace } from "@openstatus/db/src/schema";
 import { env } from "../env";
 
-import readline from "readline";
+import readline from "node:readline";
 
 // Function to prompt user for confirmation
 const askConfirmation = async (question: string): Promise<boolean> => {
@@ -58,7 +58,7 @@ async function getWorkspaceIdsByPlan(plan: WorkspacePlan) {
 async function deleteLogs(
   timestamp: number,
   workspaceIds: number[],
-  reverse = false,
+  reverse = false
 ) {
   const response = await fetch(
     "https://api.tinybird.co/v0/datasources/ping_response__v8/delete",
@@ -71,7 +71,7 @@ async function deleteLogs(
       body: new URLSearchParams({
         delete_condition: `timestamp <= ${timestamp} AND ${reverse ? "NOT" : ""} arrayExists(x -> x IN (${workspaceIds.join(", ")}), [workspaceId])`,
       }),
-    },
+    }
   );
   const json = await response.json();
   console.log(json);
@@ -84,7 +84,7 @@ async function main() {
   console.log(`DATABASE_URL: ${env().DATABASE_URL}`);
 
   const isConfirmed = await askConfirmation(
-    "Are you sure you want to run this script?",
+    "Are you sure you want to run this script?"
   );
 
   if (!isConfirmed) {
