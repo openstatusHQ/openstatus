@@ -116,6 +116,8 @@
 	--sl-color-gray-5: #353841;
 	--sl-color-gray-6: #24272f;
 	--sl-color-black: #17181c;
+
+
 }
 /* Light mode colors. */
 :root[data-theme='light'] {

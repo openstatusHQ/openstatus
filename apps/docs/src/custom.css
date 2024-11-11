@@ -1,0 +1,6 @@
+.card .icon {
+    border: 1px solid var(--sl-color-white);
+    background-color: var(--accent-foreground);
+    padding: 0.2em;
+    border-radius: 0.25rem;
+  }
