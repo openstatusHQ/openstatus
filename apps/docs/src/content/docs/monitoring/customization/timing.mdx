@@ -2,3 +2,7 @@
 title: Timing
 description: "How to monitor your HTTP services with OpenStatus.dev"
 ---
+
+By default, OpenStatus will timeout after 45sec but you can set a custom timeout.
+
+You can also set a custom degraded threshold. If the response time is higher than the degraded threshold, the status will be set to `Degraded`.

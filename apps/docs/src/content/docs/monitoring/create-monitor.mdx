@@ -3,13 +3,12 @@ title: How to create a monitor?
 description: "How to create your first monitor with OpenStatus.dev"
 ---
 
-
+import { Image } from 'astro:assets';
 import { Aside } from '@astrojs/starlight/components';
+import monitorDetail from '../../../assets/monitor/monitor-detail.png';
+import { ShowcaseYouTube } from 'starlight-showcases'
 
-
-
-<Aside>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Aside>
-
+Go to the **Monitors** page and click on the **Create Monitor** button.
 
 ## Configure your monitor 🛠
 
@@ -21,8 +20,8 @@ Your endpoint check requires:
 We will store the **response time**, the **status code**, the **headers**
 returned, and the **timing metrics** of your endpoint.
 
-  <img
-    src="/images/monitor/monitor-detail.png"
+  <Image
+    src={monitorDetail}
     alt="Charts with status code and response time"
   />
 
@@ -45,70 +44,20 @@ Add custom key-value **HTTP Headers** to your request.
 If you select the `POST` method, you can add a custom **HTTP Body** to your
 request.
 
-### Advanced Configuration ⚙️
 
-You can pause your monitor with the **active** switch button.
+### Limitations ⚠️
 
-#### Frequency ⏱
+<Aside>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Aside>
 
-Define the **frequency** of your checks. You can choose between: `30s`, `1m`,
-`5m`, `10m` (default), `30min` or `1h`.
-
-#### Regions 🌍
-
-By default, **all regions** are enabled. You can disable some regions if you
-want to. Our regions are:
-
-- `ams` - Amsterdam, Netherlands - 🇳🇱
-- `iad` - Ashburn, Virginia, USA - 🇺🇸
-- `jnb` - Johannesburg, South Africa - 🇿🇦
-- `hkg` - Hong Kong, Honkg Kong - 🇭🇰
-- `gru` - Sao Paulo, Brazil - 🇧🇷
-- `syd` - Sydney, Australia - 🇦🇺
-
-#### Description 📝
-
-The **description** is optional. If defined, an `Info` tooltip will be added to
-your monitor name.
-
-#### Timeout ⏳
-
-You can define a **timeout** for your request. The default value is `30s`.
-
-#### Assertions 🧪
-
-You can add **assertions** to your monitor. An assertion is a condition that
-needs to be met for the monitor to be considered successful.
-
-You can add multiple assertions to your monitor.
-
-We currently support the following assertions on the following fields:
-
-- **Status Code**
-- **Response Body**
-
-
-## Public Monitor 🌐
-
-You can make your monitor public by checking **Allow public monitor**.
-
-  <img
-    src="/images/monitor/setting-public-monitor.png"
-    alt="Public monitor setting"
-  />
-
-
-
-A public monitor is accessible by anyone with the monitor URL.
-e.g. https://status.openstatus.dev/monitors/1
-
-
-<img
-  src="/images/monitor/public-monitor.png"
-  alt="Public monitor"
-/>
-If the monitor is attached to a **status page**, the monitor will be displayed on the status page in the **Monitors** tab.
 
 ## Video Tutorial 📺
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/nYti3DjHoWY?si=RBGFHzoHFmwphRft" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<ShowcaseYouTube
+  entries={[
+    {
+      href: 'https://www.youtube.com/embed/nYti3DjHoWY?si=RBGFHzoHFmwphRf',
+      title: 'Create your first monitor',
+    },
+
+  ]}
+/>
