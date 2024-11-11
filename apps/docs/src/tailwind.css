@@ -103,43 +103,35 @@
     }
   }
 
+/* https://ui.shadcn.com/colors */
+
 /* Dark mode colors. */
 :root {
-	--sl-color-accent-low: #0F172A;
-	--sl-color-accent: #F8FAFC;
-	--sl-color-accent-high: #F8FAFC;
-	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #eceef2;
-	--sl-color-gray-2: #c6c8ce;
-	--sl-color-gray-3: #a0a4ae;
-	--sl-color-gray-4: #545861;
-	--sl-color-gray-5: #353841;
-	--sl-color-gray-6: #24272f;
-	--sl-color-black: #17181c;
-
-
+	--sl-color-accent-low: #020817;
+	--sl-color-accent: #f8fafc;
+	--sl-color-accent-high: #f1f5f9;
+	--sl-color-white: #f8fafc;
+	--sl-color-gray-1: #f1f5f9;
+	--sl-color-gray-2: #94a3b8;
+	--sl-color-gray-3: #64748b;
+	--sl-color-gray-4: #475569;
+	--sl-color-gray-5: #1e293b;
+	--sl-color-gray-6: #0f172a;
+	--sl-color-black: #020817;
 }
+
 /* Light mode colors. */
 :root[data-theme='light'] {
-	--sl-color-accent-low: #d4d7de;
-	--sl-color-accent: #0F172A;
-	--sl-color-accent-high: #2d323d;
-	--sl-color-white: #17181c;
-	--sl-color-gray-1: #24272f;
-	--sl-color-gray-2: #353841;
-	--sl-color-gray-3: #545861;
-	--sl-color-gray-4: #888b96;
-	--sl-color-gray-5: #c0c2c7;
-	--sl-color-gray-6: #eceef2;
-	--sl-color-gray-7: #f5f6f8;
+	--sl-color-accent-low: #f8fafc;
+	--sl-color-accent: #020817;
+	--sl-color-accent-high: #0f172a;
+	--sl-color-white: #020817;
+	--sl-color-gray-1: #0f172a;
+	--sl-color-gray-2: #1e293b;
+	--sl-color-gray-3: #475569;
+	--sl-color-gray-4: #64748b;
+	--sl-color-gray-5: #94a3b8;
+	--sl-color-gray-6: #f1f5f9;
+	--sl-color-gray-7: #f8fafc;
 	--sl-color-black: #ffffff;
-}
-
-
-
-.card .icon {
-  border: 1px solid var(--sl-color-white);
-  background-color: var(--accent-foreground);
-  padding: 0.2em;
-  border-radius: 0.25rem;
 }
