@@ -11,7 +11,7 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
+    :root[data-theme='light'] {
       --background: 0 0% 100%;
       --foreground: 222.2 84% 4.9%;
 
@@ -57,7 +57,7 @@
       --status-monitoring: 210 100% 62%; /* Blue 10 */
     }
 
-    .dark {
+    :root {
       --background: 222.2 84% 4.9%;
       --foreground: 210 40% 98%;
 
@@ -133,4 +133,11 @@
 	--sl-color-black: #ffffff;
 }
 
-/* Register your custom font family and tell the browser where to find it. */
+
+
+.card .icon {
+  border: 1px solid var(--sl-color-white);
+  background-color: var(--accent-foreground);
+  padding: 0.2em;
+  border-radius: 0.25rem;
+}
