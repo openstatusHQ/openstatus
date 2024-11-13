@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const TITLE = "OpenStatus";
 export const DESCRIPTION =
-  "A better way to monitor your API and your website. Don't let downtime or a slow response time ruin your user experience. Try OpenStatus the open-source synthetic monitoring platform for free!";
+  "A better way to monitor your API and your website. Don't let downtime or a slow response time ruin your user experience. Try the open-source synthetic monitoring platform for free!";
 
 export const defaultMetadata: Metadata = {
   title: {

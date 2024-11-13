@@ -50,6 +50,7 @@ export function MarketingFooter({ className }: Props) {
           <div className="order-3 flex flex-col gap-3 text-sm">
             <p className="font-semibold text-foreground">Tools</p>
             <FooterLink href="/play/checker" label="Speed Checker" />
+            <FooterLink href="/play/curl" label="cURL Builder" />
             <FooterLink href="https://openstat.us" label="All Status Codes" />
           </div>
         </div>

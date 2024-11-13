@@ -6,6 +6,7 @@ import {
   Palette,
   PanelTop,
   Table,
+  Terminal,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -58,6 +59,12 @@ const playgrounds: CardProps[] = [
       "Get speed insights for your api, website from multiple regions. No account needed.",
     icon: Gauge,
     variant: "primary",
+  },
+  {
+    href: "/play/curl",
+    title: "cURL Builder",
+    description: "Easily generate curl commands to test your API endpoints.",
+    icon: Terminal,
   },
   {
     href: "/public/monitors/1",
