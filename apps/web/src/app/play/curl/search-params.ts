@@ -8,6 +8,7 @@ import {
 } from "nuqs/server";
 import { z } from "zod";
 
+// REMINDER: not used, but could be useful for future reference
 export const searchParamsParsers = {
   method: parseAsStringLiteral(["GET", "POST", "PUT", "PATCH", "DELETE"]),
   url: parseAsString,
@@ -20,8 +21,8 @@ export const searchParamsParsers = {
       z.object({
         key: z.string(),
         value: z.string(),
-      }).parse
-    )
+      }).parse,
+    ),
   ),
 };
 

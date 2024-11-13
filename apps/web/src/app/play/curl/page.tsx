@@ -1,20 +1,41 @@
 import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
+import {
   CardContainer,
   CardDescription,
   CardHeader,
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
-import { CurlForm } from "../checker/_components/curl-form";
-import { searchParamsCache } from "./search-params";
+import type { Metadata } from "next";
+import { CurlForm } from "./_components/curl-form";
 
-export default function CurlBuilder({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
-  const params = searchParamsCache.parse(searchParams);
+const title = "cURL Builder";
+const description =
+  "An online curl command line builder. Generate curl commands to test your API endpoints.";
 
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title,
+  description,
+  twitter: {
+    ...twitterMetadata,
+    title,
+    description,
+    images: [`/api/og?title=${title}&description=${description}`],
+  },
+  openGraph: {
+    ...ogMetadata,
+    title,
+    description,
+    images: [`/api/og?title=${title}&description=${description}`],
+  },
+};
+
+export default function CurlBuilder() {
   return (
     <CardContainer>
       <CardHeader>
@@ -28,13 +49,13 @@ export default function CurlBuilder({
       <div className="mx-auto grid w-full max-w-xl gap-6">
         <CurlForm
           defaultValues={{
-            method: params.method || "GET",
-            url: params.url || "",
-            body: params.body || "",
-            verbose: params.verbose || false,
-            insecure: params.insecure || false,
-            json: params.json || false,
-            headers: params.headers || [],
+            method: "GET",
+            url: "",
+            body: "",
+            verbose: false,
+            insecure: false,
+            json: false,
+            headers: [],
           }}
         />
       </div>

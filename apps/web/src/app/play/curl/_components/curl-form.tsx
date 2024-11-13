@@ -24,11 +24,9 @@ import {
   Textarea,
 } from "@openstatus/ui";
 import { X } from "lucide-react";
-import { useQueryStates } from "nuqs";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { searchParamsParsers } from "../../curl/search-params";
 
 const methods = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 
@@ -49,7 +47,6 @@ export function CurlForm({
 }: {
   defaultValues?: z.infer<typeof formSchema>;
 }) {
-  const [_, setSearchParams] = useQueryStates(searchParamsParsers);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues,
@@ -60,16 +57,12 @@ export function CurlForm({
   });
 
   const formValues = form.watch();
-  const debouncedformValues = useDebounce(formValues, 1000);
+  const debouncedformValues = useDebounce(formValues, 300);
 
   const onSubmit = useCallback((values: z.infer<typeof formSchema>) => {
     copyToClipboard(generateCurlCommand(values));
     toast("CURL copied to clipboard");
   }, []);
-
-  useEffect(() => {
-    setSearchParams(debouncedformValues);
-  }, [debouncedformValues]);
 
   return (
     <Form {...form}>
@@ -273,17 +266,18 @@ function generateCurlCommand(form: z.infer<typeof formSchema>) {
     curlCommand += ` "${url}" \\\n`;
   } else {
     // force a new line if there is no URL
-    curlCommand += ` \\\n`;
+    curlCommand += " \\\n";
   }
 
-  headers?.forEach(({ key, value }) => {
+  for (const header of headers) {
+    const { key, value } = header;
     if (key && value) {
       curlCommand += `  -H "${key}: ${value}" \\\n`;
     }
-  });
+  }
 
   if (json) {
-    curlCommand += `  -H "Content-Type: application/json" \\\n`;
+    curlCommand += '  -H "Content-Type: application/json" \\\n';
   }
 
   if (body?.trim()) {
@@ -291,11 +285,11 @@ function generateCurlCommand(form: z.infer<typeof formSchema>) {
   }
 
   if (verbose) {
-    curlCommand += `  -v \\\n`;
+    curlCommand += "  -v \\\n";
   }
 
   if (insecure) {
-    curlCommand += `  -k \\\n`;
+    curlCommand += "  -k \\\n";
   }
 
   // Remove the trailing ` \` at the end
