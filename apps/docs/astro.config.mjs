@@ -100,13 +100,14 @@ export default defineConfig({
 
                 items: [
                   { label: "Overview", slug: "status-page/status-page" },
+                  { label: "Reports", slug: "status-page/status-report" },
+                  { label: "Maintenance", slug: "status-page/maintenance" },
+                  { label: "Widget", slug: "status-page/status-widget" },
+                  { label: "Custom Domain", slug: "status-page/custom-domain" },
                   {
                     label: "Subscribers",
-                    slug: "status-page/status-page-subscribers",
+                    slug: "status-page/subscribers",
                   },
-                  { label: "Reports", slug: "status-page/status-report" },
-
-                  { label: "Widget", slug: "status-page/status-widget" },
                   {
                     label: "Customization",
                     autogenerate: { directory: "status-page/customization" },
