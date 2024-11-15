@@ -47,10 +47,24 @@ export default defineConfig({
               {
                 label: "Synthetic Monitoring",
                 items: [
-                  { label: "Overview", slug: "monitoring/intro" },
+                  { label: "Overview", slug: "monitoring/overview" },
                   {
                     label: "Create you first monitor",
                     slug: "monitoring/create-monitor",
+                  },
+                  {
+                    label: "Monitor Types",
+                    collapsed: true,
+                    items: [
+                      {
+                        label: "HTTP",
+                        slug: "monitoring/type/http",
+                      },
+                      {
+                        label: "TCP",
+                        slug: "monitoring/type/tcp",
+                      },
+                    ],
                   },
                   {
                     label: "Customizations",
@@ -65,30 +79,12 @@ export default defineConfig({
                         slug: "monitoring/customization/frequency",
                       },
                       {
-                        label: "Headers",
-                        slug: "monitoring/customization/headers",
-                      },
-                      {
                         label: "Regions",
                         slug: "monitoring/customization/regions",
                       },
                       {
                         label: "Timing",
                         slug: "monitoring/customization/timing",
-                      },
-                    ],
-                  },
-                  {
-                    label: "Monitor Types",
-                    collapsed: true,
-                    items: [
-                      {
-                        label: "HTTP Monitor",
-                        slug: "monitoring/type/http",
-                      },
-                      {
-                        label: "TCP Monitor",
-                        slug: "monitoring/type/tcp",
                       },
                     ],
                   },
@@ -99,10 +95,10 @@ export default defineConfig({
                 label: "Status Page",
 
                 items: [
-                  { label: "Overview", slug: "status-page/status-page" },
-                  { label: "Reports", slug: "status-page/status-report" },
-                  { label: "Maintenance", slug: "status-page/maintenance" },
-                  { label: "Widget", slug: "status-page/status-widget" },
+                  { label: "Overview", slug: "status-page/overview" },
+                  { label: "Reports", slug: "status-page/reports" },
+                  { label: "Maintenances", slug: "status-page/maintenances" },
+                  { label: "Widget", slug: "status-page/widget" },
                   { label: "Custom Domain", slug: "status-page/custom-domain" },
                   {
                     label: "Subscribers",

@@ -3,4 +3,26 @@ title: HTTP
 description: "How to monitor your HTTP services with OpenStatus.dev"
 ---
 
-We will send an HTTP request to your service.
+### URL
+
+Enter the URL of your service that you want to monitor. You can also add a path and query parameters to the URL.
+
+### Methods
+
+Following HTTP methods are supported:
+
+- `GET`
+- `POST`
+- `HEAD`
+
+Let us know if you need more methods to support at ping@openstatus.dev.
+
+### Headers
+
+If you need to set custom headers for your HTTP requests, you can do so by going to the `Headers` tab and adding a new header.
+
+### Body Payload
+
+When you select the `POST` method, you can add a body payload to your request. This is useful when you need to send data to your service.
+
+Payloads are often JSON or XML, but we also support plain text or binary files.
