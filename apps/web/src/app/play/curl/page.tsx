@@ -3,6 +3,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
+import { Shell } from "@/components/dashboard/shell";
 import {
   CardContainer,
   CardDescription,
@@ -10,10 +11,9 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import { BottomCTA } from "@/components/marketing/in-between-cta";
 import type { Metadata } from "next";
 import { CurlForm } from "./_components/curl-form";
-import { BottomCTA } from "@/components/marketing/in-between-cta";
-import { Shell } from "@/components/dashboard/shell";
 
 const title = "cURL Builder";
 const description =
