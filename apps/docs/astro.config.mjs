@@ -152,6 +152,17 @@ export default defineConfig({
             ],
           },
           {
+            label: "Contributing",
+            icon: "pencil",
+            link: "/contributing/getting-started",
+            items: [
+              {
+                label: "Contributing",
+                autogenerate: { directory: "contributing" },
+              },
+            ],
+          },
+          {
             label: "CLI",
             icon: "seti:shell",
             link: "/cli/introduction",
