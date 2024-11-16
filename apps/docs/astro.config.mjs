@@ -8,7 +8,7 @@ import starlightSidebarTopics from "starlight-sidebar-topics";
 export default defineConfig({
   integrations: [
     starlight({
-      title: "OpenStatus",
+      title: "OpenStatus Docs",
       favicon: "/favicon.ico",
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
