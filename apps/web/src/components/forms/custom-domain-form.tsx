@@ -6,7 +6,7 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import type * as z from "zod";
 
-import { insertPageSchema } from "@openstatus/db/src/schema";
+import { selectPageSchema } from "@openstatus/db/src/schema";
 import {
   Button,
   Form,
@@ -20,13 +20,13 @@ import {
 } from "@openstatus/ui";
 
 import { useDomainStatus } from "@/hooks/use-domain-status";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import DomainConfiguration from "../domains/domain-configuration";
 import DomainStatusIcon from "../domains/domain-status-icon";
 import { LoadingAnimation } from "../loading-animation";
 
-const customDomain = insertPageSchema.pick({
+const customDomain = selectPageSchema.pick({
   customDomain: true,
   id: true,
 });
@@ -48,12 +48,16 @@ export function CustomDomainForm({ defaultValues }: { defaultValues: Schema }) {
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
-        if (defaultValues.id) {
-          await api.page.addCustomDomain.mutate({
-            customDomain: data.customDomain,
-            pageId: defaultValues?.id,
-          });
+        if (data.customDomain.toLowerCase().includes("openstatus")) {
+          toast.error("Domain cannot contain 'openstatus'");
+          return;
         }
+
+        await api.page.addCustomDomain.mutate({
+          customDomain: data.customDomain,
+          pageId: defaultValues?.id,
+        });
+
         if (data.customDomain && !defaultValues.customDomain) {
           await api.domain.addDomainToVercel.mutate({
             domain: data.customDomain,
