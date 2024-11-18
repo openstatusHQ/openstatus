@@ -1,0 +1,41 @@
+---
+title: Getting Started
+---
+
+You can use the OpenStatus CLI to manage and run your synthetic checks. The CLI is a powerful tool that allows you to interact with OpenStatus from your terminal.
+
+## Installation
+
+You can install the OpenStatus CLI using brew.
+
+```bash
+brew tap openstatus/cli
+```
+
+<br/>
+
+```bash
+brew install openstatus
+```
+
+Then you can run the following command to verify the installation.
+
+```bash
+openstatus --help
+```
+
+You need to get an API token to use the CLI. You can get an API key by signing up on the OpenStatus website.
+
+`Settings -> API Token -> Create API token`
+
+You can set the API token using the following command.
+
+```bash
+export OPENSTATUS_API_TOKEN=your-api-token
+```
+
+or you can set the `--access-token` option in the CLI command.
+
+```bash
+openstatus [COMMAND] --access-token your-api-token
+```

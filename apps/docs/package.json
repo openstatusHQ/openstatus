@@ -11,15 +11,18 @@
   },
   "dependencies": {
     "@astrojs/check": "0.9.4",
+    "@astrojs/sitemap": "^3.2.1",
     "@astrojs/starlight": "0.28.6",
     "@astrojs/starlight-tailwind": "^2.0.3",
     "@astrojs/tailwind": "^5.1.2",
     "astro": "4.16.10",
     "sharp": "0.33.5",
-    "starlight-showcases": "^0.2.0",
-    "starlight-sidebar-topics": "^0.2.0"
+    "starlight-showcases": "0.2.0",
+    "starlight-sidebar-topics": "0.2.0",
+    "unplugin-icons": "0.20.1"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "1.2.15",
     "typescript": "5.6.3"
   }
 }
