@@ -1,0 +1,24 @@
+---
+title: Run
+---
+
+This command is used to run a list of synthetic check.
+
+You need to create file `config.openstatus.yaml` in the root of your project. The file should contain the following information.
+
+```yaml
+tests:
+  ids:
+     - monitor-id-1
+     - monitor-id-2
+```
+
+You can run the synthetic checks using the following command.
+
+```bash
+openstatus run
+```
+
+### Options
+
+- `--config` - Path to the config file. Default is `config.openstatus.yaml`.

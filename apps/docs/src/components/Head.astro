@@ -1,0 +1,12 @@
+---
+import Default from "@astrojs/starlight/components/Head.astro";
+import type { Props } from "@astrojs/starlight/props";
+---
+
+<Default {...Astro.props}><slot /></Default>
+
+
+<script is:inline defer data-domain="docs.openstatus.dev" src="https://plausible.io/js/script.js" />
+
+<!-- REMINDER: prevent unexpected font flashes for our 'OpenStatus' logo on each page load -->
+<link rel="preload" href="/fonts/CalSans-SemiBold.ttf" as="font" type="font/ttf" crossorigin>

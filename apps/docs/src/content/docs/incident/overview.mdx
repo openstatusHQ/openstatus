@@ -1,0 +1,42 @@
+---
+title: Overview
+description: "How incident are created, how to acknowledge, and resolve them🔥"
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import IncidentDetail from '../../../assets/incident/incident-detail.png';
+
+
+When we detect a problem with your service, we create an incident.
+## What is an incident 🧑‍🏫
+
+We automatically create an incident when we detect a problem with your service.
+When a monitor fails in more than 50% of the locations, we create an incident.
+We do that in order to avoid false positives.
+
+## How to acknowledge an incident
+
+Go to the incident page and click on the acknowledge button.
+
+## How to resolve an incident
+
+Go to the incident page and click on the resolve button.
+
+## Auto resolve an incident
+
+We automatically resolve an incident when the monitor is passing in more than
+50% of the locations.
+
+
+## Incident detail page
+
+On the incident page, you can  see the details of the incident, the monitor that failed, and the duration.
+We are also taking a screenshot of the monitor when the incident is created, and when it's resolved.
+
+
+  <Image
+    src={IncidentDetail}
+    alt="Incident page"
+  />
+
+<Aside>There might be a delay between the incident creation and the screenshot capture. Your endpoint could have already recovered.</Aside>

@@ -1,0 +1,63 @@
+---
+title: How to create a monitor?
+description: "How to create your first monitor with OpenStatus.dev"
+---
+
+import { Image } from 'astro:assets';
+import { Aside } from '@astrojs/starlight/components';
+import monitorDetail from '../../../assets/monitor/monitor-detail.png';
+import { ShowcaseYouTube } from 'starlight-showcases'
+
+Go to the **Monitors** page and click on the **Create Monitor** button.
+
+## Configure your monitor 🛠
+
+Your endpoint check requires:
+
+- a **name** to identify your monitor
+- the **URL** to checked
+
+We will store the **response time**, the **status code**, the **headers**
+returned, and the **timing metrics** of your endpoint.
+
+  <Image
+    src={monitorDetail}
+    alt="Charts with status code and response time"
+  />
+
+
+### HTTP Request 📤
+
+Customize the request sent to your endpoint.
+
+Choose between one of the request **HTTP Method**: `GET` (default), `POST` or
+`HEAD`.
+
+Add custom key-value **HTTP Headers** to your request.
+
+> OpenStatus automatically set the `"User-Agent": "OpenStatus/1.0"` header to
+> your request. This header is used to identify the request as a ping request
+> and can be exluded from your analytics.
+
+
+
+If you select the `POST` method, you can add a custom **HTTP Body** to your
+request.
+
+
+### Limitations ⚠️
+
+<Aside>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Aside>
+
+
+## Video Tutorial 📺
+
+<ShowcaseYouTube
+  entries={[
+    {
+      href: 'https://www.youtube.com/embed/nYti3DjHoWY?si=RBGFHzoHFmwphRf',
+      title: 'Create your first monitor',
+    },
+
+  ]}
+/>

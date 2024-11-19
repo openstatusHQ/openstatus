@@ -1,0 +1,69 @@
+---
+title: How to deploy your own checker on Koyeb
+description: Learn how to deploy our checker on Koyeb.
+sidebar:
+  label: Deploy our probe on Koyeb
+---
+import { Image } from 'astro:assets';
+
+import Koyeb1 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-1.png';
+import Koyeb2 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-2.png';
+import Koyeb3 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-3.png';
+
+
+## Introduction
+
+You need a koeyb account to deploy our checker on Koyeb. If you don't have one, you can create one [here](https://app.koyeb.com/).
+
+## Deploying the checker
+
+1. Go to the [Koyeb dashboard](https://app.koyeb.com/).
+
+2. Click on the `Create Service` button.
+
+3. Select the `Docker` option.
+
+
+  <Image
+    src={Koyeb1}
+    alt="Koyeb"
+  />
+
+
+4. In the `Image` field, enter `ghcr.io/openstatushq/checker:latest`.
+
+
+  <Image
+    src={Koyeb2}
+    alt="Koyeb"
+  />
+
+5. Click on the `Next` button.
+
+6. Fill the following settings
+
+You should set the following environment variables
+- `CLOUD_PROVIDER` : Koyeb
+- `REGION` : The koyeb region where you want to deploy your checker
+- `CRON_SECRET` : A secret key to secure your endpoint to avoid unauthorized access
+
+  <Image
+    src={Koyeb3}
+    alt="Koyeb"
+  />
+
+## Calling your probe
+
+Once your checker is deployed, you can call it using the following command:
+
+```bash
+curl --request POST \
+  --url https://YOUR_KOYEB_URL.koyeb.app/ping/KOYEB_REGION \
+  --header 'Authorization: Basic test' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "url": "https://www.openstatus.dev",
+  "method": "GET"
+}'
+```
+
