@@ -73,7 +73,7 @@ export const selectPublicPageSchemaWithRelation = selectPageSchema
       .transform((val) => val ?? "free"),
   })
   .omit({
-    workspaceId: true,
+    // workspaceId: true,
     id: true,
   });
 

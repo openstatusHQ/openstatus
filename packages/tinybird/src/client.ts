@@ -10,7 +10,7 @@ export class OSTinybird {
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({ token });
+    this.tb = new Client({ token });
     }
   }
 
@@ -304,6 +304,7 @@ export class OSTinybird {
       pipe: "endpoint__http_status_45d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        days: z.number().int().max(45).optional(),
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -644,6 +645,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_status_45d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        days: z.number().int().max(45).optional(),
       }),
       data: z.object({
         day: z.string().transform((val) => {
