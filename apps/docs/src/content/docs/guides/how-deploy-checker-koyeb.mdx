@@ -4,6 +4,12 @@ description: Learn how to deploy our checker on Koyeb.
 sidebar:
   label: Deploy our probe on Koyeb
 ---
+import { Image } from 'astro:assets';
+
+import Koyeb1 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-1.png';
+import Koyeb2 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-2.png';
+import Koyeb3 from '../../../assets/guides/how-deploy-checker-koyeb/koyeb-3.png';
+
 
 ## Introduction
 
@@ -18,8 +24,8 @@ You need a koeyb account to deploy our checker on Koyeb. If you don't have one, 
 3. Select the `Docker` option.
 
 
-  <img
-    src="/images/guides/how-deploy-checker-koyeb/koyeb-1.png"
+  <Image
+    src={Koyeb1}
     alt="Koyeb"
   />
 
@@ -27,8 +33,8 @@ You need a koeyb account to deploy our checker on Koyeb. If you don't have one, 
 4. In the `Image` field, enter `ghcr.io/openstatushq/checker:latest`.
 
 
-  <img
-    src="/images/guides/how-deploy-checker-koyeb/koyeb-2.png"
+  <Image
+    src={Koyeb2}
     alt="Koyeb"
   />
 
@@ -41,8 +47,8 @@ You should set the following environment variables
 - `REGION` : The koyeb region where you want to deploy your checker
 - `CRON_SECRET` : A secret key to secure your endpoint to avoid unauthorized access
 
-  <img
-    src="/images/guides/how-deploy-checker-koyeb/koyeb-3.png"
+  <Image
+    src={Koyeb3}
     alt="Koyeb"
   />
 

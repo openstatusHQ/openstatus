@@ -1,6 +1,10 @@
 ---
 title: PagerDuty
 ---
+import { Image} from 'astro:assets';
+import PagerDuty1 from '../../../../assets/notification/pagerduty/pagerduty-1.png';
+import PagerDuty2 from '../../../../assets/notification/pagerduty/pagerduty-2.png';
+import PagerDuty3 from '../../../../assets/notification/pagerduty/pagerduty-3.png';
 
 Get Notified on PagerDuty when we create an incident.
 
@@ -10,23 +14,23 @@ Go to the Alerts Page . Select `PagerDuty` from the list of available integratio
 
 
 
-  <img
-    src="/images/notification/pagerduty/pagerduty-1.png"
+  <Image
+    src={PagerDuty1}
     alt="Connect to PagerDuty"
   />
 
 You will be redirected to the PagerDuty website to authorize OpenStatus to send notifications to your account.
 
-  <img
-    src="/images/notification/pagerduty/pagerduty-3.png"
+  <Image
+    src={PagerDuty3}
     alt="Connect to PagerDuty"
   />
 
 
 Select the service you want to use to send notifications. You can create a new service if you don't have one.
 
-  <img
-    src="/images/notification/pagerduty/pagerduty-2.png"
+  <Image
+    src={PagerDuty2}
     alt="Connect to PagerDuty"
   />
 

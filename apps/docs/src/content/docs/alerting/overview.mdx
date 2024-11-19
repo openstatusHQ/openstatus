@@ -1,3 +1,29 @@
 ---
 title: Overview
 ---
+import { Card } from '@astrojs/starlight/components';
+import { CardGrid } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import { LinkCard } from '@astrojs/starlight/components';
+import DiscordNotification from '../../../assets/notification/discord-notification.png';
+
+If you connect notification channels to your OpenStatus account, you can receive
+alerts when your services are down. We will contact you when an incident is
+created.
+
+  <Image
+    src={DiscordNotification}
+    alt="Create your notification bot"
+  />
+
+## Notification channels
+
+<CardGrid>
+  <LinkCard title="Email ✉️" href="/alerting/providers/email" description=" Receive an email"/>
+  <LinkCard title="Slack 📣" href="/alerting/providers/slack" description="Get notified on Slack" />
+  <LinkCard title="Discord 🤖" href="/alerting/providers/discord" description="Get notified on Discord" />
+  <LinkCard title="SMS 📱" href="/alerting/providers/sms" description="Receive a text message" />
+  <LinkCard title="Pagerduty 📟" href="/alerting/providers/pagerduty" description="Receive a pagerduty notification"/ >
+  <LinkCard title="Phone 📞" href="/alerting/providers/phone-call" description="Get called on your phone" />
+  <LinkCard title="Telegram 📡" href="/alerting/providers/telegram" description="Get notified on Telegram" />
+</CardGrid>

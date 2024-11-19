@@ -3,7 +3,11 @@ title: Overview
 description: "How incident are created, how to acknowledge, and resolve them🔥"
 ---
 import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import IncidentDetail from '../../../assets/incident/incident-detail.png';
 
+
+When we detect a problem with your service, we create an incident.
 ## What is an incident 🧑‍🏫
 
 We automatically create an incident when we detect a problem with your service.
@@ -30,8 +34,8 @@ On the incident page, you can  see the details of the incident, the monitor that
 We are also taking a screenshot of the monitor when the incident is created, and when it's resolved.
 
 
-  <img
-    src="/images/incident/incident-detail.png"
+  <Image
+    src={IncidentDetail}
     alt="Incident page"
   />
 
