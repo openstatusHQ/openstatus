@@ -10,7 +10,7 @@ export class OSTinybird {
     if (process.env.NODE_ENV === "development") {
       this.tb = new NoopTinybird();
     } else {
-    this.tb = new Client({ token });
+      this.tb = new Client({ token });
     }
   }
 
