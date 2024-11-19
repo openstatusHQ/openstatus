@@ -23,7 +23,7 @@ export async function sendFollowUpEmails() {
 
   for (const user of users) {
     if (user.email) {
-      await email.sendFollowUp({ to: "max@openstatus.dev" });
+      await email.sendFollowUp({ to: user.email });
     }
   }
 }

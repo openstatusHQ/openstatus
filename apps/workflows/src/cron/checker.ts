@@ -17,8 +17,6 @@ import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constan
 import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { env } from "../env";
 
-// We can't secure cron endpoint thus we should make sure they are called by the generated url
-// FIXME: we can with CRON_SECRET!
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };

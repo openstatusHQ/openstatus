@@ -1,5 +1,5 @@
 {
-  "name": "workflows",
+  "name": "@openstatus/workflows",
   "scripts": {
     "dev": "NODE_ENV=development bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
