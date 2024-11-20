@@ -39,6 +39,12 @@ api.doc("/openapi", {
   info: {
     version: "1.0.0",
     title: "OpenStatus API",
+    contact: {
+      email: "ping@openstatus.dev",
+      url: "https://www.openstatus.dev",
+    },
+    description:
+      "OpenStatus is a open-source synthetic monitoring tool that allows you to monitor your website and API's uptime, latency, and more. \n\n The OpenStatus API allows you to interact with the OpenStatus platform programmatically. ",
   },
 });
 
@@ -49,7 +55,7 @@ api.get(
       url: "/v1/openapi",
     },
     baseServerURL: "https://api.openstatus.dev/v1",
-  }),
+  })
 );
 /**
  * Authentification Middleware
