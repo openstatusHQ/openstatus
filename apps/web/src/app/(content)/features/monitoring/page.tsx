@@ -23,7 +23,7 @@ import { mockChartData, mockResponseData } from "../mock";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block"
+  (unrelated) => unrelated.slug === "ci-cd-features-block",
 );
 
 export const metadata: Metadata = {
