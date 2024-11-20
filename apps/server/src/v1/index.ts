@@ -55,7 +55,7 @@ api.get(
       url: "/v1/openapi",
     },
     baseServerURL: "https://api.openstatus.dev/v1",
-  })
+  }),
 );
 /**
  * Authentification Middleware
