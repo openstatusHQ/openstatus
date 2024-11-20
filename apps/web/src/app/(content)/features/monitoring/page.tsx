@@ -23,7 +23,7 @@ import { mockChartData, mockResponseData } from "../mock";
 
 const { description, subtitle } = marketingProductPagesConfig[0];
 const code = allUnrelateds.find(
-  (unrelated) => unrelated.slug === "ci-cd-features-block",
+  (unrelated) => unrelated.slug === "ci-cd-features-block"
 );
 
 export const metadata: Metadata = {
@@ -138,7 +138,7 @@ export default function FeaturePage() {
         action={
           <div className="mt-2">
             <Button variant="outline" className="rounded-full" asChild>
-              <Link href="https://docs.openstatus.dev/guides/test-latency-cf-workers-in-github-actions">
+              <Link href="https://docs.openstatus.dev/cli/getting-started">
                 How-to
               </Link>
             </Button>
