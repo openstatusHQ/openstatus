@@ -138,7 +138,7 @@ export default function FeaturePage() {
         action={
           <div className="mt-2">
             <Button variant="outline" className="rounded-full" asChild>
-              <Link href="https://docs.openstatus.dev/guides/test-latency-cf-workers-in-github-actions">
+              <Link href="https://docs.openstatus.dev/cli/getting-started">
                 How-to
               </Link>
             </Button>

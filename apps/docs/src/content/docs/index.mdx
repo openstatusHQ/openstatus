@@ -9,7 +9,7 @@ hero:
   tagline: Explore our documentation to get started with OpenStatus
 ---
 
-import { Card, CardGrid } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import "../../custom.css"
 
 <CardGrid >
@@ -20,7 +20,7 @@ import "../../custom.css"
 		Read our <a href="guides/introduction/">guides</a> to discover what you can do with OpenStatus
 	</Card>
 	<Card title="CLI" icon="seti:shell">
-		Learn more about our [CLI](/cli) to manage and run your synthetic check.
+		Learn more about our [CLI](/cli/getting-started) to manage and run your synthetic check.
 	</Card>
 	<Card title="API Reference" icon="puzzle">
 		Use our <a href="https://api.openstatus.dev/v1">API</a> to build amazing things on top of OpenStatus
@@ -28,4 +28,14 @@ import "../../custom.css"
 	<Card title="Open Source" icon="seti:github">
 		Checkout our [GitHub repository](https://www.github.com/openstatushq/openstatus) to contribute or report issues.
 	</Card>
+</CardGrid>
+
+
+## Join the community
+
+Join the commmunity to get help, share your ideas or just to say hi.
+
+<CardGrid>
+<LinkCard href="https://www.openstatus.dev/discord" title="Discord"/>
+<LinkCard href="https://bsky.app/profile/openstatus.dev" title="Bluesky" />
 </CardGrid>
