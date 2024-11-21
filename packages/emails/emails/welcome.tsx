@@ -26,9 +26,7 @@ const WelcomeEmail = () => {
           </a>{" "}
           to manage your monitors
           <br />- Integrate your status within your application with our{" "}
-          <a href="https://docs.openstatus.dev/tools/status-widget">
-            API
-          </a> and{" "}
+          <a href="https://docs.openstatus.dev/tools/status-widget">API</a> and{" "}
           <a href="https://docs.openstatus.dev/tools/react/">React Widget</a>
           <br />- Build your own status page with our{" "}
           <a href="https://api.openstatus.dev/v1">API</a> and host it where you
@@ -49,8 +47,7 @@ const WelcomeEmail = () => {
           <br />
           <br />⭐ Star us on{" "}
           <Link href="https://github.com/openstatushq/openstatus">GitHub</Link>
-          <br />
-          🚀 Visit our website{" "}
+          <br />🚀 Visit our website{" "}
           <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
       </Head>
