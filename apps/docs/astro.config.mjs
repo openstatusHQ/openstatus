@@ -15,7 +15,7 @@ export default defineConfig({
   integrations: [
     sitemap(),
     starlight({
-      title: "OpenStatus Docs",
+      title: "OpenStatus Documentation",
       favicon: "/favicon.ico",
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
@@ -103,6 +103,10 @@ export default defineConfig({
 
                 items: [
                   { label: "Overview", slug: "status-page/overview" },
+                  {
+                    label: "Create your status page",
+                    slug: "status-page/create-status-page",
+                  },
                   { label: "Reports", slug: "status-page/reports" },
                   { label: "Maintenances", slug: "status-page/maintenances" },
                   { label: "Widget", slug: "status-page/widget" },
@@ -114,6 +118,11 @@ export default defineConfig({
                   {
                     label: "Customization",
                     autogenerate: { directory: "status-page/customization" },
+                    collapsed: true,
+                  },
+                  {
+                    label: "Advanced",
+                    autogenerate: { directory: "status-page/advanced" },
                     collapsed: true,
                   },
                 ],
@@ -142,6 +151,7 @@ export default defineConfig({
                   {
                     label: "Help",
                     slug: "help/support",
+                    collapsed: true,
                   },
                 ],
               },

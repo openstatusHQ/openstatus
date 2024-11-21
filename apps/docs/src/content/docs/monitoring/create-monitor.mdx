@@ -4,13 +4,14 @@ description: "How to create your first monitor with OpenStatus.dev"
 ---
 
 import { Image } from 'astro:assets';
-import { Aside } from '@astrojs/starlight/components';
+import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import monitorDetail from '../../../assets/monitor/monitor-detail.png';
 import { ShowcaseYouTube } from 'starlight-showcases'
 
+
 Go to the **Monitors** page and click on the **Create Monitor** button.
 
-## Configure your monitor 🛠
+## Configure your monitor
 
 Your endpoint check requires:
 
@@ -26,7 +27,7 @@ returned, and the **timing metrics** of your endpoint.
   />
 
 
-### HTTP Request 📤
+### HTTP Request
 
 Customize the request sent to your endpoint.
 
@@ -45,12 +46,40 @@ If you select the `POST` method, you can add a custom **HTTP Body** to your
 request.
 
 
-### Limitations ⚠️
+
+
+## Customization
+
+You can customize your monitor with the following options:
+
+<CardGrid>
+    <LinkCard
+        title="Assertions"
+        href="/monitoring/customization/assertions"
+    />
+    <LinkCard
+        title="Frequency"
+        href="/monitoring/customization/frequency"
+    />
+    <LinkCard
+        title="Regions"
+        href="/monitoring/customization/regions"
+    />
+    <LinkCard
+        title="Timing"
+        href="/monitoring/customization/timing"
+    />
+</CardGrid>
+
+
+
+## Known Limitations
 
 <Aside>If you are monitoring an endpoint you don't own (e.g google.com), your request might be blocked by the remote server.</Aside>
 
 
-## Video Tutorial 📺
+
+## Video Tutorial
 
 <ShowcaseYouTube
   entries={[
