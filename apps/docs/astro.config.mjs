@@ -103,6 +103,7 @@ export default defineConfig({
 
                 items: [
                   { label: "Overview", slug: "status-page/overview" },
+                  { label: "Create your status page", slug: "status-page/create-status-page" },
                   { label: "Reports", slug: "status-page/reports" },
                   { label: "Maintenances", slug: "status-page/maintenances" },
                   { label: "Widget", slug: "status-page/widget" },
@@ -114,6 +115,11 @@ export default defineConfig({
                   {
                     label: "Customization",
                     autogenerate: { directory: "status-page/customization" },
+                    collapsed: true,
+                  },
+                  {
+                    label: "Advanced",
+                    autogenerate: { directory: "status-page/advanced" },
                     collapsed: true,
                   },
                 ],
