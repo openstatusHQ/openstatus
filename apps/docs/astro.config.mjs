@@ -15,7 +15,7 @@ export default defineConfig({
   integrations: [
     sitemap(),
     starlight({
-      title: "OpenStatus Docs",
+      title: "OpenStatus Documentation",
       favicon: "/favicon.ico",
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
@@ -142,6 +142,7 @@ export default defineConfig({
                   {
                     label: "Help",
                     slug: "help/support",
+                    collapsed: true,
                   },
                 ],
               },

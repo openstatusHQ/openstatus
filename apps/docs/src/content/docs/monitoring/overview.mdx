@@ -13,34 +13,26 @@ responses.
 
 We will alert you if your website or API is down, is timing out or does not return the expected response.
 
-You can create monitors in our dashboard, with the [API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor) or with [Terraform](/tools/terraform).
+You can create monitors in our dashboard, with the [API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor) or with our [Terraform provider](/tools/terraform).
 
 
-### What is a monitor? 🧑‍🏫
+### What is a monitor?
 
 A monitor is a job that runs periodically or on-demand and checks the status of a service. It
 can be a website, an API, or anything else that can be checked automatically.
 
-We will make a request to your endpoint on a regular schedule, or on-demand and record the results.
+We will make a request to your endpoint and record the results.
 
-### Quick Links
+### Monitor types
 
 <CardGrid>
     <LinkCard
-        title="Assertions"
-        href="/monitoring/customization/assertions"
+        title="HTTP Monitor"
+        href="/type/http"
     />
     <LinkCard
-        title="Frequency"
-        href="/monitoring/customization/frequency"
-    />
-    <LinkCard
-        title="Regions"
-        href="/monitoring/customization/regions"
-    />
-    <LinkCard
-        title="Timing"
-        href="/monitoring/customization/timing"
+        title="TCP Monitor"
+        href="/type/tcp"
     />
 </CardGrid>
 

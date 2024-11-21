@@ -21,17 +21,18 @@ const WelcomeEmail = () => {
           <br />
           Here are a few things you can do with OpenStatus:
           <br />- Use our{" "}
-          <a href="https://docs.openstatus.dev/packages/terraform">
-            Terraform providers
+          <a href="https://docs.openstatus.dev/tools/terraform">
+            Terraform provider
           </a>{" "}
           to manage your monitors
           <br />- Integrate your status within your application with our{" "}
-          <a href="https://docs.openstatus.dev/packages/status-widget">API</a>{" "}
-          and{" "}
-          <a href="https://docs.openstatus.dev/packages/react">React Widget</a>
+          <a href="https://docs.openstatus.dev/tools/status-widget">
+            API
+          </a> and{" "}
+          <a href="https://docs.openstatus.dev/tools/react/">React Widget</a>
           <br />- Build your own status page with our{" "}
-          <a href="https://docs.openstatus.dev/api-reference">API</a> and host
-          it where you want. Here's our{" "}
+          <a href="https://api.openstatus.dev/v1">API</a> and host it where you
+          want. Here's our{" "}
           <a href="https://github.com/openstatusHQ/astro-status-page">
             Astro template
           </a>{" "}
@@ -48,7 +49,8 @@ const WelcomeEmail = () => {
           <br />
           <br />⭐ Star us on{" "}
           <Link href="https://github.com/openstatushq/openstatus">GitHub</Link>
-          <br />🚀 Visit our website{" "}
+          <br />
+          🚀 Visit our website{" "}
           <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
       </Head>
