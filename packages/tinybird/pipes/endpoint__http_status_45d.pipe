@@ -18,5 +18,6 @@ SQL >
         TO toStartOfDay(
             date_sub(DAY, 45, now())
         ) STEP INTERVAL -1 DAY
+    LIMIT {{ Int16(days, 45) }}
 
 

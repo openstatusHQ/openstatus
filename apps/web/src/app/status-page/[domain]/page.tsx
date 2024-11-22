@@ -9,6 +9,13 @@ import { StatusCheck } from "@/components/status-page/status-check";
 import { api } from "@/trpc/server";
 import { Separator } from "@openstatus/ui";
 
+/**
+ * Right now, we do not allow workspaces to have a custom lookback period.
+ * If we decide to allow this in the future, we should move this to the database.
+ */
+const WORKSPACES =
+  process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
+
 type Props = {
   params: { domain: string };
   searchParams: { [key: string]: string | string[] | undefined };
@@ -49,6 +56,7 @@ export default async function Page({ params }: Props) {
           incidents={page.incidents}
           maintenances={page.maintenances}
           showMonitorValues={!!page.showMonitorValues}
+          totalDays={WORKSPACES.includes(page.workspaceId) ? 30 : 45}
         />
       ) : (
         <EmptyState
