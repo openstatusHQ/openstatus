@@ -1,4 +1,0 @@
-latency;monitorId;pageId;region;statusCode;timestamp;url;workspaceId;cronTimestamp;metadata;message
-290;openstatusPing;openstatus;kix1;200;1695573755478;https://openstatus.dev/api/ping;openstatus;1695573646204;{};
-240;openstatusPing;openstatus;gru1;200;1695573755337;https://openstatus.dev/api/ping;openstatus;1695573646204;{};
-277;openstatusPing;openstatus;hkg1;200;1695573743935;https://openstatus.dev/api/ping;openstatus;1695573646204;{};

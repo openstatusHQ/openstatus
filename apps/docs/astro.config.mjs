@@ -86,6 +86,10 @@ export default defineConfig({
                         slug: "monitoring/customization/frequency",
                       },
                       {
+                        label: "Notifications",
+                        slug: "monitoring/customization/notification",
+                      },
+                      {
                         label: "Regions",
                         slug: "monitoring/customization/regions",
                       },
@@ -107,18 +111,11 @@ export default defineConfig({
                     label: "Create your status page",
                     slug: "status-page/create-status-page",
                   },
-                  { label: "Reports", slug: "status-page/reports" },
-                  { label: "Maintenances", slug: "status-page/maintenances" },
-                  { label: "Widget", slug: "status-page/widget" },
-                  { label: "Custom Domain", slug: "status-page/custom-domain" },
+
                   {
-                    label: "Subscribers",
-                    slug: "status-page/subscribers",
-                  },
-                  {
-                    label: "Customization",
-                    autogenerate: { directory: "status-page/customization" },
-                    collapsed: true,
+                    label: "Work with Status Page",
+                    autogenerate: { directory: "status-page/work" },
+                    collapsed: false,
                   },
                   {
                     label: "Advanced",
@@ -127,7 +124,21 @@ export default defineConfig({
                   },
                 ],
               },
-              { label: "Incidents", autogenerate: { directory: "incident" } },
+              {
+                label: "Incidents",
+                items: [
+                  { label: "Overview", slug: "incident/overview" },
+                  {
+                    label: "Work with incident",
+                    slug: "incident/work-with-incident",
+                  },
+
+                  {
+                    label: "Incident Detail",
+                    slug: "incident/incident-detail",
+                  },
+                ],
+              },
               {
                 label: "Alerting",
                 items: [
