@@ -52,6 +52,10 @@ export function MarketingFooter({ className }: Props) {
             <FooterLink href="/play/checker" label="Speed Checker" />
             <FooterLink href="/play/curl" label="cURL Builder" />
             <FooterLink href="https://openstat.us" label="All Status Codes" />
+            <FooterLink
+              href="https://light.openstatus.dev"
+              label="Vercel Edge Ping"
+            />
           </div>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -87,14 +91,12 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
 
   return (
     <Link
-      className="inline-flex w-fit items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
+      className="flex flex-wrap gap-1 w-fit items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
       href={href}
       {...externalProps}
     >
       {label}
-      {isExternal ? (
-        <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0" />
-      ) : null}
+      {isExternal ? <ArrowUpRight className="h-4 w-4 flex-shrink-0" /> : null}
     </Link>
   );
 }
