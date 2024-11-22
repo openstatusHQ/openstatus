@@ -125,13 +125,19 @@ export default defineConfig({
                 ],
               },
               {
-                label: "Incidents", items: [
+                label: "Incidents",
+                items: [
                   { label: "Overview", slug: "incident/overview" },
-                  { label: "Work with incident", slug: "incident/work-with-incident" },
+                  {
+                    label: "Work with incident",
+                    slug: "incident/work-with-incident",
+                  },
 
-                  { label: "Incident Detail", slug: "incident/incident-detail" },
-
-                ]
+                  {
+                    label: "Incident Detail",
+                    slug: "incident/incident-detail",
+                  },
+                ],
               },
               {
                 label: "Alerting",
