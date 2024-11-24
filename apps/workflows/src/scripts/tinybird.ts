@@ -113,7 +113,7 @@ async function main() {
 /**
  * REMINDER: do it manually (to avoid accidental deletion on dev mode)
  * Within the app/workflows folder, run the following command:
- * $ bun src/cron/tinybird.ts
+ * $ bun src/scripts/tinybird.ts
  */
 
 // main().catch(console.error);
