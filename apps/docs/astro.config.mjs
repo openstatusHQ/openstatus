@@ -20,11 +20,13 @@ export default defineConfig({
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
         blueSky: "https://bsky.app/profile/openstatus.dev",
+        discord: "https://www.openstatus.dev/discord"
       },
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
         Head: "./src/components/Head.astro",
         Hero: "./src/components/Hero.astro",
+        Footer: "./src/components/Footer.astro",
       },
       editLink: {
         baseUrl: "https://github.com/openstatusHQ/openstatus/app/docs",
@@ -62,6 +64,10 @@ export default defineConfig({
                   {
                     label: "View your monitor data",
                     slug: "monitoring/monitor-data-collected",
+                  },
+                  {
+                    label: "Group your monitors",
+                    slug: "monitoring/group-monitor-tag",
                   },
                   {
                     label: "Monitor Types",
