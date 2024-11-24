@@ -20,7 +20,7 @@ export default defineConfig({
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
         blueSky: "https://bsky.app/profile/openstatus.dev",
-        discord: "https://www.openstatus.dev/discord"
+        discord: "https://www.openstatus.dev/discord",
       },
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
