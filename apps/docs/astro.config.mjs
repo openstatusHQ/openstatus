@@ -60,6 +60,10 @@ export default defineConfig({
                     slug: "monitoring/create-monitor",
                   },
                   {
+                    label: "View your monitor data",
+                    slug: "monitoring/monitor-data-collected",
+                  },
+                  {
                     label: "Monitor Types",
                     collapsed: true,
                     items: [

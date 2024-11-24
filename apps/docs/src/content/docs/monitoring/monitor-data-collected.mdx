@@ -1,0 +1,62 @@
+---
+title: Monitor Data Points
+description: "Monitor metrics are the data points that are collected by the monitor during the check."
+---
+
+import { Image } from 'astro:assets';
+
+import ResponseLog from '../../../assets/monitor/response-log.png';
+import ResponseLogHeader from '../../../assets/monitor/response-log-header.png';
+import ResponseLogTiming from '../../../assets/monitor/response-log-timing.png';
+
+
+## Access Monitor Data Points
+
+To view your monitor data points, navigate to the monitor details page and click on the `Response` tab.
+
+
+
+  <Image
+    src={ResponseLog}
+    alt="OpenStatus response log"
+  />
+
+
+## Monitor Data Points
+
+These are the data points that are collected by the monitor during the check.
+
+
+
+
+### HTTP Monitor Metrics
+
+  <Image
+    src={ResponseLogHeader}
+    alt="OpenStatus response log"
+  />
+
+
+For an HTTP monitor, the following metrics are collected:
+- **Status Code**: The HTTP status code returned by the server.
+- **Response Time**: The time taken by the server to respond to the request.
+- **Response Size**: The size of the response body.
+- **Response Headers**: The headers returned by the server.
+- **Response Body**: The body of the response in case of error
+- **DNS timing**: The time taken to resolve the domain name.
+- **TCP timing**: The time taken to establish a TCP connection.
+- **TLS timing**: The time taken to establish a TLS connection.
+- **TTFB timing**: Time to first byte, the time taken to receive the first byte of the response.
+- **Transfer timing**: The time taken to download the response body.
+
+
+  <Image
+    src={ResponseLogTiming}
+    alt="OpenStatus response log timing"
+  />
+
+### TCP Monitor Metrics
+
+For a TCP monitor, the following metrics are collected:
+- **Response Time**: The time taken by the server to respond to the request.
+- **TCP timing**: The time taken to establish a TCP connection.

@@ -1,9 +1,15 @@
 ---
 import Default from "@astrojs/starlight/components/Head.astro";
 import type { Props } from "@astrojs/starlight/props";
----
 
+const { title } = Astro.props.entry.data;
+const { siteTitle } = Astro.props;
+
+const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${title}`;
+---
 <Default {...Astro.props}><slot /></Default>
+
+<meta property="og:image" content={url} />
 
 
 <script is:inline defer data-domain="docs.openstatus.dev" src="https://plausible.io/js/script.js" />
