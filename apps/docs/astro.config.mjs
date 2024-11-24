@@ -69,6 +69,10 @@ export default defineConfig({
                     slug: "monitoring/group-monitor-tag",
                   },
                   {
+                    label: "Clone a monitor",
+                    slug: "monitoring/clone-monitor",
+                  },
+                  {
                     label: "Monitor Types",
                     collapsed: true,
                     items: [
