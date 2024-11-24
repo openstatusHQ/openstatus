@@ -20,11 +20,13 @@ export default defineConfig({
       social: {
         github: "https://github.com/openstatusHQ/openstatus",
         blueSky: "https://bsky.app/profile/openstatus.dev",
+        discord: "https://www.openstatus.dev/discord",
       },
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
         Head: "./src/components/Head.astro",
         Hero: "./src/components/Hero.astro",
+        Footer: "./src/components/Footer.astro",
       },
       editLink: {
         baseUrl: "https://github.com/openstatusHQ/openstatus/app/docs",
@@ -38,7 +40,7 @@ export default defineConfig({
         starlightSidebarTopics([
           {
             label: "Documentation",
-            link: "/getting-started/introduction",
+            link: "/",
             id: "docs",
             icon: "open-book",
             items: [
@@ -62,6 +64,10 @@ export default defineConfig({
                   {
                     label: "View your monitor data",
                     slug: "monitoring/monitor-data-collected",
+                  },
+                  {
+                    label: "Group your monitors",
+                    slug: "monitoring/group-monitor-tag",
                   },
                   {
                     label: "Monitor Types",
@@ -108,6 +114,7 @@ export default defineConfig({
               },
               {
                 label: "Status Page",
+                collapsed: true,
 
                 items: [
                   { label: "Overview", slug: "status-page/overview" },
@@ -130,6 +137,7 @@ export default defineConfig({
               },
               {
                 label: "Incidents",
+                collapsed: true,
                 items: [
                   { label: "Overview", slug: "incident/overview" },
                   {
@@ -145,6 +153,7 @@ export default defineConfig({
               },
               {
                 label: "Alerting",
+                collapsed: true,
                 items: [
                   { label: "Overview", slug: "alerting/overview" },
                   {
@@ -157,11 +166,13 @@ export default defineConfig({
                 ],
               },
               {
-                label: "Tools",
+                label: "Developer Tools",
+                collapsed: true,
                 autogenerate: { directory: "tools" },
               },
               {
                 label: "Support",
+                collapsed: true,
                 items: [
                   {
                     label: "Help",
