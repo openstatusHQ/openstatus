@@ -1,0 +1,16 @@
+---
+import { Image } from "astro:assets";
+import logo from "../assets/icon.png"; // Image is 1600x900
+---
+
+
+<a href="/" class="flex items-center gap-2 font-cal no-underline text-black dark:text-white text-lg">
+    <Image
+      src={logo}
+      alt="OpenStatus"
+      height={30}
+      width={30}
+      class="rounded-full border border-border bg-transparent"
+    />
+    OpenStatus
+</a>

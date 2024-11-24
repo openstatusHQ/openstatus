@@ -34,7 +34,7 @@ export function StatusWidgetContainer(props: StatusWidgetProps) {
             <Button variant="link" size="sm" asChild>
               <a
                 target="_blank"
-                href="https://docs.openstatus.dev/packages/react"
+                href="https://docs.openstatus.dev/tools/react/"
                 rel="noreferrer"
               >
                 Install your own <ExternalLink className="ml-1 h-3 w-3" />

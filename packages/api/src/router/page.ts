@@ -348,6 +348,7 @@ export const pageRouter = createTRPCRouter({
           "time",
           "help",
           "data-table",
+          "light",
         ].includes(opts.input.slug)
       ) {
         return false;

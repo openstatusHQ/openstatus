@@ -1,0 +1,50 @@
+---
+title: Documentation
+description: Explore our documentation to get started with OpenStatus.
+template: doc
+topic: docs
+next: false
+hero:
+  title: Welcome to OpenStatus
+  tagline: Explore our documentation to get started with OpenStatus and start monitoring your services.
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import "../../custom.css"
+
+### What is OpenStatus?
+
+[OpenStatus](https://www.openstatus.dev) is an open-source synthetic monitoring tool that helps you monitor the availability and performance of your website, API, servers from various locations around the world.
+
+We also provide beautiful [status pages](/status-page/overview) to keep your users informed about the status of your services.
+
+### New to OpenStatus?
+
+
+<CardGrid >
+	<Card title="Synthetic Monitoring" icon="open-book">
+		Learn how to <a href="/monitoring/create-monitor">create</a> your first monitor with OpenStatus.
+	</Card>
+	<Card title="Guides " icon="rocket">
+		Read our <a href="guides/introduction/">guides</a> to discover what you can do with OpenStatus
+	</Card>
+	<Card title="CLI" icon="seti:shell">
+		Learn more about our [CLI](/cli/getting-started) to manage and run your synthetic check.
+	</Card>
+	<Card title="API Reference" icon="puzzle">
+		Use our <a href="https://api.openstatus.dev/v1">API</a> to build amazing things on top of OpenStatus
+	</Card>
+	<Card title="Open Source" icon="seti:github">
+		Checkout our [GitHub repository](https://www.github.com/openstatushq/openstatus) to contribute or report issues.
+	</Card>
+</CardGrid>
+
+
+### Join the community
+
+Join the commmunity to get help, share your ideas or just to say hi.
+
+<CardGrid>
+<LinkCard href="https://www.openstatus.dev/discord" title="Discord"/>
+<LinkCard href="https://bsky.app/profile/openstatus.dev" title="Bluesky" />
+</CardGrid>

@@ -46,6 +46,18 @@ export function registerPutPage(api: typeof pagesApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
+    if (input.customDomain && !limits["custom-domain"]) {
+      throw new HTTPException(403, {
+        message: "Upgrade for custom domains",
+      });
+    }
+
+    if (input.customDomain?.toLowerCase().includes("openstatus")) {
+      throw new HTTPException(400, {
+        message: "Domain cannot contain 'openstatus'",
+      });
+    }
+
     if (
       limits["password-protection"] === false &&
       input?.passwordProtected === true

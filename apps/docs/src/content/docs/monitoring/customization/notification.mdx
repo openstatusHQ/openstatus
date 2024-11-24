@@ -1,0 +1,25 @@
+---
+title: Notifications
+---
+import { Image } from 'astro:assets';
+import { Aside} from '@astrojs/starlight/components';
+
+import Notification from '../../../../assets/monitor/notifications.png';
+
+  <Image
+    src={Notification}
+    alt="Monitor notifications"
+  />
+
+
+If you want to receive notifications when your monitor fails, you can connect it to a notification channel.
+
+To connect your monitor to a notification channel, _Select a monitor &rarr; Settings &rarr; Notifications_.
+
+You will have the list of available notification channels. You can connect your monitor to one or multiple notification channels.
+
+You need to create a notification channel before connecting your monitor to it.
+
+<Aside>
+By default your monitor won't send any notification on failure. You can enable notifications for your monitor by connecting it to a notification channel.
+</Aside>

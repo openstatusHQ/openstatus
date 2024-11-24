@@ -16,18 +16,21 @@ export const Monitor = async ({
   incidents,
   maintenances,
   showValues,
+  totalDays,
 }: {
   monitor: PublicMonitor;
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
   maintenances: Maintenance[];
   showValues?: boolean;
+  totalDays?: number;
 }) => {
   const res = await prepareStatusByPeriod(
     "45d",
     monitor.jobType as "http" | "tcp",
   ).getData({
     monitorId: String(monitor.id),
+    days: totalDays,
   });
 
   // TODO: we could handle the `statusReports` here instead of passing it down to the tracker

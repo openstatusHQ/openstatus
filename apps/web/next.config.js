@@ -1,6 +1,14 @@
 const { withContentCollections } = require("@content-collections/next");
 const { withSentryConfig } = require("@sentry/nextjs");
 
+// REMINDER: avoid Clickjacking attacks by setting the X-Frame-Options header
+const securityHeaders = [
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -52,6 +60,9 @@ const nextConfig = {
         hostname: "www.openstatus.dev",
       },
     ],
+  },
+  async headers() {
+    return [{ source: "/(.*)", headers: securityHeaders }];
   },
 };
 

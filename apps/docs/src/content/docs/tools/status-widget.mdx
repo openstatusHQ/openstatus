@@ -1,0 +1,284 @@
+---
+title: Public Status Widget
+description: "How to add a public status widget to your website."
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+
+We have added a public endpoint where you can access the status of your status
+page. To access it, you only need the unique `:slug` you have chosen for your
+page.
+
+```bash
+curl https://api.openstatus.dev/public/status/:slug
+```
+
+<Aside>
+  We have released an `@openstatus/react` npm package that allows you to easily
+  integrate the pre-typed status into your React projects or use the default
+  widget. Read more [here](/tools/react).
+</Aside>
+
+The response is a JSON object with the following structure:
+
+```json
+{ "status": "operational" }
+```
+
+in which the status can be one of the following values:
+
+```ts
+enum Status {
+  Operational = "operational",
+  DegradedPerformance = "degraded_performance",
+  PartialOutage = "partial_outage",
+  MajorOutage = "major_outage",
+  UnderMaintenance = "under_maintenance", // currently not in use
+  Unknown = "unknown",
+  Incident = "incident",
+}
+```
+
+### How does it work?
+
+The status is calculated by the ratio `uptime / (uptime + downtime)` of the last
+5 cron jobs of each monitor which we accumulate together. It is a simple
+calculation that gives us a good overview of the status of your services.
+
+```ts
+function getStatus(ratio: number) {
+  if (isNaN(ratio)) return Status.Unknown;
+  if (ratio >= 0.98) return Status.Operational;
+  if (ratio >= 0.6) return Status.DegradedPerformance;
+  if (ratio >= 0.3) return Status.PartialOutage;
+  if (ratio >= 0) return Status.MajorOutage;
+  return Status.Unknown;
+}
+```
+
+We are caching the result for `30 seconds` to reduce the load on our database.
+
+The `Status.Incident` will always be returned when then status of any incident
+on your page is **not** _"monitoring"_ or _"resolved"_. You can attach an
+incident to a monitor (implicit) or a page (explicit).
+
+> If you have a doubt about the above calculation, feel free to contact us via
+> [ping@openstatus.dev](mailto:ping@openstatus.dev) or
+> [discord](https://openstatus.dev/discord).
+
+### React Widget
+
+We currently do not provide any SDK or package to integrate the status into your
+stack. But will in the future.
+
+If you are using Nextjs and RSC with the `/app` directory, feel free to use that
+Component. Small reminder that we are using shadcn ui and tailwindcss. You might
+want to update the `bg-muted` and `text-foreground` classes to your needs.
+
+![Status Widget](/images/status-widget/widget-example.png)
+
+We are using `zod` to validate the response. You can use any other library if
+you want or just remove it. But better be safe than sorry.
+
+```tsx
+import * as z from "zod";
+
+const statusEnum = z.enum([
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+  "under_maintenance",
+  "unknown",
+  "incident",
+]);
+
+const statusSchema = z.object({ status: statusEnum });
+
+const dictionary = {
+  operational: {
+    label: "Operational",
+    color: "bg-green-500",
+  },
+  degraded_performance: {
+    label: "Degraded Performance",
+    color: "bg-yellow-500",
+  },
+  partial_outage: {
+    label: "Partial Outage",
+    color: "bg-yellow-500",
+  },
+  major_outage: {
+    label: "Major Outage",
+    color: "bg-red-500",
+  },
+  unknown: {
+    label: "Unknown",
+    color: "bg-gray-500",
+  },
+  incident: {
+    label: "Incident",
+    color: "bg-yellow-500",
+  },
+  under_maintenance: {
+    label: "Under Maintenance",
+    color: "bg-blue-500",
+  },
+} as const;
+
+export async function StatusWidget({ slug }: { slug: string }) {
+  const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
+    next: { revalidate: 60 }, // cache request for 60 seconds
+  });
+  const data = await res.json();
+  const parsed = statusSchema.safeParse(data);
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  const key = parsed.data.status;
+  const { label, color } = dictionary[key];
+
+  return (
+    <a
+      className="border-border text-foreground/70 hover:bg-muted hover:text-foreground inline-flex max-w-fit items-center gap-2 rounded-md border px-3 py-1 text-sm"
+      href={`https://${slug}.openstatus.dev`}
+      target="_blank"
+      rel="noreferrer"
+    >
+      {label}
+      <span className="relative flex h-2 w-2">
+        {parsed.data.status === "operational" ? (
+          <span
+            className={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
+          />
+        ) : null}
+        <span
+          className={`relative inline-flex h-2 w-2 rounded-full ${color}`}
+        />
+      </span>
+    </a>
+  );
+}
+```
+
+Then, import your `StatusWidget.tsx` component to your layout as well as the slug prop to your specific monitor. Ideally, relative imports would be setup in your `tsconfig.json`.
+```jsx
+import StatusWidget from '../../components/StatusWidget.tsx
+
+...
+
+<StatusWidget slug="monitor-slug-here" />
+```
+
+### Astro Widget
+```astro
+---
+import * as z from "zod"
+
+const statusEnum = z.enum([
+  "operational",
+  "degraded_performance",
+  "partial_outage",
+  "major_outage",
+  "under_maintenance",
+  "unknown",
+  "incident",
+])
+
+const statusSchema = z.object({ status: statusEnum })
+
+const dictionary = {
+  operational: {
+    label: "Operational",
+    color: "bg-green-500",
+  },
+  degraded_performance: {
+    label: "Degraded Performance",
+    color: "bg-yellow-500",
+  },
+  partial_outage: {
+    label: "Partial Outage",
+    color: "bg-yellow-500",
+  },
+  major_outage: {
+    label: "Major Outage",
+    color: "bg-red-500",
+  },
+  unknown: {
+    label: "Unknown",
+    color: "bg-gray-500",
+  },
+  incident: {
+    label: "Incident",
+    color: "bg-yellow-500",
+  },
+  under_maintenance: {
+    label: "Under Maintenance",
+    color: "bg-blue-500",
+  },
+}
+
+const slug = Astro.props.slug
+
+const res = await fetch(`https://api.openstatus.dev/public/status/${slug}`, {
+  // @ts-ignore
+  next: { revalidate: 60 },
+})
+const data = await res.json()
+const parsed = statusSchema.safeParse(data)
+if (!parsed.success) {
+  return null
+}
+const key = parsed.data.status
+const { label, color } = dictionary[key]
+---
+
+<a
+  class="border-border text-foreground/70 hover:bg-muted hover:text-foreground inline-flex max-w-fit items-center gap-2 rounded-md border px-3 py-1 text-sm"
+  href={`https://${slug}.openstatus.dev`}
+  target="_blank"
+  rel="noreferrer"
+>
+  {label}
+  <span class="relative flex h-2 w-2">
+    {
+      parsed.data.status === "operational" ? (
+        <span
+          class:list={[
+            "absolute",
+            "inline-flex",
+            "h-full",
+            "w-full",
+            "animate-ping",
+            "rounded-full",
+            color,
+            "opacity-75",
+            "duration-1000",
+          ]}
+        />
+      ) : null
+    }
+    <span
+      class:list={[
+        "relative",
+        "inline-flex",
+        "h-2",
+        "w-2",
+        "rounded-full",
+        color,
+      ]}></span>
+  </span>
+</a>
+```
+
+Then, import your `StatusWidget.astro` component as well as the slug from your specific monitor to your layout, most likely your footer. It would be better to have relative imports setup in your tsconfig.json.
+```astro
+---
+import StatusWidget from '../../components/StatusWidget.astro'
+---
+
+<StatusWidget slug="monitor-slug-here" />
+```

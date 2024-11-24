@@ -1,0 +1,366 @@
+---
+title: Setup environment files
+---
+
+import { Aside } from "@astrojs/starlight/components";
+
+<Aside>WIP</Aside>
+
+# Configuration of the .env file
+
+The `.env` file contains various environment variables that need to be properly
+configured for the application to work correctly. Below, I will explain how to
+obtain the values for some of these variables.
+
+## Setting up Resend for sending emails
+
+The "RESEND for email" section in the `.env` file contains the "RESEND_API_KEY"
+variable, which corresponds to the Resend API key that you need to set up to
+send emails.
+
+Here's how to obtain the Resend API key:
+
+1. Access the Resend website at [https://resend.com](https://resend.com) and log
+   in with your account or create a new account if you don't have one.
+
+2. Once you've logged in, look for the option to add a new API Key. You can do
+   this by clicking the corresponding button or navigating to the "API Keys"
+   section and creating it from there.
+
+3. Fill in the necessary information to create the API Key, such as the name and
+   required permissions.
+
+4. Once the API Key is created, copy its value, which usually starts with "re\_"
+   and includes a series of characters.
+
+5. Paste this API Key value into the `.env` file under the "RESEND_API_KEY"
+   variable. It should look something like this (real values without
+   censorship):
+
+![Create your monitor](/images/setup-env/resend.png)
+
+```
+# RESEND for email
+RESEND_API_KEY=re_••••••••••••••••••••••••••••••••
+```
+
+Replace the key with the actual Resend API key you obtained from your Resend
+account.
+
+## Setting up Upstash (QStash and Redis)
+
+The "Upstash for queue" section in the `.env` file contains the following
+variables related to QStash and Redis:
+
+```
+# UPSTASH for queue
+QSTASH_CURRENT_SIGNING_KEY=qstash-current-signing-key
+QSTASH_NEXT_SIGNING_KEY=qstash-next-signing-key
+QSTASH_TOKEN=qstash-token
+QSTASH_URL=https://qstash.upstash.io/v1/publish/
+
+
+# UPSTASH redis for waiting list
+UPSTASH_REDIS_REST_URL=test
+UPSTASH_REDIS_REST_TOKEN=test
+```
+
+To configure UPSTASH correctly, follow these steps:
+
+### Obtaining QStash Keys
+
+1. Log in to your UPSTASH account at
+   [https://upstash.com/](https://upstash.com/) or create a new account if you
+   don't have one yet.
+
+2. Once logged in, go to
+   [https://console.upstash.com/qstash](https://console.upstash.com/qstash) and
+   copy the keys you need one by one. These keys are
+   "QSTASH_CURRENT_SIGNING_KEY", "QSTASH_NEXT_SIGNING_KEY", and "QSTASH_TOKEN".
+
+3. Paste these keys into the `.env` file under their respective variables. It
+   should look something like this (real values without censorship):
+
+```
+# UPSTASH for queue
+QSTASH_CURRENT_SIGNING_KEY=sig_•••••••••••••••••••••••••
+QSTASH_NEXT_SIGNING_KEY=sig_•••••••••••••••••••••••••
+QSTASH_TOKEN=ey••••••••••••••••••••••••••••••••
+QSTASH_URL=https://qstash.upstash.io/v1/publish/
+```
+
+Replace the ellipsis with the actual keys you obtained from UPSTASH.
+
+### Configuring Redis
+
+> We have been using Redis for the waiting list in this project. It is not used
+> currently. However, if you want to use it, you can follow the steps below to.
+
+1. Create a Redis database in UPSTASH through
+   [https://console.upstash.com/](https://console.upstash.com/).
+
+2. Once the database is created, access "Details" and go to the "API REST"
+   section, selecting the `.env` tab.
+
+3. Copy the URL and token information displayed there and paste them in the
+   `.env` file under the following variables:
+
+```
+# UPSTASH redis for waiting list
+UPSTASH_REDIS_REST_URL="https://•••••••••.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="•••••••••"
+```
+
+Replace the ellipsis with the actual URL and token of Redis you obtained from
+UPSTASH.
+
+## Setting up Tinybird
+
+You will need to create an API token, Go to Auth tokens > Workspace tokens > Add
+a new token > Select your token
+
+![Create your monitor](/images/setup-env/tinybird.png)
+
+```
+# TinyBird
+TINY_BIRD_API_KEY="•••••••••"
+```
+
+The [Tinybird CLI](https://www.tinybird.co/docs/cli.html) can be used to push
+the pipes to the Tinybird server.
+
+### Datasource
+
+We ingest the monitor response into the `ping_response__v5` table. If you want
+to have some dummy data to start with, check out the
+[csv](https://raw.githubusercontent.com/openstatusHQ/openstatus/main/apps/docs/dummy/ping_response__v5.csv)
+file.
+
+> Warning: If importing the csv file, make sure to change the column names are
+> identical (e.g. `monitorId` instead of `monitorid`). Otherwise, the pipes will
+> not work.
+
+### Pipes
+
+The pipes we are using can be found under `@packages/tinybird/pipes`. Pipes are
+used to transform data from one format to another. For example, we are using a
+pipe to transform the data from the database `ping_response` into aggregated
+data.
+
+We currently have three pipes:
+
+1. `status_timezone__v0`: returns aggregated data from the `ping_response`
+   table.
+2. `response_list__v0`: returns the list of responses from the `ping_response`
+   table.
+3. `home_stats__v0`: returns the total amount of pings during a timeframe from
+   the `ping_response` table.
+
+## Setting up Turso (SQLite or Cloud Database)
+
+The "TURSO SQLITE" section in the `.env` file allows you to configure Turso
+database, either a local SQLite database or a cloud-based database.
+
+### If you want to use a local database (optional):
+
+To begin, install sqld with brew. If you don't have brew installed, we recommend
+installing it from [brew.sh](https://brew.sh/) which works on macOS or Linux, or
+WSL if you are using Windows.
+
+```bash
+brew tap libsql/sqld
+brew install sqld-beta
+```
+
+Next, you can use the following command to start Turso with a SQLite database:
+
+```bash
+turso dev --db-file openstatus.db
+```
+
+By doing this, you'll be able to work with the local database without modifying
+the `.env` file.
+
+### If you want to use a cloud-based database with Turso
+
+To use a cloud-based database with Turso, follow these steps:
+
+1. Log in to your Turso account at [https://turso.tech/](https://turso.tech/) or
+   create a new account if you don't have one yet.
+
+2. If this is your first time using Turso, it may prompt you to install the
+   client on your machine. Follow the steps provided on their website or refer
+   to their documentation
+   [https://docs.turso.tech/tutorials/get-started-turso-cli/step-01-installation](https://docs.turso.tech/tutorials/get-started-turso-cli/step-01-installation)
+   for client installation.
+
+3. Once you have successfully installed the Turso client, open your terminal and
+   use the following command to authenticate:
+
+```
+turso auth login
+```
+
+4. Then, create a new database with the following command:
+
+```
+turso db create
+```
+
+Wait for a moment until the database is created, and you will be shown
+information about the database, including a connection URL and an authentication
+token.
+
+5. Use the following commands to show the required information and create the
+   database in the `.env` file:
+
+```
+turso db show db-name
+turso db tokens create db-name
+```
+
+Replace "db-name" with the name of your database. You should get the generated
+URL and token, which should be placed in the `.env` file as follows (real values
+without censorship):
+
+```
+# TURSO SQLITE
+DATABASE_URL=libsql://my-database-example.turso.io
+DATABASE_AUTH_TOKEN=ey••••••••••••••••••••••••••••••••
+```
+
+Remember to copy this information in both` app/web/.env` and `packages/db/.env`
+and save the changes to the `.env` file once you have completed all the
+configurations.
+
+## **Connect datasource using tinybird-cli**
+
+1. Log in to your tinybird account at https://www.tinybird.co/ or create a new
+   account if you don't have one yet.
+
+2. Once logged in, go to your dashboard and copy the auth token and paste inside
+   `.env`
+
+   > Please make sure you chose the admin token otherwise it may give an error
+   > like auth token invalid
+
+3. Then download this file
+   [ping_response\_\_v5](https://raw.githubusercontent.com/openstatusHQ/openstatus/8d5c997aacd93becff2cf24ea1d08d33274d2c20/apps/docs/dummy/ping_response__v5.csv)
+
+4. install the tinybird-cli
+
+```
+cd packages/tinybird
+python3 -m venv .venv
+source .venv/bin/activate
+pip install tinybird-cli
+
+```
+
+5. Create a datasource from this file
+
+   > Please make sure while importing you edit the table header fields in
+   > camelcase .
+
+6. Create pipe from the datasource name as a `response_list__v1` and
+   `status_timezone__v0`
+
+7. Inside `response_list__v0` pipe, create a endpoint by running a following
+   query :
+
+```
+%
+    SELECT id, latency, monitorId, pageId, region, statusCode, timestamp, url, workspaceId, cronTimestamp
+    FROM ping_response__v4
+    WHERE monitorId = {{ String(monitorId, 'openstatusPing') }}
+    {% if defined(region) %}
+    AND region = {{ String(region) }}
+    {% end %}
+    {% if defined(cronTimestamp) %}
+    AND cronTimestamp = {{ Int64(cronTimestamp) }}
+    {% end %}
+    {% if defined(fromDate) %}
+    AND cronTimestamp >= {{ Int64(fromDate) }}
+    {% end %}
+    {% if defined(toDate) %}
+    AND cronTimestamp <= {{ Int64(toDate) }}
+    {% end %}
+    ORDER BY timestamp DESC
+    LIMIT {{Int32(limit, 1000)}}
+```
+
+8. Inside `status_timezone__v0` pipe , create a endpoint by running a following
+   query :
+
+```
+VERSION 0
+
+NODE group_by_cronTimestamp
+SQL >
+
+    %
+    SELECT
+        toDateTime(cronTimestamp / 1000, 'UTC') AS day,
+        -- only for debugging purposes
+        toTimezone(day, {{ String(timezone, 'Europe/Berlin') }}) as with_timezone,
+        toStartOfDay(with_timezone) as start_of_day,
+        avg(latency) AS avgLatency,
+        count() AS count,
+        count(multiIf((statusCode >= 200) AND (statusCode <= 299), 1, NULL)) AS ok
+    FROM ping_response__v4
+    WHERE
+        (day IS NOT NULL)
+        AND (day != 0)
+        AND monitorId = {{ String(monitorId, '1') }}
+        -- By default, we only only query the last 45 days
+        AND cronTimestamp >= toUnixTimestamp64Milli(
+            toDateTime64(toStartOfDay(date_sub(DAY, 45, now())), 3)
+        )
+    GROUP BY cronTimestamp, monitorId
+    ORDER BY day DESC
+
+
+
+NODE group_by_day
+SQL >
+
+    %
+    SELECT
+        start_of_day as day,
+        sum(count) as count,
+        sum(ok) as ok,
+        round(avg(avgLatency)) as avgLatency
+    FROM group_by_cronTimestamp
+    GROUP BY start_of_day
+    ORDER BY start_of_day DESC
+    LIMIT {{ Int32(limit, 100) }}
+
+
+```
+
+### Setting up the database
+
+We have an example database that you can use to get started. You can run it with
+the following command:
+
+```bash
+ turso dev --db-file openstatus-dev.db
+```
+
+It contains some dummy data that you can use to test the application.
+
+![Drizzle studio](/images/setup-env/drizzle-studio.png)
+
+```bash
+cd packages/db
+pnpm studio
+```
+
+## Conclusion
+
+Once you have collected all the necessary information, you should save it in the
+`.env` file to ensure proper configuration for your application. Following these
+steps will enable your application to function effectively with the appropriate
+settings for each service.
+
+Open this url http://localhost:3000/app/love-openstatus to start using the app.

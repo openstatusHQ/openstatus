@@ -1,0 +1,41 @@
+---
+title: Assertions
+description: "How to monitor your HTTP services with OpenStatus.dev"
+---
+
+
+import { Image } from 'astro:assets';
+
+import Assertions from '../../../../assets/monitor/assertions.png';
+
+  <Image
+    src={Assertions}
+    alt="Monitor assertions"
+  />
+
+
+
+By default we expect the endpoint to return a `200` status code. If you want to check for a different status code you can go to to the `Assertions` tab and add a new assertion.
+
+We support **status code**, **header** and **body string** assertions.
+
+To change assertions for your monitors: _Select a monitor &rarr; Settings &rarr; Timing & Assertions_.
+
+### Status Code Assertions
+
+Define the **status code** you want to check for.
+
+Supports `Equal`, `Not equal`, `Greater than`, `Less than`, `Greater than or equal`, `Less than or equal` assertions.
+
+### Header Assertions
+
+Define the **header** you want to check for.
+
+Supports `Equal`, `Not equal`, `Contains`, `Does not Contain`, `Empty`, `Not empty`, `Greater than`, `Less than`, `Greater than or equal`, `Less than or equal` assertions.
+
+### Body String Assertions
+
+Define the **body string** you want to check for.
+
+Supports `Equal`, `Not equal`, `Contains`, `Does not Contain`, `Empty`, `Not empty`, `Greater than`, `Less than`, `Greater than or equal`, `Less than or equal` assertions.
+

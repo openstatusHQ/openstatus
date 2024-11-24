@@ -15,12 +15,14 @@ export const MonitorList = ({
   incidents,
   maintenances,
   showMonitorValues,
+  totalDays,
 }: {
   monitors: PublicMonitor[];
   statusReports: z.infer<typeof selectPublicStatusReportSchemaWithRelation>[];
   incidents: Incident[];
   maintenances: Maintenance[];
   showMonitorValues?: boolean;
+  totalDays?: number;
 }) => {
   return (
     <div className="grid gap-4">
@@ -44,6 +46,7 @@ export const MonitorList = ({
             incidents={monitorIncidents}
             maintenances={monitorMaintenances}
             showValues={showMonitorValues}
+            totalDays={totalDays}
           />
         );
       })}

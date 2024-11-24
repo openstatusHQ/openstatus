@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { TRPCError } from "@trpc/server";
 import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
@@ -54,6 +55,13 @@ export const domainRouter = createTRPCRouter({
   addDomainToVercel: protectedProcedure
     .input(z.object({ domain: z.string() }))
     .mutation(async (opts) => {
+      if (opts.input.domain.toLowerCase().includes("openstatus")) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Domain cannot contain 'openstatus'",
+        });
+      }
+
       const data = await fetch(
         `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
         {

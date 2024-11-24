@@ -1,0 +1,20 @@
+---
+title: Incident Detail
+order: 2
+---
+
+import { Image } from 'astro:assets';
+import IncidentDetail from '../../../assets/incident/incident-detail.png';
+import { Aside } from '@astrojs/starlight/components';
+
+
+On the incident page, you can  see the details of the incident, the monitor that failed, and the duration.
+We are also taking a screenshot of the monitor when the incident is created, and when it's resolved.
+
+
+  <Image
+    src={IncidentDetail}
+    alt="Incident page"
+  />
+
+<Aside>There might be a delay between the incident creation and the screenshot capture. Your endpoint could have already recovered.</Aside>

@@ -3,9 +3,11 @@ import {
   Clock,
   FileCode,
   Gauge,
+  Package,
   Palette,
   PanelTop,
   Table,
+  Terminal,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -58,6 +60,19 @@ const playgrounds: CardProps[] = [
       "Get speed insights for your api, website from multiple regions. No account needed.",
     icon: Gauge,
     variant: "primary",
+  },
+  {
+    href: "/play/curl",
+    title: "cURL Builder",
+    description: "Easily generate curl commands to test your API endpoints.",
+    icon: Terminal,
+  },
+  {
+    href: "https://light.openstatus.dev",
+    title: "Vercel Edge Ping",
+    description:
+      "Lightweight one-click self-hostable checker for vercel's edge network.",
+    icon: Package,
   },
   {
     href: "/public/monitors/1",

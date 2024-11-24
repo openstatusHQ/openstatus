@@ -1,0 +1,38 @@
+---
+title: Overview
+description: "How to create your first monitor with OpenStatus.dev"
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+With synthetic monitoring, you can simulated requests to monitor the availability and performance of
+your website, API, or server from various locations around the world.
+
+We will make a request to your website or API on a regular schedule and record the
+responses.
+
+We will alert you if your website or API is down, is timing out or does not return the expected response.
+
+You can create monitors in our dashboard, with the [API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor) or with our [Terraform provider](/tools/terraform).
+
+
+### What is a monitor?
+
+A monitor is a job that runs periodically or on-demand and checks the status of a service. It
+can be a website, an API, or anything else that can be checked automatically.
+
+We will make a request to your endpoint and record the results.
+
+### Monitor types
+
+<CardGrid>
+    <LinkCard
+        title="HTTP Monitor"
+        href="/type/http"
+    />
+    <LinkCard
+        title="TCP Monitor"
+        href="/type/tcp"
+    />
+</CardGrid>
+

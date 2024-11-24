@@ -1,11 +1,28 @@
 {
   "name": "@openstatus/docs",
-  "version": "0.0.0",
-  "private": true,
+  "type": "module",
+  "version": "0.0.1",
   "scripts": {
-    "dev": "pnpm dlx mintlify@latest dev --port 3002",
-    "verify": "pnpm dlx mintlify@latest  broken-links"
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
   },
-  "keywords": [],
-  "author": "OpenStatus"
+  "dependencies": {
+    "@astrojs/check": "0.9.4",
+    "@astrojs/sitemap": "3.2.1",
+    "@astrojs/starlight": "0.29.2",
+    "@astrojs/starlight-tailwind": "2.0.3",
+    "@astrojs/tailwind": "5.1.2",
+    "astro": "4.16.14",
+    "sharp": "0.33.5",
+    "starlight-showcases": "0.2.0",
+    "starlight-sidebar-topics": "0.2.1",
+    "unplugin-icons": "0.20.1"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "1.2.15",
+    "typescript": "5.6.3"
+  }
 }

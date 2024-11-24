@@ -19,7 +19,7 @@ export class OSTinybird {
       pipe: "endpoint__stats_global__v0",
       parameters: z.object({
         cronTimestamp: z.number().int().optional(),
-        period: z.enum(["total", "1h", "10m"]).optional(),
+        period: z.enum(["total", "1h", "10m", "1d", "1w", "1m"]).optional(),
       }),
       data: z.object({
         count: z.number().int(),
@@ -304,6 +304,7 @@ export class OSTinybird {
       pipe: "endpoint__http_status_45d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        days: z.number().int().max(45).optional(),
       }),
       data: z.object({
         day: z.string().transform((val) => {
@@ -644,6 +645,7 @@ export class OSTinybird {
       pipe: "endpoint__tcp_status_45d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        days: z.number().int().max(45).optional(),
       }),
       data: z.object({
         day: z.string().transform((val) => {
