@@ -1,7 +1,6 @@
 import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
-// @ts-check
 import { defineConfig } from "astro/config";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import Icons from "unplugin-icons/vite";
@@ -68,6 +67,10 @@ export default defineConfig({
                   {
                     label: "Group your monitors",
                     slug: "monitoring/group-monitor-tag",
+                  },
+                  {
+                    label: "Clone a monitor",
+                    slug: "monitoring/clone-monitor",
                   },
                   {
                     label: "Monitor Types",

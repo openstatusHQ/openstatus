@@ -10,6 +10,7 @@ const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${titl
 <Default {...Astro.props}><slot /></Default>
 
 <meta property="og:image" content={url} />
+<meta name="twitter:image" content={url} />
 
 
 <script is:inline defer data-domain="docs.openstatus.dev" src="https://plausible.io/js/script.js" />
