@@ -40,7 +40,7 @@ export default defineConfig({
         starlightSidebarTopics([
           {
             label: "Documentation",
-            link: "/getting-started/introduction",
+            link: "/",
             id: "docs",
             icon: "open-book",
             items: [
@@ -114,6 +114,7 @@ export default defineConfig({
               },
               {
                 label: "Status Page",
+                collapsed: true,
 
                 items: [
                   { label: "Overview", slug: "status-page/overview" },
@@ -136,6 +137,7 @@ export default defineConfig({
               },
               {
                 label: "Incidents",
+                collapsed: true,
                 items: [
                   { label: "Overview", slug: "incident/overview" },
                   {
@@ -151,6 +153,7 @@ export default defineConfig({
               },
               {
                 label: "Alerting",
+                collapsed: true,
                 items: [
                   { label: "Overview", slug: "alerting/overview" },
                   {
@@ -163,11 +166,13 @@ export default defineConfig({
                 ],
               },
               {
-                label: "Tools",
+                label: "Developer Tools",
+                collapsed: true,
                 autogenerate: { directory: "tools" },
               },
               {
                 label: "Support",
+                collapsed: true,
                 items: [
                   {
                     label: "Help",
