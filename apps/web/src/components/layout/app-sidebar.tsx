@@ -3,6 +3,7 @@
 import { useParams, useSelectedLayoutSegment } from "next/navigation";
 
 import type { Page } from "@/config/pages";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import { ProBanner } from "../billing/pro-banner";
 import { AppLink } from "./app-link";
 
@@ -18,6 +19,7 @@ function replacePlaceholders(
 export function AppSidebar({ page }: { page?: Page }) {
   const params = useParams<Record<string, string>>();
   const selectedSegment = useSelectedLayoutSegment();
+  const prefix = getPathnamePrefix();
 
   if (!page) return null;
 
@@ -29,12 +31,11 @@ export function AppSidebar({ page }: { page?: Page }) {
         </p>
         <ul className="grid gap-2">
           {page?.children?.map(({ title, segment, icon, disabled, href }) => {
-            const prefix = `/app/${params.workspaceSlug}`;
             return (
               <li key={title} className="w-full">
                 <AppLink
                   label={title}
-                  href={`${prefix}${replacePlaceholders(href, params)}`}
+                  href={`${prefix}/${params.workspaceSlug}${replacePlaceholders(href, params)}`}
                   disabled={disabled}
                   active={segment === selectedSegment}
                   icon={icon}

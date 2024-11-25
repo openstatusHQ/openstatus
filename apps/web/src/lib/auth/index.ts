@@ -58,6 +58,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // REMINDER: only used in dev mode
       if (params.account?.provider === "resend") {
+        if (Number.isNaN(Number(params.user.id))) return true;
+
         await db
           .update(user)
           .set({ updatedAt: new Date() })
@@ -113,6 +115,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/app/login",
     newUser: "/app/onboarding",
+    signOut: "/app/login",
   },
   // basePath: "/api/auth", // default is `/api/auth`
   // secret: process.env.AUTH_SECRET, // default is `AUTH_SECRET`

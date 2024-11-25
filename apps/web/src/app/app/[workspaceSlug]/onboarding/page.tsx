@@ -6,6 +6,7 @@ import { Button } from "@openstatus/ui/src/components/button";
 import { Header } from "@/components/dashboard/header";
 import { MonitorForm } from "@/components/forms/monitor/form";
 import { StatusPageForm } from "@/components/forms/status-page/form";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/server";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
 
@@ -15,6 +16,7 @@ export default async function Onboarding({
   params: { workspaceSlug: string };
 }) {
   const { workspaceSlug } = params;
+  const prefix = getPathnamePrefix();
 
   const workspace = await api.workspace.getWorkspace.query();
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
@@ -30,7 +32,7 @@ export default async function Onboarding({
           description="Create your first monitor."
           actions={
             <Button variant="link" className="text-muted-foreground" asChild>
-              <Link href={`/app/${workspaceSlug}/monitors`}>Skip</Link>
+              <Link href={`${prefix}/${workspaceSlug}/monitors`}>Skip</Link>
             </Button>
           }
         />
@@ -59,7 +61,7 @@ export default async function Onboarding({
           description="Create your first status page."
           actions={
             <Button variant="link" className="text-muted-foreground">
-              <Link href={`/app/${workspaceSlug}/monitors`}>Skip</Link>
+              <Link href={`${prefix}/${workspaceSlug}/monitors`}>Skip</Link>
             </Button>
           }
         />
@@ -67,7 +69,7 @@ export default async function Onboarding({
           <div className="flex flex-col md:col-span-2">
             <StatusPageForm
               {...{ workspaceSlug, allMonitors }}
-              nextUrl={`/app/${workspaceSlug}/status-pages`}
+              nextUrl={`${prefix}/${workspaceSlug}/status-pages`}
               defaultSection="monitors"
               plan="free" // user is on free plan by default
               checkAllMonitors
@@ -81,5 +83,5 @@ export default async function Onboarding({
     );
   }
 
-  return redirect(`/app/${workspaceSlug}/monitors`);
+  return redirect(`${prefix}/${workspaceSlug}/monitors`);
 }

@@ -26,12 +26,12 @@ const links = [
   },
 ];
 
-export function LinkCards({ slug }: { slug: string }) {
+export function LinkCards({ slug, prefix }: { slug: string; prefix: string }) {
   return (
     <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2">
       {links.map((link) => {
         const isExternal = link.href.startsWith("http");
-        const href = isExternal ? link.href : `/app/${slug}${link.href}`;
+        const href = isExternal ? link.href : `${prefix}/${slug}${link.href}`;
         const target = isExternal ? "_blank" : undefined;
         return (
           <Link

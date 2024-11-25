@@ -3,6 +3,7 @@ import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { getPathnamePrefix } from "@/lib/pathname-prefix/server";
 import { api } from "@/trpc/server";
 import { Event } from "./_components/event";
 
@@ -21,6 +22,8 @@ export default async function IncidentPage({
 }: {
   params: { workspaceSlug: string; id: string };
 }) {
+  const prefix = getPathnamePrefix();
+
   const incident = await api.incident.getIncidentById.query({
     id: Number(params.id),
   });
@@ -40,7 +43,7 @@ export default async function IncidentPage({
           <div className="flex flex-row items-end gap-2">
             <p className="font-semibold text-xl">{incident.monitorName}</p>
             <Link
-              href={`/app/${params.workspaceSlug}/monitors/${incident.monitorId}/overview`}
+              href={`${prefix}/${params.workspaceSlug}/monitors/${incident.monitorId}/overview`}
               className="text-muted-foreground hover:text-foreground"
             >
               <ArrowUpRight />

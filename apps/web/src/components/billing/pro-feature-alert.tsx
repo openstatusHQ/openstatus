@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 
@@ -14,6 +15,7 @@ interface Props {
 
 export function ProFeatureAlert({ feature, workspacePlan = "pro" }: Props) {
   const params = useParams<{ workspaceSlug: string }>();
+  const prefix = getPathnamePrefix();
   return (
     <Alert>
       <AlertTriangle className="h-4 w-4" />
@@ -26,7 +28,7 @@ export function ProFeatureAlert({ feature, workspacePlan = "pro" }: Props) {
         <span className="lowercase underline decoration-dotted">{feature}</span>
         , please upgrade your plan. Go to{" "}
         <Link
-          href={`/app/${params.workspaceSlug}/settings/billing`}
+          href={`${prefix}/${params.workspaceSlug}/settings/billing`}
           className="inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
         >
           settings

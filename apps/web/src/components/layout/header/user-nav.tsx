@@ -1,9 +1,12 @@
+"use client";
+
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { ThemeIcon } from "@/components/theme/theme-icon";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import {
   Avatar,
   AvatarFallback,
@@ -28,6 +31,7 @@ export function UserNav() {
   const session = useSession();
   const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
   const { setTheme, theme } = useTheme();
+  const prefix = getPathnamePrefix();
 
   if (session.status !== "authenticated") {
     return <Skeleton className="h-8 w-8 rounded-full" />;
@@ -64,10 +68,14 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link href={`/app/${workspaceSlug}/settings/billing`}>Billing</Link>
+            <Link href={`${prefix}/${workspaceSlug}/settings/billing`}>
+              Billing
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href={`/app/${workspaceSlug}/settings/user`}>Profile</Link>
+            <Link href={`${prefix}/${workspaceSlug}/settings/user`}>
+              Profile
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>{" "}
         <DropdownMenuSeparator />

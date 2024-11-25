@@ -1,6 +1,7 @@
 import { Alert, AlertDescription, AlertTitle, Separator } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/server";
 import { api } from "@/trpc/server";
 import { LinkCards } from "./_components/link-cards";
 import { searchParamsCache } from "./search-params";
@@ -18,6 +19,7 @@ export default async function InvitePage({
     : { message: "Unavailable invitation token.", data: undefined };
 
   const workspace = await api.workspace.getWorkspace.query();
+  const prefix = getPathnamePrefix();
 
   if (!data) {
     return (
@@ -30,7 +32,7 @@ export default async function InvitePage({
         </Alert>
         <Separator className="my-4" />
         <p className="text-muted-foreground">Quick Links</p>
-        <LinkCards slug={workspace.slug} />
+        <LinkCards slug={workspace.slug} prefix={prefix} />
       </div>
     );
   }
@@ -45,7 +47,7 @@ export default async function InvitePage({
       </Alert>
       <Separator className="my-4" />
       <p className="text-muted-foreground">Quick Links</p>
-      <LinkCards slug={data.slug} />
+      <LinkCards slug={data.slug} prefix={prefix} />
     </div>
   );
 }

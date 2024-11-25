@@ -86,6 +86,7 @@ export function PricingTable({
                     }
                     // FIXME: how to properly handle `?redirectTo` with unknown workspaceSlug
                     // to redirect user to `/app/[workspaceSlug]/settings/billing?plan=${key}`?
+                    // TODO: redirect to `app.openstatus.dev`
                     return router.push(`/app/login?plan=${key}`);
                   }}
                   disabled={isCurrentPlan || isLoading}

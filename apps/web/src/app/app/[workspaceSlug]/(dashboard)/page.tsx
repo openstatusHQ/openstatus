@@ -1,3 +1,4 @@
+import { getPathnamePrefix } from "@/lib/pathname-prefix/server";
 import { redirect } from "next/navigation";
 
 export default function DashboardRedirect({
@@ -5,5 +6,6 @@ export default function DashboardRedirect({
 }: {
   params: { workspaceSlug: string };
 }) {
-  return redirect(`/app/${params.workspaceSlug}/monitors`);
+  const prefix = getPathnamePrefix();
+  return redirect(`${prefix}/${params.workspaceSlug}/monitors`);
 }

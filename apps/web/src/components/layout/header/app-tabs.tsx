@@ -5,12 +5,14 @@ import { useParams, useSelectedLayoutSegment } from "next/navigation";
 import { TabsContainer, TabsLink } from "@/components/dashboard/tabs-link";
 import { StatusDot } from "@/components/monitor/status-dot";
 import { pagesConfig } from "@/config/pages";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import { api } from "@/trpc/client";
 import { useEffect, useState } from "react";
 
 export function AppTabs() {
   const params = useParams();
   const selectedSegment = useSelectedLayoutSegment();
+  const prefix = getPathnamePrefix();
 
   if (!params?.workspaceSlug) return null;
 
@@ -21,9 +23,9 @@ export function AppTabs() {
           const active = segment === selectedSegment;
           return (
             <TabsLink
-              key={segment}
+              key={`${prefix}-${segment}`}
               active={active}
-              href={`/app/${params?.workspaceSlug}${href}`}
+              href={`${prefix}/${params?.workspaceSlug}${href}`}
               prefetch={false}
               className="relative"
             >

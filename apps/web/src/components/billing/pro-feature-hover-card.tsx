@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import {
   Badge,
@@ -28,6 +29,7 @@ export function ProFeatureHoverCard({
 }) {
   const [open, setOpen] = useState(false);
   const shouldUpgrade = upgradePlan(plan, minRequiredPlan);
+  const prefix = getPathnamePrefix();
 
   if (!shouldUpgrade) return children;
 
@@ -50,7 +52,7 @@ export function ProFeatureHoverCard({
         </p>
         <p className="text-sm">
           <Link
-            href={`/app/${workspaceSlug}/settings/billing`}
+            href={`${prefix}/${workspaceSlug}/settings/billing`}
             target="_blank"
             className="group inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
           >

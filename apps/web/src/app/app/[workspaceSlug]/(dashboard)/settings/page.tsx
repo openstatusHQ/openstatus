@@ -1,3 +1,5 @@
+import { getPathnamePrefix } from "@/lib/pathname-prefix/server";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default function SettingsPage({
@@ -5,5 +7,6 @@ export default function SettingsPage({
 }: {
   params: { workspaceSlug: string };
 }) {
-  return redirect(`/app/${params.workspaceSlug}/settings/general`);
+  const prefix = getPathnamePrefix();
+  return redirect(`${prefix}/${params.workspaceSlug}/settings/general`);
 }

@@ -7,12 +7,14 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import { api } from "@/trpc/client";
 
 export function ProBanner() {
   const [hidden, setHidden] = useState(true);
   const params = useParams();
   const workspaceSlug = params?.workspaceSlug;
+  const prefix = getPathnamePrefix();
 
   function onClick() {
     if (document) {
@@ -61,7 +63,10 @@ export function ProBanner() {
         Unlock custom domains, teams, 1 min. checks and more.
       </p>
       <Button variant="secondary" size="sm" asChild>
-        <Link href={`/app/${workspaceSlug}/settings/billing`} className="group">
+        <Link
+          href={`${prefix}/${workspaceSlug}/settings/billing`}
+          className="group"
+        >
           <span className="mr-0.5">Upgrade</span>{" "}
           <ArrowRight className="relative inline h-4 w-0 transition-all group-hover:w-4" />
           <ChevronRight className="relative inline h-4 w-4 transition-all group-hover:w-0" />

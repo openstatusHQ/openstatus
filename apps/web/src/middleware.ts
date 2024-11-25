@@ -44,7 +44,9 @@ const publicAppPaths = [
 ];
 
 // remove auth middleware if needed
-// export const middleware = () => NextResponse.next();
+// export default function middleware() {
+//   return NextResponse.next();
+// }
 
 export default auth(async (req) => {
   const url = req.nextUrl.clone();
@@ -55,19 +57,22 @@ export default auth(async (req) => {
 
   const host = req.headers.get("host");
   const subdomain = getValidSubdomain(host);
+  const isAppSubdomain = subdomain && subdomain === "app";
 
   // Rewriting to status page!
-  if (subdomain) {
+  if (subdomain && !isAppSubdomain) {
     url.pathname = `/status-page/${subdomain}${url.pathname}`;
     return NextResponse.rewrite(url);
   }
 
   const pathname = req.nextUrl.pathname;
 
-  const isPublicAppPath = publicAppPaths.some((path) =>
-    pathname.startsWith(path),
+  const prefix = isAppSubdomain ? "" : "/app";
+  const isPublicAppPath = publicAppPaths.some(
+    (path) => pathname.startsWith(path) || `/app${pathname}`.startsWith(path),
   );
 
+  // If user is not authenticated and has been invited, we redirect to login page first
   if (!req.auth && pathname.startsWith("/app/invite")) {
     return NextResponse.redirect(
       new URL(
@@ -77,6 +82,7 @@ export default auth(async (req) => {
     );
   }
 
+  // If user is not authenticated and is trying to access a private app path, redirect to login page
   if (!req.auth && pathname.startsWith("/app") && !isPublicAppPath) {
     return NextResponse.redirect(
       new URL(
@@ -119,7 +125,7 @@ export default auth(async (req) => {
           const firstWorkspace = allowedWorkspaces[0].workspace;
           const { slug } = firstWorkspace;
           return NextResponse.redirect(
-            new URL(`/app/${slug}/monitors`, req.url),
+            new URL(`${prefix}/${slug}/monitors`, req.url),
           );
         }
       }

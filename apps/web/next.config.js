@@ -66,16 +66,32 @@ const nextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [
+      afterFiles: [
         {
           source: "/:path*",
           has: [
             {
               type: "host",
-              value: "app.openstatus.dev",
+              value:
+                process.env.NODE_ENV === "production"
+                  ? "app.openstatus.dev"
+                  : "app.localhost",
             },
           ],
           destination: "/app/:path*",
+        },
+        {
+          source: "/app/api/:path*", // ensure the API paths are mapped correctly
+          has: [
+            {
+              type: "host",
+              value:
+                process.env.NODE_ENV === "production"
+                  ? "app.openstatus.dev"
+                  : "app.localhost",
+            },
+          ],
+          destination: "/api/:path*",
         },
       ],
     };
