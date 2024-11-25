@@ -73,13 +73,13 @@ const nextConfig = {
             {
               type: "host",
               value: "app.openstatus.dev",
-            }
+            },
           ],
-          destination: "/app/:path*"
-        }
-      ]
-    }
-  }
+          destination: "/app/:path*",
+        },
+      ],
+    };
+  },
 };
 
 module.exports = withSentryConfig(
