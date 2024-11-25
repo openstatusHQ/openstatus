@@ -2,8 +2,8 @@
 
 import * as React from "react";
 
-import { Icons, ValidIcon } from "@openstatus/ui";
 import { cn, copyToClipboard } from "@/lib/utils";
+import { Icons, type ValidIcon } from "@openstatus/ui";
 
 // TODO: make a generic copy to clipboard button
 
@@ -39,7 +39,7 @@ export function CopyToClipboardButton({
       type="button"
       onClick={() => {
         copyToClipboard(
-          typeof copyValue === "function" ? copyValue() : copyValue
+          typeof copyValue === "function" ? copyValue() : copyValue,
         );
         setHasCopied(true);
       }}

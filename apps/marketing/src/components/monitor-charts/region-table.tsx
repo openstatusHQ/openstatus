@@ -9,8 +9,8 @@ import {
 } from "@openstatus/ui";
 import { flyRegionsDict } from "@openstatus/utils";
 
-import { formatNumber } from "@/lib/utils";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
+import { formatNumber } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { SimpleChart } from "./simple-chart";
 

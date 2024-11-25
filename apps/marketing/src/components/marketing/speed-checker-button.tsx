@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@openstatus/ui";
-import Link from "next/link";
 import { Icons } from "@openstatus/ui";
+import Link from "next/link";
 
 export function SpeedCheckerButton({ className, ...props }: ButtonProps) {
   return (

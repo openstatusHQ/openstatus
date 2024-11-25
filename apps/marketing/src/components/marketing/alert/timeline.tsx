@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils";
 import type { ValidIcon } from "@openstatus/ui";
 import { Icons } from "@openstatus/ui";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import type { ReactNode } from "react";
 
@@ -29,7 +29,7 @@ export function TimelineEvent({
         <div
           className={cn(
             "rounded-full border bg-background p-2",
-            icon.borderColor
+            icon.borderColor,
           )}
         >
           <Icon className={cn("h-4 w-4", icon.textColor)} />

@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Button } from "@openstatus/ui/src/components/button";
 
-import type { ValidIcon } from "@openstatus/ui";
 import {
   CardContainer,
   CardFeature,
@@ -10,6 +9,7 @@ import {
   CardIcon,
   CardTitle,
 } from "@/components/marketing/card";
+import type { ValidIcon } from "@openstatus/ui";
 
 const features: {
   icon: ValidIcon;

@@ -149,7 +149,7 @@ export const Bar = ({
       prev +
       Math.abs(
         (curr.resolvedAt?.getTime() || new Date().getTime()) -
-          curr.startedAt?.getTime()
+          curr.startedAt?.getTime(),
       )
     );
   }, 0);
@@ -302,7 +302,7 @@ export function DowntimeText({
       Downtime for{" "}
       {formatDuration(
         { minutes, hours, days },
-        { format: ["days", "hours", "minutes", "seconds"], zero: false }
+        { format: ["days", "hours", "minutes", "seconds"], zero: false },
       )}
     </p>
   );

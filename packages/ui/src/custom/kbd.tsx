@@ -16,7 +16,7 @@ const kbdVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export interface KbdProps
@@ -48,7 +48,7 @@ const Kbd = React.forwardRef<HTMLUnknownElement, KbdProps>(
         )}
       </kbd>
     );
-  }
+  },
 );
 Kbd.displayName = "Kbd";
 

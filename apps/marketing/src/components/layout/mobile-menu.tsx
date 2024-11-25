@@ -23,8 +23,8 @@ import { marketingPagesConfig } from "@/config/pages";
 import { socialsConfig } from "@/config/socials";
 import { useWindowScroll } from "@/hooks/use-window-scroll";
 import { cn } from "@/lib/utils";
-import Link, { type LinkProps } from "next/link";
 import { Icons, type ValidIcon } from "@openstatus/ui";
+import Link, { type LinkProps } from "next/link";
 import { LoginButton } from "./login-button";
 import { SocialIconButton } from "./social-icon-button";
 
@@ -131,7 +131,7 @@ const ListItem = React.forwardRef<
         ref={ref}
         className={cn(
           "flex select-none items-center gap-2 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-          className
+          className,
         )}
         {...props}
       >
@@ -154,7 +154,7 @@ const ListItemSingle = React.forwardRef<
         ref={ref}
         className={cn(
           "flex flex-1 items-center justify-between border-b py-4 font-medium transition-all hover:underline",
-          className
+          className,
         )}
         target={isExternal ? "_blank" : undefined}
         {...props}

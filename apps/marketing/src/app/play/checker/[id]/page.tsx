@@ -10,6 +10,10 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
+import {
+  CopyToClipboardButton,
+  getCurrentLink,
+} from "@/components/speed-checker/copy-to-clipboard-button";
 import { MultiRegionTabs } from "@/components/speed-checker/multi-region-tabs";
 import {
   getCheckerDataById,
@@ -17,10 +21,6 @@ import {
 } from "@/components/speed-checker/utils";
 import { Shell } from "@openstatus/ui";
 import { searchParamsCache } from "./search-params";
-import {
-  CopyToClipboardButton,
-  getCurrentLink,
-} from "@/components/speed-checker/copy-to-clipboard-button";
 
 interface Props {
   params: { id: string };

@@ -9,7 +9,7 @@ import { PricingTable } from "./pricing-table";
 export function PricingWrapper() {
   const [plan, setPlan] = useQueryState(
     "plan",
-    parseAsStringLiteral(workspacePlans).withDefault("team")
+    parseAsStringLiteral(workspacePlans).withDefault("team"),
   );
   return (
     <div>

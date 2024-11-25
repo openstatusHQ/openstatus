@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
-import { type VariantProps, cva } from "class-variance-authority";
 import { Icons, type ValidIcon } from "@openstatus/ui";
+import { type VariantProps, cva } from "class-variance-authority";
 
 function getIconName(variant: CalloutProps["variant"]): ValidIcon {
   switch (variant) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { SimpleChart } from "@/components/monitor-charts/simple-chart";
-import { formatNumber } from "@/lib/utils";
 import type { ResponseTimeMetricsByRegion } from "@/lib/tb";
+import { formatNumber } from "@/lib/utils";
 import type { Region } from "@openstatus/db/src/schema/constants";
 import { flyRegionsDict } from "@openstatus/utils";
 import type { ColumnDef } from "@tanstack/react-table";

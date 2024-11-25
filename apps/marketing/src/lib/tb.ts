@@ -83,7 +83,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
 
 export function prepareMetricByRegionByPeriod(
   period: Period,
-  type: Type = "http"
+  type: Type = "http",
 ) {
   switch (period) {
     case "1d": {
@@ -119,7 +119,7 @@ export function prepareMetricByRegionByPeriod(
 
 export function prepareMetricByIntervalByPeriod(
   period: Period,
-  type: Type = "http"
+  type: Type = "http",
 ) {
   switch (period) {
     case "1d": {
@@ -155,7 +155,7 @@ export function prepareMetricByIntervalByPeriod(
 
 export function prepareStatusByPeriod(
   period: "7d" | "45d",
-  type: Type = "http"
+  type: Type = "http",
 ) {
   switch (period) {
     case "7d": {

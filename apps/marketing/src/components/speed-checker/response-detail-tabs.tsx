@@ -1,9 +1,9 @@
 import type { Assertion } from "@openstatus/assertions";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import { ResponseAssertion } from "./response-assertion";
 import { ResponseHeaderTable } from "./response-header-table";
 import { ResponseTimingTable } from "./response-timing-table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 import type { Timing } from "./utils";
 
 export function ResponseDetailTabs({

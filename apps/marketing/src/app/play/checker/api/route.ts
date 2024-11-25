@@ -41,7 +41,7 @@ async function* makeIterator({
         `${JSON.stringify({
           ...check,
           index,
-        })}\n`
+        })}\n`,
       );
     } catch (error) {
       console.error(error);

@@ -5,23 +5,23 @@ import { usePathname } from "next/navigation";
 
 import {
   Icons,
-  type ValidIcon,
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
+  type ValidIcon,
   navigationMenuTriggerStyle,
 } from "@openstatus/ui";
 
 import { marketingPagesConfig } from "@/config/pages";
 import { cn } from "@/lib/utils";
+import { ArrowUpRight } from "lucide-react";
 import * as React from "react";
 import { BrandName } from "./brand-name";
 import { LoginButton } from "./login-button";
 import { MobileMenu } from "./mobile-menu";
-import { ArrowUpRight } from "lucide-react";
 
 interface Props {
   className?: string;
@@ -34,7 +34,7 @@ export function Header({ className }: Props) {
     <header
       className={cn(
         "sticky top-3 z-10 flex w-full items-center justify-between gap-8 rounded-full border border-border px-2.5 py-1.5 backdrop-blur-lg md:top-6",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-6">
@@ -43,7 +43,7 @@ export function Header({ className }: Props) {
         </div>
         <div
           className={cn(
-            "mx-auto hidden items-center justify-center border border-transparent md:flex md:gap-1"
+            "mx-auto hidden items-center justify-center border border-transparent md:flex md:gap-1",
           )}
         >
           <NavigationMenu>
@@ -59,7 +59,7 @@ export function Header({ className }: Props) {
                           className={cn(
                             navigationMenuTriggerStyle(),
                             "h-9 rounded-full bg-transparent text-muted-foreground hover:bg-accent/50",
-                            { "text-foreground": href === pathname }
+                            { "text-foreground": href === pathname },
                           )}
                           target={isExternal ? "_blank" : undefined}
                         >
@@ -129,7 +129,7 @@ const ListItem = React.forwardRef<
           ref={ref}
           className={cn(
             "flex select-none gap-3 space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
+            className,
           )}
           {...props}
         >
