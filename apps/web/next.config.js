@@ -64,6 +64,22 @@ const nextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/:path*",
+          has: [
+            {
+              type: "host",
+              value: "app.openstatus.dev",
+            },
+          ],
+          destination: "/app/:path*",
+        },
+      ],
+    };
+  },
 };
 
 module.exports = withSentryConfig(
