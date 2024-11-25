@@ -3,6 +3,8 @@ import { z } from "zod";
 import { flyRegions } from "../../db/src/schema/constants";
 import { headersSchema, timingSchema, triggers } from "./schema";
 
+const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
+
 export class OSTinybird {
   private readonly tb: Client;
 
@@ -314,7 +316,11 @@ export class OSTinybird {
         count: z.number().default(0),
         ok: z.number().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: {
+        next: {
+          revalidate: PUBLIC_CACHE,
+        },
+      },
     });
   }
 
@@ -655,7 +661,11 @@ export class OSTinybird {
         count: z.number().default(0),
         ok: z.number().default(0),
       }),
-      opts: { cache: "no-store" },
+      opts: {
+        next: {
+          revalidate: PUBLIC_CACHE,
+        },
+      },
     });
   }
 
