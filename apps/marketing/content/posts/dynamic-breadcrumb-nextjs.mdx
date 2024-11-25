@@ -1,0 +1,224 @@
+---
+title: Dynamic Breadcrumb in Next.js with Parallel Routes
+description:
+    Learn how to create a dynamic breadcrumb in Next.js with parallel routes.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+publishedAt: 2024-08-19
+image: /assets/posts/dynamic-breadcrumb-nextjs/breadcrumb.png
+---
+
+In this post, we'll dive into the process of creating dynamic breadcrumbs in Next.js using parallel routes. Our goal is to build a breadcrumb component that automatically updates based on the current page and its hierarchy, all while leveraging server-side rendering for optimal performance.
+
+## Introduction
+
+Breadcrumbs are an essential navigation aid in web applications, helping users understand their current location within a site's hierarchy. With Next.js 13's introduction of parallel routes, we have new tools to create more dynamic and flexible navigation structures.
+
+
+You can find the complete, working example for this tutorial on [GitHub](https://github.com/openstatusHQ/nextjs-dynamic-breadcrumb/). The project uses Next.js 15 and demonstrates the implementation of parallel routes alongside our dynamic breadcrumb.
+
+
+## The Challenge
+
+We're building a website that showcases a catalog of dogs and cats. Our primary challenge is to create a breadcrumb that adapts to the user's current location within the site structure.
+
+### Project Structure
+
+Our repository is organized as follows:
+
+
+```
+src/
+    app/
+        about/
+            page.tsx
+        cats/
+            page.tsx
+            [id]/
+                page.tsx
+        dogs/
+            page.tsx
+            [id]/
+                page.tsx
+```
+
+
+### Desired Breadcrumb Behavior
+
+
+1. On the homepage:
+
+`Home`
+
+2. On pet pages (e.g., Dogs or Cats):
+
+`Home > Dogs` or `Home > Cats`
+
+3. On individual pet pages:
+
+Here we only have the pet id, so we need to fetch the pet name from the server side and display it in the breadcrumb.
+
+`Home > Dogs > Dog Name`
+
+The key is to fetch the necessary data on the server side and dynamically update the breadcrumb based on the current route instead of displaying the pet id.
+
+
+
+### Parallel route 🚀
+
+[Parallel routes](https://nextjs.org/docs/app/building-your-application/routing/parallel-routes) in Next.js allow us to render multiple pages in the same layout simultaneously. This feature is particularly useful for our breadcrumb implementation as it allows us to maintain a consistent navigation structure across different page types.
+
+
+#### Homepage
+
+In our root layout  we will use slot to render the breadcrumb component.
+
+```tsx
+export default function RootLayout({
+	breadcrumb,
+	children,
+}: Readonly<{
+	breadcrumb: React.ReactNode;
+	children: React.ReactNode;
+}>) {
+	return (
+		<html lang="en">
+			<body>
+				{breadcrumb}
+				{children}
+			</body>
+		</html>
+	);
+}
+```
+
+We need to create a new folder `@breadcrumb` in the `app` folder
+
+Here we create a new file `page.tsx` that will be responsible for rendering the breadcrumb.
+
+```tsx
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+} from "@/components/ui/breadcrumb";
+
+export default function BreadcrumbSlot() {
+	return (
+		<Breadcrumb>
+			<BreadcrumbList>
+				<BreadcrumbItem>
+					<BreadcrumbLink href="/">Home</BreadcrumbLink>
+				</BreadcrumbItem>
+			</BreadcrumbList>
+		</Breadcrumb>
+	);
+}
+```
+
+#### Pet pages
+
+We also want to create a catch all components for the dynamic routes in the `app` folder, to achieve this we need to create a new file `page.tsx` in the `@breadcrumb/[...all]` folder.
+
+```tsx
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import React from "react";
+import type { ReactElement } from "react";
+
+export default function BreadcrumbSlot({
+	params,
+}: { params: { all: string[] } }) {
+	const breadcrumbItems: ReactElement[] = [];
+	let breadcrumbPage: ReactElement = <></>;
+	for (let i = 0; i < params.all.length; i++) {
+		const route = params.all[i];
+		const href = `/${params.all.at(0)}/${route}`;
+		if (i === params.all.length - 1) {
+			breadcrumbPage = (
+				<BreadcrumbItem>
+					<BreadcrumbPage className="capitalize">{route}</BreadcrumbPage>
+				</BreadcrumbItem>
+			);
+		} else {
+			breadcrumbItems.push(
+				<React.Fragment key={href}>
+					<BreadcrumbItem>
+						<BreadcrumbLink href={href} className="capitalize">
+							{route}
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+				</React.Fragment>,
+			);
+		}
+	}
+
+	return (
+		<Breadcrumb>
+			<BreadcrumbList>
+				<BreadcrumbItem>
+					<BreadcrumbLink href="/">Home</BreadcrumbLink>
+				</BreadcrumbItem>
+				{breadcrumbItems}
+				<BreadcrumbSeparator />
+				{breadcrumbPage}
+			</BreadcrumbList>
+		</Breadcrumb>
+	);
+}
+```
+This code was taken from the [Jeremy's post](https://jeremykreutzbender.com/blog/app-router-dynamic-breadcrumbs) about dynamic breadcrumbs in Next.js.
+
+#### Dogs and Cats pages
+
+We need to create a new file `page.tsx` in the `@breadcrumb/dogs/[id]` folder, we must follow the exact same structure as our specific pet pages.
+In this component we will fetch the pet name from the server side and display it in the breadcrumb.
+
+```tsx
+
+import {
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+
+export default async function BreadcrumbSlot({params}: {params: {id: string}}) {
+	// Fetch our cat information from the database
+	const cat = await fetchCat({id: params.id});
+
+	return (
+		<BreadcrumbList>
+			<BreadcrumbItem>
+				<BreadcrumbLink href="/">Home</BreadcrumbLink>
+			</BreadcrumbItem>
+			<BreadcrumbSeparator />
+			<BreadcrumbItem>
+				<BreadcrumbLink href="/cats">Cats</BreadcrumbLink>
+			</BreadcrumbItem>
+			<BreadcrumbSeparator />
+			<BreadcrumbItem>
+				<BreadcrumbPage className="capitalize">{cat.name}</BreadcrumbPage>
+			</BreadcrumbItem>
+		</BreadcrumbList>
+	);
+}
+```
+
+
+## Conclusion
+
+By leveraging Next.js parallel routes and server-side rendering, we've created a dynamic breadcrumb component that updates based on the current route and fetches data efficiently on the server side. This approach provides a smooth user experience while maintaining good performance.
+
+Remember to check out the full working example on [GitHub](https://github.com/openstatusHQ/nextjs-dynamic-breadcrumb/) to see how all the pieces fit together in a Next.js 15 project.
+
+Happy coding!

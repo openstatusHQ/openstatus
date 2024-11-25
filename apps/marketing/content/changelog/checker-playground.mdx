@@ -1,0 +1,35 @@
+---
+title: Checker Playground
+description:
+  Experience the performance of your application from different regions.
+image: /assets/changelog/checker-playground.png
+publishedAt: 2024-01-20
+---
+
+You can now test your API or website from multiple regions around the world and
+experience the performance of your application from the different continents.
+
+Learn more about `dns`, `tls`, `ttfb` and more metrics that are collected by the
+checker.
+
+Go to the **[Playground](/play/checker)** to test your endpoint.
+
+But there is more: use the `https://checker.openstatus.dev/ping` API endpoint to
+get the metrics by yourself.
+
+For example:
+
+```bash
+curl --request POST \
+  --url https://checker.openstatus.dev/ping/ams \
+  --header 'Content-Type: application/json' \
+  --header 'x-openstatus-key: <YOUR_API_KEY>' \
+  --header 'prefer-fly-region: ams' \
+  --data '{
+  "url": "https://api.openstatus.dev/ping",
+  "method": "GET"
+}'
+```
+
+Read more about the
+[Checker API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor/:id/run) in our docs.

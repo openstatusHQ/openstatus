@@ -1,12 +1,12 @@
 import { cn } from "../lib/utils";
-import { Button } from "./button";
-import type { ButtonProps } from "./button";
+import { Button } from "../components/button";
+import type { ButtonProps } from "../components/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./tooltip";
+} from "../components/tooltip";
 
 interface ButtonWithDisableTooltipProps extends ButtonProps {
   tooltip: string;

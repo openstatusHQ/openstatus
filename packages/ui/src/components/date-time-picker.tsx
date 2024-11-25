@@ -21,7 +21,7 @@ export function DateTimePicker({
   className,
 }: DateTimePickerProps) {
   const [selectedDateTime, setSelectedDateTime] = React.useState<DateTime>(
-    DateTime.fromJSDate(date),
+    DateTime.fromJSDate(date)
   );
 
   const handleSelect: SelectSingleEventHandler = (_day, selected) => {

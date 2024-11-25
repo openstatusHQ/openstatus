@@ -1,0 +1,132 @@
+---
+title: Why we migrated our backend from Vercel to Fly.io.
+description:
+  Learn why we switched from Vercel to Fly.io for our backend and the challenges
+  we encountered.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+publishedAt: 2023-10-29
+image: /assets/posts/migration-backend-from-vercel-to-fly/fly.png
+---
+
+In this article, we are going to see the reasons that made us change our backend
+to Fly.io and the challenges we had during the migrations.
+
+We chose [Hono](https://hono.dev/) as our API server with [Bun](https://bun.sh/)
+as the runtime and picked Fly.io as our hosting service.
+
+## 🤔 Why did we want to move our backend from Vercel?
+
+### ⚡ A lightweight Server
+
+We required a lightweight server with a simple REST API for our monitoring
+endpoint. Deploying a simple Express server is possible, but it is not
+specifically designed for this purpose.
+
+`It's possible to deploy an Express.js application as a single Serverless Function, but it comes with drawbacks and should only be used as a migration path. Instead, use Next.js or embrace multiple Serverless Functions as you incrementally migrate to the Vercel platform.`
+
+[Source Vercel Doc](https://vercel.com/guides/using-express-with-vercel)
+
+Also launching a clean and new Next.js server takes 2.5 seconds on my MacBook
+Pro M1 and takes 110mb of RAM, and it includes unnecessary extra features from
+Next.js. Our prod Next.js app takes about 5 seconds to launch on my computer
+(contentlayer).
+
+<Image
+  alt="Next server"
+  src="/assets/posts/migration-backend-from-vercel-to-fly/next-server.png"
+  width={650}
+  height={200}
+/>
+
+For comparaison launching our current server takes 0.19ms and only takes 91mb.
+Our current server stack is Hono + Bun.
+
+<Image
+  alt="Hono server"
+  src="/assets/posts/migration-backend-from-vercel-to-fly/hono-server.png"
+  width={650}
+  height={575}
+/>
+
+### 💸 Pricing
+
+We initially aimed to provide multi-region monitoring for all users while
+maintaining a free tier. On Vercel, if you want a multi-region function, you
+need to opt for Edge Functions. Edge functions are cost-effective as you only
+pay for the actual CPU execution. This means that you won't be billed for idle
+times when fetching data.
+
+It's still affordable, but we are a bootstrap business and it difficult for us
+to predict our monthly expenses. If we experience an increase in new users, our
+costs will also increase accordingly.
+
+Here's the math for the cost of one monitor for a user:
+
+```
+6 (10 min monitors) * 24 * 30 * 3 (average execution unit per monitor) * 6 (number of regions) = 77,760 executions units per month
+
+77,600 * (2/1,000,000) = 0.15c per monitor monthly
+```
+
+We have over 1000 monitors, and the monthly cost to run them would be $150.
+
+While on fly we only have 6 servers with 2vcpu/512Mb It cost us $23.34 monthly
+($3.89\*6).
+
+## 🤯 What challenges did we face during our migrations?
+
+### Docker + monorepo = 🪨
+
+We are deploying to fly.io. We have to setup our app as a Docker image. Our apps
+is in a monorepo. Our initial image was over 2 GB in size, which was excessively
+large for a basic server.
+
+Our image included everything, which was inefficient. After optimizing, our
+image now occupies only 700MB. Although it is still somewhat large, it is a
+significant improvement over our initial version.
+
+It was something we never had to manage with Vercel deployment.
+
+### ⏳ Fly deployment timed
+
+Our Fly deployments have been experiencing frequent timeouts without any
+specific reason. The only solution we have discovered is to increase the timeout
+duration.
+
+```
+flyctl deploy --wait-timeout=500
+```
+
+Based on our experience, Fly deployments are generally less reliable compared
+(more timed out) to Vercel deployments. Additionally, we have not discovered a
+quick method to rollback to the previous version.
+
+### 🐛 The Bun bug
+
+When we migrated to Fly, we decided to use Bun as our runtime. However, in the
+first few hours after the migration, we observed an unexplained increase in
+request failures.
+
+After digging into the Bun GitHub we found a solution: We needed to set the
+`keepalive` parameter to `false`. This is necessary because closed connections
+are not automatically removed and remain in the ﻿`CLOSE_WAIT` state.
+
+Here's the GitHub issue:
+
+https://github.com/oven-sh/bun/issues/3327
+
+I wish it had been documented elsewhere.
+
+## Our conclusion
+
+We are pleased with our migration to Fly.io, although it was accompanied by a
+challenging weekend. And we still love Vercel, they offer a super product, it
+removes a lot of pain for the developers. However, if you require a hosting an
+application other than Next.js, it may not be the best option.
+
+We are still using it for our frontend.
+
+Create an account on [OpenStatus](https://www.openstatus.dev/app/login?ref=blog3)
+to start monitoring our website and managing your incidents for free.

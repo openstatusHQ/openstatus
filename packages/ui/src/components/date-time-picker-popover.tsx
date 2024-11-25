@@ -7,11 +7,11 @@ import * as React from "react";
 import type { SelectSingleEventHandler } from "react-day-picker";
 
 import { cn } from "../lib/utils";
-import { Button } from "./button";
-import { Calendar } from "./calendar";
-import { Input } from "./input";
-import { Label } from "./label";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { Button } from "../components/button";
+import { Calendar } from "../components/calendar";
+import { Input } from "../components/input";
+import { Label } from "../components/label";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/popover";
 
 interface DateTimePickerProps {
   date: Date;
@@ -25,7 +25,7 @@ export function DateTimePickerPopover({
   className,
 }: DateTimePickerProps) {
   const [selectedDateTime, setSelectedDateTime] = React.useState<DateTime>(
-    DateTime.fromJSDate(date),
+    DateTime.fromJSDate(date)
   );
 
   const handleSelect: SelectSingleEventHandler = (_day, selected) => {
@@ -57,7 +57,7 @@ export function DateTimePickerPopover({
           className={cn(
             "w-[280px] justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            className,
+            className
           )}
           suppressHydrationWarning // because timestamp is not same, server and client
         >

@@ -35,8 +35,8 @@ import type { SlotProps } from "@radix-ui/react-slot";
 
 import { composeRefs } from "../lib/compose-refs";
 import { cn } from "../lib/utils";
-import { Button } from "./button";
-import type { ButtonProps } from "./button";
+import { Button } from "../components/button";
+import type { ButtonProps } from "../components/button";
 
 interface SortableProps<TData extends { id: UniqueIdentifier }>
   extends DndContextProps {
@@ -117,7 +117,7 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor),
-    useSensor(KeyboardSensor),
+    useSensor(KeyboardSensor)
   );
 
   return (
@@ -225,7 +225,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         attributes,
         listeners,
       }),
-      [attributes, listeners],
+      [attributes, listeners]
     );
     const style: React.CSSProperties = {
       opacity: isDragging ? 0.4 : undefined,
@@ -245,7 +245,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
         />
       </SortableItemContext.Provider>
     );
-  },
+  }
 );
 SortableItem.displayName = "SortableItem";
 

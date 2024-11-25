@@ -1,0 +1,16 @@
+---
+title: Golang monitor checker
+description: Stability improvement for the endpoint health checker.
+image: /assets/changelog/golang-monitor-checker.png
+publishedAt: 2023-12-02
+---
+
+The endpoint health checker has been improved to be more stable and reliable
+with [Go](https://go.dev). In the past, we have been experiencing missing data
+endpoints and longer request times for some `regions`.
+
+In addition to that, we have renamed the **Incidents** to **Status Reports** to
+easily distinguish between internal incidents and external reports.
+
+> The API endpoint has also moved from `/v1/incidents` to `/v1/status_reports`.
+> Read more in the [docs](https://docs.openstatus.dev/incident/overview).
