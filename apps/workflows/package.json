@@ -14,7 +14,6 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
-    "@openstatus/assertions": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/bun": "latest"
   }

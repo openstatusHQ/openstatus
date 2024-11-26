@@ -5,6 +5,10 @@ on:
       - main
     paths:
       - "apps/workflows/**"
+      - "packages/db/**"
+      - "packages/emails/**"
+      - "packages/utils/**"
+      - "packages/tsconfig/**"
 jobs:
   deploy-workflows:
     name: Deploy Workflows
