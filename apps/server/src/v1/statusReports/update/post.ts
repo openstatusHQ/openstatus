@@ -7,7 +7,7 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { sendBatchEmailHtml } from "@openstatus/emails/emails/send";
+import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";

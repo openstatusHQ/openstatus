@@ -1,4 +1,4 @@
-"use client";
+/** @jsxImportSource react */
 
 import {
   Body,

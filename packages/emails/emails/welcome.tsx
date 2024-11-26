@@ -1,3 +1,5 @@
+/** @jsxImportSource react */
+
 import { Body, Head, Html, Link, Preview } from "@react-email/components";
 
 const WelcomeEmail = () => {
