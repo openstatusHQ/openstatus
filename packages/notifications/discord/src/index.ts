@@ -114,7 +114,7 @@ export const sendTestDiscordMessage = async (webhookUrl: string) => {
   }
   try {
     await postToWebhook(
-      "**🧪 Test [OpenStatus](<https://www.openstatus.dev/>)**\nIf you can read this, your Slack webhook is functioning correctly!\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n",
+      "**🧪 Test [OpenStatus](<https://www.openstatus.dev/>)**\nIf you can read this, your Discord webhook is functioning correctly!\n> Check your [Dashboard](<https://www.openstatus.dev/app/>).\n",
       webhookUrl,
     );
     return true;
