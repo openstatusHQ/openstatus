@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 import { Button, Input, Label } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { getPathnamePrefix } from "@/lib/pathname-prefix/client";
 import { toast, toastAction } from "@/lib/toast";
 import { signInWithResendAction } from "./actions";
 
@@ -13,6 +14,7 @@ import { signInWithResendAction } from "./actions";
  */
 export default function MagicLinkForm() {
   const { pending } = useFormStatus();
+  const prefix = getPathnamePrefix();
 
   return (
     <form
@@ -26,6 +28,7 @@ export default function MagicLinkForm() {
       }}
       className="grid gap-2"
     >
+      <input type="hidden" name="redirectTo" value={`${prefix}/login`} />
       <div className="grid gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" required />
