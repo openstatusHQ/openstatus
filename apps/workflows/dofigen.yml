@@ -40,7 +40,7 @@ builders:
     # Compile the TypeScript application
     env:
       NODE_ENV: production
-    run: bun build --compile --sourcemap src/index.ts --outfile=app
+    run: bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
 fromImage: debian:bullseye-slim
 copy:
   - fromBuilder: build

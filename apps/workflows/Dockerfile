@@ -3,7 +3,7 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e AS install
+FROM oven/bun@sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3 AS install
 WORKDIR /app/
 RUN \
     --mount=type=bind,target=package.json,source=package.json \
@@ -17,7 +17,7 @@ RUN \
     bun install --production --ignore-scripts --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e AS build
+FROM oven/bun@sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3 AS build
 ENV NODE_ENV="production"
 WORKDIR /app/apps/workflows
 COPY \
@@ -27,10 +27,10 @@ COPY \
     --from=install \
     --link \
     "/app/node_modules" "/app/node_modules"
-RUN bun build --compile --sourcemap src/index.ts --outfile=app
+RUN bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
 
 # runtime
-FROM debian@sha256:610b4c7ad241e66f6e2f9791e3abdf0cc107a69238ab21bf9b4695d51fd6366a AS runtime
+FROM debian@sha256:60a596681410bd31a48e5975806a24cd78328f3fd6b9ee5bc64dca6d46a51f29 AS runtime
 COPY \
     --from=build \
     --chown=1000:1000 \
