@@ -14,6 +14,7 @@ import {
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Background from "./_components/background";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -46,13 +47,15 @@ export default function RootLayout({
           // biome-ignore lint/nursery/useSortedClasses: <explanation>
         } ${calSans.variable}`}
       >
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <TRPCReactQueryProvider>
-            <Background>{children}</Background>
-            <Toaster richColors closeButton />
-            <TailwindIndicator />
-          </TRPCReactQueryProvider>
-        </ThemeProvider>
+        <NuqsAdapter>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <TRPCReactQueryProvider>
+              <Background>{children}</Background>
+              <Toaster richColors closeButton />
+              <TailwindIndicator />
+            </TRPCReactQueryProvider>
+          </ThemeProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );
