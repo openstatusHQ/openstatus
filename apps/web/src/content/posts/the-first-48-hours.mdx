@@ -29,7 +29,7 @@ issues and took action.
 We conducted a DDOS attack on Vercel's firewalls from Upstash servers because we
 where pining every single vercel region for every monitor (18 \* 315 = 5.670)
 more or less at once. Before considering the removal of
-[QStash](http://upstash.com/qstash?ref=openstatus), we implemented a hotfix to
+[QStash](https://upstash.com/qstash?ref=openstatus), we implemented a hotfix to
 introduce random delays of 0 to 180 seconds between each ping. This prevented us
 from overwhelming Vercel with simultaneous requests, significantly reducing the
 number of retries on QStash. As a result of these measures, we now have a
