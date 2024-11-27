@@ -1,26 +1,29 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
+  "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "*",
+        "\\*",
         "RESEND_API_KEY",
-        "!NEXT_PUBLIC_GIT_*",
+        "\\!NEXT_PUBLIC_GIT_\\*",
         "DATABASE_URL",
+        "DATABASE_AUTH_TOKEN",
         "TINY_BIRD_API_KEY",
         "NODE_ENV",
         "VERCEL_URL",
+        "BLOB_READ_WRITE_TOKEN",
         "TEAM_ID_VERCEL",
         "PROJECT_ID_VERCEL",
         "STRIPE_SECRET_KEY",
         "UNKEY_TOKEN",
         "UNKEY_API_ID",
         "UPSTASH_REDIS_REST_URL",
-        "UPSTASH_REDIS_REST_TOKEN"
+        "UPSTASH_REDIS_REST_TOKEN",
+        "EXTERNAL_API_URL"
       ],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "./dist/**"]
     },
     "lint": {},
     "dev": {

@@ -16,7 +16,7 @@
     "@turbo/gen": "1.13.3",
     "@types/node": "20.8.0",
     "knip": "5.16.0",
-    "turbo": "1.13.3",
+    "turbo": "2.3.2",
     "typescript": "5.5.2"
   },
   "packageManager": "pnpm@9.1.4",
