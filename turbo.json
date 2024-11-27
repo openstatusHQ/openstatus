@@ -20,7 +20,7 @@
         "UPSTASH_REDIS_REST_URL",
         "UPSTASH_REDIS_REST_TOKEN"
       ],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "./dist/**"]
     },
     "lint": {},
     "dev": {
