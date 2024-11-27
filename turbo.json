@@ -23,7 +23,7 @@
         "UPSTASH_REDIS_REST_TOKEN",
         "EXTERNAL_API_URL"
       ],
-      "outputs": [".next/**", "!.next/cache/**", "./dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {},
     "dev": {
