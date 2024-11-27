@@ -366,8 +366,8 @@ importers:
         specifier: 0.2.1
         version: 0.2.1(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nuqs:
-        specifier: 1.19.1
-        version: 1.19.1(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
+        specifier: 2.2.3
+        version: 2.2.3(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1)
       posthog-js:
         specifier: 1.136.1
         version: 1.136.1
@@ -8820,10 +8820,20 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
-  nuqs@1.19.1:
-    resolution: {integrity: sha512-oixldNThB1wbu6B5K961++7wpTz/EZFPWnraGmIQhibDT+YxRJNplWMIoPJgL4dlsiSDVI5bbUWKpzsIWVh3Pg==}
+  nuqs@2.2.3:
+    resolution: {integrity: sha512-nMCcUW06KSqEXA0xp+LiRqDpIE59BVYbjZLe0HUisJAlswfihHYSsAjYTzV0lcE1thfh8uh+LqUHGdQ8qq8rfA==}
     peerDependencies:
-      next: '>=13.4 <14.0.2 || ^14.0.3'
+      '@remix-run/react': '>=2'
+      next: '>=14.2.0'
+      react: '>=18.2.0 || ^19.0.0-0'
+      react-router-dom: '>=6'
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      next:
+        optional: true
+      react-router-dom:
+        optional: true
 
   nypm@0.3.9:
     resolution: {integrity: sha512-BI2SdqqTHg2d4wJh8P9A1W+bslg33vOE9IZDY6eR2QC+Pu1iNBVZUqczrd43rJb+fMzHU7ltAYKsEFY/kHMFcw==}
@@ -13841,42 +13851,12 @@ snapshots:
 
   '@mdx-js/esbuild@3.1.0(esbuild@0.21.5)':
     dependencies:
-      '@mdx-js/mdx': 3.1.0
+      '@mdx-js/mdx': 3.1.0(acorn@8.14.0)
       '@types/unist': 3.0.2
       esbuild: 0.21.5
       source-map: 0.7.4
       vfile: 6.0.1
       vfile-message: 4.0.2
-    transitivePeerDependencies:
-      - acorn
-      - supports-color
-
-  '@mdx-js/mdx@3.1.0':
-    dependencies:
-      '@types/estree': 1.0.3
-      '@types/estree-jsx': 1.0.2
-      '@types/hast': 3.0.4
-      '@types/mdx': 2.0.9
-      collapse-white-space: 2.1.0
-      devlop: 1.1.0
-      estree-util-is-identifier-name: 3.0.0
-      estree-util-scope: 1.0.0
-      estree-walker: 3.0.3
-      hast-util-to-jsx-runtime: 2.3.2
-      markdown-extensions: 2.0.0
-      recma-build-jsx: 1.0.0
-      recma-jsx: 1.0.0
-      recma-stringify: 1.0.0
-      rehype-recma: 1.0.0
-      remark-mdx: 3.1.0
-      remark-parse: 11.0.0
-      remark-rehype: 11.1.0
-      source-map: 0.7.4
-      unified: 11.0.5
-      unist-util-position-from-estree: 2.0.0
-      unist-util-stringify-position: 4.0.0
-      unist-util-visit: 5.0.0
-      vfile: 6.0.1
     transitivePeerDependencies:
       - acorn
       - supports-color
@@ -20611,9 +20591,11 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
-  nuqs@1.19.1(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)):
+  nuqs@2.2.3(next@14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react@18.3.1):
     dependencies:
       mitt: 3.0.1
+      react: 18.3.1
+    optionalDependencies:
       next: 14.2.15(@opentelemetry/api@1.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
 
   nypm@0.3.9:
@@ -21464,16 +21446,6 @@ snapshots:
       '@types/estree': 1.0.3
       estree-util-build-jsx: 3.0.1
       vfile: 6.0.1
-
-  recma-jsx@1.0.0:
-    dependencies:
-      acorn-jsx: 5.3.2(acorn@8.11.3)
-      estree-util-to-js: 2.0.0
-      recma-parse: 1.0.0
-      recma-stringify: 1.0.0
-      unified: 11.0.5
-    transitivePeerDependencies:
-      - acorn
 
   recma-jsx@1.0.0(acorn@8.14.0):
     dependencies:
