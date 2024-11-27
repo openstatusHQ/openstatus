@@ -13,7 +13,7 @@ export const revalidate = 600;
 export default async function Page() {
   return (
     <MarketingLayout>
-      <div className="grid gap-8">
+      <div className="grid gap-12">
         <Hero />
         <Partners />
         <MonitoringCard />

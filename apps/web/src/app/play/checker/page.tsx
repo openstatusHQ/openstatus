@@ -47,13 +47,11 @@ export default async function PlayPage({
   if (id && !data) return redirect("/play/checker");
 
   return (
-    <div className="grid h-full w-full gap-12">
+    <div className="grid w-full gap-12">
       <CheckerPlay data={data} />
       <Testimonial />
       <GlobalMonitoring />
-      <div className="mx-auto max-w-2xl lg:max-w-4xl">
-        <BottomCTA />
-      </div>
+      <BottomCTA className="mx-auto max-w-2xl lg:max-w-4xl" />
     </div>
   );
 }
