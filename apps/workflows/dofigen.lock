@@ -16,7 +16,7 @@ effective: |
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e
+        digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -40,7 +40,7 @@ effective: |
     build:
       fromImage:
         path: oven/bun
-        digest: sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e
+        digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
       workdir: /app/apps/workflows
       env:
         NODE_ENV: production
@@ -53,10 +53,10 @@ effective: |
         - /app/node_modules
         target: /app/node_modules
       run:
-      - bun build --compile --sourcemap src/index.ts --outfile=app
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:610b4c7ad241e66f6e2f9791e3abdf0cc107a69238ab21bf9b4695d51fd6366a
+    digest: sha256:60a596681410bd31a48e5975806a24cd78328f3fd6b9ee5bc64dca6d46a51f29
   copy:
   - fromBuilder: build
     paths:
@@ -72,14 +72,14 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:610b4c7ad241e66f6e2f9791e3abdf0cc107a69238ab21bf9b4695d51fd6366a
+          digest: sha256:60a596681410bd31a48e5975806a24cd78328f3fd6b9ee5bc64dca6d46a51f29
     oven:
       bun:
         latest:
-          digest: sha256:e2c0b11e277f0285e089ffb77ad831faeec2833b9c4b04d6d317f054e587ef4e
+          digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
 resources:
   dofigen.yml:
-    hash: d232b15ff842b392611e64b97bf65d642ca573052072490c2f54ea2f4dc4481e
+    hash: f708205b6699a47937d4ce49a38a2aa1b3f5ed409b685c285603e9e1b5f9fea0
     content: |
       ignore:
         - node_modules
@@ -123,7 +123,7 @@ resources:
           # Compile the TypeScript application
           env:
             NODE_ENV: production
-          run: bun build --compile --sourcemap src/index.ts --outfile=app
+          run: bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
       fromImage: debian:bullseye-slim
       copy:
         - fromBuilder: build
