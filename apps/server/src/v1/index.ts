@@ -34,6 +34,13 @@ api.onError(handleError);
 
 api.use("/openapi", cors());
 
+api.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {
+  type: "apiKey",
+  in: "header",
+  name: "x-openstatus-key",
+  "x-openstatus-key": "string",
+});
+
 api.doc("/openapi", {
   openapi: "3.0.0",
   info: {
@@ -46,6 +53,11 @@ api.doc("/openapi", {
     description:
       "OpenStatus is a open-source synthetic monitoring tool that allows you to monitor your website and API's uptime, latency, and more. \n\n The OpenStatus API allows you to interact with the OpenStatus platform programmatically. \n\n To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.",
   },
+  security: [
+    {
+      ApiKeyAuth: [],
+    },
+  ],
 });
 
 api.get(
