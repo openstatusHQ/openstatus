@@ -90,7 +90,7 @@ export const MonitorSchema = z
       example: "1m",
       description: "How often the monitor should run",
     }),
-    url: z.string().url().openapi({
+    url: z.string().openapi({
       example: "https://www.documenso.co",
       description: "The url to monitor",
     }),
@@ -268,7 +268,7 @@ export const ResultRun = z.object({
   latency: z.number().int(), // in ms
   statusCode: z.number().int().nullable().default(null),
   monitorId: z.string().default(""),
-  url: z.string().url().optional(),
+  url: z.string().optional(),
   error: z
     .number()
     .default(0)
