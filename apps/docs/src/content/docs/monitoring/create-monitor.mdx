@@ -1,13 +1,28 @@
 ---
-title: How to create a monitor?
+title: How to create a synthetic check?
 description: "How to create your first monitor with OpenStatus"
 ---
 
 import { Image } from 'astro:assets';
 import { Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
 import monitorDetail from '../../../assets/monitor/monitor-detail.png';
+import createMonitor from '../../../assets/monitor/create-monitor.png';
+
 import { ShowcaseYouTube } from 'starlight-showcases'
 
+  <Image
+    src={createMonitor}
+    alt="Charts with status code and response time"
+  />
+
+First you need to create a monitor to start monitoring your services.
+
+## What is a monitor?
+
+A monitor is a job that runs periodically or on-demand and checks the status of a service. A monitor will do some synthetic checks to ensure that your service is working as expected.
+
+
+## Create your first monitor
 
 Go to the **Monitors** page and click on the **Create Monitor** button.
 
