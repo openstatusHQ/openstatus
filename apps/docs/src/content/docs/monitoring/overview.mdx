@@ -1,9 +1,16 @@
 ---
 title: Overview
-description: "How to create your first monitor with OpenStatus.dev"
+description: "Learn more about synthetic monitoring and how to use it with OpenStatus"
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import overview from '../../../assets/monitor/overview.png';
+
+<Image
+    src={overview}
+    alt="Charts with status code and response time"
+/>
 
 With synthetic monitoring, you can simulated requests to monitor the availability and performance of
 your website, API, or server from various locations around the world.
@@ -15,6 +22,10 @@ We will alert you if your website or API is down, is timing out or does not retu
 
 You can create monitors in our dashboard, with the [API](https://api.openstatus.dev/v1#tag/monitor/POST/monitor) or with our [Terraform provider](/tools/terraform).
 
+
+### What is synthetic monitoring?
+
+Synthetic monitoring is a type of monitoring that simulates user interactions with your website or API. It is used to monitor the availability and performance of your website or API from various locations around the world to ensure that it is working as expected.
 
 ### What is a monitor?
 

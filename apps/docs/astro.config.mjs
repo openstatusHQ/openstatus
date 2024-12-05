@@ -57,23 +57,23 @@ export default defineConfig({
                 items: [
                   { label: "Overview", slug: "monitoring/overview" },
                   {
-                    label: "Create you first monitor",
+                    label: "Create a synthetic check",
                     slug: "monitoring/create-monitor",
                   },
                   {
-                    label: "View your monitor data",
+                    label: "View your results data",
                     slug: "monitoring/monitor-data-collected",
                   },
                   {
-                    label: "Group your monitors",
+                    label: "Group your checks",
                     slug: "monitoring/group-monitor-tag",
                   },
                   {
-                    label: "Clone a monitor",
+                    label: "Clone a check",
                     slug: "monitoring/clone-monitor",
                   },
                   {
-                    label: "Monitor Types",
+                    label: "Check Types",
                     collapsed: true,
                     items: [
                       {
@@ -103,8 +103,8 @@ export default defineConfig({
                         slug: "monitoring/customization/notification",
                       },
                       {
-                        label: "Regions",
-                        slug: "monitoring/customization/regions",
+                        label: "Locations",
+                        slug: "monitoring/customization/locations",
                       },
                       {
                         label: "Timing",
