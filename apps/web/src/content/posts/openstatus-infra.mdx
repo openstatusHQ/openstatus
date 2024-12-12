@@ -1,0 +1,74 @@
+---
+title: "Building OpenStatus: A Deep Dive into Our Infrastructure Architecture"
+description:
+  Let's deep dive in the infra behind OpenStatus. Learn how we built it and how we host it.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+publishedAt: 2024-12-12
+image: /assets/posts/infra-openstatus/tech-infra.png
+---
+
+## Infrastructure Overview
+
+OpenStatus is a synthetic monitoring platform designed with resilience, scalability, and efficiency in mind. Our infrastructure is a carefully orchestrated ecosystem of multiple applications and services, each playing a crucial role in delivering a comprehensive monitoring solution.
+
+## Application Landscape
+
+Our platform comprises several interconnected applications, each serving a specific purpose:
+
+1. **Frontend Ecosystem** The core of our user interaction is built on a robust, multi-faceted frontend architecture. We've strategically chosen technologies that provide optimal performance and developer experience:
+    - A NextJS application that powers our marketing site, user dashboard, and status page
+    - An Astro + Starlight-powered documentation platform, ensuring our users have comprehensive, easily navigable documentation
+2. **Backend Infrastructure**
+    -  API server: Our public API and our alerting engine
+    - Probes/Checker:  a golang app deployed globally to monitor your service
+    - Screenshot app: a service that takes screenshot of your website when we detect an downtime (Playwright)
+
+## Managed Services
+
+We also rely heavily on managed service to avoid handling it by ourselves.
+
+### Scheduling and Job Management
+
+Recognizing the critical nature of monitoring, we've implemented a robust scheduling strategy:
+
+- **Cron Jobs**: Currently using Vercel Cron, with plans to migrate to Google Cron for an enhanced user experience
+- **Job Queue**: Google Task Queues provide our distributed task management, with strategically segmented queues for different check frequencies
+
+### Queue Architecture
+
+We've implemented a granular queue system to ensure efficient task processing:
+
+- Separate queues for frontend services
+- Dedicated queues for API server and alerting engine
+- Specialized queues for probes and screenshot services
+
+### Hosting Strategy
+
+Our multi-cloud approach ensures flexibility and optimal performance:
+
+- Frontend: Hosted on Vercel for seamless deployment and edge networking
+- Probes: Currently on Fly.io, with plans to transition to Koyeb
+- Queue Management: Leveraging Google Cloud Platform (benefiting from Google credits)
+
+### Monitoring and Alerting
+
+We've built intelligent alerting mechanisms:
+
+- Threshold-based monitoring on queue sizes
+- Alerts triggered by data inactivity or queue backlog
+
+### Data Infrastructure
+
+- **Primary Database**: Turso, providing a scalable and efficient data storage solution
+- **Analytics Database**: Tinybird, enabling complex analytical queries and insights
+
+## Design Philosophy
+
+Our infrastructure design is driven by several key principles:
+
+- **Resilience**: Ensuring high availability and fault tolerance
+- **Scalability**: Architectural choices that allow seamless growth
+- **Cost-Efficiency**: Leveraging managed services and cloud credits
+- **Performance**: Optimizing each component for maximum efficiency
