@@ -11,7 +11,7 @@ image: /assets/posts/infra-openstatus/tech-infra.png
 
 ## Infrastructure Overview
 
-OpenStatus is a synthetic monitoring platform designed with resilience, scalability, and efficiency in mind. Our infrastructure is a carefully orchestrated ecosystem of multiple applications and services, each playing a crucial role.
+OpenStatus is a synthetic monitoring platform designed with resilience, scalability, and efficiency in mind. Our infrastructure is a carefully orchestrated ecosystem of multiple applications and services, each playing a crucial role in our system.
 
 ## Application Landscape
 
@@ -42,12 +42,12 @@ We also rely heavily on managed service to avoid handling it by ourselves. Here 
 
 Recognizing the critical nature of monitoring, we've heavily rely on managed services for scheduling and job management:
 
-- **Cron Jobs**: Currently using Vercel Cron, with plans to migrate to Google Cron for an enhanced user experience and taking advantage of Google Cloud Platform credits for cost savings.
+- **Cron Jobs**: Currently using Vercel Cron, with plans to migrate to Google Cron for an enhanced user experience.
 
 
 ### Queue Architecture
 
-Every check are pushed to a queue and processed by our probes. The probes are responsible to check the status of your service.
+Every check is pushed to a queue and processed by our probes. The probes are responsible to check the status of your service.
 
 - **Job Queue**: Google Task Queues provide our distributed task management, with strategically segmented queues for different check frequencies
 
@@ -92,8 +92,21 @@ Our infrastructure design is driven by several key principles:
 - **Performance**: Optimizing each component for maximum efficiency.
 
 
+
+## How much does it cost us?
+
+Our current monthly cost is around $319. This includes:
+
+- Vercel: $40
+- Fly.io: $150   36*4 (All our probes) + 10 (for the api server)
+- Google Cloud Platform: $0 (We are still using the free credits, but we expect to pay around $50 for the queue)
+- Tinybird: $100
+- Turso: $29
+- Cloudfare: $5
+
+
 # Conclusion
 
-Building a resilient synthetic monitoring platform requires a thoughtful approach to infrastructure design. By carefully orchestrating our applications, services, and managed solutions, we've created a robust ecosystem that delivers on our promise of reliable monitoring and alerting.
+Building a resilient synthetic monitoring platform requires a thoughtful approach to infrastructure design.
 
 The drawback of this approach is the complexity of providing an easy self hostable services.
