@@ -48,7 +48,7 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<Region, string>> & { timestamp: string })[],
+    [] as (Partial<Record<Region, number>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code
