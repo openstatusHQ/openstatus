@@ -311,6 +311,11 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 	returnData := c.Query("data")
 	if returnData == "true" {
+
+		if len(result.Body) > 1024 {
+			result.Body = result.Body[:1000]
+		}
+
 		c.JSON(http.StatusOK, result)
 
 		return
