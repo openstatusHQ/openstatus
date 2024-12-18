@@ -36,7 +36,7 @@ export function SimpleChart({ data }: SimpleChartProps) {
           cursor={false}
           content={
             <ChartTooltipContent
-              indicator="line"
+              indicator="dot"
               labelFormatter={(value) => {
                 return new Date(value).toLocaleDateString("en-US", {
                   day: "numeric",

@@ -56,7 +56,6 @@ export function Chart({ data, regions }: ChartProps) {
         <CartesianGrid vertical={false} />
         <ChartTooltip
           cursor={false}
-          defaultIndex={10}
           content={
             <ChartTooltipContent
               indicator="line"
