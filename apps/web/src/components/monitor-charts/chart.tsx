@@ -71,7 +71,7 @@ export function Chart({ data, regions }: ChartProps) {
               formatter={(value, name) => (
                 <>
                   <div
-                    className="w-1 h-full shrink-0 rounded-[2px] bg-[--color-bg] self-center"
+                    className="h-full w-1 shrink-0 self-center rounded-[2px] bg-[--color-bg]"
                     style={
                       {
                         "--color-bg": `var(--color-${name})`,
@@ -80,7 +80,7 @@ export function Chart({ data, regions }: ChartProps) {
                   />
                   {/* {chartConfig[name as keyof typeof chartConfig]?.label || name} */}
                   {regionFormatter(name as Region)}
-                  <div className="ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums text-foreground">
+                  <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
                     {value}
                     <span className="font-normal text-muted-foreground">
                       ms

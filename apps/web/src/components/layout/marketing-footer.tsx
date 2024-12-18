@@ -91,7 +91,7 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
 
   return (
     <Link
-      className="flex flex-wrap gap-1 w-fit items-center text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
+      className="flex w-fit flex-wrap items-center gap-1 text-muted-foreground underline underline-offset-4 hover:text-foreground hover:no-underline"
       href={href}
       {...externalProps}
     >
