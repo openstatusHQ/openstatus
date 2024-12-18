@@ -18,7 +18,7 @@ export interface RegionTableProps {
   regions: Region[];
   data: {
     regions: Region[];
-    data: (Partial<Record<Region, string>> & { timestamp: string })[];
+    data: (Partial<Record<Region, number>> & { timestamp: string })[];
   };
   metricsByRegion: ResponseTimeMetricsByRegion[];
   caption?: string;
@@ -60,7 +60,12 @@ export function RegionTable({
                   </p>
                 </TableCell>
                 <TableCell>
-                  <SimpleChart data={data.data} region={region} />
+                  <SimpleChart
+                    data={data.data.map((d) => ({
+                      timestamp: d.timestamp,
+                      latency: d[region],
+                    }))}
+                  />
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {formatNumber(metrics?.p50Latency)}

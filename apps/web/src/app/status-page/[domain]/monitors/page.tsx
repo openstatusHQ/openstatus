@@ -89,7 +89,14 @@ export default async function Page({
                     </Button>
                   </div>
                   {group ? (
-                    <SimpleChart data={group.data} region="ams" />
+                    <SimpleChart
+                      data={group.data.map((d) => ({
+                        timestamp: d.timestamp,
+                        // REMINDER: select first region as default
+                        // TODO: we could create an average of all regions instead
+                        latency: d[monitor.regions?.[0]],
+                      }))}
+                    />
                   ) : (
                     <p>missing data</p>
                   )}

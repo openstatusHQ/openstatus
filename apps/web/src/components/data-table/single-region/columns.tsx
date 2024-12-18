@@ -9,7 +9,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableColumnHeader } from "./data-table-column-header";
 
 export interface RegionWithMetrics {
-  data: (Partial<Record<Region, string>> & { timestamp: string })[];
+  data: (Partial<Record<Region, number>> & { timestamp: string })[];
   metrics?: ResponseTimeMetricsByRegion;
   region: Region;
 }
@@ -40,7 +40,14 @@ export const columns: ColumnDef<RegionWithMetrics>[] = [
     cell: ({ row }) => {
       const data = row.getValue("data") as RegionWithMetrics["data"];
       const region = row.getValue("region") as Region;
-      return <SimpleChart data={data} region={region} />;
+      return (
+        <SimpleChart
+          data={data.map((d) => ({
+            timestamp: d.timestamp,
+            latency: d[region],
+          }))}
+        />
+      );
     },
     meta: {
       headerClassName: "min-w-[300px] w-full",
@@ -55,9 +62,9 @@ export const columns: ColumnDef<RegionWithMetrics>[] = [
     cell: ({ row }) => {
       const p50 = row.getValue("p50") as number;
       return (
-        <div className="whitespace-nowrap">
-          <span className="font-mono">{formatNumber(p50)}</span>{" "}
-          <span className="font-normal text-muted-foreground text-xs">ms</span>
+        <div className="whitespace-nowrap font-mono">
+          <span>{formatNumber(p50)}</span>
+          <span className="text-muted-foreground text-xs">ms</span>
         </div>
       );
     },
@@ -71,9 +78,9 @@ export const columns: ColumnDef<RegionWithMetrics>[] = [
     cell: ({ row }) => {
       const p95 = row.getValue("p95") as number;
       return (
-        <div className="whitespace-nowrap">
-          <span className="font-mono">{formatNumber(p95)}</span>{" "}
-          <span className="font-normal text-muted-foreground text-xs">ms</span>
+        <div className="whitespace-nowrap font-mono">
+          <span>{formatNumber(p95)}</span>
+          <span className="text-muted-foreground text-xs">ms</span>
         </div>
       );
     },
@@ -87,9 +94,9 @@ export const columns: ColumnDef<RegionWithMetrics>[] = [
     cell: ({ row }) => {
       const p99 = row.getValue("p99") as number;
       return (
-        <div className="whitespace-nowrap">
-          <span className="font-mono">{formatNumber(p99)}</span>{" "}
-          <span className="font-normal text-muted-foreground text-xs">ms</span>
+        <div className="whitespace-nowrap font-mono">
+          <span>{formatNumber(p99)}</span>
+          <span className="text-muted-foreground text-xs">ms</span>
         </div>
       );
     },

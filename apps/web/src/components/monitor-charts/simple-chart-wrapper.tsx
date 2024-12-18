@@ -21,7 +21,12 @@ export function SimpleChartWrapper({
       <div className="w-24">
         <p className="font-mono">{region}</p>
       </div>
-      <SimpleChart data={group.data} region={region} />
+      <SimpleChart
+        data={group.data.map((d) => ({
+          timestamp: d.timestamp,
+          latency: d[region],
+        }))}
+      />
     </div>
   );
 }
