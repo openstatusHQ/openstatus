@@ -17,13 +17,14 @@ const WORKSPACES =
   process.env.WORKSPACES_LOOKBACK_30?.split(",").map(Number) || [];
 
 type Props = {
-  params: { domain: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ domain: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export const revalidate = 0;
 
-export default async function Page({ params }: Props) {
+export default async function Page(props: Props) {
+  const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   if (!page) return notFound();
 

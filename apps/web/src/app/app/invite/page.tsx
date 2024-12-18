@@ -7,11 +7,12 @@ import { searchParamsCache } from "./search-params";
 
 const AlertTriangle = Icons["alert-triangle"];
 
-export default async function InvitePage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function InvitePage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { token } = searchParamsCache.parse(searchParams);
   const { message, data } = token
     ? await api.invitation.acceptInvitation.mutate({ token })

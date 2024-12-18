@@ -34,11 +34,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Post({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function Post(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { pageIndex } = searchParamsCache.parse(searchParams);
 
   const posts = allPosts

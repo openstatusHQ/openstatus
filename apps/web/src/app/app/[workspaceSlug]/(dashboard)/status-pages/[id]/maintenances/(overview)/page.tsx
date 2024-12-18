@@ -5,11 +5,12 @@ import { api } from "@/trpc/server";
 import { Button } from "@openstatus/ui/src/components/button";
 import Link from "next/link";
 
-export default async function MaintenancePage({
-  params,
-}: {
-  params: { workspaceSlug: string; id: string };
-}) {
+export default async function MaintenancePage(
+  props: {
+    params: Promise<{ workspaceSlug: string; id: string }>;
+  }
+) {
+  const params = await props.params;
   const maintenances = await api.maintenance.getByPage.query({
     id: Number(params.id),
   });

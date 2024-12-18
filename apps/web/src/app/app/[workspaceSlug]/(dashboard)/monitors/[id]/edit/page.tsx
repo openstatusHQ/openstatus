@@ -2,13 +2,14 @@ import { MonitorForm } from "@/components/forms/monitor/form";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
-export default async function EditPage({
-  params,
-  searchParams,
-}: {
-  params: { workspaceSlug: string; id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function EditPage(
+  props: {
+    params: Promise<{ workspaceSlug: string; id: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const id = Number(params.id);
   const monitor = await api.monitor.getMonitorById.query({ id });
   const workspace = await api.workspace.getWorkspace.query();

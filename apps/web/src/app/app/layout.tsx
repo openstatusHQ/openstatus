@@ -1,13 +1,8 @@
 import { SessionProvider } from "next-auth/react";
 
-import { PHProvider } from "@/providers/posthog";
-
-const PostHogPageview = dynamic(() => import("@/app/PostHogPageView"), {
-  ssr: false,
-});
+import { PHProvider } from "@/lib/posthog/provider";
 
 import { Bubble } from "@/components/support/bubble";
-import dynamic from "next/dynamic";
 
 export default function AuthLayout({
   children, // will be a page or nested layout
@@ -16,7 +11,6 @@ export default function AuthLayout({
 }) {
   return (
     <PHProvider>
-      <PostHogPageview />
       <SessionProvider>
         {children}
         <Bubble />

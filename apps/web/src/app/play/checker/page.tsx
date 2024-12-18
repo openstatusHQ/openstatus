@@ -35,11 +35,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function PlayPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function PlayPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { id } = searchParamsCache.parse(searchParams);
 
   const data = id ? await getCheckerDataById(id) : null;

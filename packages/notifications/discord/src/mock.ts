@@ -11,7 +11,7 @@ const monitor: Monitor = {
   name: "OpenStatus Docs",
   url: "https://docs.openstatus.dev",
   periodicity: "10m",
-  jobType: "website",
+  jobType: "http",
   active: true,
   public: true,
   createdAt: null,
@@ -61,5 +61,5 @@ if (process.env.NODE_ENV === "development") {
     cronTimestamp,
   });
 
-  await sendTestDiscordMessage(process.env.DISCORD_WEBHOOK);
+  await sendTestDiscordMessage(process.env.DISCORD_WEBHOOK!);
 }

@@ -6,11 +6,12 @@ import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import { notFound } from "next/navigation";
 
-export default async function ChannelPage({
-  params,
-}: {
-  params: { channel: string };
-}) {
+export default async function ChannelPage(
+  props: {
+    params: Promise<{ channel: string }>;
+  }
+) {
+  const params = await props.params;
   const validation = notificationProviderSchema
     .exclude(["pagerduty"])
     .safeParse(params.channel);

@@ -8,13 +8,18 @@ import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
 import { api } from "@/trpc/server";
 
-export default async function Layout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { workspaceSlug: string; id: string };
-}) {
+export default async function Layout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ workspaceSlug: string; id: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const id = params.id;
 
   const page = await api.page.getPageById.query({

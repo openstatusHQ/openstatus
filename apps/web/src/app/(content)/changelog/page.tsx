@@ -34,11 +34,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ChangelogClient({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default async function ChangelogClient(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const { pageIndex } = searchParamsCache.parse(searchParams);
 
   const changelogs = allChangelogs

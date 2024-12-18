@@ -5,10 +5,8 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
-export async function POST(
-  req: Request,
-  { params }: { params: { domain: string } },
-) {
+export async function POST(req: Request, props: { params: Promise<{ domain: string }> }) {
+  const params = await props.params;
   //
   const data = await req.json();
   const result = z.object({ email: z.string().email() }).parse(data);
