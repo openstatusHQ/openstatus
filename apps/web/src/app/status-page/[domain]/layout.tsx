@@ -26,7 +26,7 @@ export default async function StatusPageLayout(props: Props) {
   const { children } = props;
 
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const timeZone = getRequestHeaderTimezone();
+  const timeZone = await getRequestHeaderTimezone();
 
   if (!page) return notFound();
 
