@@ -23,9 +23,7 @@ type Props = {
 export default async function StatusPageLayout(props: Props) {
   const params = await props.params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const timeZone = getRequestHeaderTimezone();

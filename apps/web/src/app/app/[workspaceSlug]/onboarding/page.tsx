@@ -9,11 +9,9 @@ import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 import { Description } from "./_components/description";
 
-export default async function Onboarding(
-  props: {
-    params: Promise<{ workspaceSlug: string }>;
-  }
-) {
+export default async function Onboarding(props: {
+  params: Promise<{ workspaceSlug: string }>;
+}) {
   const params = await props.params;
   const { workspaceSlug } = params;
 

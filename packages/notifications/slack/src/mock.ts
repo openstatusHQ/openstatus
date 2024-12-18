@@ -61,5 +61,5 @@ if (process.env.NODE_ENV === "development") {
     cronTimestamp,
   });
 
-  await sendTestSlackMessage(process.env.SLACK_WEBHOOK!);
+  await sendTestSlackMessage(`${process.env.SLACK_WEBHOOK}`);
 }

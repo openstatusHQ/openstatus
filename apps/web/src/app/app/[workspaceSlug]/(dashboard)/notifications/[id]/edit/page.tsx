@@ -1,11 +1,9 @@
 import { NotificationForm } from "@/components/forms/notification/form";
 import { api } from "@/trpc/server";
 
-export default async function EditPage(
-  props: {
-    params: Promise<{ workspaceSlug: string; id: string }>;
-  }
-) {
+export default async function EditPage(props: {
+  params: Promise<{ workspaceSlug: string; id: string }>;
+}) {
   const params = await props.params;
   const [workspace, monitors, notification] = await Promise.all([
     api.workspace.getWorkspace.query(),

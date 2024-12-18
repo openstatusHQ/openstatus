@@ -8,11 +8,9 @@ import { columns } from "@/components/data-table/status-report/columns";
 import { DataTable } from "@/components/data-table/status-report/data-table";
 import { api } from "@/trpc/server";
 
-export default async function MonitorPage(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
+export default async function MonitorPage(props: {
+  params: Promise<{ id: string }>;
+}) {
   const params = await props.params;
   const reports = await api.statusReport.getStatusReportByPageId.query({
     id: Number.parseInt(params.id),

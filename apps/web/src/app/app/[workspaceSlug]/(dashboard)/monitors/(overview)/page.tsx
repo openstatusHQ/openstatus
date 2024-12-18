@@ -10,11 +10,9 @@ import { prepareMetricsByPeriod, prepareStatusByPeriod } from "@/lib/tb";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
-export default async function MonitorPage(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function MonitorPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const search = searchParamsCache.parse(searchParams);
 

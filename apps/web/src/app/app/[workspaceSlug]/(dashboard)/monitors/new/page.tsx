@@ -4,11 +4,9 @@ import { MonitorForm } from "@/components/forms/monitor/form";
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
-export default async function Page(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function Page(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const workspace = await api.workspace.getWorkspace.query();
   const notifications =

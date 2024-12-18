@@ -5,7 +5,10 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
-export async function POST(req: Request, props: { params: Promise<{ domain: string }> }) {
+export async function POST(
+  req: Request,
+  props: { params: Promise<{ domain: string }> },
+) {
   const params = await props.params;
   //
   const data = await req.json();

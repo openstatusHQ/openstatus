@@ -34,11 +34,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Post(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function Post(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const { pageIndex } = searchParamsCache.parse(searchParams);
 

@@ -14,7 +14,7 @@ export function Mdx({ code, className }: MdxProps) {
     <div
       className={cn(
         "prose prose-slate dark:prose-invert prose-pre:my-0 prose-img:rounded-lg prose-pre:rounded-lg prose-img:border prose-pre:border prose-img:border-border prose-pre:border-border prose-headings:font-cal prose-headings:font-normal",
-        className
+        className,
       )}
     >
       {/* @ts-expect-error FIXME: nextjs 15 migration */}

@@ -7,11 +7,9 @@ import { api } from "@/trpc/server";
 import { Badge } from "@openstatus/ui/src/components/badge";
 import { CopyLinkButton } from "./_components/copy-link-button";
 
-export default async function IncidentPage(
-  props: {
-    params: Promise<{ domain: string; id: string }>;
-  }
-) {
+export default async function IncidentPage(props: {
+  params: Promise<{ domain: string; id: string }>;
+}) {
   const params = await props.params;
   const report = await api.statusReport.getPublicStatusReportById.query({
     slug: params.domain,

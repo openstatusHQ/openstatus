@@ -8,11 +8,9 @@ import { searchParamsCache } from "./search-params";
 
 // REMINDER: PagerDuty requires a different workflow, thus the separate page
 
-export default async function PagerDutyPage(
-  props: {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function PagerDutyPage(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const workspace = await api.workspace.getWorkspace.query();
   const monitors = await api.monitor.getMonitorsByWorkspace.query();

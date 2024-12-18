@@ -7,12 +7,10 @@ import { api } from "@/trpc/server";
 import { DataTableWrapper } from "./_components/data-table-wrapper";
 import { searchParamsCache } from "./search-params";
 
-export default async function Page(
-  props: {
-    params: Promise<{ workspaceSlug: string; id: string }>;
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-  }
-) {
+export default async function Page(props: {
+  params: Promise<{ workspaceSlug: string; id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const searchParams = await props.searchParams;
   const params = await props.params;
   const id = params.id;

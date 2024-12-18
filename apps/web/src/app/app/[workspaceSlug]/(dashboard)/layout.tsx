@@ -5,17 +5,13 @@ import type { ReactNode } from "react";
 import { WorkspaceClientCookie } from "../worskpace-client-cookie";
 
 // TODO: make the container min-h-screen and the footer below!
-export default async function AppLayout(
-  props: {
-    children: ReactNode;
-    params: Promise<{ workspaceSlug: string }>;
-  }
-) {
+export default async function AppLayout(props: {
+  children: ReactNode;
+  params: Promise<{ workspaceSlug: string }>;
+}) {
   const params = await props.params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const { workspaceSlug } = params;
   const workspaces = await api.workspace.getUserWorkspaces.query();

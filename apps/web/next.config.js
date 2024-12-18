@@ -19,10 +19,8 @@ const nextConfig = {
       "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
     ],
   },
-  serverExternalPackages: [
-    "@google-cloud/tasks",
-  ],
-  expireTime: 180, // 3 minutes 
+  serverExternalPackages: ["@google-cloud/tasks"],
+  expireTime: 180, // 3 minutes
   logging: {
     fetches: {
       fullUrl: true,

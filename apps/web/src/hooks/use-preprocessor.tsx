@@ -19,7 +19,7 @@ export function useProcessor(text: string) {
           a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => {
             return <a target="_blank" rel="noreferrer" {...props} />;
           },
-        } as { [key: string]: React.ComponentType<any> },
+        } as { [key: string]: React.ComponentType<unknown> },
       })
       .process(text)
       .then((file) => {

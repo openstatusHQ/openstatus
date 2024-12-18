@@ -43,7 +43,10 @@ const SIZE: Record<string, { width: number; height: number }> = {
   lg: { width: 200, height: 56 },
   xl: { width: 240, height: 68 },
 };
-export async function GET(req: NextRequest, props: { params: Promise<{ domain: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ domain: string }> },
+) {
   const params = await props.params;
   const { status } = await getStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme");

@@ -101,7 +101,7 @@ export async function getClosestTimezone(defaultTimezone?: string) {
       }
       return prev;
     },
-    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY }
+    { timezone: "UTC", minDifference: Number.POSITIVE_INFINITY },
   );
 
   return closestTimezone.timezone as keyof typeof timeDifferences;
