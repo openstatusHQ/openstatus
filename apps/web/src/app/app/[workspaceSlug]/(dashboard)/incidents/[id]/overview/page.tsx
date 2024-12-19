@@ -16,11 +16,10 @@ import { Event } from "./_components/event";
  *
  */
 
-export default async function IncidentPage({
-  params,
-}: {
-  params: { workspaceSlug: string; id: string };
+export default async function IncidentPage(props: {
+  params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
+  const params = await props.params;
   const incident = await api.incident.getIncidentById.query({
     id: Number(params.id),
   });

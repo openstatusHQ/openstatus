@@ -1,8 +1,8 @@
 import { format, getTimezoneOffset, utcToZonedTime } from "date-fns-tz";
 import { headers } from "next/headers";
 
-export function getRequestHeaderTimezone() {
-  const headersList = headers();
+export async function getRequestHeaderTimezone() {
+  const headersList = await headers();
 
   /**
    * Vercel includes ip timezone to request header
@@ -12,8 +12,8 @@ export function getRequestHeaderTimezone() {
   return requestTimezone;
 }
 
-export function convertTimezoneToGMT(defaultTimezone?: string) {
-  const requestTimezone = getRequestHeaderTimezone();
+export async function convertTimezoneToGMT(defaultTimezone?: string) {
+  const requestTimezone = await getRequestHeaderTimezone();
 
   /**
    * Server region timezone as fallback
@@ -62,8 +62,8 @@ export function formatTime(date: Date) {
  */
 export const supportedTimezones = Intl.supportedValuesOf("timeZone");
 
-export function getClosestTimezone(defaultTimezone?: string) {
-  const requestTimezone = getRequestHeaderTimezone();
+export async function getClosestTimezone(defaultTimezone?: string) {
+  const requestTimezone = await getRequestHeaderTimezone();
 
   /**
    * Server region timezone as fallback

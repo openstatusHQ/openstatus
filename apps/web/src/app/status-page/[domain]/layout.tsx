@@ -16,13 +16,17 @@ import PasswordProtected from "./_components/password-protected";
 import { createProtectedCookieKey, setPrefixUrl } from "./utils";
 
 type Props = {
-  params: { domain: string };
+  params: Promise<{ domain: string }>;
   children: React.ReactNode;
 };
 
-export default async function StatusPageLayout({ children, params }: Props) {
+export default async function StatusPageLayout(props: Props) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
-  const timeZone = getRequestHeaderTimezone();
+  const timeZone = await getRequestHeaderTimezone();
 
   if (!page) return notFound();
 
@@ -49,7 +53,7 @@ export default async function StatusPageLayout({ children, params }: Props) {
   // TODO: move to middleware using NextResponse.rewrite keeping the path without using redirect
   // and move the PasswordProtected into a page.tsx
   if (page.passwordProtected) {
-    const cookie = cookies();
+    const cookie = await cookies();
     const protectedCookie = cookie.get(createProtectedCookieKey(params.domain));
     const password = protectedCookie ? protectedCookie.value : undefined;
     if (password !== page.password) {
@@ -70,7 +74,8 @@ export default async function StatusPageLayout({ children, params }: Props) {
   );
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
 
   return {

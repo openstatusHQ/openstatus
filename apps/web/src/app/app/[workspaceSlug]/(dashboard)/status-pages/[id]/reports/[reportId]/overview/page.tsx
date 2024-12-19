@@ -9,11 +9,10 @@ import { Events } from "@/components/status-update/events";
 import { api } from "@/trpc/server";
 import { Header } from "./_components/header";
 
-export default async function OverviewPage({
-  params,
-}: {
-  params: { workspaceSlug: string; id: string; reportId: string };
+export default async function OverviewPage(props: {
+  params: Promise<{ workspaceSlug: string; id: string; reportId: string }>;
 }) {
+  const params = await props.params;
   const report = await api.statusReport.getStatusReportById.query({
     id: Number.parseInt(params.reportId),
     pageId: Number.parseInt(params.id),

@@ -7,13 +7,15 @@ import { searchParamsCache } from "./search-params";
 import { formatter } from "./utils";
 
 type Props = {
-  params: { domain: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ domain: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 export const revalidate = 120;
 
-export default async function Page({ params, searchParams }: Props) {
+export default async function Page(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { filter } = searchParamsCache.parse(searchParams);
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
 

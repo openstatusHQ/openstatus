@@ -3,7 +3,7 @@ import { env } from "@/env";
 import { numberFormatter } from "@/lib/utils";
 import { OSTinybird } from "@openstatus/tinybird";
 
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+const _tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
 export async function Stats() {
   // const tbLastHourStats = await tb.homeStats({ period: "1h" });

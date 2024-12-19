@@ -20,11 +20,13 @@ import {
 import { searchParamsCache } from "./search-params";
 
 interface Props {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function CheckPage({ params, searchParams }: Props) {
+export default async function CheckPage(props: Props) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const { regions } = searchParamsCache.parse(searchParams);
   const selectedRegions = regions || [...flyRegions];
 
@@ -68,7 +70,8 @@ export default async function CheckPage({ params, searchParams }: Props) {
   );
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const title = "Global Speed Checker";
   const description =
     "Get speed insights for your api, website from multiple regions.";

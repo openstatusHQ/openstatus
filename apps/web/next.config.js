@@ -12,33 +12,15 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   transpilePackages: ["@openstatus/ui", "@openstatus/api"],
-  experimental: {
-    outputFileTracingIncludes: {
-      "/": [
-        "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
-        "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
-      ],
-    },
-    serverComponentsExternalPackages: [
-      // "libsql",
-      // "@libsql",
-      "@react-email/components",
-      "@react-email/render",
-      "@google-cloud/tasks",
-      // "@libsql/client",
-      // "@libsql/hrana-client",
-      // "better-sqlite3"
+  outputFileTracingIncludes: {
+    "/": [
+      "./node_modules/.pnpm/@google-cloud/tasks/build/esm/src/**/*.json",
+      "./node_modules/@google-cloud/tasks/build/esm/src/**/*.js",
     ],
-    /**
-     * The default stale revalidate time for SWR requests is 1year.
-     * We can't rely on the default because the status pages will always return the
-     * STALE data before revalidate.
-     * @link https://nextjs.org/docs/app/api-reference/next-config-js/swrDelta
-     */
-    swrDelta: 120,
   },
+  serverExternalPackages: ["@google-cloud/tasks"],
+  expireTime: 180, // 3 minutes
   logging: {
     fetches: {
       fullUrl: true,

@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 
-export default function Page({
-  params,
-}: {
-  params: { workspaceSlug: string; reportId: string };
+export default async function Page(props: {
+  params: Promise<{ workspaceSlug: string; reportId: string }>;
 }) {
+  const params = await props.params;
   return redirect(`./${params.reportId}/overview`);
 }

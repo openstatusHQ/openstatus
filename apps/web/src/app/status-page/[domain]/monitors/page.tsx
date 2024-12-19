@@ -16,13 +16,12 @@ import { searchParamsCache } from "./search-params";
 
 export const revalidate = 120;
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { domain: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function Page(props: {
+  params: Promise<{ domain: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const { quantile, period } = searchParamsCache.parse(searchParams);
 

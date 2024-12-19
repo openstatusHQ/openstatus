@@ -11,7 +11,8 @@ export async function TrackerExample() {
     <div className="flex w-full flex-col items-center justify-center gap-8">
       <div className="mx-auto w-full max-w-md">
         <Suspense fallback={<ExampleTrackerFallback />}>
-          <ExampleTracker />
+          {/* <ExampleTracker /> */}
+          <MockTracker />
         </Suspense>
       </div>
       <Button className="rounded-full" asChild>
@@ -31,5 +32,22 @@ async function ExampleTracker() {
   });
 
   if (!res.data) return null;
-  return <Tracker data={res.data} name="Ping" description="Pong" />;
+  return <Tracker data={res.data} name="Ping" description="Pong" showValues />;
+}
+
+function MockTracker() {
+  return (
+    <Tracker data={getPingData()} name="Ping" description="Pong" showValues />
+  );
+}
+
+function getPingData() {
+  return new Array(45).fill(0).map((_, i) => {
+    const date = new Date(new Date().getTime() - i * 24 * 60 * 60 * 1000);
+    return {
+      day: date.toISOString(),
+      ok: 8640,
+      count: 8640,
+    };
+  });
 }

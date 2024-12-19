@@ -34,7 +34,7 @@ import { DataTableCollapseButton } from "./data-table-collapse-button";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  renderSubComponent(props: { row: Row<TData> }): React.ReactElement;
+  renderSubComponent(props: { row: Row<TData> }): React.ReactElement<unknown>;
   getRowCanExpand(row: Row<TData>): boolean;
   autoResetExpanded?: boolean;
 }
