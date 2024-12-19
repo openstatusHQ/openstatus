@@ -1,0 +1,112 @@
+---
+title: "Building OpenStatus: A Deep Dive into Our Infrastructure Architecture"
+description:
+  Let's deep dive in the infra behind OpenStatus. Learn how we built it and how we host it.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+publishedAt: 2024-12-12
+image: /assets/posts/infra-openstatus/tech-infra.png
+---
+
+## Infrastructure Overview
+
+OpenStatus is a synthetic monitoring platform designed with resilience, scalability, and efficiency in mind. Our infrastructure is a carefully orchestrated ecosystem of multiple applications and services, each playing a crucial role in our system.
+
+## Application Landscape
+
+Our platform comprises several interconnected applications, each serving a specific purpose:
+
+1. **Frontend Ecosystem** The core of our user interaction is built on a robust, multi-faceted frontend architecture. We've strategically chosen technologies that provide optimal performance and developer experience:
+    - A NextJS application that powers our marketing site, user dashboard, and status page hosted on Vercel.
+    - An Astro + Starlight-powered documentation platform, ensuring our users have comprehensive, easily navigable documentation hosted on Cloudfare Pages.
+2. **Backend Infrastructure** All our backend services are hosted on Fly.io.
+    - API server: Our public API and our alerting engine
+    - Probes/Checker: a golang app deployed globally to monitor your service
+    - Screenshot app: a service that takes screenshot of your website when we detect an downtime (Playwright)
+
+
+<Image
+  alt="Hosting providers"
+  src="/assets/posts/infra-openstatus/hosting.png"
+  width={650}
+  height={575}
+/>
+
+
+## Managed Services
+
+We also rely heavily on managed service to avoid handling it by ourselves. Here are some of the services we use
+
+### Scheduling and Job Management
+
+Recognizing the critical nature of monitoring, we've heavily rely on managed services for scheduling and job management:
+
+- **Cron Jobs**: Currently using Vercel Cron, with plans to migrate to Google Cron for an enhanced user experience.
+
+
+### Queue Architecture
+
+Every check is pushed to a queue and processed by our probes. The probes are responsible to check the status of your service.
+
+- **Job Queue**: Google Task Queues provide our distributed task management, with strategically segmented queues for different check frequencies
+
+We've implemented a granular queue system to ensure efficient task processing:
+
+- Separate queues for frontend services
+- Dedicated queues for API server and alerting engine
+- Specialized queues for probes and screenshot services
+
+
+<Image
+  alt="Queue providers"
+  src="/assets/posts/infra-openstatus/queue.png"
+  width={650}
+  height={575}
+/>
+
+
+### Hosting Strategy
+
+Our multi-cloud approach ensures flexibility and optimal performance:
+
+- Frontend: Hosted on Vercel for seamless deployment and edge networking
+- Probes: Currently on Fly.io, with plans to add more providers for our global monitoring system.
+- Queue Management: Leveraging Google Cloud Platform (benefiting from Google credits)
+
+
+### Data Infrastructure
+
+We also don't want to handle the data infrastructure by ourselves. We rely on managed services for that:
+
+- **Primary Database**: Turso, providing a cost efficient data storage solution.
+- **Analytics Database**: Tinybird, enabling complex analytical queries and insights.
+
+## Design Philosophy
+
+Our infrastructure design is driven by several key principles:
+
+- **Resilience**: Ensuring high availability and fault tolerance
+- **Scalability**: Architectural choices that allow seamless growth
+- **Cost-Efficiency**: Leveraging managed services and cloud credits
+- **Performance**: Optimizing each component for maximum efficiency.
+
+
+
+## How much does it cost us?
+
+Our current monthly cost is around $319. This includes:
+
+- Vercel: $40
+- Fly.io: $150   36*4 (All our probes) + 10 (for the api server)
+- Google Cloud Platform: $0 (We are still using the free credits, but we expect to pay around $50 for the queue)
+- Tinybird: $100
+- Turso: $29
+- Cloudfare: $5
+
+
+# Conclusion
+
+Building a resilient synthetic monitoring platform requires a thoughtful approach to infrastructure design.
+
+The drawback of this approach is the complexity of providing an easy self hostable services.
