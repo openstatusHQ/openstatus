@@ -1,8 +1,8 @@
-import * as Sentry from "@sentry/nextjs";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { cron, isAuthorizedDomain } from "../_cron";
+import { runSentryCron } from "../_sentry";
 
 export const runtime = "nodejs";
 // export const preferredRegion = ["auto"];
@@ -12,16 +12,13 @@ export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
   if (isAuthorizedDomain(req.url)) {
-    const checkInId = Sentry.captureCheckIn({
-      monitorSlug: "30-s-cron",
-      status: "in_progress",
-    });
-    await cron({ periodicity: "30s", req });
-    Sentry.captureCheckIn({
-      checkInId,
-      monitorSlug: "30-s-cron",
-      status: "ok",
-    });
+    const { cronCompleted, cronFailed } = runSentryCron("30-s-cron");
+    try {
+      await cron({ periodicity: "30s", req });
+      await cronCompleted();
+    } catch (error) {
+      await cronFailed();
+    }
   }
   return NextResponse.json({ success: true });
 }
