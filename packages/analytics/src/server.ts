@@ -1,9 +1,10 @@
 import { OpenPanel, type PostEventPayload } from "@openpanel/sdk";
+import { env } from "../env";
 import type { EventProps } from "./events";
 
 const op = new OpenPanel({
-  clientId: `${process.env.OPENPANEL_CLIENT_ID}`,
-  clientSecret: `${process.env.OPENPANEL_CLIENT_SECRET}`,
+  clientId: env.OPENPANEL_CLIENT_ID,
+  clientSecret: env.OPENPANEL_CLIENT_SECRET,
 });
 
 op.setGlobalProperties({
