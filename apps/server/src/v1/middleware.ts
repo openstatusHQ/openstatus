@@ -1,6 +1,7 @@
 import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
+import { type EventProps, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
@@ -8,7 +9,7 @@ import { HTTPException } from "hono/http-exception";
 import { env } from "../env";
 import type { Variables } from "./index";
 
-export async function middleware(
+export async function secureMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
@@ -35,12 +36,33 @@ export async function middleware(
     console.error("Workspace not found");
     throw new HTTPException(401, { message: "Unauthorized" });
   }
+
   const _work = selectWorkspaceSchema.parse(_workspace);
+
   c.set("workspacePlan", getPlanConfig(_workspace.plan));
   c.set("workspaceId", `${result.ownerId}`);
   c.set("limits", _work.limits);
 
   await next();
+}
+
+export function trackMiddleware(event: EventProps) {
+  return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
+    await next();
+
+    // REMINDER: only track the event if the request was successful
+    // REMINDER: use setTimeout to avoid blocking the response
+    if (c.finalized) {
+      setTimeout(async () => {
+        const analytics = await setupAnalytics({
+          userId: `api_${c.get("workspaceId")}`,
+          workspaceId: c.get("workspaceId"),
+          plan: c.get("workspacePlan").id,
+        });
+        await analytics.track(event);
+      }, 0);
+    }
+  };
 }
 
 /**

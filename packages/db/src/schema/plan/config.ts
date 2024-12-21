@@ -6,6 +6,7 @@ export const allPlans: Record<
   WorkspacePlan,
   {
     title: "Hobby" | "Starter" | "Growth" | "Pro";
+    id: WorkspacePlan;
     description: string;
     price: number;
     limits: Limits;
@@ -13,6 +14,7 @@ export const allPlans: Record<
 > = {
   free: {
     title: "Hobby",
+    id: "free",
     description: "For personal projects",
     price: 0,
     limits: {
@@ -42,6 +44,7 @@ export const allPlans: Record<
   },
   starter: {
     title: "Starter",
+    id: "starter",
     description: "For small projects",
     price: 30,
     limits: {
@@ -107,6 +110,7 @@ export const allPlans: Record<
   },
   team: {
     title: "Growth",
+    id: "team",
     description: "For small teams",
     price: 100,
     limits: {
@@ -172,6 +176,7 @@ export const allPlans: Record<
   },
   pro: {
     title: "Pro",
+    id: "pro",
     description: "For bigger teams",
     price: 300,
     limits: {

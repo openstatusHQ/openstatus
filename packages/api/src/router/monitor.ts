@@ -26,11 +26,12 @@ import {
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 
-import { trackNewMonitor } from "../analytics";
+import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
+    .meta({ track: Events.CreateMonitor, trackProps: ["url", "jobType"] })
     .input(insertMonitorSchema)
     .output(selectMonitorSchema)
     .mutation(async (opts) => {
@@ -167,11 +168,6 @@ export const monitorRouter = createTRPCRouter({
         await opts.ctx.db.insert(monitorsToPages).values(values).run();
       }
 
-      await trackNewMonitor(opts.ctx.user, {
-        url: newMonitor.url,
-        periodicity: newMonitor.periodicity,
-      });
-
       return selectMonitorSchema.parse(newMonitor);
     }),
 
@@ -262,6 +258,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
+    .meta({ track: Events.UpdateMonitor })
     .input(insertMonitorSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) return;
@@ -535,6 +532,7 @@ export const monitorRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
+    .meta({ track: Events.DeleteMonitor })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const monitorToDelete = await opts.ctx.db

@@ -1,9 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import { generateSlug } from "random-word-slugs";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, isNotNull, isNull, sql } from "@openstatus/db";
+import { and, eq, isNull, sql } from "@openstatus/db";
 import {
   application,
   monitor,

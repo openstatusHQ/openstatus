@@ -511,6 +511,12 @@ importers:
       '@jitsu/js':
         specifier: 1.9.2
         version: 1.9.2(@types/dlv@1.1.5)
+      '@openpanel/nextjs':
+        specifier: ^1.0.7
+        version: 1.0.7(next@15.1.1(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@openpanel/sdk':
+        specifier: ^1.0.0
+        version: 1.0.0
       '@t3-oss/env-core':
         specifier: 0.7.0
         version: 0.7.0(typescript@5.6.2)(zod@3.23.8)
@@ -3028,6 +3034,19 @@ packages:
 
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
+
+  '@openpanel/nextjs@1.0.7':
+    resolution: {integrity: sha512-XygTPiVlxUkcnZ3DYYwnWiogDgCL1hFK5G8nxokdrFKKuM0XQ+9mFElW/+dKgnVfmV2QiP1aAscudHAlRSUQhg==}
+    peerDependencies:
+      next: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  '@openpanel/sdk@1.0.0':
+    resolution: {integrity: sha512-FNmmfjdXoC/VHEjA+WkrQ4lyM5lxEmV7xDd57uj4E+lIS0sU3DLG2mV/dpS8AscnZbUvuMn3kPhiLCqYzuv/gg==}
+
+  '@openpanel/web@1.0.1':
+    resolution: {integrity: sha512-cVZ7Kr9SicczJ/RDIfEtZs8+1iGDzwkabVA/j3NqSl8VSucsC8m1+LVbjmCDzCJNnK4yVn6tEcc9PJRi2rtllw==}
 
   '@opentelemetry/api-logs@0.52.1':
     resolution: {integrity: sha512-qnSqB2DQ9TPP96dl8cDubDvrUyWc0/sK81xHTK8eSUspzDM3bsewX903qclQFvVhgStjRWdC5bLb3kQqMkfV5A==}
@@ -12569,6 +12588,19 @@ snapshots:
       fastq: 1.15.0
 
   '@one-ini/wasm@0.1.1': {}
+
+  '@openpanel/nextjs@1.0.7(next@15.1.1(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      '@openpanel/web': 1.0.1
+      next: 15.1.1(@opentelemetry/api@1.9.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+
+  '@openpanel/sdk@1.0.0': {}
+
+  '@openpanel/web@1.0.1':
+    dependencies:
+      '@openpanel/sdk': 1.0.0
 
   '@opentelemetry/api-logs@0.52.1':
     dependencies:
