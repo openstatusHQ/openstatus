@@ -21,7 +21,7 @@ export type IdentifyProps = {
 };
 
 export async function setupAnalytics(props: IdentifyProps) {
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV !== "production") {
     return noop();
   }
 
