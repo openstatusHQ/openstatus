@@ -109,6 +109,7 @@ export function DataTableRowActions<TData>({
           createdAt: undefined,
         };
 
+        // Create a clone function in the api
         await api.monitor.create.mutate(cloneMonitorData);
 
         toast.success("Monitor cloned!");

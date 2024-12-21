@@ -30,8 +30,6 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
     NEXT_PUBLIC_URL: z.string(),
     NEXT_PUBLIC_SENTRY_DSN: z.string(),
-    NEXT_PUBLIC_POSTHOG_KEY: z.string(),
-    NEXT_PUBLIC_POSTHOG_HOST: z.string(),
   },
   runtimeEnv: {
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
@@ -44,8 +42,6 @@ export const env = createEnv({
     STRIPE_WEBHOOK_SECRET_KEY: process.env.STRIPE_WEBHOOK_SECRET_KEY,
     NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
-    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     UNKEY_TOKEN: process.env.UNKEY_TOKEN,
     UNKEY_API_ID: process.env.UNKEY_API_ID,
     GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,

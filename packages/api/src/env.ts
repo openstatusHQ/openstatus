@@ -8,8 +8,6 @@ export const env = createEnv({
     TEAM_ID_VERCEL: z.string(),
     VERCEL_AUTH_BEARER_TOKEN: z.string(),
     TINY_BIRD_API_KEY: z.string(),
-    JITSU_HOST: z.string().optional(),
-    JITSU_WRITE_KEY: z.string().optional(),
   },
 
   runtimeEnv: {
@@ -18,8 +16,6 @@ export const env = createEnv({
     TEAM_ID_VERCEL: process.env.TEAM_ID_VERCEL,
     VERCEL_AUTH_BEARER_TOKEN: process.env.VERCEL_AUTH_BEARER_TOKEN,
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
-    JITSU_HOST: process.env.JITSU_HOST,
-    JITSU_WRITE_KEY: process.env.JITSU_WRITE_KEY,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });

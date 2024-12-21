@@ -3,11 +3,11 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    JITSU_HOST: z.string().optional(),
-    JITSU_WRITE_KEY: z.string().optional(),
+    OPENPANEL_CLIENT_ID: z.string(),
+    OPENPANEL_CLIENT_SECRET: z.string(),
   },
   runtimeEnv: {
-    JITSU_HOST: process.env.JITSU_HOST,
-    JITSU_WRITE_KEY: process.env.JITSU_WRITE_KEY,
+    OPENPANEL_CLIENT_ID: process.env.OPENPANEL_CLIENT_ID,
+    OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
   },
 });

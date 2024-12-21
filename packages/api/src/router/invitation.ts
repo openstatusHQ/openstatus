@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { Events } from "@openstatus/analytics";
 import { and, eq, gte, isNull } from "@openstatus/db";
 import {
   insertInvitationSchema,
@@ -9,14 +10,13 @@ import {
   user,
   usersToWorkspaces,
 } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 
-import { trackNewInvitation } from "../analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
 export const invitationRouter = createTRPCRouter({
   create: protectedProcedure
     .input(insertInvitationSchema.pick({ email: true }))
+    .meta({ track: Events.InviteUser })
     .mutation(async (opts) => {
       const { email } = opts.input;
 
@@ -88,16 +88,12 @@ export const invitationRouter = createTRPCRouter({
         });
       }
 
-      await trackNewInvitation(opts.ctx.user, {
-        emailTo: email,
-        workspaceId: opts.ctx.workspace.id,
-      });
-
       return _invitation;
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
+    .meta({ track: Events.DeleteInvite })
     .mutation(async (opts) => {
       await opts.ctx.db
         .delete(invitation)
@@ -140,6 +136,7 @@ export const invitationRouter = createTRPCRouter({
    */
   acceptInvitation: publicProcedure
     .input(z.object({ token: z.string() }))
+    .meta({ track: Events.AcceptInvite })
     .output(
       z.object({
         message: z.string(),
