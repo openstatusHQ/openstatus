@@ -11,7 +11,7 @@ op.setGlobalProperties({
   // app_version
 });
 
-type IdentifyProps = {
+export type IdentifyProps = {
   userId?: string;
   fullName?: string | null;
   email?: string;
@@ -20,6 +20,10 @@ type IdentifyProps = {
 };
 
 export async function setupAnalytics(props: IdentifyProps) {
+  if (process.env.NODE_ENV === "development") {
+    return noop();
+  }
+
   if (props.userId) {
     const [firstName, lastName] = props.fullName?.split(" ") || [];
     await op.identify({
@@ -38,6 +42,22 @@ export async function setupAnalytics(props: IdentifyProps) {
     track: (opts: EventProps & PostEventPayload["properties"]) => {
       const { name, ...rest } = opts;
       return op.track(name, rest);
+    },
+  };
+}
+
+/**
+ * Noop analytics for development environment
+ */
+async function noop() {
+  return {
+    track: (
+      opts: EventProps & PostEventPayload["properties"],
+    ): Promise<unknown> => {
+      return new Promise((resolve) => {
+        console.log(`>>> Track Event: ${opts.name}`);
+        resolve(null);
+      });
     },
   };
 }
