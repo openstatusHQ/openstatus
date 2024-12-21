@@ -187,24 +187,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   const user = schema.selectUserSchema.parse(userProps);
   const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
 
-  return opts.next({ ctx: { ...ctx, user, workspace } });
-});
-
-/**
- * Middleware to track events
- *
- * We use the `.meta({ track: Events.CreateMonitor })` metadata to track events
- * via middleware. This way, we can track events for specific procedures without
- * having to add the tracking code to each procedure.
- */
-const trackEvent = t.middleware(async (opts) => {
-  const result = await opts.next(opts);
+  const result = await opts.next({ ctx: { ...ctx, user, workspace } });
 
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { meta, getRawInput, ctx } = opts;
-
+    const { ctx, meta, getRawInput } = opts;
     if (meta?.track) {
       let identify: IdentifyProps = {};
 
@@ -262,6 +250,4 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure
-  .use(enforceUserIsAuthed)
-  .use(trackEvent);
+export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
