@@ -3,7 +3,11 @@ import { type NextRequest, after } from "next/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { type EventProps, setupAnalytics } from "@openstatus/analytics";
+import {
+  type EventProps,
+  type IdentifyProps,
+  setupAnalytics,
+} from "@openstatus/analytics";
 import { db, eq, schema } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
 
@@ -123,101 +127,119 @@ export const publicProcedure = t.procedure;
  * Reusable middleware that enforces users are logged in before running the
  * procedure
  */
-const enforceUserIsAuthed = t.middleware(
-  async ({ ctx, meta, next, input, getRawInput }) => {
-    if (!ctx.session?.user?.id) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
-    }
+const enforceUserIsAuthed = t.middleware(async (opts) => {
+  const { ctx } = opts;
+  if (!ctx.session?.user?.id) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
 
-    // /**
-    //  * Attach `user` and `workspace` | `activeWorkspace` infos to context by
-    //  * comparing the `user.tenantId` to clerk's `auth.userId`
-    //  */
-    const userAndWorkspace = await db.query.user.findFirst({
-      where: eq(schema.user.id, Number(ctx.session.user.id)),
-      with: {
-        usersToWorkspaces: {
-          with: {
-            workspace: true,
-          },
+  // /**
+  //  * Attach `user` and `workspace` | `activeWorkspace` infos to context by
+  //  * comparing the `user.tenantId` to clerk's `auth.userId`
+  //  */
+  const userAndWorkspace = await db.query.user.findFirst({
+    where: eq(schema.user.id, Number(ctx.session.user.id)),
+    with: {
+      usersToWorkspaces: {
+        with: {
+          workspace: true,
         },
       },
+    },
+  });
+
+  const { usersToWorkspaces, ...userProps } = userAndWorkspace || {};
+
+  /**
+   * We need to include the active "workspace-slug" cookie in the request found in the
+   * `/app/[workspaceSlug]/.../`routes. We pass them either via middleware if it's a
+   * server request or via the client cookie, set via `<WorspaceClientCookie />`
+   * if it's a client request.
+   *
+   * REMINDER: We only need the client cookie because of client side mutations.
+   */
+  const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
+
+  if (!workspaceSlug) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Workspace Slug Not Found",
     });
+  }
 
-    const { usersToWorkspaces, ...userProps } = userAndWorkspace || {};
+  const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
+    // If there is a workspace slug in the cookie, use it to find the workspace
+    if (workspaceSlug) return workspace.slug === workspaceSlug;
+    return true;
+  })?.workspace;
 
-    /**
-     * We need to include the active "workspace-slug" cookie in the request found in the
-     * `/app/[workspaceSlug]/.../`routes. We pass them either via middleware if it's a
-     * server request or via the client cookie, set via `<WorspaceClientCookie />`
-     * if it's a client request.
-     *
-     * REMINDER: We only need the client cookie because of client side mutations.
-     */
-    const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
+  if (!activeWorkspace) {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Workspace Not Found",
+    });
+  }
 
-    if (!workspaceSlug) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Workspace Slug Not Found",
-      });
-    }
+  if (!userProps) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
+  }
 
-    const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
-      // If there is a workspace slug in the cookie, use it to find the workspace
-      if (workspaceSlug) return workspace.slug === workspaceSlug;
-      return true;
-    })?.workspace;
+  const user = schema.selectUserSchema.parse(userProps);
+  const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
 
-    if (!activeWorkspace) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Workspace Not Found",
-      });
-    }
+  return opts.next({ ctx: { ...ctx, user, workspace } });
+});
 
-    if (!userProps) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
-    }
+/**
+ * Middleware to track events
+ *
+ * We use the `.meta({ track: Events.CreateMonitor })` metadata to track events
+ * via middleware. This way, we can track events for specific procedures without
+ * having to add the tracking code to each procedure.
+ */
+const trackEvent = t.middleware(async (opts) => {
+  const result = await opts.next(opts);
 
-    const user = schema.selectUserSchema.parse(userProps);
-    const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
+  // REMINDER: We only track the event if the request was successful
+  // REMINDER: We are not blocking the request
+  after(async () => {
+    const { meta, getRawInput, ctx } = opts;
 
-    const result = await next({ ctx: { ...ctx, user, workspace } });
+    if (meta?.track) {
+      let identify: IdentifyProps = {};
 
-    // REMINDER: We only track the event if the request was successful
-    after(async () => {
-      if (meta?.track) {
-        const analytics = await setupAnalytics({
-          userId: `usr_${user.id}`,
-          email: user.email || undefined,
-          workspaceId: String(workspace.id),
-          plan: workspace.plan,
-        });
-
-        const rawInput = await getRawInput();
-
-        const additionalProps =
-          typeof rawInput === "object" && rawInput !== null
-            ? meta.trackProps?.reduce(
-                (acc, prop) => {
-                  // REMINDER: Yet, prop can only be a property of the rawInput, not a nested one
-                  if (prop in rawInput) {
-                    acc[prop] = rawInput[prop as keyof typeof rawInput];
-                  }
-                  return acc;
-                },
-                {} as Record<string, unknown>,
-              )
-            : {};
-
-        await analytics.track({ ...meta.track, ...additionalProps });
+      if (ctx.user && ctx.workspace) {
+        identify = {
+          userId: `usr_${ctx.user.id}`,
+          email: ctx.user.email || undefined,
+          workspaceId: String(ctx.workspace.id),
+          plan: ctx.workspace.plan,
+        };
       }
-    });
 
-    return result;
-  },
-);
+      const analytics = await setupAnalytics(identify);
+      const rawInput = await getRawInput();
+
+      const additionalProps =
+        typeof rawInput === "object" && rawInput !== null
+          ? meta.trackProps?.reduce(
+              (acc, prop) => {
+                // REMINDER: Yet, prop can only be a property of the rawInput, not a nested one
+                if (prop in rawInput) {
+                  acc[prop] = rawInput[prop as keyof typeof rawInput];
+                }
+                return acc;
+              },
+              {} as Record<string, unknown>,
+            )
+          : {};
+
+      await analytics.track({ ...meta.track, ...additionalProps });
+    }
+  });
+
+  return result;
+});
 
 /**
  * Middleware to parse form data and put it in the rawInput
@@ -230,6 +252,7 @@ export const formdataMiddleware = t.middleware(async (opts) => {
     input: formData,
   });
 });
+
 /**
  * Protected (authed) procedure
  *
@@ -239,4 +262,6 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure
+  .use(enforceUserIsAuthed)
+  .use(trackEvent);
