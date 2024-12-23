@@ -11,8 +11,6 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     FLY_REGION: z.enum(flyRegions),
     CRON_SECRET: z.string(),
-    JITSU_WRITE_KEY: z.string().optional(),
-    JITSU_HOST: z.string().optional(),
     SCREENSHOT_SERVICE_URL: z.string(),
     QSTASH_TOKEN: z.string(),
     NODE_ENV: z.string().default("development"),

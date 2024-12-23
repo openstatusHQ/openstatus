@@ -1,5 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
   NotificationDataSchema,
@@ -11,6 +12,7 @@ import {
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
 
@@ -19,6 +21,7 @@ const postRoute = createRoute({
   tags: ["notification"],
   description: "Create a notification",
   path: "/",
+  middleware: [trackMiddleware(Events.CreateNotification)],
   request: {
     body: {
       description: "The notification to create",

@@ -3,8 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
+import { Events } from "@openstatus/analytics";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import type { incidentsApi } from "./index";
 import { IncidentSchema, ParamsSchema } from "./schema";
 
@@ -13,6 +15,7 @@ const putRoute = createRoute({
   tags: ["incident"],
   description: "Update an incident",
   path: "/:id",
+  middleware: [trackMiddleware(Events.UpdateIncident)],
   request: {
     params: ParamsSchema,
     body: {

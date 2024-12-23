@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import { trackAnalytics } from "@openstatus/analytics";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { and, eq, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
@@ -87,10 +87,8 @@ export async function handleSubscribe(formData: FormData) {
     })
     .execute();
 
-  await trackAnalytics({
-    event: "Subscribe to Status Page",
-    slug: pageData.slug,
-  });
+  const analytics = await setupAnalytics({});
+  analytics.track({ ...Events.SubscribePage, slug: pageData.slug });
 }
 
 const passwordSchema = z.object({

@@ -1,7 +1,5 @@
 import { SessionProvider } from "next-auth/react";
 
-import { PHProvider } from "@/lib/posthog/provider";
-
 import { Bubble } from "@/components/support/bubble";
 
 export default function AuthLayout({
@@ -10,11 +8,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <PHProvider>
-      <SessionProvider>
-        {children}
-        <Bubble />
-      </SessionProvider>
-    </PHProvider>
+    <SessionProvider>
+      {children}
+      <Bubble />
+    </SessionProvider>
   );
 }
