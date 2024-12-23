@@ -160,12 +160,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
    */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  if (!workspaceSlug) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Workspace Slug Not Found",
-    });
-  }
+  // if (!workspaceSlug) {
+  //   throw new TRPCError({
+  //     code: "UNAUTHORIZED",
+  //     message: "Workspace Slug Not Found",
+  //   });
+  // }
 
   const activeWorkspace = usersToWorkspaces?.find(({ workspace }) => {
     // If there is a workspace slug in the cookie, use it to find the workspace
@@ -188,6 +188,10 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
 
   const result = await opts.next({ ctx: { ...ctx, user, workspace } });
+
+  if (process.env.NODE_ENV === "test") {
+    return result;
+  }
 
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request

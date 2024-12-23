@@ -8,7 +8,7 @@ const op = new OpenPanel({
 });
 
 op.setGlobalProperties({
-  env: process.env.VERCEL_ENV || "localhost",
+  env: process.env.VERCEL_ENV || process.env.NODE_ENV || "localhost",
   // app_version
 });
 
