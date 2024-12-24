@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 import {
   type EventProps,
   type IdentifyProps,
+  parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
 import { db, eq, schema } from "@openstatus/db";
@@ -211,20 +212,7 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
 
       const analytics = await setupAnalytics(identify);
       const rawInput = await getRawInput();
-
-      const additionalProps =
-        typeof rawInput === "object" && rawInput !== null
-          ? meta.trackProps?.reduce(
-              (acc, prop) => {
-                // REMINDER: Yet, prop can only be a property of the rawInput, not a nested one
-                if (prop in rawInput) {
-                  acc[prop] = rawInput[prop as keyof typeof rawInput];
-                }
-                return acc;
-              },
-              {} as Record<string, unknown>,
-            )
-          : {};
+      const additionalProps = parseInputToProps(rawInput, meta.trackProps);
 
       await analytics.track({ ...meta.track, ...additionalProps });
     }

@@ -19,7 +19,7 @@ const postRoute = createRoute({
   tags: ["monitor"],
   description: "Create a monitor",
   path: "/",
-  middleware: [trackMiddleware(Events.CreateMonitor)],
+  middleware: [trackMiddleware(Events.CreateMonitor, ["url", "jobType"])],
   request: {
     body: {
       description: "The monitor to create",

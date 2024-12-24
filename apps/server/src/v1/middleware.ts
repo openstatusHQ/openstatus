@@ -1,7 +1,11 @@
 import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
-import { type EventProps, setupAnalytics } from "@openstatus/analytics";
+import {
+  type EventProps,
+  parseInputToProps,
+  setupAnalytics,
+} from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
 import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
@@ -46,20 +50,24 @@ export async function secureMiddleware(
   await next();
 }
 
-export function trackMiddleware(event: EventProps) {
+export function trackMiddleware(event: EventProps, eventProps?: string[]) {
   return async (c: Context<{ Variables: Variables }, "/*">, next: Next) => {
     await next();
 
     // REMINDER: only track the event if the request was successful
     // REMINDER: use setTimeout to avoid blocking the response
     if (c.finalized) {
+      // We have checked the request to be valid already
+      const json = (await c.req.json()) as unknown;
+      const additionalProps = parseInputToProps(json, eventProps);
+
       setTimeout(async () => {
         const analytics = await setupAnalytics({
           userId: `api_${c.get("workspaceId")}`,
           workspaceId: c.get("workspaceId"),
           plan: c.get("workspacePlan").id,
         });
-        await analytics.track(event);
+        await analytics.track({ ...event, additionalProps });
       }, 0);
     }
   };

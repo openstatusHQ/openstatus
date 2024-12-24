@@ -18,7 +18,7 @@ const postRoute = createRoute({
   tags: ["page"],
   description: "Create a status page",
   path: "/",
-  middleware: [trackMiddleware(Events.CreatePage)],
+  middleware: [trackMiddleware(Events.CreatePage, ["slug"])],
   request: {
     body: {
       description: "The status page to create",
