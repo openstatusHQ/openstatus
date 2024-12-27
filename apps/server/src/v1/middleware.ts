@@ -57,7 +57,14 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
     // REMINDER: only track the event if the request was successful
     if (!c.error) {
       // We have checked the request to be valid already
-      const json = (await c.req.json()) as unknown;
+      let json: unknown;
+      if (c.req.raw.bodyUsed) {
+        try {
+          json = await c.req.json();
+        } catch {
+          json = {};
+        }
+      }
       const additionalProps = parseInputToProps(json, eventProps);
 
       // REMINDER: use setTimeout to avoid blocking the response
