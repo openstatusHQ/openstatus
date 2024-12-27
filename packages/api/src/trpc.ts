@@ -202,9 +202,19 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { meta, getRawInput } = opts;
+    const { ctx, meta, getRawInput } = opts;
+
     if (meta?.track) {
-      let identify: IdentifyProps = {};
+      const userAgent = ctx.req?.headers.get("user-agent") ?? undefined;
+      const location =
+        ctx.req?.headers.get("x-forwarded-for") ??
+        process.env.VERCEL_REGION ??
+        undefined;
+
+      let identify: IdentifyProps = {
+        userAgent,
+        location,
+      };
 
       if (user && workspace) {
         identify = {

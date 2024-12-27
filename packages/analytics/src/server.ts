@@ -18,11 +18,22 @@ export type IdentifyProps = {
   email?: string;
   workspaceId?: string;
   plan?: string;
+  // headers from the request
+  location?: string;
+  userAgent?: string;
 };
 
 export async function setupAnalytics(props: IdentifyProps) {
   if (process.env.NODE_ENV !== "production") {
     return noop();
+  }
+
+  if (props.location) {
+    op.api.addHeader("x-client-ip", props.location);
+  }
+
+  if (props.userAgent) {
+    op.api.addHeader("user-agent", props.userAgent);
   }
 
   if (props.userId) {
