@@ -90,7 +90,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const analytics = await setupAnalytics({
         userId: `usr_${params.user.id}`,
-        email: params.user.id,
+        email: params.user.email,
       });
 
       await analytics.track(Events.CreateUser);
@@ -102,7 +102,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const analytics = await setupAnalytics({
         userId: `usr_${params.user.id}`,
-        email: params.user.id,
+        email: params.user.email,
       });
 
       await analytics.track(Events.SignInUser);
