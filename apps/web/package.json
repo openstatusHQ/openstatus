@@ -97,7 +97,6 @@
     "postcss": "8.4.38",
     "rehype-autolink-headings": "7.1.0",
     "rehype-slug": "5.1.0",
-    "remark-gfm": "3.0.1",
     "tailwindcss": "3.4.3",
     "typescript": "5.6.2",
     "unified": "10.1.2"

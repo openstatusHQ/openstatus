@@ -1,11 +1,12 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui/src/components/button";
 import { Clipboard, ClipboardCopy } from "lucide-react";
 import React from "react";
 export interface PreProps extends React.HTMLAttributes<HTMLPreElement> {}
 
-export default function Pre({ children, ...props }: PreProps) {
+export default function Pre({ children, className, ...props }: PreProps) {
   const [copied, setCopied] = React.useState(false);
   const ref = React.useRef<HTMLPreElement>(null);
 
@@ -43,7 +44,7 @@ export default function Pre({ children, ...props }: PreProps) {
           <ClipboardCopy className="h-5 w-5" />
         )}
       </Button>
-      <pre ref={ref} {...props}>
+      <pre ref={ref} className={cn("[&_code]:grid", className)} {...props}>
         {children}
       </pre>
     </div>

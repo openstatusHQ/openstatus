@@ -102,4 +102,12 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  [data-highlighted-chars] {
+    @apply bg-muted rounded;
+  }
+  
+  [data-highlighted-line] {
+    @apply bg-muted rounded;
+  }
 }

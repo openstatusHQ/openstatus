@@ -55,12 +55,12 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
     await next();
 
     // REMINDER: only track the event if the request was successful
-    // REMINDER: use setTimeout to avoid blocking the response
-    if (c.finalized) {
+    if (!c.error) {
       // We have checked the request to be valid already
       const json = (await c.req.json()) as unknown;
       const additionalProps = parseInputToProps(json, eventProps);
 
+      // REMINDER: use setTimeout to avoid blocking the response
       setTimeout(async () => {
         const analytics = await setupAnalytics({
           userId: `api_${c.get("workspaceId")}`,

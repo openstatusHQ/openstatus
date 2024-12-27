@@ -195,6 +195,11 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   }
 
   // REMINDER: We only track the event if the request was successful
+  if (!result.ok) {
+    return result;
+  }
+
+  // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
     const { ctx, meta, getRawInput } = opts;
