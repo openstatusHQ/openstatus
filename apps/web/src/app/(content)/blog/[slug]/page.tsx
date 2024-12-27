@@ -29,6 +29,10 @@ export async function generateMetadata(props: {
   }
   const { title, publishedAt, description, slug, image } = post;
 
+  const encodedTitle = encodeURIComponent(title);
+  const encodedDescription = encodeURIComponent(description);
+  const encodedImage = encodeURIComponent(image);
+
   return {
     ...defaultMetadata,
     title,
@@ -42,7 +46,7 @@ export async function generateMetadata(props: {
       url: `https://www.openstatus.dev/blog/${slug}`,
       images: [
         {
-          url: `https://openstatus.dev/api/og/post?title=${title}&image=${image}`,
+          url: `https://openstatus.dev/api/og/post?title=${encodedTitle}&image=${encodedImage}&description=${encodedDescription}`,
         },
       ],
     },
@@ -51,7 +55,7 @@ export async function generateMetadata(props: {
       title,
       description,
       images: [
-        `https://openstatus.dev/api/og/post?title=${title}&image=${image}`,
+        `https://openstatus.dev/api/og/post?title=${encodedTitle}&image=${encodedImage}&description=${encodedDescription}`,
       ],
     },
   };
