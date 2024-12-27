@@ -148,8 +148,10 @@ import type { User } from "@openstatus/auth";
 export function trackMiddleware(event: EventProps) {
   return async (c: Context<{ Variables: { user?: User } }, "/*">, next: Next) => {
     await next();
+    
+    const isValid = c.res.status.toString().startsWith("2") && !c.error;
 
-    if (!c.error) {
+    if (isValid) {
       setTimeout(async () => {
         const analytics = await setupAnalytics({
           profileId: c.get("user")?.id,

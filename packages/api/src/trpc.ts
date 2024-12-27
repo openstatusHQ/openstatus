@@ -32,6 +32,10 @@ type CreateContextOptions = {
   workspace?: Workspace | null;
   user?: User | null;
   req?: NextRequest;
+  metadata?: {
+    userAgent?: string;
+    location?: string;
+  };
 };
 
 type Meta = {
@@ -73,6 +77,13 @@ export const createTRPCContext = async (opts: {
     workspace,
     user,
     req: opts.req,
+    metadata: {
+      userAgent: opts.req.headers.get("user-agent") ?? undefined,
+      location:
+        opts.req.headers.get("x-forwarded-for") ??
+        process.env.VERCEL_REGION ??
+        undefined,
+    },
   });
 };
 
@@ -202,9 +213,13 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { meta, getRawInput } = opts;
+    const { ctx, meta, getRawInput } = opts;
+
     if (meta?.track) {
-      let identify: IdentifyProps = {};
+      let identify: IdentifyProps = {
+        userAgent: ctx.metadata?.userAgent,
+        location: ctx.metadata?.location,
+      };
 
       if (user && workspace) {
         identify = {
