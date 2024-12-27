@@ -202,16 +202,16 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { ctx, meta, getRawInput } = opts;
+    const { meta, getRawInput } = opts;
     if (meta?.track) {
       let identify: IdentifyProps = {};
 
-      if (ctx.user && ctx.workspace) {
+      if (user && workspace) {
         identify = {
-          userId: `usr_${ctx.user.id}`,
-          email: ctx.user.email || undefined,
-          workspaceId: String(ctx.workspace.id),
-          plan: ctx.workspace.plan,
+          userId: `usr_${user.id}`,
+          email: user.email || undefined,
+          workspaceId: String(workspace.id),
+          plan: workspace.plan,
         };
       }
 
