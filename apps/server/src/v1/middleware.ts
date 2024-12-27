@@ -55,7 +55,9 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
     await next();
 
     // REMINDER: only track the event if the request was successful
-    if (!c.error) {
+    const isValid = c.res.status.toString().startsWith("2") && !c.error;
+
+    if (isValid) {
       // We have checked the request to be valid already
       let json: unknown;
       if (c.req.raw.bodyUsed) {
