@@ -3,9 +3,11 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src/serializing";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
 import { getAssertions } from "./utils";
@@ -15,6 +17,7 @@ const putRoute = createRoute({
   tags: ["monitor"],
   description: "Update a monitor",
   path: "/:id",
+  middleware: [trackMiddleware(Events.UpdateMonitor)],
   request: {
     params: ParamsSchema,
     body: {

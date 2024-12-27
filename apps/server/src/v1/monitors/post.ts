@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { trackAnalytics } from "@openstatus/analytics";
+import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
@@ -8,8 +8,8 @@ import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src";
 
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { env } from "../../env";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";
@@ -19,6 +19,7 @@ const postRoute = createRoute({
   tags: ["monitor"],
   description: "Create a monitor",
   path: "/",
+  middleware: [trackMiddleware(Events.CreateMonitor, ["url", "jobType"])],
   request: {
     body: {
       description: "The monitor to create",
@@ -92,15 +93,6 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       })
       .returning()
       .get();
-    if (env.JITSU_WRITE_KEY) {
-      trackAnalytics({
-        event: "Monitor Created",
-        url: input.url,
-        periodicity: input.periodicity,
-        api: true,
-        workspaceId: String(workspaceId),
-      });
-    }
 
     const data = MonitorSchema.parse(_newMonitor);
 

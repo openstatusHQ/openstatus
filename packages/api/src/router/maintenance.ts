@@ -8,11 +8,13 @@ import {
   selectMaintenanceSchema,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { TRPCError } from "@trpc/server";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const maintenanceRouter = createTRPCRouter({
   create: protectedProcedure
+    .meta({ track: Events.CreateMaintenance })
     .input(insertMaintenanceSchema)
     .mutation(async (opts) => {
       const _maintenance = await opts.ctx.db
@@ -111,6 +113,7 @@ export const maintenanceRouter = createTRPCRouter({
     return _maintenances;
   }),
   update: protectedProcedure
+    .meta({ track: Events.UpdateMaintenance })
     .input(insertMaintenanceSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) {
@@ -175,6 +178,7 @@ export const maintenanceRouter = createTRPCRouter({
       return _maintenance;
     }),
   delete: protectedProcedure
+    .meta({ track: Events.DeleteMaintenance })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       return await opts.ctx.db

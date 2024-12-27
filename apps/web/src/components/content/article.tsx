@@ -2,7 +2,7 @@ import type { Post } from "content-collections";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@openstatus/ui";
+import { Avatar, AvatarFallback, AvatarImage, Badge } from "@openstatus/ui";
 
 import { Mdx } from "@/components/content/mdx";
 import { formatDate } from "@/lib/utils";
@@ -40,11 +40,15 @@ export function Article({ post }: { post: Post }) {
             >
               {post.author.name}
             </Link>
-            <p>
-              {formatDate(post.publishedAt)}
-              <span className="mx-1 text-muted-foreground/70">&bull;</span>
-              {post.readingTime}
-            </p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <time className="font-mono">{formatDate(post.publishedAt)}</time>
+              <span className="text-muted-foreground/70">&bull;</span>
+              <span className="font-mono">{post.readingTime}</span>
+              <span className="text-muted-foreground/70">&bull;</span>
+              <Badge variant="outline" className="font-normal capitalize">
+                {post.tag}
+              </Badge>
+            </div>
           </div>
         </div>
       </div>

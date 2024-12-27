@@ -34,7 +34,7 @@ export async function GET(req: Request) {
       {image ? (
         <img
           alt=""
-          style={{ objectFit: "cover", height: 350 }} // h-80 = 320px
+          style={{ objectFit: "cover", height: 330 }} // h-80 = 320px
           tw="flex w-full"
           src={new URL(image, DEFAULT_URL).toString()}
         />

@@ -12,13 +12,13 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { SchemaError } from "@openstatus/error";
-import { trackNewNotification } from "../analytics";
-import { env } from "../env";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const notificationRouter = createTRPCRouter({
   create: protectedProcedure
+    .meta({ track: Events.CreateNotification })
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
       const { monitors, ...props } = opts.input;
@@ -63,16 +63,11 @@ export const notificationRouter = createTRPCRouter({
         await opts.ctx.db.insert(notificationsToMonitors).values(values);
       }
 
-      if (env.JITSU_HOST !== undefined && env.JITSU_WRITE_KEY !== undefined) {
-        await trackNewNotification(opts.ctx.user, {
-          provider: _notification.provider,
-        });
-      }
-
       return _notification;
     }),
 
   update: protectedProcedure
+    .meta({ track: Events.UpdateNotification })
     .input(insertNotificationSchema)
     .mutation(async (opts) => {
       if (!opts.input.id) return;
@@ -160,6 +155,7 @@ export const notificationRouter = createTRPCRouter({
     }),
 
   deleteNotification: protectedProcedure
+    .meta({ track: Events.DeleteNotification })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       await opts.ctx.db

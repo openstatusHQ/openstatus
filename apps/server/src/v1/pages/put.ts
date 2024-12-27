@@ -1,10 +1,12 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema } from "./schema";
@@ -14,6 +16,7 @@ const putRoute = createRoute({
   tags: ["page"],
   description: "Update a status page",
   path: "/:id",
+  middleware: [trackMiddleware(Events.UpdatePage)],
   request: {
     params: ParamsSchema,
     body: {
