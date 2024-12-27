@@ -41,7 +41,7 @@ export const Events = {
 } as const satisfies Record<string, EventProps>;
 ```
 
-Next, we need to initialize OpenPanel (see [installation](https://openpanel.dev/docs/sdks/javascript)) and set up the analytics in our application.
+Next, we need to initialize OpenPanel (see [installation](https://openpanel.dev/docs/sdks/javascript?ref=openstatus)) and set up the analytics in our application.
 
 ```ts
 // packages/analytics/src/index.ts
@@ -119,7 +119,7 @@ The `next()` return value has an `ok` boolean property to check if the procedure
 
 How will we use it in a procedure? Adding a `meta` property will allow us to track the event by defining the event we want to track.
 
-```ts {6}
+```ts {8}
 // packages/trpc/src/router/page.ts
 import { Events } from '@openstatus/analytics';
 import { insertPageSchema } from "@openstatus/db";
@@ -165,7 +165,7 @@ Depending on where you are running the server, you might want to replace `setTim
 
 And again, we check if there was an `error` before tracking the event. We don't want to track unsuccessful events.
 
-The [`@hono/zod-openapi`](https://github.com/honojs/middleware/tree/main/packages/zod-openapi) routes have a `middleware` property that allows you to add middleware to the route. This is where we will add the tracking middleware.
+The [`@hono/zod-openapi`](https://github.com/honojs/middleware/tree/main/packages/zod-openapi?ref=openstatus) routes have a `middleware` property that allows you to add middleware to the route. This is where we will add the tracking middleware.
 
 ```ts {11}
 // apps/web/src/pages/post.ts
