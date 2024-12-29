@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { db, eq } from "@openstatus/db";
+import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -13,7 +13,7 @@ import { ParamsSchema } from "./schema";
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["monitor"],
-  description: "Delete a monitor",
+  description: "Delete the monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,
@@ -26,7 +26,7 @@ const deleteRoute = createRoute({
           schema: z.object({}),
         },
       },
-      description: "Delete the monitor",
+      description: "The monitor was successfully deleted",
     },
     ...openApiErrorResponses,
   },
@@ -34,21 +34,23 @@ const deleteRoute = createRoute({
 
 export function registerDeleteMonitor(app: typeof monitorsApi) {
   return app.openapi(deleteRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _monitor = await db
       .select()
       .from(monitor)
-      .where(eq(monitor.id, Number(id)))
+      .where(
+        and(
+          eq(monitor.id, Number(id)),
+          eq(monitor.workspaceId, workspaceId),
+          isNull(monitor.deletedAt),
+        ),
+      )
       .get();
 
     if (!_monitor) {
       throw new HTTPException(404, { message: "Not Found" });
-    }
-
-    if (Number(workspaceId) !== _monitor.workspaceId) {
-      throw new HTTPException(401, { message: "Unauthorized" });
     }
 
     await db

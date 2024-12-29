@@ -38,18 +38,8 @@ export async function POST(
     return new Response("Not found", { status: 401 });
   }
 
-  const token = (Math.random() + 1).toString(36).substring(10);
+  const token = crypto.randomUUID();
 
-  await sendEmail({
-    react: SubscribeEmail({
-      domain: params.domain,
-      token: token,
-      page: pageData.title,
-    }),
-    from: "OpenStatus <notification@notifications.openstatus.dev>",
-    to: [result.email],
-    subject: `Verify your subscription to ${pageData.title}`,
-  });
   await db
     .insert(pageSubscriber)
     .values({
@@ -59,5 +49,17 @@ export async function POST(
       expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
     })
     .execute();
+
+  await sendEmail({
+    react: SubscribeEmail({
+      domain: params.domain,
+      token,
+      page: pageData.title,
+    }),
+    from: "OpenStatus <notification@notifications.openstatus.dev>",
+    to: [result.email],
+    subject: `Verify your subscription to ${pageData.title}`,
+  });
+
   return Response.json({ message: "Hello world" });
 }

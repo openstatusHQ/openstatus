@@ -45,18 +45,15 @@ const postRoute = createRoute({
 
 export function registerPostMonitor(api: typeof monitorsApi) {
   return api.openapi(postRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
     const count = (
       await db
         .select({ count: sql<number>`count(*)` })
         .from(monitor)
         .where(
-          and(
-            eq(monitor.workspaceId, Number(workspaceId)),
-            isNull(monitor.deletedAt),
-          ),
+          and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
         )
         .all()
     )[0].count;
@@ -77,6 +74,13 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       }
     }
 
+    if (input.jobType && !["http", "tcp"].includes(input.jobType)) {
+      throw new HTTPException(400, {
+        message:
+          "Invalid jobType, currently only 'http' and 'tcp' are supported",
+      });
+    }
+
     const { headers, regions, assertions, ...rest } = input;
 
     const assert = assertions ? getAssertions(assertions) : [];
@@ -85,7 +89,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
       .insert(monitor)
       .values({
         ...rest,
-        workspaceId: Number(workspaceId),
+        workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,

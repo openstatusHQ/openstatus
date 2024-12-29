@@ -25,13 +25,6 @@ export const StatusReportSchema = z.object({
   status: statusReportStatusSchema.openapi({
     description: "The current status of the report",
   }),
-  // REMINDER: extended only on POST requests
-  // date: isoDate.openapi({
-  //   description: "The date of the report in ISO8601 format",
-  // }),
-  // message: z.string().openapi({
-  //   description: "The message of the current status of incident",
-  // }),
   statusReportUpdateIds: z
     .array(z.number())
     .optional()
@@ -45,11 +38,8 @@ export const StatusReportSchema = z.object({
     .optional()
     .nullable()
     .default([])
-    .openapi({
-      description: "id of monitors this report needs to refer",
-    })
+    .openapi({ description: "Ids of the monitors the status report." })
     .nullable(),
-
   pageId: z.number().optional().nullable().openapi({
     description: "The id of the page this status report belongs to",
   }),

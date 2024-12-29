@@ -50,7 +50,7 @@ const postRoute = createRoute({
           schema: StatusReportSchema,
         },
       },
-      description: "Status report created",
+      description: "The created status report",
     },
     ...openApiErrorResponses,
   },
@@ -59,8 +59,8 @@ const postRoute = createRoute({
 export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
 
     const { monitorIds, date, ...rest } = input;
 
@@ -70,7 +70,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .from(monitor)
         .where(
           and(
-            eq(monitor.workspaceId, Number(workspaceId)),
+            eq(monitor.workspaceId, workspaceId),
             inArray(monitor.id, monitorIds),
             isNull(monitor.deletedAt),
           ),
@@ -86,12 +86,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       const _pages = await db
         .select()
         .from(page)
-        .where(
-          and(
-            eq(page.workspaceId, Number(workspaceId)),
-            eq(page.id, rest.pageId),
-          ),
-        )
+        .where(and(eq(page.workspaceId, workspaceId), eq(page.id, rest.pageId)))
         .all();
 
       if (_pages.length !== 1) {
@@ -103,7 +98,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .insert(statusReport)
       .values({
         ...rest,
-        workspaceId: Number(workspaceId),
+        workspaceId: workspaceId,
       })
       .returning()
       .get();

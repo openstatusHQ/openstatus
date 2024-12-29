@@ -1,10 +1,9 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, db, eq, isNull } from "@openstatus/db";
+import { and, db, eq } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { HTTPException } from "hono/http-exception";
 import { env } from "../../../env";
 import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
@@ -29,7 +28,7 @@ const getMonitorStats = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(ResultRun),
+          schema: ResultRun.array(),
         },
       },
       description: "All the metrics for the monitor",
@@ -40,7 +39,7 @@ const getMonitorStats = createRoute({
 
 export function registerGetMonitorResult(api: typeof monitorsApi) {
   return api.openapi(getMonitorStats, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id, resultId } = c.req.valid("param");
 
     const _monitorRun = await db
@@ -50,7 +49,7 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
         and(
           eq(monitorRun.id, Number(resultId)),
           eq(monitorRun.monitorId, Number(id)),
-          eq(monitorRun.workspaceId, Number(workspaceId)),
+          eq(monitorRun.workspaceId, workspaceId),
         ),
       )
       .get();

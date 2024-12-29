@@ -16,7 +16,7 @@ import {
 
 const postRoute = createRoute({
   method: "post",
-  tags: ["page"],
+  tags: ["check"],
   description: "Run a single check",
   path: "/http",
   request: {
@@ -45,7 +45,7 @@ const postRoute = createRoute({
 export function registerHTTPPostCheck(api: typeof checkAPI) {
   return api.openapi(postRoute, async (c) => {
     const data = c.req.valid("json");
-    const workspaceId = Number(c.get("workspaceId"));
+    const workspaceId = c.get("workspace").id;
     const input = c.req.valid("json");
 
     const { headers, regions, runCount, aggregated, ...rest } = data;
@@ -53,7 +53,7 @@ export function registerHTTPPostCheck(api: typeof checkAPI) {
     const newCheck = await db
       .insert(check)
       .values({
-        workspaceId: Number(workspaceId),
+        workspaceId: workspaceId,
         regions: regions.join(","),
         countRequests: runCount,
         ...rest,

@@ -31,7 +31,7 @@ const getRoute = createRoute({
 
 export function registerGetIncident(app: typeof incidentsApi) {
   return app.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _incident = await db
@@ -39,7 +39,7 @@ export function registerGetIncident(app: typeof incidentsApi) {
       .from(incidentTable)
       .where(
         and(
-          eq(incidentTable.workspaceId, Number(workspaceId)),
+          eq(incidentTable.workspaceId, workspaceId),
           eq(incidentTable.id, Number(id)),
         ),
       )

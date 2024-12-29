@@ -5,10 +5,10 @@ import type { Variables } from "../index";
 import { handleZodError } from "../../libs/errors";
 import { registerHTTPPostCheck } from "./http/post";
 
-const checkAPI = new OpenAPIHono<{ Variables: Variables }>({
+const checkApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
 });
 
-registerHTTPPostCheck(checkAPI);
+registerHTTPPostCheck(checkApi);
 
-export { checkAPI };
+export { checkApi };

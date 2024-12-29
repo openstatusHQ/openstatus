@@ -47,12 +47,12 @@ const postRoute = createRoute({
 
 export function registerPostNotification(api: typeof notificationsApi) {
   return api.openapi(postRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const workspacePlan = c.get("workspacePlan");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const workspacePlan = c.get("workspace").plan;
+    const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
 
-    if (input.provider === "sms" && workspacePlan.title === "Hobby") {
+    if (input.provider === "sms" && workspacePlan === "free") {
       throw new HTTPException(403, { message: "Upgrade for SMS" });
     }
 
@@ -60,7 +60,7 @@ export function registerPostNotification(api: typeof notificationsApi) {
       await db
         .select({ count: sql<number>`count(*)` })
         .from(notification)
-        .where(eq(notification.workspaceId, Number(workspaceId)))
+        .where(eq(notification.workspaceId, workspaceId))
         .all()
     )[0].count;
 
@@ -79,7 +79,7 @@ export function registerPostNotification(api: typeof notificationsApi) {
         .where(
           and(
             inArray(monitor.id, monitors),
-            eq(monitor.workspaceId, Number(workspaceId)),
+            eq(monitor.workspaceId, workspaceId),
             isNull(monitor.deletedAt),
           ),
         )
@@ -94,7 +94,7 @@ export function registerPostNotification(api: typeof notificationsApi) {
       .insert(notification)
       .values({
         ...rest,
-        workspaceId: Number(workspaceId),
+        workspaceId: workspaceId,
         data: JSON.stringify(payload),
       })
       .returning()

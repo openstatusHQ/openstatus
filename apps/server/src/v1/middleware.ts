@@ -8,7 +8,6 @@ import {
 } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
-import { getPlanConfig } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
 import { env } from "../env";
 import type { Variables } from "./index";
@@ -23,7 +22,7 @@ export async function secureMiddleware(
   const { error, result } =
     env.NODE_ENV === "production"
       ? await verifyKey(key)
-      : { result: { valid: true, ownerId: "1" }, error: null };
+      : { result: { valid: true, ownerId: key }, error: null };
 
   if (error) throw new HTTPException(500, { message: error.message });
   if (!result.valid) throw new HTTPException(401, { message: "Unauthorized" });
@@ -41,11 +40,13 @@ export async function secureMiddleware(
     throw new HTTPException(401, { message: "Unauthorized" });
   }
 
-  const _work = selectWorkspaceSchema.parse(_workspace);
+  const validation = selectWorkspaceSchema.safeParse(_workspace);
 
-  c.set("workspacePlan", getPlanConfig(_workspace.plan));
-  c.set("workspaceId", `${result.ownerId}`);
-  c.set("limits", _work.limits);
+  if (!validation.success) {
+    throw new HTTPException(400, { message: "Bad Request" });
+  }
+
+  c.set("workspace", validation.data);
 
   await next();
 }
@@ -68,13 +69,14 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
         }
       }
       const additionalProps = parseInputToProps(json, eventProps);
+      const workspace = c.get("workspace");
 
       // REMINDER: use setTimeout to avoid blocking the response
       setTimeout(async () => {
         const analytics = await setupAnalytics({
-          userId: `api_${c.get("workspaceId")}`,
-          workspaceId: c.get("workspaceId"),
-          plan: c.get("workspacePlan").id,
+          userId: `api_${workspace.id}`,
+          workspaceId: `${workspace.id}`,
+          plan: workspace.plan,
         });
         await analytics.track({ ...event, additionalProps });
       }, 0);

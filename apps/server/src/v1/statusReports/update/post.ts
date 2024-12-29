@@ -48,8 +48,8 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
   return api.openapi(postRouteUpdate, async (c) => {
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
 
     const _statusReport = await db
       .update(statusReport)
@@ -57,7 +57,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId)),
+          eq(statusReport.workspaceId, workspaceId),
         ),
       )
       .returning()

@@ -26,6 +26,7 @@ const putRoute = createRoute({
             acknowledgedAt: true,
             resolvedAt: true,
           })
+            // TODO: check if really necessary
             .extend({
               acknowledgedAt: z.coerce.date().optional(),
               resolvedAt: z.coerce.date().optional(),
@@ -53,7 +54,7 @@ const putRoute = createRoute({
 export function registerPutIncident(app: typeof incidentsApi) {
   return app.openapi(putRoute, async (c) => {
     const inputValues = c.req.valid("json");
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _incident = await db
@@ -62,7 +63,7 @@ export function registerPutIncident(app: typeof incidentsApi) {
       .where(
         and(
           eq(incidentTable.id, Number(id)),
-          eq(incidentTable.workspaceId, Number(workspaceId)),
+          eq(incidentTable.workspaceId, workspaceId),
         ),
       )
       .get();
@@ -71,12 +72,9 @@ export function registerPutIncident(app: typeof incidentsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    if (Number(workspaceId) !== _incident.workspaceId) {
-      throw new HTTPException(401, { message: "Unauthorized" });
-    }
-
     const _newIncident = await db
       .update(incidentTable)
+      // TODO: we should set the acknowledgedBy and resolvedBy fields
       .set({ ...inputValues })
       .where(eq(incidentTable.id, Number(id)))
       .returning()

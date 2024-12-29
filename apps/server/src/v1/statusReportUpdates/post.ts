@@ -21,7 +21,7 @@ const createStatusUpdate = createRoute({
   path: "/",
   request: {
     body: {
-      description: "the status report update",
+      description: "The status report update to create",
       content: {
         "application/json": {
           schema: StatusReportUpdateSchema.omit({ id: true }),
@@ -36,7 +36,7 @@ const createStatusUpdate = createRoute({
           schema: StatusReportUpdateSchema,
         },
       },
-      description: "Get all status report updates",
+      description: "The created status report update",
     },
     ...openApiErrorResponses,
   },
@@ -46,9 +46,9 @@ export function registerPostStatusReportUpdate(
   api: typeof statusReportUpdatesApi,
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const input = c.req.valid("json");
-    const limits = c.get("limits");
+    const limits = c.get("workspace").limits;
 
     const _statusReport = await db
       .select()
@@ -56,7 +56,7 @@ export function registerPostStatusReportUpdate(
       .where(
         and(
           eq(statusReport.id, input.statusReportId),
-          eq(statusReport.workspaceId, Number(workspaceId)),
+          eq(statusReport.workspaceId, workspaceId),
         ),
       )
       .get();
@@ -77,8 +77,6 @@ export function registerPostStatusReportUpdate(
       })
       .returning()
       .get();
-
-    // send email
 
     if (limits["status-subscribers"] && _statusReport.pageId) {
       const subscribers = await db

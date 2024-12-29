@@ -66,6 +66,16 @@ export async function handleSubscribe(formData: FormData) {
 
   const token = crypto.randomUUID();
 
+  await db
+    .insert(pageSubscriber)
+    .values({
+      email: validatedFields.data.email,
+      token,
+      pageId: pageData.id,
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+    })
+    .execute();
+
   await sendEmail({
     react: SubscribeEmail({
       domain: pageData.slug,
@@ -76,16 +86,6 @@ export async function handleSubscribe(formData: FormData) {
     to: [validatedFields.data.email],
     subject: `Verify your subscription to ${pageData.title}`,
   });
-
-  await db
-    .insert(pageSubscriber)
-    .values({
-      email: validatedFields.data.email,
-      token,
-      pageId: pageData.id,
-      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-    })
-    .execute();
 
   const analytics = await setupAnalytics({});
   analytics.track({ ...Events.SubscribePage, slug: pageData.slug });

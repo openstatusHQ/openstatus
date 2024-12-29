@@ -34,7 +34,7 @@ const getRoute = createRoute({
 
 export function registerGetNotification(api: typeof notificationsApi) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _notification = await db
@@ -42,7 +42,7 @@ export function registerGetNotification(api: typeof notificationsApi) {
       .from(notification)
       .where(
         and(
-          eq(page.workspaceId, Number(workspaceId)),
+          eq(notification.workspaceId, workspaceId),
           eq(notification.id, Number(id)),
         ),
       )
@@ -52,18 +52,16 @@ export function registerGetNotification(api: typeof notificationsApi) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    const linkedMonitors = await db
+    const _monitors = await db
       .select()
       .from(notificationsToMonitors)
       .where(eq(notificationsToMonitors.notificationId, Number(id)))
       .all();
 
-    const monitors = linkedMonitors.map((m) => m.monitorId);
-
     const data = NotificationSchema.parse({
       ..._notification,
       payload: JSON.parse(_notification.data || "{}"),
-      monitors,
+      monitors: _monitors.map((m) => m.monitorId),
     });
 
     return c.json(data, 200);

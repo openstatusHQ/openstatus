@@ -18,6 +18,7 @@ export function handleError(err: Error, c: Context): Response {
         code: "BAD_REQUEST",
         message: error.message,
         docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
+        requestId: c.get("requestId"),
       },
       { status: 400 },
     );
@@ -29,6 +30,7 @@ export function handleError(err: Error, c: Context): Response {
         code: code,
         message: err.message,
         docs: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
+        requestId: c.get("requestId"),
       },
       { status: err.status },
     );
@@ -38,6 +40,7 @@ export function handleError(err: Error, c: Context): Response {
       code: "INTERNAL_SERVER_ERROR",
       message: err.message ?? "Something went wrong",
       docs: "https://docs.openstatus.dev/api-references/errors/code/INTERNAL_SERVER_ERROR",
+      requestId: c.get("requestId"),
     },
 
     { status: 500 },
@@ -63,12 +66,12 @@ export function handleZodError(
         code: "BAD_REQUEST",
         docs: "https://docs.openstatus.dev/api-references/errors/code/BAD_REQUEST",
         message: error.message,
+        requestId: c.get("requestId"),
       },
       { status: 400 },
     );
   }
 }
-export type ErrorSchema = z.infer<ReturnType<typeof createErrorSchema>>;
 
 export function createErrorSchema(code: ErrorCode) {
   return z.object({
@@ -84,5 +87,11 @@ export function createErrorSchema(code: ErrorCode) {
       description: "A link to the documentation for the error.",
       example: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
     }),
+    requestId: z.string().openapi({
+      description: "The request id to be used for debugging.",
+      example: "random-uuid",
+    }),
   });
 }
+
+export type ErrorSchema = z.infer<ReturnType<typeof createErrorSchema>>;

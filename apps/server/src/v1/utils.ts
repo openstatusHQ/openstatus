@@ -1,10 +1,17 @@
 import { z } from "@hono/zod-openapi";
+import { ZodError } from "zod";
 
 export const isoDate = z.preprocess((val) => {
-  if (val) {
-    return new Date(String(val)).toISOString();
+  try {
+    if (val) {
+      return new Date(String(val)).toISOString();
+    }
+    return new Date().toISOString();
+  } catch (e) {
+    throw new ZodError([
+      { code: "invalid_date", message: "Invalid date", path: [] },
+    ]);
   }
-  return new Date().toISOString();
 }, z.string());
 
 export function isNumberArray<T>(

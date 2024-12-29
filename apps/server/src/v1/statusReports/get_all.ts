@@ -29,14 +29,14 @@ const getAllRoute = createRoute({
 
 export function registerGetAllStatusReports(api: typeof statusReportsApi) {
   return api.openapi(getAllRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
 
     const _statusReports = await db.query.statusReport.findMany({
       with: {
         statusReportUpdates: true,
         monitorsToStatusReports: true,
       },
-      where: eq(statusReport.workspaceId, Number(workspaceId)),
+      where: eq(statusReport.workspaceId, workspaceId),
     });
 
     if (!_statusReports) {

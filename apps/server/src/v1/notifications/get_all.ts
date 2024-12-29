@@ -1,12 +1,10 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
-import { and, db, eq } from "@openstatus/db";
+import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
-  page,
 } from "@openstatus/db/src/schema";
-import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
@@ -21,7 +19,7 @@ const getAllRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(NotificationSchema),
+          schema: NotificationSchema.array(),
         },
       },
       description: "Get all your workspace notification",
@@ -32,37 +30,34 @@ const getAllRoute = createRoute({
 
 export function registerGetAllNotifications(app: typeof notificationsApi) {
   return app.openapi(getAllRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
 
-    const _incidents = await db
+    const _notifications = await db
       .select()
       .from(notification)
-      .where(and(eq(page.workspaceId, Number(workspaceId))))
+      .where(eq(notification.workspaceId, workspaceId))
       .all();
 
-    if (!_incidents) {
-      throw new HTTPException(404, { message: "Not Found" });
-    }
+    const _monitors = await db
+      .select()
+      .from(notificationsToMonitors)
+      .where(
+        inArray(
+          notificationsToMonitors.notificationId,
+          _notifications.map((n) => n.id),
+        ),
+      )
+      .all();
 
-    const data = [];
-
-    for (const _incident of _incidents) {
-      const linkedMonitors = await db
-        .select()
-        .from(notificationsToMonitors)
-        .where(eq(notificationsToMonitors.notificationId, _incident.id))
-        .all();
-
-      const monitors = linkedMonitors.map((m) => m.monitorId);
-
-      const p = NotificationSchema.parse({
-        ..._incidents,
-        payload: JSON.parse(_incident.data || "{}"),
-        monitors,
-      });
-
-      data.push(p);
-    }
+    const data = NotificationSchema.array().parse(
+      _notifications.map((n) => ({
+        ...n,
+        payload: JSON.parse(n.data || "{}"),
+        monitors: _monitors
+          .filter((m) => m.notificationId === n.id)
+          .map((m) => m.monitorId),
+      })),
+    );
 
     return c.json(data, 200);
   });

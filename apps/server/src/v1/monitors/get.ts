@@ -1,4 +1,4 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
@@ -31,7 +31,7 @@ const getRoute = createRoute({
 
 export function registerGetMonitor(api: typeof monitorsApi) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _monitor = await db
@@ -40,7 +40,7 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.id, Number(id)),
-          eq(monitor.workspaceId, Number(workspaceId)),
+          eq(monitor.workspaceId, workspaceId),
           isNull(monitor.deletedAt),
         ),
       )

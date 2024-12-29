@@ -31,15 +31,13 @@ const getRoute = createRoute({
 
 export function registerGetPage(api: typeof pagesApi) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _page = await db
       .select()
       .from(page)
-      .where(
-        and(eq(page.workspaceId, Number(workspaceId)), eq(page.id, Number(id))),
-      )
+      .where(and(eq(page.workspaceId, workspaceId), eq(page.id, Number(id))))
       .get();
 
     if (!_page) {

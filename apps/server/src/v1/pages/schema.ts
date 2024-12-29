@@ -63,7 +63,7 @@ export const PageSchema = z.object({
   password: z
     .string()
     .openapi({
-      description: "Your password to protect the page from the publi",
+      description: "Your password to protect the page from the public",
       example: "hidden-password",
     })
     .optional()
@@ -80,7 +80,9 @@ export const PageSchema = z.object({
   monitors: z
     .array(z.number())
     .openapi({
-      description: "The monitors of the page as an array of ids",
+      description:
+        "The monitors of the page as an array of ids. We recommend using the object format to include the order.",
+      deprecated: true,
       example: [1, 2],
     })
     .or(

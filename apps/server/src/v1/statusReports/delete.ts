@@ -31,7 +31,7 @@ const deleteRoute = createRoute({
 
 export function registerDeleteStatusReport(api: typeof statusReportsApi) {
   return api.openapi(deleteRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _statusReport = await db
@@ -40,7 +40,7 @@ export function registerDeleteStatusReport(api: typeof statusReportsApi) {
       .where(
         and(
           eq(statusReport.id, Number(id)),
-          eq(statusReport.workspaceId, Number(workspaceId)),
+          eq(statusReport.workspaceId, workspaceId),
         ),
       )
       .get();

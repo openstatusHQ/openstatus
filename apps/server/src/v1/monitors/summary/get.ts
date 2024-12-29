@@ -55,7 +55,7 @@ const getMonitorStats = createRoute({
 
 export function registerGetMonitorSummary(api: typeof monitorsApi) {
   return api.openapi(getMonitorStats, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _monitor = await db
@@ -64,7 +64,7 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.id, Number(id)),
-          eq(monitor.workspaceId, Number(workspaceId)),
+          eq(monitor.workspaceId, workspaceId),
           isNull(monitor.deletedAt),
         ),
       )

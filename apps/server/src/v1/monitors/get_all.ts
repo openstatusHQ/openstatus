@@ -3,7 +3,6 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
@@ -29,22 +28,15 @@ const getAllRoute = createRoute({
 
 export function registerGetAllMonitors(app: typeof monitorsApi) {
   return app.openapi(getAllRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
 
     const _monitors = await db
       .select()
       .from(monitor)
       .where(
-        and(
-          eq(monitor.workspaceId, Number(workspaceId)),
-          isNull(monitor.deletedAt),
-        ),
+        and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)),
       )
       .all();
-
-    if (!_monitors) {
-      throw new HTTPException(404, { message: "Not Found" });
-    }
 
     const data = z.array(MonitorSchema).parse(_monitors);
 

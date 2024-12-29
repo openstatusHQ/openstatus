@@ -44,8 +44,8 @@ const postRoute = createRoute({
 
 export function registerPostPage(api: typeof pagesApi) {
   return api.openapi(postRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
 
     if (input.customDomain && !limits["custom-domain"]) {
@@ -64,7 +64,7 @@ export function registerPostPage(api: typeof pagesApi) {
       await db
         .select({ count: sql<number>`count(*)` })
         .from(page)
-        .where(eq(page.workspaceId, Number(workspaceId)))
+        .where(eq(page.workspaceId, workspaceId))
         .all()
     )[0].count;
 
@@ -110,7 +110,7 @@ export function registerPostPage(api: typeof pagesApi) {
         .where(
           and(
             inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, Number(workspaceId)),
+            eq(monitor.workspaceId, workspaceId),
             isNull(monitor.deletedAt),
           ),
         )
@@ -125,7 +125,7 @@ export function registerPostPage(api: typeof pagesApi) {
       .insert(page)
       .values({
         ...rest,
-        workspaceId: Number(workspaceId),
+        workspaceId: workspaceId,
         customDomain: rest.customDomain ?? "", // TODO: make database migration to allow null
       })
       .returning()

@@ -67,7 +67,7 @@ async function noop() {
       opts: EventProps & PostEventPayload["properties"],
     ): Promise<unknown> => {
       return new Promise((resolve) => {
-        console.log(`>>> Track Event: ${opts.name}`);
+        console.log(`>>> Track Noop Event: ${opts.name}`);
         resolve(null);
       });
     },

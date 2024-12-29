@@ -1,6 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
-import { and, db, eq } from "@openstatus/db";
+import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -24,7 +24,7 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          schema: MonitorSchema.omit({ id: true }),
+          schema: MonitorSchema.omit({ id: true }).partial(),
         },
       },
     },
@@ -44,32 +44,41 @@ const putRoute = createRoute({
 
 export function registerPutMonitor(api: typeof monitorsApi) {
   return api.openapi(putRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
-    if (!limits.periodicity.includes(input.periodicity)) {
+    if (input.periodicity && !limits.periodicity.includes(input.periodicity)) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
 
-    for (const region of input.regions) {
-      if (!limits.regions.includes(region)) {
-        throw new HTTPException(403, { message: "Upgrade for more region" });
+    if (input.regions) {
+      for (const region of input.regions) {
+        if (!limits.regions.includes(region)) {
+          throw new HTTPException(403, { message: "Upgrade for more region" });
+        }
       }
     }
+
     const _monitor = await db
       .select()
       .from(monitor)
-      .where(eq(monitor.id, Number(id)))
+      .where(
+        and(
+          eq(monitor.id, Number(id)),
+          isNull(monitor.deletedAt),
+          eq(monitor.workspaceId, workspaceId),
+        ),
+      )
       .get();
 
     if (!_monitor) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    if (Number(workspaceId) !== _monitor.workspaceId) {
-      throw new HTTPException(401, { message: "Unauthorized" });
+    if (input.jobType && input.jobType !== _monitor.jobType) {
+      throw new HTTPException(400, { message: "Job type cannot be changed" });
     }
 
     const { headers, regions, assertions, ...rest } = input;

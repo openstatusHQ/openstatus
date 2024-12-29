@@ -31,7 +31,7 @@ const getRoute = createRoute({
 
 export function regsiterGetStatusReport(api: typeof statusReportsApi) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
     const _statusUpdate = await db.query.statusReport.findFirst({
@@ -40,7 +40,7 @@ export function regsiterGetStatusReport(api: typeof statusReportsApi) {
         monitorsToStatusReports: true,
       },
       where: and(
-        eq(statusReport.workspaceId, Number(workspaceId)),
+        eq(statusReport.workspaceId, workspaceId),
         eq(statusReport.id, Number(id)),
       ),
     });

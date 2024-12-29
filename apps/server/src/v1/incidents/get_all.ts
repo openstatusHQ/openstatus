@@ -1,9 +1,8 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 
 import { db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
-import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { incidentsApi } from "./index";
 import { IncidentSchema } from "./schema";
@@ -18,7 +17,7 @@ const getAllRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.array(IncidentSchema),
+          schema: IncidentSchema.array(),
         },
       },
       description: "Get all incidents",
@@ -29,19 +28,16 @@ const getAllRoute = createRoute({
 
 export function registerGetAllIncidents(app: typeof incidentsApi) {
   app.openapi(getAllRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
 
     const _incidents = await db
       .select()
       .from(incidentTable)
-      .where(eq(incidentTable.workspaceId, Number(workspaceId)))
+      .where(eq(incidentTable.workspaceId, workspaceId))
       .all();
 
-    if (!_incidents) {
-      throw new HTTPException(404, { message: "Not Found" });
-    }
+    const data = IncidentSchema.array().parse(_incidents); // TODO: think of using safeParse with SchemaError.fromZod
 
-    const returnValues = z.array(IncidentSchema).parse(_incidents); // TODO: think of using safeParse with SchemaError.fromZod
-    return c.json(returnValues, 200);
+    return c.json(data, 200);
   });
 }

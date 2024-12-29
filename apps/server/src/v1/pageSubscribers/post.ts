@@ -12,13 +12,13 @@ import { PageSubscriberSchema, ParamsSchema } from "./schema";
 
 const postRouteSubscriber = createRoute({
   method: "post",
-  tags: ["page"],
+  tags: ["page", "subscriber"],
   path: "/:id/update",
-  description: "Add a subscriber to a status page",
+  description: "Add a subscriber to a status page", // TODO: how to define legacy routes
   request: {
     params: ParamsSchema,
     body: {
-      description: "the subscriber payload",
+      description: "The subscriber payload",
       content: {
         "application/json": {
           schema: PageSubscriberSchema,
@@ -33,7 +33,7 @@ const postRouteSubscriber = createRoute({
           schema: PageSubscriberSchema,
         },
       },
-      description: "The user",
+      description: "The user has been subscribed",
     },
     ...openApiErrorResponses,
   },
@@ -41,8 +41,8 @@ const postRouteSubscriber = createRoute({
 
 export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
   return api.openapi(postRouteSubscriber, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
     const input = c.req.valid("json");
     const { id } = c.req.valid("param");
 
@@ -55,9 +55,7 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
     const _page = await db
       .select()
       .from(page)
-      .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
-      )
+      .where(and(eq(page.id, Number(id)), eq(page.workspaceId, workspaceId)))
       .get();
 
     if (!_page) {
@@ -81,19 +79,8 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       });
     }
 
-    const token = (Math.random() + 1).toString(36).substring(10);
+    const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
-
-    await sendEmail({
-      react: SubscribeEmail({
-        domain: _page.slug,
-        token,
-        page: _page.title,
-      }),
-      from: "OpenStatus <notification@notifications.openstatus.dev>",
-      to: [input.email],
-      subject: "Verify your subscription",
-    });
 
     const _statusReportSubscriberUpdate = await db
       .insert(pageSubscriber)
@@ -105,6 +92,17 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       })
       .returning()
       .get();
+
+    await sendEmail({
+      react: SubscribeEmail({
+        domain: _page.slug,
+        token,
+        page: _page.title,
+      }),
+      from: "OpenStatus <notification@notifications.openstatus.dev>",
+      to: [input.email],
+      subject: "Verify your subscription",
+    });
 
     const data = PageSubscriberSchema.parse(_statusReportSubscriberUpdate);
 

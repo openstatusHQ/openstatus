@@ -1,11 +1,11 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
 import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { workspace } from "@openstatus/db/src/schema/workspaces";
 import { HTTPException } from "hono/http-exception";
 import type { whoamiApi } from ".";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
-import { schema } from "./schema";
+import { WorkspaceSchema } from "./schema";
 
 const getRoute = createRoute({
   method: "get",
@@ -16,30 +16,30 @@ const getRoute = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: schema,
+          schema: WorkspaceSchema,
         },
       },
       description: "The current workspace information with the limits",
     },
     ...openApiErrorResponses,
   },
-}); // Error: createRoute is not defined
+});
 
 export function registerGetWhoami(api: typeof whoamiApi) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
 
-    const workspaceData = await db
+    const _workspace = await db
       .select()
       .from(workspace)
-      .where(eq(workspace.id, Number(workspaceId)))
+      .where(eq(workspace.id, workspaceId))
       .get();
 
-    if (!workspaceData) {
+    if (!_workspace) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
-    const data = schema.parse(workspaceData);
+    const data = WorkspaceSchema.parse(_workspace);
     return c.json(data, 200);
   });
 }

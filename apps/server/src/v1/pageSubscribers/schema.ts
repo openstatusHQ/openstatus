@@ -13,6 +13,7 @@ export const ParamsSchema = z.object({
       example: "1",
     }),
 });
+
 export const PageSubscriberSchema = z.object({
   email: z.string().email().openapi({
     description: "The email of the subscriber",

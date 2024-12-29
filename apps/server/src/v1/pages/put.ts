@@ -23,7 +23,6 @@ const putRoute = createRoute({
       description: "The monitor to update",
       content: {
         "application/json": {
-          // REMINDER: allow only partial updates
           schema: PageSchema.omit({ id: true }).partial(),
         },
       },
@@ -44,8 +43,8 @@ const putRoute = createRoute({
 
 export function registerPutPage(api: typeof pagesApi) {
   return api.openapi(putRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
-    const limits = c.get("limits");
+    const workspaceId = c.get("workspace").id;
+    const limits = c.get("workspace").limits;
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
@@ -73,9 +72,7 @@ export function registerPutPage(api: typeof pagesApi) {
     const _page = await db
       .select()
       .from(page)
-      .where(
-        and(eq(page.id, Number(id)), eq(page.workspaceId, Number(workspaceId))),
-      )
+      .where(and(eq(page.id, Number(id)), eq(page.workspaceId, workspaceId)))
       .get();
 
     if (!_page) {
@@ -97,6 +94,7 @@ export function registerPutPage(api: typeof pagesApi) {
         });
       }
     }
+
     const { monitors, ...rest } = input;
 
     const monitorIds = monitors
@@ -112,7 +110,7 @@ export function registerPutPage(api: typeof pagesApi) {
         .where(
           and(
             inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, Number(workspaceId)),
+            eq(monitor.workspaceId, workspaceId),
             isNull(monitor.deletedAt),
           ),
         )
@@ -167,7 +165,10 @@ export function registerPutPage(api: typeof pagesApi) {
       }
     }
 
-    const data = PageSchema.parse(newPage);
+    const data = PageSchema.parse({
+      ...newPage,
+      monitors: monitors || currentMonitorsToPages,
+    });
 
     return c.json(data, 200);
   });

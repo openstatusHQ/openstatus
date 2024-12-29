@@ -41,9 +41,9 @@ const triggerMonitor = createRoute({
 
 export function registerTriggerMonitor(api: typeof monitorsApi) {
   return api.openapi(triggerMonitor, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
-    const limits = c.get("limits");
+    const limits = c.get("workspace").limits;
 
     const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
 
@@ -53,7 +53,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         .from(monitorRun)
         .where(
           and(
-            eq(monitorRun.workspaceId, Number(workspaceId)),
+            eq(monitorRun.workspaceId, workspaceId),
             gte(monitorRun.createdAt, new Date(lastMonth)),
           ),
         )
@@ -72,7 +72,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.id, Number(id)),
-          eq(monitor.workspaceId, Number(workspaceId)),
+          eq(monitor.workspaceId, workspaceId),
           isNull(monitor.deletedAt),
         ),
       )
@@ -164,6 +164,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       if (!payload) {
         throw new Error("Invalid jobType");
       }
+
       const url = generateUrl({ row });
       const result = fetch(url, {
         headers: {

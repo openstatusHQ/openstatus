@@ -53,9 +53,9 @@ const triggerMonitor = createRoute({
 
 export function registerRunMonitor(api: typeof monitorsApi) {
   return api.openapi(triggerMonitor, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
-    const limits = c.get("limits");
+    const limits = c.get("workspace").limits;
     const { "no-wait": noWait } = c.req.valid("query");
     const lastMonth = new Date().setMonth(new Date().getMonth() - 1);
 
@@ -65,7 +65,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         .from(monitorRun)
         .where(
           and(
-            eq(monitorRun.workspaceId, Number(workspaceId)),
+            eq(monitorRun.workspaceId, workspaceId),
             gte(monitorRun.createdAt, new Date(lastMonth)),
           ),
         )
@@ -84,7 +84,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       .where(
         and(
           eq(monitor.id, Number(id)),
-          eq(monitor.workspaceId, Number(workspaceId)),
+          eq(monitor.workspaceId, workspaceId),
           isNull(monitor.deletedAt),
         ),
       )

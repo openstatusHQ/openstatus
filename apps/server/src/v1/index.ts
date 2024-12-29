@@ -1,12 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
-import { logger } from "hono/logger";
+import type { RequestIdVariables } from "hono/request-id";
 
-import type { WorkspacePlan } from "@openstatus/db/src/schema";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { Workspace } from "@openstatus/db/src/schema";
 import { handleError, handleZodError } from "../libs/errors";
-import { checkAPI } from "./check";
+import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { secureMiddleware } from "./middleware";
 import { monitorsApi } from "./monitors";
@@ -17,15 +16,8 @@ import { statusReportUpdatesApi } from "./statusReportUpdates";
 import { statusReportsApi } from "./statusReports";
 import { whoamiApi } from "./whoami";
 
-export type Variables = {
-  workspaceId: string;
-  workspacePlan: {
-    title: "Hobby" | "Starter" | "Growth" | "Pro";
-    id: WorkspacePlan;
-    description: string;
-    price: number;
-  };
-  limits: Limits;
+export type Variables = RequestIdVariables & {
+  workspace: Workspace;
 };
 
 export const api = new OpenAPIHono<{ Variables: Variables }>({
@@ -72,10 +64,9 @@ api.get(
   }),
 );
 /**
- * Authentification Middleware
+ * Middlewares
  */
 api.use("/*", secureMiddleware);
-api.use("/*", logger());
 
 /**
  * Routes
@@ -87,6 +78,6 @@ api.route("/page", pagesApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
-api.route("/check", checkAPI);
+api.route("/check", checkApi);
 
 api.route("/whoami", whoamiApi);

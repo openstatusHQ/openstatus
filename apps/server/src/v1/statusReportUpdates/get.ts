@@ -33,28 +33,28 @@ export function registerGetStatusReportUpdate(
   api: typeof statusReportUpdatesApi,
 ) {
   return api.openapi(getRoute, async (c) => {
-    const workspaceId = c.get("workspaceId");
+    const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
 
-    const _statusReportJoin = await db
+    const _statusReport = await db
       .select()
       .from(statusReportUpdate)
       .innerJoin(
         statusReport,
         and(
           eq(statusReport.id, statusReportUpdate.statusReportId),
-          eq(statusReport.workspaceId, Number(workspaceId)),
+          eq(statusReport.workspaceId, workspaceId),
         ),
       )
       .where(eq(statusReportUpdate.id, Number(id)))
       .get();
 
-    if (!_statusReportJoin) {
+    if (!_statusReport) {
       throw new HTTPException(404, { message: "Not Found" });
     }
 
     const data = StatusReportUpdateSchema.parse(
-      _statusReportJoin.status_report_update,
+      _statusReport.status_report_update,
     );
 
     return c.json(data, 200);
