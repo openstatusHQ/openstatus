@@ -1,6 +1,7 @@
 import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
+import { OpenStatusApiError } from "@/libs/errors";
 import {
   type EventProps,
   parseInputToProps,
@@ -8,7 +9,6 @@ import {
 } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
-import { HTTPException } from "hono/http-exception";
 import { env } from "../env";
 import type { Variables } from "./index";
 
@@ -17,17 +17,29 @@ export async function secureMiddleware(
   next: Next,
 ) {
   const key = c.req.header("x-openstatus-key");
-  if (!key) throw new HTTPException(401, { message: "Unauthorized" });
+  if (!key)
+    throw new OpenStatusApiError({
+      code: "UNAUTHORIZED",
+      message: "Missing 'x-openstatus-key' header",
+    });
 
   const { error, result } =
     env.NODE_ENV === "production"
       ? await verifyKey(key)
       : { result: { valid: true, ownerId: key }, error: null };
 
-  if (error) throw new HTTPException(500, { message: error.message });
-  if (!result.valid) throw new HTTPException(401, { message: "Unauthorized" });
-  if (!result.ownerId)
-    throw new HTTPException(401, { message: "Unauthorized" });
+  if (error) {
+    throw new OpenStatusApiError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: error.message,
+    });
+  }
+  if (!result.valid || !result.ownerId) {
+    throw new OpenStatusApiError({
+      code: "UNAUTHORIZED",
+      message: "Invalid API Key",
+    });
+  }
 
   const _workspace = await db
     .select()
@@ -37,13 +49,19 @@ export async function secureMiddleware(
 
   if (!_workspace) {
     console.error("Workspace not found");
-    throw new HTTPException(401, { message: "Unauthorized" });
+    throw new OpenStatusApiError({
+      code: "NOT_FOUND",
+      message: "Workspace not found, please contact support",
+    });
   }
 
   const validation = selectWorkspaceSchema.safeParse(_workspace);
 
   if (!validation.success) {
-    throw new HTTPException(400, { message: "Bad Request" });
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: "Workspace data is invalid",
+    });
   }
 
   c.set("workspace", validation.data);

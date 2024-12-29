@@ -1,13 +1,11 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { and, db, eq } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
-  page,
 } from "@openstatus/db/src/schema";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { notificationsApi } from "./index";
 import { NotificationSchema, ParamsSchema } from "./schema";
 
@@ -49,7 +47,10 @@ export function registerGetNotification(api: typeof notificationsApi) {
       .get();
 
     if (!_notification) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Notification ${id} not found`,
+      });
     }
 
     const _monitors = await db

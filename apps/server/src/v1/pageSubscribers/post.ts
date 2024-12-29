@@ -1,12 +1,11 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail } from "@openstatus/emails";
 import { sendEmail } from "@openstatus/emails/src/send";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { pageSubscribersApi } from "./index";
 import { PageSubscriberSchema, ParamsSchema } from "./schema";
 
@@ -47,8 +46,9 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
     const { id } = c.req.valid("param");
 
     if (!limits["status-subscribers"]) {
-      throw new HTTPException(403, {
-        message: "Upgrade for status page subscribers",
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for status subscribers",
       });
     }
 
@@ -59,7 +59,10 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .get();
 
     if (!_page) {
-      throw new HTTPException(401, { message: "Unauthorized" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Page ${id} not found`,
+      });
     }
 
     const alreadySubscribed = await db
@@ -74,8 +77,9 @@ export function registerPostPageSubscriber(api: typeof pageSubscribersApi) {
       .get();
 
     if (alreadySubscribed) {
-      throw new HTTPException(400, {
-        message: "Bad request - Already subscribed",
+      throw new OpenStatusApiError({
+        code: "CONFLICT",
+        message: `Email ${input.email} already subscribed`,
       });
     }
 

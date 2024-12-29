@@ -3,8 +3,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
 
@@ -47,7 +46,10 @@ export function registerGetMonitor(api: typeof monitorsApi) {
       .get();
 
     if (!_monitor) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
 
     const data = MonitorSchema.parse(_monitor);

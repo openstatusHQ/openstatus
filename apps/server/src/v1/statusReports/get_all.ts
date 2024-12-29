@@ -3,8 +3,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { openApiErrorResponses } from "@/libs/errors";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 
@@ -38,10 +37,6 @@ export function registerGetAllStatusReports(api: typeof statusReportsApi) {
       },
       where: eq(statusReport.workspaceId, workspaceId),
     });
-
-    if (!_statusReports) {
-      throw new HTTPException(404, { message: "Not Found" });
-    }
 
     const data = z.array(StatusReportSchema).parse(
       _statusReports.map((r) => ({

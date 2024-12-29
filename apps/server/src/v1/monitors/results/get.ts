@@ -4,9 +4,8 @@ import { and, db, eq } from "@openstatus/db";
 import { monitor, monitorRun } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 
-import { HTTPException } from "hono/http-exception";
-import { env } from "../../../env";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
+import { env } from "@/env";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "../index";
 import { ParamsSchema, ResultRun } from "../schema";
 
@@ -55,7 +54,10 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
       .get();
 
     if (!_monitorRun || !_monitorRun?.runnedAt) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor run ${resultId} not found`,
+      });
     }
 
     const _monitor = await db
@@ -65,7 +67,10 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
       .get();
 
     if (!_monitor) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
     // Fetch result from tb pipe
     const data = await tb.getResultForOnDemandCheckHttp({
@@ -75,7 +80,10 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
     });
     // return array of results
     if (!data || data.data.length === 0) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `No data found for monitor run ${resultId}`,
+      });
     }
     return c.json(data.data, 200);
   });

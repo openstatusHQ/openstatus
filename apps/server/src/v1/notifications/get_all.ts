@@ -1,11 +1,11 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { openApiErrorResponses } from "@/libs/errors";
 import { db, eq, inArray } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
 

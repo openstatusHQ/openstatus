@@ -21,12 +21,7 @@ app.use("/*", requestId());
 app.use("/*", logger());
 app.use("/*", prettyJSON());
 
-// app.use("/*", async (c, next) => {
-//   console.log(`Request ID: ${c.get("requestId")}`);
-//   await next();
-// });
-
-app.onError(handleError);
+// app.onError(handleError);
 
 /**
  * Public Routes

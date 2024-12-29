@@ -1,10 +1,9 @@
 import { createRoute, z } from "@hono/zod-openapi";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page } from "@openstatus/db/src/schema";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { pagesApi } from "./index";
 import { PageSchema, ParamsSchema } from "./schema";
 
@@ -41,7 +40,10 @@ export function registerGetPage(api: typeof pagesApi) {
       .get();
 
     if (!_page) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Page ${id} not found`,
+      });
     }
 
     const data = PageSchema.parse(_page);

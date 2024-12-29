@@ -1,3 +1,4 @@
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
@@ -8,8 +9,6 @@ import {
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
@@ -64,7 +63,10 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .get();
 
     if (!_statusReport) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Status Report ${id} not found`,
+      });
     }
 
     const _statusReportUpdate = await db

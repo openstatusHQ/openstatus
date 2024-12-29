@@ -1,11 +1,10 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
@@ -49,13 +48,15 @@ export function registerPutPage(api: typeof pagesApi) {
     const input = c.req.valid("json");
 
     if (input.customDomain && !limits["custom-domain"]) {
-      throw new HTTPException(403, {
-        message: "Upgrade for custom domains",
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for custom domain",
       });
     }
 
     if (input.customDomain?.toLowerCase().includes("openstatus")) {
-      throw new HTTPException(400, {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
         message: "Domain cannot contain 'openstatus'",
       });
     }
@@ -64,8 +65,9 @@ export function registerPutPage(api: typeof pagesApi) {
       limits["password-protection"] === false &&
       input?.passwordProtected === true
     ) {
-      throw new HTTPException(403, {
-        message: "Forbidden - Upgrade for password protection",
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for password protection",
       });
     }
 
@@ -76,7 +78,10 @@ export function registerPutPage(api: typeof pagesApi) {
       .get();
 
     if (!_page) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Page ${id} not found`,
+      });
     }
 
     if (input.slug && _page.slug !== input.slug) {
@@ -89,8 +94,9 @@ export function registerPutPage(api: typeof pagesApi) {
       )[0].count;
 
       if (countSlug > 0) {
-        throw new HTTPException(400, {
-          message: "Forbidden - Slug already taken",
+        throw new OpenStatusApiError({
+          code: "CONFLICT",
+          message: "Slug has to be unique and has already been taken",
         });
       }
     }
@@ -117,8 +123,9 @@ export function registerPutPage(api: typeof pagesApi) {
         .all();
 
       if (monitorsData.length !== monitors.length) {
-        throw new HTTPException(400, {
-          message: "Not Found - Wrong monitor configuration",
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Some of the monitors ${monitorIds.join(", ")} not found`,
         });
       }
     }

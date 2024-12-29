@@ -3,8 +3,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport, statusReportUpdate } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { statusReportUpdatesApi } from "./index";
 import { ParamsSchema, StatusReportUpdateSchema } from "./schema";
 
@@ -50,7 +49,10 @@ export function registerGetStatusReportUpdate(
       .get();
 
     if (!_statusReport) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Status Report Update ${id} not found`,
+      });
     }
 
     const data = StatusReportUpdateSchema.parse(

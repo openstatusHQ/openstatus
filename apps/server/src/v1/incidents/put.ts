@@ -3,9 +3,8 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { incidentTable } from "@openstatus/db/src/schema/incidents";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import type { incidentsApi } from "./index";
 import { IncidentSchema, ParamsSchema } from "./schema";
@@ -69,7 +68,10 @@ export function registerPutIncident(app: typeof incidentsApi) {
       .get();
 
     if (!_incident) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Incident ${id} not found`,
+      });
     }
 
     const _newIncident = await db

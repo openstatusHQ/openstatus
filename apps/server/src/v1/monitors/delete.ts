@@ -3,9 +3,8 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { ParamsSchema } from "./schema";
@@ -50,7 +49,10 @@ export function registerDeleteMonitor(app: typeof monitorsApi) {
       .get();
 
     if (!_monitor) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
 
     await db

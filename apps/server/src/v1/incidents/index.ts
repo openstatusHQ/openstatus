@@ -1,6 +1,6 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 
-import { handleZodError } from "../../libs/errors";
+import { handleZodError } from "@/libs/errors";
 import type { Variables } from "../index";
 import { registerGetIncident } from "./get";
 import { registerGetAllIncidents } from "./get_all";

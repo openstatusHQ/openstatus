@@ -46,7 +46,7 @@ test("create a status report with invalid monitor should return 400", async () =
   expect(res.status).toBe(400);
 });
 
-test("create a status report with invalid page should return 400", async () => {
+test("create a status report with invalid page id should return 400", async () => {
   const res = await api.request("/status_report", {
     method: "POST",
     headers: {

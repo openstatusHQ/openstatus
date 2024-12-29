@@ -9,8 +9,7 @@ import {
 } from "@openstatus/db/src/schema";
 import { sendEmailHtml } from "@openstatus/emails";
 
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { statusReportUpdatesApi } from "./index";
 import { StatusReportUpdateSchema } from "./schema";
 
@@ -62,9 +61,9 @@ export function registerPostStatusReportUpdate(
       .get();
 
     if (!_statusReport) {
-      throw new HTTPException(404, {
-        message:
-          "Not Found - Status report id does not exist within your workspace",
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Status Report ${input.statusReportId} not found`,
       });
     }
 

@@ -4,11 +4,10 @@ import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
@@ -59,23 +58,31 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     )[0].count;
 
     if (count >= getLimit(limits, "monitors")) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for more monitors",
       });
     }
 
     if (!getLimit(limits, "periodicity").includes(input.periodicity)) {
-      throw new HTTPException(403, { message: "Forbidden" });
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for more periodicity",
+      });
     }
 
     for (const region of input.regions) {
       if (!getLimit(limits, "regions").includes(region)) {
-        throw new HTTPException(403, { message: "Upgrade for more region" });
+        throw new OpenStatusApiError({
+          code: "PAYMENT_REQUIRED",
+          message: "Upgrade for more regions",
+        });
       }
     }
 
     if (input.jobType && !["http", "tcp"].includes(input.jobType)) {
-      throw new HTTPException(400, {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
         message:
           "Invalid jobType, currently only 'http' and 'tcp' are supported",
       });

@@ -4,10 +4,9 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
@@ -49,13 +48,15 @@ export function registerPostPage(api: typeof pagesApi) {
     const input = c.req.valid("json");
 
     if (input.customDomain && !limits["custom-domain"]) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for custom domains",
       });
     }
 
     if (input.customDomain?.toLowerCase().includes("openstatus")) {
-      throw new HTTPException(400, {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
         message: "Domain cannot contain 'openstatus'",
       });
     }
@@ -69,7 +70,8 @@ export function registerPostPage(api: typeof pagesApi) {
     )[0].count;
 
     if (count >= getLimit(limits, "status-pages")) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for more status pages",
       });
     }
@@ -78,7 +80,8 @@ export function registerPostPage(api: typeof pagesApi) {
       getLimit(limits, "password-protection") === false &&
       input?.passwordProtected === true
     ) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for password protection",
       });
     }
@@ -92,7 +95,8 @@ export function registerPostPage(api: typeof pagesApi) {
     )[0].count;
 
     if (countSlug > 0) {
-      throw new HTTPException(409, {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
         message: "Slug has to be unique and has already been taken",
       });
     }
@@ -117,7 +121,10 @@ export function registerPostPage(api: typeof pagesApi) {
         .all();
 
       if (_monitors.length !== monitors.length) {
-        throw new HTTPException(400, { message: "Monitor not found" });
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Some of the monitors ${monitorIds.join(", ")} not found`,
+        });
       }
     }
 

@@ -1,10 +1,9 @@
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { workspace } from "@openstatus/db/src/schema/workspaces";
-import { HTTPException } from "hono/http-exception";
 import type { whoamiApi } from ".";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { WorkspaceSchema } from "./schema";
 
 const getRoute = createRoute({
@@ -36,7 +35,10 @@ export function registerGetWhoami(api: typeof whoamiApi) {
       .get();
 
     if (!_workspace) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Workspace ${workspaceId} not found`,
+      });
     }
 
     const data = WorkspaceSchema.parse(_workspace);

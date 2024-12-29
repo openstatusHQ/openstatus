@@ -10,10 +10,9 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { isoDate } from "../utils";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
@@ -78,7 +77,10 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .all();
 
       if (_monitors.length !== monitorIds.length) {
-        throw new HTTPException(400, { message: "Monitor not found" });
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Some of the monitors ${monitorIds.join(", ")} not found`,
+        });
       }
     }
 
@@ -90,7 +92,10 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .all();
 
       if (_pages.length !== 1) {
-        throw new HTTPException(400, { message: "Page not found" });
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Page ${rest.pageId} not found`,
+        });
       }
     }
 

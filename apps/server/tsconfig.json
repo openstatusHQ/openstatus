@@ -2,6 +2,10 @@
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts", "**/*.ts"],
   "compilerOptions": {
-    "types": ["bun-types"]
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   }
 }

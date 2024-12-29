@@ -4,7 +4,7 @@ export const ErrorCodeEnum = z.enum([
   "BAD_REQUEST",
   "FORBIDDEN",
   "INTERNAL_SERVER_ERROR",
-  "USAGE_EXCEEDED",
+  "PAYMENT_REQUIRED",
   "DISABLED",
   "CONFLICT",
   "NOT_FOUND",

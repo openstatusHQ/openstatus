@@ -1,5 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
@@ -10,8 +11,6 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
@@ -53,7 +52,10 @@ export function registerPostNotification(api: typeof notificationsApi) {
     const input = c.req.valid("json");
 
     if (input.provider === "sms" && workspacePlan === "free") {
-      throw new HTTPException(403, { message: "Upgrade for SMS" });
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for SMS",
+      });
     }
 
     const count = (
@@ -65,7 +67,8 @@ export function registerPostNotification(api: typeof notificationsApi) {
     )[0].count;
 
     if (count >= getLimit(limits, "notification-channels")) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for more notification channels",
       });
     }
@@ -86,7 +89,10 @@ export function registerPostNotification(api: typeof notificationsApi) {
         .all();
 
       if (_monitors.length !== monitors.length) {
-        throw new HTTPException(400, { message: "Monitor not found" });
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Some of the monitors ${monitors.join(", ")} not found`,
+        });
       }
     }
 

@@ -1,8 +1,8 @@
 import { createRoute } from "@hono/zod-openapi";
 
+import { openApiErrorResponses } from "@/libs/errors";
 import { db, eq } from "@openstatus/db";
 import { page } from "@openstatus/db/src/schema";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
 

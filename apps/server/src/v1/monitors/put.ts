@@ -3,10 +3,9 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq, isNull } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
-import { HTTPException } from "hono/http-exception";
 import { serialize } from "../../../../../packages/assertions/src/serializing";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
 import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
@@ -50,13 +49,19 @@ export function registerPutMonitor(api: typeof monitorsApi) {
     const input = c.req.valid("json");
 
     if (input.periodicity && !limits.periodicity.includes(input.periodicity)) {
-      throw new HTTPException(403, { message: "Forbidden" });
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
+        message: "Upgrade for more periodicity",
+      });
     }
 
     if (input.regions) {
       for (const region of input.regions) {
         if (!limits.regions.includes(region)) {
-          throw new HTTPException(403, { message: "Upgrade for more region" });
+          throw new OpenStatusApiError({
+            code: "PAYMENT_REQUIRED",
+            message: "Upgrade for more regions",
+          });
         }
       }
     }
@@ -74,11 +79,18 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       .get();
 
     if (!_monitor) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
 
     if (input.jobType && input.jobType !== _monitor.jobType) {
-      throw new HTTPException(400, { message: "Job type cannot be changed" });
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message:
+          "Cannot change jobType. Please delete and create a new monitor instead.",
+      });
     }
 
     const { headers, regions, assertions, ...rest } = input;

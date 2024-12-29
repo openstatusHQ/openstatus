@@ -62,7 +62,7 @@ test("create a status report with invalid payload should return 400", async () =
   expect(res.status).toBe(400);
 });
 
-test("create a status report with invalid page should return 400", async () => {
+test("create a monitor with invalid page id should return 400", async () => {
   const res = await api.request("/monitor", {
     method: "POST",
     headers: {

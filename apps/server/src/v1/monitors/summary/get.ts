@@ -5,9 +5,9 @@ import { monitor } from "@openstatus/db/src/schema";
 import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
+import { env } from "@/env";
+import { openApiErrorResponses } from "@/libs/errors";
 import { HTTPException } from "hono/http-exception";
-import { env } from "../../../env";
-import { openApiErrorResponses } from "../../../libs/errors/openapi-error-responses";
 import { isoDate } from "../../utils";
 import type { monitorsApi } from "../index";
 import { ParamsSchema } from "../schema";

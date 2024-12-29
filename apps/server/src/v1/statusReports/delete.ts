@@ -3,8 +3,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { statusReport } from "@openstatus/db/src/schema";
 
-import { HTTPException } from "hono/http-exception";
-import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { statusReportsApi } from "./index";
 import { ParamsSchema } from "./schema";
 
@@ -46,7 +45,10 @@ export function registerDeleteStatusReport(api: typeof statusReportsApi) {
       .get();
 
     if (!_statusReport) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Status Report ${id} not found`,
+      });
     }
 
     await db

@@ -42,7 +42,7 @@ test("create a page with invalid monitor ids should return a 400", async () => {
   expect(res.status).toBe(400);
 });
 
-test("create a page with password on free plan should return a 403", async () => {
+test("create a page with password on free plan should return a 402", async () => {
   const res = await api.request("/page", {
     method: "POST",
     headers: {
@@ -57,7 +57,7 @@ test("create a page with password on free plan should return a 403", async () =>
     }),
   });
 
-  expect(res.status).toBe(403);
+  expect(res.status).toBe(402);
 });
 
 test("create a email page with invalid payload should return a 400", async () => {

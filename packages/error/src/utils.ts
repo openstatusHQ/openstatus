@@ -8,6 +8,8 @@ export function statusToCode(status: number): ErrorCode {
       return "BAD_REQUEST";
     case 401:
       return "UNAUTHORIZED";
+    case 402:
+      return "PAYMENT_REQUIRED";
     case 403:
       return "FORBIDDEN";
     case 404:
@@ -15,7 +17,7 @@ export function statusToCode(status: number): ErrorCode {
     case 405:
       return "METHOD_NOT_ALLOWED";
     case 409:
-      return "METHOD_NOT_ALLOWED";
+      return "CONFLICT";
     case 422:
       return "UNPROCESSABLE_ENTITY";
     case 500:
@@ -25,12 +27,29 @@ export function statusToCode(status: number): ErrorCode {
   }
 }
 
-export function codeToStatus(code: ErrorCode): number {
+/**
+ * TODO: EXTEND ALL ERROR CODES
+ * "BAD_REQUEST",
+  "FORBIDDEN",
+  "INTERNAL_SERVER_ERROR",
+  "USAGE_EXCEEDED",
+  "DISABLED",
+  "CONFLICT",
+  "NOT_FOUND",
+  "NOT_UNIQUE",
+  "UNAUTHORIZED",
+  "METHOD_NOT_ALLOWED",
+  "UNPROCESSABLE_ENTITY",
+ */
+
+export function codeToStatus(code: ErrorCode) {
   switch (code) {
     case "BAD_REQUEST":
       return 400;
     case "UNAUTHORIZED":
       return 401;
+    case "PAYMENT_REQUIRED":
+      return 402;
     case "FORBIDDEN":
       return 403;
     case "NOT_FOUND":

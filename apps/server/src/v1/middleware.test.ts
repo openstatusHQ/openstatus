@@ -9,7 +9,7 @@ test("Middleware error should return json", async () => {
   expect(res.status).toBe(401);
   expect(json).toMatchObject({
     code: "UNAUTHORIZED",
-    message: "Unauthorized",
+    message: "Missing 'x-openstatus-key' header",
     docs: "https://docs.openstatus.dev/api-references/errors/code/UNAUTHORIZED",
   });
 });
