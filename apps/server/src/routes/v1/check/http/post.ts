@@ -1,10 +1,10 @@
 import { createRoute, type z } from "@hono/zod-openapi";
 
+import { env } from "@/env";
 import { openApiErrorResponses } from "@/libs/errors";
 import { db } from "@openstatus/db";
 import { check } from "@openstatus/db/src/schema/check";
 import percentile from "percentile";
-import { env } from "../../../env";
 import type { checkApi } from "../index";
 import {
   AggregatedResponseSchema,

@@ -4,13 +4,14 @@ import { HTTPException } from "hono/http-exception";
 
 import type { ErrorCode } from "@openstatus/error";
 import {
-  ErrorCodeEnum,
+  ErrorCodes,
   SchemaError,
   codeToStatus,
   statusToCode,
 } from "@openstatus/error";
 
-import { ZodError, z } from "zod";
+import { z } from "@hono/zod-openapi";
+import { ZodError } from "zod";
 
 export class OpenStatusApiError extends HTTPException {
   public readonly code: ErrorCode;
@@ -27,6 +28,11 @@ export class OpenStatusApiError extends HTTPException {
     this.code = code;
   }
 }
+
+/**
+ * FIXME: Ok so the reason why tests are not getting the proper c.get() context is because we initialize it
+ * on the root middleware 'app' and we only use the 'api' app when testing. We should use the 'app' app
+ */
 
 export function handleError(err: Error, c: Context): Response {
   if (err instanceof ZodError) {
@@ -45,8 +51,6 @@ export function handleError(err: Error, c: Context): Response {
       { status: 400 },
     );
   }
-
-  console.log(c.get("requestId"));
 
   /**
    * This is a custom error that we throw in our code so we can handle it
@@ -123,7 +127,7 @@ export function handleZodError(
 
 export function createErrorSchema(code: ErrorCode) {
   return z.object({
-    code: ErrorCodeEnum.openapi({
+    code: z.enum(ErrorCodes).openapi({
       example: code,
       description: "The error code related to the status code.",
     }),

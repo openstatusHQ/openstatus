@@ -3,8 +3,8 @@ import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
+import { handleError, handleZodError } from "@/libs/errors";
 import type { Workspace } from "@openstatus/db/src/schema";
-import { handleError, handleZodError } from "../libs/errors";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { secureMiddleware } from "./middleware";

@@ -9,7 +9,7 @@ import { ZodError } from "zod";
 import {
   numberCompare,
   stringCompare,
-} from "../../../../../packages/assertions/src/v1";
+} from "../../../../../../packages/assertions/src/v1";
 
 const statusAssertion = z
   .object({

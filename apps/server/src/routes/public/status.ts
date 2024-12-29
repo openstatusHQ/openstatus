@@ -14,7 +14,7 @@ import {
 import { Status, Tracker } from "@openstatus/tracker";
 import { Redis } from "@openstatus/upstash";
 
-import { notEmpty } from "../utils/not-empty";
+import { notEmpty } from "@/utils/not-empty";
 
 // TODO: include ratelimiting
 

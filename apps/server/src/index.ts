@@ -5,11 +5,11 @@ import { logger } from "hono/logger";
 
 import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
-import { checkerRoute } from "./checker";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
-import { publicRoute } from "./public";
-import { api } from "./v1";
+import { checkerRoute } from "./routes/checker";
+import { publicRoute } from "./routes/public";
+import { api } from "./routes/v1";
 
 const app = new Hono({ strict: false });
 
@@ -21,7 +21,7 @@ app.use("/*", requestId());
 app.use("/*", logger());
 app.use("/*", prettyJSON());
 
-// app.onError(handleError);
+app.onError(handleError);
 
 /**
  * Public Routes

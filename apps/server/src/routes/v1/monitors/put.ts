@@ -5,7 +5,7 @@ import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
-import { serialize } from "../../../../../packages/assertions/src/serializing";
+import { serialize } from "../../../../../../packages/assertions/src/serializing";
 import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";

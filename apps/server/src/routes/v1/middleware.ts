@@ -1,6 +1,7 @@
 import { verifyKey } from "@unkey/api";
 import type { Context, Next } from "hono";
 
+import { env } from "@/env";
 import { OpenStatusApiError } from "@/libs/errors";
 import {
   type EventProps,
@@ -9,7 +10,6 @@ import {
 } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { selectWorkspaceSchema, workspace } from "@openstatus/db/src/schema";
-import { env } from "../env";
 import type { Variables } from "./index";
 
 export async function secureMiddleware(

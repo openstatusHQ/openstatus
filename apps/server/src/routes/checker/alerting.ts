@@ -5,9 +5,9 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 
+import { checkerAudit } from "@/utils/audit-log";
 import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
 import { Redis } from "@openstatus/upstash";
-import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
 const redis = Redis.fromEnv();
