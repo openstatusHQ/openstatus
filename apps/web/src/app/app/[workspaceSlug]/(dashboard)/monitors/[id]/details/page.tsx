@@ -7,14 +7,11 @@ import { ResponseDetails } from "@/components/monitor-dashboard/response-details
 import { api } from "@/trpc/server";
 import { searchParamsCache } from "./search-params";
 
-export default async function Details({
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
-  params,
-  searchParams,
-}: {
-  params: { id: string; workspaceSlug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function Details(props: {
+  params: Promise<{ id: string; workspaceSlug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
   const search = searchParamsCache.parse(searchParams);
 
   if (!search.monitorId) return <PageEmptyState />;

@@ -3,11 +3,12 @@ import { apiReference } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 
+import type { WorkspacePlan } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { handleError, handleZodError } from "../libs/errors";
 import { checkAPI } from "./check";
 import { incidentsApi } from "./incidents";
-import { middleware } from "./middleware";
+import { secureMiddleware } from "./middleware";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pageSubscribersApi } from "./pageSubscribers";
@@ -20,6 +21,7 @@ export type Variables = {
   workspaceId: string;
   workspacePlan: {
     title: "Hobby" | "Starter" | "Growth" | "Pro";
+    id: WorkspacePlan;
     description: string;
     price: number;
   };
@@ -72,7 +74,7 @@ api.get(
 /**
  * Authentification Middleware
  */
-api.use("/*", middleware);
+api.use("/*", secureMiddleware);
 api.use("/*", logger());
 
 /**

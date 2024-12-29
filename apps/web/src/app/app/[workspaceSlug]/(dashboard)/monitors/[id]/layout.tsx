@@ -14,13 +14,14 @@ export const revalidate = 0; // revalidate the data at most every hour
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-export default async function Layout({
-  children,
-  params,
-}: {
+export default async function Layout(props: {
   children: React.ReactNode;
-  params: { workspaceSlug: string; id: string };
+  params: Promise<{ workspaceSlug: string; id: string }>;
 }) {
+  const params = await props.params;
+
+  const { children } = props;
+
   const id = params.id;
 
   const monitor = await api.monitor.getMonitorById.query({

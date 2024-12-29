@@ -14,7 +14,7 @@ const getBaseUrl = () => {
 const lambdas = ["stripeRouter", "rumRouter"];
 
 export const endingLink = (opts?: {
-  headers?: HTTPHeaders | (() => HTTPHeaders);
+  headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
 }) =>
   ((runtime) => {
     const sharedOpts = {

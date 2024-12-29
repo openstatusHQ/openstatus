@@ -45,8 +45,9 @@ const SIZE: Record<string, { width: number; height: number }> = {
 };
 export async function GET(
   req: NextRequest,
-  { params }: { params: { domain: string } },
+  props: { params: Promise<{ domain: string }> },
 ) {
+  const params = await props.params;
   const { status } = await getStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");

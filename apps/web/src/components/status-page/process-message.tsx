@@ -16,7 +16,7 @@ export function ProcessMessage({ value }: { value: string }) {
         a: (props: AnchorHTMLAttributes<HTMLAnchorElement>) => {
           return <a target="_blank" rel="noreferrer" {...props} />;
         },
-      },
+      } as { [key: string]: React.ComponentType<unknown> },
     })
     .processSync(value).result;
 }

@@ -5,6 +5,7 @@
     "dev": "turbo run dev",
     "lint": "biome lint .",
     "format": "pnpm biome format . --write && pnpm biome check . --write ",
+    "lint:fix": "pnpm biome lint --write --unsafe .",
     "lint:turbo": "turbo run lint",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dx": "turbo run dx",
@@ -17,7 +18,7 @@
     "@types/node": "20.8.0",
     "knip": "5.16.0",
     "turbo": "2.3.2",
-    "typescript": "5.5.2"
+    "typescript": "5.6.2"
   },
   "packageManager": "pnpm@9.1.4",
   "name": "openstatus",

@@ -26,11 +26,8 @@ export class OSTinybird {
       data: z.object({
         count: z.number().int(),
       }),
-      opts: {
-        next: {
-          revalidate: 43200, // 60 * 60 * 24 = 86400s = 12h
-        },
-      },
+      // REMINDER: cache on build time as it's a global stats
+      opts: { cache: "force-cache" },
     });
   }
 

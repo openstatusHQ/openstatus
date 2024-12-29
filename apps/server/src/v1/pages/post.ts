@@ -4,9 +4,11 @@ import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
@@ -16,6 +18,7 @@ const postRoute = createRoute({
   tags: ["page"],
   description: "Create a status page",
   path: "/",
+  middleware: [trackMiddleware(Events.CreatePage, ["slug"])],
   request: {
     body: {
       description: "The status page to create",

@@ -3,11 +3,10 @@ import { redirect } from "next/navigation";
 import { StatusPageForm } from "@/components/forms/status-page/form";
 import { api } from "@/trpc/server";
 
-export default async function Page({
-  params,
-}: {
-  params: { workspaceSlug: string };
+export default async function Page(props: {
+  params: Promise<{ workspaceSlug: string }>;
 }) {
+  const params = await props.params;
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
   const isLimitReached = await api.page.isPageLimitReached.query();
   const workspace = await api.workspace.getWorkspace.query();

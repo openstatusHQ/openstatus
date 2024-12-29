@@ -48,7 +48,7 @@ export function groupDataByTimestamp(
       }
       return acc;
     },
-    [] as (Partial<Record<Region, string>> & { timestamp: string })[],
+    [] as (Partial<Record<Region, number>> & { timestamp: string })[],
   );
 
   // regions are sorted by the flag utf-8 code
@@ -67,7 +67,7 @@ export function groupDataByTimestamp(
  */
 export function renderTimestamp(timestamp: number, _period: Period) {
   const date = new Date(timestamp);
-  return format(date, "MMM d, HH:mm");
+  return date.toISOString();
 }
 
 export function dataFormatter(number: number) {

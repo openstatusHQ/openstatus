@@ -3,8 +3,10 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { HTTPException } from "hono/http-exception";
 import { openApiErrorResponses } from "../../libs/errors/openapi-error-responses";
+import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { ParamsSchema } from "./schema";
 
@@ -16,6 +18,7 @@ const deleteRoute = createRoute({
   request: {
     params: ParamsSchema,
   },
+  middleware: [trackMiddleware(Events.DeleteMonitor)],
   responses: {
     200: {
       content: {

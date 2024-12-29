@@ -7,6 +7,7 @@ import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
 
 const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
@@ -34,10 +35,16 @@ export async function create(ownerId: number) {
     ownerId: String(ownerId),
     prefix: "os",
   });
+
+  revalidatePath("/app/[workspaceSlug]/(dashboard)/settings/api-token");
+
   return key;
 }
 
 export async function revoke(keyId: string) {
   const res = await unkey.keys.delete({ keyId });
+
+  revalidatePath("/app/[workspaceSlug]/(dashboard)/settings/api-token");
+
   return res;
 }

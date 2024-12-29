@@ -13,7 +13,10 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function PostPage({ params }: { params: { slug: string } }) {
+export default async function PostPage(props: {
+  params: Promise<{ slug: string }>;
+}) {
+  const params = await props.params;
   const post = allLegals.find((post) => post.slug === params.slug);
 
   if (!post) {

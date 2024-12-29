@@ -1,12 +1,11 @@
 import type { DefaultSession } from "next-auth";
 import NextAuth from "next-auth";
 
-import { analytics, trackAnalytics } from "@openstatus/analytics";
+import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 import { sendEmail } from "@openstatus/emails/src/send";
 
-import { identifyUser } from "@/providers/posthog";
 import { WelcomeEmail } from "@openstatus/emails/emails/welcome";
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
@@ -58,6 +57,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       // REMINDER: only used in dev mode
       if (params.account?.provider === "resend") {
+        if (Number.isNaN(Number(params.user.id))) return true;
         await db
           .update(user)
           .set({ updatedAt: new Date() })
@@ -88,26 +88,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         react: WelcomeEmail(),
       });
 
-      const { id: userId, email } = params.user;
+      const analytics = await setupAnalytics({
+        userId: `usr_${params.user.id}`,
+        email: params.user.email,
+      });
 
-      if (process.env.NODE_ENV !== "development") {
-        await analytics.identify(userId, { email, userId });
-        await trackAnalytics({ event: "User Created", userId, email });
-        await identifyUser({ user: params.user });
-      }
+      await analytics.track(Events.CreateUser);
     },
 
     async signIn(params) {
       if (params.isNewUser) return;
       if (!params.user.id || !params.user.email) return;
 
-      const { id: userId, email } = params.user;
+      const analytics = await setupAnalytics({
+        userId: `usr_${params.user.id}`,
+        email: params.user.email,
+      });
 
-      if (process.env.NODE_ENV !== "development") {
-        await analytics.identify(userId, { userId, email });
-        await identifyUser({ user: params.user });
-        await trackAnalytics({ event: "User Signed In" });
-      }
+      await analytics.track(Events.SignInUser);
     },
   },
   pages: {

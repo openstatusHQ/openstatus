@@ -13,8 +13,8 @@ export const api = createTRPCClient<AppRouter>({
         (opts.direction === "down" && opts.result instanceof Error),
     }),
     endingLink({
-      headers: () => {
-        const h = new Map(headers());
+      headers: async () => {
+        const h = new Map(await headers());
         h.delete("connection");
         h.delete("transfer-encoding");
         h.set("x-trpc-source", "server");

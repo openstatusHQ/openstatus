@@ -6,7 +6,7 @@ const monitor: Monitor = {
   name: "OpenStatus Docs",
   url: "https://docs.openstatus.dev",
   periodicity: "10m",
-  jobType: "website",
+  jobType: "http",
   active: true,
   public: true,
   createdAt: null,

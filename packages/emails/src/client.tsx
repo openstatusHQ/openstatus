@@ -14,7 +14,7 @@ export class EmailClient {
   public async sendFollowUp(req: { to: string }) {
     if (process.env.NODE_ENV === "development") return;
 
-    const html = render(<FollowUpEmail />);
+    const html = await render(<FollowUpEmail />);
     try {
       const result = await this.client.emails.send({
         from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",

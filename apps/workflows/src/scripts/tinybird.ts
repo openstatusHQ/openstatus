@@ -95,7 +95,7 @@ async function main() {
   const lastTwoWeeks = calculatePastTimestamp(14);
   const lastThreeMonths = calculatePastTimestamp(90);
   const lastYear = calculatePastTimestamp(365);
-  const lastTwoYears = calculatePastTimestamp(730);
+  const _lastTwoYears = calculatePastTimestamp(730);
 
   const starters = await getWorkspaceIdsByPlan("starter");
   const teams = await getWorkspaceIdsByPlan("team");

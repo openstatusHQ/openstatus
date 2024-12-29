@@ -4,14 +4,14 @@
   "description": "",
   "main": "src/index.ts",
   "dependencies": {
-    "@jitsu/js": "1.9.2",
+    "@openpanel/sdk": "1.0.0",
     "@t3-oss/env-core": "0.7.0",
     "zod": "3.23.8"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
-    "@types/node": "20.8.0",
-    "typescript": "5.5.2"
+    "@types/node": "22.10.2",
+    "typescript": "5.6.2"
   },
   "scripts": {},
   "keywords": [],

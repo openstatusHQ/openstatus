@@ -28,6 +28,8 @@ const prettyCode = [
       dark: "github-dark-dimmed",
       light: "github-light",
     },
+    grid: true,
+    keepBackground: false,
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     onVisitLine(node: any) {
       // Prevent lines from collapsing in `display: grid` mode, and
@@ -35,14 +37,6 @@ const prettyCode = [
       if (node.children.length === 0) {
         node.children = [{ type: "text", value: " " }];
       }
-    },
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    onVisitHighlightedLine(node: any) {
-      node.properties.className.push("highlighted");
-    },
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    onVisitHighlightedWord(node: any) {
-      node.properties.className = ["word"];
     },
   },
 ];
@@ -61,6 +55,7 @@ const posts = defineCollection({
       url: z.string().optional(),
       avatar: z.string().optional(),
     }),
+    tag: z.enum(["company", "engineering", "education"]),
   }),
   transform: async (document, context) => {
     const mdx = await compileMDX(context, document, {

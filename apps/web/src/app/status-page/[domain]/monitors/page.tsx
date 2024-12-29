@@ -16,13 +16,12 @@ import { searchParamsCache } from "./search-params";
 
 export const revalidate = 120;
 
-export default async function Page({
-  params,
-  searchParams,
-}: {
-  params: { domain: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+export default async function Page(props: {
+  params: Promise<{ domain: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
   const { quantile, period } = searchParamsCache.parse(searchParams);
 
@@ -89,7 +88,14 @@ export default async function Page({
                     </Button>
                   </div>
                   {group ? (
-                    <SimpleChart data={group.data} region="ams" />
+                    <SimpleChart
+                      data={group.data.map((d) => ({
+                        timestamp: d.timestamp,
+                        // REMINDER: select first region as default
+                        // TODO: we could create an average of all regions instead
+                        latency: d[monitor.regions?.[0]],
+                      }))}
+                    />
                   ) : (
                     <p>missing data</p>
                   )}

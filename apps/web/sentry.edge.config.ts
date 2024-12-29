@@ -2,7 +2,6 @@
 // The config you add here will be used whenever one of the edge features is loaded.
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
-import { CaptureConsole as CaptureConsoleIntegration } from "@sentry/integrations";
 import * as Sentry from "@sentry/nextjs";
 
 import { env } from "@/env";
@@ -15,11 +14,5 @@ Sentry.init({
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
   debug: false,
-  integrations: [
-    new CaptureConsoleIntegration({
-      // array of methods that should be captured
-      // defaults to ['log', 'info', 'warn', 'error', 'debug', 'assert']
-      levels: ["error"],
-    }),
-  ],
+  integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
 });

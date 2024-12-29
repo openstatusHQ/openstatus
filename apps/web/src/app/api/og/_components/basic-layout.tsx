@@ -17,11 +17,16 @@ export function BasicLayout({
       <div tw="flex flex-col h-full w-full px-24">
         <div tw="flex flex-col flex-1 justify-end">
           <div tw="flex flex-col px-12">
-            <h1 style={{ fontFamily: "Cal" }} tw="text-6xl">
+            <h3 style={{ fontFamily: "Cal" }} tw="text-5xl">
               {title}
-            </h1>
+            </h3>
             {description ? (
-              <p tw="text-slate-600 text-3xl">{description}</p>
+              <p
+                tw="text-slate-600 text-3xl"
+                style={{ lineClamp: 2, display: "block" }}
+              >
+                {description}
+              </p>
             ) : null}
           </div>
         </div>

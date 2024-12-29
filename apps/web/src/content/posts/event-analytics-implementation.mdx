@@ -1,0 +1,197 @@
+---
+title: How We Implemented Event Analytics with OpenPanel
+description:
+  Leveraging Hono OpenAPI middleware and tRPC metadata + middleware to implement event analytics easily.
+author:
+  name: Maximilian Kaske
+  url: https://x.com/mxkaske
+  avatar: /assets/authors/max.png
+publishedAt: 2024-12-27
+image: /assets/posts/event-analytics-implementation/event-analytics-implementation.png
+tag: engineering
+---
+
+We had never really tracked events properly. We had some basic tracking in place, but it was not very useful. It is time to improve that with [OpenPanel](https://openpanel.dev?ref=openstatus).
+
+After some research, we finally settled on leveraging tRPC and Hono middlewares. Shoutout to [Midday](https://midday.ai?ref=openstatus) for the (tRPC) inspiration. They use a similar approach with [next-safe-action](https://next-safe-action.dev?ref=openstatus) for their server actions.
+
+This post is not a step-by-step guide but instead presents the core concepts and ideas behind the implementation. Please refer to the [Hono](https://hono.dev?ref=openstatus) or [tRPC](https://trpc.io?ref=openstatus) documentation for more detailed information and our [GitHub](https://openstatus.dev/github) repository for the full implementation.
+
+---
+
+First, let's start with the basics. We need to define the events we want to track, like `page_created`, `user_created`, etc.
+
+```ts
+// packages/analytics/src/events.ts
+export type EventProps = {
+  name: string;
+  channel: string;
+};
+
+export const Events = {
+  CreatePage: {
+    name: "page_created",
+    channel: "page",
+  },
+  UpdatePage: {
+    name: "page_upated",
+    channel: "page",
+  },
+  // ... add more events
+} as const satisfies Record<string, EventProps>;
+```
+
+Next, we need to initialize OpenPanel (see [installation](https://openpanel.dev/docs/sdks/javascript?ref=openstatus)) and set up the analytics in our application.
+
+```ts
+// packages/analytics/src/index.ts
+import {
+  OpenPanel,
+  type PostEventPayload,
+  type IdentifyPayload,
+} from "@openpanel/sdk";
+import { type EventProps } from "@openstatus/analytics";
+
+const op = new OpenPanel({
+  clientId: process.env.OPENPANEL_CLIENT_ID,
+  clientSecret: process.env.OPENPANEL_CLIENT_SECRET,
+});
+
+export async function setupAnalytics(props: Partial<IdentifyPayload>) {
+  if (props.profileId) {
+    await op.identify(props):
+  }
+
+  return {
+    track: (opts: EventProps & PostEventPayload["properties"]) => {
+      const { name, ...rest } = opts;
+      return op.track(name, rest);
+    },
+  };
+}
+```
+
+Now that we have the basic setup in place, we can start implementing the tracking in our application. We will use the tRPC middleware and metadata to track events. Below, we define the `trackEvent` middleware that will track the event after the procedure has been executed. An `enforceUserSession` middleware can be added to include the user's ID for tracking.
+
+```ts {8,12,35} /trackEvent/
+// packages/trpc/src/index.ts
+import { after } from "next/server";
+import { initTRPC } from "@trpc/server";
+import { setupAnalytics, type EventProps } from "@openstatus/analytics";
+import type { User } from "@openstatus/auth";
+
+type Context = { user?: User };
+type Meta = { track?: EventProps };
+
+export const t = initTRPC
+  .context<Context>()
+  .meta<Meta>()
+  .create({ /* ... */ });
+
+
+const trackEvent = t.middleware(async opts => {
+  const result = await opts.next(opts.ctx);
+  
+  if (!result.ok) return result;
+
+  if (opts.meta.track) {
+    after(async () => {
+      const identify = opts.ctx.user ? { userId: opts.ctx.user.id } : {};
+      const analytics = await setupAnalytics(identify);
+      await analytics.track(opts.meta.track);
+    })
+  }
+  return result;
+});
+
+const enforceUserSession = t.middleware(async opts => { 
+  // ... set user to ctx
+});
+
+export const protectedProcedure = t.procedure
+  .use(enforceUserSession)
+  .use(trackEvent);
+```
+
+The `after` function (similar to `waitUntil`) will execute the tracking after the procedure has been executed and won't block the response.
+
+The `next()` return value has an `ok` boolean property to check if the procedure was successful. If not, we don't want to track the event.
+
+How will we use it in a procedure? Adding a `meta` property will allow us to track the event by defining the event we want to track.
+
+```ts {8}
+// packages/trpc/src/router/page.ts
+import { Events } from '@openstatus/analytics';
+import { insertPageSchema } from "@openstatus/db";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
+
+export const pageRouter = createTRPCRouter({
+  create: protectedProcedure
+    .meta({ track: Events.CreatePage })
+    .input(insertPageSchema)
+    .mutation(async (opts) => { /* ... */ })
+});
+```
+
+Voilà! Each time you want to add tracking to a new procedure, you only need to add the `meta` property with the event you want to track. The middleware handles the rest.
+
+---
+
+Now, how do we track the events within our API? Let's start by adding the `trackMiddleware` function and only track the event if the response has been finalized. 
+
+```ts /trackMiddleware/
+// app/server/src/middleware.ts
+import { setupAnalytics, type EventProps } from "@openstatus/analytics";
+import type { Context, Next } from "hono";
+import type { User } from "@openstatus/auth";
+
+export function trackMiddleware(event: EventProps) {
+  return async (c: Context<{ Variables: { user?: User } }, "/*">, next: Next) => {
+    await next();
+    
+    const isValid = c.res.status.toString().startsWith("2") && !c.error;
+
+    if (isValid) {
+      setTimeout(async () => {
+        const analytics = await setupAnalytics({
+          profileId: c.get("user")?.id,
+        });
+        await analytics.track(event);
+      }, 0);
+    }
+  };
+}
+```
+
+Depending on where you are running the server, you might want to replace `setTimeout` with `waitUntil` (cf workers, Vercel) or other functions that extend the lifetime of the request without blocking the response.
+
+And again, we check if there was an `error` before tracking the event. We don't want to track unsuccessful events.
+
+The [`@hono/zod-openapi`](https://github.com/honojs/middleware/tree/main/packages/zod-openapi?ref=openstatus) routes have a `middleware` property that allows you to add middleware to the route. This is where we will add the tracking middleware.
+
+```ts {11}
+// apps/web/src/pages/post.ts
+import { createRoute } from "@hono/zod-openapi";
+import { Events } from "@openstatus/analytics";
+import { trackMiddleware } from "../middleware";
+
+const postRoute = createRoute({
+  method: "post",
+  tags: ["page"],
+  description: "Create a new Page",
+  path: "/",
+  middleware: [trackMiddleware(Events.CreatePage)],
+  request: { /* ... */ },
+  responses: { /* ... */},
+});
+
+// ...
+```
+
+---
+
+And that's it. With minimal code changes and the help of middlewares, we have implemented event tracking in our application. You can swap [OpenPanel](https://openpanel.dev?ref=openstatus) with any other analytics provider like PostHog, but give it a try, it's an amazing tool!
+
+By the way, this approach can be used for audit log tracking for example as well.
+
+Check out our [GitHub](https://openstatus.dev/github) repository for the full implementation and don't forget to leave a star if you found this helpful.
