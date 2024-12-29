@@ -1,10 +1,10 @@
-import type { z } from "zod";
-import type { Assertion } from "../../../../../../packages/assertions/src";
+import type { Assertion } from "@openstatus/assertions";
 import {
   HeaderAssertion,
   StatusAssertion,
   TextBodyAssertion,
-} from "../../../../../../packages/assertions/src/v1";
+} from "@openstatus/assertions";
+import type { z } from "zod";
 import type { assertion } from "./schema";
 
 export const getAssertions = (

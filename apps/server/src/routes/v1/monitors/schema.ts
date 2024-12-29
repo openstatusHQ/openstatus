@@ -1,15 +1,12 @@
 import { z } from "@hono/zod-openapi";
 
+import { numberCompare, stringCompare } from "@openstatus/assertions";
 import { monitorJobTypes, monitorMethods } from "@openstatus/db/src/schema";
 import {
   flyRegions,
   monitorPeriodicitySchema,
 } from "@openstatus/db/src/schema/constants";
 import { ZodError } from "zod";
-import {
-  numberCompare,
-  stringCompare,
-} from "../../../../../../packages/assertions/src/v1";
 
 const statusAssertion = z
   .object({

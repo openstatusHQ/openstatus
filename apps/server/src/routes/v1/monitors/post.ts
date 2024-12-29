@@ -4,7 +4,7 @@ import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-import { serialize } from "../../../../../../packages/assertions/src";
+import { serialize } from "@openstatus/assertions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
