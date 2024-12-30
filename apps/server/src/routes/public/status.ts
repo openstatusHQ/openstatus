@@ -23,51 +23,56 @@ const redis = Redis.fromEnv();
 export const status = new Hono();
 
 status.get("/:slug", async (c) => {
-  const { slug } = c.req.param();
+  try {
+    const { slug } = c.req.param();
 
-  const cache = await redis.get(slug);
+    const cache = await redis.get(slug);
 
-  if (cache) {
-    setMetric(c, "OpenStatus-Cache", "HIT");
-    return c.json({ status: cache });
-  }
+    if (cache) {
+      setMetric(c, "OpenStatus-Cache", "HIT");
+      return c.json({ status: cache });
+    }
 
-  startTime(c, "database");
+    startTime(c, "database");
 
-  const currentPage = await db
-    .select()
-    .from(page)
-    .where(eq(page.slug, slug))
-    .get();
+    const currentPage = await db
+      .select()
+      .from(page)
+      .where(eq(page.slug, slug))
+      .get();
 
-  if (!currentPage) {
+    if (!currentPage) {
+      return c.json({ status: Status.Unknown });
+    }
+
+    const {
+      pageStatusReportData,
+      monitorStatusReportData,
+      ongoingIncidents,
+      maintenanceData,
+    } = await getStatusPageData(currentPage.id);
+    endTime(c, "database");
+
+    const statusReports = [...monitorStatusReportData].map((item) => {
+      return item.status_report;
+    });
+
+    statusReports.push(...pageStatusReportData);
+
+    const tracker = new Tracker({
+      incidents: ongoingIncidents,
+      statusReports,
+      maintenances: maintenanceData,
+    });
+
+    const status = tracker.currentStatus;
+    await redis.set(slug, status, { ex: 60 }); // 1m cache
+
+    return c.json({ status });
+  } catch (e) {
+    console.error(`Error in public status page: ${e}`);
     return c.json({ status: Status.Unknown });
   }
-
-  const {
-    pageStatusReportData,
-    monitorStatusReportData,
-    ongoingIncidents,
-    maintenanceData,
-  } = await getStatusPageData(currentPage.id);
-  endTime(c, "database");
-
-  const statusReports = [...monitorStatusReportData].map((item) => {
-    return item.status_report;
-  });
-
-  statusReports.push(...pageStatusReportData);
-
-  const tracker = new Tracker({
-    incidents: ongoingIncidents,
-    statusReports,
-    maintenances: maintenanceData,
-  });
-
-  const status = tracker.currentStatus;
-  await redis.set(slug, status, { ex: 60 }); // 1m cache
-
-  return c.json({ status });
 });
 
 async function getStatusPageData(pageId: number) {
