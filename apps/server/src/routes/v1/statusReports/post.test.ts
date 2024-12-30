@@ -4,6 +4,9 @@ import { api } from "../index";
 import { StatusReportSchema } from "./schema";
 
 test("create a valid status report", async () => {
+  const date = new Date();
+  date.setMilliseconds(0);
+
   const res = await api.request("/status_report", {
     method: "POST",
     headers: {
@@ -15,6 +18,7 @@ test("create a valid status report", async () => {
       title: "New Status Report",
       message: "Message",
       monitorIds: [1],
+      date: date.toISOString(),
       pageId: 1,
     }),
   });

@@ -22,7 +22,7 @@ test("acknlowledge the incident", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
-  expect(result.data?.acknowledgedAt).toBe(date.toISOString());
+  expect(result.data?.acknowledgedAt?.toISOString()).toBe(date.toISOString());
 });
 
 test("resolve the incident", async () => {
@@ -44,7 +44,7 @@ test("resolve the incident", async () => {
 
   expect(res.status).toBe(200);
   expect(result.success).toBe(true);
-  expect(result.data?.resolvedAt).toBe(date.toISOString());
+  expect(result.data?.resolvedAt?.toISOString()).toBe(date.toISOString());
 });
 
 test("invalid incident id should return 404", async () => {

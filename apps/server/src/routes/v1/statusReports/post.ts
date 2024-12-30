@@ -13,7 +13,6 @@ import {
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
-import { isoDate } from "../utils";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
 
@@ -31,8 +30,9 @@ const postRoute = createRoute({
             id: true,
             statusReportUpdateIds: true,
           }).extend({
-            date: isoDate.optional().openapi({
-              description: "The date of the report in ISO8601 format",
+            date: z.coerce.date().optional().openapi({
+              description:
+                "The date of the report in ISO8601 format, defaults to now",
             }),
             message: z.string().openapi({
               description: "The message of the current status of incident",

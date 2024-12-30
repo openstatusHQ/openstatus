@@ -6,29 +6,12 @@ import { OSTinybird } from "@openstatus/tinybird";
 import { Redis } from "@openstatus/upstash";
 
 import { env } from "@/env";
-import { openApiErrorResponses } from "@/libs/errors";
-import { HTTPException } from "hono/http-exception";
-import { isoDate } from "../../utils";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "../index";
-import { ParamsSchema } from "../schema";
+import { ParamsSchema, SummarySchema } from "./schema";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 const redis = Redis.fromEnv();
-
-const dailyStatsSchema = z.object({
-  ok: z.number().int().openapi({
-    description: "The number of ok responses",
-  }),
-  count: z
-    .number()
-    .int()
-    .openapi({ description: "The total number of request" }),
-  day: isoDate,
-});
-
-const dailyStatsSchemaArray = z
-  .array(dailyStatsSchema)
-  .openapi({ description: "The daily stats" });
 
 const getMonitorStats = createRoute({
   method: "get",
@@ -43,7 +26,7 @@ const getMonitorStats = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: dailyStatsSchemaArray,
+            data: SummarySchema.array(),
           }),
         },
       },
@@ -71,24 +54,26 @@ export function registerGetMonitorSummary(api: typeof monitorsApi) {
       .get();
 
     if (!_monitor) {
-      throw new HTTPException(404, { message: "Not Found" });
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
 
-    const cache = await redis.get<z.infer<typeof dailyStatsSchemaArray>>(
-      `${id}-daily-stats`,
-    );
+    const cache = await redis.get<SummarySchema[]>(`${id}-daily-stats`);
+
     if (cache) {
       console.log("fetching from cache");
       return c.json({ data: cache }, 200);
     }
 
     console.log("fetching from tinybird");
-    const res = await tb.httpStatus45d({ monitorId: id });
+    const res =
+      _monitor.jobType === "http"
+        ? await tb.httpStatus45d({ monitorId: id })
+        : await tb.tcpStatus45d({ monitorId: id });
 
-    if (!res || res.data.length === 0) {
-      throw new HTTPException(404, { message: "Not Found" });
-    }
-    await redis.set(`${id}-daily-stats`, res, { ex: 600 });
+    await redis.set(`${id}-daily-stats`, res.data, { ex: 600 });
 
     return c.json({ data: res.data }, 200);
   });

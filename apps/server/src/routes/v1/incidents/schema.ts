@@ -1,7 +1,5 @@
 import { z } from "@hono/zod-openapi";
 
-import { isoDate } from "../utils";
-
 export const ParamsSchema = z.object({
   id: z
     .string()
@@ -21,7 +19,7 @@ export const IncidentSchema = z.object({
     description: "The id of the incident",
     example: 1,
   }),
-  startedAt: isoDate.openapi({
+  startedAt: z.coerce.date().openapi({
     description: "The date the incident started",
   }),
   monitorId: z
@@ -31,7 +29,8 @@ export const IncidentSchema = z.object({
       example: 1,
     })
     .nullable(),
-  acknowledgedAt: isoDate
+  acknowledgedAt: z.coerce
+    .date()
     .openapi({
       description: "The date the incident was acknowledged",
     })
@@ -43,7 +42,8 @@ export const IncidentSchema = z.object({
       description: "The user who acknowledged the incident",
     })
     .nullable(),
-  resolvedAt: isoDate
+  resolvedAt: z.coerce
+    .date()
     .openapi({
       description: "The date the incident was resolved",
     })

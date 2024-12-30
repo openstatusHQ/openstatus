@@ -2,8 +2,6 @@ import { z } from "@hono/zod-openapi";
 
 import { statusReportStatus } from "@openstatus/db/src/schema";
 
-import { isoDate } from "../utils";
-
 export const ParamsSchema = z.object({
   id: z
     .string()
@@ -23,7 +21,7 @@ export const StatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: isoDate.openapi({
+  date: z.coerce.date().openapi({
     description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({

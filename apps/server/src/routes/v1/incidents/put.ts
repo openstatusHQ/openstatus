@@ -24,15 +24,7 @@ const putRoute = createRoute({
           schema: IncidentSchema.pick({
             acknowledgedAt: true,
             resolvedAt: true,
-          })
-            // TODO: check if really necessary
-            .extend({
-              acknowledgedAt: z.coerce.date().optional(),
-              resolvedAt: z.coerce.date().optional(),
-            })
-            .openapi({
-              description: "The incident to update",
-            }),
+          }).partial(),
         },
       },
     },
