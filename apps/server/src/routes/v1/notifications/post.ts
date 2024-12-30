@@ -1,6 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
@@ -11,7 +12,6 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { trackMiddleware } from "../middleware";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
 

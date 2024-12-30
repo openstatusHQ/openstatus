@@ -10,9 +10,9 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";

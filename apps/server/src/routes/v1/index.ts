@@ -4,10 +4,10 @@ import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
 import { handleError, handleZodError } from "@/libs/errors";
+import { authMiddleware } from "@/libs/middlewares";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
-import { secureMiddleware } from "./middleware";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pageSubscribersApi } from "./pageSubscribers";
@@ -66,7 +66,7 @@ api.get(
 /**
  * Middlewares
  */
-api.use("/*", secureMiddleware);
+api.use("/*", authMiddleware);
 
 /**
  * Routes

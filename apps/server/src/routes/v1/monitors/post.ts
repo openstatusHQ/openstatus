@@ -7,8 +7,8 @@ import { monitor } from "@openstatus/db/src/schema";
 import { serialize } from "@openstatus/assertions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
-import { trackMiddleware } from "../middleware";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";

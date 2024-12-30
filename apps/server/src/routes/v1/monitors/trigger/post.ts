@@ -1,5 +1,5 @@
 import { env } from "@/env";
-import { openApiErrorResponses } from "@/libs/errors";
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute, z } from "@hono/zod-openapi";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
@@ -12,7 +12,7 @@ import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
-import { ParamsSchema } from "../schema";
+import { ParamsSchema, TriggerSchema } from "./schema";
 
 const triggerMonitor = createRoute({
   method: "post",
@@ -26,11 +26,7 @@ const triggerMonitor = createRoute({
     200: {
       content: {
         "application/json": {
-          schema: z.object({
-            resultId: z
-              .number()
-              .openapi({ description: "the id of your check result" }),
-          }),
+          schema: TriggerSchema,
         },
       },
       description: "All the historical metrics",
@@ -61,12 +57,13 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     )[0].count;
 
     if (count >= getLimit(limits, "synthetic-checks")) {
-      throw new HTTPException(403, {
+      throw new OpenStatusApiError({
+        code: "PAYMENT_REQUIRED",
         message: "Upgrade for more checks",
       });
     }
 
-    const monitorData = await db
+    const _monitor = await db
       .select()
       .from(monitor)
       .where(
@@ -78,11 +75,14 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       )
       .get();
 
-    if (!monitorData) {
-      throw new HTTPException(404, { message: "Not Found" });
+    if (!_monitor) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
     }
 
-    const parseMonitor = selectMonitorSchema.safeParse(monitorData);
+    const parseMonitor = selectMonitorSchema.safeParse(_monitor);
 
     if (!parseMonitor.success) {
       throw new HTTPException(400, { message: "Something went wrong" });
@@ -95,7 +95,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     const monitorStatusData = await db
       .select()
       .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, monitorData.id))
+      .where(eq(monitorStatusTable.monitorId, _monitor.id))
       .all();
 
     const monitorStatus = z
