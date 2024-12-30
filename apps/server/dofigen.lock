@@ -10,7 +10,7 @@ effective: |
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
+        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -54,7 +54,7 @@ effective: |
     build:
       fromImage:
         path: oven/bun
-        digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
+        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
       workdir: /app/apps/server
       env:
         NODE_ENV: production
@@ -70,7 +70,7 @@ effective: |
       - bun build --compile --sourcemap src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
+    digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
   copy:
   - fromBuilder: build
     paths:
@@ -86,11 +86,11 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:00558f781b91e90469812bad32002f311ab26ef241b4a1996f6600680ec82f5c
+          digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
     oven:
       bun:
         latest:
-          digest: sha256:eb409bed239c3adff079a6b71283f151e802d66b99f643ba7a71e1be7d3da513
+          digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
 resources:
   dofigen.yml:
     hash: 06641706a075437d0d038b10609949fde32ab3340f6eb081add0b1e0a1889d8b

@@ -13,10 +13,27 @@ effective: |
   - /packages/tracker
   - /packages/upstash
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
+        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -37,26 +54,9 @@ effective: |
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
         source: packages/tsconfig/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:60a596681410bd31a48e5975806a24cd78328f3fd6b9ee5bc64dca6d46a51f29
+    digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
   copy:
   - fromBuilder: build
     paths:
@@ -72,11 +72,11 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:60a596681410bd31a48e5975806a24cd78328f3fd6b9ee5bc64dca6d46a51f29
+          digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
     oven:
       bun:
         latest:
-          digest: sha256:4ca745e33ed5b5b5233d3e1ed8d5e63dafd519d2adcfc37f65218ece032824f3
+          digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
 resources:
   dofigen.yml:
     hash: f708205b6699a47937d4ce49a38a2aa1b3f5ed409b685c285603e9e1b5f9fea0
