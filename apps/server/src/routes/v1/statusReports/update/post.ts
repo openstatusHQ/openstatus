@@ -7,7 +7,6 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
@@ -79,7 +78,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .returning()
       .get();
 
-    if (getLimit(limits, "notifications") && _statusReport.pageId) {
+    if (limits.notifications && _statusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)

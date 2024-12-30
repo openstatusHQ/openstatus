@@ -1,6 +1,8 @@
 import { createRoute } from "@hono/zod-openapi";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
+import { Events } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
@@ -13,6 +15,7 @@ const postRouteSubscriber = createRoute({
   method: "post",
   tags: ["page", "subscriber"],
   path: "/:id/update",
+  middleware: [trackMiddleware(Events.SubscribePage)],
   description: "Add a subscriber to a status page", // TODO: how to define legacy routes
   request: {
     params: ParamsSchema,

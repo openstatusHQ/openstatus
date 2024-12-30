@@ -47,6 +47,23 @@ test("resolve the incident", async () => {
   expect(result.data?.resolvedAt?.toISOString()).toBe(date.toISOString());
 });
 
+test("invalid payload should return 400", async () => {
+  const res = await app.request("/v1/incident/2", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      acknowledgedAt: "helloworld",
+    }),
+  });
+
+  const result = (await res.json()) as Record<string, unknown>;
+  expect(result.message).toBe("invalid_date in 'acknowledgedAt': Invalid date");
+  expect(res.status).toBe(400);
+});
+
 test("invalid incident id should return 404", async () => {
   const res = await app.request("/v1/incident/404", {
     method: "PUT",

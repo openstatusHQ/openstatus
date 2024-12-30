@@ -10,7 +10,7 @@ test.skip("return the summary of the monitor", async () => {
       "x-openstatus-key": "1",
     },
   });
-  console.log(await res.text());
+
   const result = SummarySchema.safeParse(await res.json());
 
   expect(res.status).toBe(200);

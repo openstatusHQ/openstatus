@@ -11,7 +11,6 @@ import {
   notificationsToMonitors,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { notificationsApi } from "./index";
 import { NotificationSchema } from "./schema";
 
@@ -66,7 +65,7 @@ export function registerPostNotification(api: typeof notificationsApi) {
         .all()
     )[0].count;
 
-    if (count >= getLimit(limits, "notification-channels")) {
+    if (count >= limits["notification-channels"]) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more notification channels",

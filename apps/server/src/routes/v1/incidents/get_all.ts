@@ -36,7 +36,7 @@ export function registerGetAllIncidents(app: typeof incidentsApi) {
       .where(eq(incidentTable.workspaceId, workspaceId))
       .all();
 
-    const data = IncidentSchema.array().parse(_incidents); // TODO: think of using safeParse with SchemaError.fromZod
+    const data = IncidentSchema.array().parse(_incidents);
 
     return c.json(data, 200);
   });

@@ -11,7 +11,6 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
@@ -132,7 +131,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         .returning();
     }
 
-    if (getLimit(limits, "status-subscribers") && _newStatusReport.pageId) {
+    if (limits["status-subscribers"] && _newStatusReport.pageId) {
       const subscribers = await db
         .select()
         .from(pageSubscriber)

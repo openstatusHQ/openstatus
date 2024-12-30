@@ -12,7 +12,6 @@ import {
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { Events } from "@openstatus/analytics";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
 import { PageSchema } from "./schema";
@@ -74,7 +73,7 @@ export function registerPostPage(api: typeof pagesApi) {
         .all()
     )[0].count;
 
-    if (count >= getLimit(limits, "status-pages")) {
+    if (count >= limits["status-pages"]) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more status pages",
@@ -82,8 +81,8 @@ export function registerPostPage(api: typeof pagesApi) {
     }
 
     if (
-      getLimit(limits, "password-protection") === false &&
-      input?.passwordProtected === true
+      !limits["password-protection"] &&
+      (input?.passwordProtected || input?.password)
     ) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",

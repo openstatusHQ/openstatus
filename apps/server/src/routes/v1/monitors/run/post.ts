@@ -8,7 +8,6 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
@@ -67,7 +66,7 @@ export function registerRunMonitor(api: typeof monitorsApi) {
         .all()
     )[0].count;
 
-    if (count >= getLimit(limits, "synthetic-checks")) {
+    if (count >= limits["synthetic-checks"]) {
       throw new HTTPException(403, {
         message: "Upgrade for more checks",
       });

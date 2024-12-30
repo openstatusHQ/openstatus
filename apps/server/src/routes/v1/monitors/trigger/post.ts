@@ -8,13 +8,12 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerSchema } from "./schema";
 
-const triggerMonitor = createRoute({
+const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
   description: "Trigger a monitor check",
@@ -36,7 +35,7 @@ const triggerMonitor = createRoute({
 });
 
 export function registerTriggerMonitor(api: typeof monitorsApi) {
-  return api.openapi(triggerMonitor, async (c) => {
+  return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
     const limits = c.get("workspace").limits;
@@ -56,7 +55,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         .all()
     )[0].count;
 
-    if (count >= getLimit(limits, "synthetic-checks")) {
+    if (count >= limits["synthetic-checks"]) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more checks",
@@ -161,10 +160,6 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         };
       }
 
-      if (!payload) {
-        throw new Error("Invalid jobType");
-      }
-
       const url = generateUrl({ row });
       const result = fetch(url, {
         headers: {
@@ -191,6 +186,10 @@ function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
     case "tcp":
       return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api&data=false`;
     default:
-      throw new Error("Invalid jobType");
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message:
+          "Invalid jobType, currently only 'http' and 'tcp' are supported",
+      });
   }
 }

@@ -29,11 +29,6 @@ export class OpenStatusApiError extends HTTPException {
   }
 }
 
-/**
- * FIXME: Ok so the reason why tests are not getting the proper c.get() context is because we initialize it
- * on the root middleware 'app' and we only use the 'api' app when testing. We should use the 'app' app
- */
-
 export function handleError(err: Error, c: Context): Response {
   if (err instanceof ZodError) {
     const error = SchemaError.fromZod(err, c);

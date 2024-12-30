@@ -8,7 +8,6 @@ import { serialize } from "@openstatus/assertions";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 import type { monitorsApi } from "./index";
 import { MonitorSchema } from "./schema";
 import { getAssertions } from "./utils";
@@ -57,14 +56,14 @@ export function registerPostMonitor(api: typeof monitorsApi) {
         .all()
     )[0].count;
 
-    if (count >= getLimit(limits, "monitors")) {
+    if (count >= limits.monitors) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more monitors",
       });
     }
 
-    if (!getLimit(limits, "periodicity").includes(input.periodicity)) {
+    if (!limits.periodicity.includes(input.periodicity)) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for more periodicity",
@@ -72,7 +71,7 @@ export function registerPostMonitor(api: typeof monitorsApi) {
     }
 
     for (const region of input.regions) {
-      if (!getLimit(limits, "regions").includes(region)) {
+      if (!limits.regions.includes(region)) {
         throw new OpenStatusApiError({
           code: "PAYMENT_REQUIRED",
           message: "Upgrade for more regions",
