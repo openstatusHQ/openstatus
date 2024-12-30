@@ -1,3 +1,5 @@
+# Workflows
+
 ## Development
 
 To install dependencies:
@@ -24,7 +26,8 @@ flyctl deploy --config apps/workflows/fly.toml --dockerfile  apps/workflows/Dock
 
 ## Docker
 
-The Dockerfile is generated thanks to [Dofigen](https://github.com/lenra-io/dofigen). To generate the Dockerfile, run the following command from the `apps/workflows` directory:
+The Dockerfile is generated thanks to [Dofigen](https://github.com/lenra-io/dofigen).
+To generate the Dockerfile, run the following command from the `apps/workflows` directory:
 
 ```bash
 # Update the dependent image versions
