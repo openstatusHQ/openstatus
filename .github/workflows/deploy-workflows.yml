@@ -16,9 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - working-directory: apps/workflows
-        name: Deploy Workflows
-        run: |
-          flyctl deploy --remote-only --wait-timeout=500
+      - run: flyctl deploy --config apps/workflows/fly.toml
+          --dockerfile  apps/workflows/Dockerfile --remote-only --wait-timeout=500
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
