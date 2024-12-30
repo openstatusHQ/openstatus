@@ -1,13 +1,13 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { IncidentSchema } from "./schema";
 
 test("acknlowledge the incident", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
-  const res = await api.request("/incident/2", {
+  const res = await app.request("/v1/incident/2", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -29,7 +29,7 @@ test("resolve the incident", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
-  const res = await api.request("/incident/2", {
+  const res = await app.request("/v1/incident/2", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -48,7 +48,7 @@ test("resolve the incident", async () => {
 });
 
 test("invalid incident id should return 404", async () => {
-  const res = await api.request("/incident/404", {
+  const res = await app.request("/v1/incident/404", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -63,7 +63,7 @@ test("invalid incident id should return 404", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/incident/2", {
+  const res = await app.request("/v1/incident/2", {
     method: "PUT",
     headers: {
       "content-type": "application/json",
@@ -76,7 +76,7 @@ test("no auth key should return 401", async () => {
 });
 
 test("update the incident with invalid data should return 400", async () => {
-  const res = await api.request("/incident/2", {
+  const res = await app.request("/v1/incident/2", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",

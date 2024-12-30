@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { PageSchema } from "./schema";
 
 test("create a valid page", async () => {
-  const res = await api.request("/page", {
+  const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -25,7 +25,7 @@ test("create a valid page", async () => {
 });
 
 test("create a page with invalid monitor ids should return a 400", async () => {
-  const res = await api.request("/page", {
+  const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -43,7 +43,7 @@ test("create a page with invalid monitor ids should return a 400", async () => {
 });
 
 test("create a page with password on free plan should return a 402", async () => {
-  const res = await api.request("/page", {
+  const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
       "x-openstatus-key": "2",
@@ -61,7 +61,7 @@ test("create a page with password on free plan should return a 402", async () =>
 });
 
 test("create a email page with invalid payload should return a 400", async () => {
-  const res = await api.request("/page", {
+  const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -78,7 +78,7 @@ test("create a email page with invalid payload should return a 400", async () =>
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/page", {
+  const res = await app.request("/v1/page", {
     method: "POST",
     headers: {
       "content-type": "application/json",

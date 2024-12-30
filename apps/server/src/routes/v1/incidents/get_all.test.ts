@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { IncidentSchema } from "./schema";
 
 test("return all incidents", async () => {
-  const res = await api.request("/incident", {
+  const res = await app.request("/v1/incident", {
     method: "GET",
     headers: {
       "x-openstatus-key": "1",
@@ -19,7 +19,7 @@ test("return all incidents", async () => {
 });
 
 test("return empty incidents", async () => {
-  const res = await api.request("/incident", {
+  const res = await app.request("/v1/incident", {
     method: "GET",
     headers: {
       "x-openstatus-key": "2",
@@ -34,7 +34,7 @@ test("return empty incidents", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/incident", {
+  const res = await app.request("/v1/incident", {
     method: "GET",
   });
 

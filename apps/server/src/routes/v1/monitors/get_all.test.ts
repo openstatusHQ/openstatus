@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { MonitorSchema } from "./schema";
 
 test("return all monitors", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "GET",
     headers: {
       "x-openstatus-key": "1",
@@ -19,7 +19,7 @@ test("return all monitors", async () => {
 });
 
 test("return empty monitors", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "GET",
     headers: {
       "x-openstatus-key": "2",
@@ -34,7 +34,7 @@ test("return empty monitors", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "GET",
   });
 

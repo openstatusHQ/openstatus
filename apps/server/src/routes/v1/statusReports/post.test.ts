@@ -1,13 +1,13 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { StatusReportSchema } from "./schema";
 
 test("create a valid status report", async () => {
   const date = new Date();
   date.setMilliseconds(0);
 
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -32,7 +32,7 @@ test("create a valid status report", async () => {
 });
 
 test("create a status report with invalid monitor should return 400", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -51,7 +51,7 @@ test("create a status report with invalid monitor should return 400", async () =
 });
 
 test("create a status report with invalid page id should return 400", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -70,7 +70,7 @@ test("create a status report with invalid page id should return 400", async () =
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "POST",
     headers: {
       "content-type": "application/json",

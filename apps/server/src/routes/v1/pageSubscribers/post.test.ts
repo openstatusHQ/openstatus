@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { PageSubscriberSchema } from "./schema";
 
 test("create a page subscription", async () => {
-  const res = await api.request("/page_subscriber/1/update", {
+  const res = await app.request("/v1/page_subscriber/1/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -20,7 +20,7 @@ test("create a page subscription", async () => {
 });
 
 test("create a scubscriber with invalid email should return a 400", async () => {
-  const res = await api.request("/page_subscriber/1/update", {
+  const res = await app.request("/v1/page_subscriber/1/update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -33,7 +33,7 @@ test("create a scubscriber with invalid email should return a 400", async () => 
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/page_subscriber/1/update", {
+  const res = await app.request("/v1/page_subscriber/1/update", {
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -11,15 +11,15 @@ import { checkerRoute } from "./routes/checker";
 import { publicRoute } from "./routes/public";
 import { api } from "./routes/v1";
 
-const app = new Hono({ strict: false });
+export const app = new Hono({ strict: false });
 
 /**
  * Middleware
  */
 app.use("*", sentry({ dsn: process.env.SENTRY_DSN }));
-app.use("/*", requestId());
-app.use("/*", logger());
-app.use("/*", prettyJSON());
+app.use("*", requestId());
+app.use("*", logger());
+app.use("*", prettyJSON());
 
 app.onError(handleError);
 

@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -39,7 +39,7 @@ test("create a valid monitor", async () => {
 });
 
 test("create a status report with invalid payload should return 400", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -63,7 +63,7 @@ test("create a status report with invalid payload should return 400", async () =
 });
 
 test("create a monitor with invalid page id should return 400", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -82,7 +82,7 @@ test("create a monitor with invalid page id should return 400", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/monitor", {
+  const res = await app.request("/v1/monitor", {
     method: "POST",
     headers: {
       "content-type": "application/json",

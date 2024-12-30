@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { PageSchema } from "./schema";
 
 test("return the page", async () => {
-  const res = await api.request("/page/1", {
+  const res = await app.request("/v1/page/1", {
     headers: {
       "x-openstatus-key": "1",
     },
@@ -16,13 +16,13 @@ test("return the page", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/page/2");
+  const res = await app.request("/v1/page/2");
 
   expect(res.status).toBe(401);
 });
 
 test("invalid page id should return 404", async () => {
-  const res = await api.request("/page/2", {
+  const res = await app.request("/v1/page/2", {
     headers: {
       "x-openstatus-key": "2",
     },

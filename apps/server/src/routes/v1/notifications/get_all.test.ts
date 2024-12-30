@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { NotificationSchema } from "./schema";
 
 test("return all notifications", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "GET",
     headers: {
       "x-openstatus-key": "1",
@@ -19,7 +19,7 @@ test("return all notifications", async () => {
 });
 
 test("return empty notifications", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "GET",
     headers: {
       "x-openstatus-key": "2",
@@ -34,7 +34,7 @@ test("return empty notifications", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "GET",
   });
 

@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { StatusReportUpdateSchema } from "./schema";
 
 test("create a valid status report update", async () => {
-  const res = await api.request("/status_report_update", {
+  const res = await app.request("/v1/status_report_update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -25,7 +25,7 @@ test("create a valid status report update", async () => {
 });
 
 test("create a status report update without valid payload should return 400", async () => {
-  const res = await api.request("/status_report_update", {
+  const res = await app.request("/v1/status_report_update", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -41,7 +41,7 @@ test("create a status report update without valid payload should return 400", as
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/status_report_update", {
+  const res = await app.request("/v1/status_report_update", {
     method: "POST",
     headers: {
       "content-type": "application/json",

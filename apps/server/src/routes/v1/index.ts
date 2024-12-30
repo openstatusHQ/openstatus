@@ -24,8 +24,6 @@ export const api = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
 });
 
-api.onError(handleError);
-
 api.use("/openapi", cors());
 
 api.openAPIRegistry.registerComponent("securitySchemes", "ApiKeyAuth", {

@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { PageSchema } from "./schema";
 
 test("update the page with monitor ids", async () => {
-  const res = await api.request("/page/1", {
+  const res = await app.request("/v1/page/1", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -25,7 +25,7 @@ test("update the page with monitor ids", async () => {
 });
 
 test("update the page with monitor objects", async () => {
-  const res = await api.request("/page/1", {
+  const res = await app.request("/v1/page/1", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -50,7 +50,7 @@ test("update the page with monitor objects", async () => {
 });
 
 test("update the page with invalid monitors should return 400", async () => {
-  const res = await api.request("/page/1", {
+  const res = await app.request("/v1/page/1", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -64,7 +64,7 @@ test("update the page with invalid monitors should return 400", async () => {
 });
 
 test("invalid page id should return 404", async () => {
-  const res = await api.request("/page/404", {
+  const res = await app.request("/v1/page/404", {
     method: "PUT",
     headers: {
       "x-openstatus-key": "1",
@@ -79,7 +79,7 @@ test("invalid page id should return 404", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/page/2", {
+  const res = await app.request("/v1/page/2", {
     method: "PUT",
     headers: {
       "content-type": "application/json",

@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { NotificationSchema } from "./schema";
 
 test("create a notification", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -25,7 +25,7 @@ test("create a notification", async () => {
 });
 
 test("create a notification with invalid monitor ids should return a 400", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -43,7 +43,7 @@ test("create a notification with invalid monitor ids should return a 400", async
 });
 
 test("create a email notification with invalid payload should return a 400", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -60,7 +60,7 @@ test("create a email notification with invalid payload should return a 400", asy
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/notification", {
+  const res = await app.request("/v1/notification", {
     method: "POST",
     headers: {
       "content-type": "application/json",

@@ -1,8 +1,7 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../../index";
-
 import { afterEach, mock } from "bun:test";
+import { app } from "@/index";
 
 const mockFetch = mock();
 
@@ -30,7 +29,7 @@ test("Create a single check  ", async () => {
     ),
   );
 
-  const res = await api.request("/check/http", {
+  const res = await app.request("/v1/check/http", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -99,7 +98,7 @@ test.todo("Create a multiple check  ", async () => {
     ),
   );
 
-  const res = await api.request("/check", {
+  const res = await app.request("/v1/check", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",

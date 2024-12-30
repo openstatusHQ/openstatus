@@ -39,7 +39,7 @@ export function handleError(err: Error, c: Context): Response {
     const error = SchemaError.fromZod(err, c);
 
     // If the error is a client error, we disable Sentry
-    // c.get("sentry").setEnabled(false);
+    c.get("sentry").setEnabled(false);
 
     return c.json<ErrorSchema>(
       {
@@ -59,9 +59,9 @@ export function handleError(err: Error, c: Context): Response {
     const code = statusToCode(err.status);
 
     // If the error is a client error, we disable Sentry
-    // if (err.status < 499) {
-    //   c.get("sentry").setEnabled(false);
-    // }
+    if (err.status < 499) {
+      c.get("sentry").setEnabled(false);
+    }
 
     return c.json<ErrorSchema>(
       {

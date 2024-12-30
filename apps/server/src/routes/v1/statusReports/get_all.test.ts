@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { StatusReportSchema } from "./schema";
 
 test("return all status reports", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "GET",
     headers: {
       "x-openstatus-key": "1",
@@ -19,7 +19,7 @@ test("return all status reports", async () => {
 });
 
 test("return empty status reports", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "GET",
     headers: {
       "x-openstatus-key": "2",
@@ -34,7 +34,7 @@ test("return empty status reports", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/status_report", {
+  const res = await app.request("/v1/status_report", {
     method: "GET",
   });
 

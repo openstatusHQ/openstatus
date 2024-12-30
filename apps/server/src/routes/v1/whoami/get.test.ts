@@ -1,10 +1,10 @@
 import { expect, test } from "bun:test";
 
-import { api } from "../index";
+import { app } from "@/index";
 import { WorkspaceSchema } from "./schema";
 
 test("return the whoami", async () => {
-  const res = await api.request("/whoami", {
+  const res = await app.request("/v1/whoami", {
     headers: {
       "x-openstatus-key": "1",
     },
@@ -16,7 +16,7 @@ test("return the whoami", async () => {
 });
 
 test("no auth key should return 401", async () => {
-  const res = await api.request("/whoami");
+  const res = await app.request("/v1/whoami");
 
   expect(res.status).toBe(401);
 });
