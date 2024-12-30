@@ -10,6 +10,11 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import type { monitorsApi } from "../index";
 import { ParamsSchema, SummarySchema } from "./schema";
 
+// TODO: is there another better way to mock Redis/Tinybird?
+if (process.env.NODE_ENV === "test") {
+  require("@/libs/test/preload");
+}
+
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 const redis = Redis.fromEnv();
 
