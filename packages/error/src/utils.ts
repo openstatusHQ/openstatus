@@ -27,21 +27,6 @@ export function statusToCode(status: number): ErrorCode {
   }
 }
 
-/**
- * TODO: EXTEND ALL ERROR CODES
- * "BAD_REQUEST",
-  "FORBIDDEN",
-  "INTERNAL_SERVER_ERROR",
-  "USAGE_EXCEEDED",
-  "DISABLED",
-  "CONFLICT",
-  "NOT_FOUND",
-  "NOT_UNIQUE",
-  "UNAUTHORIZED",
-  "METHOD_NOT_ALLOWED",
-  "UNPROCESSABLE_ENTITY",
- */
-
 export function codeToStatus(code: ErrorCode) {
   switch (code) {
     case "BAD_REQUEST":
