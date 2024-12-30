@@ -2,7 +2,12 @@ import { createRoute, z } from "@hono/zod-openapi";
 
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorsToPages,
+  page,
+  subdomainSafeList,
+} from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
@@ -83,6 +88,13 @@ export function registerPostPage(api: typeof pagesApi) {
       throw new OpenStatusApiError({
         code: "PAYMENT_REQUIRED",
         message: "Upgrade for password protection",
+      });
+    }
+
+    if (subdomainSafeList.includes(input.slug)) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: "Slug is reserved",
       });
     }
 

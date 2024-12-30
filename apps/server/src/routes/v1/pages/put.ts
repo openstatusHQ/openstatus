@@ -4,7 +4,12 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { Events } from "@openstatus/analytics";
 import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { monitor, monitorsToPages, page } from "@openstatus/db/src/schema";
+import {
+  monitor,
+  monitorsToPages,
+  page,
+  subdomainSafeList,
+} from "@openstatus/db/src/schema";
 import { trackMiddleware } from "../middleware";
 import { isNumberArray } from "../utils";
 import type { pagesApi } from "./index";
@@ -85,6 +90,13 @@ export function registerPutPage(api: typeof pagesApi) {
     }
 
     if (input.slug && _page.slug !== input.slug) {
+      if (subdomainSafeList.includes(input.slug)) {
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: "Slug is reserved",
+        });
+      }
+
       const countSlug = (
         await db
           .select({ count: sql<number>`count(*)` })
