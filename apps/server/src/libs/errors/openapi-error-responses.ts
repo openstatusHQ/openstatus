@@ -1,3 +1,4 @@
+import type { RouteConfig } from "@hono/zod-openapi";
 import { createErrorSchema } from "./utils";
 
 export const openApiErrorResponses = {
@@ -16,6 +17,15 @@ export const openApiErrorResponses = {
     content: {
       "application/json": {
         schema: createErrorSchema("UNAUTHORIZED").openapi("ErrUnauthorized"),
+      },
+    },
+  },
+  402: {
+    description: "A higher pricing plan is required to access the resource.",
+    content: {
+      "application/json": {
+        schema:
+          createErrorSchema("PAYMENT_REQUIRED").openapi("ErrPaymentRequired"),
       },
     },
   },
@@ -56,4 +66,4 @@ export const openApiErrorResponses = {
       },
     },
   },
-};
+} satisfies RouteConfig["responses"];
