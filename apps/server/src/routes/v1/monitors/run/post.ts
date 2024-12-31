@@ -1,4 +1,5 @@
 import { env } from "@/env";
+import { getCheckerPayload, getCheckerUrl } from "@/libs/checker";
 import { openApiErrorResponses } from "@/libs/errors";
 import { createRoute, z } from "@hono/zod-openapi";
 import { and, eq, gte, isNull, sql } from "@openstatus/db";
@@ -8,11 +9,10 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
-import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerResult } from "../schema";
-import { getCheckerPayload, getCheckerUrl } from "../utils";
+import { QuerySchema } from "./schema";
 
 const postMonitor = createRoute({
   method: "post",
@@ -21,19 +21,13 @@ const postMonitor = createRoute({
   path: "/:id/run",
   request: {
     params: ParamsSchema,
-    query: z
-      .object({
-        "no-wait": z.coerce.boolean().optional().default(false).openapi({
-          description: "Don't wait for the result",
-        }),
-      })
-      .openapi({}),
+    query: QuerySchema,
   },
   responses: {
     200: {
       content: {
         "application/json": {
-          schema: z.array(TriggerResult),
+          schema: TriggerResult.array(),
         },
       },
       description: "All the historical metrics",
@@ -101,9 +95,10 @@ export function registerRunMonitor(api: typeof monitorsApi) {
       .where(eq(monitorStatusTable.monitorId, monitorData.id))
       .all();
 
-    const monitorStatus = z
-      .array(selectMonitorStatusSchema)
+    const monitorStatus = selectMonitorStatusSchema
+      .array()
       .safeParse(monitorStatusData);
+
     if (!monitorStatus.success) {
       console.log(monitorStatus.error);
       throw new HTTPException(400, { message: "Something went wrong" });
@@ -148,12 +143,9 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     }
 
     const result = await Promise.all(allResult);
-    // console.log(result);
-
     const bodies = await Promise.all(result.map((r) => r.json()));
-    // let data = null;
 
-    const data = z.array(TriggerResult).safeParse(bodies);
+    const data = TriggerResult.array().safeParse(bodies);
 
     if (!data) {
       throw new HTTPException(400, { message: "Something went wrong" });

@@ -11,7 +11,7 @@ import { ParamsSchema, ResultRun } from "../schema";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
-const getMonitorStats = createRoute({
+const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
   description: "Get a monitor result",
@@ -37,7 +37,7 @@ const getMonitorStats = createRoute({
 });
 
 export function registerGetMonitorResult(api: typeof monitorsApi) {
-  return api.openapi(getMonitorStats, async (c) => {
+  return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const { id, resultId } = c.req.valid("param");
 
