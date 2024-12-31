@@ -105,6 +105,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         headers: input.headers ? JSON.stringify(input.headers) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
+        updatedAt: new Date(),
       })
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()

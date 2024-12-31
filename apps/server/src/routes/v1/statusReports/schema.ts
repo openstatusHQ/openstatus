@@ -36,11 +36,9 @@ export const StatusReportSchema = z.object({
   monitorIds: z
     .array(z.number())
     .optional()
-    .nullable()
     .default([])
-    .openapi({ description: "Ids of the monitors the status report." })
-    .nullable(),
-  pageId: z.number().optional().nullable().openapi({
+    .openapi({ description: "Ids of the monitors the status report." }),
+  pageId: z.number().openapi({
     description: "The id of the page this status report belongs to",
   }),
 });

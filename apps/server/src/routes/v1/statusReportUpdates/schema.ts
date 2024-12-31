@@ -21,7 +21,7 @@ export const StatusReportUpdateSchema = z.object({
   status: z.enum(statusReportStatus).openapi({
     description: "The status of the update",
   }),
-  date: z.coerce.date().openapi({
+  date: z.coerce.date().default(new Date()).openapi({
     description: "The date of the update in ISO8601 format",
   }),
   message: z.string().openapi({

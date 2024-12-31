@@ -35,11 +35,11 @@ export const NotificationSchema = z.object({
   }),
   monitors: z
     .array(z.number())
+    .nullish()
     .openapi({
       description: "The monitors that the notification is linked to",
       example: [1, 2],
-    })
-    .nullish(),
+    }),
 });
 
 export type NotificationSchema = z.infer<typeof NotificationSchema>;

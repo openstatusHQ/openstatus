@@ -5,8 +5,8 @@ import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 export const WorkspaceSchema = z.object({
   name: z
     .string()
-    .openapi({ description: "The current workspace name" })
-    .optional(),
+    .optional()
+    .openapi({ description: "The current workspace name" }),
   slug: z.string().openapi({ description: "The current workspace slug" }),
   plan: z
     .enum(workspacePlans)

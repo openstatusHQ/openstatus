@@ -121,13 +121,10 @@ export const MonitorSchema = z
       example: "Documenso",
       description: "The name of the monitor",
     }),
-    description: z
-      .string()
-      .openapi({
-        example: "Documenso website",
-        description: "The description of your monitor",
-      })
-      .optional(),
+    description: z.string().optional().openapi({
+      example: "Documenso website",
+      description: "The description of your monitor",
+    }),
     method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
@@ -202,13 +199,9 @@ export const MonitorSchema = z
     timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request",
     }),
-    jobType: z
-      .enum(monitorJobTypes)
-      .openapi({
-        description: "The type of the monitor",
-      })
-      .default("http")
-      .optional(),
+    jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
+      description: "The type of the monitor",
+    }),
   })
   .openapi({
     description: "The monitor",

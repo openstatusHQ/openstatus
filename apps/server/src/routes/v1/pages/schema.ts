@@ -34,49 +34,37 @@ export const PageSchema = z.object({
   // REMINDER: needs to be configured on Dashboard UI
   customDomain: z
     .string()
+    .transform((val) => (val ? val : undefined))
+    .nullish()
     .openapi({
       description:
         "The custom domain of the page. To be configured within the dashboard.",
       example: "status.acme.com",
-    })
-    .transform((val) => (val ? val : undefined))
-    .nullish(),
+    }),
   icon: z
     .string()
-    .openapi({
-      description: "The icon of the page",
-      example: "https://example.com/icon.png",
-    })
     .url()
     .or(z.literal(""))
     .transform((val) => (val ? val : undefined))
-    .nullish(),
-  passwordProtected: z
-    .boolean()
+    .nullish()
     .openapi({
-      description:
-        "Make the page password protected. Used with the 'passwordProtected' property.",
-      example: true,
-    })
-    .default(false)
-    .optional(),
-  password: z
-    .string()
-    .openapi({
-      description: "Your password to protect the page from the public",
-      example: "hidden-password",
-    })
-    .optional()
-    .nullish(),
-  showMonitorValues: z
-    .boolean()
-    .openapi({
-      description:
-        "Displays the total and failed request numbers for each monitor",
-      example: true,
-    })
-    .optional()
-    .nullish(),
+      description: "The icon of the page",
+      example: "https://example.com/icon.png",
+    }),
+  passwordProtected: z.boolean().optional().default(false).openapi({
+    description:
+      "Make the page password protected. Used with the 'passwordProtected' property.",
+    example: true,
+  }),
+  password: z.string().optional().nullish().openapi({
+    description: "Your password to protect the page from the public",
+    example: "hidden-password",
+  }),
+  showMonitorValues: z.boolean().optional().nullish().default(true).openapi({
+    description:
+      "Displays the total and failed request numbers for each monitor",
+    example: true,
+  }),
   monitors: z
     .array(z.number())
     .openapi({

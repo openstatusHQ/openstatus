@@ -71,8 +71,9 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
     const _statusReportUpdate = await db
       .insert(statusReportUpdate)
       .values({
-        ...input,
-        date: new Date(input.date),
+        status: input.status,
+        message: input.message,
+        date: input.date,
         statusReportId: Number(id),
       })
       .returning()

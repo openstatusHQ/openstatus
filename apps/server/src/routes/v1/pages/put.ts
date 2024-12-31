@@ -144,7 +144,11 @@ export function registerPutPage(api: typeof pagesApi) {
 
     const newPage = await db
       .update(page)
-      .set({ ...rest, customDomain: input.customDomain ?? "" })
+      .set({
+        ...rest,
+        customDomain: input.customDomain ?? "",
+        updatedAt: new Date(),
+      })
       .where(eq(page.id, _page.id))
       .returning()
       .get();
