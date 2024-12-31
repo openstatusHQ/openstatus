@@ -1,0 +1,108 @@
+---
+title: Our plans in 2025
+description: Embrace OpenTelemetry, improve developer experience, and support community editions.
+author:
+  name: Maximilian Kaske
+  url: https://x.com/mxkaske
+  avatar: /assets/authors/max.png
+publishedAt: 2024-12-31
+image: /assets/posts/vision-2025/vision-2025.png
+tag: company
+---
+
+This post has two purposes: (a) *sharing our vision with you*  and (b) *holding ourselves accountable*.
+
+We know that startup cycles are unpredictable and move fast. This post will serve as a checkpoint—allowing us to reflect on what we’ve achieved and where we may have lost sight of our initial plan.
+
+After all the work, we’ve finally distilled our focus into three main pillars:
+
+1. **Synthetic Monitoring**
+2. **Status Pages**
+3. **Alerting**
+
+Additionally, **Community Editions** are something we’d like to invest in, enabling faster access to self-hosted solutions.
+
+Let’s explore these pillars and uncover our key drivers for 2025.
+
+---
+
+### 1. Synthetic Monitoring
+
+This is where our heart lies.  
+
+We are committed to providing the best tools to monitor your APIs, websites and server globally. So far, we’ve built a highly performant checker that you can deploy as your own probe. 
+
+Moving forward, we want to embrace standards **OpenTelemetry.** 
+
+We believe the current synthetic monitoring ecosystem  is broken you can not build a observability tool isolated from the rest of the observability stack 
+
+What does this mean? By leveraging OpenTelemetry, we can export data from our probes via metrics to your observability stacks.
+
+This flexibility allows you to choose how you handle the data—leaving alerts, visualizations, and storage to your stack while enabling custom integrations. 
+
+Besides we also think at a new kind of monitor which is neither TCP or HTTP based but based on metrics from your system.  You define a PromQL query and configure custom assertions,  if an assertion fails, you can inform your users via a *headless* status page and receive alerts instantly.
+
+But there’s more. As developers, we live in our IDEs and terminals. That’s why we really want improve our **openstatus CLI** and `config.openstatus.yaml` to make developer experience neat (DX). Allowing you to run your synthetic check in you CI workflow, or from your terminal.
+
+Thinking of DX, if interest exists, we’d start building SDKs for your favorite language.
+
+Some of you also love beautiful craft UI this is why  we want to make the dashboard feel *alive*  Dashboard—showing real-time pings as they await responses.
+
+Looking ahead, we want to expand our probes to more cloud providers like AWS, GCP, Koyeb, Render or more if requested.
+
+---
+
+### 2. Status Pages
+
+Status pages go hand in hand with synthetic monitoring. 
+
+We aim to make it effortless to communicate incidents to your users while ensuring the page feels uniquely *yours*. **Customization is key**: supporting brand colors, layouts, and enabling custom `script` injections (e.g., for tools like Plausible to learn who your users are and where they’re coming from).
+
+As we work on our otel monitor integrating non http/tcp monitor will be possible, allowing you to show any part of your stack without the need to define a health endpoint.
+
+---
+
+### 3. Alerting
+
+Let’s clarify what *our* Alerting is. It’s **not on-call rotation**—instead, it’s about sending notifications to your preferred channels when something unexpected happens. Whether it’s failures, degraded performance, or endpoint recoveries, you’ll always be informed and ready to act.
+
+So far, our alerting configurations have been basic. We plan to make them more customizable by **reworking our Alert Engine**. Features we’re considering include:
+
+- Retry policies
+- Delays (e.g., “wait X minutes before sending a notification”)
+- Recovery policies (e.g. “wait for X successful pings”)
+
+Naturally, we’ll integrate with more notification channels and third-party tools for on-call rotations and incident management. While we’ll provide the basics, our focus will remain on flexibility and core alerting—not full-blown incident management. We’ll leave that part to others.
+
+---
+
+### Community Editions
+
+Last but not least, we know many of you want easy-to-host solutions to monitor your services. However, hosting our full application currently involves third-party dependencies and some setup complexity. Instead, we’ll focus on:
+
+(a) *Supporting the community* as they build on top of OpenStatus core infra.
+
+(b) *Building smaller, easily self-hostable solutions* (e.g., [vercel-edge-ping](https://github.com/openstatusHQ/vercel-edge-ping)).
+
+You should think of our community editions as Uptime Kuma on steroids with powerful opentelemetry support based our on work for our main product.
+
+We aren't making the full app difficult to host on purpose. Instead, we're focusing on keeping things simple while meeting community needs. As enterprises request specific features like dedicated databases and queues, we'll evolve toward a more modular architecture.
+
+---
+
+### Recap
+
+Here are the key focus areas for each pillar in 2025:
+
+- **Synthetic Monitoring**: OTel adoption and developer experience (CLI, SDK, real-time UX).
+- **Status Pages**: Customization (styles, scripts) and third-party integrations.
+- **Alerting**: Advanced configurations and more integrations.
+- **Community Editions**: Smaller, self-hostable projects.
+
+If there’s something crucial you’re looking for, we’d love to hear from you. Join our [Discord](https://openstatus.dev/discord) or drop us a [message](mailto:ping@openstatus.dev)!
+
+Thanks for supporting us on this journey. ❤️
+
+**Happy New Year,**
+
+Thibault and Max
