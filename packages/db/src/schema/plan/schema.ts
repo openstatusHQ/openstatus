@@ -10,7 +10,7 @@ export const limitsSchema = z.object({
    * Monitor limits
    */
   monitors: z.number().default(1),
-  "synthetic-checks": z.number().default(30),
+  "synthetic-checks": z.number().default(30), // monthly limits
   periodicity: monitorPeriodicitySchema.array().default(["10m", "30m", "1h"]),
   "multi-region": z.boolean().default(true),
   "max-regions": z.number().default(6),

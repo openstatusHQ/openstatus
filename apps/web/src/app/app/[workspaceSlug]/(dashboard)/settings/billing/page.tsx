@@ -19,11 +19,14 @@ export default async function BillingPage() {
       <div className="grid max-w-lg gap-3">
         {Object.entries(currentNumbers).map(([key, value]) => {
           const limit = workspace.limits[key as keyof typeof currentNumbers];
+          // TODO: find a better way to determine if the limit is monthly
+          const isMonthly = ["synthetic-checks"].includes(key);
           return (
             <div key={key}>
               <div className="mb-1 flex items-center justify-between text-muted-foreground">
                 <p className="text-sm capitalize">{key.replace("-", " ")}</p>
                 <p className="text-xs">
+                  {isMonthly ? "monthly" : null}{" "}
                   <span className="text-foreground">{value}</span> / {limit}
                 </p>
               </div>
