@@ -461,3 +461,5 @@ export const tpcPayloadSchema = z.object({
   degradedAfter: z.number().nullable(),
   trigger: z.enum(["cron", "api"]).optional().nullable().default("cron"),
 });
+
+export type TcpPayload = z.infer<typeof tpcPayloadSchema>;

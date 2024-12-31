@@ -12,6 +12,7 @@ import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerResult } from "../schema";
+import { getCheckerPayload, getCheckerUrl } from "../utils";
 
 const postMonitor = createRoute({
   method: "post",
@@ -127,47 +128,9 @@ export function registerRunMonitor(api: typeof monitorsApi) {
     for (const region of parseMonitor.data.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
-      // Trigger the monitor
+      const payload = getCheckerPayload(row, status);
+      const url = getCheckerUrl(row, { data: true });
 
-      let payload:
-        | z.infer<typeof httpPayloadSchema>
-        | z.infer<typeof tpcPayloadSchema>
-        | null = null;
-      //
-      if (row.jobType === "http") {
-        payload = {
-          workspaceId: String(row.workspaceId),
-          monitorId: String(row.id),
-          url: row.url,
-          method: row.method || "GET",
-          cronTimestamp: timestamp,
-          body: row.body,
-          headers: row.headers,
-          status: status,
-          assertions: row.assertions ? JSON.parse(row.assertions) : null,
-          degradedAfter: row.degradedAfter,
-          timeout: row.timeout,
-          trigger: "api",
-        };
-      }
-      if (row.jobType === "tcp") {
-        payload = {
-          workspaceId: String(row.workspaceId),
-          monitorId: String(row.id),
-          uri: row.url,
-          status: status,
-          assertions: row.assertions ? JSON.parse(row.assertions) : null,
-          cronTimestamp: timestamp,
-          degradedAfter: row.degradedAfter,
-          timeout: row.timeout,
-          trigger: "api",
-        };
-      }
-
-      if (!payload) {
-        throw new Error("Invalid jobType");
-      }
-      const url = generateUrl({ row });
       const result = fetch(url, {
         headers: {
           "Content-Type": "application/json",
@@ -203,15 +166,4 @@ export function registerRunMonitor(api: typeof monitorsApi) {
 
     return c.json(data.data, 200);
   });
-}
-
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
-  switch (row.jobType) {
-    case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api&data=true`;
-    case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api&data=true`;
-    default:
-      throw new Error("Invalid jobType");
-  }
 }

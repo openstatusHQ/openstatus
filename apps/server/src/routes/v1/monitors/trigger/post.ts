@@ -8,9 +8,9 @@ import { monitorStatusTable } from "@openstatus/db/src/schema/monitor_status/mon
 import { selectMonitorStatusSchema } from "@openstatus/db/src/schema/monitor_status/validation";
 import { monitor } from "@openstatus/db/src/schema/monitors/monitor";
 import { selectMonitorSchema } from "@openstatus/db/src/schema/monitors/validation";
-import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
 import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
+import { getCheckerPayload, getCheckerUrl } from "../utils";
 import { ParamsSchema, TriggerSchema } from "./schema";
 
 const postRoute = createRoute({
@@ -81,17 +81,20 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
       });
     }
 
-    const parseMonitor = selectMonitorSchema.safeParse(_monitor);
+    const validateMonitor = selectMonitorSchema.safeParse(_monitor);
 
-    if (!parseMonitor.success) {
-      throw new HTTPException(400, { message: "Something went wrong" });
+    if (!validateMonitor.success) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: "Invalid monitor, please contact support",
+      });
     }
 
-    const row = parseMonitor.data;
+    const row = validateMonitor.data;
 
     // Maybe later overwrite the region
 
-    const monitorStatusData = await db
+    const _monitorStatus = await db
       .select()
       .from(monitorStatusTable)
       .where(eq(monitorStatusTable.monitorId, _monitor.id))
@@ -99,9 +102,13 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
 
     const monitorStatus = z
       .array(selectMonitorStatusSchema)
-      .safeParse(monitorStatusData);
+      .safeParse(_monitorStatus);
+
     if (!monitorStatus.success) {
-      throw new HTTPException(400, { message: "Something went wrong" });
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: "Invalid monitor status, please contact support",
+      });
     }
 
     const timestamp = Date.now();
@@ -120,47 +127,13 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
     }
 
     const allResult = [];
-    for (const region of parseMonitor.data.regions) {
+
+    for (const region of validateMonitor.data.regions) {
       const status =
         monitorStatus.data.find((m) => region === m.region)?.status || "active";
-      // Trigger the monitor
+      const payload = getCheckerPayload(row, status);
+      const url = getCheckerUrl(row);
 
-      let payload:
-        | z.infer<typeof httpPayloadSchema>
-        | z.infer<typeof tpcPayloadSchema>
-        | null = null;
-      //
-      if (row.jobType === "http") {
-        payload = {
-          workspaceId: String(row.workspaceId),
-          monitorId: String(row.id),
-          url: row.url,
-          method: row.method || "GET",
-          cronTimestamp: timestamp,
-          body: row.body,
-          headers: row.headers,
-          status: status,
-          assertions: row.assertions ? JSON.parse(row.assertions) : null,
-          degradedAfter: row.degradedAfter,
-          timeout: row.timeout,
-          trigger: "api",
-        };
-      }
-      if (row.jobType === "tcp") {
-        payload = {
-          workspaceId: String(row.workspaceId),
-          monitorId: String(row.id),
-          uri: row.url,
-          status: status,
-          assertions: row.assertions ? JSON.parse(row.assertions) : null,
-          cronTimestamp: timestamp,
-          degradedAfter: row.degradedAfter,
-          timeout: row.timeout,
-          trigger: "api",
-        };
-      }
-
-      const url = generateUrl({ row });
       const result = fetch(url, {
         headers: {
           "Content-Type": "application/json",
@@ -170,6 +143,7 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
         method: "POST",
         body: JSON.stringify(payload),
       });
+
       allResult.push(result);
     }
 
@@ -177,19 +151,4 @@ export function registerTriggerMonitor(api: typeof monitorsApi) {
 
     return c.json({ resultId: newRun[0].id }, 200);
   });
-}
-
-function generateUrl({ row }: { row: z.infer<typeof selectMonitorSchema> }) {
-  switch (row.jobType) {
-    case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${row.id}&trigger=api&data=false`;
-    case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${row.id}&trigger=api&data=false`;
-    default:
-      throw new OpenStatusApiError({
-        code: "BAD_REQUEST",
-        message:
-          "Invalid jobType, currently only 'http' and 'tcp' are supported",
-      });
-  }
 }
