@@ -13,7 +13,7 @@ import { PageSubscriberSchema, ParamsSchema } from "./schema";
 
 const postRouteSubscriber = createRoute({
   method: "post",
-  tags: ["page", "subscriber"],
+  tags: ["page_subscriber"],
   path: "/:id/update",
   middleware: [trackMiddleware(Events.SubscribePage)],
   description: "Add a subscriber to a status page", // TODO: how to define legacy routes

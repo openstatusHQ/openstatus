@@ -13,7 +13,7 @@ import { HTTPException } from "hono/http-exception";
 import type { monitorsApi } from "..";
 import { ParamsSchema, TriggerResult } from "../schema";
 
-const triggerMonitor = createRoute({
+const postMonitor = createRoute({
   method: "post",
   tags: ["monitor"],
   description: "Run a monitor check",
@@ -22,13 +22,9 @@ const triggerMonitor = createRoute({
     params: ParamsSchema,
     query: z
       .object({
-        "no-wait": z.coerce
-          .boolean()
-          .optional()
-          .openapi({
-            description: "Don't wait for the result",
-          })
-          .default(false),
+        "no-wait": z.coerce.boolean().optional().default(false).openapi({
+          description: "Don't wait for the result",
+        }),
       })
       .openapi({}),
   },
@@ -46,7 +42,7 @@ const triggerMonitor = createRoute({
 });
 
 export function registerRunMonitor(api: typeof monitorsApi) {
-  return api.openapi(triggerMonitor, async (c) => {
+  return api.openapi(postMonitor, async (c) => {
     const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
     const limits = c.get("workspace").limits;

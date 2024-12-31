@@ -128,15 +128,16 @@ export function createErrorSchema(code: ErrorCode) {
     }),
     message: z.string().openapi({
       description: "A human readable message describing the issue.",
-      example: "Missing required field 'name'.",
+      example: "<string>",
     }),
     docs: z.string().openapi({
       description: "A link to the documentation for the error.",
       example: `https://docs.openstatus.dev/api-references/errors/code/${code}`,
     }),
     requestId: z.string().openapi({
-      description: "The request id to be used for debugging.",
-      example: "random-uuid",
+      description:
+        "The request id to be used for debugging and error reporting.",
+      example: "<uuid>",
     }),
   });
 }
