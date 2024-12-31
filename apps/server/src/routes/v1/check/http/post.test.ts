@@ -3,6 +3,7 @@ import { expect, test } from "bun:test";
 import { afterEach, mock } from "bun:test";
 import { app } from "@/index";
 
+// @ts-expect-error - FIXME: requires a function...
 const mockFetch = mock();
 
 global.fetch = mockFetch;
