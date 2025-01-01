@@ -30,7 +30,7 @@ const getRoute = createRoute({
           schema: ResultRun.array(),
         },
       },
-      description: "All the metrics for the monitor",
+      description: "All the metrics for the result id from the monitor",
     },
     ...openApiErrorResponses,
   },

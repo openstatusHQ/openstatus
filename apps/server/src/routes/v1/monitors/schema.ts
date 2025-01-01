@@ -203,13 +203,11 @@ export const MonitorSchema = z
       description: "The type of the monitor",
     }),
   })
-  .openapi({
-    description: "The monitor",
-    required: ["periodicity", "url", "regions", "method"],
-  });
+  .openapi("Monitor");
 
 export type MonitorSchema = z.infer<typeof MonitorSchema>;
 
+// TODO: Move to @/libs/checker/schema
 const timingSchema = z.object({
   dnsStart: z.number(),
   dnsDone: z.number(),
@@ -222,6 +220,8 @@ const timingSchema = z.object({
   transferStart: z.number(),
   transferDone: z.number(),
 });
+
+// Use a baseSchema with 'latency', 'region', 'timestamp'
 
 export const HTTPTriggerResult = z.object({
   jobType: z.literal("http"),
@@ -245,6 +245,7 @@ export const TCPTriggerResult = z.object({
   region: z.enum(flyRegions),
   timestamp: z.number(),
   timing: tcptimingSchema,
+  // check if it should be z.coerce.boolean()?
   error: z.number().optional().nullable(),
   errorMessage: z.string().optional().nullable(),
 });

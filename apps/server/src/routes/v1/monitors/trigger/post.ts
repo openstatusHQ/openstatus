@@ -16,7 +16,7 @@ import { ParamsSchema, TriggerSchema } from "./schema";
 const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
-  description: "Trigger a monitor check",
+  description: "Trigger a monitor check without waiting the result",
   path: "/:id/trigger",
   request: {
     params: ParamsSchema,
@@ -28,7 +28,8 @@ const postRoute = createRoute({
           schema: TriggerSchema,
         },
       },
-      description: "All the historical metrics",
+      description:
+        "Returns a result id that can be used to get the result of your trigger",
     },
     ...openApiErrorResponses,
   },

@@ -16,20 +16,22 @@ export const ParamsSchema = z.object({
     }),
 });
 
-export const StatusReportUpdateSchema = z.object({
-  id: z.coerce.string().openapi({ description: "The id of the update" }),
-  status: z.enum(statusReportStatus).openapi({
-    description: "The status of the update",
-  }),
-  date: z.coerce.date().default(new Date()).openapi({
-    description: "The date of the update in ISO8601 format",
-  }),
-  message: z.string().openapi({
-    description: "The message of the update",
-  }),
-  statusReportId: z.number().openapi({
-    description: "The id of the status report",
-  }),
-});
+export const StatusReportUpdateSchema = z
+  .object({
+    id: z.coerce.string().openapi({ description: "The id of the update" }),
+    status: z.enum(statusReportStatus).openapi({
+      description: "The status of the update",
+    }),
+    date: z.coerce.date().default(new Date()).openapi({
+      description: "The date of the update in ISO8601 format",
+    }),
+    message: z.string().openapi({
+      description: "The message of the update",
+    }),
+    statusReportId: z.number().openapi({
+      description: "The id of the status report",
+    }),
+  })
+  .openapi("StatusReportUpdate");
 
 export type StatusReportUpdateSchema = z.infer<typeof StatusReportUpdateSchema>;

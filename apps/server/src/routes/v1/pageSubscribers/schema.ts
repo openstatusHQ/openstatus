@@ -14,10 +14,20 @@ export const ParamsSchema = z.object({
     }),
 });
 
-export const PageSubscriberSchema = z.object({
-  email: z.string().email().openapi({
-    description: "The email of the subscriber",
-  }),
-});
+export const PageSubscriberSchema = z
+  .object({
+    id: z.number().openapi({
+      description: "The id of the subscriber",
+      example: 1,
+    }),
+    email: z.string().email().openapi({
+      description: "The email of the subscriber",
+    }),
+    pageId: z.number().openapi({
+      description: "The id of the page to subscribe to",
+      example: 1,
+    }),
+  })
+  .openapi("PageSubscriber");
 
 export type PageSubscriberSchema = z.infer<typeof PageSubscriberSchema>;

@@ -23,7 +23,7 @@ const postRouteSubscriber = createRoute({
       description: "The subscriber payload",
       content: {
         "application/json": {
-          schema: PageSubscriberSchema,
+          schema: PageSubscriberSchema.pick({ email: true }),
         },
       },
     },
