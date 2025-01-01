@@ -8,7 +8,7 @@ export async function GET() {
     description: "OpenStatus changelog feed",
     generator: "RSS for Node and Next.js",
     feedLinks: {
-      json: "https://www.openstatus.dev/changelog/feed.xml",
+      rss: "https://www.openstatus.dev/changelog/feed.xml",
     },
     link: "https://www.openstatus.dev",
     author: {
