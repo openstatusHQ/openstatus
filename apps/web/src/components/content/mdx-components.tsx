@@ -1,5 +1,3 @@
-import type { ImageProps } from "next/image";
-import Image from "next/image";
 import Link from "next/link";
 
 import type {
@@ -25,6 +23,7 @@ import { PricingSlider } from "../marketing/pricing/pricing-slider";
 import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
 import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import { Callout, type CalloutProps } from "./callout";
+import { DialogImage, type DialogImageProps } from "./dialog-image";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
@@ -58,7 +57,9 @@ export const components = {
       </div>
     );
   },
-  Image: (props: ImageProps) => <Image {...props} />,
+  Image: (props: DialogImageProps) => {
+    return <DialogImage {...props} />;
+  },
   MetricsCard: (props: MetricsCardProps) => {
     return (
       // remove prose class from cards
