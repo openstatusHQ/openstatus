@@ -35,8 +35,7 @@ export async function GET() {
         link: `https://www.openstatus.dev/blog/${post.slug}`,
         author: [{
           name: post.author.name,
-          email: post.author.url,
-          link: "https://openstatus.dev",
+          link: post.author.url,
         }],
         date: post.publishedAt,
       });
