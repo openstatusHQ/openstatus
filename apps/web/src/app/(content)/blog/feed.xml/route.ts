@@ -4,7 +4,7 @@ import { Feed } from "feed";
 export async function GET() {
   const feed = new Feed({
     id: "https://www.openstatus.dev/blog",
-    title: "OpenStatus",
+    title: "OpenStatus - Blog",
     description: "OpenStatus blog feed",
     generator: "RSS for Node and Next.js",
     feedLinks: {
