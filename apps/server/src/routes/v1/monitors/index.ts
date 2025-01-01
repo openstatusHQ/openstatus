@@ -20,8 +20,9 @@ registerGetAllMonitors(monitorsApi);
 registerGetMonitor(monitorsApi);
 registerPutMonitor(monitorsApi);
 registerDeleteMonitor(monitorsApi);
-registerGetMonitorSummary(monitorsApi);
 registerPostMonitor(monitorsApi);
+//
+registerGetMonitorSummary(monitorsApi);
 registerTriggerMonitor(monitorsApi);
 registerGetMonitorResult(monitorsApi);
 registerRunMonitor(monitorsApi);

@@ -10,7 +10,7 @@ import { IncidentSchema, ParamsSchema } from "./schema";
 const getRoute = createRoute({
   method: "get",
   tags: ["incident"],
-  description: "Get an incident",
+  summary: "Get an incident",
   path: "/:id",
   request: {
     params: ParamsSchema,

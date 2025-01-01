@@ -12,7 +12,8 @@ import { IncidentSchema, ParamsSchema } from "./schema";
 const putRoute = createRoute({
   method: "put",
   tags: ["incident"],
-  description: "Update an incident",
+  summary: "Update an incident",
+  description: "Acknowledge or resolve an incident",
   path: "/:id",
   middleware: [trackMiddleware(Events.UpdateIncident)],
   request: {

@@ -12,7 +12,7 @@ import { ParamsSchema } from "./schema";
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["monitor"],
-  description: "Delete the monitor",
+  summary: "Delete a monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,

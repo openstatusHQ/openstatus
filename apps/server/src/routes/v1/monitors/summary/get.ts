@@ -21,6 +21,7 @@ const redis = Redis.fromEnv();
 const getMonitorStats = createRoute({
   method: "get",
   tags: ["monitor"],
+  summary: "Get a monitor summary",
   description:
     "Get a monitor summary of the last 45 days of data to be used within a status page",
   path: "/:id/summary",

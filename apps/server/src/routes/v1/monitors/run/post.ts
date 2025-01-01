@@ -17,7 +17,9 @@ import { QuerySchema } from "./schema";
 const postMonitor = createRoute({
   method: "post",
   tags: ["monitor"],
-  description: "Run a monitor check",
+  summary: "Create a monitor run",
+  description:
+    "Run a synthetic check for a specific monitor. It will take all configs into account.",
   path: "/:id/run",
   request: {
     params: ParamsSchema,

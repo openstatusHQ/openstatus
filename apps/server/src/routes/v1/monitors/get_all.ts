@@ -10,7 +10,7 @@ import { MonitorSchema } from "./schema";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["monitor"],
-  description: "Get all monitors",
+  summary: "List all monitors",
   path: "/",
   request: {},
   responses: {

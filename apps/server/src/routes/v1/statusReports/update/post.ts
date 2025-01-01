@@ -16,8 +16,9 @@ const postRouteUpdate = createRoute({
   method: "post",
   tags: ["status_report"],
   path: "/:id/update",
-  description:
-    "Create an status report update. Deprecated, please use /status-report-updates instead.",
+  summary: "Create a status report update",
+  deprecated: true,
+  description: "Preferably use /status-report-updates instead.",
   request: {
     params: ParamsSchema,
     body: {

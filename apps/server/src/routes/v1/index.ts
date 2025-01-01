@@ -45,6 +45,53 @@ api.doc("/openapi", {
     description:
       "OpenStatus is a open-source synthetic monitoring tool that allows you to monitor your website and API's uptime, latency, and more. \n\n The OpenStatus API allows you to interact with the OpenStatus platform programmatically. \n\n To get started you need to create an account on https://www.openstatus.dev/ and create an api token in your settings.",
   },
+  tags: [
+    {
+      name: "monitor",
+      description: "Monitor related endpoints",
+      "x-displayName": "Monitor",
+    },
+    {
+      name: "page",
+      description: "Page related endpoints",
+      "x-displayName": "Page",
+    },
+    {
+      name: "status_report",
+      description: "Status report related endpoints",
+      "x-displayName": "Status Report",
+    },
+    {
+      name: "status_report_update",
+      description: "Status report update related endpoints",
+      "x-displayName": "Status Report Update",
+    },
+    {
+      name: "incident",
+      description: "Incident related endpoints",
+      "x-displayName": "Incident",
+    },
+    {
+      name: "notification",
+      description: "Notification related endpoints",
+      "x-displayName": "Notification",
+    },
+    {
+      name: "page_subscriber",
+      description: "Page subscriber related endpoints",
+      "x-displayName": "Page Subscriber",
+    },
+    {
+      name: "check",
+      description: "Check related endpoints",
+      "x-displayName": "Check",
+    },
+    {
+      name: "whoami",
+      description: "WhoAmI related endpoints",
+      "x-displayName": "WhoAmI",
+    },
+  ],
   security: [
     {
       ApiKeyAuth: [],
@@ -69,13 +116,12 @@ api.use("/*", authMiddleware);
 /**
  * Routes
  */
-api.route("/incident", incidentsApi);
 api.route("/monitor", monitorsApi);
-api.route("/notification", notificationsApi);
 api.route("/page", pagesApi);
-api.route("/page_subscriber", pageSubscribersApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
+api.route("/incident", incidentsApi);
+api.route("/notification", notificationsApi);
+api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);
-
 api.route("/whoami", whoamiApi);

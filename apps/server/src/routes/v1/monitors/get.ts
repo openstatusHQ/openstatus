@@ -10,7 +10,7 @@ import { MonitorSchema, ParamsSchema } from "./schema";
 const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
-  description: "Get a monitor",
+  summary: "Get a monitor",
   path: "/:id",
   request: {
     params: ParamsSchema,

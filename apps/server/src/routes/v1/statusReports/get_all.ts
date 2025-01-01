@@ -10,7 +10,7 @@ import { StatusReportSchema } from "./schema";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["status_report"],
-  description: "Get all Status Reports",
+  summary: "List all status reports",
   path: "/",
   request: {},
   responses: {

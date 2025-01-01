@@ -9,7 +9,7 @@ import { PageSchema } from "./schema";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["page"],
-  description: "Get all your status pages",
+  summary: "List all status pages",
   path: "/",
   responses: {
     200: {

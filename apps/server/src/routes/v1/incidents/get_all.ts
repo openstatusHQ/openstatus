@@ -10,7 +10,7 @@ import { IncidentSchema } from "./schema";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["incident"],
-  description: "Get all Incidents",
+  summary: "List all incidents",
   path: "/",
   request: {},
   responses: {

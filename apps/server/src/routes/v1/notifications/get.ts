@@ -12,7 +12,7 @@ import { NotificationSchema, ParamsSchema } from "./schema";
 const getRoute = createRoute({
   method: "get",
   tags: ["notification"],
-  description: "Get a notification",
+  summary: "Get a notification",
   path: "/:id",
   request: {
     params: ParamsSchema,

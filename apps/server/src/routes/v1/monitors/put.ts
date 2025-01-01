@@ -14,7 +14,7 @@ import { getAssertions } from "./utils";
 const putRoute = createRoute({
   method: "put",
   tags: ["monitor"],
-  description: "Update a monitor",
+  summary: "Update a monitor",
   path: "/:id",
   middleware: [trackMiddleware(Events.UpdateMonitor)],
   request: {

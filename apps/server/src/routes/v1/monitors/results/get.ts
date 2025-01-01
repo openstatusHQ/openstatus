@@ -14,7 +14,7 @@ const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
-  description: "Get a monitor result",
+  summary: "Get a monitor result",
   path: "/:id/result/:resultId",
   request: {
     params: ParamsSchema.extend({

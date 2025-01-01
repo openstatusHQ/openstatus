@@ -16,6 +16,7 @@ import { ParamsSchema, TriggerSchema } from "./schema";
 const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
+  summary: "Create a monitor trigger",
   description: "Trigger a monitor check without waiting the result",
   path: "/:id/trigger",
   request: {

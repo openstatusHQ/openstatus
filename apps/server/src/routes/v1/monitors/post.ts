@@ -15,7 +15,7 @@ import { getAssertions } from "./utils";
 const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
-  description: "Create a monitor",
+  summary: "Create a monitor",
   path: "/",
   middleware: [trackMiddleware(Events.CreateMonitor, ["url", "jobType"])],
   request: {

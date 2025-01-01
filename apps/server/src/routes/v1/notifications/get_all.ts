@@ -12,7 +12,7 @@ import { NotificationSchema } from "./schema";
 const getAllRoute = createRoute({
   method: "get",
   tags: ["notification"],
-  description: "Get a notification",
+  summary: "List all notifications",
   path: "/",
 
   responses: {

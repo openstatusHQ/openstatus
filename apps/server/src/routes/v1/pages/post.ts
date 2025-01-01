@@ -19,7 +19,7 @@ import { PageSchema } from "./schema";
 const postRoute = createRoute({
   method: "post",
   tags: ["page"],
-  description: "Create a status page",
+  summary: "Create a status page",
   path: "/",
   middleware: [trackMiddleware(Events.CreatePage, ["slug"])],
   request: {

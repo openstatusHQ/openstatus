@@ -18,7 +18,7 @@ import { PageSchema, ParamsSchema } from "./schema";
 const putRoute = createRoute({
   method: "put",
   tags: ["page"],
-  description: "Update a status page",
+  summary: "Update a status page",
   path: "/:id",
   middleware: [trackMiddleware(Events.UpdatePage)],
   request: {

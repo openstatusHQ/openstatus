@@ -10,7 +10,7 @@ import { PageSchema, ParamsSchema } from "./schema";
 const getRoute = createRoute({
   method: "get",
   tags: ["page"],
-  description: "Get a status page",
+  summary: "Get a status page",
   path: "/:id",
   request: {
     params: ParamsSchema,

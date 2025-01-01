@@ -16,7 +16,7 @@ import { StatusReportUpdateSchema } from "./schema";
 const createStatusUpdate = createRoute({
   method: "post",
   tags: ["status_report_update"],
-  description: "Create a Status Report Update",
+  summary: "Create a status report update",
   path: "/",
   request: {
     body: {

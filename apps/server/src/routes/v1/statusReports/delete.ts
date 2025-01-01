@@ -10,7 +10,7 @@ import { ParamsSchema } from "./schema";
 const deleteRoute = createRoute({
   method: "delete",
   tags: ["status_report"],
-  description: "Delete a Status Report",
+  summary: "Delete a status report",
   path: "/:id",
   request: {
     params: ParamsSchema,

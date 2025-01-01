@@ -17,7 +17,7 @@ import {
 const postRoute = createRoute({
   method: "post",
   tags: ["check"],
-  description: "Run a single check",
+  summary: "Run a single check",
   path: "/http",
   request: {
     body: {

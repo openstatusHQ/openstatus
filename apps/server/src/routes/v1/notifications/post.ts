@@ -17,7 +17,7 @@ import { NotificationSchema } from "./schema";
 const postRoute = createRoute({
   method: "post",
   tags: ["notification"],
-  description: "Create a notification",
+  summary: "Create a notification",
   path: "/",
   middleware: [trackMiddleware(Events.CreateNotification)],
   request: {

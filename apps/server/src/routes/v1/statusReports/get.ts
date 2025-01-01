@@ -10,7 +10,7 @@ import { ParamsSchema, StatusReportSchema } from "./schema";
 const getRoute = createRoute({
   method: "get",
   tags: ["status_report"],
-  description: "Get a Status Report",
+  summary: "Get a status report",
   path: "/:id",
   request: {
     params: ParamsSchema,
