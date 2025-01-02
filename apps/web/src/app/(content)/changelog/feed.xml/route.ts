@@ -1,18 +1,24 @@
 import { allChangelogs } from "content-collections";
-import RSS from "rss";
+import { Feed } from "feed";
 
 export async function GET() {
-  const feed = new RSS({
-    title: "OpenStatus",
+  const feed = new Feed({
+    id: "https://www.openstatus.dev/changelog",
+    title: "OpenStatus - Changelog",
     description: "OpenStatus changelog feed",
     generator: "RSS for Node and Next.js",
-    feed_url: "https://www.openstatus.dev/blog/feed.xml",
-    site_url: "https://www.openstatus.dev",
-    managingEditor: "ping@openstatus.dev (OpenStatus Team)",
-    webMaster: "ping@openstatus.dev (OpenStatus Team)",
+    feedLinks: {
+      rss: "https://www.openstatus.dev/changelog/feed.xml",
+    },
+    link: "https://www.openstatus.dev",
+    author: {
+      name: "OpenStatus Team",
+      email: "ping@openstatus.dev",
+      link: "https://openstatus.dev"
+    },
     copyright: `Copyright ${new Date().getFullYear().toString()}, OpenStatus`,
     language: "en-US",
-    pubDate: new Date().toUTCString(),
+    updated: new Date(),
     ttl: 60,
   });
 
@@ -22,15 +28,20 @@ export async function GET() {
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
     .map((post) => {
-      feed.item({
+      feed.addItem({
+        id: `https://www.openstatus.dev/changelog/${post.slug}`,
         title: post.title,
         description: post.description,
-        url: `https://www.openstatus.dev/changelog/${post.slug}`,
-        author: "OpenStatus Team",
+        link: `https://www.openstatus.dev/changelog/${post.slug}`,
+        author: [{
+          name: "OpenStatus Team",
+          email: "ping@openstatus.dev",
+          link: "https://openstatus.dev"
+        }],
         date: post.publishedAt,
       });
     });
-  return new Response(feed.xml({ indent: true }), {
+  return new Response(feed.rss2(), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
     },

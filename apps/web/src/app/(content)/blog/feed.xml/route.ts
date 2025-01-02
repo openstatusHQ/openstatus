@@ -1,18 +1,24 @@
 import { allPosts } from "content-collections";
-import RSS from "rss";
+import { Feed } from "feed";
 
 export async function GET() {
-  const feed = new RSS({
-    title: "OpenStatus",
+  const feed = new Feed({
+    id: "https://www.openstatus.dev/blog",
+    title: "OpenStatus - Blog",
     description: "OpenStatus blog feed",
     generator: "RSS for Node and Next.js",
-    feed_url: "https://www.openstatus.dev/blog/feed.xml",
-    site_url: "https://www.openstatus.dev",
-    managingEditor: "ping@openstatus.dev (OpenStatus Team)",
-    webMaster: "ping@openstatus.dev (OpenStatus Team)",
+    feedLinks: {
+      rss: "https://www.openstatus.dev/blog/feed.xml",
+    },
+    link: "https://www.openstatus.dev",
+    author: {
+      name: "OpenStatus Team",
+      email: "ping@openstatus.dev",
+      link: "https://openstatus.dev"
+    },
     copyright: `Copyright ${new Date().getFullYear().toString()}, OpenStatus`,
     language: "en-US",
-    pubDate: new Date().toUTCString(),
+    updated: new Date(),
     ttl: 60,
   });
 
@@ -22,15 +28,19 @@ export async function GET() {
         new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
     )
     .map((post) => {
-      feed.item({
+      feed.addItem({
+        id: `https://www.openstatus.dev/blog/${post.slug}`,
         title: post.title,
         description: post.description,
-        url: `https://www.openstatus.dev/blog/${post.slug}`,
-        author: post.author.name,
+        link: `https://www.openstatus.dev/blog/${post.slug}`,
+        author: [{
+          name: post.author.name,
+          link: post.author.url,
+        }],
         date: post.publishedAt,
       });
     });
-  return new Response(feed.xml({ indent: true }), {
+  return new Response(feed.rss2(), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
     },
