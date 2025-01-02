@@ -18,10 +18,7 @@ export async function authMiddleware(
       message: "Missing 'x-openstatus-key' header",
     });
 
-  const { error, result } =
-    env.NODE_ENV === "production"
-      ? await verifyKey(key)
-      : { result: { valid: true, ownerId: key }, error: null };
+  const { error, result } = await validateKey(key);
 
   if (error) {
     throw new OpenStatusApiError({
@@ -29,7 +26,7 @@ export async function authMiddleware(
       message: error.message,
     });
   }
-  if (!result.valid || !result.ownerId) {
+  if (!result?.valid || !result?.ownerId) {
     throw new OpenStatusApiError({
       code: "UNAUTHORIZED",
       message: "Invalid API Key",
@@ -62,4 +59,25 @@ export async function authMiddleware(
   c.set("workspace", validation.data);
 
   await next();
+}
+
+async function validateKey(key: string): Promise<{
+  result: { valid: boolean; ownerId?: string };
+  error?: { message: string };
+}> {
+  if (env.NODE_ENV === "production") {
+    /**
+     * The Unkey api key starts with `os_` - that's how we can differentiate if we
+     * want to roll out our own key verification in the future.
+     * > We cannot use `os_` as a prefix for our own keys.
+     */
+    const { result, error } = await verifyKey(key);
+    return {
+      result: { valid: result?.valid ?? false, ownerId: result?.ownerId },
+      error: error ? { message: error.message } : undefined,
+    };
+  }
+
+  // In dev / test mode we can use the key as the ownerId
+  return { result: { valid: true, ownerId: key } };
 }
