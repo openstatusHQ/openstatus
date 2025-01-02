@@ -106,6 +106,15 @@ api.get(
       url: "/v1/openapi",
     },
     baseServerURL: "https://api.openstatus.dev/v1",
+    metaData: {
+      title: "OpenStatus API",
+      description: "API Reference",
+      ogDescription: "API Reference",
+      ogTitle: "OpenStatus API",
+      ogImage:
+        "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
+      twitterCard: "summary_large_image",
+    },
   }),
 );
 /**
