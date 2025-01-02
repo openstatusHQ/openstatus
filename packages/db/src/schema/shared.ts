@@ -59,6 +59,10 @@ export const selectPageSchemaWithMonitorsRelation = selectPageSchema.extend({
     }),
   ),
   maintenancesToPages: selectMaintenanceSchema.array().default([]),
+  statusReports: selectStatusReportSchema
+    .extend({ statusReportUpdates: selectStatusReportUpdateSchema.array() })
+    .array()
+    .default([]),
 });
 
 export const selectPublicPageSchemaWithRelation = selectPageSchema
