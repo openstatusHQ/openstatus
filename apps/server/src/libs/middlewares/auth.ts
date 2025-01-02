@@ -71,11 +71,18 @@ async function validateKey(key: string): Promise<{
      * want to roll out our own key verification in the future.
      * > We cannot use `os_` as a prefix for our own keys.
      */
-    const { result, error } = await verifyKey(key);
-    return {
-      result: { valid: result?.valid ?? false, ownerId: result?.ownerId },
-      error: error ? { message: error.message } : undefined,
-    };
+    if (key.startsWith("os_")) {
+      const { result, error } = await verifyKey(key);
+      return {
+        result: { valid: result?.valid ?? false, ownerId: result?.ownerId },
+        error: error ? { message: error.message } : undefined,
+      };
+    }
+    // In production, we only accept Unkey keys
+    throw new OpenStatusApiError({
+      code: "UNAUTHORIZED",
+      message: "Invalid API Key",
+    });
   }
 
   // In dev / test mode we can use the key as the ownerId
