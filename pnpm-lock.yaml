@@ -122,8 +122,11 @@ importers:
         specifier: 0.2.2
         version: 0.2.2(hono@4.5.3)(zod@3.23.8)
       '@openstatus/analytics':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/analytics
+      '@openstatus/assertions':
+        specifier: workspace:*
+        version: link:../../packages/assertions
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db

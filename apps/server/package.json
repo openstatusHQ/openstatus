@@ -7,13 +7,15 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "start": "NODE_ENV=production bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@hono/sentry": "1.2.0",
     "@hono/zod-openapi": "0.15.1",
     "@hono/zod-validator": "0.2.2",
-    "@openstatus/analytics": "workspace:^",
+    "@openstatus/analytics": "workspace:*",
+    "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/error": "workspace:*",

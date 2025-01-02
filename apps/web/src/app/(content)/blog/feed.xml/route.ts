@@ -14,7 +14,7 @@ export async function GET() {
     author: {
       name: "OpenStatus Team",
       email: "ping@openstatus.dev",
-      link: "https://openstatus.dev"
+      link: "https://openstatus.dev",
     },
     copyright: `Copyright ${new Date().getFullYear().toString()}, OpenStatus`,
     language: "en-US",
@@ -33,10 +33,12 @@ export async function GET() {
         title: post.title,
         description: post.description,
         link: `https://www.openstatus.dev/blog/${post.slug}`,
-        author: [{
-          name: post.author.name,
-          link: post.author.url,
-        }],
+        author: [
+          {
+            name: post.author.name,
+            link: post.author.url,
+          },
+        ],
         date: post.publishedAt,
       });
     });

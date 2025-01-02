@@ -19,15 +19,19 @@ export type EmailHtml = {
   from: string;
 };
 export const sendEmail = async (email: Emails) => {
+  if (process.env.NODE_ENV !== "production") return;
   await resend.emails.send(email);
 };
 
 export const sendBatchEmailHtml = async (emails: EmailHtml[]) => {
+  if (process.env.NODE_ENV !== "production") return;
   await resend.batch.send(emails);
 };
 
 // TODO: delete in favor of sendBatchEmailHtml
 export const sendEmailHtml = async (emails: EmailHtml[]) => {
+  if (process.env.NODE_ENV !== "production") return;
+
   await fetch("https://api.resend.com/emails/batch", {
     method: "POST",
     headers: {

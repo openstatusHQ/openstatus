@@ -9,11 +9,11 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
-    if (process.env.NODE_ENV === "development") {
-      this.tb = new NoopTinybird();
-    } else {
-      this.tb = new Client({ token });
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   this.tb = new NoopTinybird();
+    // } else {
+    this.tb = new Client({ token });
+    // }
   }
 
   public get homeStats() {
@@ -346,7 +346,8 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.string(),
       }),
-      opts: { cache: "no-store" },
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { cache: "force-cache" },
     });
   }
 
@@ -685,7 +686,8 @@ export class OSTinybird {
         timestamp: z.number(),
         workspaceId: z.string(),
       }),
-      opts: { cache: "no-store" },
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { cache: "force-cache" },
     });
   }
 }

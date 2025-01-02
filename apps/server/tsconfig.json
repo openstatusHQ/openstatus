@@ -2,6 +2,13 @@
   "extends": "@openstatus/tsconfig/base.json",
   "include": ["src", "*.ts", "**/*.ts"],
   "compilerOptions": {
-    "types": ["bun-types"]
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "allowJs": true,
+    "types": ["bun-types"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   }
 }
