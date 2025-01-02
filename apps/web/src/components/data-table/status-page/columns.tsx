@@ -5,7 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import * as z from "zod";
 
-import type { Maintenance, Page } from "@openstatus/db/src/schema";
+import type {
+  Maintenance,
+  Page,
+  StatusReport,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui";
 
+import { formatDate } from "@/lib/utils";
 import { ArrowUpRight, Check } from "lucide-react";
 import { DataTableBadges } from "../data-table-badges";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -21,6 +27,9 @@ export const columns: ColumnDef<
   Page & {
     monitorsToPages: { monitor: { name: string } }[];
     maintenancesToPages: Maintenance[]; // we get only the active maintenances!
+    statusReports: (StatusReport & {
+      statusReportUpdates: StatusReportUpdate[];
+    })[];
   }
 >[] = [
   {
@@ -82,6 +91,36 @@ export const columns: ColumnDef<
         <DataTableBadges
           names={monitors.map((monitor) => monitor.monitor.name)}
         />
+      );
+    },
+  },
+  {
+    accessorKey: "statusReports",
+    header: "Last Report",
+    cell: ({ row }) => {
+      const lastReport = row.original.statusReports?.[0];
+
+      if (!lastReport) {
+        return <span className="text-muted-foreground/50">-</span>;
+      }
+
+      const date =
+        lastReport.statusReportUpdates?.[0].date || lastReport.updatedAt;
+
+      return (
+        <div className="group relative">
+          <span className="group-hover:text-muted-foreground/70">
+            {formatDate(date)}
+          </span>
+          <div className="absolute -inset-x-2 -inset-y-1 invisible group-hover:visible backdrop-blur-sm flex items-center px-2 py-1">
+            <Link
+              href={`./status-pages/${row.original.id}/reports/${lastReport.id}`}
+              className="hover:underline"
+            >
+              Go to report
+            </Link>
+          </div>
+        </div>
       );
     },
   },

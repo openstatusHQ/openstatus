@@ -14,13 +14,15 @@ export const insertStatusReportUpdateSchema = createInsertSchema(
   {
     status: statusReportStatusSchema,
   },
-);
+).extend({
+  date: z.coerce.date().optional().default(new Date()),
+});
 
 export const insertStatusReportSchema = createInsertSchema(statusReport, {
   status: statusReportStatusSchema,
 })
   .extend({
-    date: z.date().optional().default(new Date()),
+    date: z.coerce.date().optional().default(new Date()),
     /**
      * relationship to monitors and pages
      */

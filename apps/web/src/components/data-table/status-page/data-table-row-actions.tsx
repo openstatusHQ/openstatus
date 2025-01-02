@@ -21,6 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@openstatus/ui";
 
@@ -80,6 +81,11 @@ export function DataTableRowActions<TData>({
           >
             <DropdownMenuItem>Visit</DropdownMenuItem>
           </Link>
+          <DropdownMenuSeparator />
+          <Link href={`./status-pages/${page.id}/reports/new`}>
+            <DropdownMenuItem>Create Report</DropdownMenuItem>
+          </Link>
+          <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

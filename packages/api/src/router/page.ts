@@ -224,8 +224,17 @@ export const pageRouter = createTRPCRouter({
             gte(maintenance.to, new Date()),
           ),
         },
+        statusReports: {
+          orderBy: (reports, { desc }) => desc(reports.updatedAt),
+          with: {
+            statusReportUpdates: {
+              orderBy: (updates, { desc }) => desc(updates.date),
+            },
+          },
+        },
       },
     });
+    console.log(allPages.map((page) => page.statusReports));
     return z.array(selectPageSchemaWithMonitorsRelation).parse(allPages);
   }),
 
