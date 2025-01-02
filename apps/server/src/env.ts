@@ -14,6 +14,7 @@ export const env = createEnv({
     SCREENSHOT_SERVICE_URL: z.string(),
     QSTASH_TOKEN: z.string(),
     NODE_ENV: z.string().default("development"),
+    SUPER_ADMIN_TOKEN: z.string(),
   },
 
   /**
