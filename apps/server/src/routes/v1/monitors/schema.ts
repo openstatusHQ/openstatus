@@ -260,10 +260,7 @@ export const ResultRun = z.object({
   statusCode: z.number().int().nullable().default(null),
   monitorId: z.string().default(""),
   url: z.string().optional(),
-  error: z
-    .number()
-    .default(0)
-    .transform((val) => val !== 0),
+  error: z.coerce.boolean().default(false),
   region: z.enum(flyRegions),
   timestamp: z.number().int().optional(),
   message: z.string().nullable().optional(),

@@ -15,6 +15,9 @@ const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
   summary: "Get a monitor result",
+  // FIXME: Should work for all types of monitors
+  description:
+    "**WARNING:** This works only for HTTP monitors. We will add support for other types of monitors soon.",
   path: "/:id/result/:resultId",
   request: {
     params: ParamsSchema.extend({
@@ -72,19 +75,14 @@ export function registerGetMonitorResult(api: typeof monitorsApi) {
         message: `Monitor ${id} not found`,
       });
     }
+
     // Fetch result from tb pipe
     const data = await tb.getResultForOnDemandCheckHttp({
       monitorId: _monitor.id,
       timestamp: _monitorRun.runnedAt?.getTime(),
       url: _monitor.url,
     });
-    // return array of results
-    if (!data || data.data.length === 0) {
-      throw new OpenStatusApiError({
-        code: "NOT_FOUND",
-        message: `No data found for monitor run ${resultId}`,
-      });
-    }
+
     return c.json(data.data, 200);
   });
 }

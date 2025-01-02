@@ -9,14 +9,9 @@ export const WorkspaceSchema = z
       .optional()
       .openapi({ description: "The current workspace name" }),
     slug: z.string().openapi({ description: "The current workspace slug" }),
-    plan: z
-      .enum(workspacePlans)
-      .nullable()
-      .default("free")
-      .transform((val) => val ?? "free")
-      .openapi({
-        description: "The current workspace plan",
-      }),
+    plan: z.enum(workspacePlans).nullable().default("free").openapi({
+      description: "The current workspace plan",
+    }),
   })
   .openapi("Workspace");
 
