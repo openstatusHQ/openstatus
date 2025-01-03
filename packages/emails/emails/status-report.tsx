@@ -10,17 +10,20 @@ import {
   Row,
   Text,
 } from "@react-email/components";
+import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { colors, styles } from "./_components/styles";
 
-export interface StatusReportProps {
-  pageTitle: string;
-  status: "investigating" | "identified" | "monitoring" | "resolved";
-  date: string;
-  message: string;
-  reportTitle: string;
-  monitors: string[]; // array of monitor names
-}
+export const StatusReportSchema = z.object({
+  pageTitle: z.string(),
+  status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
+  date: z.string(),
+  message: z.string(),
+  reportTitle: z.string(),
+  monitors: z.array(z.string()),
+});
+
+export type StatusReportProps = z.infer<typeof StatusReportSchema>;
 
 function getStatusColor(status: string) {
   switch (status) {
