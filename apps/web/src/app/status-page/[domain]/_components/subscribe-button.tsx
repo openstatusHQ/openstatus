@@ -10,8 +10,8 @@ import {
 } from "@openstatus/ui/src/components/popover";
 
 import { Button } from "@openstatus/ui/src/components/button";
-import { SubscribeModal } from "./subscribe-modal";
 import { getBaseUrl } from "../utils";
+import { SubscribeModal } from "./subscribe-modal";
 
 interface Props {
   slug: string;

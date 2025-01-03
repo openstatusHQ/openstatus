@@ -66,7 +66,12 @@ export function Header({ navigation, plan, page }: Props) {
             <Menu navigation={navigation} />
           </div>
           <div className="text-end sm:w-32">
-            {isSubscribers ? <SubscribeButton slug={page.slug} customDomain={page.customDomain} /> : null}
+            {isSubscribers ? (
+              <SubscribeButton
+                slug={page.slug}
+                customDomain={page.customDomain}
+              />
+            ) : null}
           </div>
         </div>
       </div>
