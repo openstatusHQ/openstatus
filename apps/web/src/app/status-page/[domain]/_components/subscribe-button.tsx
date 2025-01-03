@@ -1,89 +1,86 @@
 "use client";
 
-import { Mail } from "lucide-react";
-import { useFormStatus } from "react-dom";
+import { Bell, Mail, Rss } from "lucide-react";
+import { useState } from "react";
 
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@openstatus/ui/src/components/popover";
 
-import { LoadingAnimation } from "@/components/loading-animation";
-import { toast } from "@/lib/toast";
-import { wait } from "@/lib/utils";
 import { Button } from "@openstatus/ui/src/components/button";
-import { Input } from "@openstatus/ui/src/components/input";
-import { Label } from "@openstatus/ui/src/components/label";
-import { handleSubscribe } from "./actions";
+import { getBaseUrl } from "../utils";
+import { SubscribeModal } from "./subscribe-modal";
 
 interface Props {
+  plan: WorkspacePlan;
   slug: string;
+  customDomain?: string;
   isDemo?: boolean;
 }
 
-export function SubscribeButton({ slug, isDemo = false }: Props) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="rounded-full">
-          Get updates
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="flex items-center font-medium leading-none">
-              <Mail className="mr-2 h-4 w-4" /> Subscribe to updates
-            </h4>
-            <p className="text-muted-foreground text-sm">
-              Get email notifications whenever a report has been created or
-              resolved.
-            </p>
-          </div>
-          <form
-            className="grid gap-2"
-            action={async (formData) => {
-              if (!isDemo) {
-                const res = await handleSubscribe(formData);
-                if (res?.error) {
-                  toast.error("Something went wrong", {
-                    description: res.error,
-                  });
-                  return;
-                }
-                toast.message("Success", {
-                  description: "Please confirm your email.",
-                });
-              } else {
-                await wait(1000);
-                toast.message("Success (Demo)", {
-                  description: "Please confirm your email (not).",
-                });
-              }
-            }}
-          >
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="notify@me.com"
-            />
-            <input type="hidden" name="slug" value={slug} />
-            <SubmitButton />
-          </form>
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
+export function SubscribeButton({
+  plan,
+  slug,
+  customDomain,
+  isDemo = false,
+}: Props) {
+  const [showModal, setShowModal] = useState(false);
+  const isSubscribers = allPlans[plan].limits["status-subscribers"]; // FIXME: use the workspace.limits
+  const baseUrl = getBaseUrl({
+    slug: slug,
+    customDomain: customDomain,
+  });
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
-      {pending ? <LoadingAnimation /> : "Subscribe"}
-    </Button>
+    <>
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="gap-2 rounded-full">
+            <Bell className="h-4 w-4" />
+            Subscribe
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-32 p-0" align="end">
+          <div className="flex flex-col">
+            <a
+              href={`${baseUrl}/feed/rss`}
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <Rss className="h-4 w-4" />
+              RSS
+            </a>
+            <a
+              href={`${baseUrl}/feed/atom`}
+              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+            >
+              <Rss className="h-4 w-4" />
+              Atom
+            </a>
+
+            {isSubscribers ? (
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <Mail className="h-4 w-4" />
+                Email
+              </button>
+            ) : null}
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      <SubscribeModal
+        open={showModal}
+        onOpenChange={setShowModal}
+        slug={slug}
+        isDemo={isDemo}
+      />
+    </>
   );
 }
