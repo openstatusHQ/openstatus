@@ -57,7 +57,7 @@ export async function GET(
     const statusReportUpdates = statusReport.statusReportUpdates
       .map((update) => {
         const updateStatus = statusDict[update.status].label;
-        return `${updateStatus}: ${update.message}.`
+        return `${updateStatus}: ${update.message}.`;
       })
       .join("\n\n");
 
