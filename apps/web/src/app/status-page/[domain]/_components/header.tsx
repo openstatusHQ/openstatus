@@ -65,8 +65,8 @@ export function Header({ navigation, plan, page }: Props) {
           <div className="block sm:hidden">
             <Menu navigation={navigation} />
           </div>
-          <div className="text-end sm:w-[120px]">
-            {isSubscribers ? <SubscribeButton slug={page.slug} /> : null}
+          <div className="text-end sm:w-32">
+            {isSubscribers ? <SubscribeButton slug={page.slug} customDomain={page.customDomain} /> : null}
           </div>
         </div>
       </div>
