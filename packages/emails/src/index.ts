@@ -1,4 +1,4 @@
-import { Alert, EmailDataSchema } from "../emails/alert";
+import { Alert } from "../emails/alert";
 import { FollowUpEmail } from "../emails/followup";
 import { SubscribeEmail } from "../emails/subscribe";
 import { WelcomeEmail } from "../emails/welcome";
@@ -8,7 +8,6 @@ export {
   WelcomeEmail,
   validateEmailNotDisposable,
   Alert,
-  EmailDataSchema,
   SubscribeEmail,
   FollowUpEmail,
 };
