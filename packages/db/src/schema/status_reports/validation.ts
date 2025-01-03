@@ -52,3 +52,4 @@ export type InsertStatusReportUpdate = z.infer<
   typeof insertStatusReportUpdateSchema
 >;
 export type StatusReportUpdate = z.infer<typeof selectStatusReportUpdateSchema>;
+export type StatusReportStatus = z.infer<typeof statusReportStatusSchema>;
