@@ -30,7 +30,7 @@ export function SubscribeButton({ slug, customDomain, isDemo = false }: Props) {
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="rounded-full gap-2">
+          <Button variant="outline" className="gap-2 rounded-full">
             <Bell className="h-4 w-4" />
             Subscribe
           </Button>
