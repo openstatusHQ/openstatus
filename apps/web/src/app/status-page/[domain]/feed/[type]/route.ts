@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { getBaseUrl } from "../../utils";
 import { statusDict } from "@/data/incidents-dictionary";
 
+export const revalidate = 60;
+
 export async function GET(
   _request: Request,
   props: { params: Promise<{ domain: string; type: string }> }
@@ -47,7 +49,7 @@ export async function GET(
       title: `Maintenance - ${maintenance.title}`,
       link: maintenanceUrl,
       description: maintenance.message,
-      date: maintenance.updatedAt ?? maintenance.createdAt!,
+      date: maintenance.updatedAt ?? maintenance.createdAt ?? new Date(),
     });
   });
 
