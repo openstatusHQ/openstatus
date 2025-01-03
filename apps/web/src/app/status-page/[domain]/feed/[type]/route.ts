@@ -1,14 +1,14 @@
-import { Feed } from "feed";
+import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
+import { Feed } from "feed";
 import { notFound } from "next/navigation";
 import { getBaseUrl } from "../../utils";
-import { statusDict } from "@/data/incidents-dictionary";
 
 export const revalidate = 60;
 
 export async function GET(
   _request: Request,
-  props: { params: Promise<{ domain: string; type: string }> }
+  props: { params: Promise<{ domain: string; type: string }> },
 ) {
   const { domain, type } = await props.params;
   if (!["rss", "atom"].includes(type)) return notFound();
@@ -73,7 +73,7 @@ export async function GET(
   }
 
   feed.items.sort(
-    (a, b) => (a.date as Date).getTime() - (b.date as Date).getTime()
+    (a, b) => (a.date as Date).getTime() - (b.date as Date).getTime(),
   );
 
   const res = type === "atom" ? feed.atom1() : feed.rss2();
