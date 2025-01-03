@@ -52,8 +52,9 @@ export function SubscribeButton({ slug, customDomain, isDemo = false }: Props) {
               Atom
             </a>
             <button
+              type="button"
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground"
+              className="flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
             >
               <Mail className="h-4 w-4" />
               Email
