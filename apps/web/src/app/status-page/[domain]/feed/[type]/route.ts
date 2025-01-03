@@ -30,7 +30,7 @@ export async function GET(
       rss: `${baseUrl}/feed/rss`,
       atom: `${baseUrl}/feed/atom`,
     },
-    link: "https://www.openstatus.dev",
+    link: baseUrl,
     author: {
       name: "OpenStatus Team",
       email: "ping@openstatus.dev",
