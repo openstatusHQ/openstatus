@@ -56,6 +56,7 @@ export function SubscribeModal({
                   toast.error("Something went wrong", {
                     description: res.error,
                   });
+                  onOpenChange(false);
                   return;
                 }
                 toast.message("Success", {
