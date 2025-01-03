@@ -14,19 +14,22 @@ import {
   Row,
   Text,
 } from "@react-email/components";
+import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { colors, styles } from "./_components/styles";
 
-export interface MonitorAlertProps {
-  type: "degraded" | "up" | "down";
-  name?: string;
-  url?: string;
-  method?: string;
-  status?: string;
-  latency?: string;
-  location?: string;
-  timestamp?: string;
-}
+const MonitorAlertSchema = z.object({
+  type: z.enum(["degraded", "up", "down"]),
+  name: z.string().optional(),
+  url: z.string().optional(),
+  method: z.string().optional(),
+  status: z.string().optional(),
+  latency: z.string().optional(),
+  location: z.string().optional(),
+  timestamp: z.string().optional(),
+});
+
+export type MonitorAlertProps = z.infer<typeof MonitorAlertSchema>;
 
 function getIcon(type: MonitorAlertProps["type"]): {
   src: string;
@@ -149,7 +152,7 @@ export const MonitorAlertEmail = (props: MonitorAlertProps) => (
 );
 
 MonitorAlertEmail.PreviewProps = {
-  type: "down",
+  type: "up",
   name: "Ping Pong",
   url: "https://openstatus.dev/ping",
   method: "GET",

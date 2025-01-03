@@ -9,14 +9,17 @@ import {
   Preview,
   Text,
 } from "@react-email/components";
+import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
-export interface TeamInvitationProps {
-  invitedBy: string; // email address
-  workspaceName?: string;
-  token: string;
-}
+export const TeamInvitationSchema = z.object({
+  invitedBy: z.string(),
+  workspaceName: z.string().optional().nullable(),
+  token: z.string(),
+});
+
+export type TeamInvitationProps = z.infer<typeof TeamInvitationSchema>;
 
 const TeamInvitationEmail = ({
   token,

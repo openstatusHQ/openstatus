@@ -9,18 +9,23 @@ import {
   Preview,
   Text,
 } from "@react-email/components";
+import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
-export interface PageSubscriptionProps {
-  token: string;
-  page: string;
-  domain: string;
-  img?: {
-    src: string;
-    alt: string;
-  };
-}
+export const PageSubscriptionSchema = z.object({
+  token: z.string(),
+  page: z.string(),
+  domain: z.string(),
+  img: z
+    .object({
+      src: z.string(),
+      alt: z.string(),
+    })
+    .optional(),
+});
+
+export type PageSubscriptionProps = z.infer<typeof PageSubscriptionSchema>;
 
 const PageSubscriptionEmail = ({
   token,
