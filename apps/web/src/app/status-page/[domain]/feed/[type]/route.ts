@@ -42,7 +42,7 @@ export async function GET(
     ttl: 60,
   });
 
-  page.maintenances.forEach((maintenance) => {
+  for (const maintenance of page.maintenances) {
     const maintenanceUrl = `${baseUrl}/maintenances/${maintenance.id}`;
     feed.addItem({
       id: maintenanceUrl,
@@ -51,9 +51,9 @@ export async function GET(
       description: maintenance.message,
       date: maintenance.updatedAt ?? maintenance.createdAt ?? new Date(),
     });
-  });
+  }
 
-  page.statusReports.forEach((statusReport) => {
+  for (const statusReport of page.statusReports) {
     const statusReportUrl = `${baseUrl}/reports/${statusReport.id}`;
     const status = statusDict[statusReport.status].label;
     const statusReportUpdates = statusReport.statusReportUpdates
@@ -68,9 +68,9 @@ export async function GET(
       title: `${status} - ${statusReport.title}`,
       link: statusReportUrl,
       description: statusReportUpdates,
-      date: statusReport.updatedAt ?? statusReport.createdAt!,
+      date: statusReport.updatedAt ?? statusReport.createdAt ?? new Date(),
     });
-  });
+  }
 
   feed.items.sort(
     (a, b) => (a.date as Date).getTime() - (b.date as Date).getTime()
