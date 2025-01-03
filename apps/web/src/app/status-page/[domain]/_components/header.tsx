@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useSelectedLayoutSegment } from "next/navigation";
 
 import type { PublicPage } from "@openstatus/db/src/schema";
-import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 
 import { cn } from "@/lib/utils";
@@ -25,7 +24,6 @@ type Props = {
 
 export function Header({ navigation, plan, page }: Props) {
   const selectedSegment = useSelectedLayoutSegment();
-  const isSubscribers = allPlans[plan].limits["status-subscribers"]; // FIXME: use the workspace.limits
 
   return (
     <header className="sticky top-3 z-10 w-full">
@@ -66,12 +64,11 @@ export function Header({ navigation, plan, page }: Props) {
             <Menu navigation={navigation} />
           </div>
           <div className="text-end sm:w-32">
-            {isSubscribers ? (
-              <SubscribeButton
-                slug={page.slug}
-                customDomain={page.customDomain}
-              />
-            ) : null}
+            <SubscribeButton
+              plan={plan}
+              slug={page.slug}
+              customDomain={page.customDomain}
+            />
           </div>
         </div>
       </div>

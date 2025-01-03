@@ -3,6 +3,8 @@
 import { Bell, Mail, Rss } from "lucide-react";
 import { useState } from "react";
 
+import { allPlans } from "@openstatus/db/src/schema/plan/config";
+import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import {
   Popover,
   PopoverContent,
@@ -14,13 +16,20 @@ import { getBaseUrl } from "../utils";
 import { SubscribeModal } from "./subscribe-modal";
 
 interface Props {
+  plan: WorkspacePlan;
   slug: string;
   customDomain?: string;
   isDemo?: boolean;
 }
 
-export function SubscribeButton({ slug, customDomain, isDemo = false }: Props) {
+export function SubscribeButton({
+  plan,
+  slug,
+  customDomain,
+  isDemo = false,
+}: Props) {
   const [showModal, setShowModal] = useState(false);
+  const isSubscribers = allPlans[plan].limits["status-subscribers"]; // FIXME: use the workspace.limits
   const baseUrl = getBaseUrl({
     slug: slug,
     customDomain: customDomain,
@@ -51,14 +60,17 @@ export function SubscribeButton({ slug, customDomain, isDemo = false }: Props) {
               <Rss className="h-4 w-4" />
               Atom
             </a>
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-            >
-              <Mail className="h-4 w-4" />
-              Email
-            </button>
+
+            {isSubscribers ? (
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <Mail className="h-4 w-4" />
+                Email
+              </button>
+            ) : null}
           </div>
         </PopoverContent>
       </Popover>
