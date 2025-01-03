@@ -43,7 +43,7 @@ export async function GET(
   });
 
   for (const maintenance of page.maintenances) {
-    const maintenanceUrl = `${baseUrl}/maintenances/${maintenance.id}`;
+    const maintenanceUrl = `${baseUrl}/events?filter=maintenances`;
     feed.addItem({
       id: maintenanceUrl,
       title: `Maintenance - ${maintenance.title}`,
@@ -54,7 +54,7 @@ export async function GET(
   }
 
   for (const statusReport of page.statusReports) {
-    const statusReportUrl = `${baseUrl}/reports/${statusReport.id}`;
+    const statusReportUrl = `${baseUrl}/events/report/${statusReport.id}`;
     const status = statusDict[statusReport.status].label;
     const statusReportUpdates = statusReport.statusReportUpdates
       .map((update) => {
