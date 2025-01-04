@@ -48,6 +48,7 @@ export function SubscribeButton({
           <div className="flex flex-col">
             <a
               href={`${baseUrl}/feed/rss`}
+              target="_blank"
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
             >
               <Rss className="h-4 w-4" />
@@ -55,6 +56,7 @@ export function SubscribeButton({
             </a>
             <a
               href={`${baseUrl}/feed/atom`}
+              target="_blank"
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
             >
               <Rss className="h-4 w-4" />
