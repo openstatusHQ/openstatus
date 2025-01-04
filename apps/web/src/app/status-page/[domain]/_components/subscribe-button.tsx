@@ -50,6 +50,7 @@ export function SubscribeButton({
               href={`${baseUrl}/feed/rss`}
               target="_blank"
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+              rel="noreferrer"
             >
               <Rss className="h-4 w-4" />
               RSS
@@ -58,6 +59,7 @@ export function SubscribeButton({
               href={`${baseUrl}/feed/atom`}
               target="_blank"
               className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+              rel="noreferrer"
             >
               <Rss className="h-4 w-4" />
               Atom
