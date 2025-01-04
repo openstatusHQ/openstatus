@@ -6,10 +6,11 @@ import { useState } from "react";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import type { WorkspacePlan } from "@openstatus/db/src/schema/workspaces/validation";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@openstatus/ui/src/components/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@openstatus/ui/src/components/dropdown-menu";
 
 import { Button } from "@openstatus/ui/src/components/button";
 import { getBaseUrl } from "../utils";
@@ -37,47 +38,44 @@ export function SubscribeButton({
 
   return (
     <>
-      <Popover>
-        <PopoverTrigger asChild>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button variant="outline" className="gap-2 rounded-full">
             <Bell className="h-4 w-4" />
             Subscribe
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-32 p-0" align="end">
-          <div className="flex flex-col">
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
             <a
               href={`${baseUrl}/feed/rss`}
               target="_blank"
-              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
               rel="noreferrer"
+              className="flex items-center gap-2"
             >
               <Rss className="h-4 w-4" />
               RSS
             </a>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <a
               href={`${baseUrl}/feed/atom`}
               target="_blank"
-              className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
               rel="noreferrer"
+              className="flex items-center gap-2"
             >
               <Rss className="h-4 w-4" />
               Atom
             </a>
-
-            {isSubscribers ? (
-              <button
-                type="button"
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-              >
-                <Mail className="h-4 w-4" />
-                Email
-              </button>
-            ) : null}
-          </div>
-        </PopoverContent>
-      </Popover>
+          </DropdownMenuItem>
+          {isSubscribers ? (
+            <DropdownMenuItem onClick={() => setShowModal(true)}>
+              <Mail className="h-4 w-4 mr-2" />
+              Email
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <SubscribeModal
         open={showModal}
