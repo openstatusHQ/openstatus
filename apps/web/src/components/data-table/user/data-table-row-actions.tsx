@@ -24,7 +24,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
-import { toastAction } from "@/lib/toast";
+import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 interface DataTableRowActionsProps<TData> {
@@ -47,8 +47,13 @@ export function DataTableRowActions<TData>({
         toastAction("removed");
         router.refresh();
         setAlertOpen(false);
-      } catch {
-        toastAction("error");
+      } catch (error) {
+        if (error instanceof Error) {
+          toast.error(error.message);
+        } else {
+          toastAction("error");
+        }
+        setAlertOpen(false);
       }
     });
   }
