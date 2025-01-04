@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/utils";
 
 export function ChangelogCard({ post }: { post: Changelog }) {
   return (
-    <article className="relative mx-auto flex max-w-prose flex-col gap-8">
+    <article className="relative mx-auto flex max-w-prose w-full flex-col gap-8">
       <div className="grid w-full gap-3">
         <p className="font-mono text-muted-foreground text-sm">
           {formatDate(new Date(post.publishedAt))}
