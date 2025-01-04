@@ -68,6 +68,7 @@ export function Header({ navigation, plan, page }: Props) {
               plan={plan}
               slug={page.slug}
               customDomain={page.customDomain}
+              passwordProtected={page.passwordProtected}
             />
           </div>
         </div>

@@ -20,6 +20,7 @@ interface Props {
   plan: WorkspacePlan;
   slug: string;
   customDomain?: string;
+  passwordProtected?: boolean | null;
   isDemo?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function SubscribeButton({
   plan,
   slug,
   customDomain,
+  passwordProtected = false,
   isDemo = false,
 }: Props) {
   const [showModal, setShowModal] = useState(false);
@@ -46,28 +48,32 @@ export function SubscribeButton({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem asChild>
-            <a
-              href={`${baseUrl}/feed/rss`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2"
-            >
-              <Rss className="h-4 w-4" />
-              RSS
-            </a>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <a
-              href={`${baseUrl}/feed/atom`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2"
-            >
-              <Rss className="h-4 w-4" />
-              Atom
-            </a>
-          </DropdownMenuItem>
+          {!passwordProtected ? (
+            <>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`${baseUrl}/feed/rss`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <Rss className="h-4 w-4" />
+                  RSS
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a
+                  href={`${baseUrl}/feed/atom`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <Rss className="h-4 w-4" />
+                  Atom
+                </a>
+              </DropdownMenuItem>
+            </>
+          ) : null}
           {isSubscribers ? (
             <DropdownMenuItem onClick={() => setShowModal(true)}>
               <Mail className="h-4 w-4 mr-2" />
