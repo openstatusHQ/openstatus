@@ -1,7 +1,7 @@
 import { statusDict } from "@/data/incidents-dictionary";
 import { api } from "@/trpc/server";
 import { Feed } from "feed";
-import { notFound } from "next/navigation";
+import { notFound, unauthorized } from "next/navigation";
 import { getBaseUrl } from "../../utils";
 
 export const revalidate = 60;
@@ -15,6 +15,7 @@ export async function GET(
 
   const page = await api.page.getPageBySlug.query({ slug: domain });
   if (!page) return notFound();
+  if (page.passwordProtected) return unauthorized();
 
   const baseUrl = getBaseUrl({
     slug: page.slug,
