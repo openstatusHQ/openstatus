@@ -21,6 +21,7 @@ export const PageSubscriptionSchema = z.object({
     .object({
       src: z.string(),
       alt: z.string(),
+      href: z.string(),
     })
     .optional(),
 });
