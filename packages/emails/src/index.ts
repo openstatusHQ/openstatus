@@ -1,17 +1,9 @@
-import { Alert, EmailDataSchema } from "../emails/alert";
-import { FollowUpEmail } from "../emails/followup";
-import { SubscribeEmail } from "../emails/subscribe";
-import { WelcomeEmail } from "../emails/welcome";
-import { validateEmailNotDisposable } from "./utils";
-
-export {
-  WelcomeEmail,
-  validateEmailNotDisposable,
-  Alert,
-  EmailDataSchema,
-  SubscribeEmail,
-  FollowUpEmail,
-};
+export * from "../emails/alert";
+export * from "../emails/followup";
+export * from "../emails/subscribe";
+export * from "../emails/welcome";
+export * from "../emails/team-invitation";
+export * from "./utils";
 
 export { sendEmail, sendEmailHtml } from "./send";
 

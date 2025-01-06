@@ -5,6 +5,8 @@ import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 
+// TODO: use trpc route
+
 export async function POST(
   req: Request,
   props: { params: Promise<{ domain: string }> },
