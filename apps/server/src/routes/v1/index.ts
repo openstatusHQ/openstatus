@@ -10,6 +10,7 @@ import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
+import { maintenanceApi } from "./maintenance";
 import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
@@ -72,6 +73,11 @@ api.doc("/openapi", {
       "x-displayName": "Incident",
     },
     {
+      name: "maintenance",
+      description: "Maintenance related endpoints",
+      "x-displayName": "Maintenance",
+    },
+    {
       name: "notification",
       description: "Notification related endpoints",
       "x-displayName": "Notification",
@@ -115,7 +121,7 @@ api.get(
         "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
       twitterCard: "summary_large_image",
     },
-  }),
+  })
 );
 /**
  * Middlewares
@@ -130,6 +136,7 @@ api.route("/page", pagesApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/incident", incidentsApi);
+api.route("/maintenance", maintenanceApi);
 api.route("/notification", notificationsApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);
