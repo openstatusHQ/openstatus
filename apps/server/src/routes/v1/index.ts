@@ -8,9 +8,9 @@ import { authMiddleware } from "@/libs/middlewares";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
+import { maintenanceApi } from "./maintenance";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
-import { maintenanceApi } from "./maintenance";
 import { pageSubscribersApi } from "./pageSubscribers";
 import { pagesApi } from "./pages";
 import { statusReportUpdatesApi } from "./statusReportUpdates";
@@ -121,7 +121,7 @@ api.get(
         "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
       twitterCard: "summary_large_image",
     },
-  })
+  }),
 );
 /**
  * Middlewares

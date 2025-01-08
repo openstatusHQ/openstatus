@@ -1,7 +1,7 @@
-import { createRoute } from "@hono/zod-openapi";
-import { db, eq, desc } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema/maintenances";
 import { openApiErrorResponses } from "@/libs/errors";
+import { createRoute } from "@hono/zod-openapi";
+import { db, desc, eq } from "@openstatus/db";
+import { maintenance } from "@openstatus/db/src/schema/maintenances";
 import type { maintenanceApi } from "./index";
 import { MaintenanceSchema } from "./schema";
 
@@ -33,14 +33,14 @@ export function registerGetAllMaintenances(api: typeof maintenanceApi) {
         maintenancesToMonitors: true,
       },
       where: eq(maintenance.workspaceId, workspaceId),
-      orderBy: desc(maintenance.createdAt)
+      orderBy: desc(maintenance.createdAt),
     });
 
     const data = MaintenanceSchema.array().parse(
       _maintenances.map((m) => ({
         ...m,
         monitorIds: m.maintenancesToMonitors.map((mtm) => mtm.monitorId),
-      }))
+      })),
     );
 
     return c.json(data, 200);

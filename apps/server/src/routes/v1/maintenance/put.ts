@@ -1,12 +1,12 @@
+import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
+import { Events } from "@openstatus/analytics";
 import { and, db, eq } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
-import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { trackMiddleware } from "@/libs/middlewares";
-import { Events } from "@openstatus/analytics";
 import type { maintenanceApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 
@@ -51,7 +51,7 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
       },
       where: and(
         eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId)
+        eq(maintenance.workspaceId, workspaceId),
       ),
     });
 
@@ -88,7 +88,7 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
               input.monitorIds.map((monitorId) => ({
                 maintenanceId: Number(id),
                 monitorId,
-              }))
+              })),
             )
             .run();
         }
