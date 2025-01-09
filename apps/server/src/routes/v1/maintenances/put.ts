@@ -8,7 +8,7 @@ import {
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
 import { monitor, page } from "@openstatus/db/src/schema";
-import type { maintenanceApi } from "./index";
+import type { maintenancesApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 
 const putRoute = createRoute({
@@ -40,7 +40,7 @@ const putRoute = createRoute({
   },
 });
 
-export function registerPutMaintenance(api: typeof maintenanceApi) {
+export function registerPutMaintenance(api: typeof maintenancesApi) {
   return api.openapi(putRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");

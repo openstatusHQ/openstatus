@@ -2,7 +2,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema/maintenances";
-import type { maintenanceApi } from "./index";
+import type { maintenancesApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 
 const getRoute = createRoute({
@@ -26,7 +26,7 @@ const getRoute = createRoute({
   },
 });
 
-export function registerGetMaintenance(api: typeof maintenanceApi) {
+export function registerGetMaintenance(api: typeof maintenancesApi) {
   return api.openapi(getRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const { id } = c.req.valid("param");
@@ -37,7 +37,7 @@ export function registerGetMaintenance(api: typeof maintenanceApi) {
       },
       where: and(
         eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId),
+        eq(maintenance.workspaceId, workspaceId)
       ),
     });
 

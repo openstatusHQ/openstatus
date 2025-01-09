@@ -6,13 +6,13 @@ import { registerGetAllMaintenances } from "./get_all";
 import { registerPostMaintenance } from "./post";
 import { registerPutMaintenance } from "./put";
 
-const maintenanceApi = new OpenAPIHono<{ Variables: Variables }>({
+const maintenancesApi = new OpenAPIHono<{ Variables: Variables }>({
   defaultHook: handleZodError,
 });
 
-registerGetAllMaintenances(maintenanceApi);
-registerGetMaintenance(maintenanceApi);
-registerPostMaintenance(maintenanceApi);
-registerPutMaintenance(maintenanceApi);
+registerGetAllMaintenances(maintenancesApi);
+registerGetMaintenance(maintenancesApi);
+registerPostMaintenance(maintenancesApi);
+registerPutMaintenance(maintenancesApi);
 
-export { maintenanceApi };
+export { maintenancesApi };

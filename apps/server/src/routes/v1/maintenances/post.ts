@@ -7,7 +7,7 @@ import {
   maintenance,
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
-import type { maintenanceApi } from "./index";
+import type { maintenancesApi } from "./index";
 import { MaintenanceSchema } from "./schema";
 import { monitor, page } from "@openstatus/db/src/schema";
 
@@ -39,7 +39,7 @@ const postRoute = createRoute({
   },
 });
 
-export function registerPostMaintenance(api: typeof maintenanceApi) {
+export function registerPostMaintenance(api: typeof maintenancesApi) {
   return api.openapi(postRoute, async (c) => {
     const workspaceId = c.get("workspace").id;
     const input = c.req.valid("json");
