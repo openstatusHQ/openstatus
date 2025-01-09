@@ -2,11 +2,12 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { and, db, eq } from "@openstatus/db";
+import { and, isNull, eq, inArray, db } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
+import { monitor, page } from "@openstatus/db/src/schema";
 import type { maintenanceApi } from "./index";
 import { MaintenanceSchema, ParamsSchema } from "./schema";
 
@@ -45,13 +46,15 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
     const { id } = c.req.valid("param");
     const input = c.req.valid("json");
 
+    const { monitorIds, pageId } = input;
+
     const _maintenance = await db.query.maintenance.findFirst({
       with: {
         maintenancesToMonitors: true,
       },
       where: and(
         eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId),
+        eq(maintenance.workspaceId, workspaceId)
       ),
     });
 
@@ -60,6 +63,42 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
         code: "NOT_FOUND",
         message: `Maintenance ${id} not found`,
       });
+    }
+
+    if (monitorIds?.length) {
+      const _monitors = await db
+        .select()
+        .from(monitor)
+        .where(
+          and(
+            inArray(monitor.id, monitorIds),
+            eq(monitor.workspaceId, workspaceId),
+            isNull(monitor.deletedAt)
+          )
+        )
+        .all();
+
+      if (_monitors.length !== monitorIds.length) {
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Some of the monitors ${monitorIds.join(", ")} not found`,
+        });
+      }
+    }
+
+    if (pageId) {
+      const _page = await db
+        .select()
+        .from(page)
+        .where(and(eq(page.id, pageId), eq(page.workspaceId, workspaceId)))
+        .get();
+
+      if (!_page) {
+        throw new OpenStatusApiError({
+          code: "BAD_REQUEST",
+          message: `Page ${pageId} not found`,
+        });
+      }
     }
 
     const updatedMaintenance = await db.transaction(async (tx) => {
@@ -73,7 +112,7 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
         .returning()
         .get();
 
-      if (input.monitorIds) {
+      if (monitorIds) {
         // Delete existing monitor associations
         await tx
           .delete(maintenancesToMonitors)
@@ -81,14 +120,14 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
           .run();
 
         // Add new monitor associations
-        if (input.monitorIds.length > 0) {
+        if (monitorIds.length > 0) {
           await tx
             .insert(maintenancesToMonitors)
             .values(
-              input.monitorIds.map((monitorId) => ({
+              monitorIds.map((monitorId) => ({
                 maintenanceId: Number(id),
                 monitorId,
-              })),
+              }))
             )
             .run();
         }
@@ -100,7 +139,7 @@ export function registerPutMaintenance(api: typeof maintenanceApi) {
     const data = MaintenanceSchema.parse({
       ...updatedMaintenance,
       monitorIds:
-        input.monitorIds ??
+        monitorIds ??
         _maintenance.maintenancesToMonitors.map((m) => m.monitorId),
     });
 

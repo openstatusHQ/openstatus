@@ -67,3 +67,33 @@ test("no auth key should return 401", async () => {
 
   expect(res.status).toBe(401);
 });
+
+test("update with invalid monitor ids should return 400", async () => {
+  const res = await app.request("/v1/maintenance/1", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      monitorIds: [999], // Non-existent monitor
+    }),
+  });
+
+  expect(res.status).toBe(400);
+});
+
+test("update with invalid page id should return 400", async () => {
+  const res = await app.request("/v1/maintenance/1", {
+    method: "PUT",
+    headers: {
+      "x-openstatus-key": "1",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      pageId: 999, // Non-existent page
+    }),
+  });
+
+  expect(res.status).toBe(400);
+});

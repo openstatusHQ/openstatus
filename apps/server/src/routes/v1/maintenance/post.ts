@@ -2,13 +2,14 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { db } from "@openstatus/db";
+import { and, isNull, eq, inArray, db } from "@openstatus/db";
 import {
   maintenance,
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
 import type { maintenanceApi } from "./index";
 import { MaintenanceSchema } from "./schema";
+import { monitor, page } from "@openstatus/db/src/schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -43,6 +44,40 @@ export function registerPostMaintenance(api: typeof maintenanceApi) {
     const workspaceId = c.get("workspace").id;
     const input = c.req.valid("json");
 
+    const { monitorIds, pageId } = input;
+
+    const _monitors = await db
+      .select()
+      .from(monitor)
+      .where(
+        and(
+          inArray(monitor.id, monitorIds),
+          eq(monitor.workspaceId, workspaceId),
+          isNull(monitor.deletedAt)
+        )
+      )
+      .all();
+
+    if (_monitors.length !== monitorIds.length) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: `Some of the monitors ${monitorIds.join(", ")} not found`,
+      });
+    }
+
+    const _page = await db
+      .select()
+      .from(page)
+      .where(and(eq(page.id, pageId), eq(page.workspaceId, workspaceId)))
+      .get();
+
+    if (!_page) {
+      throw new OpenStatusApiError({
+        code: "BAD_REQUEST",
+        message: `Page ${pageId} not found`,
+      });
+    }
+
     const _maintenance = await db.transaction(async (tx) => {
       const newMaintenance = await tx
         .insert(maintenance)
@@ -53,14 +88,14 @@ export function registerPostMaintenance(api: typeof maintenanceApi) {
         .returning()
         .get();
 
-      if (input.monitorIds?.length) {
+      if (monitorIds?.length) {
         await tx
           .insert(maintenancesToMonitors)
           .values(
             input.monitorIds.map((monitorId) => ({
               maintenanceId: newMaintenance.id,
               monitorId,
-            })),
+            }))
           )
           .run();
       }
