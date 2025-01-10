@@ -25,9 +25,9 @@ import {
 } from "@openstatus/notification-twillio-sms";
 
 import {
-  sendAlert as sendPagerdutyAlert,
   sendDegraded as sendPagerDutyDegraded,
   sendRecovery as sendPagerDutyRecovery,
+  sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
 
 import {

@@ -18,5 +18,5 @@ export const OpsGeniePayloadAlert = z.object({
 });
 
 export const OpsGenieCloseAlert = z.object({
-  "source": z.string().default("OpenStatus"),
+  source: z.string().default("OpenStatus"),
 });

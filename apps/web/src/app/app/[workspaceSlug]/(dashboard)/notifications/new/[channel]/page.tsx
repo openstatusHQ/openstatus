@@ -21,14 +21,13 @@ export default async function ChannelPage(props: {
 
   const provider = validation.data;
 
-  const allowed = provider === "sms"
-    ? getLimit(workspace.limits, provider)
-    : true;
+  const allowed =
+    provider === "sms" ? getLimit(workspace.limits, provider) : true;
 
   if (!allowed) return <ProFeatureAlert feature="SMS channel notification" />;
 
-  const isLimitReached = await api.notification.isNotificationLimitReached
-    .query();
+  const isLimitReached =
+    await api.notification.isNotificationLimitReached.query();
 
   if (isLimitReached) {
     return <ProFeatureAlert feature="More notification channel" />;

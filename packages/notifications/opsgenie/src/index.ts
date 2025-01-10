@@ -30,16 +30,17 @@ export const sendAlert = async ({
     },
   });
 
-  const url = notificationData.region === "eu"
-    ? "https://api.eu.opsgenie.com/v2/alerts"
-    : "https://api.opsgenie.com/v2/alerts";
+  const url =
+    notificationData.region === "eu"
+      ? "https://api.eu.opsgenie.com/v2/alerts"
+      : "https://api.opsgenie.com/v2/alerts";
   try {
     await fetch(url, {
       method: "POST",
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${notificationData.apiKey}`,
       },
     });
   } catch (err) {
@@ -76,16 +77,17 @@ export const sendDegraded = async ({
     },
   });
 
-  const url = notificationData.region === "eu"
-    ? "https://api.eu.opsgenie.com/v2/alerts"
-    : "https://api.opsgenie.com/v2/alerts";
+  const url =
+    notificationData.region === "eu"
+      ? "https://api.eu.opsgenie.com/v2/alerts"
+      : "https://api.opsgenie.com/v2/alerts";
   try {
     await fetch(url, {
       method: "POST",
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${notificationData.apiKey}`,
       },
     });
   } catch (err) {
@@ -114,9 +116,10 @@ export const sendRecovery = async ({
 }) => {
   const notificationData = OpsGenieSchema.parse(JSON.parse(notification.data));
 
-  const url = notificationData.region === "eu"
-    ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
-    : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
+  const url =
+    notificationData.region === "eu"
+      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
+      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
 
   try {
     await fetch(url, {
@@ -124,7 +127,7 @@ export const sendRecovery = async ({
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${notificationData.apiKey}`,
       },
     });
   } catch (err) {
