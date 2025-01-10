@@ -8,26 +8,28 @@ export async function LaunchMonitorWorkflow() {
 
   // Only free users monitors are paused
   // We don't need to handle multi users per workspace because free workspaces only have one user
-  const users = await db.select({
-    userId: schema.user.id,
-    email: schema.user.email,
-    lastConnection: schema.user.updatedAt,
-    workspaceId: schema.workspace.id,
-  }).from(user).innerJoin(
-    schema.usersToWorkspaces,
-    eq(schema.user.id, schema.usersToWorkspaces.userId),
-  ).innerJoin(
-    schema.workspace,
-    eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-  ).where(
-    and(
-      or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
-      or(
-        isNull(schema.workspace.plan),
-        ne(schema.workspace.plan, "free"),
+  const users = await db
+    .select({
+      userId: schema.user.id,
+      email: schema.user.email,
+      lastConnection: schema.user.updatedAt,
+      workspaceId: schema.workspace.id,
+    })
+    .from(user)
+    .innerJoin(
+      schema.usersToWorkspaces,
+      eq(schema.user.id, schema.usersToWorkspaces.userId),
+    )
+    .innerJoin(
+      schema.workspace,
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+    )
+    .where(
+      and(
+        or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
+        or(isNull(schema.workspace.plan), ne(schema.workspace.plan, "free")),
       ),
-    ),
-  );
+    );
 
   // iterate over users
   for (const user of users) {
