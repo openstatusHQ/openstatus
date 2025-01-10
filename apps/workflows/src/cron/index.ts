@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
+import { LaunchMonitorWorkflow } from "./monitor";
 
 const app = new Hono({ strict: false });
 
@@ -41,6 +42,18 @@ app.get("/emails/follow-up", async (c) => {
     console.error(e);
     return c.text("Internal Server Error", 500);
   }
+});
+
+app.post("/monitors", async (c) => {
+  await LaunchMonitorWorkflow();
+  return c.json({ success: true }, 200);
+});
+
+app.post("/monitors/:step", async (c) => {
+  // Swith on step
+  // and do the right action
+  //
+  return c.json({ success: true }, 200);
 });
 
 export { app as cronRouter };
