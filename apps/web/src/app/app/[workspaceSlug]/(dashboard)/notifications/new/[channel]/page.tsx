@@ -11,7 +11,7 @@ export default async function ChannelPage(props: {
 }) {
   const params = await props.params;
   const validation = notificationProviderSchema
-    .exclude(["pagerduty"])
+    .exclude(["pagerduty", "opsgenie"])
     .safeParse(params.channel);
 
   if (!validation.success) notFound();
@@ -21,16 +21,18 @@ export default async function ChannelPage(props: {
 
   const provider = validation.data;
 
-  const allowed =
-    provider === "sms" ? getLimit(workspace.limits, provider) : true;
+  const allowed = provider === "sms"
+    ? getLimit(workspace.limits, provider)
+    : true;
 
   if (!allowed) return <ProFeatureAlert feature="SMS channel notification" />;
 
-  const isLimitReached =
-    await api.notification.isNotificationLimitReached.query();
+  const isLimitReached = await api.notification.isNotificationLimitReached
+    .query();
 
-  if (isLimitReached)
+  if (isLimitReached) {
     return <ProFeatureAlert feature="More notification channel" />;
+  }
 
   return (
     <NotificationForm

@@ -6,6 +6,7 @@ import { allPlans } from "@openstatus/db/src/schema/plan/config";
 import { workspacePlans } from "@openstatus/db/src/schema/workspaces/constants";
 import { sendTestDiscordMessage } from "@openstatus/notification-discord";
 import { sendTestSlackMessage } from "@openstatus/notification-slack";
+import { nullable } from "zod";
 export function getDefaultProviderData(defaultValues?: InsertNotification) {
   if (!defaultValues?.provider) return ""; // FIXME: input can empty - needs to be undefined
   return JSON.parse(defaultValues?.data || "{}")[defaultValues?.provider];
@@ -67,7 +68,16 @@ export function getProviderMetaData(provider: NotificationProvider) {
         sendTest: null,
         plans: workspacePlans.filter((plan) => allPlans[plan].limits.pagerduty),
       };
-
+    case "opsgenie":
+      return {
+        label: "OpsGenie",
+        dataType: nullable,
+        placeholder: "",
+        setupDocLink:
+          "https://docs.openstatus.dev/synthetic/features/notification/pagerduty",
+        sendTest: null,
+        plans: workspacePlans.filter((plan) => allPlans[plan].limits.opsgenie),
+      };
     default:
       return {
         label: "Webhook",
