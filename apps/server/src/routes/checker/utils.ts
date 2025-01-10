@@ -25,10 +25,16 @@ import {
 } from "@openstatus/notification-twillio-sms";
 
 import {
+  sendAlert as sendPagerdutyAlert,
   sendDegraded as sendPagerDutyDegraded,
   sendRecovery as sendPagerDutyRecovery,
-  sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
+
+import {
+  sendAlert as sendOpsGenieAlert,
+  sendDegraded as sendOpsGenieDegraded,
+  sendRecovery as sendOpsGenieRecovery,
+} from "@openstatus/notification-opsgenie";
 
 type SendNotification = ({
   monitor,
@@ -73,7 +79,11 @@ export const providerToFunction = {
     sendRecovery: sendSmsRecovery,
     sendDegraded: sendSmsDegraded,
   },
-
+  opsgenie: {
+    sendAlert: sendOpsGenieAlert,
+    sendRecovery: sendOpsGenieRecovery,
+    sendDegraded: sendOpsGenieDegraded,
+  },
   pagerduty: {
     sendAlert: sendPagerdutyAlert,
     sendRecovery: sendPagerDutyRecovery,

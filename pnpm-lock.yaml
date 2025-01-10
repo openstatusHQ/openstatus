@@ -142,6 +142,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-opsgenie':
+        specifier: workspace:*
+        version: link:../../packages/notifications/opsgenie
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../../packages/notifications/pagerduty
