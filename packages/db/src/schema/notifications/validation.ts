@@ -41,6 +41,7 @@ export const phoneDataSchema = z.object({ sms: phoneSchema });
 export const slackDataSchema = z.object({ slack: urlSchema });
 export const discordDataSchema = z.object({ discord: urlSchema });
 export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
+export const opsgenieDataSchema = z.object({ opsgenie: z.string() });
 
 export const NotificationDataSchema = z.union([
   emailDataSchema,
@@ -48,4 +49,5 @@ export const NotificationDataSchema = z.union([
   slackDataSchema,
   discordDataSchema,
   pagerdutyDataSchema,
+  opsgenieDataSchema,
 ]);
