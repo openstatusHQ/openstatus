@@ -135,5 +135,36 @@ export const sendRecovery = async ({
     // Do something
   }
 };
+export const sendTest = async (props: {
+  apiKey: string;
+  region: "eu" | "us";
+}) => {
+  const { apiKey, region } = props;
+
+  const url =
+    region === "eu"
+      ? "https://api.eu.opsgenie.com/v2/alerts"
+      : "https://api.opsgenie.com/v2/alerts";
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      body: JSON.stringify({
+        message: "Test Alert <OpenStatus>",
+        description:
+          "If you can read this, your OpsGenie integration is functioning correctly! Please ignore this alert and delete it.",
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `GenieKey ${apiKey}`,
+      },
+    });
+    console.log(await res.json());
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
+  }
+};
 
 export { OpsGenieSchema };

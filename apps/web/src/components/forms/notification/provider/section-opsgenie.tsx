@@ -2,11 +2,15 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
+import { LoadingAnimation } from "@/components/loading-animation";
+import { toastAction } from "@/lib/toast";
 import type {
   InsertNotificationWithData,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
+import { sendTest } from "@openstatus/notification-opsgenie";
 import {
+  Button,
   FormControl,
   FormDescription,
   FormField,
@@ -20,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@openstatus/ui";
+import { useTransition } from "react";
 
 interface Props {
   form: UseFormReturn<InsertNotificationWithData>;
@@ -27,6 +32,25 @@ interface Props {
 }
 
 export function SectionOpsGenie({ form, plan }: Props) {
+  const [isTestPending, startTestTransition] = useTransition();
+  const watchApiKey = form.watch("data.opsgenie.apiKey");
+  const watchRegion = form.watch("data.opsgenie.region");
+
+  async function sendTestAlert() {
+    if (!watchApiKey || !watchRegion) return;
+    startTestTransition(async () => {
+      const isSuccessfull = await sendTest({
+        apiKey: watchApiKey,
+        region: watchRegion,
+      });
+      if (isSuccessfull) {
+        toastAction("test-success");
+      } else {
+        toastAction("test-error");
+      }
+    });
+  }
+
   return (
     <>
       <FormField
@@ -79,6 +103,21 @@ export function SectionOpsGenie({ form, plan }: Props) {
           </FormItem>
         )}
       />
+      <div className="col-span-full text-right">
+        <Button
+          type="button"
+          variant="secondary"
+          className="w-full sm:w-auto"
+          disabled={isTestPending || !watchApiKey || !watchRegion}
+          onClick={sendTestAlert}
+        >
+          {!isTestPending ? (
+            "Test Alert"
+          ) : (
+            <LoadingAnimation variant="inverse" />
+          )}
+        </Button>
+      </div>
     </>
   );
 }
