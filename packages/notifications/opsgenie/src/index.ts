@@ -1,5 +1,5 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
-import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema/config";
+import { OpsGeniePayloadAlert, OpsGenieSchema } from "./schema";
 
 export const sendAlert = async ({
   monitor,
@@ -16,7 +16,7 @@ export const sendAlert = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = OpsGenieSchema.parse(JSON.parse(notification.data));
+  const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
@@ -31,7 +31,7 @@ export const sendAlert = async ({
   });
 
   const url =
-    notificationData.region === "eu"
+    opsgenie.region === "eu"
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
   try {
@@ -40,7 +40,7 @@ export const sendAlert = async ({
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${opsgenie.apiKey}`,
       },
     });
   } catch (err) {
@@ -63,7 +63,7 @@ export const sendDegraded = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = OpsGenieSchema.parse(JSON.parse(notification.data));
+  const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
   const event = OpsGeniePayloadAlert.parse({
@@ -78,7 +78,7 @@ export const sendDegraded = async ({
   });
 
   const url =
-    notificationData.region === "eu"
+    opsgenie.region === "eu"
       ? "https://api.eu.opsgenie.com/v2/alerts"
       : "https://api.opsgenie.com/v2/alerts";
   try {
@@ -87,7 +87,7 @@ export const sendDegraded = async ({
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${opsgenie.apiKey}`,
       },
     });
   } catch (err) {
@@ -114,10 +114,10 @@ export const sendRecovery = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = OpsGenieSchema.parse(JSON.parse(notification.data));
+  const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
 
   const url =
-    notificationData.region === "eu"
+    opsgenie.region === "eu"
       ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
       : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
 
@@ -127,7 +127,7 @@ export const sendRecovery = async ({
       body: JSON.stringify(event),
       headers: {
         "Content-Type": "application/json",
-        Authorization: `GenieKey ${notificationData.apiKey}`,
+        Authorization: `GenieKey ${opsgenie.apiKey}`,
       },
     });
   } catch (err) {

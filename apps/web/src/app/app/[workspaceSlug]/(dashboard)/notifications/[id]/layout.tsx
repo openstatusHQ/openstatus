@@ -24,7 +24,10 @@ export default async function Layout(props: {
 
   return (
     <AppPageWithSidebarLayout id="notifications">
-      <Header title={notification.name} description={notification.provider} />
+      <Header
+        title={notification.name}
+        description={<span className="font-mono">{notification.provider}</span>}
+      />
       {children}
     </AppPageWithSidebarLayout>
   );

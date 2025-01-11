@@ -11,7 +11,7 @@ export default async function ChannelPage(props: {
 }) {
   const params = await props.params;
   const validation = notificationProviderSchema
-    .exclude(["pagerduty", "opsgenie"])
+    .exclude(["pagerduty"])
     .safeParse(params.channel);
 
   if (!validation.success) notFound();

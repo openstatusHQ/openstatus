@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 export const OpsGenieSchema = z.object({
-  apiKey: z.string(),
-  region: z.enum(["eu", "us"]),
+  opsgenie: z.object({
+    apiKey: z.string(),
+    region: z.enum(["eu", "us"]),
+  }),
 });
 
 export const OpsGeniePayloadAlert = z.object({

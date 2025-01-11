@@ -40,7 +40,23 @@ export const notificationRouter = createTRPCRouter({
         });
       }
 
+      const limitedProviders = ["sms", "pagerduty", "opsgenie"];
+      if (limitedProviders.includes(props.provider)) {
+        const isAllowed =
+          opts.ctx.workspace.limits[
+            props.provider as "sms" | "pagerduty" | "opsgenie"
+          ];
+
+        if (!isAllowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Upgrade to use the notification channel.",
+          });
+        }
+      }
+
       const _data = NotificationDataSchema.safeParse(JSON.parse(props.data));
+
       if (!_data.success) {
         throw new TRPCError({
           code: "BAD_REQUEST",
