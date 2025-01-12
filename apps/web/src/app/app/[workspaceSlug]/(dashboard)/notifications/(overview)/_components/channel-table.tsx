@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
@@ -36,11 +37,11 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
         <Channel
           title="PagerDuty"
           description="Send notifications to PagerDuty."
-          href={`https://app.pagerduty.com/install/integration?app_id=PN76M56&redirect_url=${
+          href={`https://app.pagerduty.com/install/integration?app_id=${env.PAGERDUTY_APP_ID}&redirect_url=${
             process.env.NODE_ENV === "development" // FIXME: This sucks
               ? "http://localhost:3000"
               : "https://www.openstatus.dev"
-          }/app/${workspace.slug}/notifications/new/pagerduty&version=2`}
+          }/api/callback/pagerduty?workspace=${workspace.slug}&version=2`}
           disabled={disabled || !isPagerDutyAllowed}
         />
         <Separator />

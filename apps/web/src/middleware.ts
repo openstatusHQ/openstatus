@@ -65,7 +65,7 @@ export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
 
   const isPublicAppPath = publicAppPaths.some((path) =>
-    pathname.startsWith(path),
+    pathname.startsWith(path)
   );
 
   if (!req.auth && pathname.startsWith("/app/invite")) {
@@ -155,6 +155,5 @@ export const config = {
     // "/node_modules/function-bind/**",
     // "**/node_modules/.pnpm/**/function-bind/**",
     // "../../packages/analytics/src/index.ts",
-    "**/node_modules/.pnpm/@jitsu*/**",
   ],
 };
