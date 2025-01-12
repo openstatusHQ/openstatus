@@ -184,4 +184,5 @@ export const sendTest = async ({
     console.log(err);
     // Do something
   }
-  export { PagerDutySchema };
+};
+export { PagerDutySchema };
