@@ -8,7 +8,6 @@ import type {
   InsertNotificationWithData,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { sendTest } from "@openstatus/notification-opsgenie";
 import {
   Button,
   FormControl,
@@ -26,6 +25,8 @@ import {
 } from "@openstatus/ui";
 import { useTransition } from "react";
 
+import { sendOpsGenieTestAlert } from "./actions";
+
 interface Props {
   form: UseFormReturn<InsertNotificationWithData>;
   plan: WorkspacePlan;
@@ -39,10 +40,10 @@ export function SectionOpsGenie({ form, plan }: Props) {
   async function sendTestAlert() {
     if (!watchApiKey || !watchRegion) return;
     startTestTransition(async () => {
-      const isSuccessfull = await sendTest({
-        apiKey: watchApiKey,
-        region: watchRegion,
-      });
+      const isSuccessfull = await sendOpsGenieTestAlert(
+        watchApiKey,
+        watchRegion
+      );
       if (isSuccessfull) {
         toastAction("test-success");
       } else {
