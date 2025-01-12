@@ -12,11 +12,13 @@ export const OpsGeniePayloadAlert = z.object({
   alias: z.string(),
   description: z.string(),
   source: z.string().default("OpenStatus"),
-  details: z.object({
-    message: z.string(),
-    status: z.number().optional(),
-    severity: z.enum(["degraded", "down"]),
-  }).optional(),
+  details: z
+    .object({
+      message: z.string(),
+      status: z.number().optional(),
+      severity: z.enum(["degraded", "down"]),
+    })
+    .optional(),
 });
 
 export const OpsGenieCloseAlert = z.object({

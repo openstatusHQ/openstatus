@@ -111,11 +111,11 @@ export function SectionOpsGenie({ form, plan }: Props) {
           disabled={isTestPending || !watchApiKey || !watchRegion}
           onClick={sendTestAlert}
         >
-          {!isTestPending
-            ? (
-              "Test Alert"
-            )
-            : <LoadingAnimation variant="inverse" />}
+          {!isTestPending ? (
+            "Test Alert"
+          ) : (
+            <LoadingAnimation variant="inverse" />
+          )}
         </Button>
       </div>
     </>
