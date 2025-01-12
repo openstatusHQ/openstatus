@@ -40,8 +40,7 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
               ? "http://localhost:3000"
               : "https://www.openstatus.dev"
           }/api/callback/pagerduty?workspace=${workspace.slug}&version=2`}
-          disabled={disabled || || !workspace.limits.pagerduty}
-
+          disabled={disabled || !workspace.limits.pagerduty}
         />
         <Separator />
         <Channel
