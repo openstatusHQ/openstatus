@@ -4,4 +4,5 @@ export const notificationProvider = [
   "slack",
   "sms",
   "pagerduty",
+  "opsgenie",
 ] as const;
