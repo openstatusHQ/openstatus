@@ -65,7 +65,7 @@ export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
 
   const isPublicAppPath = publicAppPaths.some((path) =>
-    pathname.startsWith(path)
+    pathname.startsWith(path),
   );
 
   if (!req.auth && pathname.startsWith("/app/invite")) {

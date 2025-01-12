@@ -2,19 +2,19 @@
 
 import type { UseFormReturn } from "react-hook-form";
 
+import { LoadingAnimation } from "@/components/loading-animation";
+import { toastAction } from "@/lib/toast";
 import {
   type InsertNotificationWithData,
   InsertNotificationWithDataSchema,
   NotificationDataSchema,
-  selectNotificationSchema,
   type WorkspacePlan,
+  selectNotificationSchema,
 } from "@openstatus/db/src/schema";
-import { Button } from "@openstatus/ui";
-import { LoadingAnimation } from "@/components/loading-animation";
-import { useTransition } from "react";
-import { toastAction } from "@/lib/toast";
 import { PagerDutySchema } from "@openstatus/notification-pagerduty";
+import { Button } from "@openstatus/ui";
 import { useSearchParams } from "next/navigation";
+import { useTransition } from "react";
 import { sendPagerDutyTestAlert } from "./actions";
 
 interface Props {
