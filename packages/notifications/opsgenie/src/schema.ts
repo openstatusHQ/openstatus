@@ -16,7 +16,7 @@ export const OpsGeniePayloadAlert = z.object({
     message: z.string(),
     status: z.number().optional(),
     severity: z.enum(["degraded", "down"]),
-  }),
+  }).optional(),
 });
 
 export const OpsGenieCloseAlert = z.object({

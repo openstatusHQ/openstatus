@@ -30,10 +30,9 @@ export const sendAlert = async ({
     },
   });
 
-  const url =
-    opsgenie.region === "eu"
-      ? "https://api.eu.opsgenie.com/v2/alerts"
-      : "https://api.opsgenie.com/v2/alerts";
+  const url = opsgenie.region === "eu"
+    ? "https://api.eu.opsgenie.com/v2/alerts"
+    : "https://api.opsgenie.com/v2/alerts";
   try {
     await fetch(url, {
       method: "POST",
@@ -77,10 +76,9 @@ export const sendDegraded = async ({
     },
   });
 
-  const url =
-    opsgenie.region === "eu"
-      ? "https://api.eu.opsgenie.com/v2/alerts"
-      : "https://api.opsgenie.com/v2/alerts";
+  const url = opsgenie.region === "eu"
+    ? "https://api.eu.opsgenie.com/v2/alerts"
+    : "https://api.opsgenie.com/v2/alerts";
   try {
     await fetch(url, {
       method: "POST",
@@ -116,11 +114,19 @@ export const sendRecovery = async ({
 }) => {
   const { opsgenie } = OpsGenieSchema.parse(JSON.parse(notification.data));
 
-  const url =
-    opsgenie.region === "eu"
-      ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
-      : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
+  const url = opsgenie.region === "eu"
+    ? `https://api.eu.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`
+    : `https://api.opsgenie.com/v2/alerts/${monitor.id}}-${incidentId}/close`;
 
+  const event = OpsGeniePayloadAlert.parse({
+    alias: `${monitor.id}}-${incidentId}`,
+    message: `${monitor.name} has recovered`,
+    description: message,
+    details: {
+      message,
+      status: statusCode,
+    },
+  });
   try {
     await fetch(url, {
       method: "POST",
@@ -141,22 +147,25 @@ export const sendTest = async (props: {
 }) => {
   const { apiKey, region } = props;
 
-  const url =
-    region === "eu"
-      ? "https://api.eu.opsgenie.com/v2/alerts"
-      : "https://api.opsgenie.com/v2/alerts";
+  const url = region === "eu"
+    ? "https://api.eu.opsgenie.com/v2/alerts"
+    : "https://api.opsgenie.com/v2/alerts";
+
+  const alert = OpsGeniePayloadAlert.parse({
+    alias: "test-openstatus",
+    message: "Test Alert <OpenStatus>",
+    description:
+      "If can read this, your OpsGenie integration is functioning correctly! Please ignore this alert and delete it.",
+  });
 
   try {
     const res = await fetch(url, {
       method: "POST",
-      body: JSON.stringify({
-        message: "Test Alert <OpenStatus>",
-        description:
-          "If you can read this, your OpsGenie integration is functioning correctly! Please ignore this alert and delete it.",
-      }),
+      body: JSON.stringify(alert),
       headers: {
         "Content-Type": "application/json",
         Authorization: `GenieKey ${apiKey}`,
+        "Access-Control-Allow-Origin": "*",
       },
     });
     console.log(await res.json());
