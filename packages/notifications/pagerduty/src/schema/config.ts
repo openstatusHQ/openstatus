@@ -37,7 +37,7 @@ export const linkSchema = z.object({
 });
 
 const baseEventPayloadSchema = z.object({
-  rounting_key: z.string(),
+  routing_key: z.string(),
   dedup_key: z.string(),
 });
 
