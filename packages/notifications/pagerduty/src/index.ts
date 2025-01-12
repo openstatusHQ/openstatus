@@ -148,10 +148,10 @@ export const sendTest = async ({
     // biome-ignore lint/correctness/noUnusedVariables: <explanation>
     const event = triggerEventPayloadSchema.parse({
       routing_key: integrationKey,
-      dedup_key: `openstatus-test`,
+      dedup_key: "openstatus-test",
       event_action: "trigger",
       payload: {
-        summary: `This is a test from OpenStatus`,
+        summary: "This is a test from OpenStatus",
         source: "Open Status",
         severity: "error",
         timestamp: new Date().toISOString(),
