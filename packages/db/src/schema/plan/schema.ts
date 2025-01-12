@@ -37,6 +37,7 @@ export const limitsSchema = z.object({
    */
   notifications: z.boolean().default(true),
   pagerduty: z.boolean().default(false),
+  opsgenie: z.boolean().default(false),
   sms: z.boolean().default(false),
   "notification-channels": z.number().default(1),
   /**

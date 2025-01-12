@@ -1,0 +1,69 @@
+---
+title: OpsGenie
+description: "How to set up OpsGenie notifications in OpenStatus to get alerts when your synthetic check fail"
+
+---
+import { Image} from 'astro:assets';
+import OpsGenie1 from '../../../../assets/notification/opsgenie/opsgenie-1.png';
+import OpsGenie2 from '../../../../assets/notification/opsgenie/opsgenie-2.png';
+import OpsGenie3 from '../../../../assets/notification/opsgenie/opsgenie-3.png';
+import OpsGenie4 from '../../../../assets/notification/opsgenie/opsgenie-4.png';
+import OpsGenie5 from '../../../../assets/notification/opsgenie/opsgenie-5.png';
+
+Get Notified on OpsGenie when we create an incident.
+
+## How to connect OpsGenie
+
+### Create an OpsGenie Integration
+
+First we need to create an integration in OpsGenie.
+
+Go to your team in OpsGenie and select `Integrations` from the menu.
+
+
+  <Image
+    src={OpsGenie1}
+    alt="OpsGenie integration page"
+  />
+In the integrations page, search for `API` and select it.
+
+
+  <Image
+    src={OpsGenie2}
+    alt="Connect to OpsGenie"
+  />
+
+Give your integration a name and save it.
+Copy your API key and save it. You will need it to connect OpenStatus to OpsGenie.
+
+  <Image
+    src={OpsGenie3}
+    alt="Connect to OpsGenie"
+  />
+
+
+### Connect your OpenStatus account to OpsGenie
+
+
+Go to the Alerts Page . Select `OpsGenie` from the list of available integrations.
+
+
+  <Image
+    src={OpsGenie4}
+    alt="OpenStatus Notifications Page"
+  />
+
+
+Give you integration a name and paste the API key you copied from OpsGenie and select the region of your OpsGenie account.
+
+  <Image
+    src={OpsGenie5}
+    alt="Connect to OpsGenie in OpenStatus"
+  />
+
+Select the service you want to use to send notifications. You can create a new service if you don't have one.
+
+
+You are now connected to OpsGenie. 
+
+You will receive some notifications if we detect an incident

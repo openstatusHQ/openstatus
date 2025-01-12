@@ -29,8 +29,9 @@ export default async function ChannelPage(props: {
   const isLimitReached =
     await api.notification.isNotificationLimitReached.query();
 
-  if (isLimitReached)
+  if (isLimitReached) {
     return <ProFeatureAlert feature="More notification channel" />;
+  }
 
   return (
     <NotificationForm

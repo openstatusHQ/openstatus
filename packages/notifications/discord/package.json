@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "dependencies": {
-    "@openstatus/db": "workspace:*"
+    "@openstatus/db": "workspace:*",
+    "zod": "3.22.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",

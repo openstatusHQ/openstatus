@@ -13,8 +13,6 @@ interface ChannelTable {
 }
 
 export default function ChannelTable({ workspace, disabled }: ChannelTable) {
-  const isPagerDutyAllowed = getLimit(workspace.limits, "pagerduty");
-  const isSMSAllowed = getLimit(workspace.limits, "sms");
   return (
     <div className="col-span-full w-full rounded-lg border border-border border-dashed bg-background p-8">
       <h2 className="font-cal text-2xl">Channels</h2>
@@ -42,7 +40,8 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
               ? "http://localhost:3000"
               : "https://www.openstatus.dev"
           }/api/callback/pagerduty?workspace=${workspace.slug}&version=2`}
-          disabled={disabled || !isPagerDutyAllowed}
+          disabled={disabled || || !workspace.limits.pagerduty}
+
         />
         <Separator />
         <Channel
@@ -56,7 +55,14 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
           title="SMS"
           description="Send notifications to your phones."
           href="./notifications/new/sms"
-          disabled={disabled || !isSMSAllowed}
+          disabled={disabled || !workspace.limits.sms}
+        />
+        <Separator />
+        <Channel
+          title="OpsGenie"
+          description="Send notifications to OpsGenie."
+          href="./notifications/new/opsgenie"
+          disabled={disabled || !workspace.limits.opsgenie}
         />
       </div>
     </div>

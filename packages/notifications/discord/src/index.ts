@@ -1,4 +1,5 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { DataSchema } from "./schema";
 
 const postToWebhook = async (content: string, webhookUrl: string) => {
   await fetch(webhookUrl, {
@@ -29,7 +30,7 @@ export const sendAlert = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -61,7 +62,7 @@ export const sendRecovery = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -93,7 +94,7 @@ export const sendDegraded = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 

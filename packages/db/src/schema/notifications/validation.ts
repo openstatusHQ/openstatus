@@ -36,11 +36,18 @@ export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
 export const emailSchema = z.string().email();
 export const urlSchema = z.string().url();
 
+export const webhookDataSchema = z.object({ webhook: urlSchema });
 export const emailDataSchema = z.object({ email: emailSchema });
 export const phoneDataSchema = z.object({ sms: phoneSchema });
 export const slackDataSchema = z.object({ slack: urlSchema });
 export const discordDataSchema = z.object({ discord: urlSchema });
 export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
+export const opsgenieDataSchema = z.object({
+  opsgenie: z.object({
+    apiKey: z.string(),
+    region: z.enum(["us", "eu"]),
+  }),
+});
 
 export const NotificationDataSchema = z.union([
   emailDataSchema,
@@ -48,4 +55,51 @@ export const NotificationDataSchema = z.union([
   slackDataSchema,
   discordDataSchema,
   pagerdutyDataSchema,
+  opsgenieDataSchema,
 ]);
+
+export const InsertNotificationWithDataSchema = z.discriminatedUnion(
+  "provider",
+  [
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("email"),
+        data: emailDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("sms"),
+        data: phoneDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("slack"),
+        data: slackDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("discord"),
+        data: discordDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("pagerduty"),
+        data: pagerdutyDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("opsgenie"),
+        data: opsgenieDataSchema,
+      }),
+    ),
+  ],
+);
+
+export type InsertNotificationWithData = z.infer<
+  typeof InsertNotificationWithDataSchema
+>;
