@@ -3,7 +3,7 @@
 # See https://github.com/lenra-io/dofigen
 
 # install
-FROM oven/bun@sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454 AS install
+FROM oven/bun@sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df AS install
 WORKDIR /app/
 RUN \
     --mount=type=bind,target=package.json,source=package.json \
@@ -14,6 +14,7 @@ RUN \
     --mount=type=bind,target=packages/error/package.json,source=packages/error/package.json \
     --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
     --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
     --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
     --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
     --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
@@ -27,7 +28,7 @@ RUN \
     bun install --production --ignore-scripts --frozen-lockfile --verbose
 
 # build
-FROM oven/bun@sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454 AS build
+FROM oven/bun@sha256:10cda3ac52b7ddfb3dda2fd1f0ed2147dcb8d5b7ed7baeffbfcaf6e15c1c00df AS build
 ENV NODE_ENV="production"
 WORKDIR /app/apps/server
 COPY \
