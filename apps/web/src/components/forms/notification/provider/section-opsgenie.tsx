@@ -42,7 +42,7 @@ export function SectionOpsGenie({ form, plan }: Props) {
     startTestTransition(async () => {
       const isSuccessfull = await sendOpsGenieTestAlert(
         watchApiKey,
-        watchRegion
+        watchRegion,
       );
       if (isSuccessfull) {
         toastAction("test-success");
