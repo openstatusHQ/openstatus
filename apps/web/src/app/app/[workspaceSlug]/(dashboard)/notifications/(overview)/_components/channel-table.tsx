@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
@@ -12,8 +13,6 @@ interface ChannelTable {
 }
 
 export default function ChannelTable({ workspace, disabled }: ChannelTable) {
-  const isPagerDutyAllowed = getLimit(workspace.limits, "pagerduty");
-  const isSMSAllowed = getLimit(workspace.limits, "sms");
   return (
     <div className="col-span-full w-full rounded-lg border border-border border-dashed bg-background p-8">
       <h2 className="font-cal text-2xl">Channels</h2>
@@ -36,12 +35,12 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
         <Channel
           title="PagerDuty"
           description="Send notifications to PagerDuty."
-          href={`https://app.pagerduty.com/install/integration?app_id=PN76M56&redirect_url=${
+          href={`https://app.pagerduty.com/install/integration?app_id=${env.PAGERDUTY_APP_ID}&redirect_url=${
             process.env.NODE_ENV === "development" // FIXME: This sucks
               ? "http://localhost:3000"
               : "https://www.openstatus.dev"
-          }/app/${workspace.slug}/notifications/new/pagerduty&version=2`}
-          disabled={disabled || !isPagerDutyAllowed}
+          }/api/callback/pagerduty?workspace=${workspace.slug}&version=2`}
+          disabled={disabled || !workspace.limits.pagerduty}
         />
         <Separator />
         <Channel
@@ -55,7 +54,14 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
           title="SMS"
           description="Send notifications to your phones."
           href="./notifications/new/sms"
-          disabled={disabled || !isSMSAllowed}
+          disabled={disabled || !workspace.limits.sms}
+        />
+        <Separator />
+        <Channel
+          title="OpsGenie"
+          description="Send notifications to OpsGenie."
+          href="./notifications/new/opsgenie"
+          disabled={disabled || !workspace.limits.opsgenie}
         />
       </div>
     </div>

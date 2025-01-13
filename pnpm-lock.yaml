@@ -142,6 +142,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-opsgenie':
+        specifier: workspace:*
+        version: link:../../packages/notifications/opsgenie
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../../packages/notifications/pagerduty
@@ -248,6 +251,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-opsgenie':
+        specifier: workspace:*
+        version: link:../../packages/notifications/opsgenie
       '@openstatus/notification-pagerduty':
         specifier: workspace:*
         version: link:../../packages/notifications/pagerduty
@@ -721,6 +727,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../db
+      zod:
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -769,6 +778,40 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  packages/notifications/opsgenie:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@t3-oss/env-core':
+        specifier: 0.7.1
+        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
+      '@types/validator':
+        specifier: 13.11.6
+        version: 13.11.6
+      validator:
+        specifier: 13.12.0
+        version: 13.12.0
+      zod:
+        specifier: 3.22.4
+        version: 3.22.4
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 20.8.0
+        version: 20.8.0
+      '@types/react':
+        specifier: 18.2.64
+        version: 18.2.64
+      '@types/react-dom':
+        specifier: 18.2.21
+        version: 18.2.21
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
+
   packages/notifications/pagerduty:
     dependencies:
       '@openstatus/db':
@@ -808,6 +851,9 @@ importers:
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../db
+      zod:
+        specifier: 3.22.4
+        version: 3.22.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*

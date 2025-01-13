@@ -21,6 +21,7 @@
     "@openstatus/error": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",

@@ -1,4 +1,5 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import { DataSchema } from "./schema";
 
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 const postToWebhook = async (body: any, webhookUrl: string) => {
@@ -29,7 +30,7 @@ export const sendAlert = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -88,7 +89,7 @@ export const sendRecovery = async ({
   incidentId?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
@@ -139,7 +140,7 @@ export const sendDegraded = async ({
   message?: string;
   cronTimestamp: number;
 }) => {
-  const notificationData = JSON.parse(notification.data);
+  const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { slack: webhookUrl } = notificationData; // webhook url
   const { name } = monitor;
 
