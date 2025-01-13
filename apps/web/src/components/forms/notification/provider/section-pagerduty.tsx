@@ -36,10 +36,14 @@ export function SectionPagerDuty({ form }: Props) {
 
   const data = result.data;
 
+  if (config) {
+    form.setValue("data.pagerduty", config);
+  }
+
   async function sendTestAlert() {
     startTestTransition(async () => {
       const isSuccessfull = await sendPagerDutyTestAlert(
-        data.integration_keys[0].integration_key,
+        data.integration_keys[0].integration_key
       );
       if (isSuccessfull) {
         toastAction("test-success");

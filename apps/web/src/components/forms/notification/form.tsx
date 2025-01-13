@@ -104,7 +104,7 @@ export function NotificationForm({
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit, console.log)}
+        onSubmit={form.handleSubmit(onSubmit)}
         id="notification-form" // we use a form id to connect the submit button to the form (as we also have the form nested inside of `MonitorForm`)
         className="flex flex-col gap-4"
       >
