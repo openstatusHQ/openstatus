@@ -486,6 +486,9 @@ importers:
       '@openstatus/emails':
         specifier: workspace:*
         version: link:../../packages/emails
+      '@openstatus/upstash':
+        specifier: workspace:*
+        version: link:../../packages/upstash
       '@openstatus/utils':
         specifier: workspace:*
         version: link:../../packages/utils

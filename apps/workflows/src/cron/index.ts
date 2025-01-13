@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
-import { LaunchMonitorWorkflow } from "./monitor";
+import { LaunchMonitorWorkflow, workflowStepSchema } from "./monitor";
 
 const app = new Hono({ strict: false });
 
@@ -50,6 +50,29 @@ app.post("/monitors", async (c) => {
 });
 
 app.post("/monitors/:step", async (c) => {
+  const step = c.req.param("step");
+  const schema = workflowStepSchema.safeParse(step);
+
+  if (!schema.success) {
+    return c.json({ error: schema.error.issues?.[0].message }, 400);
+  }
+
+  switch (schema.data) {
+    case "14days":
+      console.log("14 days");
+      break;
+    case "7days":
+      console.log("7days");
+      break;
+    case "1day":
+      console.log("1day");
+      break;
+    case "paused":
+      console.log("paused");
+      break;
+    default:
+      throw new Error("Invalid step");
+  }
   // Swith on step
   // and do the right action
   //
