@@ -1,11 +1,11 @@
-import { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos/protos";
 import { and, db, eq, isNull, lte, max, ne, or, schema } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 
-import { Redis } from "@openstatus/upstash";
-import { env } from "../env";
 import { CloudTasksClient } from "@google-cloud/tasks";
+import { Redis } from "@openstatus/upstash";
 import { z } from "zod";
+import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
@@ -75,7 +75,7 @@ export async function LaunchMonitorWorkflow() {
     await CreateTask({
       parent,
       client: client,
-      "step": "14days",
+      step: "14days",
     });
     // if they have check if the user is in the workflow
     // If user not in workflow
@@ -103,13 +103,14 @@ export async function StepPaused() {
   // pause monitors
 }
 
-async function hasUserLoggedIn(
-  { userId, date }: { userId: number; date: Date },
-) {
-  const userResult = await db.select({ lastConnection: schema.user.updatedAt })
-    .from(
-      schema.user,
-    ).where(eq(schema.user.id, userId));
+async function hasUserLoggedIn({
+  userId,
+  date,
+}: { userId: number; date: Date }) {
+  const userResult = await db
+    .select({ lastConnection: schema.user.updatedAt })
+    .from(schema.user)
+    .where(eq(schema.user.id, userId));
 
   if (userResult.length === 0) {
     console.error("Something strange no user found", userId);
@@ -121,13 +122,15 @@ async function hasUserLoggedIn(
   return user.lastConnection > date;
 }
 
-function CreateTask(
-  { parent, client, step }: {
-    parent: string;
-    client: CloudTasksClient;
-    step: z.infer<typeof workflowStepSchema>;
-  },
-) {
+function CreateTask({
+  parent,
+  client,
+  step,
+}: {
+  parent: string;
+  client: CloudTasksClient;
+  step: z.infer<typeof workflowStepSchema>;
+}) {
   const url = "";
   const timestamp = Date.now();
   const payload = {}; // Should we send some data to the task or only in the url/
