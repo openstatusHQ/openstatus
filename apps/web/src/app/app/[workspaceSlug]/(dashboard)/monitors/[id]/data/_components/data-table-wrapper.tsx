@@ -8,7 +8,6 @@ import type {
   PaginationState,
   Row,
 } from "@tanstack/react-table";
-import { Suspense, use } from "react";
 
 import * as assertions from "@openstatus/assertions";
 
@@ -18,7 +17,7 @@ import { DataTable } from "@/components/data-table/data-table";
 import { LoadingAnimation } from "@/components/loading-animation";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { Trigger } from "@/lib/monitor/utils";
-import { api } from "@/trpc/client";
+import { api } from "@/trpc/rq-client";
 import type { monitorFlyRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { z } from "zod";
 
@@ -62,30 +61,25 @@ export function DataTableWrapper({
 }
 
 function renderSubComponent({ row }: { row: Row<Monitor> }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="py-4">
-          <LoadingAnimation variant="inverse" />
-        </div>
-      }
-    >
-      <Details row={row} />
-    </Suspense>
-  );
+  return <Details row={row} />;
 }
 
 // REMINDER: only HTTP monitors have more details
 function Details({ row }: { row: Row<Monitor> }) {
-  const data = use(
-    api.tinybird.httpGetMonthly.query({
-      monitorId: row.original.monitorId,
-      region: row.original.region,
-      cronTimestamp: row.original.cronTimestamp || undefined,
-    }),
-  );
+  const { data, isLoading } = api.tinybird.httpGetMonthly.useQuery({
+    monitorId: row.original.monitorId,
+    region: row.original.region,
+    cronTimestamp: row.original.cronTimestamp || undefined,
+  });
 
-  if (!data.data || data.data.length === 0) return <p>Something went wrong</p>;
+  if (isLoading)
+    return (
+      <div className="py-4">
+        <LoadingAnimation variant="inverse" />
+      </div>
+    );
+
+  if (!data) return <p>Something went wrong</p>;
 
   const first = data.data?.[0];
 
