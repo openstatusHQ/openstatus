@@ -10,6 +10,7 @@
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@openstatus/upstash": "workspace:*",
     "hono": "4.5.3",
     "zod": "3.23.8"
   },
