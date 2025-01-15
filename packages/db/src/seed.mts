@@ -5,6 +5,8 @@ import { drizzle } from "drizzle-orm/libsql";
 import { env } from "../env.mjs";
 import {
   incidentTable,
+  maintenance,
+  maintenancesToMonitors,
   monitor,
   monitorsToPages,
   monitorsToStatusReport,
@@ -20,7 +22,7 @@ import {
 
 async function main() {
   const db = drizzle(
-    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
+    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN })
   );
   console.log("Seeding database ");
   await db
@@ -182,6 +184,27 @@ async function main() {
       status: "investigating",
       message: "Message",
       date: new Date(),
+    })
+    .run();
+
+  await db
+    .insert(maintenance)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      title: "Test Maintenance",
+      message: "Test message",
+      from: new Date(),
+      to: new Date(Date.now() + 1000),
+      pageId: 1,
+    })
+    .run();
+
+  await db
+    .insert(maintenancesToMonitors)
+    .values({
+      maintenanceId: 1,
+      monitorId: 1,
     })
     .run();
 
