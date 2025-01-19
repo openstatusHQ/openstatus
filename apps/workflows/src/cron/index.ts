@@ -3,7 +3,13 @@ import { Hono } from "hono";
 import { env } from "../env";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
-import { LaunchMonitorWorkflow, workflowStepSchema } from "./monitor";
+import {
+  LaunchMonitorWorkflow,
+  Step14Days,
+  Step3Days,
+  StepPaused,
+  workflowStepSchema,
+} from "./monitor";
 
 const app = new Hono({ strict: false });
 
@@ -53,22 +59,31 @@ app.post("/monitors/:step", async (c) => {
   const step = c.req.param("step");
   const schema = workflowStepSchema.safeParse(step);
 
+  const userId = c.req.query("userId");
+  const initialRun = c.req.query("initialRun");
   if (!schema.success) {
     return c.json({ error: schema.error.issues?.[0].message }, 400);
   }
 
+  if (!userId) {
+    return c.json({ error: "userId is required" }, 400);
+  }
+  if (!initialRun) {
+    return c.json({ error: "initialRun is required" }, 400);
+  }
+
   switch (schema.data) {
     case "14days":
-      console.log("14 days");
+      // We send the first email
+      await Step14Days(Number(userId));
       break;
-    case "7days":
-      console.log("7days");
-      break;
-    case "1day":
-      console.log("1day");
+    case "3days":
+      await Step3Days(Number(userId), Number(initialRun));
+      // 3 days before we send the second email
       break;
     case "paused":
-      console.log("paused");
+      // Let's pause the monitor
+      await StepPaused(Number(userId), Number(initialRun));
       break;
     default:
       throw new Error("Invalid step");
