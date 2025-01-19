@@ -118,5 +118,4 @@ StatusReportEmail.PreviewProps = {
   monitors: ["OpenStatus API", "OpenStatus Webhook"],
 };
 
-export { StatusReportEmail };
 export default StatusReportEmail;

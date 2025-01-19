@@ -60,5 +60,4 @@ TeamInvitationEmail.PreviewProps = {
   invitedBy: "max@openstatus.dev",
 } satisfies TeamInvitationProps;
 
-export { TeamInvitationEmail };
 export default TeamInvitationEmail;

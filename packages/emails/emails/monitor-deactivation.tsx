@@ -64,5 +64,4 @@ MonitorDeactivationEmail.PreviewProps = {
   reminder: true,
 } satisfies MonitorDeactivationProps;
 
-export { MonitorDeactivationEmail };
 export default MonitorDeactivationEmail;

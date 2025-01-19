@@ -2,23 +2,15 @@
 
 import { render } from "@react-email/render";
 import { Resend } from "resend";
-import { FollowUpEmail } from "../emails/followup";
-import {
-  MonitorAlertEmail,
-  type MonitorAlertProps,
-} from "../emails/monitor-alert";
-import {
-  PageSubscriptionEmail,
-  type PageSubscriptionProps,
-} from "../emails/page-subscription";
-import {
-  StatusReportEmail,
-  type StatusReportProps,
-} from "../emails/status-report";
-import {
-  TeamInvitationEmail,
-  type TeamInvitationProps,
-} from "../emails/team-invitation";
+import FollowUpEmail from "../emails/followup";
+import MonitorAlertEmail from "../emails/monitor-alert";
+import type { MonitorAlertProps } from "../emails/monitor-alert";
+import PageSubscriptionEmail from "../emails/page-subscription";
+import type { PageSubscriptionProps } from "../emails/page-subscription";
+import StatusReportEmail from "../emails/status-report";
+import type { StatusReportProps } from "../emails/status-report";
+import TeamInvitationEmail from "../emails/team-invitation";
+import type { TeamInvitationProps } from "../emails/team-invitation";
 
 export class EmailClient {
   public readonly client: Resend;
