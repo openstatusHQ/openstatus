@@ -4,9 +4,8 @@ import NextAuth from "next-auth";
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
-import { sendEmail } from "@openstatus/emails/src/send";
 
-import { WelcomeEmail } from "@openstatus/emails/emails/welcome";
+import { WelcomeEmail, sendEmail } from "@openstatus/emails";
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 

@@ -1,10 +1,7 @@
-export * from "../emails/alert";
-export * from "../emails/followup";
-export * from "../emails/subscribe";
-export * from "../emails/welcome";
-export * from "../emails/team-invitation";
-export * from "./utils";
-
-export { sendEmail, sendEmailHtml } from "./send";
+export { default as FollowUpEmail } from "../emails/followup";
+export { default as SubscribeEmail } from "../emails/subscribe";
+export { default as WelcomeEmail } from "../emails/welcome";
+export { default as TeamInvitationEmail } from "../emails/team-invitation";
+export { sendEmail, sendEmailHtml, sendBatchEmailHtml } from "./send";
 
 export { EmailClient } from "./client";

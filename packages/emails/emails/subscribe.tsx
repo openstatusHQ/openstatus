@@ -43,5 +43,4 @@ SubscribeEmail.PreviewProps = {
   domain: "slug",
 } satisfies SubscribeProps;
 
-export { SubscribeEmail };
 export default SubscribeEmail;

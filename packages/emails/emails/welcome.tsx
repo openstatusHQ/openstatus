@@ -57,5 +57,4 @@ const WelcomeEmail = () => {
   );
 };
 
-export { WelcomeEmail };
 export default WelcomeEmail;

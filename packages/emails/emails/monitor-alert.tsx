@@ -10,6 +10,7 @@ import {
   Heading,
   Html,
   Img,
+  Link,
   Preview,
   Row,
   Text,
@@ -54,7 +55,7 @@ function getIcon(type: MonitorAlertProps["type"]): {
   }
 }
 
-export const MonitorAlertEmail = (props: MonitorAlertProps) => (
+const MonitorAlertEmail = (props: MonitorAlertProps) => (
   <Html>
     <Head />
     <Preview>
@@ -142,7 +143,9 @@ export const MonitorAlertEmail = (props: MonitorAlertProps) => (
         <Row style={styles.row}>
           <Column>
             <Text style={{ textAlign: "center" }}>
-              <Button style={styles.button}>View details</Button>
+              <Link style={styles.link} href="https://openstatus.dev/app">
+                View details
+              </Link>
             </Text>
           </Column>
         </Row>

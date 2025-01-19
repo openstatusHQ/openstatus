@@ -72,5 +72,4 @@ PageSubscriptionEmail.PreviewProps = {
   domain: "slug",
 } satisfies PageSubscriptionProps;
 
-export { PageSubscriptionEmail };
 export default PageSubscriptionEmail;
