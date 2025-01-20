@@ -1,6 +1,17 @@
 import type { google } from "@google-cloud/tasks/build/protos/protos";
-import { and, db, eq, isNull, lte, max, ne, or, schema } from "@openstatus/db";
-import { user } from "@openstatus/db/src/schema";
+import {
+  and,
+  db,
+  desc,
+  eq,
+  isNull,
+  lte,
+  max,
+  ne,
+  or,
+  schema,
+} from "@openstatus/db";
+import { session, user } from "@openstatus/db/src/schema";
 
 import { CloudTasksClient } from "@google-cloud/tasks";
 import { Redis } from "@openstatus/upstash";
@@ -24,20 +35,31 @@ const parent = client.queuePath(
 );
 
 export async function LaunchMonitorWorkflow() {
-  const threeMonthAgo = new Date().setMonth(new Date().getMonth() - 3);
+  // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
+  const twoMonthAgo = new Date().setMonth(new Date().getMonth() - 2);
 
-  const date = new Date(threeMonthAgo);
-
-  // Only free users monitors are paused
-  // We don't need to handle multi users per workspace because free workspaces only have one user
-  const users = await db
+  const date = new Date(twoMonthAgo);
+  // User without session
+  const userWithoutSession = db
     .select({
       userId: schema.user.id,
       email: schema.user.email,
-      lastConnection: schema.user.updatedAt,
+    })
+    .from(schema.user)
+    .leftJoin(schema.session, eq(schema.session.userId, schema.user.id))
+    .where(isNull(schema.session.userId))
+    .as("query");
+  // Only free users monitors are paused
+  // We don't need to handle multi users per workspace because free workspaces only have one user
+  // Only free users monitors are paused
+
+  const u1 = await db
+    .select({
+      userId: userWithoutSession.userId,
+      email: userWithoutSession.email,
       workspaceId: schema.workspace.id,
     })
-    .from(user)
+    .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
       eq(schema.user.id, schema.usersToWorkspaces.userId),
@@ -49,13 +71,58 @@ export async function LaunchMonitorWorkflow() {
     .where(
       and(
         or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
-        or(isNull(schema.workspace.plan), ne(schema.workspace.plan, "free")),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
       ),
     );
+
+  const maxSessionPerUser = db
+    .select({
+      userId: schema.user.id,
+      email: schema.user.email,
+      lastConnection: max(schema.session.expires),
+    })
+    .from(schema.user)
+    .innerJoin(schema.session, eq(schema.session.userId, schema.user.id))
+    .groupBy(schema.user.id)
+    .as("query");
+  // Only free users monitors are paused
+  // We don't need to handle multi users per workspace because free workspaces only have one user
+  // Only free users monitors are paused
+
+  const u = await db
+    .select({
+      userId: maxSessionPerUser.userId,
+      email: maxSessionPerUser.email,
+      workspaceId: schema.workspace.id,
+    })
+    .from(maxSessionPerUser)
+    .innerJoin(
+      schema.usersToWorkspaces,
+      eq(schema.user.id, schema.usersToWorkspaces.userId),
+    )
+    .innerJoin(
+      schema.workspace,
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+    )
+    .where(
+      and(
+        lte(maxSessionPerUser.lastConnection, date),
+        or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
+      ),
+    );
+  // Let's merge both results
+  const users = [...u, ...u1];
+
   // iterate over users
   for (const user of users) {
+    // Let's check if the user is in the workflow
+    const isMember = await redis.sismember("workflow:users", user.userId);
+
+    if (isMember) {
+      continue;
+    }
     // check if user has some running monitors
-    //
     const nbRunningMonitor = await db.$count(
       schema.monitor,
       and(
@@ -65,11 +132,6 @@ export async function LaunchMonitorWorkflow() {
       ),
     );
     if (nbRunningMonitor > 0) {
-      continue;
-    }
-    const isMember = await redis.sismember("workflow:users", user.userId);
-
-    if (isMember) {
       continue;
     }
 
@@ -127,10 +189,10 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .select({
         userId: schema.user.id,
         email: schema.user.email,
-        lastConnection: schema.user.updatedAt,
         workspaceId: schema.workspace.id,
       })
       .from(user)
+      .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
         eq(schema.user.id, schema.usersToWorkspaces.userId),
@@ -141,7 +203,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       )
       .where(
         and(
-          or(isNull(schema.workspace.plan), ne(schema.workspace.plan, "free")),
+          or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
           eq(schema.user.id, userId),
         ),
       );
@@ -168,18 +230,19 @@ async function hasUserLoggedIn({
   date: Date;
 }) {
   const userResult = await db
-    .select({ lastConnection: schema.user.updatedAt })
-    .from(schema.user)
-    .where(eq(schema.user.id, userId));
+    .select({ lastSession: schema.session.expires })
+    .from(schema.session)
+    .where(eq(schema.session.userId, userId))
+    .orderBy(desc(schema.session.expires));
 
   if (userResult.length === 0) {
-    console.error("Something strange no user found", userId);
-  }
-  const user = userResult[0];
-  if (user.lastConnection === null) {
     return false;
   }
-  return user.lastConnection > date;
+  const user = userResult[0];
+  if (user.lastSession === null) {
+    return false;
+  }
+  return user.lastSession > date;
 }
 
 function CreateTask({
