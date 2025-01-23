@@ -26,6 +26,9 @@
     },
     "lint": {},
     "dev": {
+      "cache": false
+    },
+    "@openstatus/web#dev": {
       "cache": false,
       "dependsOn": ["@openstatus/react#build"]
     },
