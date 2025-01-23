@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.6/.schema/devbox.schema.json",
+  "packages": ["turso-cli@latest", "nodejs@20", "bun@latest", "sqld@latest"],
+  "env": {
+    "DEVBOX_COREPACK_ENABLED": "true"
+  },
+  "shell": {
+    "init_hook": [
+      "test -f ./apps/server/.env || cp ./apps/server/.env.example ./apps/server/.env",
+      "test -f ./apps/web/.env || cp ./apps/web/.env.example ./apps/web/.env",
+      "test -f ./packages/db/.env || cp ./packages/db/.env.example ./packages/db/.env"
+    ],
+    "scripts": {
+      "test": ["echo \"Error: no test specified\" && exit 1"]
+    }
+  }
+}

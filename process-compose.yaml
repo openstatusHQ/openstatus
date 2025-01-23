@@ -1,0 +1,34 @@
+version: "0.5"
+is_strict: true
+processes:
+  init_dependencies:
+    namespace: init
+    command: |
+      pnpm install
+    is_tty: true
+  init_turso:
+    namespace: init
+    command: |
+      turso dev --db-file openstatus-dev.db
+    is_tty: true
+    availability:
+      restart: "no"
+  init_dx:
+    namespace: init
+    command: |
+      pnpm dx
+      kill $(pgrep -f "turso dev")
+    is_tty: true
+    depends_on:
+      init_dependencies:
+        condition: process_completed_successfully
+      init_turso:
+        condition: process_started
+  dev:
+    namespace: dev
+    command: |
+      pnpm dev:web
+    is_tty: true
+    depends_on:
+      init_dx:
+        condition: process_completed_successfully
