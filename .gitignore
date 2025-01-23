@@ -60,6 +60,7 @@ openstatus-test.db-wal
 .wrangler
 apps/web/.env.dev
 packages/db/.env.dev
+openstatus-dev.db
 openstatus-dev.db-wal
 openstatus-dev.db-shm
 apps/ingest-worker/.production.vars
