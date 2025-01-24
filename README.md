@@ -88,47 +88,46 @@ Made with [Contrib.rocks](https://contrib.rocks)
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
 - [pnpm](https://pnpm.io/) >= 8.6.2
+- [Bun](https://bun.sh/)
+- [Turso CLI](https://docs.turso.tech/quickstart)
 
 ### Setup
 
 1. Clone the repository
 
-   ```sh
-   git clone https://github.com/openstatushq/openstatus.git
-   ```
+```sh
+git clone https://github.com/openstatushq/openstatus.git
+```
 
 2. Install dependencies
 
-   ```sh
-   pnpm install
-   ```
+```sh
+pnpm install
+```
 
-3. Set up your .env file
+3. Initialize the development environment
 
-   From `apps/web` and `packages/db`, you will find .env.example. Create your
-   own copy.
+Launch the database in one terminal:
 
-4. Follow the steps to run your sqlite database locally inside of
-   [README.md](https://github.com/openstatusHQ/openstatus/blob/main/packages/db/README.md)
+```sh
+turso dev --db-file openstatus-dev.db
+```
 
-5. Start the development with the below command
+In another terminal, run the following command:
 
-   ```sh
-    pnpm dev
-   ```
+```sh
+pnpm dx
+```
 
-   It will:
+4. Launch the web app
 
-   - run the web app on port `3000`
-   - run the api server on port `3001`
-   - run the docs on port `3002`
+```sh
+pnpm dev:web
+```
 
-6. See the results:
+5. See the results:
 
 - open [http://localhost:3000](http://localhost:3000) for the web app
-- open [http://localhost:3001/ping](http://localhost:3001/ping) for the api
-  server health check
-- open [http://localhost:3002](http://localhost:3002) for the docs
 
 ### Videos
 
