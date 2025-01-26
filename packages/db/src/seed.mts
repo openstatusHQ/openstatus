@@ -49,6 +49,7 @@ async function main() {
         paidUntil: null,
       },
     ])
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -91,6 +92,7 @@ async function main() {
         body: '{"hello":"world"}',
       },
     ])
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -105,6 +107,7 @@ async function main() {
       customDomain: "",
       published: true,
     })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -117,13 +120,19 @@ async function main() {
       email: "ping@openstatus.dev",
       photoUrl: "",
     })
+    .onConflictDoNothing()
     .run();
   await db
     .insert(usersToWorkspaces)
     .values({ workspaceId: 1, userId: 1 })
+    .onConflictDoNothing()
     .run();
 
-  await db.insert(monitorsToPages).values({ monitorId: 1, pageId: 1 }).run();
+  await db
+    .insert(monitorsToPages)
+    .values({ monitorId: 1, pageId: 1 })
+    .onConflictDoNothing()
+    .run();
   await db
     .insert(notification)
     .values({
@@ -133,10 +142,12 @@ async function main() {
       data: '{"email":"ping@openstatus.dev"}',
       workspaceId: 1,
     })
+    .onConflictDoNothing()
     .run();
   await db
     .insert(notificationsToMonitors)
     .values({ monitorId: 1, notificationId: 1 })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -149,6 +160,7 @@ async function main() {
       status: "investigating",
       updatedAt: new Date(),
     })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -160,6 +172,7 @@ async function main() {
       message: "Message",
       date: new Date(),
     })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -172,6 +185,7 @@ async function main() {
       status: "investigating",
       updatedAt: new Date(),
     })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -183,18 +197,23 @@ async function main() {
       message: "Message",
       date: new Date(),
     })
+    .onConflictDoNothing()
     .run();
 
-  await db.insert(monitorsToStatusReport).values([
-    {
-      monitorId: 1,
-      statusReportId: 2,
-    },
-    {
-      monitorId: 2,
-      statusReportId: 2,
-    },
-  ]);
+  await db
+    .insert(monitorsToStatusReport)
+    .values([
+      {
+        monitorId: 1,
+        statusReportId: 2,
+      },
+      {
+        monitorId: 2,
+        statusReportId: 2,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
 
   await db
     .insert(incidentTable)
@@ -205,6 +224,7 @@ async function main() {
       createdAt: new Date(),
       startedAt: new Date(),
     })
+    .onConflictDoNothing()
     .run();
 
   await db
@@ -216,6 +236,7 @@ async function main() {
       createdAt: new Date(),
       startedAt: new Date(Date.now() + 1000),
     })
+    .onConflictDoNothing()
     .run();
   // on status update
   await db
@@ -231,6 +252,7 @@ async function main() {
       message: "test",
       date: new Date(),
     })
+    .onConflictDoNothing()
     .run();
   process.exit(0);
 }
