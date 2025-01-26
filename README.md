@@ -84,6 +84,21 @@ Made with [Contrib.rocks](https://contrib.rocks)
 
 ## Getting Started 🚀
 
+### With Devbox
+
+You can use [Devbox](https://www.jetify.com/devbox/) and get started with the following commands:
+
+1. Install Devbox
+    ```sh
+    curl -fsSL https://get.jetify.com/devbox | bash
+    ```
+2. Install project dependencies, build and start services
+    ```sh
+    devbox services up
+    ```
+
+Alternatively, follow the instructions below.
+
 ### Requirements
 
 - [Node.js](https://nodejs.org/en/) >= 20.0.0
