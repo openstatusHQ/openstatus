@@ -3,5 +3,8 @@
   "packages": ["turso-cli@latest", "nodejs@20", "bun@latest", "sqld@latest"],
   "env": {
     "DEVBOX_COREPACK_ENABLED": "true"
+  },
+  "shell": {
+    "init_hook": ["yes | pnpm -v &> /dev/null"]
   }
 }
