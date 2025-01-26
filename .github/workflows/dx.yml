@@ -1,0 +1,52 @@
+# https://github.com/kentcdodds/kentcdodds.com/blob/main/.github/workflows/deployment.yml
+name: DX Check
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches: [main]
+
+jobs:
+  dx:
+    name: 🧑‍💻 DX checker
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      sqld:
+        image: ghcr.io/tursodatabase/libsql-server:latest
+        ports:
+          - 8080:8080
+        # env:
+        #   SQLD_HTTP_AUTH: "basic:token"
+
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+      DATABASE_URL: http://127.0.0.1:8080
+      DATABASE_AUTH_TOKEN: "basic:token"
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.1.4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: 📥 Download deps
+        run: pnpm install
+
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 🔥  DX task
+        run: pnpm dx
