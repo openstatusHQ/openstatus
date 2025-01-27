@@ -73,6 +73,8 @@ export function DataTable<TData, TValue>({
       pagination,
       sorting,
     },
+    // @ts-expect-error - REMINDER: unfortunately we cannot pass a function from a RSC to a client component
+    getRowId: (row, index) => row.monitor?.id?.toString() ?? index,
     onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(),
     onColumnFiltersChange: setColumnFilters,
