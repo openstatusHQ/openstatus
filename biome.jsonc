@@ -3,7 +3,8 @@
   "files": {
     "ignore": [
       "packages/ui/src/components/*.tsx",
-      "packages/ui/src/components/*.ts"
+      "packages/ui/src/components/*.ts",
+      ".devbox"
     ]
   },
   "linter": {
