@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,9 +11,12 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/metric"
 
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
@@ -82,7 +87,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		assertionAsString = ""
 	}
 
-	var trigger = "cron"
+	trigger := "cron"
 	if req.Trigger != "" {
 		trigger = req.Trigger
 	}
@@ -94,7 +99,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	op := func() error {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
-
 		if err != nil {
 			return fmt.Errorf("unable to ping: %w", err)
 		}
@@ -133,7 +137,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			for _, a := range req.RawAssertions {
 				var assert request.Assertion
 				err = json.Unmarshal(a, &assert)
-
 				if err != nil {
 					// handle error
 					return fmt.Errorf("unable to unmarshal assertion: %w", err)
@@ -273,6 +276,30 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			}
 		}
 
+		if req.OtelConfig.Endpoint != "" {
+			fmt.Println("OtelConfig", req.OtelConfig)
+			otelShutdown, err := otelOS.SetupOTelSDK(ctx)
+			if err != nil {
+				fmt.Println("Error setting up otel", err)
+			}
+			defer func() {
+				err = errors.Join(err, otelShutdown(context.Background()))
+				fmt.Println("Error joining", err)
+				fmt.Println("Sending data")
+			}()
+			meter := otel.Meter("OpenStatus")
+
+			histogram, err := meter.Float64Histogram("http.client.request.duration", metric.WithDescription("Duration of HTTP client requests."), metric.WithUnit("ms"))
+			if err != nil {
+				fmt.Println("Error creating histogram", err)
+			}
+			histogram.Record(ctx, float64(res.Latency))
+			gauge, err := meter.Float64Gauge("openstatus.http.probe.latency", metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+			if err != nil {
+				fmt.Println("Error creating gauge", err)
+			}
+			gauge.Record(ctx, float64(res.Latency))
+		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
