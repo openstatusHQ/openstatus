@@ -1,11 +1,14 @@
 "use client";
 
+import { Info } from "lucide-react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type { InsertMonitor, WorkspacePlan } from "@openstatus/db/src/schema";
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
+import { cn } from "@/lib/utils";
 import {
   FormControl,
   FormDescription,
@@ -21,7 +24,6 @@ import {
 } from "@openstatus/ui";
 import { groupByContinent } from "@openstatus/utils";
 
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { CheckboxLabel } from "../shared/checkbox-label";
 import { SectionHeader } from "../shared/section-header";
 import { SelectRegion } from "./select-region";
@@ -108,10 +110,13 @@ export function SectionScheduling({ form, limits, plan }: Props) {
               <FormDescription>
                 Select the regions you want to monitor your endpoint from.{" "}
                 <br />
-                {plan === "free"
-                  ? "Only a few regions are available in the free plan. Upgrade to access all regions."
-                  : ""}
+                <span className="text-xs">
+                  {plan === "free"
+                    ? "Only a few regions are available in the free plan. Upgrade to access all regions."
+                    : ""}
+                </span>
               </FormDescription>
+              <FewRegionsBanner form={form} className="max-w-md" />
               <div>
                 {Object.entries(groupByContinent)
                   .sort((a, b) => a[0].localeCompare(b[0]))
@@ -183,12 +188,41 @@ export function SectionScheduling({ form, limits, plan }: Props) {
                     );
                   })}
               </div>
-
               <FormMessage />
             </FormItem>
           );
         }}
       />
+    </div>
+  );
+}
+
+// REMINDER: only watch the regions in a new component to avoid re-renders
+function FewRegionsBanner({
+  form,
+  className,
+}: Pick<Props, "form"> & { className?: string }) {
+  const watchRegions = form.watch("regions");
+
+  if (watchRegions?.length && watchRegions.length > 2) return null;
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-3 rounded-lg border border-border px-3 py-2",
+        className,
+      )}
+    >
+      <Info
+        className="-mt-0.5 shrink-0 text-status-monitoring"
+        size={16}
+        strokeWidth={2}
+        aria-hidden="true"
+      />
+      <p className="text-sm">
+        To minimize false positives, we recommend monitoring your endpoint in at
+        least 3 regions.
+      </p>
     </div>
   );
 }
