@@ -2,9 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.10.6/.schema/devbox.schema.json",
   "packages": ["turso-cli@latest", "nodejs@20", "bun@latest", "sqld@latest"],
   "env": {
-    "DEVBOX_COREPACK_ENABLED": "true"
-  },
-  "shell": {
-    "init_hook": ["yes | pnpm -v &> /dev/null"]
+    "DEVBOX_COREPACK_ENABLED": "true",
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
   }
 }
