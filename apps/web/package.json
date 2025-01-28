@@ -1,8 +1,9 @@
 {
-  "name": "web",
+  "name": "@openstatus/web",
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "env": "bun env.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -26,6 +27,7 @@
     "@openstatus/notification-emails": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
+    "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",

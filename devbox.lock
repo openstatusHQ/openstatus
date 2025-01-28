@@ -1,0 +1,214 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "bun@latest": {
+      "last_modified": "2025-01-13T08:04:02Z",
+      "resolved": "github:NixOS/nixpkgs/ef56e777fedaa4da8c66a150081523c5de1e0171#bun",
+      "source": "devbox-search",
+      "version": "1.1.43",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wg9x0cb4rl5jrvmkak6ihljdxl811h62-bun-1.1.43",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wg9x0cb4rl5jrvmkak6ihljdxl811h62-bun-1.1.43"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/6yszhl10ah05n17lf35kpnyzrqlsg3hl-bun-1.1.43",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/6yszhl10ah05n17lf35kpnyzrqlsg3hl-bun-1.1.43"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/4rjyabjj3fj3qd01sv6aii0qcnxb6jyx-bun-1.1.43",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/4rjyabjj3fj3qd01sv6aii0qcnxb6jyx-bun-1.1.43"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/k8yj5s89swbhlh1i8lp25ha2hw9171yr-bun-1.1.43",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/k8yj5s89swbhlh1i8lp25ha2hw9171yr-bun-1.1.43"
+        }
+      }
+    },
+    "nodejs@20": {
+      "last_modified": "2024-05-03T15:42:32Z",
+      "plugin_version": "0.0.2",
+      "resolved": "github:NixOS/nixpkgs/5fd8536a9a5932d4ae8de52b7dc08d92041237fc#nodejs_20",
+      "source": "devbox-search",
+      "version": "20.12.2",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/844n9zrm2sindml9hvla57shgwavwyjn-nodejs-20.12.2",
+              "default": true
+            },
+            {
+              "name": "libv8",
+              "path": "/nix/store/zsss2v62ff4wxbbv6zizjk6zmlhkqjzh-nodejs-20.12.2-libv8"
+            }
+          ],
+          "store_path": "/nix/store/844n9zrm2sindml9hvla57shgwavwyjn-nodejs-20.12.2"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/4lpbv14w1bhh1z2v3sjhv9xcp05pgn2d-nodejs-20.12.2",
+              "default": true
+            },
+            {
+              "name": "libv8",
+              "path": "/nix/store/lhiqlp28jmnhqibsr550yf6fqbx5c9c7-nodejs-20.12.2-libv8"
+            }
+          ],
+          "store_path": "/nix/store/4lpbv14w1bhh1z2v3sjhv9xcp05pgn2d-nodejs-20.12.2"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/49d07knzwmlaggcq86d98fpzqa70a2ya-nodejs-20.12.2",
+              "default": true
+            },
+            {
+              "name": "libv8",
+              "path": "/nix/store/idmhy1hnfndv43ncd6yy60vdwin1nyfa-nodejs-20.12.2-libv8"
+            }
+          ],
+          "store_path": "/nix/store/49d07knzwmlaggcq86d98fpzqa70a2ya-nodejs-20.12.2"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/71r8n7ckcpvav9qwshlr12hjd5nlchds-nodejs-20.12.2",
+              "default": true
+            },
+            {
+              "name": "libv8",
+              "path": "/nix/store/zyp86pvn1l7fsw0s7kgv5iwmn14z0vg7-nodejs-20.12.2-libv8"
+            }
+          ],
+          "store_path": "/nix/store/71r8n7ckcpvav9qwshlr12hjd5nlchds-nodejs-20.12.2"
+        }
+      }
+    },
+    "sqld@latest": {
+      "last_modified": "2024-12-03T12:40:06Z",
+      "resolved": "github:NixOS/nixpkgs/566e53c2ad750c84f6d31f9ccb9d00f823165550#sqld",
+      "source": "devbox-search",
+      "version": "0.24.18",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/znd6nm9kkpkdwk4db7h6j7fkk5p5k6wa-sqld-0.24.18",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/znd6nm9kkpkdwk4db7h6j7fkk5p5k6wa-sqld-0.24.18"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dm4jsc4acixxznds5xdpxg1isd2scg8a-sqld-0.24.18",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/dm4jsc4acixxznds5xdpxg1isd2scg8a-sqld-0.24.18"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/rsvrgk3b71b149a0d5hxf7zhcn42d7qm-sqld-0.24.18",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/rsvrgk3b71b149a0d5hxf7zhcn42d7qm-sqld-0.24.18"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/gfxfxqnj208jhld4m56zab3byhhq63dc-sqld-0.24.18",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/gfxfxqnj208jhld4m56zab3byhhq63dc-sqld-0.24.18"
+        }
+      }
+    },
+    "turso-cli@latest": {
+      "last_modified": "2024-12-23T21:10:33Z",
+      "resolved": "github:NixOS/nixpkgs/de1864217bfa9b5845f465e771e0ecb48b30e02d#turso-cli",
+      "source": "devbox-search",
+      "version": "0.97.2",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/0lddbdg4y9fyiqvvlp82zblmmcrnji3c-turso-cli-0.97.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/0lddbdg4y9fyiqvvlp82zblmmcrnji3c-turso-cli-0.97.2"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dyfpmyx65n26c44dvw6h80aa66s5cabf-turso-cli-0.97.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/dyfpmyx65n26c44dvw6h80aa66s5cabf-turso-cli-0.97.2"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/b6k6gkc2np7dhlrd6r2347pd2zgp7dg5-turso-cli-0.97.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/b6k6gkc2np7dhlrd6r2347pd2zgp7dg5-turso-cli-0.97.2"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/fxgjr95908fmpysl9wamziaa6lq50kws-turso-cli-0.97.2",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/fxgjr95908fmpysl9wamziaa6lq50kws-turso-cli-0.97.2"
+        }
+      }
+    }
+  }
+}

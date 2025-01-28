@@ -7,11 +7,12 @@ import { useForm } from "react-hook-form";
 
 import type {
   InsertNotification,
+  InsertNotificationWithData,
   Monitor,
   NotificationProvider,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { insertNotificationSchema } from "@openstatus/db/src/schema";
+import { InsertNotificationWithDataSchema } from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
 import {
@@ -24,7 +25,6 @@ import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 import { TRPCClientError } from "@trpc/client";
 import { SaveButton } from "../shared/save-button";
-import { getDefaultProviderData, setProviderData } from "./config";
 import { General } from "./general";
 import { SectionConnect } from "./section-connect";
 
@@ -51,38 +51,39 @@ export function NotificationForm({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
-  const form = useForm<InsertNotification>({
-    resolver: zodResolver(insertNotificationSchema),
+  const form = useForm<InsertNotificationWithData>({
+    resolver: zodResolver(InsertNotificationWithDataSchema),
     defaultValues: {
       ...defaultValues,
       provider,
       name: defaultValues?.name || "",
-      data: getDefaultProviderData(defaultValues),
+      data: JSON.parse(defaultValues?.data || "{}"),
     },
   });
 
-  async function onSubmit({ provider, data, ...rest }: InsertNotification) {
+  async function onSubmit({
+    provider,
+    data,
+    ...rest
+  }: InsertNotificationWithData) {
+    console.log({ provider, data, ...rest });
     startTransition(async () => {
       try {
         if (provider === "pagerduty") {
           if (callbackData) {
-            data = callbackData;
+            data.pagerduty = callbackData;
           }
-        }
-        if (data === "") {
-          form.setError("data", { message: "This field is required" });
-          return;
         }
         if (defaultValues) {
           await api.notification.update.mutate({
             provider,
-            data: JSON.stringify(setProviderData(provider, data)),
+            data: JSON.stringify(data),
             ...rest,
           });
         } else {
           await api.notification.create.mutate({
             provider,
-            data: JSON.stringify(setProviderData(provider, data)),
+            data: JSON.stringify(data),
             ...rest,
           });
         }

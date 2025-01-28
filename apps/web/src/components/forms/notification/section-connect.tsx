@@ -3,7 +3,10 @@
 import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
-import type { InsertNotification, Monitor } from "@openstatus/db/src/schema";
+import type {
+  InsertNotificationWithData,
+  Monitor,
+} from "@openstatus/db/src/schema";
 import {
   FormControl,
   FormDescription,
@@ -16,7 +19,7 @@ import {
 import { CheckboxLabel } from "../shared/checkbox-label";
 
 interface Props {
-  form: UseFormReturn<InsertNotification>;
+  form: UseFormReturn<InsertNotificationWithData>;
   monitors?: Monitor[];
 }
 

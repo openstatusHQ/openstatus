@@ -3,6 +3,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "env": "bun env.ts",
     "lint": "biome lint .",
     "format": "pnpm biome format . --write && pnpm biome check . --write ",
     "lint:fix": "pnpm biome lint --write --unsafe .",
