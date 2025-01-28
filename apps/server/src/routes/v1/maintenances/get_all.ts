@@ -40,7 +40,7 @@ export function registerGetAllMaintenances(api: typeof maintenancesApi) {
       _maintenances.map((m) => ({
         ...m,
         monitorIds: m.maintenancesToMonitors.map((mtm) => mtm.monitorId),
-      }))
+      })),
     );
 
     return c.json(data, 200);

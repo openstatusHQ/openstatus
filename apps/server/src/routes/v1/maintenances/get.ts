@@ -37,7 +37,7 @@ export function registerGetMaintenance(api: typeof maintenancesApi) {
       },
       where: and(
         eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId)
+        eq(maintenance.workspaceId, workspaceId),
       ),
     });
 

@@ -2,14 +2,14 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
-import { and, isNull, eq, inArray, db } from "@openstatus/db";
+import { and, db, eq, inArray, isNull } from "@openstatus/db";
+import { monitor, page } from "@openstatus/db/src/schema";
 import {
   maintenance,
   maintenancesToMonitors,
 } from "@openstatus/db/src/schema/maintenances";
 import type { maintenancesApi } from "./index";
 import { MaintenanceSchema } from "./schema";
-import { monitor, page } from "@openstatus/db/src/schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -53,8 +53,8 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
         and(
           inArray(monitor.id, monitorIds),
           eq(monitor.workspaceId, workspaceId),
-          isNull(monitor.deletedAt)
-        )
+          isNull(monitor.deletedAt),
+        ),
       )
       .all();
 
@@ -95,7 +95,7 @@ export function registerPostMaintenance(api: typeof maintenancesApi) {
             input.monitorIds.map((monitorId) => ({
               maintenanceId: newMaintenance.id,
               monitorId,
-            }))
+            })),
           )
           .run();
       }

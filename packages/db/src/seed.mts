@@ -22,7 +22,7 @@ import {
 
 async function main() {
   const db = drizzle(
-    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN })
+    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
   );
   console.log("Seeding database ");
   await db
