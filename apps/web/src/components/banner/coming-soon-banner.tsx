@@ -1,4 +1,4 @@
-import { Alert, AlertTitle, AlertDescription } from "@openstatus/ui";
+import { Alert, AlertDescription, AlertTitle } from "@openstatus/ui";
 import { Hourglass } from "lucide-react";
 
 interface Props {
