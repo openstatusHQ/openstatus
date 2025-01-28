@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn, useFieldArray } from "react-hook-form";
 
 import type { InsertMonitor } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
@@ -17,9 +17,9 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { SectionHeader } from "../shared/section-header";
-import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { ComingSoonBanner } from "@/components/banner/coming-soon-banner";
+import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
+import { SectionHeader } from "../shared/section-header";
 
 interface Props {
   form: UseFormReturn<InsertMonitor>;
@@ -45,7 +45,7 @@ export function SectionOtel({ form, limits }: Props) {
     <div className="grid w-full gap-4">
       <SectionHeader
         title="OpenTelemetry"
-        description="Configure your OpenTelemetry endpoint to send metrics to."
+        description="Configure your OpenTelemetry Exporter."
       />
       <div className="grid sm:grid-cols-2 md:grid-cols-3">
         <FormField
@@ -63,7 +63,7 @@ export function SectionOtel({ form, limits }: Props) {
                 />
               </FormControl>
               <FormDescription>
-                The endpoint to send metrics to.
+                The endpoint to send the metrics to.
               </FormDescription>
               <FormMessage />
             </FormItem>
