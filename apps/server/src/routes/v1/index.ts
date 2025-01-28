@@ -8,6 +8,7 @@ import { authMiddleware } from "@/libs/middlewares";
 import type { Workspace } from "@openstatus/db/src/schema";
 import { checkApi } from "./check";
 import { incidentsApi } from "./incidents";
+import { maintenancesApi } from "./maintenances";
 import { monitorsApi } from "./monitors";
 import { notificationsApi } from "./notifications";
 import { pageSubscribersApi } from "./pageSubscribers";
@@ -72,6 +73,11 @@ api.doc("/openapi", {
       "x-displayName": "Incident",
     },
     {
+      name: "maintenance",
+      description: "Maintenance related endpoints",
+      "x-displayName": "Maintenance",
+    },
+    {
       name: "notification",
       description: "Notification related endpoints",
       "x-displayName": "Notification",
@@ -130,6 +136,7 @@ api.route("/page", pagesApi);
 api.route("/status_report", statusReportsApi);
 api.route("/status_report_update", statusReportUpdatesApi);
 api.route("/incident", incidentsApi);
+api.route("/maintenance", maintenancesApi);
 api.route("/notification", notificationsApi);
 api.route("/page_subscriber", pageSubscribersApi);
 api.route("/check", checkApi);

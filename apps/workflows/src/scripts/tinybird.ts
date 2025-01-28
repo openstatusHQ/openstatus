@@ -28,7 +28,7 @@ function calculatePastTimestamp(days: number) {
   const date = new Date();
   date.setDate(date.getDate() - days);
   const timestamp = date.getTime();
-  console.log(`${days}: ${timestamp}`);
+  console.log(`${days}d back: ${timestamp}`);
   return timestamp;
 }
 
@@ -95,7 +95,7 @@ async function main() {
   const lastTwoWeeks = calculatePastTimestamp(14);
   const lastThreeMonths = calculatePastTimestamp(90);
   const lastYear = calculatePastTimestamp(365);
-  const _lastTwoYears = calculatePastTimestamp(730);
+  // const _lastTwoYears = calculatePastTimestamp(730);
 
   const starters = await getWorkspaceIdsByPlan("starter");
   const teams = await getWorkspaceIdsByPlan("team");
