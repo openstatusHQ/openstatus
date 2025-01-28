@@ -23,10 +23,7 @@
   },
   "packageManager": "pnpm@10.0.0",
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@swc/core",
-      "sharp"
-    ]
+    "onlyBuiltDependencies": ["@swc/core", "sharp"]
   },
   "name": "openstatus",
   "workspaces": [
