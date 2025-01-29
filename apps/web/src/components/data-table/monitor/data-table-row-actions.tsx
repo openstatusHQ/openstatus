@@ -30,6 +30,9 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
+
+import type { TCPResponse } from "@/app/api/checker/test/tcp/schema";
+
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }
@@ -72,9 +75,17 @@ export function DataTableRowActions<TData>({
           }),
           body: JSON.stringify({ url, body, method, headers }),
         });
-        const data = (await res.json()) as RegionChecker;
+        const data = (await res.json()) as
+          | RegionChecker
+          | z.infer<typeof TCPResponse>;
 
-        if (data.status >= 200 && data.status < 300) {
+        // FIXME: assertions
+        const success =
+          data.type === "http"
+            ? data.status >= 200 && data.status < 300
+            : !data.error;
+
+        if (success) {
           toastAction("test-success");
         } else {
           toastAction("test-error");
