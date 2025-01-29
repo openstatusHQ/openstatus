@@ -62,10 +62,10 @@ export function DataTableRowActions<TData>({
   // FIXME: improve (similar to the one in the edit form - also include toast.promise + better error message!)
   async function onTest() {
     startTransition(async () => {
-      const { url, body, method, headers } = monitor;
+      const { url, body, method, headers, jobType } = monitor;
 
       try {
-        const res = await fetch("/api/checker/test", {
+        const res = await fetch(`/api/checker/test/${jobType}`, {
           method: "POST",
           headers: new Headers({
             "Content-Type": "application/json",
