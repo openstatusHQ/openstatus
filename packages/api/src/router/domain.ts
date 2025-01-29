@@ -13,7 +13,7 @@ export const domainConfigResponseSchema = z.object({
     .array(z.union([z.literal("dns-01"), z.literal("http-01")]))
     .optional()
     .nullable(),
-  misconfigured: z.boolean(),
+  misconfigured: z.boolean().default(true).optional(),
 });
 
 export const domainResponseSchema = z.object({
