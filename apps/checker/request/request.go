@@ -62,7 +62,8 @@ type HttpCheckerRequest struct {
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
 	OtelConfig    struct {
-		Endpoint string `json:"endpoint"`
+		Endpoint string            `json:"endpoint"`
+		Headers  map[string]string `json:"headers,omitempty"`
 	} `json:"otelConfig,omitempty"`
 }
 

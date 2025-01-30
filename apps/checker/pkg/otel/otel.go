@@ -14,7 +14,7 @@ import (
 )
 
 func SetupOTelSDK(
-	ctx context.Context,
+	ctx context.Context, url string, probes string, headers map[string]string,
 ) (shutdown func(context.Context) error, err error) {
 	var shutdownFuncs []func(context.Context) error
 
@@ -37,20 +37,22 @@ func SetupOTelSDK(
 	res, err := newResource()
 	if err != nil {
 		handleErr(err)
-		return
+
+		return nil, err
 	}
 
-	meterProvider, err := newMeterProvider(ctx, res)
+	meterProvider, err := newMeterProvider(ctx, res, url, headers)
 	if err != nil {
 		handleErr(err)
-		return
+
+		return nil, err
 	}
 
 	shutdownFuncs = append(shutdownFuncs, meterProvider.Shutdown)
 
 	otel.SetMeterProvider(meterProvider)
 
-	return
+	return shutdown, nil
 }
 
 func newResource() (*resource.Resource, error) {
@@ -64,21 +66,23 @@ func newResource() (*resource.Resource, error) {
 func newMeterProvider(
 	ctx context.Context,
 	res *resource.Resource,
+	url string,
+	headers map[string]string,
 ) (*metric.MeterProvider, error) {
 	metricExporter, err := stdoutmetric.New(stdoutmetric.WithPrettyPrint())
 	if err != nil {
 		return nil, err
 	}
+
 	grafanaExporter, err := otlpmetrichttp.New(ctx,
-		otlpmetrichttp.WithEndpointURL("https://otlp-gateway-prod-eu-west-2.grafana.net/otlp/v1/metrics"),
+		otlpmetrichttp.WithEndpointURL(url),
 		// otlpmetrichttp.WithInsecure(),
-		otlpmetrichttp.WithHeaders(map[string]string{
-			"Authorization": "Basic ",
-		}),
+		otlpmetrichttp.WithHeaders(headers),
 	)
 	if err != nil {
 		return nil, err
 	}
+
 	meterProvider := metric.NewMeterProvider(
 		metric.WithResource(res),
 		metric.WithReader(metric.NewPeriodicReader(metricExporter,

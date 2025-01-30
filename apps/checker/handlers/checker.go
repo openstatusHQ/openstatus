@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 
 	"github.com/openstatushq/openstatus/apps/checker"
@@ -278,28 +279,55 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		if req.OtelConfig.Endpoint != "" {
 			fmt.Println("OtelConfig", req.OtelConfig)
-			otelShutdown, err := otelOS.SetupOTelSDK(ctx)
+			otelShutdown, err := otelOS.SetupOTelSDK(ctx, req.OtelConfig.Endpoint, h.Region, req.OtelConfig.Headers)
+			fmt.Println(req.OtelConfig.Headers)
+
 			if err != nil {
 				fmt.Println("Error setting up otel", err)
 			}
+
 			defer func() {
 				err = errors.Join(err, otelShutdown(context.Background()))
 				fmt.Println("Error joining", err)
 				fmt.Println("Sending data")
 			}()
+
 			meter := otel.Meter("OpenStatus")
 
-			histogram, err := meter.Float64Histogram("http.client.request.duration", metric.WithDescription("Duration of HTTP client requests."), metric.WithUnit("ms"))
+			histogram, err := meter.Float64Histogram("http.client.request.duration",
+				metric.WithDescription("Duration of HTTP client requests."), metric.WithUnit("ms"))
+
 			if err != nil {
 				fmt.Println("Error creating histogram", err)
 			}
-			histogram.Record(ctx, float64(res.Latency))
-			gauge, err := meter.Float64Gauge("openstatus.http.probe.latency", metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+
+			att := metric.WithAttributes(
+				attribute.String("openstatus.probes", h.Region),
+				attribute.String("openstatus.target", req.URL),
+			)
+
+			histogram.Record(ctx, float64(res.Latency), att)
+
+			gauge, err := meter.Float64Gauge("openstatus.http.probe.latency",
+				metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+
 			if err != nil {
 				fmt.Println("Error creating gauge", err)
 			}
-			gauge.Record(ctx, float64(res.Latency))
+
+			gauge.Record(ctx, float64(res.Latency), att)
+
+			gaugeDns, err := meter.Float64Gauge("openstatus.http.probe.dns",
+				metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+
+			if err != nil {
+				fmt.Println("Error creating gauge", err)
+			}
+
+			gaugeDns.Record(ctx, float64(res.Timing.DnsDone-res.Timing.DnsStart), att)
+
 		}
+
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
