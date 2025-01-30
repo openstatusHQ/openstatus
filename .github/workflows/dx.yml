@@ -1,5 +1,5 @@
 # https://github.com/kentcdodds/kentcdodds.com/blob/main/.github/workflows/deployment.yml
-name: Tests
+name: DX Check
 on:
   push:
     branches:
@@ -8,8 +8,8 @@ on:
     branches: [main]
 
 jobs:
-  tests:
-    name: 🧪 Tests
+  dx:
+    name: 🧑‍💻 DX checker
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -40,21 +40,13 @@ jobs:
           node-version: 20
           cache: "pnpm"
 
+      - name: 📥 Download deps
+        run: pnpm install
+
       - name: 🔥 Install bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: 📥 Download deps
-        run: pnpm install
-
-      - name: 🗃️ Run migrations
-        run: pnpm migrate
-        working-directory: ./packages/db
-
-      - name: 💽  Seed database
-        run: pnpm seed
-        working-directory: ./packages/db
-
-      - name: 🧪 Tests
-        run: pnpm test
+      - name: 🔥  DX task
+        run: pnpm dx

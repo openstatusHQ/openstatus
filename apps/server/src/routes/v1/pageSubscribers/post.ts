@@ -6,8 +6,7 @@ import { Events } from "@openstatus/analytics";
 import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { SubscribeEmail } from "@openstatus/emails";
-import { sendEmail } from "@openstatus/emails/src/send";
+import { SubscribeEmail, sendEmail } from "@openstatus/emails";
 import type { pageSubscribersApi } from "./index";
 import { PageSubscriberSchema, ParamsSchema } from "./schema";
 

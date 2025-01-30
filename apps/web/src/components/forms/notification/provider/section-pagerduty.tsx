@@ -36,6 +36,10 @@ export function SectionPagerDuty({ form }: Props) {
 
   const data = result.data;
 
+  if (config) {
+    form.setValue("data.pagerduty", config);
+  }
+
   async function sendTestAlert() {
     startTestTransition(async () => {
       const isSuccessfull = await sendPagerDutyTestAlert(

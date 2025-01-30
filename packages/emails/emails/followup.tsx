@@ -36,4 +36,4 @@ const FollowUpEmail = () => {
   );
 };
 
-export { FollowUpEmail };
+export default FollowUpEmail;

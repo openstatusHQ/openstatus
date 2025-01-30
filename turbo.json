@@ -28,6 +28,10 @@
     "dev": {
       "cache": false
     },
+    "@openstatus/web#dev": {
+      "cache": false,
+      "dependsOn": ["@openstatus/react#build"]
+    },
     "test": {
       "cache": false
     },
@@ -43,6 +47,8 @@
       "cache": false,
       "dependsOn": ["env"]
     },
-    "env": {}
+    "env": {
+      "cache": true
+    }
   }
 }

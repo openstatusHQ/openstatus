@@ -3,6 +3,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "env": "bun env.ts",
     "lint": "biome lint .",
     "format": "pnpm biome format . --write && pnpm biome check . --write ",
     "lint:fix": "pnpm biome lint --write --unsafe .",
@@ -20,7 +21,10 @@
     "turbo": "2.3.2",
     "typescript": "5.6.2"
   },
-  "packageManager": "pnpm@9.1.4",
+  "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "onlyBuiltDependencies": ["@swc/core", "sharp"]
+  },
   "name": "openstatus",
   "workspaces": [
     "apps/*",

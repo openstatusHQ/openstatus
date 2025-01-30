@@ -627,6 +627,7 @@ export const monitorRouter = createTRPCRouter({
       with: {
         monitorTagsToMonitors: { with: { monitorTag: true } },
       },
+      orderBy: (monitor, { desc }) => [desc(monitor.active)],
     });
 
     return z
