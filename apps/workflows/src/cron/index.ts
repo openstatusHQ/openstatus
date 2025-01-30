@@ -50,12 +50,12 @@ app.get("/emails/follow-up", async (c) => {
   }
 });
 
-app.post("/monitors", async (c) => {
+app.get("/monitors", async (c) => {
   await LaunchMonitorWorkflow();
   return c.json({ success: true }, 200);
 });
 
-app.post("/monitors/:step", async (c) => {
+app.get("/monitors/:step", async (c) => {
   const step = c.req.param("step");
   const schema = workflowStepSchema.safeParse(step);
 

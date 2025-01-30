@@ -17,8 +17,11 @@ import { CloudTasksClient } from "@google-cloud/tasks";
 import { Redis } from "@openstatus/upstash";
 import { z } from "zod";
 import { env } from "../env";
+import { EmailClient } from "@openstatus/emails/src/client";
+import { sendEmail } from "@openstatus/emails";
 
 const redis = Redis.fromEnv();
+const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
 
 const client = new CloudTasksClient({
   projectId: env().GCP_PROJECT_ID,
@@ -31,7 +34,7 @@ const client = new CloudTasksClient({
 const parent = client.queuePath(
   env().GCP_PROJECT_ID,
   env().GCP_LOCATION,
-  "workflow",
+  "workflow"
 );
 
 export async function LaunchMonitorWorkflow() {
@@ -44,6 +47,7 @@ export async function LaunchMonitorWorkflow() {
     .select({
       userId: schema.user.id,
       email: schema.user.email,
+      updatedAt: schema.user.updatedAt,
     })
     .from(schema.user)
     .leftJoin(schema.session, eq(schema.session.userId, schema.user.id))
@@ -62,29 +66,33 @@ export async function LaunchMonitorWorkflow() {
     .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(schema.user.id, schema.usersToWorkspaces.userId),
+      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
-        or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(
+          lte(userWithoutSession.updatedAt, date),
+          isNull(userWithoutSession.updatedAt)
+        ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
 
+  console.log(`Found ${u1.length} users without session to start the workflow`);
   const maxSessionPerUser = db
     .select({
       userId: schema.user.id,
       email: schema.user.email,
-      lastConnection: max(schema.session.expires),
+      lastConnection: max(schema.session.expires).as("lastConnection"),
     })
     .from(schema.user)
     .innerJoin(schema.session, eq(schema.session.userId, schema.user.id))
     .groupBy(schema.user.id)
-    .as("query");
+    .as("maxSessionPerUser");
   // Only free users monitors are paused
   // We don't need to handle multi users per workspace because free workspaces only have one user
   // Only free users monitors are paused
@@ -98,27 +106,25 @@ export async function LaunchMonitorWorkflow() {
     .from(maxSessionPerUser)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(schema.user.id, schema.usersToWorkspaces.userId),
+      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         lte(maxSessionPerUser.lastConnection, date),
-        or(lte(schema.user.updatedAt, date), isNull(schema.user.updatedAt)),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
   // Let's merge both results
   const users = [...u, ...u1];
-
   // iterate over users
   for (const user of users) {
+    console.log(`Starting workflow for ${user.userId}`);
     // Let's check if the user is in the workflow
     const isMember = await redis.sismember("workflow:users", user.userId);
-
     if (isMember) {
       continue;
     }
@@ -128,13 +134,12 @@ export async function LaunchMonitorWorkflow() {
       and(
         eq(schema.monitor.workspaceId, user.workspaceId),
         eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt),
-      ),
+        isNull(schema.monitor.deletedAt)
+      )
     );
     if (nbRunningMonitor > 0) {
       continue;
     }
-
     await CreateTask({
       parent,
       client: client,
@@ -142,17 +147,20 @@ export async function LaunchMonitorWorkflow() {
       userId: user.userId,
       initialRun: new Date().getTime(),
     });
-    // Add our user to the list of users that have started the workflow
+    // // Add our user to the list of users that have started the workflow
 
     await redis.sadd("workflow:users", user.userId);
-    console.log(`user worflow started for ${user.userId}`);
+    console.log(`user workflow started for ${user.userId}`);
   }
 }
 
 export async function Step14Days(userId: number) {
+  const user = await getUser(userId);
+
   // Send email saying we are going to pause the monitors
   // The task has just been created we don't double check if the user has logged in :scary:
   // send First email
+  // TODO: Send email
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
@@ -167,7 +175,11 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
     await redis.srem("workflow:users", userId);
     return;
   }
+
+  const user = await getUser(userId);
+
   // Send second email
+  //TODO: Send email
   // Let's schedule the next task
   await CreateTask({
     client,
@@ -195,31 +207,35 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
+        eq(schema.user.id, schema.usersToWorkspaces.userId)
       )
       .innerJoin(
         schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
       )
       .where(
         and(
           or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
-      );
+          eq(schema.user.id, userId)
+        )
+      )
+      .get();
     // We should only have one user :)
-    if (users.length !== 1) {
+    if (!users) {
       throw new Error("Too much users found");
     }
-    const workspaceId = users[0].workspaceId;
+
     await db
       .update(schema.monitor)
       .set({ active: false })
-      .where(eq(schema.monitor.workspaceId, workspaceId));
+      .where(eq(schema.monitor.workspaceId, users.workspaceId));
     // Send last email with pause monitor
   }
+
+  const currentUser = await getUser(userId);
+  // TODO: Send email
   // Remove user for workflow
-  await redis.srem("workflow:users", userId);
+  // await redis.srem("workflow:users", userId);
 }
 
 async function hasUserLoggedIn({
@@ -298,3 +314,18 @@ function getScheduledTime(step: z.infer<typeof workflowStepSchema>) {
 
 export const workflowStep = ["14days", "3days", "paused"] as const;
 export const workflowStepSchema = z.enum(workflowStep);
+
+async function getUser(userId: number) {
+  const currentUser = await db
+    .select()
+    .from(user)
+    .where(eq(schema.user.id, userId))
+    .get();
+
+  if (!currentUser) {
+    throw new Error("User not found");
+  }
+  if (!currentUser.email) {
+    throw new Error("User email not found");
+  }
+}
