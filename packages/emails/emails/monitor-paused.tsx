@@ -17,7 +17,7 @@ const MonitorPausedEmail = () => {
   return (
     <Html>
       <Head />
-      <Preview>Your monitors has been paused</Preview>
+      <Preview>Your monitors have been paused</Preview>
       <Body style={styles.main}>
         <Layout>
           <Text>Hello 👋</Text>
