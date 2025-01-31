@@ -731,8 +731,8 @@ importers:
         specifier: workspace:*
         version: link:../../db
       zod:
-        specifier: 3.22.4
-        version: 3.22.4
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -788,7 +788,7 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
+        version: 0.7.1(typescript@5.4.5)(zod@3.23.8)
       '@types/validator':
         specifier: 13.11.6
         version: 13.11.6
@@ -796,8 +796,8 @@ importers:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.22.4
-        version: 3.22.4
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -822,7 +822,7 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.4.5)(zod@3.22.4)
+        version: 0.7.1(typescript@5.4.5)(zod@3.23.8)
       '@types/validator':
         specifier: 13.11.6
         version: 13.11.6
@@ -830,8 +830,8 @@ importers:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.22.4
-        version: 3.22.4
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -855,8 +855,8 @@ importers:
         specifier: workspace:*
         version: link:../../db
       zod:
-        specifier: 3.22.4
-        version: 3.22.4
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -10319,9 +10319,6 @@ packages:
     peerDependencies:
       zod: ^3.18.0
 
-  zod@3.22.4:
-    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
-
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
 
@@ -11330,7 +11327,7 @@ snapshots:
 
   '@chronark/zod-bird@0.3.6':
     dependencies:
-      zod: 3.24.1
+      zod: 3.23.8
 
   '@cloudflare/workers-types@4.20241230.0':
     optional: true
@@ -13722,7 +13719,7 @@ snapshots:
       vue: 3.4.31(typescript@5.7.2)
       vue-router: 4.4.0(vue@3.4.31(typescript@5.7.2))
       whatwg-mimetype: 4.0.0
-      zod: 3.24.1
+      zod: 3.23.8
     transitivePeerDependencies:
       - '@jest/globals'
       - '@types/bun'
@@ -13849,7 +13846,7 @@ snapshots:
       axios: 1.7.2
       nanoid: 5.0.7
       yaml: 2.4.5
-      zod: 3.24.1
+      zod: 3.23.8
     transitivePeerDependencies:
       - debug
       - typescript
@@ -14572,9 +14569,9 @@ snapshots:
     optionalDependencies:
       typescript: 5.6.2
 
-  '@t3-oss/env-core@0.7.1(typescript@5.4.5)(zod@3.22.4)':
+  '@t3-oss/env-core@0.7.1(typescript@5.4.5)(zod@3.23.8)':
     dependencies:
-      zod: 3.22.4
+      zod: 3.23.8
     optionalDependencies:
       typescript: 5.4.5
 
@@ -15027,12 +15024,12 @@ snapshots:
 
   '@unkey/error@0.2.0':
     dependencies:
-      zod: 3.24.1
+      zod: 3.23.8
 
   '@unkey/rbac@0.3.1':
     dependencies:
       '@unkey/error': 0.2.0
-      zod: 3.24.1
+      zod: 3.23.8
 
   '@upstash/core-analytics@0.0.6(encoding@0.1.13)':
     dependencies:
@@ -17694,8 +17691,8 @@ snapshots:
       strip-json-comments: 5.0.1
       summary: 2.1.0
       typescript: 5.6.2
-      zod: 3.24.1
-      zod-validation-error: 3.3.0(zod@3.24.1)
+      zod: 3.23.8
+      zod-validation-error: 3.3.0(zod@3.23.8)
 
   kolorist@1.8.0: {}
 
@@ -21536,11 +21533,9 @@ snapshots:
       typescript: 5.6.2
       zod: 3.24.1
 
-  zod-validation-error@3.3.0(zod@3.24.1):
+  zod-validation-error@3.3.0(zod@3.23.8):
     dependencies:
-      zod: 3.24.1
-
-  zod@3.22.4: {}
+      zod: 3.23.8
 
   zod@3.23.8: {}
 
