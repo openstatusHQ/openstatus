@@ -14,11 +14,15 @@ import {
 import { session, user } from "@openstatus/db/src/schema";
 
 import { CloudTasksClient } from "@google-cloud/tasks";
-import { sendEmail } from "@openstatus/emails";
+import {
+  MonitorDeactivationEmail,
+  MonitorPausedEmail,
+} from "@openstatus/emails";
 import { EmailClient } from "@openstatus/emails/src/client";
 import { Redis } from "@openstatus/upstash";
 import { z } from "zod";
 import { env } from "../env";
+import { sendWithRender } from "@openstatus/emails/src/send";
 
 const redis = Redis.fromEnv();
 const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
@@ -34,7 +38,7 @@ const client = new CloudTasksClient({
 const parent = client.queuePath(
   env().GCP_PROJECT_ID,
   env().GCP_LOCATION,
-  "workflow",
+  "workflow"
 );
 
 export async function LaunchMonitorWorkflow() {
@@ -66,20 +70,20 @@ export async function LaunchMonitorWorkflow() {
     .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
+      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         or(
           lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
+          isNull(userWithoutSession.updatedAt)
         ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
@@ -106,17 +110,17 @@ export async function LaunchMonitorWorkflow() {
     .from(maxSessionPerUser)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
+      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
   // Let's merge both results
   const users = [...u, ...u1];
@@ -134,8 +138,8 @@ export async function LaunchMonitorWorkflow() {
       and(
         eq(schema.monitor.workspaceId, user.workspaceId),
         eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt),
-      ),
+        isNull(schema.monitor.deletedAt)
+      )
     );
     if (nbRunningMonitor > 0) {
       continue;
@@ -161,6 +165,18 @@ export async function Step14Days(userId: number) {
   // The task has just been created we don't double check if the user has logged in :scary:
   // send First email
   // TODO: Send email
+
+  if (user.email) {
+    sendWithRender({
+      to: [user.email],
+      subject: "Your OpenStatus monitors will be paused soon",
+      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      react: MonitorDeactivationEmail({
+        lastLogin: new Date(),
+        deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+      }),
+    });
+  }
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
@@ -177,6 +193,18 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   }
 
   const user = await getUser(userId);
+
+  if (user.email) {
+    sendWithRender({
+      to: [user.email],
+      subject: "Your OpenStatus monitors will be paused in 3 days",
+      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      react: MonitorDeactivationEmail({
+        lastLogin: new Date(workFlowRunTimestamp),
+        deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
+      }),
+    });
+  }
 
   // Send second email
   //TODO: Send email
@@ -207,22 +235,22 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
+        eq(schema.user.id, schema.usersToWorkspaces.userId)
       )
       .innerJoin(
         schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
       )
       .where(
         and(
           or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
+          eq(schema.user.id, userId)
+        )
       )
       .get();
     // We should only have one user :)
     if (!users) {
-      throw new Error("Too much users found");
+      throw new Error("Too many users found");
     }
 
     await db
@@ -235,7 +263,16 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
   const currentUser = await getUser(userId);
   // TODO: Send email
   // Remove user for workflow
-  // await redis.srem("workflow:users", userId);
+
+  if (currentUser.email) {
+    sendWithRender({
+      to: [currentUser.email],
+      subject: "Your monitors have been paused",
+      from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      react: MonitorPausedEmail(),
+    });
+  }
+  await redis.srem("workflow:users", userId);
 }
 
 async function hasUserLoggedIn({
@@ -328,4 +365,5 @@ async function getUser(userId: number) {
   if (!currentUser.email) {
     throw new Error("User email not found");
   }
+  return currentUser;
 }

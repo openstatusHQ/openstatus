@@ -2,6 +2,7 @@ import type React from "react";
 import { Resend } from "resend";
 
 import { env } from "./env";
+import { render } from "@react-email/render";
 
 export const resend = new Resend(env.RESEND_API_KEY);
 
@@ -39,5 +40,14 @@ export const sendEmailHtml = async (emails: EmailHtml[]) => {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
     },
     body: JSON.stringify(emails),
+  });
+};
+
+export const sendWithRender = async (email: Emails) => {
+  if (process.env.NODE_ENV !== "production") return;
+  const html = await render(email.react);
+  await resend.emails.send({
+    ...email,
+    html,
   });
 };

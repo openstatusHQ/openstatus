@@ -16,7 +16,6 @@ import { styles } from "./_components/styles";
 export const MonitorDeactivationSchema = z.object({
   lastLogin: z.coerce.date(),
   deactivateAt: z.coerce.date(),
-  reminder: z.boolean().optional(),
 });
 
 export type MonitorDeactivationProps = z.infer<
@@ -26,31 +25,43 @@ export type MonitorDeactivationProps = z.infer<
 const MonitorDeactivationEmail = ({
   lastLogin,
   deactivateAt,
-  reminder,
 }: MonitorDeactivationProps) => {
   return (
     <Html>
       <Head />
       <Preview>
-        {reminder ? "[REMINDER] " : ""}Deactivation of your monitor(s)
+        Login to your OpenStatus account to keep your monitors active.
       </Preview>
       <Body style={styles.main}>
         <Layout>
-          <Heading as="h3">Deactivation of the your monitor(s)</Heading>
+          <Text>Hello 👋</Text>
+          {/* <Heading as="h3">Deactivation of the your monitor(s)</Heading> */}
+          <Text>
+            To save on cloud resources and avoid having stale monitors. We are
+            deactivating monitors for free account if you have not logged in for
+            the last 2 months.
+          </Text>
           <Text>Your last login was {lastLogin.toDateString()}.</Text>
           <Text>
-            To avoid having stale monitors and reduce the number of testing
-            accounts, we will deactivate your monitor(s) at{" "}
-            {deactivateAt.toDateString()}.
+            Your monitor(s) will be deactivated on {deactivateAt.toDateString()}
+            .
           </Text>
           <Text>
             If you would like to keep your monitor(s) active, please login to
-            your account or upgrade your plan.
+            your account or upgrade to a paid plan.
           </Text>
           <Text style={{ textAlign: "center" }}>
-            <Button style={styles.button} href="https://.openstatus.dev/app">
+            <Button style={styles.button} href="https://www.openstatus.dev/app">
               Login
             </Button>
+          </Text>
+          <Text>If you have any questions, please reply to this email.</Text>
+          <Text>Thibault </Text>
+          <Text>
+            Check out our latest update{" "}
+            <a href="https://www.openstatus.dev/changelog?ref=paused-email">
+              here
+            </a>
           </Text>
         </Layout>
       </Body>
@@ -61,7 +72,6 @@ const MonitorDeactivationEmail = ({
 MonitorDeactivationEmail.PreviewProps = {
   lastLogin: new Date(new Date().setDate(new Date().getDate() - 100)),
   deactivateAt: new Date(new Date().setDate(new Date().getDate() + 7)),
-  reminder: true,
 } satisfies MonitorDeactivationProps;
 
 export default MonitorDeactivationEmail;
