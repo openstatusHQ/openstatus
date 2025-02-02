@@ -28,6 +28,7 @@ import { Callout, type CalloutProps } from "./callout";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
+import { ImageWithCaption, ImageWithCaptionProps } from "./image-with-caption";
 
 export const components = {
   a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
@@ -84,6 +85,9 @@ export const components = {
       </div>
     );
   },
+  ImageWithCaption: (props: ImageWithCaptionProps) => (
+    <ImageWithCaption {...props} />
+  ),
   table: (props: HTMLAttributes<HTMLTableElement>) => <Table {...props} />,
   thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
     <TableHeader {...props} />

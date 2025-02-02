@@ -10,19 +10,27 @@ image: /assets/posts/the-data-table-i-always-wanted/toolbox.png
 tag: engineering
 ---
 
-First, a note: While there's still a long way to go, the PR [#11](https://github.com/openstatusHQ/data-table-filters/pull/11) marks an important second milestone after the initial release a few months ago. We now have a solid foundation to focus on the component API design and data fetching for the data table. Though you can create your own data table using config files (for "sheet," "filters," and "columns"), you end up writing more code than you would like.
+We have release our react data-table based on [shadcn/ui](https://ui.shadcn.com/) a couple of months ago. While there's still in development, the PR [#11](https://github.com/openstatusHQ/data-table-filters/pull/11) marks an important second milestone after the initial release a few months ago. We now have a solid foundation to focus on the component API design and data fetching. Though you can create your own data table using only config files (for "sheet," "filters," and "columns"), you end up writing more code than you would like.
 
-If you want to try out the demo right away [logs.run/i](http://logs.run/i) or go to the [data-table-filters](https://github.com/openstatusHQ/data-table-filters) repository.
+If you want to try out the demo right away [logs.run/i](http://logs.run/i) or go to the [data-table-filters](https://github.com/openstatusHQ/data-table-filters) GitHub repository - it's open source.
 
 ### Design improvements
 
 We've reworked the design. Adding table borders improves clarity and structure. We've replaced the `Check` icon with the rounded square already used in the Chart to maintain design consistency. We've also removed the "green" highlighting to emphasize bad requests instead.
 
-A quick look at **before** (first screenshot) and **after** (second screenshot):
+A quick look of the before/after changes:
 
-![before](/assets/posts/the-data-table-i-always-wanted/before.png)
+<ImageWithCaption
+  src="/assets/posts/the-data-table-i-always-wanted/before.png"
+  alt="before"
+  caption="before"
+/>
 
-![after](/assets/posts/the-data-table-i-always-wanted/after.png)
+<ImageWithCaption
+  src="/assets/posts/the-data-table-i-always-wanted/after.png"
+  alt="after"
+  caption="after"
+/>
 
 We have been inspired by [Vercel](http://vercel.com/?ref=openstatus), [Datadog](http://datadoghq.com/?ref=openstatus) and [Axiom](http://axiom.co/?ref=openstatus) when it comes to design and features.
 
@@ -87,7 +95,7 @@ One persistent issue is the flickering of default values on the `<Accordion defa
 
 Performance is improving. We've moved most of the state into a dedicated context, so only components consuming it rerender. Previously, our entire `data-table-infinite.tsx` component would trigger rerenders for all child components on any property change.
 
-Very important: **we will stick with the [shadcn](https://ui.shadcn.com/) defaults** and avoid additional libraries except [`nuqs`](https://nuqs.47ng.com/), an excellent type-safe search params state manager supporting major React frameworks. We'll keep using React Context for state management, letting you choose your preferred library (zustand, jotai, redux) when needed.
+Very important: **we will stick with the shadcn defaults** and avoid additional libraries except [`nuqs`](https://nuqs.47ng.com/), an excellent type-safe search params state manager supporting major React frameworks. We'll keep using React Context for state management, letting you choose your preferred library (zustand, jotai, redux) when needed.
 
 We've added `debounce` to all possible controls to prevent renders on every keystroke. This helps with input searches and slider value changes.
 
