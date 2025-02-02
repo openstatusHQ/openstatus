@@ -25,10 +25,13 @@ import { PricingSlider } from "../marketing/pricing/pricing-slider";
 import type { MetricsCardProps } from "../monitor-dashboard/metrics-card";
 import { MetricsCard } from "../monitor-dashboard/metrics-card";
 import { Callout, type CalloutProps } from "./callout";
+import {
+  ImageWithCaption,
+  type ImageWithCaptionProps,
+} from "./image-with-caption";
 import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
-import { ImageWithCaption, ImageWithCaptionProps } from "./image-with-caption";
 
 export const components = {
   a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
