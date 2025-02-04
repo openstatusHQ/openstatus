@@ -36,7 +36,7 @@ const client = new CloudTasksClient({
 const parent = client.queuePath(
   env().GCP_PROJECT_ID,
   env().GCP_LOCATION,
-  "workflow",
+  "workflow"
 );
 
 export async function LaunchMonitorWorkflow() {
@@ -68,20 +68,20 @@ export async function LaunchMonitorWorkflow() {
     .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
+      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         or(
           lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
+          isNull(userWithoutSession.updatedAt)
         ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
@@ -108,17 +108,17 @@ export async function LaunchMonitorWorkflow() {
     .from(maxSessionPerUser)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
+      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
   // Let's merge both results
   const users = [...u, ...u1];
@@ -136,8 +136,8 @@ export async function LaunchMonitorWorkflow() {
       and(
         eq(schema.monitor.workspaceId, user.workspaceId),
         eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt),
-      ),
+        isNull(schema.monitor.deletedAt)
+      )
     );
     if (nbRunningMonitor > 0) {
       continue;
@@ -169,6 +169,8 @@ export async function Step14Days(userId: number) {
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused soon",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
+
       react: MonitorDeactivationEmail({
         lastLogin: new Date(),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
@@ -197,6 +199,8 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused in 3 days",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
+
       react: MonitorDeactivationEmail({
         lastLogin: new Date(workFlowRunTimestamp),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
@@ -233,17 +237,17 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
+        eq(schema.user.id, schema.usersToWorkspaces.userId)
       )
       .innerJoin(
         schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
       )
       .where(
         and(
           or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
+          eq(schema.user.id, userId)
+        )
       )
       .get();
     // We should only have one user :)
@@ -267,6 +271,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       to: [currentUser.email],
       subject: "Your monitors have been paused",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
       react: MonitorPausedEmail(),
     });
   }
