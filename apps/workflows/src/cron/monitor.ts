@@ -186,7 +186,7 @@ async function workflowInit({
   console.log(`user workflow started for ${user.userId}`);
 }
 
-export async function Step14Days(userId: number) {
+export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   // Send email saying we are going to pause the monitors
@@ -205,6 +205,14 @@ export async function Step14Days(userId: number) {
         lastLogin: new Date(),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
       }),
+    });
+
+    await CreateTask({
+      parent,
+      client: client,
+      step: "3days",
+      userId: user.id,
+      initialRun: workFlowRunTimestamp,
     });
   }
 }
