@@ -169,6 +169,8 @@ export async function Step14Days(userId: number) {
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused soon",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
+
       react: MonitorDeactivationEmail({
         lastLogin: new Date(),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
@@ -197,6 +199,8 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused in 3 days",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
+
       react: MonitorDeactivationEmail({
         lastLogin: new Date(workFlowRunTimestamp),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
@@ -267,6 +271,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       to: [currentUser.email],
       subject: "Your monitors have been paused",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
+      replyTo: "thibault@openstatus.dev",
       react: MonitorPausedEmail(),
     });
   }

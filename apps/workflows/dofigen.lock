@@ -11,29 +11,11 @@ effective: |
   - /packages/notifications
   - /packages/tinybird
   - /packages/tracker
-  - /packages/upstash
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
-        digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
+        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
       workdir: /app/
       run:
       - bun install --production --ignore-scripts --frozen-lockfile --verbose
@@ -54,9 +36,28 @@ effective: |
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
         source: packages/tsconfig/package.json
+      - target: packages/upstash/package.json
+        source: packages/upstash/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
-    digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
+    digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
   copy:
   - fromBuilder: build
     paths:
@@ -72,14 +73,14 @@ images:
     library:
       debian:
         bullseye-slim:
-          digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
+          digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
     oven:
       bun:
         latest:
-          digest: sha256:9a45ebd9a1e5403177064592e1564791443b1a459356c905d1112e32758dd454
+          digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
 resources:
   dofigen.yml:
-    hash: f708205b6699a47937d4ce49a38a2aa1b3f5ed409b685c285603e9e1b5f9fea0
+    hash: 48a9d086b070600575e9867af0c63f2bbcfd301c867121e671fc771ae50f34dc
     content: |
       ignore:
         - node_modules
@@ -93,7 +94,6 @@ resources:
         - /packages/notifications
         - /packages/tinybird
         - /packages/tracker
-        - /packages/upstash
       builders:
         install:
           fromImage: oven/bun
@@ -107,6 +107,8 @@ resources:
             - packages/emails/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json
+            - packages/upstash/package.json
+
           # Install dependencies
           run: bun install --production --ignore-scripts --frozen-lockfile --verbose
           cache:

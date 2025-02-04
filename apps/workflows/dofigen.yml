@@ -10,7 +10,6 @@ ignore:
   - /packages/notifications
   - /packages/tinybird
   - /packages/tracker
-  - /packages/upstash
 builders:
   install:
     fromImage: oven/bun
@@ -24,6 +23,8 @@ builders:
       - packages/emails/package.json
       - packages/utils/package.json
       - packages/tsconfig/package.json
+      - packages/upstash/package.json
+
     # Install dependencies
     run: bun install --production --ignore-scripts --frozen-lockfile --verbose
     cache:
