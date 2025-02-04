@@ -18,14 +18,12 @@ import {
   MonitorDeactivationEmail,
   MonitorPausedEmail,
 } from "@openstatus/emails";
-import { EmailClient } from "@openstatus/emails/src/client";
 import { sendWithRender } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
 import { z } from "zod";
 import { env } from "../env";
 
 const redis = Redis.fromEnv();
-const email = new EmailClient({ apiKey: env().RESEND_API_KEY });
 
 const client = new CloudTasksClient({
   projectId: env().GCP_PROJECT_ID,
@@ -38,7 +36,7 @@ const client = new CloudTasksClient({
 const parent = client.queuePath(
   env().GCP_PROJECT_ID,
   env().GCP_LOCATION,
-  "workflow",
+  "workflow"
 );
 
 export async function LaunchMonitorWorkflow() {
@@ -70,20 +68,20 @@ export async function LaunchMonitorWorkflow() {
     .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
+      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         or(
           lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
+          isNull(userWithoutSession.updatedAt)
         ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
@@ -110,17 +108,17 @@ export async function LaunchMonitorWorkflow() {
     .from(maxSessionPerUser)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
+      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
   // Let's merge both results
   const users = [...u, ...u1];
@@ -138,8 +136,8 @@ export async function LaunchMonitorWorkflow() {
       and(
         eq(schema.monitor.workspaceId, user.workspaceId),
         eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt),
-      ),
+        isNull(schema.monitor.deletedAt)
+      )
     );
     if (nbRunningMonitor > 0) {
       continue;
@@ -235,17 +233,17 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
+        eq(schema.user.id, schema.usersToWorkspaces.userId)
       )
       .innerJoin(
         schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
       )
       .where(
         and(
           or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
+          eq(schema.user.id, userId)
+        )
       )
       .get();
     // We should only have one user :)
@@ -313,16 +311,14 @@ function CreateTask({
 }) {
   const url = `https://openstatus-workflows.fly.dev/cron/monitors/${step}?userId=${userId}&initialRun=${initialRun}`;
   const timestamp = getScheduledTime(step);
-  const payload = {}; // Should we send some data to the task or only in the url/
   const newTask: google.cloud.tasks.v2beta3.ITask = {
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
         Authorization: `Basic ${env().CRON_SECRET}`,
       },
-      httpMethod: "POST",
+      httpMethod: "GET",
       url,
-      body: Buffer.from(JSON.stringify(payload)).toString("base64"),
     },
     scheduleTime: {
       seconds: timestamp,
