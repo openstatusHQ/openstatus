@@ -7,7 +7,6 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -69,10 +68,6 @@ func newMeterProvider(
 	url string,
 	headers map[string]string,
 ) (*metric.MeterProvider, error) {
-	metricExporter, err := stdoutmetric.New(stdoutmetric.WithPrettyPrint())
-	if err != nil {
-		return nil, err
-	}
 
 	grafanaExporter, err := otlpmetrichttp.New(ctx,
 		otlpmetrichttp.WithEndpointURL(url),
@@ -85,9 +80,7 @@ func newMeterProvider(
 
 	meterProvider := metric.NewMeterProvider(
 		metric.WithResource(res),
-		metric.WithReader(metric.NewPeriodicReader(metricExporter,
-			// Default is 1m. Set to 3s for demonstrative purposes.
-			metric.WithInterval(3*time.Second))),
+
 		metric.WithReader(metric.NewPeriodicReader(grafanaExporter,
 			metric.WithInterval(3*time.Second))),
 	)

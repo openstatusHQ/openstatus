@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
 
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
@@ -100,6 +100,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	op := func() error {
 		called++
 		res, err := checker.Http(ctx, requestClient, req)
+
 		if err != nil {
 			return fmt.Errorf("unable to ping: %w", err)
 		}
@@ -277,57 +278,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			}
 		}
 
-		if req.OtelConfig.Endpoint != "" {
-			fmt.Println("OtelConfig", req.OtelConfig)
-			otelShutdown, err := otelOS.SetupOTelSDK(ctx, req.OtelConfig.Endpoint, h.Region, req.OtelConfig.Headers)
-			fmt.Println(req.OtelConfig.Headers)
-
-			if err != nil {
-				fmt.Println("Error setting up otel", err)
-			}
-
-			defer func() {
-				err = errors.Join(err, otelShutdown(context.Background()))
-				fmt.Println("Error joining", err)
-				fmt.Println("Sending data")
-			}()
-
-			meter := otel.Meter("OpenStatus")
-
-			histogram, err := meter.Float64Histogram("http.client.request.duration",
-				metric.WithDescription("Duration of HTTP client requests."), metric.WithUnit("ms"))
-
-			if err != nil {
-				fmt.Println("Error creating histogram", err)
-			}
-
-			att := metric.WithAttributes(
-				attribute.String("openstatus.probes", h.Region),
-				attribute.String("openstatus.target", req.URL),
-			)
-
-			histogram.Record(ctx, float64(res.Latency), att)
-
-			gauge, err := meter.Float64Gauge("openstatus.http.probe.latency",
-				metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
-
-			if err != nil {
-				fmt.Println("Error creating gauge", err)
-			}
-
-			gauge.Record(ctx, float64(res.Latency), att)
-
-			gaugeDns, err := meter.Float64Gauge("openstatus.http.probe.dns",
-				metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
-
-			if err != nil {
-				fmt.Println("Error creating gauge", err)
-			}
-
-			gaugeDns.Record(ctx, float64(res.Timing.DnsDone-res.Timing.DnsStart), att)
-
-		}
-
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
@@ -361,7 +311,113 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
+	}
 
+	if req.OtelConfig.Endpoint != "" {
+
+		otelShutdown, err := otelOS.SetupOTelSDK(ctx, req.OtelConfig.Endpoint, h.Region, req.OtelConfig.Headers)
+
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error setting up otel")
+		}
+
+		defer func() {
+			err = errors.Join(err, otelShutdown(ctx))
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error sending the data")
+			}
+		}()
+
+		meter := otel.Meter("OpenStatus")
+
+		if result.Error != "" {
+			att := metric.WithAttributes(
+				attribute.String("openstatus.probes", h.Region),
+				attribute.String("openstatus.target", req.URL),
+				semconv.HTTPResponseStatusCode(result.Status),
+			)
+			statusError, err := meter.Int64Counter("openstatus.error", metric.WithDescription("Status of the check"))
+
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
+			}
+
+			statusError.Add(ctx, (1), att)
+		} else {
+			att := metric.WithAttributes(
+				attribute.String("openstatus.probes", h.Region),
+				attribute.String("openstatus.target", req.URL),
+				semconv.HTTPResponseStatusCode(result.Status),
+			)
+
+			status, err := meter.Int64Counter("openstatus.status", metric.WithDescription("Status of the check"))
+
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
+			}
+
+			status.Add(ctx, 1, att)
+
+		}
+
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", h.Region),
+			attribute.String("openstatus.target", req.URL),
+		)
+
+		gauge, err := meter.Float64Gauge("openstatus.http.request.duration",
+			metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gauge.Record(ctx, float64(result.Latency), att)
+
+		gaugeDns, err := meter.Float64Gauge("openstatus.http.dns.duration",
+			metric.WithDescription("Duration of the dns lookup"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeDns.Record(ctx, float64(result.Timing.DnsDone-result.Timing.DnsStart), att)
+
+		gaugeConnect, err := meter.Float64Gauge("openstatus.http.connection.duration",
+			metric.WithDescription("Duration of the connection"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeConnect.Record(ctx, float64(result.Timing.ConnectDone-result.Timing.ConnectStart), att)
+
+		gaugeTLS, err := meter.Float64Gauge("openstatus.http.tls.duration",
+			metric.WithDescription("Duration of the tls handshake"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeTLS.Record(ctx, float64(result.Timing.TlsHandshakeDone-result.Timing.TlsHandshakeStart), att)
+
+		gaugeTTFB, err := meter.Float64Gauge("openstatus.http.ttfb.duration",
+			metric.WithDescription("Duration of the ttfb"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeTTFB.Record(ctx, float64(result.Timing.FirstByteDone-result.Timing.FirstByteStart), att)
+
+		gaugeTransfer, err := meter.Float64Gauge("openstatus.http.transfer.duration",
+			metric.WithDescription("Duration of the transfer"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeTransfer.Record(ctx, float64(result.Timing.TransferDone-result.Timing.TransferStart), att)
 	}
 
 	returnData := c.Query("data")
