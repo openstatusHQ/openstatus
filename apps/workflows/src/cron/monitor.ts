@@ -1,3 +1,4 @@
+import { CloudTasksClient } from "@google-cloud/tasks";
 import type { google } from "@google-cloud/tasks/build/protos/protos";
 import {
   and,
@@ -12,14 +13,13 @@ import {
   schema,
 } from "@openstatus/db";
 import { session, user } from "@openstatus/db/src/schema";
-
-import { CloudTasksClient } from "@google-cloud/tasks";
 import {
   MonitorDeactivationEmail,
   MonitorPausedEmail,
 } from "@openstatus/emails";
 import { sendWithRender } from "@openstatus/emails/src/send";
 import { Redis } from "@openstatus/upstash";
+import { RateLimiter } from "limiter";
 import { z } from "zod";
 import { env } from "../env";
 
@@ -38,6 +38,8 @@ const parent = client.queuePath(
   env().GCP_LOCATION,
   "workflow",
 );
+
+const limiter = new RateLimiter({ tokensPerInterval: 50, interval: "minute" });
 
 export async function LaunchMonitorWorkflow() {
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
@@ -127,6 +129,7 @@ export async function LaunchMonitorWorkflow() {
   const allResult = [];
 
   for (const user of users) {
+    await limiter.removeTokens(1);
     const workflow = workflowInit({ user });
     allResult.push(workflow);
   }
@@ -154,6 +157,7 @@ async function workflowInit({
   // Let's check if the user is in the workflow
   const isMember = await redis.sismember("workflow:users", user.userId);
   if (isMember) {
+    console.log(`user workflow already started for ${user.userId}`);
     return;
   }
   // check if user has some running monitors
@@ -166,6 +170,7 @@ async function workflowInit({
     ),
   );
   if (nbRunningMonitor > 0) {
+    console.log(`user has running monitors for ${user.userId}`);
     return;
   }
   await CreateTask({
