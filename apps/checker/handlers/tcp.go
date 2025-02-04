@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -10,8 +11,12 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/metric"
 )
 
 type TCPResponse struct {
@@ -314,6 +319,76 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 
 		return
+	}
+
+	if req.OtelConfig.Endpoint != "" {
+
+		otelShutdown, err := otelOS.SetupOTelSDK(ctx, req.OtelConfig.Endpoint, h.Region, req.OtelConfig.Headers)
+
+		if err != nil {
+			log.Ctx(ctx).Error().Err(err).Msg("Error setting up otel")
+		}
+
+		defer func() {
+			err = errors.Join(err, otelShutdown(ctx))
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error sending the data")
+			}
+		}()
+
+		meter := otel.Meter("OpenStatus")
+
+		if response.ErrorMessage != "" {
+			att := metric.WithAttributes(
+				attribute.String("openstatus.probes", h.Region),
+				attribute.String("openstatus.target", req.URI),
+			)
+			statusError, err := meter.Int64Counter("openstatus.error", metric.WithDescription("Status of the check"))
+
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
+			}
+
+			statusError.Add(ctx, (1), att)
+		} else {
+			att := metric.WithAttributes(
+				attribute.String("openstatus.probes", h.Region),
+				attribute.String("openstatus.target", req.URI),
+			)
+
+			status, err := meter.Int64Counter("openstatus.status", metric.WithDescription("Status of the check"))
+
+			if err != nil {
+				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
+			}
+
+			status.Add(ctx, 1, att)
+
+		}
+
+		att := metric.WithAttributes(
+			attribute.String("openstatus.probes", h.Region),
+			attribute.String("openstatus.target", req.URI),
+		)
+
+		gauge, err := meter.Float64Gauge("openstatus.dns.request.duration",
+			metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gauge.Record(ctx, float64(response.Latency), att)
+
+		gaugeDns, err := meter.Float64Gauge("openstatus.tcp.tcp.duration",
+			metric.WithDescription("Duration of the tcp lookup"), metric.WithUnit("ms"))
+
+		if err != nil {
+			fmt.Println("Error creating gauge", err)
+		}
+
+		gaugeDns.Record(ctx, float64(response.Timing.TCPDone-response.Timing.TCPStart), att)
+
 	}
 
 	c.JSON(http.StatusOK, response)
