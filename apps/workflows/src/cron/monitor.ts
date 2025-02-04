@@ -123,37 +123,62 @@ export async function LaunchMonitorWorkflow() {
   // Let's merge both results
   const users = [...u, ...u1];
   // iterate over users
-  for (const user of users) {
-    console.log(`Starting workflow for ${user.userId}`);
-    // Let's check if the user is in the workflow
-    const isMember = await redis.sismember("workflow:users", user.userId);
-    if (isMember) {
-      continue;
-    }
-    // check if user has some running monitors
-    const nbRunningMonitor = await db.$count(
-      schema.monitor,
-      and(
-        eq(schema.monitor.workspaceId, user.workspaceId),
-        eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt)
-      )
-    );
-    if (nbRunningMonitor > 0) {
-      continue;
-    }
-    await CreateTask({
-      parent,
-      client: client,
-      step: "14days",
-      userId: user.userId,
-      initialRun: new Date().getTime(),
-    });
-    // // Add our user to the list of users that have started the workflow
 
-    await redis.sadd("workflow:users", user.userId);
-    console.log(`user workflow started for ${user.userId}`);
+  const allResult = [];
+
+  for (const user of users) {
+    const workflow = workflowInit({ user });
+    allResult.push(workflow);
   }
+
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  console.log(
+    `End cron with ${allResult.length} jobs with ${success} success and ${failed} failed`
+  );
+}
+
+async function workflowInit({
+  user,
+}: {
+  user: {
+    userId: number;
+    email: string | null;
+    workspaceId: number;
+  };
+}) {
+  console.log(`Starting workflow for ${user.userId}`);
+  // Let's check if the user is in the workflow
+  const isMember = await redis.sismember("workflow:users", user.userId);
+  if (isMember) {
+    return;
+  }
+  // check if user has some running monitors
+  const nbRunningMonitor = await db.$count(
+    schema.monitor,
+    and(
+      eq(schema.monitor.workspaceId, user.workspaceId),
+      eq(schema.monitor.active, true),
+      isNull(schema.monitor.deletedAt)
+    )
+  );
+  if (nbRunningMonitor > 0) {
+    return;
+  }
+  await CreateTask({
+    parent,
+    client: client,
+    step: "14days",
+    userId: user.userId,
+    initialRun: new Date().getTime(),
+  });
+  // // Add our user to the list of users that have started the workflow
+
+  await redis.sadd("workflow:users", user.userId);
+  console.log(`user workflow started for ${user.userId}`);
 }
 
 export async function Step14Days(userId: number) {
