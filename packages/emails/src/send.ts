@@ -11,7 +11,7 @@ export interface Emails {
   subject: string;
   to: string[];
   from: string;
-  replyTo?: string;
+  reply_to?: string;
 }
 
 export type EmailHtml = {
