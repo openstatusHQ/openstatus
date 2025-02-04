@@ -12,7 +12,7 @@ import {
   schema,
 } from "@openstatus/db";
 import { session, user } from "@openstatus/db/src/schema";
-
+import { RateLimiter } from "limiter";
 import { CloudTasksClient } from "@google-cloud/tasks";
 import {
   MonitorDeactivationEmail,
@@ -36,8 +36,10 @@ const client = new CloudTasksClient({
 const parent = client.queuePath(
   env().GCP_PROJECT_ID,
   env().GCP_LOCATION,
-  "workflow",
+  "workflow"
 );
+
+const limiter = new RateLimiter({ tokensPerInterval: 100, interval: "minute" });
 
 export async function LaunchMonitorWorkflow() {
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
@@ -68,20 +70,20 @@ export async function LaunchMonitorWorkflow() {
     .from(userWithoutSession)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
+      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         or(
           lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
+          isNull(userWithoutSession.updatedAt)
         ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
@@ -108,17 +110,17 @@ export async function LaunchMonitorWorkflow() {
     .from(maxSessionPerUser)
     .innerJoin(
       schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
+      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId)
     )
     .innerJoin(
       schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
     )
     .where(
       and(
         lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
+        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free"))
+      )
     );
   // Let's merge both results
   const users = [...u, ...u1];
@@ -127,6 +129,7 @@ export async function LaunchMonitorWorkflow() {
   const allResult = [];
 
   for (const user of users) {
+    await limiter.removeTokens(1);
     const workflow = workflowInit({ user });
     allResult.push(workflow);
   }
@@ -137,7 +140,7 @@ export async function LaunchMonitorWorkflow() {
   const failed = allRequests.filter((r) => r.status === "rejected").length;
 
   console.log(
-    `End cron with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+    `End cron with ${allResult.length} jobs with ${success} success and ${failed} failed`
   );
 }
 
@@ -154,6 +157,7 @@ async function workflowInit({
   // Let's check if the user is in the workflow
   const isMember = await redis.sismember("workflow:users", user.userId);
   if (isMember) {
+    console.log(`user workflow already started for ${user.userId}`);
     return;
   }
   // check if user has some running monitors
@@ -162,10 +166,11 @@ async function workflowInit({
     and(
       eq(schema.monitor.workspaceId, user.workspaceId),
       eq(schema.monitor.active, true),
-      isNull(schema.monitor.deletedAt),
-    ),
+      isNull(schema.monitor.deletedAt)
+    )
   );
   if (nbRunningMonitor > 0) {
+    console.log(`user has running monitors for ${user.userId}`);
     return;
   }
   await CreateTask({
@@ -262,17 +267,17 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .innerJoin(session, eq(schema.user.id, schema.session.userId))
       .innerJoin(
         schema.usersToWorkspaces,
-        eq(schema.user.id, schema.usersToWorkspaces.userId),
+        eq(schema.user.id, schema.usersToWorkspaces.userId)
       )
       .innerJoin(
         schema.workspace,
-        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
+        eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id)
       )
       .where(
         and(
           or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-          eq(schema.user.id, userId),
-        ),
+          eq(schema.user.id, userId)
+        )
       )
       .get();
     // We should only have one user :)
