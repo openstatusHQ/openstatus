@@ -39,7 +39,7 @@ const parent = client.queuePath(
   "workflow",
 );
 
-const limiter = new RateLimiter({ tokensPerInterval: 50, interval: "minute" });
+const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
 export async function LaunchMonitorWorkflow() {
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
@@ -169,8 +169,8 @@ async function workflowInit({
       isNull(schema.monitor.deletedAt),
     ),
   );
-  if (nbRunningMonitor > 0) {
-    console.log(`user has running monitors for ${user.userId}`);
+  if (nbRunningMonitor === 0) {
+    console.log(`user has no running monitors for ${user.userId}`);
     return;
   }
   await CreateTask({
