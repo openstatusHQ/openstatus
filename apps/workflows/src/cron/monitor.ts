@@ -39,7 +39,7 @@ const parent = client.queuePath(
   "workflow"
 );
 
-const limiter = new RateLimiter({ tokensPerInterval: 100, interval: "minute" });
+const limiter = new RateLimiter({ tokensPerInterval: 50, interval: "minute" });
 
 export async function LaunchMonitorWorkflow() {
   // Expires is one month after last connection, so if we want to reach people who connected 3 months ago we need to check for people with  expires 2 months ago
