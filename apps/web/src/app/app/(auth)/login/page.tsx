@@ -40,7 +40,7 @@ export default async function Page(props: {
           className="w-full"
         >
           <Button type="submit" className="w-full">
-            Signin with GitHub <Icons.github className="ml-2 h-4 w-4" />
+            Sign in with GitHub <Icons.github className="ml-2 h-4 w-4" />
           </Button>
         </form>
         <form
@@ -51,7 +51,7 @@ export default async function Page(props: {
           className="w-full"
         >
           <Button type="submit" className="w-full" variant="outline">
-            Signin with Google <Icons.google className="ml-2 h-4 w-4" />
+            Sign in with Google <Icons.google className="ml-2 h-4 w-4" />
           </Button>
         </form>
       </div>
