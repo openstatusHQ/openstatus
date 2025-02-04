@@ -75,7 +75,7 @@ app.get("/monitors/:step", async (c) => {
   switch (schema.data) {
     case "14days":
       // We send the first email
-      await Step14Days(Number(userId));
+      await Step14Days(Number(userId), Number(initialRun));
       break;
     case "3days":
       await Step3Days(Number(userId), Number(initialRun));
