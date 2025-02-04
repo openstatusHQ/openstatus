@@ -14,7 +14,7 @@ import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
 export const MonitorDeactivationSchema = z.object({
-  lastLogin: z.coerce.date(),
+  // lastLogin: z.coerce.date(),
   deactivateAt: z.coerce.date(),
 });
 
@@ -23,7 +23,7 @@ export type MonitorDeactivationProps = z.infer<
 >;
 
 const MonitorDeactivationEmail = ({
-  lastLogin,
+  // lastLogin,
   deactivateAt,
 }: MonitorDeactivationProps) => {
   return (
@@ -41,7 +41,7 @@ const MonitorDeactivationEmail = ({
             deactivating monitors for free account if you have not logged in for
             the last 2 months.
           </Text>
-          <Text>Your last login was {lastLogin.toDateString()}.</Text>
+          {/* <Text>Your last login was {lastLogin.toDateString()}.</Text> */}
           <Text>
             Your monitor(s) will be deactivated on {deactivateAt.toDateString()}
             .
@@ -70,7 +70,7 @@ const MonitorDeactivationEmail = ({
 };
 
 MonitorDeactivationEmail.PreviewProps = {
-  lastLogin: new Date(new Date().setDate(new Date().getDate() - 100)),
+  // lastLogin: new Date(new Date().setDate(new Date().getDate() - 100)),
   deactivateAt: new Date(new Date().setDate(new Date().getDate() + 7)),
 } satisfies MonitorDeactivationProps;
 

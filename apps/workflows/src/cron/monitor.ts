@@ -202,7 +202,6 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
       reply_to: "thibault@openstatus.dev",
 
       react: MonitorDeactivationEmail({
-        lastLogin: new Date(),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
       }),
     });
@@ -240,7 +239,6 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
       reply_to: "thibault@openstatus.dev",
 
       react: MonitorDeactivationEmail({
-        lastLogin: new Date(workFlowRunTimestamp),
         deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
       }),
     });

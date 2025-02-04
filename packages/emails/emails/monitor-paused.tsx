@@ -9,7 +9,6 @@ import {
   Preview,
   Text,
 } from "@react-email/components";
-import { z } from "zod";
 import { Layout } from "./_components/layout";
 import { styles } from "./_components/styles";
 
