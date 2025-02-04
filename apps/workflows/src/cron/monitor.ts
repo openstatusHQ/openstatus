@@ -123,37 +123,62 @@ export async function LaunchMonitorWorkflow() {
   // Let's merge both results
   const users = [...u, ...u1];
   // iterate over users
-  for (const user of users) {
-    console.log(`Starting workflow for ${user.userId}`);
-    // Let's check if the user is in the workflow
-    const isMember = await redis.sismember("workflow:users", user.userId);
-    if (isMember) {
-      continue;
-    }
-    // check if user has some running monitors
-    const nbRunningMonitor = await db.$count(
-      schema.monitor,
-      and(
-        eq(schema.monitor.workspaceId, user.workspaceId),
-        eq(schema.monitor.active, true),
-        isNull(schema.monitor.deletedAt),
-      ),
-    );
-    if (nbRunningMonitor > 0) {
-      continue;
-    }
-    await CreateTask({
-      parent,
-      client: client,
-      step: "14days",
-      userId: user.userId,
-      initialRun: new Date().getTime(),
-    });
-    // // Add our user to the list of users that have started the workflow
 
-    await redis.sadd("workflow:users", user.userId);
-    console.log(`user workflow started for ${user.userId}`);
+  const allResult = [];
+
+  for (const user of users) {
+    const workflow = workflowInit({ user });
+    allResult.push(workflow);
   }
+
+  const allRequests = await Promise.allSettled(allResult);
+
+  const success = allRequests.filter((r) => r.status === "fulfilled").length;
+  const failed = allRequests.filter((r) => r.status === "rejected").length;
+
+  console.log(
+    `End cron with ${allResult.length} jobs with ${success} success and ${failed} failed`,
+  );
+}
+
+async function workflowInit({
+  user,
+}: {
+  user: {
+    userId: number;
+    email: string | null;
+    workspaceId: number;
+  };
+}) {
+  console.log(`Starting workflow for ${user.userId}`);
+  // Let's check if the user is in the workflow
+  const isMember = await redis.sismember("workflow:users", user.userId);
+  if (isMember) {
+    return;
+  }
+  // check if user has some running monitors
+  const nbRunningMonitor = await db.$count(
+    schema.monitor,
+    and(
+      eq(schema.monitor.workspaceId, user.workspaceId),
+      eq(schema.monitor.active, true),
+      isNull(schema.monitor.deletedAt),
+    ),
+  );
+  if (nbRunningMonitor > 0) {
+    return;
+  }
+  await CreateTask({
+    parent,
+    client: client,
+    step: "14days",
+    userId: user.userId,
+    initialRun: new Date().getTime(),
+  });
+  // // Add our user to the list of users that have started the workflow
+
+  await redis.sadd("workflow:users", user.userId);
+  console.log(`user workflow started for ${user.userId}`);
 }
 
 export async function Step14Days(userId: number) {
@@ -165,11 +190,11 @@ export async function Step14Days(userId: number) {
   // TODO: Send email
 
   if (user.email) {
-    sendWithRender({
+    await sendWithRender({
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused soon",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      replyTo: "thibault@openstatus.dev",
+      reply_to: "thibault@openstatus.dev",
 
       react: MonitorDeactivationEmail({
         lastLogin: new Date(),
@@ -195,11 +220,11 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
-    sendWithRender({
+    await sendWithRender({
       to: [user.email],
       subject: "Your OpenStatus monitors will be paused in 3 days",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      replyTo: "thibault@openstatus.dev",
+      reply_to: "thibault@openstatus.dev",
 
       react: MonitorDeactivationEmail({
         lastLogin: new Date(workFlowRunTimestamp),
@@ -267,11 +292,11 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
   // Remove user for workflow
 
   if (currentUser.email) {
-    sendWithRender({
+    await sendWithRender({
       to: [currentUser.email],
       subject: "Your monitors have been paused",
       from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-      replyTo: "thibault@openstatus.dev",
+      reply_to: "thibault@openstatus.dev",
       react: MonitorPausedEmail(),
     });
   }
@@ -320,7 +345,7 @@ function CreateTask({
     httpRequest: {
       headers: {
         "Content-Type": "application/json", // Set content type to ensure compatibility your application's request parsing
-        Authorization: `Basic ${env().CRON_SECRET}`,
+        Authorization: `${env().CRON_SECRET}`,
       },
       httpMethod: "GET",
       url,
