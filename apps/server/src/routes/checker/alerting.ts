@@ -42,7 +42,7 @@ export const triggerNotifications = async ({
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
-    const key = `${monitorId}:${incidentId}:${notif.notification.provider}:${notifType}`;
+    const key = `${monitorId}:${incidentId}:${notif.notification.id}:${notifType}`;
     const r = await redis.setnx(key, "1");
     if (r === 0) {
       console.log(`🤔 notification already sent for ${key}`);
