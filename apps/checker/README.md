@@ -7,7 +7,15 @@ It pings the service and save thedata to the tinybird
 ## How to run
 
 ```bash
-go run *.go
+go run cmd/main.go
+```
+
+you can also set the env variable
+
+```fish
+set CRON_SECRET YOLO
+set CLOUD_PROVIDER local
+set TINYBIRD_TOKEN random
 ```
 
 ## How to build
@@ -39,4 +47,4 @@ fly scale count 35 --region   ams,arn,atl,bog,bom,bos,cdg,den,dfw,ewr,eze,fra,gd
 
 Use our docker image
 
-https://github.com/openstatusHQ/openstatus/pkgs/container/checker
+<https://github.com/openstatusHQ/openstatus/pkgs/container/checker>

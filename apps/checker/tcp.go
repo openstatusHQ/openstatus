@@ -18,6 +18,19 @@ type TCPResponseTiming struct {
 	TCPDone  int64 `json:"tcpDone"`
 }
 
+type TCPResponse struct {
+	Region       string            `json:"region"`
+	ErrorMessage string            `json:"errorMessage"`
+	JobType      string            `json:"jobType"`
+	RequestId    int64             `json:"requestId,omitempty"`
+	WorkspaceID  int64             `json:"workspaceId"`
+	MonitorID    int64             `json:"monitorId"`
+	Timestamp    int64             `json:"timestamp"`
+	Latency      int64             `json:"latency"`
+	Timing       TCPResponseTiming `json:"timing"`
+	Error        uint8             `json:"error,omitempty"`
+}
+
 func PingTcp(timeout int, url string) (TCPResponseTiming, error) {
 	start := time.Now().UTC().UnixMilli()
 	conn, err := net.DialTimeout("tcp", url, time.Duration(timeout)*time.Second)

@@ -10,22 +10,10 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/openstatushq/openstatus/apps/checker"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 )
-
-type TCPResponse struct {
-	Region       string                    `json:"region"`
-	ErrorMessage string                    `json:"errorMessage"`
-	JobType      string                    `json:"jobType"`
-	RequestId    int64                     `json:"requestId,omitempty"`
-	WorkspaceID  int64                     `json:"workspaceId"`
-	MonitorID    int64                     `json:"monitorId"`
-	Timestamp    int64                     `json:"timestamp"`
-	Latency      int64                     `json:"latency"`
-	Timing       checker.TCPResponseTiming `json:"timing"`
-	Error        uint8                     `json:"error,omitempty"`
-}
 
 // Only used for Tinybird.
 type TCPData struct {
@@ -97,7 +85,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 	var called int
 
-	var response TCPResponse
+	var response checker.TCPResponse
 
 	op := func() error {
 		called++
@@ -128,7 +116,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			URI:           req.URI,
 		}
 
-		response = TCPResponse{
+		response = checker.TCPResponse{
 			Timestamp: res.TCPStart,
 			Timing: checker.TCPResponseTiming{
 				TCPStart: res.TCPStart,
@@ -259,7 +247,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 	var called int
 
-	var response TCPResponse
+	var response checker.TCPResponse
 
 	op := func() error {
 		called++
@@ -270,7 +258,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			return fmt.Errorf("unable to check tcp %s", err)
 		}
 
-		response = TCPResponse{
+		response = checker.TCPResponse{
 			Timestamp: timestamp,
 			Timing: checker.TCPResponseTiming{
 				TCPStart: res.TCPStart,
@@ -314,6 +302,12 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 
 		return
+	}
+
+	if req.OtelConfig.Endpoint != "" {
+
+		otelOS.RecordTCPMetrics(ctx, req, response, region)
+
 	}
 
 	c.JSON(http.StatusOK, response)

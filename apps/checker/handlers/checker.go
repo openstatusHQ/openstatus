@@ -12,6 +12,7 @@ import (
 
 	"github.com/openstatushq/openstatus/apps/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 )
 
@@ -82,7 +83,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		assertionAsString = ""
 	}
 
-	var trigger = "cron"
+	trigger := "cron"
 	if req.Trigger != "" {
 		trigger = req.Trigger
 	}
@@ -133,7 +134,6 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			for _, a := range req.RawAssertions {
 				var assert request.Assertion
 				err = json.Unmarshal(a, &assert)
-
 				if err != nil {
 					// handle error
 					return fmt.Errorf("unable to unmarshal assertion: %w", err)
@@ -306,7 +306,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 			})
 		}
+	}
 
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordHTTPMetrics(ctx, req, result, h.Region)
 	}
 
 	returnData := c.Query("data")
