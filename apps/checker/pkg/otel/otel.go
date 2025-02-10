@@ -122,7 +122,7 @@ func RecordHTTPMetrics(ctx context.Context, req request.HttpCheckerRequest, resu
 		statusError, err := meter.Int64Counter("openstatus.error", metric.WithDescription("Status of the check"))
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
+			log.Ctx(ctx).Error().Err(err).Msg("Error setting up counter")
 		}
 
 		statusError.Add(ctx, (1), att)
