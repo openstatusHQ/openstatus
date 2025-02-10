@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -14,23 +13,7 @@ import (
 	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 )
-
-type TCPResponse struct {
-	Region       string                    `json:"region"`
-	ErrorMessage string                    `json:"errorMessage"`
-	JobType      string                    `json:"jobType"`
-	RequestId    int64                     `json:"requestId,omitempty"`
-	WorkspaceID  int64                     `json:"workspaceId"`
-	MonitorID    int64                     `json:"monitorId"`
-	Timestamp    int64                     `json:"timestamp"`
-	Latency      int64                     `json:"latency"`
-	Timing       checker.TCPResponseTiming `json:"timing"`
-	Error        uint8                     `json:"error,omitempty"`
-}
 
 // Only used for Tinybird.
 type TCPData struct {
@@ -102,7 +85,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 	var called int
 
-	var response TCPResponse
+	var response checker.TCPResponse
 
 	op := func() error {
 		called++
@@ -133,7 +116,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			URI:           req.URI,
 		}
 
-		response = TCPResponse{
+		response = checker.TCPResponse{
 			Timestamp: res.TCPStart,
 			Timing: checker.TCPResponseTiming{
 				TCPStart: res.TCPStart,
@@ -264,7 +247,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 	var called int
 
-	var response TCPResponse
+	var response checker.TCPResponse
 
 	op := func() error {
 		called++
@@ -275,7 +258,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			return fmt.Errorf("unable to check tcp %s", err)
 		}
 
-		response = TCPResponse{
+		response = checker.TCPResponse{
 			Timestamp: timestamp,
 			Timing: checker.TCPResponseTiming{
 				TCPStart: res.TCPStart,
@@ -323,71 +306,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 	if req.OtelConfig.Endpoint != "" {
 
-		otelShutdown, err := otelOS.SetupOTelSDK(ctx, req.OtelConfig.Endpoint, h.Region, req.OtelConfig.Headers)
-
-		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("Error setting up otel")
-		}
-
-		defer func() {
-			err = errors.Join(err, otelShutdown(ctx))
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("Error sending the data")
-			}
-		}()
-
-		meter := otel.Meter("OpenStatus")
-
-		if response.ErrorMessage != "" {
-			att := metric.WithAttributes(
-				attribute.String("openstatus.probes", h.Region),
-				attribute.String("openstatus.target", req.URI),
-			)
-			statusError, err := meter.Int64Counter("openstatus.error", metric.WithDescription("Status of the check"))
-
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
-			}
-
-			statusError.Add(ctx, (1), att)
-		} else {
-			att := metric.WithAttributes(
-				attribute.String("openstatus.probes", h.Region),
-				attribute.String("openstatus.target", req.URI),
-			)
-
-			status, err := meter.Int64Counter("openstatus.status", metric.WithDescription("Status of the check"))
-
-			if err != nil {
-				log.Ctx(ctx).Error().Err(err).Msg("Error setting up conunter")
-			}
-
-			status.Add(ctx, 1, att)
-
-		}
-
-		att := metric.WithAttributes(
-			attribute.String("openstatus.probes", h.Region),
-			attribute.String("openstatus.target", req.URI),
-		)
-
-		gauge, err := meter.Float64Gauge("openstatus.dns.request.duration",
-			metric.WithDescription("Duration of the check"), metric.WithUnit("ms"))
-
-		if err != nil {
-			fmt.Println("Error creating gauge", err)
-		}
-
-		gauge.Record(ctx, float64(response.Latency), att)
-
-		gaugeDns, err := meter.Float64Gauge("openstatus.tcp.tcp.duration",
-			metric.WithDescription("Duration of the tcp lookup"), metric.WithUnit("ms"))
-
-		if err != nil {
-			fmt.Println("Error creating gauge", err)
-		}
-
-		gaugeDns.Record(ctx, float64(response.Timing.TCPDone-response.Timing.TCPStart), att)
+		otelOS.RecordTCPMetrics(ctx, req, response, region)
 
 	}
 
