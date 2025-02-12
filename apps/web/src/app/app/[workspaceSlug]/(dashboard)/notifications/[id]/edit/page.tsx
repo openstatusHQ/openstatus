@@ -8,10 +8,7 @@ export default async function EditPage(props: {
   const [workspace, monitors, notification] = await Promise.all([
     api.workspace.getWorkspace.query(),
     api.monitor.getMonitorsByWorkspace.query(),
-
-    await api.notification.getNotificationById.query({
-      id: Number(params.id),
-    }),
+    api.notification.getNotificationById.query({ id: Number(params.id) }),
   ]);
 
   return (
