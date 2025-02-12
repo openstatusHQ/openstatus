@@ -29,7 +29,7 @@ export function SectionPagerDuty({ form }: Props) {
   const config = searchParams.get("config") || form.getValues("data.pagerduty");
 
   const result = PagerDutySchema.safeParse(JSON.parse(config || ""));
-  // We should fix that but that's not working for editing pagerduty notifications
+
   if (result.success === false) {
     return null;
   }
