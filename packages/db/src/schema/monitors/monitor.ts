@@ -46,6 +46,10 @@ export const monitor = sqliteTable("monitor", {
 
   assertions: text("assertions"),
 
+  otelEndpoint: text("otel_endpoint"),
+
+  otelHeaders: text("otel_headers"),
+
   public: integer("public", { mode: "boolean" }).default(false),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(

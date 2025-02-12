@@ -175,6 +175,9 @@ const createCronTask = async ({
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
       trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? { endpoint: row.otelEndpoint, headers: row.otelHeaders }
+        : undefined,
     };
   }
   if (row.jobType === "tcp") {
@@ -188,6 +191,9 @@ const createCronTask = async ({
       degradedAfter: row.degradedAfter,
       timeout: row.timeout,
       trigger: "cron",
+      otelConfig: row.otelEndpoint
+        ? { endpoint: row.otelEndpoint, headers: row.otelHeaders }
+        : undefined,
     };
   }
 
