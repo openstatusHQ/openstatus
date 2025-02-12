@@ -75,7 +75,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       id: `monitor:${monitorId}`,
       action: "monitor.degraded",
       targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region, statusCode: Number(statusCode) },
+      metadata: { region, statusCode: statusCode ?? -1 },
     });
     const currentMonitor = await db
       .select()
@@ -230,7 +230,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       id: `monitor:${monitorId}`,
       action: "monitor.recovered",
       targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region: region, statusCode: Number(statusCode) },
+      metadata: { region: region, statusCode: statusCode ?? -1 },
     });
 
     if (incident) {
