@@ -1,7 +1,11 @@
 import { OpenStatusApiError } from "@/libs/errors";
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
-import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
+import {
+  type httpPayloadSchema,
+  type tpcPayloadSchema,
+  transformHeaders,
+} from "@openstatus/utils";
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
@@ -26,9 +30,7 @@ export function getCheckerPayload(
         otelConfig: monitor.otelEndpoint
           ? {
               endpoint: monitor.otelEndpoint,
-              headers: monitor.otelHeaders
-                ? JSON.parse(monitor.otelHeaders)
-                : {},
+              headers: JSON.stringify(transformHeaders(monitor.otelHeaders)),
             }
           : undefined,
       };
@@ -46,9 +48,7 @@ export function getCheckerPayload(
         otelConfig: monitor.otelEndpoint
           ? {
               endpoint: monitor.otelEndpoint,
-              headers: monitor.otelHeaders
-                ? JSON.parse(monitor.otelHeaders)
-                : {},
+              headers: JSON.stringify(transformHeaders(monitor.otelHeaders)),
             }
           : undefined,
       };

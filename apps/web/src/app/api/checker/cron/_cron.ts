@@ -15,7 +15,11 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { env } from "@/env";
-import type { httpPayloadSchema, tpcPayloadSchema } from "@openstatus/utils";
+import {
+  type httpPayloadSchema,
+  type tpcPayloadSchema,
+  transformHeaders,
+} from "@openstatus/utils";
 
 const periodicityAvailable = selectMonitorSchema.pick({ periodicity: true });
 
@@ -160,6 +164,7 @@ const createCronTask = async ({
     | z.infer<typeof httpPayloadSchema>
     | z.infer<typeof tpcPayloadSchema>
     | null = null;
+
   //
   if (row.jobType === "http") {
     payload = {
@@ -178,7 +183,7 @@ const createCronTask = async ({
       otelConfig: row.otelEndpoint
         ? {
             endpoint: row.otelEndpoint,
-            headers: row.otelHeaders ? JSON.parse(row.otelHeaders) : {},
+            headers: JSON.stringify(transformHeaders(row.otelHeaders)),
           }
         : undefined,
     };
@@ -197,7 +202,7 @@ const createCronTask = async ({
       otelConfig: row.otelEndpoint
         ? {
             endpoint: row.otelEndpoint,
-            headers: row.otelHeaders ? JSON.parse(row.otelHeaders) : {},
+            headers: JSON.stringify(transformHeaders(row.otelHeaders)),
           }
         : undefined,
     };
