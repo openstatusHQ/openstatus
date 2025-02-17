@@ -27,8 +27,7 @@ interface Props {
 
 export function SectionOtel({ form, limits }: Props) {
   const { fields, append, prepend, remove, update } = useFieldArray({
-    // name: "otelHeaders",
-    name: "otelHeadersArray",
+    name: "otelHeaders",
     control: form.control,
   });
 
@@ -70,7 +69,7 @@ export function SectionOtel({ form, limits }: Props) {
           <div key={field.id} className="grid grid-cols-6 gap-4">
             <FormField
               control={form.control}
-              name={`otelHeadersArray.${index}.key`}
+              name={`otelHeaders.${index}.key`}
               render={({ field }) => (
                 <FormItem className="col-span-2">
                   <FormControl>
@@ -82,7 +81,7 @@ export function SectionOtel({ form, limits }: Props) {
             <div className="col-span-4 flex items-center space-x-2">
               <FormField
                 control={form.control}
-                name={`otelHeadersArray.${index}.value`}
+                name={`otelHeaders.${index}.value`}
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
@@ -102,13 +101,15 @@ export function SectionOtel({ form, limits }: Props) {
             </div>
           </div>
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => append({ key: "", value: "" })}
-        >
-          Add Custom Header
-        </Button>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ key: "", value: "" })}
+          >
+            Add Custom Header
+          </Button>
+        </div>
       </div>
     </div>
   );

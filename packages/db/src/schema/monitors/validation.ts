@@ -32,43 +32,13 @@ const headersToArraySchema = z.preprocess(
     if (Array.isArray(val)) {
       return val;
     }
-    if (String(val).length > 0) {
+    if (typeof val === "string" && String(val).length > 0) {
       return JSON.parse(String(val));
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([])
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
 );
-
-export const otelHeadersToArraySchema = z.preprocess(
-  (val) => {
-    // early return in case the header is already an array
-    if (Array.isArray(val)) {
-      return val;
-    }
-    if (String(val).length > 0) {
-      const otelHeaders = [];
-
-      const headers = JSON.parse(String(val));
-      for (let [key, value] of Object.entries(headers)) {
-        otelHeaders.push({ key: key, value: value });
-      }
-      return otelHeaders;
-    }
-    return [];
-  },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([])
-);
-
-export const otelHeadersArrayToString = z.preprocess((val) => {
-  if (!Array.isArray(val)) {
-    return null;
-  }
-  const r = val.reduce((a, v) => {
-    return { ...a, [v.key]: v.value };
-  }, {});
-  return JSON.stringify(r);
-}, z.string().nullable());
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
@@ -78,8 +48,8 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   regions: regionsToArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
+  otelHeaders: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
-  otelEndpoint: z.string().optional(),
   // for tcp monitors the method is not needed
   method: monitorMethodsSchema.default("GET"),
 });
@@ -97,6 +67,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   regions: z.array(monitorRegionSchema).default([]).optional(),
   headers: headersSchema.default([]),
+  otelHeaders: headersSchema.default([]),
 }).extend({
   method: monitorMethodsSchema.default("GET"),
   notifications: z.array(z.number()).optional().default([]),
@@ -108,9 +79,6 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
   timeout: z.coerce.number().gte(0).lte(60000).default(45000),
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
-  otelEndpoint: z.string().optional(),
-  otelHeadersArray: otelHeadersToArraySchema.optional(),
-  otelHeaders: otelHeadersArrayToString.optional(),
 });
 
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);

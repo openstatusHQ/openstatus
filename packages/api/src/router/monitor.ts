@@ -19,7 +19,6 @@ import {
   monitorsToStatusReport,
   notification,
   notificationsToMonitors,
-  otelHeadersArrayToString,
   page,
   selectMonitorSchema,
   selectMonitorTagSchema,
@@ -93,7 +92,7 @@ export const monitorRouter = createTRPCRouter({
         statusAssertions,
         headerAssertions,
         textBodyAssertions,
-        otelHeadersArray,
+        otelHeaders,
         ...data
       } = opts.input;
 
@@ -108,18 +107,16 @@ export const monitorRouter = createTRPCRouter({
         assertions.push(new TextBodyAssertion(a));
       }
 
-      const otelHeaders = otelHeadersArrayToString.parse(otelHeadersArray);
-
       const newMonitor = await opts.ctx.db
         .insert(monitor)
         .values({
           // REMINDER: We should explicitly pass the corresponding attributes
           // otherwise, unexpected attributes will be passed
           ...data,
-          otelHeaders,
           workspaceId: opts.ctx.workspace.id,
           regions: regions?.join(","),
           headers: headers ? JSON.stringify(headers) : undefined,
+          otelHeaders: otelHeaders ? JSON.stringify(otelHeaders) : undefined,
           assertions: assertions.length > 0 ? serialize(assertions) : undefined,
         })
         .returning()
@@ -306,7 +303,7 @@ export const monitorRouter = createTRPCRouter({
         statusAssertions,
         headerAssertions,
         textBodyAssertions,
-        otelHeadersArray,
+        otelHeaders,
 
         ...data
       } = opts.input;
@@ -322,16 +319,14 @@ export const monitorRouter = createTRPCRouter({
         assertions.push(new TextBodyAssertion(a));
       }
 
-      const otelHeaders = otelHeadersArrayToString.parse(otelHeadersArray);
-
       const currentMonitor = await opts.ctx.db
         .update(monitor)
         .set({
           ...data,
-          otelHeaders,
           regions: regions?.join(","),
           updatedAt: new Date(),
           headers: headers ? JSON.stringify(headers) : undefined,
+          otelHeaders: otelHeaders ? JSON.stringify(otelHeaders) : undefined,
           assertions: serialize(assertions),
         })
         .where(
