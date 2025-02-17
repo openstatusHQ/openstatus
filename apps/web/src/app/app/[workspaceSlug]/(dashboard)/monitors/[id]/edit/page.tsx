@@ -33,16 +33,15 @@ export default async function EditPage(props: {
         degradedAfter: monitor.degradedAfter ?? undefined,
         pages: pages
           .filter((page) =>
-            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id),
+            page.monitorsToPages.map(({ monitorId }) => monitorId).includes(id)
           )
           .map(({ id }) => id),
         notifications: monitorNotifications?.map(({ id }) => id),
         tags: tags
           .filter((tag) =>
-            tag.monitor.map(({ monitorId }) => monitorId).includes(id),
+            tag.monitor.map(({ monitorId }) => monitorId).includes(id)
           )
           .map(({ id }) => id),
-        otelEndpoint: monitor.otelEndpoint ?? undefined,
       }}
       limits={workspace.limits}
       notifications={notifications}

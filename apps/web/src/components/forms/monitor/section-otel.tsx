@@ -26,10 +26,6 @@ interface Props {
 }
 
 export function SectionOtel({ form, limits }: Props) {
-  // if (process.env.NODE_ENV === "production") {
-  //   return <ComingSoonBanner />;
-  // }
-
   const { fields, append, prepend, remove, update } = useFieldArray({
     // name: "otelHeaders",
     name: "otelHeadersArray",

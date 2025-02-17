@@ -37,7 +37,7 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const otelHeadersToArraySchema = z.preprocess(
@@ -57,7 +57,7 @@ export const otelHeadersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
 
 export const otelHeadersArrayToString = z.preprocess((val) => {
@@ -79,6 +79,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
 }).extend({
   headers: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
+  otelEndpoint: z.string().optional(),
   // for tcp monitors the method is not needed
   method: monitorMethodsSchema.default("GET"),
 });
