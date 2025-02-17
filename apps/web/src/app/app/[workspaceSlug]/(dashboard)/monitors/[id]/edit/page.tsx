@@ -42,6 +42,7 @@ export default async function EditPage(props: {
             tag.monitor.map(({ monitorId }) => monitorId).includes(id),
           )
           .map(({ id }) => id),
+        otelEndpoint: monitor.otelEndpoint ?? undefined,
       }}
       limits={workspace.limits}
       notifications={notifications}
