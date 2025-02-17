@@ -37,8 +37,38 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
 );
+
+const otelHeadersToArraySchema = z.preprocess(
+  (val) => {
+    // early return in case the header is already an array
+    if (Array.isArray(val)) {
+      return val;
+    }
+    if (String(val).length > 0) {
+      const otelHeaders = [];
+
+      const headers = JSON.parse(String(val));
+      for (let [key, value] of Object.entries(headers)) {
+        otelHeaders.push({ key: key, value: value });
+      }
+      return otelHeaders;
+    }
+    return [];
+  },
+  z.array(z.object({ key: z.string(), value: z.string() })).default([])
+);
+
+const otelHeadersArrayToString = z.preprocess((val) => {
+  if (!Array.isArray(val)) {
+    return undefined;
+  }
+  const r = val.reduce((a, v) => {
+    return { ...a, [v.key]: v.value };
+  }, {});
+  return JSON.stringify(r);
+}, z.string().nullable());
 
 export const selectMonitorSchema = createSelectSchema(monitor, {
   periodicity: monitorPeriodicitySchema.default("10m"),
@@ -77,6 +107,8 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   textBodyAssertions: z.array(assertions.textBodyAssertion).optional(),
   timeout: z.coerce.number().gte(0).lte(60000).default(45000),
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
+  otelEndpoint: z.string().optional(),
+  otelHeaders: otelHeadersArrayToString.optional(),
 });
 
 export const selectMonitorToPageSchema = createSelectSchema(monitorsToPages);
