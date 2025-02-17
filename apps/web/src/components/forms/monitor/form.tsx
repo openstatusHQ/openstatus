@@ -100,9 +100,7 @@ export function MonitorForm({
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
       jobType: defaultValues?.jobType || "http",
-      otelEndpoint: defaultValues?.otelEndpoint!
-        ? defaultValues?.otelEndpoint
-        : "",
+      otelEndpoint: defaultValues?.otelEndpoint ?? "",
       otelHeaders: defaultValues?.otelHeaders ?? [],
     },
   });

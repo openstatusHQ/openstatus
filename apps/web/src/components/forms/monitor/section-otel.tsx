@@ -53,6 +53,7 @@ export function SectionOtel({ form, limits }: Props) {
                   type="text"
                   placeholder="https://otel.openstatus.dev/api/v1/metrics"
                   {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
               <FormDescription>
