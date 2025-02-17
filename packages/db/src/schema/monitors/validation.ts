@@ -37,10 +37,10 @@ const headersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([])
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
 );
 
-const otelHeadersToArraySchema = z.preprocess(
+export const otelHeadersToArraySchema = z.preprocess(
   (val) => {
     // early return in case the header is already an array
     if (Array.isArray(val)) {
@@ -57,12 +57,12 @@ const otelHeadersToArraySchema = z.preprocess(
     }
     return [];
   },
-  z.array(z.object({ key: z.string(), value: z.string() })).default([])
+  z.array(z.object({ key: z.string(), value: z.string() })).default([]),
 );
 
-const otelHeadersArrayToString = z.preprocess((val) => {
+export const otelHeadersArrayToString = z.preprocess((val) => {
   if (!Array.isArray(val)) {
-    return undefined;
+    return null;
   }
   const r = val.reduce((a, v) => {
     return { ...a, [v.key]: v.value };
@@ -108,6 +108,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   timeout: z.coerce.number().gte(0).lte(60000).default(45000),
   degradedAfter: z.coerce.number().gte(0).lte(60000).nullish(),
   otelEndpoint: z.string().optional(),
+  otelHeadersArray: otelHeadersToArraySchema.optional(),
   otelHeaders: otelHeadersArrayToString.optional(),
 });
 

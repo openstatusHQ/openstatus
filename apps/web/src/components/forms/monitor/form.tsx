@@ -14,7 +14,10 @@ import type {
   Page,
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
-import { insertMonitorSchema } from "@openstatus/db/src/schema";
+import {
+  insertMonitorSchema,
+  otelHeadersToArraySchema,
+} from "@openstatus/db/src/schema";
 import { Badge, Form } from "@openstatus/ui";
 
 import {
@@ -70,6 +73,9 @@ export function MonitorForm({
     ? assertions.deserialize(defaultValues?.assertions).map((a) => a.schema)
     : [];
 
+  const otelHeadersArray = otelHeadersToArraySchema.parse(
+    defaultValues?.otelHeaders
+  );
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
     defaultValues: {
@@ -103,7 +109,7 @@ export function MonitorForm({
       otelEndpoint: defaultValues?.otelEndpoint!
         ? defaultValues?.otelEndpoint
         : "",
-      otelHeaders: "",
+      otelHeadersArray: otelHeadersArray,
     },
   });
   const router = useRouter();
@@ -318,15 +324,7 @@ export function MonitorForm({
                   </Badge>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger
-                value="otel"
-                disabled={process.env.NODE_ENV === "production"}
-              >
-                OTel{" "}
-                <Badge variant="secondary" className="ml-1">
-                  Soon
-                </Badge>
-              </TabsTrigger>
+              <TabsTrigger value="otel">OTel</TabsTrigger>
               {defaultValues?.id ? (
                 <TabsTrigger value="danger">Danger</TabsTrigger>
               ) : null}

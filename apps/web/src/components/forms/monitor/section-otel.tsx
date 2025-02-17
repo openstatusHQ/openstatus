@@ -32,7 +32,7 @@ export function SectionOtel({ form, limits }: Props) {
 
   const { fields, append, prepend, remove, update } = useFieldArray({
     // name: "otelHeaders",
-    name: "otelHeaders",
+    name: "otelHeadersArray",
     control: form.control,
   });
 
