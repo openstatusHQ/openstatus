@@ -405,7 +405,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  }
+  },
 );
 
 export const vercelRegions = [
@@ -483,7 +483,7 @@ export function transformHeaders(headers: { key: string; value: string }[]) {
           acc[curr.key] = curr.value;
           return acc;
         },
-        {} as Record<string, string>
+        {} as Record<string, string>,
       )
     : {};
 }

@@ -9,7 +9,7 @@ import {
 
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
-  status: z.infer<typeof selectMonitorSchema>["status"]
+  status: z.infer<typeof selectMonitorSchema>["status"],
 ): z.infer<typeof httpPayloadSchema> | z.infer<typeof tpcPayloadSchema> {
   const timestamp = new Date().getTime();
   switch (monitor.jobType) {
@@ -66,7 +66,7 @@ export function getCheckerUrl(
   opts: { trigger?: "api" | "cron"; data?: boolean } = {
     trigger: "api",
     data: false,
-  }
+  },
 ): string {
   switch (monitor.jobType) {
     case "http":
