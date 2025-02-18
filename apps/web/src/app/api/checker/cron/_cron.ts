@@ -183,7 +183,7 @@ const createCronTask = async ({
       otelConfig: row.otelEndpoint
         ? {
             endpoint: row.otelEndpoint,
-            headers: JSON.stringify(transformHeaders(row.otelHeaders)),
+            headers: transformHeaders(row.otelHeaders),
           }
         : undefined,
     };
@@ -202,7 +202,7 @@ const createCronTask = async ({
       otelConfig: row.otelEndpoint
         ? {
             endpoint: row.otelEndpoint,
-            headers: JSON.stringify(transformHeaders(row.otelHeaders)),
+            headers: transformHeaders(row.otelHeaders),
           }
         : undefined,
     };

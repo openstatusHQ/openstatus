@@ -449,7 +449,7 @@ export const httpPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.string().nullish(),
+      headers: z.record(z.string()),
     })
     .optional(),
 });
@@ -469,7 +469,7 @@ export const tpcPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.string().nullish(),
+      headers: z.record(z.string()),
     })
     .optional(),
 });

@@ -30,7 +30,7 @@ export function getCheckerPayload(
         otelConfig: monitor.otelEndpoint
           ? {
               endpoint: monitor.otelEndpoint,
-              headers: JSON.stringify(transformHeaders(monitor.otelHeaders)),
+              headers: transformHeaders(monitor.otelHeaders),
             }
           : undefined,
       };
@@ -48,7 +48,7 @@ export function getCheckerPayload(
         otelConfig: monitor.otelEndpoint
           ? {
               endpoint: monitor.otelEndpoint,
-              headers: JSON.stringify(transformHeaders(monitor.otelHeaders)),
+              headers: transformHeaders(monitor.otelHeaders),
             }
           : undefined,
       };
