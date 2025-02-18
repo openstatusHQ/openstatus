@@ -1,9 +1,9 @@
 ---
 import Default from "@astrojs/starlight/components/Head.astro";
 
-const  title  = Astro.locals.starlightRoute.title;
+const title = Astro.locals.starlightRoute.title;
 const { siteTitle } = Astro.locals.starlightRoute;
-console.log(Astro.locals)
+console.log(Astro.locals);
 
 const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${title}`;
 ---

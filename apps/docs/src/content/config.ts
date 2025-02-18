@@ -1,6 +1,6 @@
 import { defineCollection } from "astro:content";
-import { docsSchema } from "@astrojs/starlight/schema";
 import { docsLoader } from "@astrojs/starlight/loaders";
+import { docsSchema } from "@astrojs/starlight/schema";
 // import { glob } from "astro/loaders";
 import { topicSchema } from "starlight-sidebar-topics/schema";
 
