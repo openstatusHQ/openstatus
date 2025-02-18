@@ -15,16 +15,13 @@ import { Aside } from '@astrojs/starlight/components';
 
 OpenStatus supports exporting your synthetic monitoring data to your observability platform using OpenTelemetry.
 
+When you enable this feature, we will export the results of the synthetic checks as metrics.
 
-### How does it work?
-
-When you set up this feature we will export the result of the synthetic checks as metrics.
-
-You can ingest them in your o11y stack.
 
 You can send your metrics to:
 - [How to send data to Grafana Cloud](https://grafana.com/docs/grafana-cloud/send-data/otlp/send-data-otlp/)
 - [How to send data to New Relic](https://docs.newrelic.com/docs/opentelemetry/best-practices/opentelemetry-otlp/)
+- [How to send data to Honeycomb](https://docs.honeycomb.io/send-data/opentelemetry/collector/)
 - Signoz
 
 
@@ -37,8 +34,7 @@ You can send your metrics to:
 
 To change set up an otlp endpont : _Select a monitor &rarr; Settings &rarr; OTel_.
 
-Add your OTLP endpoint and add your headers.
-
+Add your OTLP endpoint and include your headers.
 
 
 #### Attributes
