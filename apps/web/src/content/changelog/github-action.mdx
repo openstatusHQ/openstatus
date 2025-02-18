@@ -1,0 +1,21 @@
+---
+title: OpenStatus GitHub Actions
+description: Run your OpenStatus synthetic checks as part of your GitHub Workflow.
+image: /assets/changelog/github-action.png
+publishedAt: 2025-02-18
+---
+
+We have published our GitHub Actions, It lets your run your OpenStatus synthetic checks as part of your GitHub Workflow.
+
+The action is available on [GitHub Marketplace](https://github.com/marketplace/actions/openstatus-synthetics-ci)
+
+Here's a simple example of how to use it:
+
+```yaml
+- name: Run OpenStatus Synthetics CI
+    uses: openstatushq/openstatus-github-action@v1
+    with:
+        api_key: ${{ secrets.OPENSTATUS_API_KEY }}
+```
+
+Here's a GitHub repo with the action in use: [openstatushq/openstatus-github-action-example](https://github.com/openstatusHQ/github-action-tester)
