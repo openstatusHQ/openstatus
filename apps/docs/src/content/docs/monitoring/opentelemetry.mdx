@@ -1,0 +1,57 @@
+---
+title: OpenTelemetry
+description: "How to export your synthetic monitoring data to your observability platform with OpenStatus"
+---
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside>
+    This feature is available for Pro plan users and above.
+</Aside>
+
+
+
+## How to export your synthetic monitoring data to your observability stack with OpenStatus
+
+
+OpenStatus supports exporting your synthetic monitoring data to your observability platform using OpenTelemetry.
+
+When you enable this feature, we will export the results of the synthetic checks as metrics.
+
+
+You can send your metrics to:
+- [How to send data to Grafana Cloud](https://grafana.com/docs/grafana-cloud/send-data/otlp/send-data-otlp/)
+- [How to send data to New Relic](https://docs.newrelic.com/docs/opentelemetry/best-practices/opentelemetry-otlp/)
+- [How to send data to Honeycomb](https://docs.honeycomb.io/send-data/opentelemetry/collector/)
+- Signoz
+
+
+#### Grafana Cloud Example
+
+
+[OpenStatus X Grafana Public dashboard](https://openstatus.grafana.net/public-dashboards/a85806536e9243f7ab9e0d458eb2ad32)
+
+### How to setup?
+
+To change set up an otlp endpont : _Select a monitor &rarr; Settings &rarr; OTel_.
+
+Add your OTLP endpoint and include your headers.
+
+
+#### Attributes
+
+- openstatus.probes -> the region of the probes
+- openstatus.target
+#### Available Metrics
+
+For HTTP probes:
+- openstatus.http.request.duration
+- openstatus.http.dns.duration
+- openstatus.http.connection.duration
+- openstatus.http.tls.duration
+- openstatus.http.ttfb.duration
+- openstatus.http.transfer.duration
+- openstatus.error  ( counter fill when error)
+- openstatus.status (counter -> 1 when successful request)
+
+For TCP probes:
+- openstatus.tcp.request.duration

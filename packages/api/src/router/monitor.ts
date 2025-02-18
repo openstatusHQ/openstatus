@@ -92,6 +92,7 @@ export const monitorRouter = createTRPCRouter({
         statusAssertions,
         headerAssertions,
         textBodyAssertions,
+        otelHeaders,
         ...data
       } = opts.input;
 
@@ -115,6 +116,7 @@ export const monitorRouter = createTRPCRouter({
           workspaceId: opts.ctx.workspace.id,
           regions: regions?.join(","),
           headers: headers ? JSON.stringify(headers) : undefined,
+          otelHeaders: otelHeaders ? JSON.stringify(otelHeaders) : undefined,
           assertions: assertions.length > 0 ? serialize(assertions) : undefined,
         })
         .returning()
@@ -301,6 +303,8 @@ export const monitorRouter = createTRPCRouter({
         statusAssertions,
         headerAssertions,
         textBodyAssertions,
+        otelHeaders,
+
         ...data
       } = opts.input;
 
@@ -322,6 +326,7 @@ export const monitorRouter = createTRPCRouter({
           regions: regions?.join(","),
           updatedAt: new Date(),
           headers: headers ? JSON.stringify(headers) : undefined,
+          otelHeaders: otelHeaders ? JSON.stringify(otelHeaders) : undefined,
           assertions: serialize(assertions),
         })
         .where(

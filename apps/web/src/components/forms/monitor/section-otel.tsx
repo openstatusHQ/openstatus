@@ -17,7 +17,6 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { ComingSoonBanner } from "@/components/banner/coming-soon-banner";
 import { ProFeatureAlert } from "@/components/billing/pro-feature-alert";
 import { SectionHeader } from "../shared/section-header";
 
@@ -27,13 +26,8 @@ interface Props {
 }
 
 export function SectionOtel({ form, limits }: Props) {
-  if (process.env.NODE_ENV === "production") {
-    return <ComingSoonBanner />;
-  }
-
   const { fields, append, prepend, remove, update } = useFieldArray({
-    // name: "otelHeaders",
-    name: "headers",
+    name: "otelHeaders",
     control: form.control,
   });
 
@@ -50,8 +44,7 @@ export function SectionOtel({ form, limits }: Props) {
       <div className="grid sm:grid-cols-2 md:grid-cols-3">
         <FormField
           control={form.control}
-          //   name="otelEndpoint"
-          name="url"
+          name="otelEndpoint"
           render={({ field }) => (
             <FormItem className="col-span-full">
               <FormLabel>Endpoint</FormLabel>
@@ -60,6 +53,7 @@ export function SectionOtel({ form, limits }: Props) {
                   type="text"
                   placeholder="https://otel.openstatus.dev/api/v1/metrics"
                   {...field}
+                  value={field.value ?? ""}
                 />
               </FormControl>
               <FormDescription>
@@ -76,7 +70,7 @@ export function SectionOtel({ form, limits }: Props) {
           <div key={field.id} className="grid grid-cols-6 gap-4">
             <FormField
               control={form.control}
-              name={`headers.${index}.key`}
+              name={`otelHeaders.${index}.key`}
               render={({ field }) => (
                 <FormItem className="col-span-2">
                   <FormControl>
@@ -88,7 +82,7 @@ export function SectionOtel({ form, limits }: Props) {
             <div className="col-span-4 flex items-center space-x-2">
               <FormField
                 control={form.control}
-                name={`headers.${index}.value`}
+                name={`otelHeaders.${index}.value`}
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
@@ -108,13 +102,15 @@ export function SectionOtel({ form, limits }: Props) {
             </div>
           </div>
         ))}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => append({ key: "", value: "" })}
-        >
-          Add Custom Header
-        </Button>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ key: "", value: "" })}
+          >
+            Add Custom Header
+          </Button>
+        </div>
       </div>
     </div>
   );

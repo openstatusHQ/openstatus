@@ -32,7 +32,7 @@ const headersToArraySchema = z.preprocess(
     if (Array.isArray(val)) {
       return val;
     }
-    if (String(val).length > 0) {
+    if (typeof val === "string" && String(val).length > 0) {
       return JSON.parse(String(val));
     }
     return [];
@@ -48,6 +48,7 @@ export const selectMonitorSchema = createSelectSchema(monitor, {
   regions: regionsToArraySchema.default([]),
 }).extend({
   headers: headersToArraySchema.default([]),
+  otelHeaders: headersToArraySchema.default([]),
   body: bodyToStringSchema.default(""),
   // for tcp monitors the method is not needed
   method: monitorMethodsSchema.default("GET"),
@@ -66,6 +67,7 @@ export const insertMonitorSchema = createInsertSchema(monitor, {
   status: monitorStatusSchema.default("active"),
   regions: z.array(monitorRegionSchema).default([]).optional(),
   headers: headersSchema.default([]),
+  otelHeaders: headersSchema.default([]),
 }).extend({
   method: monitorMethodsSchema.default("GET"),
   notifications: z.array(z.number()).optional().default([]),

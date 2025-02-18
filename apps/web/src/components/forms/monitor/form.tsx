@@ -69,6 +69,7 @@ export function MonitorForm({
   const _assertions = defaultValues?.assertions
     ? assertions.deserialize(defaultValues?.assertions).map((a) => a.schema)
     : [];
+
   const form = useForm<InsertMonitor>({
     resolver: zodResolver(insertMonitorSchema),
     defaultValues: {
@@ -99,6 +100,8 @@ export function MonitorForm({
       degradedAfter: defaultValues?.degradedAfter,
       timeout: defaultValues?.timeout || 45000,
       jobType: defaultValues?.jobType || "http",
+      otelEndpoint: defaultValues?.otelEndpoint ?? "",
+      otelHeaders: defaultValues?.otelHeaders ?? [],
     },
   });
   const router = useRouter();
@@ -313,15 +316,7 @@ export function MonitorForm({
                   </Badge>
                 ) : null}
               </TabsTrigger>
-              <TabsTrigger
-                value="otel"
-                disabled={process.env.NODE_ENV === "production"}
-              >
-                OTel{" "}
-                <Badge variant="secondary" className="ml-1">
-                  Soon
-                </Badge>
-              </TabsTrigger>
+              <TabsTrigger value="otel">OTel</TabsTrigger>
               {defaultValues?.id ? (
                 <TabsTrigger value="danger">Danger</TabsTrigger>
               ) : null}
