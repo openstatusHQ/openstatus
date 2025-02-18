@@ -1,7 +1,7 @@
 ---
 import type { Props } from "@astrojs/starlight/props";
 
-const { data } = Astro.props.entry;
+const { data } = Astro.locals.starlightRoute.entry;
 const { title = data.title, tagline, image, actions = [] } = data.hero || {};
 import { LinkButton } from "@astrojs/starlight/components";
 ---

@@ -1,13 +1,13 @@
 ---
 import Default from "@astrojs/starlight/components/Head.astro";
-import type { Props } from "@astrojs/starlight/props";
 
-const { title } = Astro.props.entry.data;
-const { siteTitle } = Astro.props;
+const  title  = Astro.locals.starlightRoute.title;
+const { siteTitle } = Astro.locals.starlightRoute;
+console.log(Astro.locals)
 
 const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${title}`;
 ---
-<Default {...Astro.props}><slot /></Default>
+<Default><slot /></Default>
 
 <meta property="og:image" content={url} />
 <meta name="twitter:image" content={url} />
@@ -18,5 +18,3 @@ const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${titl
 <!-- REMINDER: prevent unexpected font flashes for our 'OpenStatus' logo on each page load -->
 <link rel="preload" href="/fonts/CalSans-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
 <script defer async src="https://buttons.github.io/buttons.js" />
-
-

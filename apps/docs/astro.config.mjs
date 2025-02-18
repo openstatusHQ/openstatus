@@ -73,6 +73,10 @@ export default defineConfig({
                     slug: "monitoring/clone-monitor",
                   },
                   {
+                    label: "OpenTelemetry",
+                    slug: "monitoring/opentelemetry",
+                  },
+                  {
                     label: "Check Types",
                     collapsed: true,
                     items: [
