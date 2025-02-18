@@ -405,7 +405,7 @@ export const groupByContinent = Object.entries(flyRegionsDict).reduce<
     Oceania: [],
     Asia: [],
     Africa: [],
-  },
+  }
 );
 
 export const vercelRegions = [
@@ -449,7 +449,7 @@ export const httpPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.string().nullish(),
+      headers: z.record(z.string()),
     })
     .optional(),
 });
@@ -469,7 +469,7 @@ export const tpcPayloadSchema = z.object({
   otelConfig: z
     .object({
       endpoint: z.string(),
-      headers: z.string().nullish(),
+      headers: z.record(z.string()),
     })
     .optional(),
 });
@@ -483,7 +483,7 @@ export function transformHeaders(headers: { key: string; value: string }[]) {
           acc[curr.key] = curr.value;
           return acc;
         },
-        {} as Record<string, string>,
+        {} as Record<string, string>
       )
     : {};
 }
