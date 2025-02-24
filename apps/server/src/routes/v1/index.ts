@@ -130,7 +130,7 @@ api.get(
         "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
       twitterCard: "summary_large_image",
     },
-  })
+  }),
 );
 /**
  * Middlewares
