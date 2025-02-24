@@ -111,17 +111,26 @@ api.get(
     spec: {
       url: "/v1/openapi",
     },
-    baseServerURL: "https://api.openstatus.dev/v1",
+    servers: [
+      {
+        url: "https://api.openstatus.dev/v1",
+        description: "Production server",
+      },
+      {
+        url: "http://localhost:3000",
+        description: "Dev server",
+      },
+    ],
     metaData: {
       title: "OpenStatus API",
-      description: "API Reference",
+      description: "Start building with OpenStatus API",
       ogDescription: "API Reference",
       ogTitle: "OpenStatus API",
       ogImage:
         "https://openstatus.dev/api/og?title=OpenStatus%20API&description=API%20Reference",
       twitterCard: "summary_large_image",
     },
-  }),
+  })
 );
 /**
  * Middlewares
