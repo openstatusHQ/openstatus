@@ -1,0 +1,128 @@
+---
+title: How We Built our own GitHub Action
+description:
+  Learn how we built our own custom Docker GitHub Action to run OpenStatus Synthetics Tests on every push to our main branch and on a schedule.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+  avatar: /assets/authors/thibault.jpeg
+publishedAt: 2025-02-26
+image: /assets/posts/how-we-build-our-github-action/GitHub.png
+tag: engineering
+---
+
+Couple of weeks ago, when we released our CLI. We wanted to use it to run our own Synthetics Tests in a GitHub Action. We wanted to have a simple way to run our tests on every push to our main branch or on schedule.
+
+
+There's 3 ways to build a github action
+
+- Composite actions
+- Javascript actions
+- Docker container actions
+
+
+Our CLI is built in Golang, and publish every version as a binary.  It made sense to go with the Docker container actions.
+This way we could use our CLI to run the tests.
+
+We needed to have a way to pass the API key and the configuration file to the action.
+
+Our Docker file is pretty simple. We use the alpine image and install curl to download the CLI. We then extract the CLI and set the entrypoint to the entrypoint.sh file.
+
+
+```Dockerfile
+FROM alpine:3.21.3
+
+RUN apk --no-cache add curl
+
+WORKDIR /home/openstatus
+
+COPY entrypoint.sh .
+
+RUN  curl -o cli.tar.gz -L  https://github.com/openstatusHQ/cli/releases/latest/download/cli_Linux_x86_64.tar.gz
+
+RUN tar -xf ./cli.tar.gz
+
+ENTRYPOINT ["/home/openstatus/entrypoint.sh"]
+```
+
+Our entrypoint.sh file is also pretty simple. We just run the CLI with the API key and the configuration file.
+
+```bash
+#!/bin/sh
+
+if [ -z "$INPUT_CONFIG_PATH" ]; then
+    /home/openstatus/openstatus run --access-token $INPUT_API_KEY
+else
+    /home/openstatus/openstatus run --access-token $INPUT_API_KEY --config $INPUT_CONFIG_PATH
+fi
+
+if [ $? -eq 0 ]
+then
+    echo "OpenStatus run successfully"
+    exit 0
+else
+    echo "OpenStatus run failed"
+    exit 1
+fi
+```
+
+Our action.yml file
+
+```yaml
+name: 'OpenStatus Synthetics CI'
+description: 'Run your OpenStatus synthetics checks as part of your GitHub Actions workflow.'
+author: 'OpenStatus'
+branding:
+  icon: 'zap'
+  color: gray-dark
+
+inputs:
+  api_key:
+    description: 'OpenStatus API key'
+    required: true
+  config_path:
+    description: 'Path to the OpenStatus configuration file'
+    required: false
+
+runs:
+  using: docker
+  image: docker://ghcr.io/openstatushq/action:latest
+  args:
+    - ${{ inputs.api_key }}
+    - ${{ inputs.config_path }}
+```
+
+That's all you need to build your own Docker custom GitHub Action.
+
+
+
+I struggle a bit with the GitHub action because the docker image was being built on the fly.
+I had to push the image to the GitHub Container Registry to be able to use it in the action.  You can use any other container registry but GitHub Container Registry is free for public repositories.
+
+The solution was to change the image in the action.yml file to the image in the GitHub Container Registry.
+
+From:
+
+```yaml
+image: Dockerfile
+```
+To:
+```yaml
+image: docker://ghcr.io/openstatushq/action:latest
+```
+
+
+
+If you want to start using our action you can find it in the GitHub Marketplace.
+
+[https://github.com/marketplace/actions/openstatus-synthetics-ci](https://github.com/marketplace/actions/openstatus-synthetics-ci
+)
+
+
+If you want to see a GitHub repository with the action you can find it here.
+
+[https://github.com/openstatusHQ/github-action-tester/actions](https://github.com/openstatusHQ/github-action-tester/actions
+)
+
+
+Create an account on [OpenStatus](/app/sign-in?ref=blog-github-action) and start running your own Synthetics Tests in your
