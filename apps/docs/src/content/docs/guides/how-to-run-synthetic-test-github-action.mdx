@@ -1,0 +1,68 @@
+---
+title: How to run a synthetic test in a GitHub Action
+description: Learn how to run a synthetic test in a GitHub Action using OpenStatus.
+sidebar:
+  label: GitHub Action for Synthetics
+---
+
+In this guide, we will show you how to run a synthetic test in a GitHub Action using OpenStatus.
+
+### Requirements
+
+- An [OpenStatus](https://www.openstatus.dev) Account .
+- A GitHub Repository.
+
+### Create a configuration file
+
+First, you need to create a configuration file for your synthetic test.
+
+
+```yaml
+tests:
+  ids:
+    - 1
+    - 2
+```
+The ids are the ids of the monitors you want to run. You can find the ids in the URL of the monitor page.
+
+
+### Get your OpenStatus API Key
+
+You can find your API key in the settings page of your OpenStatus account.
+Go to the settings page and copy your API key.
+
+
+
+### Add your API Key to GitHub Secrets
+
+Go to the settings of your repository and add a new secret with the name `OPENSTATUS_API_KEY` and the value of your OpenStatus API key.
+
+
+### Create a GitHub Action
+
+Create a new file in your repository under `.github/workflows` with the following content:
+
+```yaml
+name: Run OpenStatus Synthetics CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  synthetic_ci:
+    runs-on: ubuntu-latest
+    name: Run OpenStatus Synthetics CI
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run OpenStatus Synthetics CI
+        uses: openstatushq/openstatus-github-action@v1
+        with:
+          api_key: ${{ secrets.OPENSTATUS_API_KEY }}
+```
+
+### Run the GitHub Action
+
+On every push to the main branch, the GitHub Action will run the synthetic tests you have configured in the configuration file.

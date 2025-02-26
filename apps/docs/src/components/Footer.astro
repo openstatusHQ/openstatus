@@ -11,10 +11,15 @@ import Pagination from "@astrojs/starlight/components/Pagination.astro";
 		<LastUpdated {...Astro.props} />
 	</div>
 	<Pagination {...Astro.props} />
+
     <div class="github">
         <span>Show your support! Star us on GitHub ⭐️</span>
         <a class="github-button" href="https://github.com/openstatusHQ/openstatus" data-color-scheme="no-preference: light; light: light; dark: light;" data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star openstatusHQ/openstatus on GitHub">Star</a>
     </div>
+
+	<div class="flex items-center justify-center">
+		<img src='https://status.openstatus.dev/badge'>
+	</div>
 </footer>
 
 <style>
