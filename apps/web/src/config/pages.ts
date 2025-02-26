@@ -205,7 +205,7 @@ type MarketingPageType = Page;
 export const marketingProductPagesConfig = [
   {
     href: "/features/monitoring",
-    title: "Monitoring",
+    title: "Synthetic Monitoring",
     subtitle:
       "Get insights of the latency of your API and website from all over the world.",
     description: "Monitor your API and website globally.",

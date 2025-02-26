@@ -31,7 +31,7 @@ export const specialCardConfig = {
 export const cardConfig = {
   monitors: {
     icon: "activity",
-    title: "Monitoring",
+    title: "Synthetic Monitoring",
     features: [
       {
         icon: "globe",
@@ -47,10 +47,9 @@ export const cardConfig = {
       },
       {
         icon: "bot",
-        catchline: "Cron Monitoring.",
-        badge: "Coming soon",
+        catchline: "OpenTelemetry.",
         description:
-          "Never let a cron job fail you. Get notified when a job did not run successfully.",
+          "Export your synthetic monitoring metrics to your observability stack.",
       },
     ],
   },
