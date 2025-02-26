@@ -205,7 +205,7 @@ type MarketingPageType = Page;
 export const marketingProductPagesConfig = [
   {
     href: "/features/monitoring",
-    title: "Monitoring",
+    title: "Synthetic Monitoring",
     subtitle:
       "Get insights of the latency of your API and website from all over the world.",
     description: "Monitor your API and website globally.",
@@ -289,7 +289,7 @@ export const marketingPagesConfig = [
 
 export function getPageBySegment(
   segment: string | string[],
-  currentPage: readonly Page[] = pagesConfig,
+  currentPage: readonly Page[] = pagesConfig
 ): Page | undefined {
   if (typeof segment === "string") {
     const page = currentPage.find((page) => page.segment === segment);
