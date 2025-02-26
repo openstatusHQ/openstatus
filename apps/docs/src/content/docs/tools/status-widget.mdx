@@ -4,7 +4,9 @@ description: "How to add a public status widget to your website."
 ---
 
 import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
 
+import StatusWidget from '../../../assets/status-widget/widget-example.png';
 
 We have added a public endpoint where you can access the status of your status
 page. To access it, you only need the unique `:slug` you have chosen for your
@@ -76,7 +78,12 @@ If you are using Nextjs and RSC with the `/app` directory, feel free to use that
 Component. Small reminder that we are using shadcn ui and tailwindcss. You might
 want to update the `bg-muted` and `text-foreground` classes to your needs.
 
-![Status Widget](/images/status-widget/widget-example.png)
+<br />
+
+<Image src={StatusWidget} alt="Status Widget" />
+
+
+<br />
 
 We are using `zod` to validate the response. You can use any other library if
 you want or just remove it. But better be safe than sorry.
@@ -168,7 +175,6 @@ Then, import your `StatusWidget.tsx` component to your layout as well as the slu
 ```jsx
 import StatusWidget from '../../components/StatusWidget.tsx
 
-...
 
 <StatusWidget slug="monitor-slug-here" />
 ```
@@ -282,3 +288,14 @@ import StatusWidget from '../../components/StatusWidget.astro'
 
 <StatusWidget slug="monitor-slug-here" />
 ```
+### SVG Badge
+
+You can also use the SVG badge to display the status of your page.
+
+```html
+		<img src='https://[slug].openstatus.dev/badge'>
+```
+This will return an SVG image with the status of your page. It will look like this:
+<img src='https://status.openstatus.dev/badge' />
+
+

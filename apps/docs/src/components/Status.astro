@@ -1,0 +1,27 @@
+---
+import { statusDictionary, type Status, getStatus } from './utils';
+
+const { status } = await getStatus('openstatus');
+
+const { label, color } = statusDictionary[status];
+
+---
+
+<a
+class="inline-flex max-w-fit items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-gray-700 text-sm hover:bg-gray-100 hover:text-black dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900 dark:hover:text-white no-underline"
+href="https://status.openstatus.dev"
+target="_blank"
+rel="noreferrer"
+>
+{label}
+<span class="relative flex h-2 w-2">
+  {status === "operational" ? (
+    <span
+      class={`absolute inline-flex h-full w-full animate-ping rounded-full ${color} opacity-75 duration-1000`}
+    />
+  ) : null}
+  <span
+    class={`relative inline-flex h-2 w-2 rounded-full ${color}`}
+  />
+</span>
+</a>
