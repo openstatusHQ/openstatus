@@ -12,12 +12,16 @@ const WelcomeEmail = () => {
           Hey 👋
           <br />
           <br />
-          I'm Thibault, the co-founder of OpenStatus, the open-source synthetic monitoring platform.          <br />
+          I'm Thibault, the co-founder of OpenStatus, the open-source synthetic
+          monitoring platform. <br />
           <br />
           <br />
           <br />
           Here are a few things you can do with OpenStatus:
-          <br />- Run your synthetics checks in your{" "}<a href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action?ref=email-onboarding">GitHub Actions</a>
+          <br />- Run your synthetics checks in your{" "}
+          <a href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action?ref=email-onboarding">
+            GitHub Actions
+          </a>
           <br />- Use our{" "}
           <a href="https://docs.openstatus.dev/tools/terraform?ref=email-onboarding">
             Terraform provider
