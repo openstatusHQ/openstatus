@@ -37,7 +37,7 @@ const statusDictionary: Record<Status, { label: string; color: string }> = {
 } as const;
 
 // const SIZE = { width: 120, height: 34 };
-export const SIZE: Record<string, { width: number; height: number }> = {
+const SIZE: Record<string, { width: number; height: number }> = {
   sm: { width: 120, height: 34 },
   md: { width: 160, height: 46 },
   lg: { width: 200, height: 56 },
@@ -45,7 +45,7 @@ export const SIZE: Record<string, { width: number; height: number }> = {
 };
 export async function GET(
   req: NextRequest,
-  props: { params: Promise<{ domain: string }> },
+  props: { params: Promise<{ domain: string }> }
 ) {
   const params = await props.params;
   const { status } = await getStatus(params.domain);
@@ -57,18 +57,20 @@ export async function GET(
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
 
   return new ImageResponse(
-    <div
-      tw={`flex items-center justify-center rounded-md border px-3 py-1
+    (
+      <div
+        tw={`flex items-center justify-center rounded-md border px-3 py-1
         ${size === "sm" && "text-sm"}${size === "md" && "text-md"} ${
           size === "lg" && "text-lg"
         } ${size === "xl" && "text-xl"} ${!size && "text-sm"} ${
           theme === "dark" ? dark : light
         }`}
-      style={{ ...s }}
-    >
-      {label}
-      <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
-    </div>,
-    { ...s },
+        style={{ ...s }}
+      >
+        {label}
+        <div tw={`flex h-2 w-2 rounded-full ml-2 ${color}`} />
+      </div>
+    ),
+    { ...s }
   );
 }
