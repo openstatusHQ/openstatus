@@ -200,7 +200,7 @@ export function DataTableRowActions<TData>({
               onClick={() =>
                 copy(
                   `https://openstatus.dev/status-page/${page.slug}/badge?size=${size}&theme=${theme}`,
-                  { withToast: true }
+                  { withToast: true },
                 )
               }
             >
