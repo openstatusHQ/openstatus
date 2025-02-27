@@ -37,7 +37,7 @@ const statusDictionary: Record<Status, { label: string; color: string }> = {
 } as const;
 
 // const SIZE = { width: 120, height: 34 };
-const SIZE: Record<string, { width: number; height: number }> = {
+export const SIZE: Record<string, { width: number; height: number }> = {
   sm: { width: 120, height: 34 },
   md: { width: 160, height: 46 },
   lg: { width: 200, height: 56 },
@@ -51,12 +51,7 @@ export async function GET(
   const { status } = await getStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
-  let s = SIZE.sm;
-  if (size) {
-    if (SIZE[size]) {
-      s = SIZE[size];
-    }
-  }
+  const s = SIZE[size ?? "sm"] ?? SIZE.sm;
   const { label, color } = statusDictionary[status];
   const light = "border-gray-200 text-gray-700 bg-white";
   const dark = "border-gray-800 text-gray-300 bg-gray-900";

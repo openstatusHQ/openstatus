@@ -27,9 +27,9 @@ import { api } from "@/trpc/client";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionAdvanced } from "./section-advanced";
+import { SectionDanger } from "./section-danger";
 import { SectionMonitor } from "./section-monitor";
 import { SectionVisibility } from "./section-visibility";
-import { SectionDanger } from "./section-danger";
 
 interface Props {
   defaultSection?: string;
@@ -72,7 +72,7 @@ export function StatusPageForm({
       monitors:
         checkAllMonitors && allMonitors
           ? allMonitors.map(({ id }) => ({ monitorId: id, order: 0 }))
-          : (defaultValues?.monitors ?? []),
+          : defaultValues?.monitors ?? [],
     },
   });
   const pathname = usePathname();
