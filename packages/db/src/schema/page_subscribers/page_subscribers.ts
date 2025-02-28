@@ -9,7 +9,7 @@ export const pageSubscriber = sqliteTable("page_subscriber", {
 
   pageId: integer("page_id")
     .notNull()
-    .references(() => page.id),
+    .references(() => page.id, { onDelete: "cascade" }),
 
   token: text("token"),
   acceptedAt: integer("accepted_at", { mode: "timestamp" }),

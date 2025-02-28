@@ -27,6 +27,7 @@ import { api } from "@/trpc/client";
 import { SaveButton } from "../shared/save-button";
 import { General } from "./general";
 import { SectionAdvanced } from "./section-advanced";
+import { SectionDanger } from "./section-danger";
 import { SectionMonitor } from "./section-monitor";
 import { SectionVisibility } from "./section-visibility";
 
@@ -183,6 +184,9 @@ export function StatusPageForm({
             </TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
             <TabsTrigger value="visibility">Visibility</TabsTrigger>
+            {defaultValues?.id ? (
+              <TabsTrigger value="danger">Danger</TabsTrigger>
+            ) : null}
           </TabsList>
           <TabsContent value="monitors">
             <SectionMonitor form={form} monitors={allMonitors} />
@@ -193,6 +197,11 @@ export function StatusPageForm({
           <TabsContent value="visibility">
             <SectionVisibility {...{ form, plan, workspaceSlug }} />
           </TabsContent>
+          {defaultValues?.id ? (
+            <TabsContent value="danger">
+              <SectionDanger pageId={defaultValues.id} />
+            </TabsContent>
+          ) : null}
         </Tabs>
         <SaveButton
           isPending={isPending}

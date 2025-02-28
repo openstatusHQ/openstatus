@@ -51,12 +51,7 @@ export async function GET(
   const { status } = await getStatus(params.domain);
   const theme = req.nextUrl.searchParams.get("theme");
   const size = req.nextUrl.searchParams.get("size");
-  let s = SIZE.sm;
-  if (size) {
-    if (SIZE[size]) {
-      s = SIZE[size];
-    }
-  }
+  const s = SIZE[size ?? "sm"] ?? SIZE.sm;
   const { label, color } = statusDictionary[status];
   const light = "border-gray-200 text-gray-700 bg-white";
   const dark = "border-gray-800 text-gray-300 bg-gray-900";
