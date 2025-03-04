@@ -198,7 +198,6 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				Message:       err.Error(),
 				Region:        h.Region,
 				CronTimestamp: req.CronTimestamp,
-				Latency:       latency,
 			})
 		}
 	}
