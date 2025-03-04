@@ -7,11 +7,14 @@ import {
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
-import { sendEmailHtml } from "@openstatus/emails";
 
+import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
+import { EmailClient } from "@openstatus/emails";
 import type { statusReportUpdatesApi } from "./index";
 import { StatusReportUpdateSchema } from "./schema";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const createStatusUpdate = createRoute({
   method: "post",
@@ -89,21 +92,27 @@ export function registerPostStatusReportUpdate(
         )
         .all();
 
-      const pageInfo = await db
-        .select()
-        .from(page)
-        .where(eq(page.id, _statusReport.pageId))
-        .get();
-      if (pageInfo) {
-        const subscribersEmails = subscribers.map((subscriber) => ({
-          to: subscriber.email,
-          subject: `New status update for ${pageInfo.title}`,
-          html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-            `,
-          from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
-        }));
+      const _page = await db.query.page.findFirst({
+        where: eq(page.id, _statusReport.pageId),
+        with: {
+          monitorsToPages: {
+            with: {
+              monitor: true,
+            },
+          },
+        },
+      });
 
-        await sendEmailHtml(subscribersEmails);
+      if (_page && subscribers.length > 0) {
+        await emailClient.sendStatusReportUpdate({
+          to: subscribers.map((subscriber) => subscriber.email),
+          pageTitle: _page.title,
+          reportTitle: _statusReport.title,
+          status: _statusReport.status,
+          message: _statusReportUpdate.message,
+          date: _statusReportUpdate.date.toISOString(),
+          monitors: _page.monitorsToPages.map((i) => i.monitor.name),
+        });
       }
     }
 

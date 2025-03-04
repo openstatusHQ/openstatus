@@ -33,6 +33,7 @@ checkerRoute.post("/updateStatus", async (c) => {
     region: z.enum(flyRegions),
     cronTimestamp: z.number(),
     status: monitorStatusSchema,
+    latency: z.number().optional(),
   });
 
   const result = payloadSchema.safeParse(json);
@@ -40,8 +41,15 @@ checkerRoute.post("/updateStatus", async (c) => {
   if (!result.success) {
     return c.text("Unprocessable Entity", 422);
   }
-  const { monitorId, message, region, statusCode, cronTimestamp, status } =
-    result.data;
+  const {
+    monitorId,
+    message,
+    region,
+    statusCode,
+    cronTimestamp,
+    status,
+    latency,
+  } = result.data;
 
   console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
@@ -103,6 +111,8 @@ checkerRoute.post("/updateStatus", async (c) => {
           notifType: "degraded",
           cronTimestamp,
           incidentId: `${cronTimestamp}`,
+          region,
+          latency,
         });
       }
     }
@@ -182,6 +192,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             incidentId: newIncident.length
               ? String(newIncident[0]?.id)
               : `${cronTimestamp}`,
+            region,
+            latency,
           });
 
           if (newIncident.length > 0) {
@@ -287,6 +299,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             notifType: "recovery",
             cronTimestamp,
             incidentId: String(incident.id),
+            region,
+            latency,
           });
 
           const monitor = await db

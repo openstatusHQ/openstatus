@@ -16,6 +16,7 @@ import { colors, styles } from "./_components/styles";
 
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
+  // statusReportStatus from db
   status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
   date: z.string(),
   message: z.string(),
@@ -91,7 +92,7 @@ function StatusReportEmail({
             </Column>
             <Column style={{ textAlign: "right" }}>
               <Text style={{ flexWrap: "wrap", wordWrap: "break-word" }}>
-                {monitors.join(", ")}
+                {monitors.length > 0 ? monitors.join(", ") : "N/A"}
               </Text>
             </Column>
           </Row>
@@ -112,7 +113,7 @@ StatusReportEmail.PreviewProps = {
   pageTitle: "OpenStatus Status",
   reportTitle: "API Unavaible",
   status: "investigating",
-  date: "2021-07-19",
+  date: new Date().toISOString(),
   message:
     "The API is down, including the webhook. We are actively investigating the issue and will provide updates as soon as possible.",
   monitors: ["OpenStatus API", "OpenStatus Webhook"],

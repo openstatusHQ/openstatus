@@ -10,6 +10,7 @@ export const env = () =>
       GCP_PRIVATE_KEY: z.string().default(""),
       GCP_LOCATION: z.string().default("europe-west1"),
       CRON_SECRET: z.string().default(""),
+      ADMIN_SECRET: z.string().default(""),
       SITE_URL: z.string().default("http://localhost:3000"),
       DATABASE_URL: z.string().default("http://localhost:8080"),
       DATABASE_AUTH_TOKEN: z.string().default(""),

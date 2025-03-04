@@ -1,16 +1,21 @@
+import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq, isNotNull } from "@openstatus/db";
 import {
+  monitor,
   page,
   pageSubscriber,
   statusReport,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { EmailClient } from "@openstatus/emails/src/client";
 import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 import { StatusReportUpdateSchema } from "../../statusReportUpdates/schema";
 import type { statusReportsApi } from "../index";
 import { ParamsSchema, StatusReportSchema } from "../schema";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const postRouteUpdate = createRoute({
   method: "post",
@@ -82,6 +87,18 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
       .get();
 
     if (limits.notifications && _statusReport.pageId) {
+      const allInfo = await db.query.statusReport.findFirst({
+        where: eq(statusReport.id, Number(id)),
+        with: {
+          monitorsToStatusReports: {
+            with: {
+              monitor: true,
+            },
+          },
+          page: true,
+        },
+      });
+
       const subscribers = await db
         .select()
         .from(pageSubscriber)
@@ -92,22 +109,19 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           ),
         )
         .all();
-      const pageInfo = await db
-        .select()
-        .from(page)
-        .where(eq(page.id, _statusReport.pageId))
-        .get();
-      if (pageInfo) {
-        const subscribersEmails = subscribers.map((subscriber) => {
-          return {
-            to: subscriber.email,
-            subject: `New status update for ${pageInfo.title}`,
-            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-          `,
-            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
-          };
+
+      if (allInfo && allInfo.page) {
+        await emailClient.sendStatusReportUpdate({
+          to: subscribers.map((subscriber) => subscriber.email),
+          pageTitle: allInfo.page.title,
+          reportTitle: allInfo.title,
+          status: allInfo.status,
+          message: _statusReportUpdate.message,
+          date: _statusReportUpdate.date.toISOString(),
+          monitors: allInfo.monitorsToStatusReports.map(
+            (monitor) => monitor.monitor.name,
+          ),
         });
-        await sendBatchEmailHtml(subscribersEmails);
       }
     }
 

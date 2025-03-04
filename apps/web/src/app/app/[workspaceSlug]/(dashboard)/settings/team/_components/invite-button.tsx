@@ -50,7 +50,8 @@ export function InviteButton({
   async function onSubmit(data: Schema) {
     startTransition(async () => {
       try {
-        api.invitation.create.mutate(data);
+        const invitation = await api.invitation.create.mutate(data);
+        await api.emailRouter.sendTeamInvitation.mutate({ id: invitation.id });
         toastAction("saved");
         router.refresh();
       } catch {

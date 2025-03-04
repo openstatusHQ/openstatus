@@ -202,6 +202,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					Message:       res.Error,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 			// Check if the status is degraded
@@ -212,6 +213,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 		}
@@ -225,6 +227,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 
@@ -246,6 +249,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 		}
@@ -259,6 +263,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 
@@ -269,6 +274,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 					Region:        h.Region,
 					StatusCode:    res.Status,
 					CronTimestamp: req.CronTimestamp,
+					Latency:       res.Latency,
 				})
 			}
 		}
@@ -304,6 +310,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				Message:       err.Error(),
 				Region:        h.Region,
 				CronTimestamp: req.CronTimestamp,
+				Latency:       res.Latency,
 			})
 		}
 	}

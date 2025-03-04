@@ -6,7 +6,10 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { checkerAudit } from "@/utils/audit-log";
-import type { MonitorFlyRegion } from "@openstatus/db/src/schema/constants";
+import type {
+  MonitorFlyRegion,
+  Region,
+} from "@openstatus/db/src/schema/constants";
 import { Redis } from "@openstatus/upstash";
 import { providerToFunction } from "./utils";
 
@@ -19,6 +22,8 @@ export const triggerNotifications = async ({
   notifType,
   cronTimestamp,
   incidentId,
+  region,
+  latency,
 }: {
   monitorId: string;
   statusCode?: number;
@@ -26,6 +31,8 @@ export const triggerNotifications = async ({
   notifType: "alert" | "recovery" | "degraded";
   cronTimestamp: number;
   incidentId: string;
+  region?: Region;
+  latency?: number;
 }) => {
   console.log(`💌 triggerAlerting for ${monitorId}`);
   const notifications = await db
@@ -64,6 +71,8 @@ export const triggerNotifications = async ({
           message,
           incidentId,
           cronTimestamp,
+          region,
+          latency,
         });
         break;
       case "recovery":
@@ -74,6 +83,8 @@ export const triggerNotifications = async ({
           message,
           incidentId,
           cronTimestamp,
+          region,
+          latency,
         });
         break;
       case "degraded":
@@ -83,6 +94,8 @@ export const triggerNotifications = async ({
           statusCode,
           message,
           cronTimestamp,
+          region,
+          latency,
         });
         break;
     }
