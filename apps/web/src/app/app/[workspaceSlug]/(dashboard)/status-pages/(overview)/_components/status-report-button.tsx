@@ -33,9 +33,9 @@ export function StatusReportButton({ pages }: { pages: Page[] }) {
             "mt-2",
           )}
         >
-          <Megaphone className="h-4 w-4 mr-1 pb-0.5" />
+          <Megaphone className="mr-1 h-4 w-4 pb-0.5" />
           New Status Report
-          <span className="h-8 w-px bg-background mx-2" />
+          <span className="mx-2 h-8 w-px bg-background" />
           <ChevronDown className="h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

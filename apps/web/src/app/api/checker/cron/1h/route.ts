@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     try {
       await cron({ periodicity: "1h", req });
       await cronCompleted();
-    } catch (error) {
+    } catch (_error) {
       await cronFailed();
     }
   }

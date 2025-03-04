@@ -48,4 +48,4 @@ export class MemoryCache {
   }
 }
 
-const cache = new MemoryCache();
+const _cache = new MemoryCache();

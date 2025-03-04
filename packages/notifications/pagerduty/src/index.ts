@@ -169,7 +169,7 @@ export const sendTest = async ({
       },
     });
 
-    const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
+    const _res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
     });

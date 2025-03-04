@@ -110,7 +110,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
         )
         .all();
 
-      if (allInfo && allInfo.page) {
+      if (allInfo?.page) {
         await emailClient.sendStatusReportUpdate({
           to: subscribers.map((subscriber) => subscriber.email),
           pageTitle: allInfo.page.title,
