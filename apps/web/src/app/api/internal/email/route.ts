@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   for (const user of users) {
     if (user.email) {
       await sendEmail({
-        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        from: "Thibault from OpenStatus <thibault@openstatus.dev>",
         subject: "How's it going with OpenStatus?",
         to: [user.email],
         react: FollowUpEmail(),

@@ -1,56 +1,48 @@
 /** @jsxImportSource react */
 
-import { Body, Head, Html, Link, Preview } from "@react-email/components";
+import { Body, Head, Html, Preview } from "@react-email/components";
 
 const WelcomeEmail = () => {
   return (
     <Html>
       <Head>
         <title>Welcome to OpenStatus</title>
-        <Preview>Take the most of your OpenStatus monitoring</Preview>
+        <Preview>Few tips to get started</Preview>
         <Body>
           Hey 👋
           <br />
           <br />
-          I'm Thibault <a href="https://www.openstatus.dev">OpenStatus</a>{" "}
-          co-founder.
+          I'm Thibault, the co-founder of OpenStatus, the open-source synthetic
+          monitoring platform. <br />
           <br />
-          <br /> I'm thrilled to see you joining us. We are building an
-          open-source status page and monitoring tool. We are here to help you
-          monitor your websites and API to get notified before your users alert
-          you.
           <br />
           <br />
           Here are a few things you can do with OpenStatus:
+          <br />- Run your synthetics checks in your{" "}
+          <a href="https://docs.openstatus.dev/guides/how-to-run-synthetic-test-github-action?ref=email-onboarding">
+            GitHub Actions
+          </a>
           <br />- Use our{" "}
-          <a href="https://docs.openstatus.dev/tools/terraform">
+          <a href="https://docs.openstatus.dev/tools/terraform?ref=email-onboarding">
             Terraform provider
           </a>{" "}
           to manage your monitors
-          <br />- Integrate your status within your application with our{" "}
-          <a href="https://docs.openstatus.dev/tools/status-widget">API</a> and{" "}
-          <a href="https://docs.openstatus.dev/tools/react/">React Widget</a>
           <br />- Build your own status page with our{" "}
           <a href="https://api.openstatus.dev/v1">API</a> and host it where you
           want. Here's our{" "}
-          <a href="https://github.com/openstatusHQ/astro-status-page">
+          <a href="https://github.com/openstatusHQ/astro-status-page?ref=email-onboarding">
             Astro template
           </a>{" "}
           that you can easily host on CloudFlare
           <br />
           <br />
-          If you have any questions, just let me know, or book a call with me{" "}
-          <a href="https://cal.com/team/openstatus/30min">here</a>.
+          Quick question: How did you learn about us? and why did you sign up?
           <br />
           Thank you,
           <br />
           <br />
           Thibault Le Ouay Ducasse
           <br />
-          <br />⭐ Star us on{" "}
-          <Link href="https://github.com/openstatushq/openstatus">GitHub</Link>
-          <br />🚀 Visit our website{" "}
-          <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
       </Head>
     </Html>
