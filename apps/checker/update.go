@@ -18,7 +18,7 @@ type UpdateData struct {
 	Region        string `json:"region"`
 	CronTimestamp int64  `json:"cronTimestamp"`
 	StatusCode    int    `json:"statusCode,omitempty"`
-	Latency       int    `json:"latency,omitempty"`
+	Latency       int64    `json:"latency,omitempty"`
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) {
