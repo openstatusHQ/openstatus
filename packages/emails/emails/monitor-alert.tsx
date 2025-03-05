@@ -2,14 +2,11 @@
 
 import {
   Body,
-  Button,
   CodeInline,
   Column,
-  Container,
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Row,
@@ -62,19 +59,6 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => (
     <Preview>Your monitor's status is: {props.type}</Preview>
     <Body style={styles.main}>
       <Layout>
-        <Container
-          style={{
-            backgroundColor: getIcon(props.type).color,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "40px",
-            height: "40px",
-            borderRadius: "50%",
-          }}
-        >
-          <Img src={getIcon(props.type).src} width="24" height="24" />
-        </Container>
         <Row>
           <Column>
             <Heading as="h4">{props.name}</Heading>
@@ -126,6 +110,16 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => (
             <Text>{props.region}</Text>
           </Column>
         </Row>
+        {props.latency ? (
+          <Row style={styles.row}>
+            <Column>
+              <Text style={styles.bold}>Latency</Text>
+            </Column>
+            <Column style={{ textAlign: "right" }}>
+              <Text>{props.latency}</Text>
+            </Column>
+          </Row>
+        ) : null}
         <Row style={styles.row}>
           <Column>
             <Text style={styles.bold}>Timestamp</Text>
