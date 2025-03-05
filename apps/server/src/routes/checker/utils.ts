@@ -30,6 +30,7 @@ import {
   sendAlert as sendPagerdutyAlert,
 } from "@openstatus/notification-pagerduty";
 
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   sendAlert as sendOpsGenieAlert,
   sendDegraded as sendOpsGenieDegraded,
@@ -43,6 +44,8 @@ type SendNotification = ({
   message,
   incidentId,
   cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -50,6 +53,8 @@ type SendNotification = ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => Promise<void>;
 
 type Notif = {

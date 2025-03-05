@@ -40,7 +40,7 @@ export function Article({ post }: { post: Post }) {
             >
               {post.author.name}
             </Link>
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex flex-wrap items-center gap-1.5">
               <time className="font-mono">{formatDate(post.publishedAt)}</time>
               <span className="text-muted-foreground/70">&bull;</span>
               <span className="font-mono">{post.readingTime}</span>

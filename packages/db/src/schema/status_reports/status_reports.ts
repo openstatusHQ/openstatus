@@ -37,7 +37,7 @@ export const statusReport = sqliteTable("status_report", {
 export const statusReportUpdate = sqliteTable("status_report_update", {
   id: integer("id").primaryKey(),
 
-  status: text("status", statusReportStatus).notNull(),
+  status: text("status", { enum: statusReportStatus }).notNull(),
   date: integer("date", { mode: "timestamp" }).notNull(),
   message: text("message").notNull(),
 

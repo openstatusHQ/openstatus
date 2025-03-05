@@ -20,14 +20,15 @@ import { Layout } from "./_components/layout";
 import { colors, styles } from "./_components/styles";
 
 const MonitorAlertSchema = z.object({
-  type: z.enum(["degraded", "up", "down"]),
+  type: z.enum(["degraded", "alert", "recovery"]),
   name: z.string().optional(),
   url: z.string().optional(),
   method: z.string().optional(),
   status: z.string().optional(),
   latency: z.string().optional(),
-  location: z.string().optional(),
+  region: z.string().optional(),
   timestamp: z.string().optional(),
+  message: z.string().optional(),
 });
 
 export type MonitorAlertProps = z.infer<typeof MonitorAlertSchema>;
@@ -37,12 +38,12 @@ function getIcon(type: MonitorAlertProps["type"]): {
   color: string;
 } {
   switch (type) {
-    case "up":
+    case "recovery":
       return {
         src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNoZWNrIj48cGF0aCBkPSJNMjAgNiA5IDE3bC01LTUiLz48L3N2Zz4=",
         color: colors.success,
       };
-    case "down":
+    case "alert":
       return {
         src: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXgiPjxwYXRoIGQ9Ik0xOCA2IDYgMTgiLz48cGF0aCBkPSJtNiA2IDEyIDEyIi8+PC9zdmc+",
         color: colors.danger,
@@ -58,9 +59,7 @@ function getIcon(type: MonitorAlertProps["type"]): {
 const MonitorAlertEmail = (props: MonitorAlertProps) => (
   <Html>
     <Head />
-    <Preview>
-      A fine-grained personal access token has been added to your account
-    </Preview>
+    <Preview>Your monitor's status is: {props.type}</Preview>
     <Body style={styles.main}>
       <Layout>
         <Container
@@ -108,28 +107,23 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => (
             </Text>
           </Column>
         </Row>
+        {/* REMINDER: no status code for TCP monitors */}
+        {props.status ? (
+          <Row style={styles.row}>
+            <Column>
+              <Text style={styles.bold}>Status</Text>
+            </Column>
+            <Column style={{ textAlign: "right" }}>
+              <Text>{props.status}</Text>
+            </Column>
+          </Row>
+        ) : null}
         <Row style={styles.row}>
           <Column>
-            <Text style={styles.bold}>Status</Text>
+            <Text style={styles.bold}>Region</Text>
           </Column>
           <Column style={{ textAlign: "right" }}>
-            <Text>{props.status}</Text>
-          </Column>
-        </Row>
-        <Row style={styles.row}>
-          <Column>
-            <Text style={styles.bold}>Latency</Text>
-          </Column>
-          <Column style={{ textAlign: "right" }}>
-            <Text>{props.latency}</Text>
-          </Column>
-        </Row>
-        <Row style={styles.row}>
-          <Column>
-            <Text style={styles.bold}>Location</Text>
-          </Column>
-          <Column style={{ textAlign: "right" }}>
-            <Text>{props.location}</Text>
+            <Text>{props.region}</Text>
           </Column>
         </Row>
         <Row style={styles.row}>
@@ -140,6 +134,16 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => (
             <Text>{props.timestamp}</Text>
           </Column>
         </Row>
+        {props.message ? (
+          <Row style={styles.row}>
+            <Column>
+              <Text>
+                {props.message?.slice(0, 200)}
+                {props.message?.length > 200 ? "..." : ""}
+              </Text>
+            </Column>
+          </Row>
+        ) : null}
         <Row style={styles.row}>
           <Column>
             <Text style={{ textAlign: "center" }}>
@@ -155,14 +159,16 @@ const MonitorAlertEmail = (props: MonitorAlertProps) => (
 );
 
 MonitorAlertEmail.PreviewProps = {
-  type: "up",
+  type: "alert",
   name: "Ping Pong",
   url: "https://openstatus.dev/ping",
   method: "GET",
   status: "200",
   latency: "300ms",
-  location: "San Francisco",
+  region: "Amsterdam, Netherlands",
   timestamp: "2021-10-13T17:29:00Z",
+  message:
+    "This is a very long test message that will be truncated. Just testing it for the preview. Veryy veryy long message.",
 } satisfies MonitorAlertProps;
 
 export default MonitorAlertEmail;

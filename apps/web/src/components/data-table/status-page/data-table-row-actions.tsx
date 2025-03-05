@@ -150,7 +150,7 @@ export function DataTableRowActions<TData>({
             Create an uptime badge for your status page.
           </DialogDescription>
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center p-4 border rounded-md w-full">
+            <div className="flex w-full items-center justify-center rounded-md border p-4">
               <img
                 src={`/status-page/${page.slug}/badge?size=${size}&theme=${theme}`}
                 alt="Badge"
@@ -175,7 +175,7 @@ export function DataTableRowActions<TData>({
               ))}
             </RadioGroup>
             <div>
-              <span className="text-sm text-muted-foreground font-mono">
+              <span className="font-mono text-muted-foreground text-sm">
                 {SIZE[size].width}x{SIZE[size].height}
               </span>
             </div>

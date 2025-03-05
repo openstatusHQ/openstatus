@@ -112,7 +112,7 @@ export const columns: ColumnDef<
           <span className="group-hover:text-muted-foreground/70">
             {formatDate(date)}
           </span>
-          <div className="absolute -inset-x-2 -inset-y-1 invisible group-hover:visible backdrop-blur-sm flex items-center px-2 py-1">
+          <div className="-inset-x-2 -inset-y-1 invisible absolute flex items-center px-2 py-1 backdrop-blur-sm group-hover:visible">
             <Link
               href={`./status-pages/${row.original.id}/reports/${lastReport.id}`}
               className="hover:underline"

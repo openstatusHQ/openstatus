@@ -82,12 +82,19 @@ export function StatusReportForm({
           );
           // include update on creation
           if (statusReport?.id) {
-            await api.statusReport.createStatusReportUpdate.mutate({
-              message,
-              date,
-              status,
-              statusReportId: statusReport.id,
-            });
+            const statusReportUpdate =
+              await api.statusReport.createStatusReportUpdate.mutate({
+                message,
+                date,
+                status,
+                statusReportId: statusReport.id,
+              });
+
+            if (statusReportUpdate) {
+              await api.emailRouter.sendStatusReport.mutate({
+                id: statusReportUpdate.id,
+              });
+            }
           }
         }
         if (nextUrl) {

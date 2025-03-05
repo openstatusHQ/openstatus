@@ -50,9 +50,18 @@ export function StatusReportUpdateForm({
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.statusReport.updateStatusReportUpdate.mutate({ ...props });
+          await api.statusReport.updateStatusReportUpdate.mutate({
+            ...props,
+          });
         } else {
-          await api.statusReport.createStatusReportUpdate.mutate({ ...props });
+          const statusReportUpdate =
+            await api.statusReport.createStatusReportUpdate.mutate({
+              ...props,
+            });
+          if (!statusReportUpdate) return;
+          await api.emailRouter.sendStatusReport.mutate({
+            id: statusReportUpdate.id,
+          });
         }
         toastAction("saved");
         onSubmit?.();

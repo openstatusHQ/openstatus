@@ -4,44 +4,12 @@ import {
   emailDataSchema,
 } from "@openstatus/db/src/schema";
 
+import type { Region } from "@openstatus/db/src/schema/constants";
+import { EmailClient } from "@openstatus/emails/src/client";
+import { flyRegionsDict } from "@openstatus/utils";
 import { env } from "../env";
 
-async function send({
-  subject,
-  html,
-  email,
-  id,
-  type,
-}: {
-  subject: string;
-  html: string;
-  email: string;
-  id: number;
-  type: "recovered" | "alert" | "degraded";
-}) {
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      to: email,
-      from: "Notifications <ping@openstatus.dev>",
-      subject,
-      html,
-    }),
-  });
-
-  if (res.ok) {
-    const data = await res.json();
-    console.log(data);
-    // return NextResponse.json(data);
-  }
-  if (!res.ok) {
-    console.log(`Error sending ${type} email ${id}`);
-  }
-}
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 export const sendAlert = async ({
   monitor,
@@ -49,6 +17,8 @@ export const sendAlert = async ({
   statusCode,
   message,
   cronTimestamp,
+  latency,
+  region,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -56,33 +26,33 @@ export const sendAlert = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  region?: Region;
+  latency?: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;
 
-  await send({
-    id: monitor.id,
+  await emailClient.sendMonitorAlert({
+    name: monitor.name,
     type: "alert",
-    email: config.data.email,
-    subject: `🚨 Alert ${monitor.name}`,
-    html: `
-    <p>Hi,</p>
-    <p>Your monitor <strong>${monitor.name}</strong> is down.</p>
-    <p>URL: ${monitor.url}</p>
-      ${
-        statusCode
-          ? `<p>Status Code: ${statusCode}</p>`
-          : `<p>Error message: ${message}</p>`
-      }
-    <p>Cron Timestamp: ${cronTimestamp} (${new Date(cronTimestamp).toISOString()})</p>
-    <p>OpenStatus 🏓</p>`,
+    to: config.data.email,
+    url: monitor.url,
+    status: statusCode?.toString(),
+    latency: latency ? `${latency}ms` : "N/A",
+    region: region ? flyRegionsDict[region].location : "N/A",
+    timestamp: new Date(cronTimestamp).toISOString(),
+    message,
   });
 };
 
 export const sendRecovery = async ({
   monitor,
   notification,
+  statusCode,
+  cronTimestamp,
+  region,
+  latency,
 }: {
   monitor: Monitor;
   notification: Notification;
@@ -90,49 +60,53 @@ export const sendRecovery = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  region?: Region;
+  latency?: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;
 
-  send({
-    id: monitor.id,
-    type: "recovered",
-    email: config.data.email,
-    subject: `✅ Recovered ${monitor.name}`,
-    html: `
-      <p>Hi,</p>
-      <p>Your monitor <strong>${monitor.name}</strong> is up again.</p>
-      <p>URL: ${monitor.url}</p>
-      <p>OpenStatus 🏓</p>
-    `,
+  await emailClient.sendMonitorAlert({
+    name: monitor.name,
+    type: "recovery",
+    to: config.data.email,
+    url: monitor.url,
+    status: statusCode?.toString(),
+    latency: latency ? `${latency}ms` : "N/A",
+    region: region ?? "N/A",
+    timestamp: new Date(cronTimestamp).toISOString(),
   });
 };
 
 export const sendDegraded = async ({
   monitor,
   notification,
+  statusCode,
+  cronTimestamp,
+  region,
+  latency,
 }: {
   monitor: Monitor;
   notification: Notification;
   statusCode?: number;
   message?: string;
   cronTimestamp: number;
+  region?: Region;
+  latency?: number;
 }) => {
   const config = emailDataSchema.safeParse(JSON.parse(notification.data));
 
   if (!config.success) return;
 
-  send({
-    id: monitor.id,
+  await emailClient.sendMonitorAlert({
+    name: monitor.name,
     type: "degraded",
-    email: config.data.email,
-    subject: `⚠️ Degraded ${monitor.name}`,
-    html: `
-      <p>Hi,</p>
-      <p>Your monitor <strong>${monitor.name}</strong> is taking longer than expected to respond</p>
-      <p>URL: ${monitor.url}</p>
-      <p>OpenStatus 🏓</p>
-    `,
+    to: config.data.email,
+    url: monitor.url,
+    status: statusCode?.toString(),
+    latency: latency ? `${latency}ms` : "N/A",
+    region: region ?? "N/A",
+    timestamp: new Date(cronTimestamp).toISOString(),
   });
 };

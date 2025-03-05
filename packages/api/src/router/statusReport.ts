@@ -1,12 +1,11 @@
 import { z } from "zod";
 
-import { and, eq, inArray, isNotNull, sql } from "@openstatus/db";
+import { and, eq, inArray, sql } from "@openstatus/db";
 import {
   insertStatusReportSchema,
   insertStatusReportUpdateSchema,
   monitorsToStatusReport,
   page,
-  pageSubscriber,
   selectMonitorSchema,
   selectPublicStatusReportSchemaWithRelation,
   selectStatusReportSchema,
@@ -14,9 +13,7 @@ import {
   statusReport,
   statusReportStatusSchema,
   statusReportUpdate,
-  workspace,
 } from "@openstatus/db/src/schema";
-import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -67,9 +64,9 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const { id, ...statusReportUpdateInput } = opts.input;
+      if (!_statusReport) return;
 
-      // Send email
+      const { id, ...statusReportUpdateInput } = opts.input;
 
       const updatedValue = await opts.ctx.db
         .insert(statusReportUpdate)
@@ -77,44 +74,7 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      const currentWorkspace = await opts.ctx.db
-        .select()
-        .from(workspace)
-        .where(eq(workspace.id, opts.ctx.workspace.id))
-        .get();
-      if (currentWorkspace?.plan !== "pro" && _statusReport.pageId) {
-        const subscribers = await opts.ctx.db
-          .select()
-          .from(pageSubscriber)
-          .where(
-            and(
-              eq(pageSubscriber.pageId, _statusReport.pageId),
-              isNotNull(pageSubscriber.acceptedAt),
-            ),
-          )
-          .all();
-        const pageInfo = await opts.ctx.db
-          .select()
-          .from(page)
-          .where(eq(page.id, _statusReport.pageId))
-          .get();
-        if (pageInfo) {
-          const emails = subscribers.map((subscriber) => {
-            return {
-              to: subscriber.email,
-
-              subject: `New status update for ${pageInfo.title}`,
-              html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${updatedValue.status}</p><p>${updatedValue.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-        `,
-              from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
-            };
-          });
-          if (emails.length > 0) {
-            await sendBatchEmailHtml(emails);
-          }
-        }
-      }
-      return updatedValue;
+      return selectStatusReportUpdateSchema.parse(updatedValue);
     }),
 
   updateStatusReport: protectedProcedure
@@ -195,7 +155,7 @@ export const statusReportRouter = createTRPCRouter({
         .returning()
         .get();
 
-      return currentStatusReportUpdate;
+      return selectStatusReportUpdateSchema.parse(currentStatusReportUpdate);
     }),
 
   deleteStatusReport: protectedProcedure
