@@ -183,8 +183,14 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		// it's in error if not successful
 		if isSuccessfull {
 			data.Error = 0
+			if req.DegradedAfter != 0 && res.Latency > req.DegradedAfter {
+				data.Body = res.Body
+
+			} else {
+				data.Body = ""
+
+			}
 			// Small trick to avoid sending the body at the moment to TB
-			data.Body = ""
 		} else {
 			data.Error = 1
 			result.Error = "Error"
@@ -192,85 +198,46 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		data.Assertions = assertionAsString
 
-		if req.Status == "active" {
-			if !isSuccessfull {
-				// Q: Why here we do not check if the status was previously active?
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "error",
-					StatusCode:    res.Status,
-					Region:        h.Region,
-					Message:       res.Error,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
-			// Check if the status is degraded
-			if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "degraded",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
+		if !isSuccessfull {
+			// Q: Why here we do not check if the status was previously active?
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "error",
+				StatusCode:    res.Status,
+				Region:        h.Region,
+				Message:       res.Error,
+				CronTimestamp: req.CronTimestamp,
+			})
 		}
-
-		// We were in error
-		if req.Status == "error" {
-			if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "degraded",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
-
-			if isSuccessfull && req.DegradedAfter > 0 && res.Latency < req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "active",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
-
-			// This happens when we don't have a degradedAfter
-			if isSuccessfull && req.DegradedAfter == 0 {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "active",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
+		// it's degraded
+		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "degraded",
+				Region:        h.Region,
+				StatusCode:    res.Status,
+				CronTimestamp: req.CronTimestamp,
+			})
 		}
-
-		if req.Status == "degraded" {
-			// if we were in degraded and now we are successful, we should update the status to active
-			if isSuccessfull && req.DegradedAfter > 0 && res.Latency <= req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "active",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
-
-			if !isSuccessfull {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "error",
-					Region:        h.Region,
-					StatusCode:    res.Status,
-					CronTimestamp: req.CronTimestamp,
-				})
-			}
+		// it's active
+		if isSuccessfull && req.DegradedAfter == 0 {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "active",
+				Region:        h.Region,
+				StatusCode:    res.Status,
+				CronTimestamp: req.CronTimestamp,
+			})
+		}
+		// it's active
+		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "active",
+				Region:        h.Region,
+				StatusCode:    res.Status,
+				CronTimestamp: req.CronTimestamp,
+			})
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {

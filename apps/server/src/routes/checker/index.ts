@@ -2,21 +2,36 @@ import { Client } from "@upstash/qstash";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { and, db, eq, isNull, schema } from "@openstatus/db";
+import { and, count, db, eq, isNull, schema } from "@openstatus/db";
 import { incidentTable, workspace } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
-import { Redis } from "@openstatus/upstash";
 
 import { env } from "@/env";
 import { checkerAudit } from "@/utils/audit-log";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
+import { Tinybird } from "@openstatus/tinybird";
 
 export const checkerRoute = new Hono();
-const redis = Redis.fromEnv();
+
+const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+
+const payloadSchema = z.object({
+  monitorId: z.string(),
+  message: z.string().optional(),
+  statusCode: z.number().optional(),
+  region: z.enum(flyRegions),
+  cronTimestamp: z.number(),
+  status: monitorStatusSchema,
+});
+
+const publishStatus = tb.buildIngestEndpoint({
+  datasource: "alerts__v0",
+  event: payloadSchema,
+});
 
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
@@ -26,14 +41,6 @@ checkerRoute.post("/updateStatus", async (c) => {
   }
 
   const json = await c.req.json();
-  const payloadSchema = z.object({
-    monitorId: z.string(),
-    message: z.string().optional(),
-    statusCode: z.number().optional(),
-    region: z.enum(flyRegions),
-    cronTimestamp: z.number(),
-    status: monitorStatusSchema,
-  });
 
   const result = payloadSchema.safeParse(json);
 
@@ -45,155 +52,142 @@ checkerRoute.post("/updateStatus", async (c) => {
 
   console.log(`📝 update monitor status ${JSON.stringify(result.data)}`);
 
-  // we check if it's an error
-  // If status  not in 200>  and <300
-  // if there's no  incident create one and notify
-  // publish event to TB
+  // First we upsert the monitor status
+  await upsertMonitorStatus({
+    monitorId: monitorId,
+    status,
+    region: region,
+  });
+  await publishStatus(result.data);
 
-  // if status is ok  checked if there's an open incident
-  // if open incident publish incident recovered
-  const incident = await db
-    .select()
-    .from(incidentTable)
-    .where(
-      and(
-        eq(incidentTable.monitorId, Number(monitorId)),
-        isNull(incidentTable.resolvedAt),
-        isNull(incidentTable.acknowledgedAt),
-      ),
-    )
-    .get();
 
-  if (status === "degraded") {
-    // We upsert the status of the  monitor
-    await upsertMonitorStatus({
-      monitorId: monitorId,
-      status: "degraded",
-      region: region,
-    });
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${monitorId}`,
-      action: "monitor.degraded",
-      targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region, statusCode: statusCode ?? -1 },
-    });
     const currentMonitor = await db
       .select()
       .from(schema.monitor)
       .where(eq(schema.monitor.id, Number(monitorId)))
       .get();
-    if (currentMonitor?.status === "active") {
-      const redisKey = `${monitorId}-${cronTimestamp}-degraded`;
-      // We add the new region to the set
-      await redis.sadd(redisKey, region);
-      // let's add an expire to the set
-      // We get the number of regions affected
-      const nbAffectedRegion = await redis.scard(redisKey);
-      await redis.expire(redisKey, 60 * 60 * 24);
 
-      const monitor = selectMonitorSchema.parse(currentMonitor);
+    const monitor = selectMonitorSchema.parse(currentMonitor);
+    const numberOfRegions = monitor.regions.length;
 
-      const numberOfRegions = monitor.regions.length;
+    const affectedRegion = await db
+      .select({ count: count() })
+      .from(schema.monitorStatusTable)
+      .where(
+        and(
+          eq(schema.monitorStatusTable.monitorId, monitor.id),
+          eq(schema.monitorStatusTable.status, status),
+        ),
+      )
+      .get();
 
-      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
-        await triggerNotifications({
-          monitorId,
-          statusCode,
-          message,
-          notifType: "degraded",
-          cronTimestamp,
-          incidentId: `${cronTimestamp}`,
-        });
-      }
+    if (!affectedRegion?.count) {
+      return;
     }
-  }
-  // if we are in error
-  if (status === "error") {
-    // trigger alerting
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${monitorId}`,
-      action: "monitor.failed",
-      targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region, statusCode, message },
-    });
-    // We upsert the status of the  monitor
-    await upsertMonitorStatus({
-      monitorId: monitorId,
-      status: "error",
-      region: region,
-    });
 
-    if (incident === undefined) {
-      const redisKey = `${monitorId}-${cronTimestamp}-error`;
-      // We add the new region to the set
-      await redis.sadd(redisKey, region);
-      // let's add an expire to the set
-      // We get the number of regions affected
-      const nbAffectedRegion = await redis.scard(redisKey);
-      await redis.expire(redisKey, 60 * 60 * 24);
+    if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
+      switch (status) {
+        case "active": {
+          const incident = await db
+            .select()
+            .from(incidentTable)
+            .where(
+              and(
+                eq(incidentTable.monitorId, Number(monitorId)),
+                isNull(incidentTable.resolvedAt),
+                isNull(incidentTable.acknowledgedAt),
+              ),
+            )
+            .get();
 
-      const currentMonitor = await db
-        .select()
-        .from(schema.monitor)
-        .where(eq(schema.monitor.id, Number(monitorId)))
-        .get();
+          if (!incident) {
+            // it was just a single failure not a proper incident
+            return;
+          }
+          if (incident?.resolvedAt) {
+            // incident is already resolved
+            return;
+          }
 
-      const monitor = selectMonitorSchema.parse(currentMonitor);
-
-      const numberOfRegions = monitor.regions.length;
-
-      console.log(
-        `🤓 MonitorID ${monitorId} incident current affected ${nbAffectedRegion} total region ${numberOfRegions}`,
-      );
-      // If the number of affected regions is greater than half of the total region, we  trigger the alerting
-      // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
-        // let's refetch the incident to avoid race condition
-        const incident = await db
-          .select()
-          .from(incidentTable)
-          .where(
-            and(
-              eq(incidentTable.monitorId, Number(monitorId)),
-              isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt),
-              eq(incidentTable.startedAt, new Date(cronTimestamp)),
-            ),
-          )
-          .get();
-
-        if (incident === undefined) {
-          const newIncident = await db
-            .insert(incidentTable)
-            .values({
-              monitorId: Number(monitorId),
-              workspaceId: monitor.workspaceId,
-              startedAt: new Date(cronTimestamp),
+          console.log(`🤓 recovering incident ${incident.id}`);
+          await db
+            .update(incidentTable)
+            .set({
+              resolvedAt: new Date(cronTimestamp),
+              autoResolved: true,
             })
-            .onConflictDoNothing()
-            .returning();
+            .where(eq(incidentTable.id, incident.id))
+            .run();
+
+          await db.update(schema.monitor).set({status: 'active'}).where(eq(schema.monitor.id, monitor.id))
 
           await triggerNotifications({
             monitorId,
             statusCode,
             message,
-            notifType: "alert",
+            notifType: "recovery",
             cronTimestamp,
-            incidentId: newIncident.length
-              ? String(newIncident[0]?.id)
-              : `${cronTimestamp}`,
+            incidentId: `${cronTimestamp}`,
           });
 
-          if (newIncident.length > 0) {
-            const monitor = await db
-              .select({
-                url: schema.monitor.url,
-                jobType: schema.monitor.jobType,
-                workspaceId: schema.monitor.workspaceId,
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "monitor.recovered",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { region: region, statusCode: statusCode ?? -1 },
+          });
+
+          break;
+        }
+        case "degraded":
+          if (monitor.status !== "degraded") {
+            console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED}`)
+            await db
+              .update(schema.monitor)
+              .set({ status: "degraded" })
+              .where(eq(schema.monitor.id, monitor.id));
+            // figure how to send the notification once
+            await triggerNotifications({
+              monitorId,
+              statusCode,
+              message,
+              notifType: "degraded",
+              cronTimestamp,
+              incidentId: `${cronTimestamp}`,
+            });
+          }
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "monitor.degraded",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { region, statusCode: statusCode ?? -1 },
+          });
+          break;
+        case "error":
+          try {
+            const newIncident = await db
+              .insert(incidentTable)
+              .values({
+                monitorId: Number(monitorId),
+                workspaceId: monitor.workspaceId,
+                startedAt: new Date(cronTimestamp),
               })
-              .from(schema.monitor)
-              .where(eq(schema.monitor.id, Number(monitorId)))
-              .get();
+              .returning();
+
+            if (!newIncident[0].id) {
+              return;
+            }
+            await triggerNotifications({
+              monitorId,
+              statusCode,
+              message,
+              notifType: "alert",
+              cronTimestamp,
+              incidentId: String(newIncident[0].id),
+            });
+
+            await db.update(schema.monitor).set({status: 'error'}).where(eq(schema.monitor.id, monitor.id))
+
             if (monitor && monitor.jobType === "http" && monitor.workspaceId) {
               const currentWorkspace = await db
                 .select()
@@ -213,113 +207,24 @@ checkerRoute.post("/updateStatus", async (c) => {
                 });
               }
             }
+            await checkerAudit.publishAuditLog({
+              id: `monitor:${monitorId}`,
+              action: "monitor.failed",
+              targets: [{ id: monitorId, type: "monitor" }],
+              metadata: { region, statusCode, message },
+            });
+          } catch {
+            console.log("incident was already created");
           }
-        }
+          break;
+        default:
+          console.log("should not happen");
+          break;
       }
-    }
-  }
-  // When the status is ok
-  if (status === "active") {
-    await upsertMonitorStatus({
-      monitorId: monitorId,
-      status: "active",
-      region: region,
-    });
 
-    await checkerAudit.publishAuditLog({
-      id: `monitor:${monitorId}`,
-      action: "monitor.recovered",
-      targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { region: region, statusCode: statusCode ?? -1 },
-    });
+  };
 
-    if (incident) {
-      const redisKey = `${monitorId}-${incident.id}-resolved`;
-      //   // We add the new region to the set
-      await redis.sadd(redisKey, region);
-      //   // let's add an expire to the set
-      //   // We get the number of regions affected
-      const nbAffectedRegion = await redis.scard(redisKey);
-      await redis.expire(redisKey, 60 * 60 * 24);
-
-      const currentMonitor = await db
-        .select()
-        .from(schema.monitor)
-        .where(eq(schema.monitor.id, Number(monitorId)))
-        .get();
-
-      const monitor = selectMonitorSchema.parse(currentMonitor);
-
-      const numberOfRegions = monitor.regions.length;
-
-      console.log(
-        `🤓 MonitorId ${monitorId} recovering incident current ${nbAffectedRegion} total region ${numberOfRegions}`,
-      );
-      //   // If the number of affected regions is greater than half of the total region, we  trigger the alerting
-      //   // 4 of 6 monitor need to fail to trigger an alerting
-      if (nbAffectedRegion >= numberOfRegions / 2 || numberOfRegions === 1) {
-        const incident = await db
-          .select()
-          .from(incidentTable)
-          .where(
-            and(
-              eq(incidentTable.monitorId, Number(monitorId)),
-              isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt),
-            ),
-          )
-          .get();
-        if (incident) {
-          console.log(`🤓 recovering incident ${incident.id}`);
-          await db
-            .update(incidentTable)
-            .set({
-              resolvedAt: new Date(cronTimestamp),
-              autoResolved: true,
-            })
-            .where(eq(incidentTable.id, incident.id))
-            .run();
-
-          await triggerNotifications({
-            monitorId,
-            statusCode,
-            message,
-            notifType: "recovery",
-            cronTimestamp,
-            incidentId: String(incident.id),
-          });
-
-          const monitor = await db
-            .select({
-              url: schema.monitor.url,
-              jobType: schema.monitor.jobType,
-              workspaceId: schema.monitor.workspaceId,
-            })
-            .from(schema.monitor)
-            .where(eq(schema.monitor.id, Number(monitorId)))
-            .get();
-          if (monitor && monitor.jobType === "http" && monitor.workspaceId) {
-            const currentWorkspace = await db
-              .select()
-              .from(workspace)
-              .where(eq(workspace.id, monitor.workspaceId))
-              .get();
-
-            if (!!currentWorkspace?.plan && currentWorkspace?.plan !== "free") {
-              await triggerScreenshot({
-                data: {
-                  url: monitor.url,
-                  incidentId: incident.id,
-                  kind: "recovery",
-                },
-              });
-            }
-          }
-        }
-      }
-    }
-  }
-
+  // if we are in error
   return c.text("Ok", 200);
 });
 
