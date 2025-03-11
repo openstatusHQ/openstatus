@@ -12,7 +12,6 @@ import type {
 import { checkerAudit } from "../utils/audit-log";
 import { providerToFunction } from "./utils";
 
-
 export const triggerNotifications = async ({
   monitorId,
   statusCode,
