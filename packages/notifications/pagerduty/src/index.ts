@@ -1,5 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+import type { Region } from "@openstatus/db/src/schema/constants";
 import {
   PagerDutySchema,
   resolveEventPayloadSchema,
@@ -20,6 +21,8 @@ export const sendAlert = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
@@ -66,6 +69,8 @@ export const sendDegraded = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
@@ -117,6 +122,8 @@ export const sendRecovery = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = PagerDutySchema.parse(JSON.parse(notification.data));
 
@@ -162,7 +169,7 @@ export const sendTest = async ({
       },
     });
 
-    const res = await fetch("https://events.pagerduty.com/v2/enqueue", {
+    const _res = await fetch("https://events.pagerduty.com/v2/enqueue", {
       method: "POST",
       body: JSON.stringify(event),
     });

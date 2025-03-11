@@ -2,11 +2,14 @@
 
 import { z } from "zod";
 
+import { env } from "@/env";
 import { Events, setupAnalytics } from "@openstatus/analytics";
 import { and, eq, sql } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { SubscribeEmail, sendEmail } from "@openstatus/emails";
+import { EmailClient } from "@openstatus/emails";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const subscribeSchema = z.object({
   email: z
@@ -76,15 +79,11 @@ export async function handleSubscribe(formData: FormData) {
     })
     .execute();
 
-  await sendEmail({
-    react: SubscribeEmail({
-      domain: pageData.slug,
-      token: token,
-      page: pageData.title,
-    }),
-    from: "OpenStatus <notification@notifications.openstatus.dev>",
-    to: [validatedFields.data.email],
-    subject: `Verify your subscription to ${pageData.title}`,
+  await emailClient.sendPageSubscription({
+    domain: pageData.slug,
+    token,
+    page: pageData.title,
+    to: validatedFields.data.email,
   });
 
   const analytics = await setupAnalytics({});

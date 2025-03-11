@@ -10,10 +10,13 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { env } from "@/env";
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
-import { sendBatchEmailHtml } from "@openstatus/emails/src/send";
+import { EmailClient } from "@openstatus/emails";
 import type { statusReportsApi } from "./index";
 import { StatusReportSchema } from "./schema";
+
+const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 
 const postRoute = createRoute({
   method: "post",
@@ -142,24 +145,27 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
         )
         .all();
 
-      const pageInfo = await db
-        .select()
-        .from(page)
-        .where(eq(page.id, _newStatusReport.pageId))
-        .get();
+      const pageInfo = await db.query.page.findFirst({
+        where: eq(page.id, _newStatusReport.pageId),
+        with: {
+          monitorsToPages: {
+            with: {
+              monitor: true,
+            },
+          },
+        },
+      });
 
-      if (pageInfo) {
-        const emails = subscribers.map((subscriber) => {
-          return {
-            to: subscriber.email,
-            subject: `New status update for ${pageInfo.title}`,
-            html: `<p>Hi,</p><p>${pageInfo.title} just posted an update on their status page:</p><p>New Status : ${statusReportUpdate.status}</p><p>${statusReportUpdate.message}</p></p><p></p><p>Powered by OpenStatus</p><p></p><p></p><p></p><p></p><p></p>
-          `,
-            from: "Notification OpenStatus <notification@notifications.openstatus.dev>",
-          };
+      if (pageInfo && subscribers.length > 0) {
+        await emailClient.sendStatusReportUpdate({
+          to: subscribers.map((subscriber) => subscriber.email),
+          pageTitle: pageInfo.title,
+          reportTitle: _newStatusReport.title,
+          status: _newStatusReport.status,
+          message: _newStatusReportUpdate.message,
+          date: _newStatusReportUpdate.date.toISOString(),
+          monitors: pageInfo.monitorsToPages.map((i) => i.monitor.name),
         });
-
-        await sendBatchEmailHtml(emails);
       }
     }
 

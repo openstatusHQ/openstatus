@@ -76,7 +76,7 @@ export function SubscribeButton({
           ) : null}
           {isSubscribers ? (
             <DropdownMenuItem onClick={() => setShowModal(true)}>
-              <Mail className="h-4 w-4 mr-2" />
+              <Mail className="mr-2 h-4 w-4" />
               Email
             </DropdownMenuItem>
           ) : null}

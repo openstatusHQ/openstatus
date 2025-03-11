@@ -1,5 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { env } from "./env";
 import { SmsConfigurationSchema } from "./schema/config";
 
@@ -17,6 +18,8 @@ export const sendAlert = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),
@@ -68,6 +71,8 @@ export const sendRecovery = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),
@@ -112,6 +117,8 @@ export const sendDegraded = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = SmsConfigurationSchema.parse(
     JSON.parse(notification.data),

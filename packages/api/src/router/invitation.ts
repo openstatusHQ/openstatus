@@ -62,30 +62,6 @@ export const invitationRouter = createTRPCRouter({
         console.log(
           `>>>> Invitation token: http://localhost:3000/app/invite?token=${token} <<<< `,
         );
-      } else {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            to: email,
-            from: "OpenStatus <ping@openstatus.dev>",
-            subject: "You have been invited to join OpenStatus.dev",
-            html: `<p>You have been invited by ${opts.ctx.user.email} ${
-              opts.ctx.workspace.name
-                ? `to join the workspace '${opts.ctx.workspace.name}'.`
-                : "to join a workspace."
-            }</p>
-              <br>
-              <p>Click here to access the workspace: <a href='https://openstatus.dev/app/invite?token=${
-                _invitation.token
-              }'>accept invitation</a>.</p>
-              <p>If you don't have an account yet, it will require you to create one.</p>
-              `,
-          }),
-        });
       }
 
       return _invitation;

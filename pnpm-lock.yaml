@@ -761,6 +761,9 @@ importers:
       '@openstatus/tinybird':
         specifier: workspace:*
         version: link:../../tinybird
+      '@openstatus/utils':
+        specifier: workspace:*
+        version: link:../../utils
       '@react-email/components':
         specifier: 0.0.31
         version: 0.0.31(react-dom@19.0.0(react@19.0.0))(react@19.0.0)

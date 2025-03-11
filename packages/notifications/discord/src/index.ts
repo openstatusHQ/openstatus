@@ -1,6 +1,6 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
+import type { Region } from "@openstatus/db/src/schema/constants";
 import { DataSchema } from "./schema";
-
 const postToWebhook = async (content: string, webhookUrl: string) => {
   await fetch(webhookUrl, {
     method: "POST",
@@ -29,6 +29,8 @@ export const sendAlert = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url
@@ -61,6 +63,8 @@ export const sendRecovery = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url
@@ -93,6 +97,8 @@ export const sendDegraded = async ({
   message?: string;
   incidentId?: string;
   cronTimestamp: number;
+  latency?: number;
+  region?: Region;
 }) => {
   const notificationData = DataSchema.parse(JSON.parse(notification.data));
   const { discord: webhookUrl } = notificationData; // webhook url

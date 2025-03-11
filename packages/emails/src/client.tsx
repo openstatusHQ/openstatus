@@ -42,17 +42,21 @@ export class EmailClient {
     }
   }
 
-  public async sendStatusReportUpdate(req: StatusReportProps & { to: string }) {
+  public async sendStatusReportUpdate(
+    req: StatusReportProps & { to: string[] },
+  ) {
     if (process.env.NODE_ENV === "development") return;
 
     try {
       const html = await render(<StatusReportEmail {...req} />);
-      const result = await this.client.emails.send({
-        from: `${req.pageTitle} <notifications@openstatus.dev>`,
-        subject: req.reportTitle,
-        to: req.to,
-        html,
-      });
+      const result = await this.client.batch.send(
+        req.to.map((subscriber) => ({
+          from: `${req.pageTitle} <notifications@notifications.openstatus.dev>`,
+          subject: req.reportTitle,
+          to: subscriber,
+          html,
+        })),
+      );
 
       if (!result.error) {
         console.log(`Sent status report update email to ${req.to}`);
@@ -62,7 +66,8 @@ export class EmailClient {
       throw result.error;
     } catch (err) {
       console.error(
-        `Error sending status report update email to ${req.to}: ${err}`,
+        `Error sending status report update email to ${req.to}`,
+        err,
       );
     }
   }
@@ -73,7 +78,7 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.workspaceName ?? "OpenStatus"} <notifications@openstatus.dev>`,
+        from: `${req.workspaceName ?? "OpenStatus"} <notifications@notifications.openstatus.dev>`,
         subject: `You've been invited to join ${req.workspaceName ?? "OpenStatus"}`,
         to: req.to,
         html,
@@ -86,7 +91,7 @@ export class EmailClient {
 
       throw result.error;
     } catch (err) {
-      console.error(`Error sending team invitation email to ${req.to}: ${err}`);
+      console.error(`Error sending team invitation email to ${req.to}`, err);
     }
   }
 
@@ -96,7 +101,7 @@ export class EmailClient {
     try {
       const html = await render(<MonitorAlertEmail {...req} />);
       const result = await this.client.emails.send({
-        from: "OpenStatus <notifications@openstatus.dev>",
+        from: "OpenStatus <notifications@notifications.openstatus.dev>",
         subject: `${req.name}: ${req.type.toUpperCase()}`,
         to: req.to,
         html,
@@ -109,7 +114,7 @@ export class EmailClient {
 
       throw result.error;
     } catch (err) {
-      console.error(`Error sending monitor alert to ${req.to}: ${err}`);
+      console.error(`Error sending monitor alert to ${req.to}`, err);
     }
   }
 
@@ -121,8 +126,8 @@ export class EmailClient {
     try {
       const html = await render(<PageSubscriptionEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.page} <notifications@openstatus.dev>`,
-        subject: "Status page subscription",
+        from: "Status Page <notifications@notifications.openstatus.dev>",
+        subject: `Confirm your subscription to ${req.page}`,
         to: req.to,
         html,
       });
@@ -134,7 +139,7 @@ export class EmailClient {
 
       throw result.error;
     } catch (err) {
-      console.error(`Error sending page subscription to ${req.to}: ${err}`);
+      console.error(`Error sending page subscription to ${req.to}`, err);
     }
   }
 }

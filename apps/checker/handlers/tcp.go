@@ -133,6 +133,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				Status:        "active",
 				Region:        h.Region,
 				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
 			})
 		}
 
