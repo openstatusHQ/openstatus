@@ -198,7 +198,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 
 		data.Assertions = assertionAsString
 
-		if !isSuccessfull {
+		if !isSuccessfull && req.Status != "error" {
 			// Q: Why here we do not check if the status was previously active?
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
@@ -211,7 +211,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			})
 		}
 		// it's degraded
-		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter {
+		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter && req.Status != "degraded" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "degraded",
@@ -222,7 +222,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			})
 		}
 		// it's active
-		if isSuccessfull && req.DegradedAfter == 0 {
+		if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
@@ -233,7 +233,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			})
 		}
 		// it's active
-		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 {
+		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",

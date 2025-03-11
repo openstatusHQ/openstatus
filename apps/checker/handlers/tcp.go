@@ -127,7 +127,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			JobType: "tcp",
 		}
 
-		if req.DegradedAfter == 0 || (req.DegradedAfter > 0 && latency < req.DegradedAfter) {
+		if req.DegradedAfter == 0 &&  req.Status != "active" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
@@ -137,7 +137,17 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			})
 		}
 
-		if req.DegradedAfter > 0 && latency > req.DegradedAfter {
+		if (req.DegradedAfter > 0 && latency < req.DegradedAfter) && req.Status != "active" {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "active",
+				Region:        h.Region,
+				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
+			})
+		}
+
+		if req.DegradedAfter > 0 && latency > req.DegradedAfter  && req.Status != "degraded" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "degraded",
