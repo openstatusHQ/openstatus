@@ -26,6 +26,7 @@ const payloadSchema = z.object({
   region: z.enum(flyRegions),
   cronTimestamp: z.number(),
   status: monitorStatusSchema,
+  latency: z.number().optional(),
 });
 
 const publishStatus = tb.buildIngestEndpoint({
@@ -164,6 +165,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             message,
             notifType: "degraded",
             cronTimestamp,
+            latency,
             incidentId: `${cronTimestamp}`,
           });
         }

@@ -143,6 +143,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				Status:        "degraded",
 				Region:        h.Region,
 				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
 			})
 		}
 
