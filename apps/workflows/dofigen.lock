@@ -8,10 +8,25 @@ effective: |
   - /packages/analytics
   - /packages/api
   - /packages/error
-  - /packages/notifications
-  - /packages/tinybird
   - /packages/tracker
   builders:
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
@@ -32,29 +47,26 @@ effective: |
         source: packages/db/package.json
       - target: packages/emails/package.json
         source: packages/emails/package.json
+      - target: packages/notifications/discord/package.json
+        source: packages/notifications/discord/package.json
+      - target: packages/notifications/email/package.json
+        source: packages/notifications/email/package.json
+      - target: packages/notifications/opsgenie/package.json
+        source: packages/notifications/opsgenie/package.json
+      - target: packages/notifications/pagerduty/package.json
+        source: packages/notifications/pagerduty/package.json
+      - target: packages/notifications/slack/package.json
+        source: packages/notifications/slack/package.json
+      - target: packages/notifications/twillio-sms/package.json
+        source: packages/notifications/twillio-sms/package.json
       - target: packages/utils/package.json
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
         source: packages/tsconfig/package.json
+      - target: packages/tinybird/package.json
+        source: packages/tinybird/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
@@ -70,17 +82,17 @@ effective: |
   - port: 3000
 images:
   registry.hub.docker.com:443:
-    library:
-      debian:
-        bullseye-slim:
-          digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
     oven:
       bun:
         latest:
           digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
+    library:
+      debian:
+        bullseye-slim:
+          digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
 resources:
   dofigen.yml:
-    hash: 48a9d086b070600575e9867af0c63f2bbcfd301c867121e671fc771ae50f34dc
+    hash: 89efc794b70865f5718e42302021382f7ed0c0ea9459a7bd9a8047cdd28757ae
     content: |
       ignore:
         - node_modules
@@ -91,8 +103,6 @@ resources:
         - /packages/analytics
         - /packages/api
         - /packages/error
-        - /packages/notifications
-        - /packages/tinybird
         - /packages/tracker
       builders:
         install:
@@ -105,8 +115,15 @@ resources:
             - packages/assertions/package.json
             - packages/db/package.json
             - packages/emails/package.json
+            - packages/notifications/discord/package.json
+            - packages/notifications/email/package.json
+            - packages/notifications/opsgenie/package.json
+            - packages/notifications/pagerduty/package.json
+            - packages/notifications/slack/package.json
+            - packages/notifications/twillio-sms/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json
+            - packages/tinybird/package.json
             - packages/upstash/package.json
 
           # Install dependencies

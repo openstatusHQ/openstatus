@@ -11,8 +11,15 @@ RUN \
     --mount=type=bind,target=packages/assertions/package.json,source=packages/assertions/package.json \
     --mount=type=bind,target=packages/db/package.json,source=packages/db/package.json \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
+    --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
+    --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
+    --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
+    --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
+    --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
+    --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \
     --mount=type=bind,target=packages/upstash/package.json,source=packages/upstash/package.json \
     --mount=type=cache,target=/root/.bun/install/cache,sharing=locked \
     bun install --production --ignore-scripts --frozen-lockfile --verbose

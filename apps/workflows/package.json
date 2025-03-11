@@ -9,8 +9,10 @@
     "@google-cloud/tasks": "4.0.1",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/tinybird":"workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@upstash/qstash": "2.6.2",
     "hono": "4.5.3",
     "limiter": "^3.0.0",
     "zod": "3.23.8"

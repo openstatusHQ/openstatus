@@ -15,5 +15,7 @@ export const env = () =>
       DATABASE_AUTH_TOKEN: z.string().default(""),
       RESEND_API_KEY: z.string().default(""),
       TINY_BIRD_API_KEY: z.string().default(""),
+      QSTASH_TOKEN: z.string().default(""),
+      SCREENSHOT_SERVICE_URL:z.string().default("")
     })
     .parse(process.env);
