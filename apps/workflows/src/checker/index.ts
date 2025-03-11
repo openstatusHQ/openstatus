@@ -1,6 +1,5 @@
 import { Client } from "@upstash/qstash";
 
-
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -11,15 +10,15 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
 
-import { env } from "../env";
-import { checkerAudit } from "../utils/audit-log";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { Tinybird } from "@openstatus/tinybird";
+import { env } from "../env";
+import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
 
 export const checkerRoute = new Hono();
 
-const tb = new Tinybird({ token: env().TINY_BIRD_API_KEY  });
+const tb = new Tinybird({ token: env().TINY_BIRD_API_KEY });
 
 const payloadSchema = z.object({
   monitorId: z.string(),
@@ -85,8 +84,8 @@ checkerRoute.post("/updateStatus", async (c) => {
     .where(
       and(
         eq(schema.monitorStatusTable.monitorId, monitor.id),
-        eq(schema.monitorStatusTable.status, status)
-      )
+        eq(schema.monitorStatusTable.status, status),
+      ),
     )
     .get();
 
@@ -104,8 +103,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt)
-            )
+              isNull(incidentTable.acknowledgedAt),
+            ),
           )
           .get();
 
@@ -154,7 +153,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       case "degraded":
         if (monitor.status !== "degraded") {
           console.log(
-            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`
+            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`,
           );
           await db
             .update(schema.monitor)

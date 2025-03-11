@@ -9,7 +9,7 @@
     "@google-cloud/tasks": "4.0.1",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
-    "@openstatus/tinybird":"workspace:*",
+    "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
     "@upstash/qstash": "2.6.2",
