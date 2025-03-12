@@ -84,8 +84,8 @@ checkerRoute.post("/updateStatus", async (c) => {
     .where(
       and(
         eq(schema.monitorStatusTable.monitorId, monitor.id),
-        eq(schema.monitorStatusTable.status, status)
-      )
+        eq(schema.monitorStatusTable.status, status),
+      ),
     )
     .get();
 
@@ -103,8 +103,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt)
-            )
+              isNull(incidentTable.acknowledgedAt),
+            ),
           )
           .get();
 
@@ -155,7 +155,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       case "degraded":
         if (monitor.status !== "degraded") {
           console.log(
-            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`
+            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`,
           );
           await db
             .update(schema.monitor)
