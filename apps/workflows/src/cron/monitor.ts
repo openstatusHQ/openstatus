@@ -288,6 +288,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
       .get();
     // We should only have one user :)
     if (!users) {
+      console.log(`No user found for ${userId}`);
       throw new Error("Too many users found");
     }
 
