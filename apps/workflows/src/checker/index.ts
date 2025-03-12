@@ -138,6 +138,8 @@ checkerRoute.post("/updateStatus", async (c) => {
           message,
           notifType: "recovery",
           cronTimestamp,
+          region,
+          latency,
           incidentId: `${cronTimestamp}`,
         });
 
@@ -167,6 +169,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             notifType: "degraded",
             cronTimestamp,
             latency,
+            region,
             incidentId: `${cronTimestamp}`,
           });
         }
@@ -197,6 +200,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             message,
             notifType: "alert",
             cronTimestamp,
+            latency,
+            region,
             incidentId: String(newIncident[0].id),
           });
 
