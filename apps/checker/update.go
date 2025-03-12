@@ -22,9 +22,10 @@ type UpdateData struct {
 }
 
 func UpdateStatus(ctx context.Context, updateData UpdateData) {
-	url := "https://openstatus-api.fly.dev/updateStatus"
+	url := "https://openstatus-workflows.fly.dev/updateStatus"
 	basic := "Basic " + os.Getenv("CRON_SECRET")
 	payloadBuf := new(bytes.Buffer)
+
 	if err := json.NewEncoder(payloadBuf).Encode(updateData); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 		return
@@ -37,6 +38,7 @@ func UpdateStatus(ctx context.Context, updateData UpdateData) {
 	if _, err := client.Do(req); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("error while updating status")
 	}
+
 	defer req.Body.Close()
 	// Should we add a retry mechanism here?
 }
