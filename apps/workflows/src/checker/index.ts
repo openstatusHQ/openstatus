@@ -96,6 +96,14 @@ checkerRoute.post("/updateStatus", async (c) => {
   if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
     switch (status) {
       case "active": {
+
+        if(monitor.status!== 'active') {
+          await db
+            .update(schema.monitor)
+            .set({ status: "active" })
+            .where(eq(schema.monitor.id, monitor.id));
+        }
+
         const incident = await db
           .select()
           .from(incidentTable)
@@ -127,10 +135,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           .where(eq(incidentTable.id, incident.id))
           .run();
 
-        await db
-          .update(schema.monitor)
-          .set({ status: "active" })
-          .where(eq(schema.monitor.id, monitor.id));
+
 
         await triggerNotifications({
           monitorId,
@@ -181,7 +186,30 @@ checkerRoute.post("/updateStatus", async (c) => {
         });
         break;
       case "error":
+
+      if(monitor.status !== 'error') {
+        await db
+          .update(schema.monitor)
+          .set({ status: "error" })
+          .where(eq(schema.monitor.id, monitor.id));
+
+      }
         try {
+          const incident = await db
+              .select()
+              .from(incidentTable)
+              .where(
+                and(
+                  eq(incidentTable.monitorId, Number(monitorId)),
+                  isNull(incidentTable.resolvedAt),
+                  isNull(incidentTable.acknowledgedAt),
+                ),
+              )
+              .get();
+          if(incident) {
+            console.log('we are already in incident')
+            break;
+          }
           const newIncident = await db
             .insert(incidentTable)
             .values({
