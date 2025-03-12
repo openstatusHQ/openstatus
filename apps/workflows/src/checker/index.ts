@@ -84,13 +84,13 @@ checkerRoute.post("/updateStatus", async (c) => {
     .where(
       and(
         eq(schema.monitorStatusTable.monitorId, monitor.id),
-        eq(schema.monitorStatusTable.status, status),
-      ),
+        eq(schema.monitorStatusTable.status, status)
+      )
     )
     .get();
 
   if (!affectedRegion?.count) {
-    return;
+    return c.json({ success: true }, 200);
   }
 
   if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
@@ -103,18 +103,18 @@ checkerRoute.post("/updateStatus", async (c) => {
             and(
               eq(incidentTable.monitorId, Number(monitorId)),
               isNull(incidentTable.resolvedAt),
-              isNull(incidentTable.acknowledgedAt),
-            ),
+              isNull(incidentTable.acknowledgedAt)
+            )
           )
           .get();
 
         if (!incident) {
           // it was just a single failure not a proper incident
-          return;
+          break;
         }
         if (incident?.resolvedAt) {
           // incident is already resolved
-          return;
+          break;
         }
 
         console.log(`🤓 recovering incident ${incident.id}`);
@@ -153,7 +153,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       case "degraded":
         if (monitor.status !== "degraded") {
           console.log(
-            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`,
+            `🔄 update monitorStatus ${monitor.id} status: DEGRADED}`
           );
           await db
             .update(schema.monitor)
