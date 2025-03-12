@@ -9,6 +9,4 @@ node_modules
 /packages/analytics
 /packages/api
 /packages/error
-/packages/notifications
-/packages/tinybird
 /packages/tracker

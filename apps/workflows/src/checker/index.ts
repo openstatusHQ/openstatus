@@ -1,4 +1,5 @@
 import { Client } from "@upstash/qstash";
+
 import { Hono } from "hono";
 import { z } from "zod";
 
@@ -9,15 +10,15 @@ import {
   selectMonitorSchema,
 } from "@openstatus/db/src/schema/monitors/validation";
 
-import { env } from "@/env";
-import { checkerAudit } from "@/utils/audit-log";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { Tinybird } from "@openstatus/tinybird";
+import { env } from "../env";
+import { checkerAudit } from "../utils/audit-log";
 import { triggerNotifications, upsertMonitorStatus } from "./alerting";
 
 export const checkerRoute = new Hono();
 
-const tb = new Tinybird({ token: process.env.TINY_BIRD_API_KEY || "" });
+const tb = new Tinybird({ token: env().TINY_BIRD_API_KEY });
 
 const payloadSchema = z.object({
   monitorId: z.string(),
@@ -36,7 +37,7 @@ const publishStatus = tb.buildIngestEndpoint({
 
 checkerRoute.post("/updateStatus", async (c) => {
   const auth = c.req.header("Authorization");
-  if (auth !== `Basic ${env.CRON_SECRET}`) {
+  if (auth !== `Basic ${env().CRON_SECRET}`) {
     console.error("Unauthorized");
     return c.text("Unauthorized", 401);
   }
@@ -253,14 +254,14 @@ const triggerScreenshot = async ({
 }) => {
   console.log(` 📸 taking screenshot for incident ${data.incidentId}`);
 
-  const client = new Client({ token: env.QSTASH_TOKEN });
+  const client = new Client({ token: env().QSTASH_TOKEN });
 
   await client.publishJSON({
-    url: env.SCREENSHOT_SERVICE_URL,
+    url: env().SCREENSHOT_SERVICE_URL,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "api-key": `Basic ${env.CRON_SECRET}`,
+      "api-key": `Basic ${env().CRON_SECRET}`,
     },
     body: {
       url: data.url,

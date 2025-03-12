@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
+import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
 
@@ -25,6 +26,8 @@ app.route("/cron", cronRouter);
 if (NODE_ENV === "development") {
   showRoutes(app, { verbose: true, colorize: true });
 }
+
+app.route("/", checkerRoute);
 
 console.log(`Starting server on port ${PORT}`);
 

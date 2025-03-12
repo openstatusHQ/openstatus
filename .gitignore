@@ -65,3 +65,4 @@ openstatus-dev.db-wal
 openstatus-dev.db-shm
 apps/ingest-worker/.production.vars
 apps/ingest-worker/.dev.vars
+apps/alerting-engine/tmp/

@@ -127,17 +127,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			JobType: "tcp",
 		}
 
-		if req.Status == "active" && req.DegradedAfter > 0 && latency > req.DegradedAfter {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "degraded",
-				Region:        h.Region,
-				CronTimestamp: req.CronTimestamp,
-				Latency:       latency,
-			})
-		}
-
-		if req.Status == "degraded" && req.DegradedAfter > 0 && latency <= req.DegradedAfter {
+		if req.DegradedAfter == 0 &&  req.Status != "active" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
@@ -147,27 +137,24 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			})
 		}
 
-		if req.Status == "error" {
-			if req.DegradedAfter == 0 || (req.DegradedAfter > 0 && latency < req.DegradedAfter) {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "active",
-					Region:        h.Region,
-					CronTimestamp: req.CronTimestamp,
-					Latency:       latency,
-				})
-			}
+		if (req.DegradedAfter > 0 && latency < req.DegradedAfter) && req.Status != "active" {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "active",
+				Region:        h.Region,
+				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
+			})
+		}
 
-			if req.DegradedAfter > 0 && latency > req.DegradedAfter {
-				checker.UpdateStatus(ctx, checker.UpdateData{
-					MonitorId:     req.MonitorID,
-					Status:        "degraded",
-					Region:        h.Region,
-					CronTimestamp: req.CronTimestamp,
-					Latency:       latency,
-				})
-			}
-
+		if req.DegradedAfter > 0 && latency > req.DegradedAfter  && req.Status != "degraded" {
+			checker.UpdateStatus(ctx, checker.UpdateData{
+				MonitorId:     req.MonitorID,
+				Status:        "degraded",
+				Region:        h.Region,
+				CronTimestamp: req.CronTimestamp,
+				Latency:       latency,
+			})
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
@@ -190,16 +177,14 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
+		checker.UpdateStatus(ctx, checker.UpdateData{
+			MonitorId:     req.MonitorID,
+			Status:        "error",
+			Message:       err.Error(),
+			Region:        h.Region,
+			CronTimestamp: req.CronTimestamp,
+		})
 
-		if req.Status != "error" {
-			checker.UpdateStatus(ctx, checker.UpdateData{
-				MonitorId:     req.MonitorID,
-				Status:        "error",
-				Message:       err.Error(),
-				Region:        h.Region,
-				CronTimestamp: req.CronTimestamp,
-			})
-		}
 	}
 
 	returnData := c.Query("data")
