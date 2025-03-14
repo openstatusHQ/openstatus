@@ -101,8 +101,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        console.log(`🔄 update monitorStatus ${monitor.id} status: ACTIVE}`);
-
+        console.log(`🔄 update monitorStatus ${monitor.id} status: ACTIVE`);
         await db
           .update(schema.monitor)
           .set({ status: "active" })
@@ -167,7 +166,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           // already degraded let's return early
           break;
         }
-        console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED}`);
+        console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
         await db
           .update(schema.monitor)
           .set({ status: "degraded" })
@@ -197,7 +196,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
 
-        console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR}`);
+        console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
         await db
           .update(schema.monitor)
           .set({ status: "error" })
