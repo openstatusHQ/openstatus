@@ -4,6 +4,7 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
@@ -23,6 +24,25 @@ export const notification = sqliteTable("notification", {
     sql`(strftime('%s', 'now'))`,
   ),
 });
+
+export const notificationTrigger = sqliteTable(
+  "notification_trigger",
+  {
+    id: integer("id").primaryKey(),
+    monitorId: integer("monitor_id").references(() => monitor.id),
+    notificationId: integer("notification_id").references(
+      () => notification.id,
+    ),
+    cronTimestamp: integer("cron_timestamp").notNull(),
+  },
+  (table) => ({
+    unique: uniqueIndex("notification_id_monitor_id_crontimestampe").on(
+      table.notificationId,
+      table.monitorId,
+      table.cronTimestamp,
+    ),
+  }),
+);
 
 export const notificationsToMonitors = sqliteTable(
   "notifications_to_monitors",
