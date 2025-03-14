@@ -152,7 +152,6 @@ export const sendTest = async ({
 }) => {
   console.log("Sending test alert to PagerDuty");
   try {
-    // biome-ignore lint/correctness/noUnusedVariables: <explanation>
     const event = triggerEventPayloadSchema.parse({
       routing_key: integrationKey,
       dedup_key: "openstatus-test",

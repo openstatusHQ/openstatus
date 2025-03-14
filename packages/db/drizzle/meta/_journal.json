@@ -288,6 +288,13 @@
       "when": 1740684132626,
       "tag": "0040_narrow_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "6",
+      "when": 1741936835660,
+      "tag": "0041_nasty_jigsaw",
+      "breakpoints": true
     }
   ]
 }

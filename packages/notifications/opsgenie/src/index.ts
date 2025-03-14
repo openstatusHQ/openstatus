@@ -106,9 +106,7 @@ export const sendDegraded = async ({
 export const sendRecovery = async ({
   monitor,
   notification,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   statusCode,
-  // biome-ignore lint/correctness/noUnusedVariables: <explanation>
   message,
   incidentId,
 }: {

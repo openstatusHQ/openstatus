@@ -1,6 +1,7 @@
 import { db, eq, schema } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
+  monitor,
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
@@ -50,6 +51,16 @@ export const triggerNotifications = async ({
       `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
     const monitor = selectMonitorSchema.parse(notif.monitor);
+    try {
+      await insertNotificationTrigger({
+        monitorId: monitor.id,
+        notificationId: notif.notification.id,
+        cronTimestamp: cronTimestamp,
+      });
+    } catch (e) {
+      console.log("notification trigger already exists dont send again");
+      continue;
+    }
     switch (notifType) {
       case "alert":
         await providerToFunction[notif.notification.provider].sendAlert({
@@ -96,6 +107,21 @@ export const triggerNotifications = async ({
     });
     //
   }
+};
+
+const insertNotificationTrigger = async ({
+  monitorId,
+  notificationId,
+  cronTimestamp,
+}: { monitorId: number; notificationId: number; cronTimestamp: number }) => {
+  await db
+    .insert(schema.notificationTrigger)
+    .values({
+      monitorId: Number(monitorId),
+      notificationId: notificationId,
+      cronTimestamp: cronTimestamp,
+    })
+    .returning();
 };
 
 export const upsertMonitorStatus = async ({
