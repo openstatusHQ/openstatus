@@ -10,7 +10,9 @@ image: /assets/posts/live-mode-infinite-query/tanstack.png
 tag: engineering
 ---
 
-While TanStack provides excellent [documentation on Infinite Queries](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries), this article offers an additional practical example focusing on implementing live data updates.
+This article is part of the [logs.run](https://logs.run) series. You can enable the live mode right away via [logs.run/i?live=true](https://logs.run/i?live=true).
+
+While TanStack provides excellent documentation on [Infinite Queries](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries), this article offers an additional practical example focusing on implementing live data updates.
 
 ## Basic Concept
 
@@ -26,14 +28,14 @@ const flatData = React.useMemo(
 );
 ```
 
-![Timeline with live mode and load more behavior](/assets/posts/live-mode-infinite-query/infinite-query.png)
-
 Once we understand the _load more_ (append data) functionality, we can mirror this approach to implement _live mode_ (prepend data).
 
 Each query requires two key parameters:
 
 1. A `cursor` - a pointer indicating a position in the dataset
 2. A `direction` - specifying whether to fetch data before or after the cursor ("prev" or "next")
+
+![Timeline with live mode and load more behavior](/assets/posts/live-mode-infinite-query/infinite-query.png)
 
 In our implementation, the `cursor` is a timestamp representing the last checked date:
 
@@ -166,5 +168,9 @@ React.useEffect(() => {
 ```
 
 We use `setTimeout` with recursion rather than `setInterval` to ensure each refresh only starts after the previous one completes. This prevents multiple simultaneous fetches when network latency exceeds the refresh interval and is a better UX.
+
+---
+
+Now check it out on [logs.run/i?live=true](https://logs.run/i?live=true).
 
 For more details about our data table implementation, check out [The React data-table I always wanted](https://www.openstatus.dev/blog/data-table-redesign).
