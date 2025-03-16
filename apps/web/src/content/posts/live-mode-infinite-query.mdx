@@ -29,6 +29,9 @@ A timeline sketch of the infinite query behavior:
 
 ![Timeline with live mode and load more behavior](/assets/posts/live-mode-infinite-query/infinite-query.png)
 
+- The `nextCursor` is the timestamp of the last item of the page. The "next" page will only fetch items that are older than the `nextCursor`.
+- The `prevCursor` is the timestamp of the first item of the page (or the current timestamp). The "prev" page will only fetch items that are newer than the `prevCursor`.
+
 ## API Endpoint
 
 Your API endpoint should return at minimum:
