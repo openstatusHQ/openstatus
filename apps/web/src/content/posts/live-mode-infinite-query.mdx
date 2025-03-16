@@ -12,7 +12,9 @@ tag: engineering
 
 This article is part of the [logs.run](https://logs.run) series.
 
-You can enable the live mode right away via [logs.run/i?live=true](https://logs.run/i?live=true). Note that it's a demo; the data is mocked and not persisted. Live mode might take a while to load new data.
+You can enable the live mode right away via [logs.run/i?live=true](https://logs.run/i?live=true). 
+
+Note that it's a demo. The data is mocked and not persisted. Live mode might take a while to load new data.
 
 While TanStack provides excellent documentation on [Infinite Queries](https://tanstack.com/query/latest/docs/framework/react/guides/infinite-queries), this article offers an additional practical example focusing on implementing a live data update.
 
@@ -172,9 +174,11 @@ The `getPreviousPageParam` and `getNextPageParam` functions receive the first an
 
 TanStack provides helpful states like `isFetchingNextPage` and `isFetchingPreviousPage` for loading indicators, as well as `hasNextPage` and `hasPreviousPage` to check for available pages - especially useful for as we can hit the end of the load more values. Check out the [`useInfiniteQuery`](https://tanstack.com/query/latest/docs/framework/react/reference/useInfiniteQuery) docs for more details.
 
+Both `fetchNextPage` and `fetchPreviousPage` can run independently and in parallel. TanStack Query manages appending and prepending pages to the `data.pages` array accordingly.
+
 ## Implementing Auto-Refresh
 
-While TanStack Query provides a `refetchInterval` option, it would refetch all pages, growing increasingly expensive as more pages are loaded. Additionally, it doesn't reflect the purpose of live mode as instead of refreshing the data, we want to fetch new data.
+While TanStack Query provides a `refetchInterval` option, it would refetch all pages, growing increasingly expensive as more pages are loaded. Additionally, it doesn't reflect the purpose of live mode as instead of refreshing the data, we want to fetch newer data.
 
 Therefore, we implement a custom refresh mechanism for fetching only new data that you can add to any client component. Here's an simple example implementation of the `LiveModeButton`:
 
