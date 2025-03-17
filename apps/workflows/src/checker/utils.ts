@@ -14,6 +14,11 @@ import {
   sendRecovery as sendEmailRecovery,
 } from "@openstatus/notification-emails";
 import {
+  sendAlert as sendNtfyAlert,
+  sendDegraded as sendNtfyDegraded,
+  sendRecovery as sendNtfyRecovery,
+} from "@openstatus/notification-ntfy";
+import {
   sendAlert as sendSlackAlert,
   sendDegraded as sendSlackDegraded,
   sendRecovery as sendSlackRecovery,
@@ -32,6 +37,7 @@ import {
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
+  sendAlert,
   sendAlert as sendOpsGenieAlert,
   sendDegraded as sendOpsGenieDegraded,
   sendRecovery as sendOpsGenieRecovery,
@@ -64,25 +70,20 @@ type Notif = {
 };
 
 export const providerToFunction = {
-  email: {
-    sendAlert: sendEmailAlert,
-    sendRecovery: sendEmailRecovery,
-    sendDegraded: sendEmailDegraded,
-  },
-  slack: {
-    sendAlert: sendSlackAlert,
-    sendRecovery: sendSlackRecovery,
-    sendDegraded: sendSlackDegraded,
-  },
   discord: {
     sendAlert: sendDiscordAlert,
     sendRecovery: sendDiscordRecovery,
     sendDegraded: sendDiscordDegraded,
   },
-  sms: {
-    sendAlert: sendSmsAlert,
-    sendRecovery: sendSmsRecovery,
-    sendDegraded: sendSmsDegraded,
+  email: {
+    sendAlert: sendEmailAlert,
+    sendRecovery: sendEmailRecovery,
+    sendDegraded: sendEmailDegraded,
+  },
+  ntfy: {
+    sendAlert: sendNtfyAlert,
+    sendRecovery: sendNtfyRecovery,
+    sendDegraded: sendNtfyDegraded,
   },
   opsgenie: {
     sendAlert: sendOpsGenieAlert,
@@ -93,5 +94,15 @@ export const providerToFunction = {
     sendAlert: sendPagerdutyAlert,
     sendRecovery: sendPagerDutyRecovery,
     sendDegraded: sendPagerDutyDegraded,
+  },
+  slack: {
+    sendAlert: sendSlackAlert,
+    sendRecovery: sendSlackRecovery,
+    sendDegraded: sendSlackDegraded,
+  },
+  sms: {
+    sendAlert: sendSmsAlert,
+    sendRecovery: sendSmsRecovery,
+    sendDegraded: sendSmsDegraded,
   },
 } satisfies Record<NotificationProvider, Notif>;

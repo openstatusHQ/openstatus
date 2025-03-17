@@ -36,6 +36,13 @@ export const phoneSchema = z.string().regex(phoneRegex, "Invalid Number!");
 export const emailSchema = z.string().email();
 export const urlSchema = z.string().url();
 
+export const ntfyDataSchema = z.object({
+  ntfy: z.object({
+    topic: z.string().default(""),
+    serverUrl: z.string().default("https://ntfy.sh"),
+    token: z.string().optional(),
+  }),
+});
 export const webhookDataSchema = z.object({ webhook: urlSchema });
 export const emailDataSchema = z.object({ email: emailSchema });
 export const phoneDataSchema = z.object({ sms: phoneSchema });
@@ -63,26 +70,20 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
   [
     insertNotificationSchema.merge(
       z.object({
+        provider: z.literal("discord"),
+        data: discordDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
         provider: z.literal("email"),
         data: emailDataSchema,
       }),
     ),
     insertNotificationSchema.merge(
       z.object({
-        provider: z.literal("sms"),
-        data: phoneDataSchema,
-      }),
-    ),
-    insertNotificationSchema.merge(
-      z.object({
-        provider: z.literal("slack"),
-        data: slackDataSchema,
-      }),
-    ),
-    insertNotificationSchema.merge(
-      z.object({
-        provider: z.literal("discord"),
-        data: discordDataSchema,
+        provider: z.literal("ntfy"),
+        data: ntfyDataSchema,
       }),
     ),
     insertNotificationSchema.merge(
@@ -95,6 +96,18 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("opsgenie"),
         data: opsgenieDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("sms"),
+        data: phoneDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("slack"),
+        data: slackDataSchema,
       }),
     ),
   ],

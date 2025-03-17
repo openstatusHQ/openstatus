@@ -1,6 +1,5 @@
 import { env } from "@/env";
 import type { Workspace } from "@openstatus/db/src/schema";
-import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
 import { Button, Separator } from "@openstatus/ui";
 import Link from "next/link";
@@ -33,6 +32,20 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
         />
         <Separator />
         <Channel
+          title="ntfy.sh"
+          description="Send notifications by ntfy.sh."
+          href="./notifications/new/ntfy"
+          disabled={disabled}
+        />
+        <Separator />
+        <Channel
+          title="OpsGenie"
+          description="Send notifications to OpsGenie."
+          href="./notifications/new/opsgenie"
+          disabled={disabled || !workspace.limits.opsgenie}
+        />
+        <Separator />
+        <Channel
           title="PagerDuty"
           description="Send notifications to PagerDuty."
           href={`https://app.pagerduty.com/install/integration?app_id=${env.PAGERDUTY_APP_ID}&redirect_url=${
@@ -57,12 +70,6 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
           disabled={disabled || !workspace.limits.sms}
         />
         <Separator />
-        <Channel
-          title="OpsGenie"
-          description="Send notifications to OpsGenie."
-          href="./notifications/new/opsgenie"
-          disabled={disabled || !workspace.limits.opsgenie}
-        />
       </div>
     </div>
   );

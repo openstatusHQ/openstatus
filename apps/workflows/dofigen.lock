@@ -51,6 +51,8 @@ effective: |
         source: packages/notifications/discord/package.json
       - target: packages/notifications/email/package.json
         source: packages/notifications/email/package.json
+      - target: packages/notifications/ntfy/package.json
+        source: packages/notifications/ntfy/package.json
       - target: packages/notifications/opsgenie/package.json
         source: packages/notifications/opsgenie/package.json
       - target: packages/notifications/pagerduty/package.json
@@ -92,7 +94,7 @@ images:
           digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
 resources:
   dofigen.yml:
-    hash: 89efc794b70865f5718e42302021382f7ed0c0ea9459a7bd9a8047cdd28757ae
+    hash: 756c481a0bf4efc02d00ba1da6a9d84960b3424e625d492ef4c93ec841d075f6
     content: |
       ignore:
         - node_modules
@@ -117,6 +119,7 @@ resources:
             - packages/emails/package.json
             - packages/notifications/discord/package.json
             - packages/notifications/email/package.json
+            - packages/notifications/ntfy/package.json
             - packages/notifications/opsgenie/package.json
             - packages/notifications/pagerduty/package.json
             - packages/notifications/slack/package.json

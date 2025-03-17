@@ -13,6 +13,7 @@ RUN \
     --mount=type=bind,target=packages/emails/package.json,source=packages/emails/package.json \
     --mount=type=bind,target=packages/notifications/discord/package.json,source=packages/notifications/discord/package.json \
     --mount=type=bind,target=packages/notifications/email/package.json,source=packages/notifications/email/package.json \
+    --mount=type=bind,target=packages/notifications/ntfy/package.json,source=packages/notifications/ntfy/package.json \
     --mount=type=bind,target=packages/notifications/opsgenie/package.json,source=packages/notifications/opsgenie/package.json \
     --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
     --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \

@@ -32,7 +32,6 @@ export default async function ChannelPage(props: {
   if (isLimitReached) {
     return <ProFeatureAlert feature="More notification channel" />;
   }
-
   return (
     <NotificationForm
       workspacePlan={workspace.plan}

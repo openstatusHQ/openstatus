@@ -11,6 +11,7 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
     "@openstatus/notification-emails": "workspace:*",
+    "@openstatus/notification-ntfy": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
