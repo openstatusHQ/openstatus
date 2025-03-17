@@ -254,6 +254,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-ntfy':
+        specifier: workspace:*
+        version: link:../../packages/notifications/ntfy
       '@openstatus/notification-opsgenie':
         specifier: workspace:*
         version: link:../../packages/notifications/opsgenie
@@ -495,6 +498,9 @@ importers:
       '@openstatus/notification-emails':
         specifier: workspace:*
         version: link:../../packages/notifications/email
+      '@openstatus/notification-ntfy':
+        specifier: workspace:*
+        version: link:../../packages/notifications/ntfy
       '@openstatus/notification-opsgenie':
         specifier: workspace:*
         version: link:../../packages/notifications/opsgenie
@@ -800,6 +806,25 @@ importers:
       resend:
         specifier: 4.0.1
         version: 4.0.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
+    devDependencies:
+      '@openstatus/tsconfig':
+        specifier: workspace:*
+        version: link:../../tsconfig
+      '@types/node':
+        specifier: 22.10.2
+        version: 22.10.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
+  packages/notifications/ntfy:
+    dependencies:
+      '@openstatus/db':
+        specifier: workspace:*
+        version: link:../../db
       zod:
         specifier: 3.23.8
         version: 3.23.8

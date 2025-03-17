@@ -20,6 +20,7 @@ import {
 import { SectionHeader } from "../shared/section-header";
 import { SectionDiscord } from "./provider/section-discord";
 import { SectionEmail } from "./provider/section-email";
+import { SectionNtfy } from "./provider/section-ntfy";
 import { SectionOpsGenie } from "./provider/section-opsgenie";
 import { SectionPagerDuty } from "./provider/section-pagerduty";
 import { SectionSlack } from "./provider/section-slack";
@@ -32,6 +33,7 @@ const LABELS = {
   pagerduty: "PagerDuty",
   opsgenie: "OpsGenie",
   email: "Email",
+  ntfy: "Ntfy.sh",
 };
 
 interface Props {
@@ -56,6 +58,8 @@ export function General({ form, plan }: Props) {
         return <SectionOpsGenie form={form} plan={plan} />;
       case "email":
         return <SectionEmail form={form} />;
+      case "ntfy":
+        return <SectionNtfy form={form} />;
       default:
         return <div>No provider selected</div>;
     }

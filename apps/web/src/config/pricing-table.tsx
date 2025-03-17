@@ -110,7 +110,7 @@ export const pricingTableConfig: Record<
     features: [
       {
         value: "notifications",
-        label: "Slack, Discord, Email",
+        label: "Slack, Discord, Email, ntfy.sh",
       },
       {
         value: "sms",
