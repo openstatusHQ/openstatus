@@ -36,7 +36,7 @@ export const sendAlert = async ({
     : `https://ntfy.sh/${notificationData.topic}`;
 
   try {
-    fetch(url, {
+    await fetch(url, {
       method: "post",
       body,
       headers: {
@@ -124,7 +124,7 @@ export const sendDegraded = async ({
     : `https://ntfy.sh/${notificationData.topic}`;
 
   try {
-    fetch(url, {
+    await fetch(url, {
       method: "post",
       body,
       headers: {

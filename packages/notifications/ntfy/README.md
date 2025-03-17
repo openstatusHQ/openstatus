@@ -1,5 +1,4 @@
-# @openstatus/notifications-discord
-
+# @openstatus/notification-ntfy
 To install dependencies:
 
 ```bash
