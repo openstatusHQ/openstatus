@@ -85,7 +85,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       and(
         eq(schema.monitorStatusTable.monitorId, monitor.id),
         eq(schema.monitorStatusTable.status, status),
-        inArray(schema.monitorStatusTable.region, monitor.regions)
+        inArray(schema.monitorStatusTable.region, monitor.regions),
       ),
     )
     .get();
