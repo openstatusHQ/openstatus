@@ -3,7 +3,7 @@ import { Client } from "@upstash/qstash";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { and, count, db, eq, isNull, schema } from "@openstatus/db";
+import { and, count, db, eq, inArray, isNull, schema } from "@openstatus/db";
 import { incidentTable, workspace } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,
@@ -85,6 +85,7 @@ checkerRoute.post("/updateStatus", async (c) => {
       and(
         eq(schema.monitorStatusTable.monitorId, monitor.id),
         eq(schema.monitorStatusTable.status, status),
+        inArray(schema.monitorStatusTable.region, monitor.regions)
       ),
     )
     .get();
