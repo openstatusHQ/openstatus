@@ -63,6 +63,7 @@ export const NotificationDataSchema = z.union([
   discordDataSchema,
   pagerdutyDataSchema,
   opsgenieDataSchema,
+  ntfyDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
