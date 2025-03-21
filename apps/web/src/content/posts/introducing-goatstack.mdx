@@ -1,0 +1,85 @@
+---
+title: Introducing the GoaT stack
+description:
+  A full-stack app template featuring a Golang server and a Vite + React SPA front end.
+author:
+  name: Thibault Le Ouay Ducasse
+  url: https://bsky.app/profile/thibaultleouay.dev
+  avatar: /assets/authors/thibault.jpeg
+publishedAt: 2025-03-21
+image: /assets/posts/introducing-goatstack/goat.png
+tag: engineering
+---
+
+## What is the GoaT stack?
+
+The GoaT stack is a full-stack app template featuring a Golang server and a Vite + React SPA front end.
+
+We want the GoaT stack to have a great DX.
+
+
+### What is included in the GoaT stack?
+
+**SQLite**: We have chosen SQLite as the database because we love it. It’s just a file.
+**LiteStream**: To backup our database
+
+
+**Protocol Buffer with ConnecTRPC**: For their http based protocol that works with Protocol Buffer.
+
+**Chi**: For our Golang router
+**[connectrpc.com/connect](https://connectrpc.com/connect)**: To handle http based request
+
+
+**React**: Our frontend framework of choice.
+**TanStack Query + Connect-Query **: to generate our typesafe query
+**TanStack Router**: The typed router is joy to work with.
+
+### API: Schema First Approach
+
+Using Protocol Buffer we can design our API in `proto` file
+
+
+### Why not going full stack TypeScript
+Because we have worked in a large monorepo, we have often been frustrated by the number of times we had to restart our TypeScript LSP.
+
+Additionally, we love Golang. We heavily rely on it for OpenStatus.
+
+## How to get started with the Goat Stack
+
+
+### Requirements
+
+To get started you need to have these  installed on your computer
+
+- [Just](https://just.systems)
+- [Golang](https://go.dev/)
+- [pnpm](https://pnpm.io)
+- [Node](https://nodejs.org/en)
+
+
+
+### Get Started
+1. First clone our repository : https://github.com/openstatusHQ/goat-stack
+
+2. Run
+```bash
+just init
+```
+
+It will download all the dependancies.
+
+3. Open your IDE and update `packages/proto/goat/v1/goat.proto`
+Add new procedure in the GoatService
+
+4. Run `just buf`
+
+5. Implement the handler in the server
+
+6. Start calling it in your React App with the newly generated query
+
+
+### How to deploy it.
+
+We provide 2 docker files to deploy the dashboard and the server where you want. For example our server for [GoatStack.dev](https://GoatStack.dev) is hosted on Koyeb.
+
+Before deploying the server you need to update `apps/server/etc/litestream.yml` with your S3 compatible bucket key to backup your database.
