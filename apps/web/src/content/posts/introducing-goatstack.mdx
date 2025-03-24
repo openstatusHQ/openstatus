@@ -119,11 +119,10 @@ message GetVotesResponse {
 
 4. Run `just buf`
 
-5. Implement the handler in the server
+5. Implement the handler in the server  `apps/server/internal/goat/handler.go`
 
 ```go
 func (h *goatHandler) Vote(ctx context.Context, req *connect.Request[goatv1.VoteRequest]) (*connect.Response[goatv1.VoteResponse], error) {
-
 	tx := h.db.MustBegin()
 	var value string
 	switch req.Msg.Vote {
@@ -133,7 +132,6 @@ func (h *goatHandler) Vote(ctx context.Context, req *connect.Request[goatv1.Vote
 	case goatv1.Vote_NO:
 		value = "no"
 		break
-
 	default:
 		break
 	}
@@ -142,7 +140,6 @@ func (h *goatHandler) Vote(ctx context.Context, req *connect.Request[goatv1.Vote
 	res := connect.NewResponse(&goatv1.VoteResponse{
 		Success: true,
 	})
-
 	return res, nil
 }
 ```
