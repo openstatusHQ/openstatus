@@ -6,43 +6,74 @@ author:
   name: Thibault Le Ouay Ducasse
   url: https://bsky.app/profile/thibaultleouay.dev
   avatar: /assets/authors/thibault.jpeg
-publishedAt: 2025-03-21
+publishedAt: 2025-03-24
 image: /assets/posts/introducing-goatstack/goat.png
 tag: engineering
 ---
 
 ## What is the GoaT stack?
 
-The GoaT stack is a full-stack app template featuring a Golang server and a Vite + React SPA front end.
+The GoaT stack is a [full-stack app template](https://github.com/openstatusHQ/goat-stack) featuring a Golang server and a Vite + React SPA front end.
 
 We want the GoaT stack to have a great DX.
 
-
 ### What is included in the GoaT stack?
 
-**SQLite**: We have chosen SQLite as the database because we love it. It’s just a file.
-**LiteStream**: To backup our database
+**[SQLite](https://www.sqlite.org/)**: We have chosen SQLite as the database because we love it. It’s just a file.
+**[LiteStream](https://litestream.io/)**: To backup our database
 
 
-**Protocol Buffer with ConnecTRPC**: For their http based protocol that works with Protocol Buffer.
+**[Protocol Buffer with ConnecTRPC](https://connectrpc.com/)**: For their http based protocol that works with Protocol Buffer.
 
-**Chi**: For our Golang router
+**[Chi](https://go-chi.io)**: For our Golang router\
 **[connectrpc.com/connect](https://connectrpc.com/connect)**: To handle http based request
 
 
-**React**: Our frontend framework of choice.
-**TanStack Query + Connect-Query **: to generate our typesafe query
-**TanStack Router**: The typed router is joy to work with.
+**[React](https://react.dev/)**: Our frontend framework of choice.\
+**[TanStack Query + Connect-Query](https://github.com/connectrpc/connect-query-es)**: to generate our typesafe query.\
+**[TanStack Router](https://tanstack.com/router/latest)**: The typed router is a joy to work with.
+
+
 
 ### API: Schema First Approach
 
 Using Protocol Buffer we can design our API in `proto` file
 
+```proto
+syntax = "proto3";
+
+package goat.v1;
+
+enum Vote {
+  YES = 0;
+  NO = 1;
+}
+
+message VoteRequest {
+    Vote Vote = 1;
+}
+message VoteResponse {
+  bool Success = 1;
+}
+```
 
 ### Why not going full stack TypeScript
-Because we have worked in a large monorepo, we have often been frustrated by the number of times we had to restart our TypeScript LSP.
 
-Additionally, we love Golang. We heavily rely on it for OpenStatus.
+
+<a href="https://bsky.app/profile/did:plc:eu6cezqsf5yocjsyc7mgkued/post/3lkeag64a2s2x"><Image
+  alt="New users per week"
+  src="/assets/posts/introducing-goatstack/bsky-post.png"
+  width={650}
+  height={575}
+/></a>
+
+
+We have worked in a large monorepo, we have often been frustrated by the number of times we had to restart our TypeScript LSP.
+
+
+
+
+We love Golang. We heavily rely on it for OpenStatus.
 
 ## How to get started with the Goat Stack
 
@@ -59,7 +90,7 @@ To get started you need to have these  installed on your computer
 
 
 ### Get Started
-1. First clone our repository : https://github.com/openstatusHQ/goat-stack
+1. First clone our repository : [https://github.com/openstatusHQ/goat-stack](https://github.com/openstatusHQ/goat-stack)
 
 2. Run
 ```bash
@@ -71,15 +102,133 @@ It will download all the dependancies.
 3. Open your IDE and update `packages/proto/goat/v1/goat.proto`
 Add new procedure in the GoatService
 
+```proto
+service GoatService {
+    rpc GetVotes(GetVotesRequest) returns (GetVotesResponse) {}
+    rpc Vote(VoteRequest) returns (VoteResponse) {}
+}
+
+message GetVotesRequest {}
+
+message GetVotesResponse {
+  int64 Yes = 1;
+  int64 No = 2;
+}
+
+```
+
 4. Run `just buf`
 
 5. Implement the handler in the server
 
+```go
+func (h *goatHandler) Vote(ctx context.Context, req *connect.Request[goatv1.VoteRequest]) (*connect.Response[goatv1.VoteResponse], error) {
+
+	tx := h.db.MustBegin()
+	var value string
+	switch req.Msg.Vote {
+	case goatv1.Vote_YES:
+		value = "yes"
+		break
+	case goatv1.Vote_NO:
+		value = "no"
+		break
+
+	default:
+		break
+	}
+	r := tx.MustExec("INSERT INTO vote (timestamp, vote) VALUES ($1, $2)", time.Now().Unix(), value)
+	tx.Commit()
+	res := connect.NewResponse(&goatv1.VoteResponse{
+		Success: true,
+	})
+
+	return res, nil
+}
+```
+
 6. Start calling it in your React App with the newly generated query
+
+```tsx
+// Our wrapper around tanstack query
+import { useMutation } from "@connectrpc/connect-query";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+// Our generated query
+import { vote } from "../gen/proto/goat/v1/goat-GoatService_connectquery";
+// Our generated types
+import { Vote } from "../gen/proto/goat/v1/goat_pb";
+import { Button } from "@goat/ui/components/button";
+
+export const Route = createFileRoute("/")({
+  component: App,
+});
+
+function App() {
+  // Use the mutation hook with our generated query
+  const v = useMutation(vote);
+  const { navigate } = useRouter();
+  return (
+    <div>
+      <div >
+        <p>Is this the 🐐 stack?</p>
+        <div>
+          <Button
+            variant={"outline"}
+            disabled={v.isPending}
+            onClick={async () => {
+              await v.mutateAsync({
+                Vote: Vote.YES,
+              });
+              navigate({ to: "/results" });
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            variant={"outline"}
+            disabled={v.isPending}
+            onClick={async () => {
+              await v.mutateAsync({
+                Vote: Vote.NO,
+              });
+              navigate({ to: "/results" });
+            }}
+          >
+            No
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+````
 
 
 ### How to deploy it.
 
-We provide 2 docker files to deploy the dashboard and the server where you want. For example our server for [GoatStack.dev](https://GoatStack.dev) is hosted on Koyeb.
+We provide 2 docker files to deploy the dashboard and the server where you want. For example our server for [GoatStack.dev](https://GoatStack.dev) is hosted on [Koyeb](https://www.koyeb.com/) and our dashboard on [Cloudflare](https://cloudflare.com/)
 
 Before deploying the server you need to update `apps/server/etc/litestream.yml` with your S3 compatible bucket key to backup your database.
+
+```yaml
+dbs:
+  - path: /data/db
+    replicas:
+      - type: s3
+        endpoint: https://${CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com/
+        bucket: goat-stack
+        access-key-id: ${CLOUDFLARE_R2_ACCESS_KEY_ID}
+        secret-access-key: ${CLOUDFLARE_R2_SECRET_ACCESS_KEY}
+```
+
+
+### Conclusion
+
+We hope you will enjoy using the GoaT stack as much as we do. We are looking forward to seeing what you will build with it. Feel free to reach out to us on [ping@openstatus](mailto:ping@openstatus.dev?subject=GoatStack) if you have any questions or feedback.
+
+And if you want to contribute to the GoaT stack, we would be more than happy to welcome you to our community.
+
+And create a free [OpenStatus account](/app/login) to monitor your server and get notified if something goes wrong.
+
+Happy coding! 🐐
