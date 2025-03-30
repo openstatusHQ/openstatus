@@ -10,13 +10,13 @@ image: /assets/posts/openstatus-light-viewer/light-viewer.png
 tag: engineering
 ---
 
+› [logs.run/light](https://logs.run/light)
+
 A few months ago, we released [light.openstatus.dev](https://light.openstatus.dev) (`vercel-edge-ping`) - a lightweight community edition of OpenStatus designed to monitor your `HTTP` endpoints via Vercel's edge regions and notify you if `>50%` of the requests go down. No dependencies, no UI, just the essentials. For more details, check out our [README](https://github.com/openstatusHQ/vercel-edge-ping).
 
 Now, we’re excited to announce support for an extensive dashboard. If you're already using Tinybird to store your data, simply redeploy the latest `vercel-edge-ping` project and include the updated [pipes](https://github.com/openstatusHQ/vercel-edge-ping/tree/main/tb/pipes) in Tinybird. You can then access your values via [logs.run/light](https://logs.run/light) by updating the base URL of the API endpoint (use the floating button in the bottom left corner). By default, it will display demo values from [light.openstatus.dev](https://light.openstatus.dev).
 
 ![OpenStatus Light Viewer](/assets/posts/openstatus-light-viewer/data-table-popover.png)
-
-Check it out: [logs.run/light](https://logs.run/light)
 
 ### Folder Structure
 
@@ -64,7 +64,7 @@ The [`vercel-edge-ping`](https://github.com/openstatusHQ/vercel-edge-ping) proje
 
 Self-hosting is not required. If you have `vercel-edge-ping` ingesting data into Tinybird and are using the default pipes, you can open the API endpoint configuration. Click the floating button in the bottom left corner or press <kbd>⌘ + J</kbd>. Enter the base URL, and the `tb_endpoint` cookie will be set automatically. Delete the cookie manually if needed.
 
-Use the [data-table-filters](https://github.com/openstatusHQ/data-table-filters) to build your own logs tables.
+Use the [data-table-filters](https://github.com/openstatusHQ/data-table-filters) to build your own logs tables. Check out [logs.run](https://logs.run) for a guide and more examples.
 
 ### Is an authentication system provided?
 
