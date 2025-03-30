@@ -32,7 +32,7 @@ For everyone who wants to build their own dashboard, here's a snapshot of the cu
 ```json
 /src/app/light
 ├── api
-│   └── route.tsx
+│   └── route.ts
 ├── client.tsx
 ├── columns.tsx
 ├── constants.tsx
@@ -42,7 +42,8 @@ For everyone who wants to build their own dashboard, here's a snapshot of the cu
 └── search-params.ts
 ```
 
-- **`client.tsx`**: Client component that queries the API and performs minor data transformations.
+- **`route.ts`**: API endpoint to fetch Tinybird values.
+- **`client.tsx`**: Tanstack query client to fetch data from `route.ts`.
 - **`columns.tsx`**: TanStack column array configuration.
 - **`constants.tsx`**: Filter and sheet fields configuration.
 - **`layout.tsx`**: Simple layout component.
