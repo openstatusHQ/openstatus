@@ -10,8 +10,6 @@ image: /assets/posts/openstatus-light-viewer/light-viewer.png
 tag: engineering
 ---
 
-The first real-world use case of the [logs.run](https://logs.run/light) project and a simple yet effective showcase of the [data-table-filters](https://github.com/openstatusHQ/data-table-filters) project.
-
 A few months ago, we released [light.openstatus.dev](https://light.openstatus.dev) (`vercel-edge-ping`) - a lightweight community edition of OpenStatus designed to monitor your `HTTP` endpoints via Vercel's edge regions and notify you if `>50%` of the requests go down. No dependencies, no UI, just the essentials. For more details, check out our [README](https://github.com/openstatusHQ/vercel-edge-ping).
 
 Now, we’re excited to announce support for an extensive dashboard. If you're already using Tinybird to store your data, simply redeploy the latest `vercel-edge-ping` project and include the updated [pipes](https://github.com/openstatusHQ/vercel-edge-ping/tree/main/tb/pipes) in Tinybird. You can then access your values via [logs.run/light](https://logs.run/light) by updating the base URL of the API endpoint (use the floating button in the bottom left corner). By default, it will display demo values from [light.openstatus.dev](https://light.openstatus.dev).
@@ -22,7 +20,7 @@ Check it out: [logs.run/light](https://logs.run/light)
 
 ### Folder Structure
 
-Here's a snapshot of the current **Folder Structure**:
+For everyone who wants to build their own dashboard, here's a snapshot of the current **Folder Structure**:
 
 ```json
 /src/app/light
