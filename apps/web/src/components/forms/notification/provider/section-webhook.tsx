@@ -1,7 +1,7 @@
 "use client";
 
 import { toastAction } from "@/lib/toast";
-import type { UseFormReturn } from "react-hook-form";
+import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { InsertNotificationWithData } from "@openstatus/db/src/schema";
@@ -15,7 +15,8 @@ import {
   Input,
 } from "@openstatus/ui";
 import { useTransition } from "react";
-import { sendNtfyTestAlert, sendWebhookTestAlert } from "./actions";
+import {  sendWebhookTestAlert } from "./actions";
+import { X } from "lucide-react";
 
 interface Props {
   form: UseFormReturn<InsertNotificationWithData>;
@@ -24,8 +25,12 @@ interface Props {
 export function SectionWebhook({ form }: Props) {
   const [isTestPending, startTestTransition] = useTransition();
 
+  const { fields, append, prepend, remove, update } = useFieldArray({
+    name: "data.webhook.headers",
+    control: form.control,
+  });
+
   const watchUrl = form.watch("data.webhook.endpoint");
-  const watchToken = form.watch("data.webhook.headers");
 
   async function sendTestAlert() {
     if (!watchUrl) return;
@@ -60,6 +65,55 @@ export function SectionWebhook({ form }: Props) {
           </FormItem>
         )}
       />
+
+      <div className="space-y-2 sm:col-span-full">
+        <FormLabel>Request Header</FormLabel>
+        {fields.map((field, index) => (
+          <div key={field.id} className="grid grid-cols-6 gap-4">
+            <FormField
+              control={form.control}
+              name={`webhook.headers.${index}.key`}
+              render={({ field }) => (
+                <FormItem className="col-span-2">
+                  <FormControl>
+                    <Input placeholder="key" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <div className="col-span-4 flex items-center space-x-2">
+              <FormField
+                control={form.control}
+                name={`webhook.headers.${index}.value`}
+                render={({ field }) => (
+                  <FormItem className="w-full">
+                    <FormControl>
+                      <Input placeholder="value" {...field} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <Button
+                size="icon"
+                variant="ghost"
+                type="button"
+                onClick={() => remove(index)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        ))}
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => append({ key: "", value: "" })}
+          >
+            Add Custom Header
+          </Button>
+        </div>
+      </div>
       {/* <FormField
         control={form.control}
         name="data.ntfy.token"

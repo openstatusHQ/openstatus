@@ -38,7 +38,7 @@ export const sendAlert = async ({
       method: "post",
       body: JSON.stringify(body),
       headers: {
-        ...notificationData.headers,
+        ...{},
       },
     });
   } catch (err) {
@@ -82,7 +82,7 @@ export const sendRecovery = async ({
       method: "post",
       body: JSON.stringify(body),
       headers: {
-        ...notificationData.headers,
+        ...{},
       },
     });
   } catch (err) {
@@ -119,12 +119,13 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
+  // const headers = notificationData.headers ? notificationData.headers.map(header => ({  header.key : header.value })) : [];
   try {
     await fetch(notificationData.endpoint, {
       method: "post",
       body: JSON.stringify(body),
       headers: {
-        ...notificationData.headers,
+        ...{},
       },
     });
   } catch (err) {

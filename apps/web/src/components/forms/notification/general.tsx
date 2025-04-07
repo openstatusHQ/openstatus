@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type {
@@ -17,7 +16,6 @@ import {
   Input,
 } from "@openstatus/ui";
 
-import { Webcam } from "lucide-react";
 import { SectionHeader } from "../shared/section-header";
 import { SectionDiscord } from "./provider/section-discord";
 import { SectionEmail } from "./provider/section-email";

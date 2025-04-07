@@ -7,7 +7,6 @@ import { prettyJSON } from "hono/pretty-json";
 import { requestId } from "hono/request-id";
 import { env } from "./env";
 import { handleError } from "./libs/errors";
-import { checkerRoute } from "./routes/checker";
 import { publicRoute } from "./routes/public";
 import { api } from "./routes/v1";
 
@@ -48,7 +47,6 @@ app.route("/v1", api);
  * This route is used by our checker to update the status of the monitors,
  * create incidents, and send notifications.
  */
-app.route("/", checkerRoute);
 
 const isDev = process.env.NODE_ENV === "development";
 const port = 3000;
