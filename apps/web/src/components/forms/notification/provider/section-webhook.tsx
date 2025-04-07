@@ -1,7 +1,7 @@
 "use client";
 
 import { toastAction } from "@/lib/toast";
-import { useFieldArray, type UseFormReturn } from "react-hook-form";
+import { type UseFormReturn, useFieldArray } from "react-hook-form";
 
 import { LoadingAnimation } from "@/components/loading-animation";
 import type { InsertNotificationWithData } from "@openstatus/db/src/schema";
@@ -14,9 +14,9 @@ import {
   FormMessage,
   Input,
 } from "@openstatus/ui";
-import { useTransition } from "react";
-import {  sendWebhookTestAlert } from "./actions";
 import { X } from "lucide-react";
+import { useTransition } from "react";
+import { sendWebhookTestAlert } from "./actions";
 
 interface Props {
   form: UseFormReturn<InsertNotificationWithData>;
