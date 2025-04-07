@@ -1,0 +1,101 @@
+---
+title: Webhook
+description: "How to set up Webhook notifications in OpenStatus to get alerts when your synthetic check fail"
+---
+## Setting Up Webhook Notifications
+To set up Webhook notifications, follow these steps:
+
+1. **Access the Notifications Tab**\
+Navigate to your notifications tab within the application.
+
+2. **Add a New Notification**\
+Click on the "Add Notification" button and select Webhook as the notification type.
+
+3.	**Provide Notification URL**\
+Enter the URL where OpenStatus will send the notification payload. This URL should be publicly accessible and capable of handling incoming POST requests.
+
+4. **Optional: Add Custom Headers**\
+If needed, you can include custom headers in your request for additional context or authentication.
+
+
+## Notification Payloads
+
+
+OpenStatus sends different payloads depending on the status of the monitor. Below are the payload structures for both
+recovery and failure notifications.
+
+
+### Payload for Monitor Recovery
+When the monitor recovers, you will receive a notification with the following payload:
+```json
+{
+  "monitor": {
+    "id": 1,
+    "name": "test",
+    "url": "http://openstat.us"
+  },
+  "cronTimestamp": 1744023705307,
+  "status": "recovered",
+  "statusCode": 200,
+  "latency": 1337
+}
+```
+
+
+Fields Explanation:
+-	monitor: Contains details about the monitor.
+    -	id: Unique identifier for the monitor.
+    -	name: Name of the monitor.
+    -	url: The URL being monitored.
+-	cronTimestamp: The timestamp when the check was executed, in milliseconds since epoch.
+-	status: Indicates the current status of the monitor (in this case, "recovered").
+-	statusCode: The HTTP status code returned by the monitored service.
+-	latency: The time taken to complete the check, in milliseconds.
+
+
+### Payload for Monitor Failure
+
+In the event of a monitor failure, the notification will include the following payload:
+```json
+{
+  "monitor": {
+    "id": 1,
+    "name": "test",
+    "url": "http://openstat.us"
+  },
+  "cronTimestamp": 1744023705307,
+  "status": "error",
+  "errorMessage": "Connection refused"
+}
+```
+
+Fields Explanation:
+
+-	monitor: Contains details about the monitor.
+    -	id: Unique identifier for the monitor.
+  	-	name: Name of the monitor.
+  	-	url: The URL being monitored.
+-	cronTimestamp: The timestamp when the check was executed, in milliseconds since epoch.
+-	status: Indicates the current status of the monitor (in this case, "error").
+-	errorMessage: A description of the error encountered during the check.
+
+
+### Zod Schema
+
+
+```ts
+import { z } from "zod";
+
+export const PayloadSchema = z.object({
+  monitor: z.object({
+    id: z.number(),
+    name: z.string(),
+    url: z.string(),
+  }),
+  cronTimestamp: z.number(),
+  status: z.enum(["degraded", "error", "recovered"]),
+  statusCode: z.number().optional(),
+  latency: z.number().optional(),
+  errorMessage: z.string().optional(),
+});
+````
