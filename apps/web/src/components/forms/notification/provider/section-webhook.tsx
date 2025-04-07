@@ -15,26 +15,23 @@ import {
   Input,
 } from "@openstatus/ui";
 import { useTransition } from "react";
-import { sendNtfyTestAlert } from "./actions";
+import { sendNtfyTestAlert, sendWebhookTestAlert } from "./actions";
 
 interface Props {
   form: UseFormReturn<InsertNotificationWithData>;
 }
 
-export function SectionNtfy({ form }: Props) {
+export function SectionWebhook({ form }: Props) {
   const [isTestPending, startTestTransition] = useTransition();
 
-  const watchTopic = form.watch("data.ntfy.topic");
-  const watchUrl = form.watch("data.ntfy.serverUrl");
-  const watchToken = form.watch("data.ntfy.token");
+  const watchUrl = form.watch("data.webhook.endpoint");
+  const watchToken = form.watch("data.webhook.headers");
 
   async function sendTestAlert() {
-    if (!watchTopic) return;
+    if (!watchUrl) return;
     startTestTransition(async () => {
-      const isSuccessfull = await sendNtfyTestAlert({
-        topic: watchTopic,
-        serverUrl: watchUrl || undefined,
-        token: watchToken || undefined,
+      const isSuccessfull = await sendWebhookTestAlert({
+        url: watchUrl ,
       });
       if (isSuccessfull) {
         toastAction("test-success");
@@ -48,31 +45,18 @@ export function SectionNtfy({ form }: Props) {
     <>
       <FormField
         control={form.control}
-        name="data.ntfy.topic"
-        render={({ field }) => (
-          <FormItem className="sm:col-span-full">
-            <FormLabel>Topic</FormLabel>
-            <FormControl>
-              <Input type="text" placeholder="your-topic" required {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        control={form.control}
-        name="data.ntfy.serverUrl"
+        name="data.webhook.endpoint"
         render={({ field }) => (
           <FormItem className="sm:col-span-full">
             <FormLabel>URL</FormLabel>
             <FormControl>
-              <Input type="url" placeholder="https://ntfy.sh" {...field} />
+              <Input type="url" placeholder="https://your-webhook-url" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
         )}
       />
-      <FormField
+      {/* <FormField
         control={form.control}
         name="data.ntfy.token"
         render={({ field }) => (
@@ -84,13 +68,13 @@ export function SectionNtfy({ form }: Props) {
             <FormMessage />
           </FormItem>
         )}
-      />
+      /> */}
       <div className="col-span-full text-right">
         <Button
           type="button"
           variant="secondary"
           className="w-full sm:w-auto"
-          disabled={isTestPending || !watchTopic}
+          disabled={isTestPending }
           onClick={sendTestAlert}
         >
           {!isTestPending ? (

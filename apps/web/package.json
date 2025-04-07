@@ -29,6 +29,7 @@
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-opsgenie": "workspace:*",
+    "@openstatus/notification-webhook":"workspace:*",
     "@openstatus/react": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/tracker": "workspace:*",

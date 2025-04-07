@@ -10,23 +10,6 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
-      fromImage:
-        path: oven/bun
-        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
-      workdir: /app/apps/workflows
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      run:
-      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
     install:
       fromImage:
         path: oven/bun
@@ -61,6 +44,8 @@ effective: |
         source: packages/notifications/slack/package.json
       - target: packages/notifications/twillio-sms/package.json
         source: packages/notifications/twillio-sms/package.json
+      - target: packages/notifications/webhook/package.json
+        source: packages/notifications/webhook/package.json
       - target: packages/utils/package.json
         source: packages/utils/package.json
       - target: packages/tsconfig/package.json
@@ -69,6 +54,23 @@ effective: |
         source: packages/tinybird/package.json
       - target: packages/upstash/package.json
         source: packages/upstash/package.json
+    build:
+      fromImage:
+        path: oven/bun
+        digest: sha256:e9382fda475d1ff0a939e925db3ca5a91b3b26cd71f23410dc5363262384bbc2
+      workdir: /app/apps/workflows
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      run:
+      - bun build --compile --sourcemap --format=cjs src/index.ts --outfile=app
   fromImage:
     path: debian
     digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
@@ -94,7 +96,7 @@ images:
           digest: sha256:e831d9a884d63734fe3dd9c491ed9a5a3d4c6a6d32c5b14f2067357c49b0b7e1
 resources:
   dofigen.yml:
-    hash: 756c481a0bf4efc02d00ba1da6a9d84960b3424e625d492ef4c93ec841d075f6
+    hash: fbea3a6c2c01ffe130db1ea9fc60ffaf2c2f1aaac2fd63d523bb526c5eb92cf4
     content: |
       ignore:
         - node_modules
@@ -124,6 +126,7 @@ resources:
             - packages/notifications/pagerduty/package.json
             - packages/notifications/slack/package.json
             - packages/notifications/twillio-sms/package.json
+            - packages/notifications/webhook/package.json
             - packages/utils/package.json
             - packages/tsconfig/package.json
             - packages/tinybird/package.json

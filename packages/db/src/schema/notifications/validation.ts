@@ -43,7 +43,12 @@ export const ntfyDataSchema = z.object({
     token: z.string().optional(),
   }),
 });
-export const webhookDataSchema = z.object({ webhook: urlSchema });
+export const webhookDataSchema = z.object({
+  webhook: z.object({
+    endpoint: z.string().url(),
+    headers: z.record(z.string(), z.string()).optional(),
+  }),
+});
 export const emailDataSchema = z.object({ email: emailSchema });
 export const phoneDataSchema = z.object({ sms: phoneSchema });
 export const slackDataSchema = z.object({ slack: urlSchema });
@@ -64,6 +69,7 @@ export const NotificationDataSchema = z.union([
   pagerdutyDataSchema,
   opsgenieDataSchema,
   ntfyDataSchema,
+  webhookDataSchema,
 ]);
 
 export const InsertNotificationWithDataSchema = z.discriminatedUnion(
@@ -109,6 +115,12 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
       z.object({
         provider: z.literal("slack"),
         data: slackDataSchema,
+      }),
+    ),
+    insertNotificationSchema.merge(
+      z.object({
+        provider: z.literal("webhook"),
+        data: webhookDataSchema,
       }),
     ),
   ],
