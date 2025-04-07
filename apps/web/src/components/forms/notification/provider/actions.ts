@@ -40,9 +40,9 @@ export async function sendWebhookTestAlert({
   url,
   headers,
 }: {
-  url: string,
+  url: string;
   headers?: Record<string, string>;
-})  {
+}) {
   const isSuccessfull = await sendWebhookAlert({ url, headers });
   return isSuccessfull;
 }

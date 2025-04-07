@@ -17,6 +17,7 @@ import {
   Input,
 } from "@openstatus/ui";
 
+import { Webcam } from "lucide-react";
 import { SectionHeader } from "../shared/section-header";
 import { SectionDiscord } from "./provider/section-discord";
 import { SectionEmail } from "./provider/section-email";
@@ -26,8 +27,6 @@ import { SectionPagerDuty } from "./provider/section-pagerduty";
 import { SectionSlack } from "./provider/section-slack";
 import { SectionSms } from "./provider/section-sms";
 import { SectionWebhook } from "./provider/section-webhook";
-import { Webcam } from "lucide-react";
-
 
 const LABELS = {
   slack: "Slack",

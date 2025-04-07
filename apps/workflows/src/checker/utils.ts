@@ -42,7 +42,6 @@ import {
   sendRecovery as sendOpsGenieRecovery,
 } from "@openstatus/notification-opsgenie";
 
-
 import {
   sendAlert as sendWebhookAlert,
   sendDegraded as sendWebhookDegraded,

@@ -6,5 +6,5 @@ export const notificationProvider = [
   "opsgenie",
   "slack",
   "sms",
-  "webhook"
+  "webhook",
 ] as const;

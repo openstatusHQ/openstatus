@@ -5,7 +5,6 @@ export const WebhookSchema = z.object({
   headers: z.record(z.string(), z.string()).optional(),
 });
 
-
 export const PayloadSchema = z.object({
   monitor: z.object({
     id: z.number(),
@@ -13,7 +12,7 @@ export const PayloadSchema = z.object({
     url: z.string(),
   }),
   cronTimestamp: z.number(),
-  status:z.enum(["degraded", "error", "recovered"]),
+  status: z.enum(["degraded", "error", "recovered"]),
   statusCode: z.number().optional(),
   latency: z.number().optional(),
   errorMessage: z.string().optional(),

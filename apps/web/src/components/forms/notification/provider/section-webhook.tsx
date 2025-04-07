@@ -31,7 +31,7 @@ export function SectionWebhook({ form }: Props) {
     if (!watchUrl) return;
     startTestTransition(async () => {
       const isSuccessfull = await sendWebhookTestAlert({
-        url: watchUrl ,
+        url: watchUrl,
       });
       if (isSuccessfull) {
         toastAction("test-success");
@@ -50,7 +50,11 @@ export function SectionWebhook({ form }: Props) {
           <FormItem className="sm:col-span-full">
             <FormLabel>URL</FormLabel>
             <FormControl>
-              <Input type="url" placeholder="https://your-webhook-url" {...field} />
+              <Input
+                type="url"
+                placeholder="https://your-webhook-url"
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -74,7 +78,7 @@ export function SectionWebhook({ form }: Props) {
           type="button"
           variant="secondary"
           className="w-full sm:w-auto"
-          disabled={isTestPending }
+          disabled={isTestPending}
           onClick={sendTestAlert}
         >
           {!isTestPending ? (

@@ -24,17 +24,14 @@ export const sendAlert = async ({
 }) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
-
   const body = PayloadSchema.parse({
     monitor: monitor,
     cronTimestamp,
-    status:"error",
+    status: "error",
     statusCode,
     latency,
-    errorMessage: message
-  })
-
-
+    errorMessage: message,
+  });
 
   try {
     await fetch(notificationData.endpoint, {
@@ -71,20 +68,19 @@ export const sendRecovery = async ({
 }) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
-
   const body = PayloadSchema.parse({
     monitor: monitor,
     cronTimestamp,
-    status:"recovered",
+    status: "recovered",
     statusCode,
     latency,
-    errorMessage: message
-  })
+    errorMessage: message,
+  });
   const url = notificationData.endpoint;
   try {
     await fetch(url, {
       method: "post",
-      body:JSON.stringify(body),
+      body: JSON.stringify(body),
       headers: {
         ...notificationData.headers,
       },
@@ -114,20 +110,19 @@ export const sendDegraded = async ({
 }) => {
   const notificationData = WebhookSchema.parse(JSON.parse(notification.data));
 
-
   const body = PayloadSchema.parse({
     monitior: monitor,
     cronTimestamp,
-    status:"degraded",
+    status: "degraded",
     statusCode,
     latency,
-    errorMessage: message
-  })
+    errorMessage: message,
+  });
 
   try {
     await fetch(notificationData.endpoint, {
       method: "post",
-      body:JSON.stringify(body),
+      body: JSON.stringify(body),
       headers: {
         ...notificationData.headers,
       },
@@ -139,24 +134,23 @@ export const sendDegraded = async ({
 };
 
 export const sendTest = async ({
-   url,
+  url,
   headers,
 }: {
   url: string;
   headers?: Record<string, string>;
 }) => {
-
   const body = PayloadSchema.parse({
     monitor: {
-      id:1,
-      name:"test",
-      url:"http://openstat.us",
+      id: 1,
+      name: "test",
+      url: "http://openstat.us",
     },
     cronTimestamp: Date.now(),
-    status:"recovered",
+    status: "recovered",
     statusCode: 200,
     latency: 1337,
-  })
+  });
   try {
     await fetch(url, {
       method: "post",
