@@ -1,6 +1,7 @@
 import type { Monitor, Notification } from "@openstatus/db/src/schema";
 
 import type { Region } from "@openstatus/db/src/schema/constants";
+import { transformHeaders } from "@openstatus/utils";
 import { PayloadSchema, WebhookSchema } from "./schema";
 
 export const sendAlert = async ({
@@ -37,9 +38,9 @@ export const sendAlert = async ({
     await fetch(notificationData.endpoint, {
       method: "post",
       body: JSON.stringify(body),
-      headers: {
-        ...{},
-      },
+      headers: notificationData.headers
+        ? transformHeaders(notificationData.headers)
+        : undefined,
     });
   } catch (err) {
     console.log(err);
@@ -81,9 +82,9 @@ export const sendRecovery = async ({
     await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: {
-        ...{},
-      },
+      headers: notificationData.headers
+        ? transformHeaders(notificationData.headers)
+        : undefined,
     });
   } catch (err) {
     console.log(err);
@@ -119,14 +120,13 @@ export const sendDegraded = async ({
     errorMessage: message,
   });
 
-  // const headers = notificationData.headers ? notificationData.headers.map(header => ({  header.key : header.value })) : [];
   try {
     await fetch(notificationData.endpoint, {
       method: "post",
       body: JSON.stringify(body),
-      headers: {
-        ...{},
-      },
+      headers: notificationData.headers
+        ? transformHeaders(notificationData.headers)
+        : undefined,
     });
   } catch (err) {
     console.log(err);
@@ -139,7 +139,7 @@ export const sendTest = async ({
   headers,
 }: {
   url: string;
-  headers?: Record<string, string>;
+  headers?: { key: string; value: string }[];
 }) => {
   const body = PayloadSchema.parse({
     monitor: {
@@ -156,9 +156,7 @@ export const sendTest = async ({
     await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: {
-        ...headers,
-      },
+      headers: headers ? transformHeaders(headers) : undefined,
     });
   } catch (err) {
     console.log(err);

@@ -72,7 +72,7 @@ export function SectionWebhook({ form }: Props) {
           <div key={field.id} className="grid grid-cols-6 gap-4">
             <FormField
               control={form.control}
-              name={`webhook.headers.${index}.key`}
+              name={`data.webhook.headers.${index}.key`}
               render={({ field }) => (
                 <FormItem className="col-span-2">
                   <FormControl>
@@ -84,7 +84,7 @@ export function SectionWebhook({ form }: Props) {
             <div className="col-span-4 flex items-center space-x-2">
               <FormField
                 control={form.control}
-                name={`webhook.headers.${index}.value`}
+                name={`data.webhook.headers.${index}.value`}
                 render={({ field }) => (
                   <FormItem className="w-full">
                     <FormControl>
@@ -114,19 +114,7 @@ export function SectionWebhook({ form }: Props) {
           </Button>
         </div>
       </div>
-      {/* <FormField
-        control={form.control}
-        name="data.ntfy.token"
-        render={({ field }) => (
-          <FormItem className="sm:col-span-full">
-            <FormLabel>Bearer Token</FormLabel>
-            <FormControl>
-              <Input type="url" placeholder="tk_iloveopenstatus" {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      /> */}
+
       <div className="col-span-full text-right">
         <Button
           type="button"
