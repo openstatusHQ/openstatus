@@ -26,7 +26,7 @@ interface Props {
 }
 
 export function SectionOtel({ form, limits }: Props) {
-  const { fields, append, prepend, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     name: "otelHeaders",
     control: form.control,
   });

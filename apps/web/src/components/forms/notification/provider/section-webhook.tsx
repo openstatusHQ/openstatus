@@ -25,7 +25,7 @@ interface Props {
 export function SectionWebhook({ form }: Props) {
   const [isTestPending, startTestTransition] = useTransition();
 
-  const { fields, append, prepend, remove, update } = useFieldArray({
+  const { fields, append,  remove } = useFieldArray({
     name: "data.webhook.headers",
     control: form.control,
   });
@@ -36,11 +36,11 @@ export function SectionWebhook({ form }: Props) {
   async function sendTestAlert() {
     if (!watchUrl) return;
     startTestTransition(async () => {
-      const isSuccessfull = await sendWebhookTestAlert({
+      const isSuccessful = await sendWebhookTestAlert({
         url: watchUrl,
         headers: watchHeaders,
       });
-      if (isSuccessfull) {
+      if (isSuccessful) {
         toastAction("test-success");
       } else {
         toastAction("test-error");
