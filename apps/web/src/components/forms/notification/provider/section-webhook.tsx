@@ -25,7 +25,7 @@ interface Props {
 export function SectionWebhook({ form }: Props) {
   const [isTestPending, startTestTransition] = useTransition();
 
-  const { fields, append,  remove } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     name: "data.webhook.headers",
     control: form.control,
   });
