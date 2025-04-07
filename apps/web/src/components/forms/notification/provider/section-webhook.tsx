@@ -31,12 +31,14 @@ export function SectionWebhook({ form }: Props) {
   });
 
   const watchUrl = form.watch("data.webhook.endpoint");
+  const watchHeaders = form.watch("data.webhook.headers");
 
   async function sendTestAlert() {
     if (!watchUrl) return;
     startTestTransition(async () => {
       const isSuccessfull = await sendWebhookTestAlert({
         url: watchUrl,
+        headers: watchHeaders,
       });
       if (isSuccessfull) {
         toastAction("test-success");
