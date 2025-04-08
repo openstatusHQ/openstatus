@@ -27,13 +27,13 @@ export const sendAlert = async ({
     statusCode ? `status code ${statusCode}` : `error: ${message}`
   }`;
 
-  const authorization = notificationData.token
-    ? { Authorization: `Bearer ${notificationData.token}` }
+  const authorization = notificationData.ntfy.token
+    ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
 
-  const url = notificationData.serverUrl
-    ? `${notificationData.serverUrl}/${notificationData.topic}`
-    : `https://ntfy.sh/${notificationData.topic}`;
+  const url = notificationData.ntfy.serverUrl
+    ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
+    : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
   try {
     await fetch(url, {
@@ -72,13 +72,13 @@ export const sendRecovery = async ({
   const { name } = monitor;
 
   const body = `Your monitor ${name} / ${monitor.url} is up again`;
-  const authorization = notificationData.token
-    ? { Authorization: `Bearer ${notificationData.token}` }
+  const authorization = notificationData.ntfy.token
+    ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
 
-  const url = notificationData.serverUrl
-    ? `${notificationData.serverUrl}/${notificationData.topic}`
-    : `https://ntfy.sh/${notificationData.topic}`;
+  const url = notificationData.ntfy.serverUrl
+    ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
+    : `https://ntfy.sh/${notificationData.ntfy.topic}`;
   try {
     await fetch(url, {
       method: "post",
@@ -115,13 +115,13 @@ export const sendDegraded = async ({
 
   const body = `Your monitor ${name} / ${monitor.url} is degraded `;
 
-  const authorization = notificationData.token
-    ? { Authorization: `Bearer ${notificationData.token}` }
+  const authorization = notificationData.ntfy
+    ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
 
-  const url = notificationData.serverUrl
-    ? `${notificationData.serverUrl}/${notificationData.topic}`
-    : `https://ntfy.sh/${notificationData.topic}`;
+  const url = notificationData.ntfy.serverUrl
+    ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
+    : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
   try {
     await fetch(url, {

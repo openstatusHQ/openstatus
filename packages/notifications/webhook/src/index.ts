@@ -35,11 +35,11 @@ export const sendAlert = async ({
   });
 
   try {
-    await fetch(notificationData.endpoint, {
+    await fetch(notificationData.webhook.endpoint, {
       method: "post",
       body: JSON.stringify(body),
-      headers: notificationData.headers
-        ? transformHeaders(notificationData.headers)
+      headers: notificationData.webhook.headers
+        ? transformHeaders(notificationData.webhook.headers)
         : undefined,
     });
   } catch (err) {
@@ -77,13 +77,13 @@ export const sendRecovery = async ({
     latency,
     errorMessage: message,
   });
-  const url = notificationData.endpoint;
+  const url = notificationData.webhook.endpoint;
   try {
     await fetch(url, {
       method: "post",
       body: JSON.stringify(body),
-      headers: notificationData.headers
-        ? transformHeaders(notificationData.headers)
+      headers: notificationData.webhook.headers
+        ? transformHeaders(notificationData.webhook.headers)
         : undefined,
     });
   } catch (err) {
@@ -121,11 +121,11 @@ export const sendDegraded = async ({
   });
 
   try {
-    await fetch(notificationData.endpoint, {
+    await fetch(notificationData.webhook.endpoint, {
       method: "post",
       body: JSON.stringify(body),
-      headers: notificationData.headers
-        ? transformHeaders(notificationData.headers)
+      headers: notificationData.webhook.headers
+        ? transformHeaders(notificationData.webhook.headers)
         : undefined,
     });
   } catch (err) {
