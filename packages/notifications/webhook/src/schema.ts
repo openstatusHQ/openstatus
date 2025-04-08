@@ -1,8 +1,12 @@
 import { z } from "zod";
 
 export const WebhookSchema = z.object({
-  endpoint: z.string().url(),
-  headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+  webhook: z.object({
+    endpoint: z.string().url(),
+    headers: z
+      .array(z.object({ key: z.string(), value: z.string() }))
+      .optional(),
+  }),
 });
 
 export const PayloadSchema = z.object({

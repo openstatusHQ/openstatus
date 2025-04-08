@@ -17,7 +17,6 @@ export function Mdx({ code, className }: MdxProps) {
         className,
       )}
     >
-      {/* @ts-expect-error FIXME: nextjs 15 migration */}
       <MDXContent code={code} components={components} />
     </div>
   );
