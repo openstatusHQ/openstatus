@@ -16,6 +16,7 @@
     "@openstatus/notification-pagerduty": "workspace:*",
     "@openstatus/notification-slack": "workspace:*",
     "@openstatus/notification-twillio-sms": "workspace:*",
+    "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",

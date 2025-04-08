@@ -18,6 +18,7 @@ RUN \
     --mount=type=bind,target=packages/notifications/pagerduty/package.json,source=packages/notifications/pagerduty/package.json \
     --mount=type=bind,target=packages/notifications/slack/package.json,source=packages/notifications/slack/package.json \
     --mount=type=bind,target=packages/notifications/twillio-sms/package.json,source=packages/notifications/twillio-sms/package.json \
+    --mount=type=bind,target=packages/notifications/webhook/package.json,source=packages/notifications/webhook/package.json \
     --mount=type=bind,target=packages/utils/package.json,source=packages/utils/package.json \
     --mount=type=bind,target=packages/tsconfig/package.json,source=packages/tsconfig/package.json \
     --mount=type=bind,target=packages/tinybird/package.json,source=packages/tinybird/package.json \

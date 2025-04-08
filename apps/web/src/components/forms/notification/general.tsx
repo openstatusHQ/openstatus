@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import type {
@@ -25,6 +24,7 @@ import { SectionOpsGenie } from "./provider/section-opsgenie";
 import { SectionPagerDuty } from "./provider/section-pagerduty";
 import { SectionSlack } from "./provider/section-slack";
 import { SectionSms } from "./provider/section-sms";
+import { SectionWebhook } from "./provider/section-webhook";
 
 const LABELS = {
   slack: "Slack",
@@ -34,6 +34,7 @@ const LABELS = {
   opsgenie: "OpsGenie",
   email: "Email",
   ntfy: "Ntfy.sh",
+  webhook: "Webhook",
 };
 
 interface Props {
@@ -60,6 +61,8 @@ export function General({ form, plan }: Props) {
         return <SectionEmail form={form} />;
       case "ntfy":
         return <SectionNtfy form={form} />;
+      case "webhook":
+        return <SectionWebhook form={form} />;
       default:
         return <div>No provider selected</div>;
     }

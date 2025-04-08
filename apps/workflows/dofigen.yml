@@ -26,6 +26,7 @@ builders:
       - packages/notifications/pagerduty/package.json
       - packages/notifications/slack/package.json
       - packages/notifications/twillio-sms/package.json
+      - packages/notifications/webhook/package.json
       - packages/utils/package.json
       - packages/tsconfig/package.json
       - packages/tinybird/package.json

@@ -70,6 +70,12 @@ export default function ChannelTable({ workspace, disabled }: ChannelTable) {
           disabled={disabled || !workspace.limits.sms}
         />
         <Separator />
+        <Channel
+          title="Webhook"
+          description="Send notifications to your webhook."
+          href="./notifications/new/webhook"
+          disabled={disabled}
+        />
       </div>
     </div>
   );

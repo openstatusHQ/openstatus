@@ -8,7 +8,6 @@ import type { InsertNotificationWithData } from "@openstatus/db/src/schema";
 import {
   Button,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,

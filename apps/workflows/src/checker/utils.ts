@@ -37,11 +37,16 @@ import {
 
 import type { Region } from "@openstatus/db/src/schema/constants";
 import {
-  sendAlert,
   sendAlert as sendOpsGenieAlert,
   sendDegraded as sendOpsGenieDegraded,
   sendRecovery as sendOpsGenieRecovery,
 } from "@openstatus/notification-opsgenie";
+
+import {
+  sendAlert as sendWebhookAlert,
+  sendDegraded as sendWebhookDegraded,
+  sendRecovery as sendWebhookRecovery,
+} from "@openstatus/notification-webhook";
 
 type SendNotification = ({
   monitor,
@@ -104,5 +109,10 @@ export const providerToFunction = {
     sendAlert: sendSmsAlert,
     sendRecovery: sendSmsRecovery,
     sendDegraded: sendSmsDegraded,
+  },
+  webhook: {
+    sendAlert: sendWebhookAlert,
+    sendRecovery: sendWebhookRecovery,
+    sendDegraded: sendWebhookDegraded,
   },
 } satisfies Record<NotificationProvider, Notif>;

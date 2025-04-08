@@ -1,7 +1,6 @@
 import { db, eq, schema } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
-  monitor,
   selectMonitorSchema,
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";

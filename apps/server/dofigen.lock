@@ -46,18 +46,6 @@ effective: |
         source: packages/emails/package.json
       - target: packages/error/package.json
         source: packages/error/package.json
-      - target: packages/notifications/discord/package.json
-        source: packages/notifications/discord/package.json
-      - target: packages/notifications/email/package.json
-        source: packages/notifications/email/package.json
-      - target: packages/notifications/opsgenie/package.json
-        source: packages/notifications/opsgenie/package.json
-      - target: packages/notifications/pagerduty/package.json
-        source: packages/notifications/pagerduty/package.json
-      - target: packages/notifications/slack/package.json
-        source: packages/notifications/slack/package.json
-      - target: packages/notifications/twillio-sms/package.json
-        source: packages/notifications/twillio-sms/package.json
       - target: packages/tinybird/package.json
         source: packages/tinybird/package.json
       - target: packages/tracker/package.json
@@ -95,7 +83,7 @@ images:
           digest: sha256:b0c91cc181796d34c53f7ea106fbcddaf87f3e601cc371af6a24a019a489c980
 resources:
   dofigen.yml:
-    hash: 4983836e4e9309e7c36e9d8b42696abad4223effb74f65efdc47e8f651e323a6
+    hash: d8fd3cc0e7fc97f77bb35e336fc7ce1a9f70131a2c0c24fb2056e112b128cbc2
     content: |
       ignore:
         - node_modules
@@ -116,12 +104,6 @@ resources:
             - packages/db/package.json
             - packages/emails/package.json
             - packages/error/package.json
-            - packages/notifications/discord/package.json
-            - packages/notifications/email/package.json
-            - packages/notifications/opsgenie/package.json
-            - packages/notifications/pagerduty/package.json
-            - packages/notifications/slack/package.json
-            - packages/notifications/twillio-sms/package.json
             - packages/tinybird/package.json
             - packages/tracker/package.json
             - packages/upstash/package.json
