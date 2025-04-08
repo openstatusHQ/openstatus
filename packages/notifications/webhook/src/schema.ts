@@ -3,7 +3,9 @@ import { z } from "zod";
 export const WebhookSchema = z.object({
   webhook: z.object({
     endpoint: z.string().url(),
-    headers: z.array(z.object({ key: z.string(), value: z.string() })).optional(),
+    headers: z
+      .array(z.object({ key: z.string(), value: z.string() }))
+      .optional(),
   }),
 });
 
