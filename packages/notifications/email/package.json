@@ -8,8 +8,8 @@
     "@openstatus/emails": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@react-email/components": "0.0.31",
-    "@react-email/render": "1.0.3",
+    "@react-email/components": "0.0.36",
+    "@react-email/render": "1.0.6",
     "@t3-oss/env-core": "0.7.0",
     "resend": "4.0.1",
     "zod": "3.23.8"
