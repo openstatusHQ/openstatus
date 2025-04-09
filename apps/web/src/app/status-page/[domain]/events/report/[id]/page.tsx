@@ -5,8 +5,8 @@ import { DateTimeTooltip } from "@/components/status-page/datetime-tooltip";
 import { StatusReportUpdates } from "@/components/status-page/status-report";
 import { api } from "@/trpc/server";
 import { Badge } from "@openstatus/ui/src/components/badge";
+import type { Metadata } from "next";
 import { CopyLinkButton } from "./_components/copy-link-button";
-import { Metadata } from "next";
 
 export async function generateMetadata(props: {
   params: Promise<{ domain: string; id: string }>;
@@ -34,7 +34,7 @@ export default async function IncidentPage(props: {
   if (!report) return notFound();
 
   const affectedMonitors = report.monitorsToStatusReports.map(
-    ({ monitor }) => monitor
+    ({ monitor }) => monitor,
   );
 
   const firstUpdate =

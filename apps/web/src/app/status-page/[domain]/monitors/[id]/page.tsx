@@ -17,6 +17,7 @@ import {
   prepareMetricsByPeriod,
 } from "@/lib/tb";
 import { api } from "@/trpc/server";
+import type { Metadata } from "next";
 import {
   DEFAULT_INTERVAL,
   DEFAULT_PERIOD,
@@ -24,7 +25,6 @@ import {
   periods,
   searchParamsCache,
 } from "./search-params";
-import type { Metadata } from "next";
 
 export const revalidate = 120;
 
