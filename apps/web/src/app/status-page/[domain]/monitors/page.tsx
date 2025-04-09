@@ -14,6 +14,10 @@ import { searchParamsCache } from "./search-params";
 
 // Add loading page
 
+export const metadata: Metadata = {
+  title: "Monitors",
+};
+
 export const revalidate = 120;
 
 export default async function Page(props: {
