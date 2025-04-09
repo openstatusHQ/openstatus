@@ -5,6 +5,7 @@ import { api } from "@/trpc/server";
 import { notFound } from "next/navigation";
 import { searchParamsCache } from "./search-params";
 import { formatter } from "./utils";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Events",

@@ -78,10 +78,12 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params;
   const page = await api.page.getPageBySlug.query({ slug: params.domain });
 
+  if (!page) return notFound();
+
   return {
     ...defaultMetadata,
     title: {
-      template: `%s | ${page?.title}`,
+      template: `%s | ${page.title}`,
       default: page?.title,
     },
     description: page?.description,

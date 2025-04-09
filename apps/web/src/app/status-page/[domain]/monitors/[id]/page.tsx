@@ -24,12 +24,23 @@ import {
   periods,
   searchParamsCache,
 } from "./search-params";
+import type { Metadata } from "next";
 
 export const revalidate = 120;
 
-export const metadata: Metadata = {
-  title: "Monitor",
-};
+export async function generateMetadata(props: {
+  params: Promise<{ domain: string; id: string }>;
+}): Promise<Metadata> {
+  const { domain, id } = await props.params;
+  const monitor = await api.monitor.getPublicMonitorById.query({
+    id: Number(id),
+    slug: domain,
+  });
+
+  if (!monitor) return notFound();
+
+  return { title: monitor.name };
+}
 
 export default async function Page(props: {
   params: Promise<{ domain: string; id: string }>;
