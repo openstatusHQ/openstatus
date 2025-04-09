@@ -2,10 +2,10 @@ import { Header } from "@/components/dashboard/header";
 import { SearchParamsPreset } from "@/components/monitor-dashboard/search-params-preset"; // TOO: move to shared components
 import { Feed } from "@/components/status-page/feed";
 import { api } from "@/trpc/server";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { searchParamsCache } from "./search-params";
 import { formatter } from "./utils";
-import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Events",
