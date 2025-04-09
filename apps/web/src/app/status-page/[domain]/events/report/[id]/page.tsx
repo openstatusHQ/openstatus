@@ -6,10 +6,21 @@ import { StatusReportUpdates } from "@/components/status-page/status-report";
 import { api } from "@/trpc/server";
 import { Badge } from "@openstatus/ui/src/components/badge";
 import { CopyLinkButton } from "./_components/copy-link-button";
+import { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Report",
-};
+export async function generateMetadata(props: {
+  params: Promise<{ domain: string; id: string }>;
+}): Promise<Metadata> {
+  const { domain, id } = await props.params;
+  const report = await api.statusReport.getPublicStatusReportById.query({
+    slug: domain,
+    id: Number(id),
+  });
+
+  if (!report) return notFound();
+
+  return { title: report.title };
+}
 
 export default async function IncidentPage(props: {
   params: Promise<{ domain: string; id: string }>;
@@ -23,7 +34,7 @@ export default async function IncidentPage(props: {
   if (!report) return notFound();
 
   const affectedMonitors = report.monitorsToStatusReports.map(
-    ({ monitor }) => monitor,
+    ({ monitor }) => monitor
   );
 
   const firstUpdate =
