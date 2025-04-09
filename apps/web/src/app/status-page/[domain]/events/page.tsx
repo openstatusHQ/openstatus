@@ -6,6 +6,10 @@ import { notFound } from "next/navigation";
 import { searchParamsCache } from "./search-params";
 import { formatter } from "./utils";
 
+export const metadata: Metadata = {
+  title: "Events",
+};
+
 type Props = {
   params: Promise<{ domain: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

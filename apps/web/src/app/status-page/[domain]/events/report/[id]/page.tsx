@@ -7,6 +7,10 @@ import { api } from "@/trpc/server";
 import { Badge } from "@openstatus/ui/src/components/badge";
 import { CopyLinkButton } from "./_components/copy-link-button";
 
+export const metadata: Metadata = {
+  title: "Report",
+};
+
 export default async function IncidentPage(props: {
   params: Promise<{ domain: string; id: string }>;
 }) {

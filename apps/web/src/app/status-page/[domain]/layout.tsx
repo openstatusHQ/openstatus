@@ -80,9 +80,17 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
   return {
     ...defaultMetadata,
-    title: page?.title,
+    title: {
+      template: `%s | ${page?.title}`,
+      default: page?.title,
+    },
     description: page?.description,
     icons: page?.icon,
+    alternates: {
+      canonical: page?.customDomain
+        ? `https://${page.customDomain}`
+        : `https://${page.slug}.openstatus.dev`,
+    },
     twitter: {
       ...twitterMetadata,
       images: [

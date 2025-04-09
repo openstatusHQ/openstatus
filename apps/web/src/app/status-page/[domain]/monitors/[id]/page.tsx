@@ -27,6 +27,10 @@ import {
 
 export const revalidate = 120;
 
+export const metadata: Metadata = {
+  title: "Monitor",
+};
+
 export default async function Page(props: {
   params: Promise<{ domain: string; id: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
