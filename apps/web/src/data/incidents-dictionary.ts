@@ -40,3 +40,22 @@ export const statusDict = {
     order: 0,
   },
 } as const;
+
+// TODO: check if we can use the status-color palette
+export const severityDict = {
+  critical: {
+    value: "critical",
+    label: "Critical",
+    color: "bg-red-50 hover:bg-red-50 border-red-100 text-red-500",
+  },
+  major: {
+    value: "major",
+    label: "Major",
+    color: "bg-orange-50 hover:bg-orange-50 border-orange-100 text-orange-500",
+  },
+  minor: {
+    value: "minor",
+    label: "Minor",
+    color: "bg-yellow-50 hover:bg-yellow-50 border-yellow-100 text-yellow-500",
+  },
+} as const;

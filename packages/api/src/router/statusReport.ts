@@ -84,11 +84,11 @@ export const statusReportRouter = createTRPCRouter({
 
       if (!statusReportInput.id) return;
 
-      const { title, status } = statusReportInput;
+      const { title, status, severity } = statusReportInput;
 
       const currentStatusReport = await opts.ctx.db
         .update(statusReport)
-        .set({ title, status, updatedAt: new Date() })
+        .set({ title, status, severity, updatedAt: new Date() })
         .where(
           and(
             eq(statusReport.id, statusReportInput.id),

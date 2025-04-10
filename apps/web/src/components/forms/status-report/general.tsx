@@ -4,11 +4,14 @@ import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
 import {
+  statusReportSeverity,
+  statusReportSeveritySchema,
   statusReportStatus,
   statusReportStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { InsertStatusReport } from "@openstatus/db/src/schema";
 import {
+  Button,
   FormControl,
   FormDescription,
   FormField,
@@ -21,7 +24,7 @@ import {
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { statusDict } from "@/data/incidents-dictionary";
+import { severityDict, statusDict } from "@/data/incidents-dictionary";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
@@ -29,6 +32,8 @@ interface Props {
 }
 
 export function General({ form }: Props) {
+  const watchSeverity = form.watch("severity");
+
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader
@@ -82,6 +87,58 @@ export function General({ form }: Props) {
                     </FormItem>
                   );
                 })}
+              </RadioGroup>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="severity"
+          render={({ field }) => (
+            <FormItem className="space-y-1">
+              <FormLabel>Severity</FormLabel>
+              <FormDescription>
+                {/* TODO: educate the user about the severity of the incident */}
+                Select the severity of the incident.
+              </FormDescription>
+              <FormMessage />
+              <RadioGroup
+                onValueChange={(value) => {
+                  field.onChange(statusReportSeveritySchema.parse(value));
+                }} // value is a string
+                defaultValue={field.value ?? undefined}
+                className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+              >
+                {statusReportSeverity.map((severity) => {
+                  const { value, label } = severityDict[severity];
+                  return (
+                    <FormItem key={value}>
+                      <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:text-foreground">
+                        <FormControl>
+                          <RadioGroupItem
+                            value={value}
+                            className="sr-only"
+                            checked={watchSeverity === value}
+                          />
+                        </FormControl>
+                        <div className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-center text-muted-foreground text-sm">
+                          {/* <Icon className="mr-2 h-4 w-4 shrink-0" /> */}
+                          <span className="truncate">{label}</span>
+                        </div>
+                      </FormLabel>
+                    </FormItem>
+                  );
+                })}
+                {watchSeverity ? (
+                  <Button
+                    variant="ghost"
+                    className="h-auto"
+                    type="button"
+                    onClick={() => field.onChange(undefined)}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
               </RadioGroup>
             </FormItem>
           )}

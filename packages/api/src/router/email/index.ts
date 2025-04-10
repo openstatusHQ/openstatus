@@ -54,6 +54,7 @@ export const emailRouter = createTRPCRouter({
           pageTitle: _statusReportUpdate.statusReport.page.title,
           reportTitle: _statusReportUpdate.statusReport.title,
           status: _statusReportUpdate.status,
+          severity: _statusReportUpdate.statusReport.severity,
           message: _statusReportUpdate.message,
           date: new Date(_statusReportUpdate.date).toISOString(),
           monitors: _statusReportUpdate.statusReport.page.monitorsToPages.map(

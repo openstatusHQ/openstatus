@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, isNull, schema } from "@openstatus/db";
+import { and, desc, eq, isNull, schema } from "@openstatus/db";
 import { selectIncidentSchema } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -15,6 +15,7 @@ export const incidentRouter = createTRPCRouter({
         .select()
         .from(schema.incidentTable)
         .where(eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id))
+        .orderBy(desc(schema.incidentTable.startedAt))
         .leftJoin(
           schema.monitor,
           eq(schema.incidentTable.monitorId, schema.monitor.id),

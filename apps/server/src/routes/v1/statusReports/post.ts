@@ -162,6 +162,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           pageTitle: pageInfo.title,
           reportTitle: _newStatusReport.title,
           status: _newStatusReport.status,
+          severity: _newStatusReport.severity,
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
           monitors: pageInfo.monitorsToPages.map((i) => i.monitor.name),

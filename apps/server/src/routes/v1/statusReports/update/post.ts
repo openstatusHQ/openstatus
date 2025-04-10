@@ -116,6 +116,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           pageTitle: allInfo.page.title,
           reportTitle: allInfo.title,
           status: allInfo.status,
+          severity: allInfo.severity,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: allInfo.monitorsToStatusReports.map(

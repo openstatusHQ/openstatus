@@ -109,6 +109,7 @@ export function registerPostStatusReportUpdate(
           pageTitle: _page.title,
           reportTitle: _statusReport.title,
           status: _statusReport.status,
+          severity: _statusReport.severity,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: _page.monitorsToPages.map((i) => i.monitor.name),

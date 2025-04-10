@@ -17,13 +17,15 @@ export const statusReportStatus = [
   "resolved",
 ] as const;
 
+export const statusReportSeverity = ["critical", "major", "minor"] as const;
+
 export const statusReport = sqliteTable("status_report", {
   id: integer("id").primaryKey(),
   status: text("status", { enum: statusReportStatus }).notNull(),
   title: text("title", { length: 256 }).notNull(),
+  severity: text("severity", { enum: statusReportSeverity }),
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
-
   pageId: integer("page_id").references(() => page.id),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
