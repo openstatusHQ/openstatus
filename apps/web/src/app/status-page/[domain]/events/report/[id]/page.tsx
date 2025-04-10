@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Header } from "@/components/dashboard/header";
 import { DateTimeTooltip } from "@/components/status-page/datetime-tooltip";
 import { StatusReportUpdates } from "@/components/status-page/status-report";
+import { SeverityBadge } from "@/components/status-report/severity-badge";
 import { api } from "@/trpc/server";
 import { Badge } from "@openstatus/ui/src/components/badge";
 import type { Metadata } from "next";
@@ -50,6 +51,12 @@ export default async function IncidentPage(props: {
             <p className="text-muted-foreground text-sm tracking-wide">
               Started at <DateTimeTooltip date={firstUpdate?.date} />
             </p>
+            {report.severity ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <SeverityBadge severity={report.severity} />
+              </>
+            ) : null}
             {affectedMonitors.length > 0 ? (
               <>
                 <span className="text-muted-foreground/50 text-xs">•</span>

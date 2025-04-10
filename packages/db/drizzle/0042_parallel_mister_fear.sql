@@ -1,0 +1,1 @@
+ALTER TABLE `status_report` ADD `severity` text;

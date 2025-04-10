@@ -3,12 +3,16 @@
 import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
+import { cn } from "@/lib/utils";
 import {
+  statusReportSeverity,
+  statusReportSeveritySchema,
   statusReportStatus,
   statusReportStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { InsertStatusReport } from "@openstatus/db/src/schema";
 import {
+  Button,
   FormControl,
   FormDescription,
   FormField,
@@ -18,10 +22,15 @@ import {
   Input,
   RadioGroup,
   RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
-import { statusDict } from "@/data/incidents-dictionary";
+import { severityDict, statusDict } from "@/data/incidents-dictionary";
 import { SectionHeader } from "../shared/section-header";
 
 interface Props {
@@ -29,6 +38,8 @@ interface Props {
 }
 
 export function General({ form }: Props) {
+  const watchSeverity = form.watch("severity");
+
   return (
     <div className="grid gap-4 sm:grid-cols-3 sm:gap-6">
       <SectionHeader
@@ -83,6 +94,74 @@ export function General({ form }: Props) {
                   );
                 })}
               </RadioGroup>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="severity"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Severity</FormLabel>
+              <div className="grid sm:grid-cols-4 gap-4">
+                <Select
+                  key={field.value} // NOTE: required to re-render the select when the value set undefined
+                  onValueChange={field.onChange}
+                  value={field.value ?? undefined}
+                >
+                  <FormControl>
+                    <SelectTrigger className="col-span-2">
+                      <SelectValue placeholder="Select a severity" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {statusReportSeverity.map((severity) => {
+                      const { value, label, level, color } =
+                        severityDict[severity];
+                      return (
+                        <SelectItem
+                          key={value}
+                          value={value}
+                          className="[&>span:last-child]:flex [&>span:last-child]:items-center [&>span:last-child]:justify-between [&>span:last-child]:w-full"
+                        >
+                          <span>{label}</span>
+                          <span
+                            className={cn(
+                              "text-xs ml-2 font-normal font-mono rounded-full px-1 border",
+                              color,
+                            )}
+                          >
+                            Level {level}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {watchSeverity ? (
+                  <Button
+                    variant="ghost"
+                    className="h-auto"
+                    type="button"
+                    onClick={() => field.onChange(undefined)}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+              <FormDescription>
+                Learn more about the{" "}
+                <a
+                  href="https://docs.openstatus.dev/status-report/severity"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium"
+                >
+                  severity levels
+                </a>
+                .
+              </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />
