@@ -122,7 +122,6 @@ export default defineConfig({
               {
                 label: "Status Page",
                 collapsed: true,
-
                 items: [
                   { label: "Overview", slug: "status-page/overview" },
                   {
@@ -139,6 +138,16 @@ export default defineConfig({
                     label: "Advanced",
                     autogenerate: { directory: "status-page/advanced" },
                     collapsed: true,
+                  },
+                ],
+              },
+              {
+                label: "Status Report",
+                collapsed: true,
+                items: [
+                  {
+                    label: "Severity",
+                    slug: "status-report/severity",
                   },
                 ],
               },

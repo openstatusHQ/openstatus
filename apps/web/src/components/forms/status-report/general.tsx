@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
+import { cn } from "@/lib/utils";
 import {
   statusReportSeverity,
   statusReportSeveritySchema,
@@ -21,6 +22,11 @@ import {
   Input,
   RadioGroup,
   RadioGroupItem,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@openstatus/ui";
 
 import { Icons } from "@/components/icons";
@@ -95,40 +101,43 @@ export function General({ form }: Props) {
           control={form.control}
           name="severity"
           render={({ field }) => (
-            <FormItem className="space-y-1">
+            <FormItem>
               <FormLabel>Severity</FormLabel>
-              <FormDescription>
-                {/* TODO: educate the user about the severity of the incident */}
-                Select the severity of the incident.
-              </FormDescription>
-              <FormMessage />
-              <RadioGroup
-                onValueChange={(value) => {
-                  field.onChange(statusReportSeveritySchema.parse(value));
-                }} // value is a string
-                defaultValue={field.value ?? undefined}
-                className="grid grid-cols-2 gap-4 sm:grid-cols-4"
-              >
-                {statusReportSeverity.map((severity) => {
-                  const { value, label } = severityDict[severity];
-                  return (
-                    <FormItem key={value}>
-                      <FormLabel className="[&:has([data-state=checked])>div]:border-primary [&:has([data-state=checked])>div]:text-foreground">
-                        <FormControl>
-                          <RadioGroupItem
-                            value={value}
-                            className="sr-only"
-                            checked={watchSeverity === value}
-                          />
-                        </FormControl>
-                        <div className="flex w-full items-center justify-center rounded-lg border border-border px-3 py-2 text-center text-muted-foreground text-sm">
-                          {/* <Icon className="mr-2 h-4 w-4 shrink-0" /> */}
-                          <span className="truncate">{label}</span>
-                        </div>
-                      </FormLabel>
-                    </FormItem>
-                  );
-                })}
+              <div className="grid sm:grid-cols-4 gap-4">
+                <Select
+                  key={field.value} // NOTE: required to re-render the select when the value set undefined
+                  onValueChange={field.onChange}
+                  value={field.value ?? undefined}
+                >
+                  <FormControl>
+                    <SelectTrigger className="col-span-2">
+                      <SelectValue placeholder="Select a severity" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {statusReportSeverity.map((severity) => {
+                      const { value, label, level, color } =
+                        severityDict[severity];
+                      return (
+                        <SelectItem
+                          key={value}
+                          value={value}
+                          className="[&>span:last-child]:flex [&>span:last-child]:items-center [&>span:last-child]:justify-between [&>span:last-child]:w-full"
+                        >
+                          <span>{label}</span>
+                          <span
+                            className={cn(
+                              "text-xs ml-2 font-normal font-mono rounded-full px-1 border",
+                              color,
+                            )}
+                          >
+                            Level {level}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
                 {watchSeverity ? (
                   <Button
                     variant="ghost"
@@ -139,7 +148,20 @@ export function General({ form }: Props) {
                     Remove
                   </Button>
                 ) : null}
-              </RadioGroup>
+              </div>
+              <FormDescription>
+                Learn more about the{" "}
+                <a
+                  href="https://docs.openstatus.dev/status-report/severity"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium"
+                >
+                  severity levels
+                </a>
+                .
+              </FormDescription>
+              <FormMessage />
             </FormItem>
           )}
         />

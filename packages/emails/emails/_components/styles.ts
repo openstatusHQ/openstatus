@@ -6,9 +6,11 @@ export const colors = {
 };
 
 export const severityColors = {
-  critical: "#ec6041",
-  major: "#f97316",
-  minor: "#ffd60a",
+  critical: "#ef4444",
+  high: "#f97316",
+  moderate: "#f59e0b",
+  low: "#eab308",
+  informational: "#3b82f6",
 };
 
 export const styles = {

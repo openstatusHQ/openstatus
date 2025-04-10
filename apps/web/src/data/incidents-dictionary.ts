@@ -46,16 +46,31 @@ export const severityDict = {
   critical: {
     value: "critical",
     label: "Critical",
+    level: 1,
     color: "bg-red-50 hover:bg-red-50 border-red-100 text-red-500",
   },
-  major: {
-    value: "major",
-    label: "Major",
+  high: {
+    value: "high",
+    label: "High",
+    level: 2,
     color: "bg-orange-50 hover:bg-orange-50 border-orange-100 text-orange-500",
   },
-  minor: {
-    value: "minor",
-    label: "Minor",
+  moderate: {
+    value: "moderate",
+    label: "Moderate",
+    level: 3,
+    color: "bg-amber-50 hover:bg-amber-50 border-amber-100 text-amber-500",
+  },
+  low: {
+    value: "low",
+    label: "Low",
+    level: 4,
     color: "bg-yellow-50 hover:bg-yellow-50 border-yellow-100 text-yellow-500",
+  },
+  informational: {
+    value: "informational",
+    label: "Informational",
+    level: 5,
+    color: "bg-blue-50 hover:bg-blue-50 border-blue-100 text-blue-500",
   },
 } as const;

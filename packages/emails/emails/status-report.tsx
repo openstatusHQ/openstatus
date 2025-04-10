@@ -18,7 +18,10 @@ import { colors, severityColors, styles } from "./_components/styles";
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
   status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
-  severity: z.enum(["critical", "major", "minor"]).nullable().optional(),
+  severity: z
+    .enum(["critical", "high", "moderate", "low", "informational"])
+    .nullable()
+    .optional(),
   date: z.string(),
   message: z.string(),
   reportTitle: z.string(),

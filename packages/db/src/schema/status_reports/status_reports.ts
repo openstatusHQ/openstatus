@@ -17,7 +17,13 @@ export const statusReportStatus = [
   "resolved",
 ] as const;
 
-export const statusReportSeverity = ["critical", "major", "minor"] as const;
+export const statusReportSeverity = [
+  "critical",
+  "high",
+  "moderate",
+  "low",
+  "informational",
+] as const;
 
 export const statusReport = sqliteTable("status_report", {
   id: integer("id").primaryKey(),
