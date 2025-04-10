@@ -16,6 +16,7 @@ export function MaintenanceContainer({
     <div className={cn("grid gap-4 border border-transparent p-3", className)}>
       <StatusReportHeader
         title={maintenance.title}
+        severity={null}
         monitors={monitors || []}
         actions={
           <p className="font-mono text-muted-foreground text-xs">

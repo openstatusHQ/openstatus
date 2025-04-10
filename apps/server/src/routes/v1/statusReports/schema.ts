@@ -1,6 +1,9 @@
 import { z } from "@hono/zod-openapi";
 
-import { statusReportStatusSchema } from "@openstatus/db/src/schema";
+import {
+  statusReportSeveritySchema,
+  statusReportStatusSchema,
+} from "@openstatus/db/src/schema";
 
 export const ParamsSchema = z.object({
   id: z
@@ -26,6 +29,13 @@ export const StatusReportSchema = z
     status: statusReportStatusSchema.openapi({
       description: "The current status of the report",
     }),
+    severity: statusReportSeveritySchema
+      .optional()
+      .nullable()
+      .default(null)
+      .openapi({
+        description: "The severity of the status report",
+      }),
     statusReportUpdateIds: z
       .array(z.number())
       .optional()

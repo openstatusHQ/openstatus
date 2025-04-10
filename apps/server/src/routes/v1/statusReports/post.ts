@@ -101,6 +101,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .insert(statusReport)
       .values({
         status: input.status,
+        severity: input.severity,
         title: input.title,
         pageId: input.pageId,
         workspaceId: workspaceId,
