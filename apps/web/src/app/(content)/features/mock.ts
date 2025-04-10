@@ -1036,7 +1036,7 @@ export const statusReportData = {
     status: "resolved" as const,
     title: "Downtime",
     workspaceId: 1,
-    severity: "major" as const,
+    severity: "critical" as const,
     pageId: 0,
     createdAt: new Date("2024-07-09T21:22:43.000Z"),
     updatedAt: new Date("2024-07-09T21:23:17.000Z"),
