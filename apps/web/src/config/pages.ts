@@ -246,11 +246,11 @@ export const marketingResourcePagesConfig = [
     icon: "gauge",
   },
   {
-    href: "/play",
-    title: "Playground",
-    description: "All the latest tools build by OpenStatus.",
-    segment: "play",
-    icon: "toy-brick",
+    href: "/compare",
+    title: "Alternatives",
+    description: "Compare OpenStatus with other services.",
+    segment: "alternative",
+    icon: "compare",
   },
 ] as const satisfies Page[];
 
