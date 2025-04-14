@@ -1,14 +1,37 @@
+import {
+  defaultMetadata,
+  ogMetadata,
+  twitterMetadata,
+} from "@/app/shared-metadata";
 import { alternativesConfig as config } from "@/config/alternatives";
 import {
   Card,
-  CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@openstatus/ui/src/components/card";
 import { ChevronRight } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  ...defaultMetadata,
+  title: "Compare Alternatives",
+  description:
+    "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+  openGraph: {
+    ...ogMetadata,
+    title: "Compare Alternatives",
+    description:
+      "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+  },
+  twitter: {
+    ...twitterMetadata,
+    title: "Compare Alternatives",
+    description:
+      "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+  },
+};
 
 export default function Page() {
   return (

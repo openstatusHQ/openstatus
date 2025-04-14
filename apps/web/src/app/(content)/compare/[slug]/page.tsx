@@ -120,22 +120,28 @@ export default async function Page({
           </div>
           <ComparisonTable slug={slug} />
         </Shell>
-        <Shell className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <Shell className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-muted">
           <div>
             <p className="font-semibold text-2xl">
               Don't talk to Sales. Talk to Founders.
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               We are here to help you with any questions or concerns you may
               have.
             </p>
           </div>
-          <div>
-            <Button className="w-full" asChild>
+          <div className="flex gap-2">
+            <Button className="rounded-full" variant="outline" asChild>
+              <Link href="/app/login" className="text-nowrap">
+                Start for free
+              </Link>
+            </Button>
+            <Button className="rounded-full" asChild>
               <a
                 target="_blank"
                 rel="noreferrer"
                 href="https://cal.com/team/openstatus/30min"
+                className="text-nowrap"
               >
                 Talk to us
               </a>
