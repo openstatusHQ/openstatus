@@ -36,7 +36,13 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <>
-      <h1 className="mb-5 font-cal text-4xl text-foreground">Compare</h1>
+      <div className="mb-5 space-y-3">
+        <h1 className="font-cal text-4xl text-foreground">Alternatives</h1>
+        <p className="text-lg text-muted-foreground">
+          Compare OpenStatus with other Uptime and Synthetic Monitoring
+          products.
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
         {Object.entries(config).map(([slug, alternative]) => (
           <Link
@@ -48,7 +54,9 @@ export default function Page() {
               <CardHeader className="flex-1">
                 <CardTitle>{alternative.name} Alternative</CardTitle>
                 <div className="flex flex-1 justify-between gap-3">
-                  <CardDescription>{alternative.description}</CardDescription>
+                  <CardDescription className="truncate mr-3">
+                    {alternative.description}
+                  </CardDescription>
                   <ChevronRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
                 </div>
               </CardHeader>

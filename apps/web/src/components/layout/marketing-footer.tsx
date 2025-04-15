@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { alternativesConfig } from "@/config/alternatives";
 import { socialsConfig } from "@/config/socials";
 import { cn } from "@/lib/utils";
 import { Shell } from "../dashboard/shell";
@@ -17,8 +18,8 @@ export function MarketingFooter({ className }: Props) {
   return (
     <footer className={cn("w-full", className)}>
       <Shell className="grid gap-6">
-        <div className="grid grid-cols-2 gap-6 md:grid-cols-5">
-          <div className="col-span-2 flex flex-col gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:grid-cols-11">
+          <div className="col-span-2 md:col-span-3 flex flex-col gap-3">
             <div>
               <BrandName />
               <p className="mt-2 max-w-md font-light text-muted-foreground text-sm">
@@ -32,23 +33,34 @@ export function MarketingFooter({ className }: Props) {
             </div>
             <StatusWidgetContainer slug="status" />
           </div>
-          <div className="order-2 flex flex-col gap-3 text-sm">
+          <div className="col-span-2 sm:col-span-1 md:col-span-2 flex flex-col gap-3 text-sm">
             <p className="font-semibold text-foreground">Resources</p>
             <FooterLink href="/blog" label="Blog" />
             <FooterLink href="/pricing" label="Pricing" />
-            <FooterLink href="/compare" label="Compare" />
             <FooterLink href="https://docs.openstatus.dev" label="Docs" />
             <FooterLink href="/oss-friends" label="OSS Friends" />
             <FooterLink href="/status" label="External Providers Monitoring" />
           </div>
-          <div className="order-3 flex flex-col gap-3 text-sm">
+          <div className="col-span-2 sm:col-span-1 md:col-span-2 flex flex-col gap-3 text-sm">
+            <p className="font-semibold text-foreground">Compare</p>
+            {Object.keys(alternativesConfig).map((slug) => (
+              <FooterLink
+                href={`/compare/${slug}`}
+                label={
+                  alternativesConfig[slug as keyof typeof alternativesConfig]
+                    .name
+                }
+              />
+            ))}
+          </div>
+          <div className="col-span-2 sm:col-span-1 md:col-span-2 flex flex-col gap-3 text-sm">
             <p className="font-semibold text-foreground">Company</p>
             <FooterLink href="/about" label="About" />
             <FooterLink href="/changelog" label="Changelog" />
             <FooterLink href="/legal/terms" label="Terms" />
             <FooterLink href="/legal/privacy" label="Privacy" />
           </div>
-          <div className="order-3 flex flex-col gap-3 text-sm">
+          <div className="col-span-2 sm:col-span-1 md:col-span-2 flex flex-col gap-3 text-sm">
             <p className="font-semibold text-foreground">Tools</p>
             <FooterLink href="/play" label="Playground" />
             <FooterLink href="/play/checker" label="Speed Checker" />

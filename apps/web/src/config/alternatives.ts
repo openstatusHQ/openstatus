@@ -22,7 +22,8 @@ export const alternativesConfig = {
   betterstack: {
     name: "BetterStack",
     logo: "/assets/alternatives/betterstack.png",
-    description: "Bootstrap directly to the founder.",
+    description:
+      "Bootstrap directly to the founder. Learn how OpenStatus compares to BetterStack.",
     features: [
       opensource(),
       bootstrap(),
@@ -37,7 +38,8 @@ export const alternativesConfig = {
   },
   "uptime-robot": {
     name: "UptimeRobot",
-    description: "Monitor your endpoints globally.",
+    description:
+      "Monitor your endpoints globally. Learn how OpenStatus compares to UptimeRobot.",
     logo: "/assets/alternatives/uptime-robot.png",
     features: [
       opensource(),
@@ -49,15 +51,22 @@ export const alternativesConfig = {
   },
   "uptime-kuma": {
     name: "Uptime Kuma",
-    description: "Monitor your endpoints globally.",
+    description:
+      "Monitor your endpoints globally. Learn how OpenStatus compares to Uptime Kuma.",
     logo: "/assets/alternatives/uptime-kuma.png",
     features: [opensource(), global(), selfhost(), managed(), githubaction()],
   },
   checkly: {
     name: "Checkly",
-    description: "Open-Source multi-region monitoring.",
+    description:
+      "Open-Source multi-region monitoring. Learn how OpenStatus compares to Checkly.",
     logo: "/assets/alternatives/checkly.png",
-    features: [global(true), statuspage(undefined), opensource(), bootstrap()],
+    features: [
+      multiregion(19),
+      statuspage(undefined),
+      opensource(),
+      bootstrap(),
+    ],
   },
 } satisfies Config;
 
@@ -88,6 +97,15 @@ function global(alternative = false): Feature {
     label: "Global (35 regions)",
     description: "Monitor your endpoints globally.",
     openstatus: true,
+    alternative,
+  };
+}
+
+function multiregion(alternative = 1): Feature {
+  return {
+    label: "Multi-region",
+    description: "Monitor your endpoints globally",
+    openstatus: 35,
     alternative,
   };
 }
@@ -177,7 +195,7 @@ function selfhost(alternative = "easy"): Feature {
 function managed(alternative = false): Feature {
   return {
     label: "Managed",
-    description: "Don't worry about bug fixes.",
+    description: "Don't worry about managing your instance.",
     openstatus: true,
     alternative,
   };

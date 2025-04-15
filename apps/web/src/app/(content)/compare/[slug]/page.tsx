@@ -114,9 +114,9 @@ export default async function Page({
             <h1 className="text-4xl font-cal text-center">
               {alternative.name} Alternative
             </h1>
-            <p className="mx-auto max-w-xl text-muted-foreground text-lg text-center">
-              {alternative.description}
-            </p>
+            <div className="mx-auto max-w-lg text-muted-foreground text-lg text-center">
+              <p>{alternative.description}</p>
+            </div>
           </div>
           <ComparisonTable slug={slug} />
         </Shell>
