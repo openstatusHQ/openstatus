@@ -1,6 +1,7 @@
 import {
   Activity,
   AlertTriangle,
+  ArrowLeftRight,
   Bell,
   Book,
   BookOpenCheck,
@@ -92,6 +93,7 @@ export const Icons = {
   twitter: TwitterIcon,
   terminal: Terminal,
   globe: Globe,
+  compare: ArrowLeftRight,
   plug: Plug,
   copy: Copy,
   check: Check,
