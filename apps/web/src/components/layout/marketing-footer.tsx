@@ -45,6 +45,7 @@ export function MarketingFooter({ className }: Props) {
             <p className="font-semibold text-foreground">Compare</p>
             {Object.keys(alternativesConfig).map((slug) => (
               <FooterLink
+                key={slug}
                 href={`/compare/${slug}`}
                 label={
                   alternativesConfig[slug as keyof typeof alternativesConfig]
