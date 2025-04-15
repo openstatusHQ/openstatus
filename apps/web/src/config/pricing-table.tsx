@@ -51,7 +51,6 @@ export const pricingTableConfig: Record<
       },
       { value: "max-regions", label: "Number of Regions" },
       { value: "data-retention", label: "Data retention" },
-      { value: "screenshots", label: "Screenshots upon failure" },
       { value: "otel", label: "OTel Exporter" },
     ],
   },
