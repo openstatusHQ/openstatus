@@ -72,7 +72,7 @@ export default function FeaturePage() {
         subTitle="Let your users subscribe to your status page, to automatically receive updates about the status of your services."
         component={
           <div className="m-auto">
-            <SubscribeButton plan="pro" slug={""} isDemo />
+            <SubscribeButton plan="team" slug={""} isDemo />
           </div>
         }
         col={1}
