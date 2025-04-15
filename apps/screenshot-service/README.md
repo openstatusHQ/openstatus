@@ -1,3 +1,5 @@
 # Screenshot Worker
 
-This is a worker that takes screenshots of web pages when we create an incident.
+This is not used anymore.
+
+Will be used for browser check
