@@ -63,7 +63,6 @@ export const pricingTableConfig: Record<
         label: "Number of on-demand checks",
         monthly: true,
       },
-      { value: "private-locations", label: "Private Locations" },
     ],
   },
   "status-pages": {
@@ -98,10 +97,6 @@ export const pricingTableConfig: Record<
         description: renderChangelogDescription(
           "password-protected-status-page",
         ),
-      },
-      {
-        value: "white-label",
-        label: "White Label",
       },
     ],
   },

@@ -12,7 +12,7 @@ interface Props {
   workspacePlan?: WorkspacePlan;
 }
 
-export function ProFeatureAlert({ feature, workspacePlan = "pro" }: Props) {
+export function ProFeatureAlert({ feature, workspacePlan = "team" }: Props) {
   const params = useParams<{ workspaceSlug: string }>();
   return (
     <Alert>

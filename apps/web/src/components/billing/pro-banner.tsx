@@ -46,7 +46,7 @@ export function ProBanner() {
     <div className="grid gap-2 rounded-md border border-border p-3">
       <div className="flex items-center justify-between">
         <p className="inline-flex items-center font-medium text-sm">
-          OpenStatus Pro <Rocket className="ml-2 h-4 w-4" />
+          OpenStatus Subscription <Rocket className="ml-2 h-4 w-4" />
         </p>
         <Button
           variant="ghost"
