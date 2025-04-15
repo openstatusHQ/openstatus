@@ -101,7 +101,7 @@ export default async function ChangelogPage(props: {
 
   return (
     <>
-      <Breadcrumb className="px-3 md:px-6 mb-4">
+      <Breadcrumb className="mb-4 px-3 md:px-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>

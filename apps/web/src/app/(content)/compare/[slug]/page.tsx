@@ -86,7 +86,7 @@ export default async function Page({
   }
 
   return (
-    <div className="w-full flex flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       {/* TODO: use the breadcrump component for the changelog and blog and play pages */}
       <Breadcrumb className="px-3 md:px-6">
         <BreadcrumbList>
@@ -109,23 +109,23 @@ export default async function Page({
               alt={alternative.name}
               width={60}
               height={60}
-              className="rounded-full overflow-hidden border border-border bg-muted"
+              className="overflow-hidden rounded-full border border-border bg-muted"
             />
-            <h1 className="text-4xl font-cal text-center">
+            <h1 className="text-center font-cal text-4xl">
               {alternative.name} Alternative
             </h1>
-            <div className="mx-auto max-w-lg text-muted-foreground text-lg text-center">
+            <div className="mx-auto max-w-lg text-center text-lg text-muted-foreground">
               <p>{alternative.description}</p>
             </div>
           </div>
           <ComparisonTable slug={slug} />
         </Shell>
-        <Shell className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-muted">
+        <Shell className="flex flex-col gap-6 bg-muted md:flex-row md:items-center md:justify-between">
           <div>
             <p className="font-semibold text-2xl">
               Don't talk to Sales. Talk to Founders.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               We are here to help you with any questions or concerns you may
               have.
             </p>

@@ -23,10 +23,10 @@ export function ComparisonTable({ slug }: { slug: string }) {
       <TableHeader>
         <TableRow className="bg-muted/50">
           <TableHead className="px-3 py-3 align-bottom">Feature</TableHead>
-          <TableHead className="h-auto px-3 py-3 text-foreground text-center align-middle">
+          <TableHead className="h-auto px-3 py-3 text-center align-middle text-foreground">
             OpenStatus
           </TableHead>
-          <TableHead className="h-auto px-3 py-3 text-foreground text-center align-middle">
+          <TableHead className="h-auto px-3 py-3 text-center align-middle text-foreground">
             {alternative.name}
           </TableHead>
         </TableRow>
@@ -44,14 +44,14 @@ export function ComparisonTable({ slug }: { slug: string }) {
                         href={url}
                         target="_blank"
                         rel="noreferrer"
-                        className="group text-sm text-muted-foreground font-normal items-center gap-1 hidden sm:flex"
+                        className="group hidden items-center gap-1 font-normal text-muted-foreground text-sm sm:flex"
                       >
                         {description}
                         {/* FIXME: arrow is not `text-foreground` when hovered */}
                         <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-transparent group-hover/row:text-muted-foreground group-hover:text-foreground" />
                       </a>
                     ) : (
-                      <span className="text-sm text-muted-foreground font-normal hidden sm:block">
+                      <span className="hidden font-normal text-muted-foreground text-sm sm:block">
                         {description}
                       </span>
                     )}
@@ -79,9 +79,9 @@ function Cell({
 }) {
   if (typeof value === "boolean") {
     return value ? (
-      <CircleCheck className="size-5 text-green-500 mx-auto" />
+      <CircleCheck className="mx-auto size-5 text-green-500" />
     ) : (
-      <Minus className="size-5 text-muted-foreground mx-auto" />
+      <Minus className="mx-auto size-5 text-muted-foreground" />
     );
   }
 
@@ -89,7 +89,7 @@ function Cell({
     typeof value === "number" ||
     (typeof value === "string" && value === "Unlimited")
   ) {
-    return <span className="font-mono font-medium">{value}</span>;
+    return <span className="font-medium font-mono">{value}</span>;
   }
 
   if (typeof value === "string") {
@@ -98,7 +98,7 @@ function Cell({
 
   if (typeof value === "undefined") {
     // TODO check for rounded question
-    return <CircleHelp className="size-5 text-muted-foreground mx-auto" />;
+    return <CircleHelp className="mx-auto size-5 text-muted-foreground" />;
   }
 
   return value;
