@@ -45,7 +45,7 @@ export function PricingTable({
     .filter(([key, _]) => plans.includes(key as keyof typeof allPlans))
     .map(([key, value]) => ({ key: key as keyof typeof allPlans, ...value }));
   return (
-    <Table className="relative">
+    <Table className="relative table-fixed">
       <TableCaption>
         A list to compare the different features by plan.
       </TableCaption>

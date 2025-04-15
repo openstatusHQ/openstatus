@@ -15,7 +15,7 @@ export const allPlans: Record<
   free: {
     title: "Hobby",
     id: "free",
-    description: "For personal projects",
+    description: "Perfect for personal projects",
     price: 0,
     limits: {
       monitors: 1,
