@@ -23,7 +23,7 @@ export const alternativesConfig = {
     name: "BetterStack",
     logo: "/assets/alternatives/betterstack.png",
     description:
-      "Bootstrap directly to the founder. Learn how OpenStatus compares to BetterStack.",
+      "Open-source uptime monitoring. Learn how OpenStatus compares to BetterStack.",
     features: [
       opensource(),
       bootstrap(),
@@ -45,6 +45,7 @@ export const alternativesConfig = {
       opensource(),
       bootstrap(),
       global(),
+      otelexport(),
       githubaction(),
       teammembers("additional 19$/seat"),
     ],
@@ -54,12 +55,19 @@ export const alternativesConfig = {
     description:
       "Monitor your endpoints globally. Learn how OpenStatus compares to Uptime Kuma.",
     logo: "/assets/alternatives/uptime-kuma.png",
-    features: [opensource(), global(), selfhost(), managed(), githubaction()],
+    features: [
+      opensource(),
+      global(),
+      selfhost(),
+      managed(),
+      otelexport(),
+      githubaction(),
+    ],
   },
   checkly: {
     name: "Checkly",
     description:
-      "Open-Source multi-region monitoring. Learn how OpenStatus compares to Checkly.",
+      "Open-source multi-region monitoring. Learn how OpenStatus compares to Checkly.",
     logo: "/assets/alternatives/checkly.png",
     features: [
       multiregion(19),
