@@ -26,7 +26,8 @@ export function EnterpricePlan() {
                 <CheckIcon className="mr-2 h-4 w-4" /> SSO/SAML
               </div>
               <div className="flex items-center">
-                <CheckIcon className="mr-2 h-4 w-4" /> BYOC (Bring Your Own Cloud)
+                <CheckIcon className="mr-2 h-4 w-4" /> BYOC (Bring Your Own
+                Cloud)
               </div>
               <div className="flex items-center">
                 <CheckIcon className="mr-2 h-4 w-4" /> Something else
