@@ -18,18 +18,18 @@ export const metadata: Metadata = {
   ...defaultMetadata,
   title: "Compare Alternatives",
   description:
-    "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+    "Discover how OpenStatus compares to other services and start monitoring your website or api for free.",
   openGraph: {
     ...ogMetadata,
     title: "Compare Alternatives",
     description:
-      "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+      "Discover how OpenStatus compares to other services and start monitoring your website or api for free.",
   },
   twitter: {
     ...twitterMetadata,
     title: "Compare Alternatives",
     description:
-      "Compare alternatives to OpenStatus and start monitoring your website and api for free.",
+      "Discover how OpenStatus compares to other services and start monitoring your website or api for free.",
   },
 };
 
@@ -37,13 +37,15 @@ export default function Page() {
   return (
     <>
       <div className="mb-5 space-y-3">
-        <h1 className="font-cal text-4xl text-foreground">Alternatives</h1>
-        <p className="text-lg text-muted-foreground">
-          Compare OpenStatus with other Uptime and Synthetic Monitoring
-          products.
+        <h1 className="font-cal text-4xl text-foreground">
+          Compare OpenStatus
+        </h1>
+        <p className="max-w-lg text-lg text-muted-foreground">
+          Discover how OpenStatus compares to other Uptime and Synthetic
+          Monitoring solutions.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+      <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
         {Object.entries(config).map(([slug, alternative]) => (
           <Link
             key={slug}
@@ -54,7 +56,7 @@ export default function Page() {
               <CardHeader className="flex-1">
                 <CardTitle>{alternative.name} Alternative</CardTitle>
                 <div className="flex flex-1 justify-between gap-3">
-                  <CardDescription className="truncate mr-3">
+                  <CardDescription className="mr-3 truncate">
                     {alternative.description}
                   </CardDescription>
                   <ChevronRight className="h-5 w-5 shrink-0 self-end text-muted-foreground group-hover:text-foreground" />
