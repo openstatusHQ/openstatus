@@ -34,7 +34,7 @@ async function main() {
         stripeId: "stripeId1",
         name: "test",
         subscriptionId: "subscriptionId",
-        plan: "pro",
+        plan: "team",
         endsAt: null,
         paidUntil: null,
         limits:
