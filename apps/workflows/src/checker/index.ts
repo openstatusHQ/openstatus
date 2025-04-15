@@ -246,23 +246,6 @@ checkerRoute.post("/updateStatus", async (c) => {
             .update(schema.monitor)
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));
-
-          if (monitor && monitor.jobType === "http" && monitor.workspaceId) {
-            const currentWorkspace = await db
-              .select()
-              .from(workspace)
-              .where(eq(workspace.id, monitor.workspaceId))
-              .get();
-            if (!!currentWorkspace?.plan && currentWorkspace?.plan !== "free") {
-              await triggerScreenshot({
-                data: {
-                  url: monitor.url,
-                  incidentId: newIncident[0].id,
-                  kind: "incident",
-                },
-              });
-            }
-          }
           await checkerAudit.publishAuditLog({
             id: `monitor:${monitorId}`,
             action: "monitor.failed",
@@ -283,33 +266,3 @@ checkerRoute.post("/updateStatus", async (c) => {
   // if we are in error
   return c.text("Ok", 200);
 });
-
-const payload = z.object({
-  url: z.string().url(),
-  incidentId: z.number(),
-  kind: z.enum(["incident", "recovery"]),
-});
-
-const triggerScreenshot = async ({
-  data,
-}: {
-  data: z.infer<typeof payload>;
-}) => {
-  console.log(` 📸 taking screenshot for incident ${data.incidentId}`);
-
-  const client = new Client({ token: env().QSTASH_TOKEN });
-
-  await client.publishJSON({
-    url: env().SCREENSHOT_SERVICE_URL,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "api-key": `Basic ${env().CRON_SECRET}`,
-    },
-    body: {
-      url: data.url,
-      incidentId: data.incidentId,
-      kind: data.kind,
-    },
-  });
-};
