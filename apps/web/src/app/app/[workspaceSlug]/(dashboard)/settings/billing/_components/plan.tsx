@@ -47,7 +47,6 @@ export const SettingsPlan = ({ workspace }: { workspace: Workspace }) => {
         // REMINDER: redirecting to customer portal as a fallback because the free plan has no price
         free: getUserCustomerPortal,
         starter: () => getCheckoutSession("starter"),
-        pro: () => getCheckoutSession("pro"),
         team: () => getCheckoutSession("team"),
       }}
     />

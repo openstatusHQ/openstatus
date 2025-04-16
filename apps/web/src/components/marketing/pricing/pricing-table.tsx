@@ -45,7 +45,7 @@ export function PricingTable({
     .filter(([key, _]) => plans.includes(key as keyof typeof allPlans))
     .map(([key, value]) => ({ key: key as keyof typeof allPlans, ...value }));
   return (
-    <Table className="relative">
+    <Table className="relative table-fixed">
       <TableCaption>
         A list to compare the different features by plan.
       </TableCaption>
@@ -61,7 +61,7 @@ export function PricingTable({
                 key={key}
                 className={cn(
                   "h-auto px-3 py-3 align-bottom text-foreground",
-                  key === "team" ? "bg-muted/30" : "bg-background",
+                  key === "starter" ? "bg-muted/30" : "bg-background",
                 )}
               >
                 <p className="sticky top-0 mb-2 font-cal text-2xl">
@@ -79,7 +79,7 @@ export function PricingTable({
                 <Button
                   className="w-full"
                   size="sm"
-                  variant={key === "team" ? "default" : "outline"}
+                  variant={key === "starter" ? "default" : "outline"}
                   onClick={() => {
                     if (events?.[key]) {
                       return events[key]?.();
@@ -92,7 +92,7 @@ export function PricingTable({
                 >
                   {isLoading ? (
                     <LoadingAnimation
-                      variant={key === "team" ? "default" : "inverse"}
+                      variant={key === "starter" ? "default" : "inverse"}
                     />
                   ) : isCurrentPlan ? (
                     "Current plan"
@@ -178,7 +178,7 @@ export function PricingTable({
                               key={key + value + _i}
                               className={cn(
                                 "p-3 font-mono",
-                                plan.key === "team" && "bg-muted/30",
+                                plan.key === "starter" && "bg-muted/30",
                               )}
                             >
                               {renderContent()}

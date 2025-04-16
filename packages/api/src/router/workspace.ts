@@ -184,9 +184,6 @@ export const workspaceRouter = createTRPCRouter({
         case "team": {
           break;
         }
-        case "pro": {
-          break;
-        }
         default: {
         }
       }
