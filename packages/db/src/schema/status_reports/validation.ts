@@ -3,11 +3,13 @@ import * as z from "zod";
 
 import {
   statusReport,
+  statusReportSeverity,
   statusReportStatus,
   statusReportUpdate,
 } from "./status_reports";
 
 export const statusReportStatusSchema = z.enum(statusReportStatus);
+export const statusReportSeveritySchema = z.enum(statusReportSeverity);
 
 export const insertStatusReportUpdateSchema = createInsertSchema(
   statusReportUpdate,

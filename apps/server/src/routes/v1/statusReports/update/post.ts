@@ -24,7 +24,7 @@ const postRouteUpdate = createRoute({
   summary: "Create a status report update",
   deprecated: true,
   description:
-    "Preferably use [`/status-report-updates`](#tag/status_report_update/POST/status_report_update) instead.",
+    "Preferably use [`/status_report_updates`](#tag/status_report_update/POST/status_report_update) instead.",
   request: {
     params: ParamsSchema,
     body: {
@@ -116,6 +116,7 @@ export function registerStatusReportUpdateRoutes(api: typeof statusReportsApi) {
           pageTitle: allInfo.page.title,
           reportTitle: allInfo.title,
           status: allInfo.status,
+          severity: allInfo.severity,
           message: _statusReportUpdate.message,
           date: _statusReportUpdate.date.toISOString(),
           monitors: allInfo.monitorsToStatusReports.map(

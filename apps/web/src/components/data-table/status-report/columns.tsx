@@ -8,6 +8,7 @@ import type {
   StatusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { SeverityBadge } from "@/components/status-report/severity-badge";
 import { StatusBadge } from "@/components/status-update/status-badge";
 import { formatDate } from "@/lib/utils";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -31,8 +32,20 @@ export const columns: ColumnDef<
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
+      // TODO: use last status update
       const status = row.original.status;
       return <StatusBadge status={status} />;
+    },
+  },
+  {
+    accessorKey: "severity",
+    header: "Severity",
+    cell: ({ row }) => {
+      const severity = row.original.severity;
+      if (!severity) {
+        return <span className="text-muted-foreground/50">-</span>;
+      }
+      return <SeverityBadge severity={severity} />;
     },
   },
   {

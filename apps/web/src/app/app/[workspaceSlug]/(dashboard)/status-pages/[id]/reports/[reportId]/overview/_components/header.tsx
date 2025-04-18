@@ -1,6 +1,7 @@
 "use client";
 
 import { StatusReportUpdateForm } from "@/components/forms/status-report-update/form";
+import { SeverityBadge } from "@/components/status-report/severity-badge";
 import { StatusBadge } from "@/components/status-update/status-badge";
 import { formatDate } from "@/lib/utils";
 import type {
@@ -45,14 +46,24 @@ export function Header({
                 ? formatDate(firstUpdate?.date)
                 : "Missing date"}
             </span>
+            {report.severity ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                <SeverityBadge severity={report.severity} />
+              </>
+            ) : null}
             <span className="text-muted-foreground/50 text-xs">•</span>
             <StatusBadge status={report.status} />
-            <span className="text-muted-foreground/50 text-xs">•</span>
-            {monitors?.map(({ name, id }) => (
-              <Badge key={id} variant="outline">
-                {name}
-              </Badge>
-            ))}
+            {monitors?.length ? (
+              <>
+                <span className="text-muted-foreground/50 text-xs">•</span>
+                {monitors.map(({ name, id }) => (
+                  <Badge key={id} variant="outline">
+                    {name}
+                  </Badge>
+                ))}
+              </>
+            ) : null}
           </div>
         </div>
 

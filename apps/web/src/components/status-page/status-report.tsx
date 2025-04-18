@@ -14,6 +14,7 @@ import { setPrefixUrl } from "@/app/status-page/[domain]/utils";
 import { statusDict } from "@/data/incidents-dictionary";
 import { cn } from "@/lib/utils";
 import { Icons } from "../icons";
+import { SeverityBadge } from "../status-report/severity-badge";
 import { DateTimeTooltip } from "./datetime-tooltip";
 import { ProcessMessage } from "./process-message";
 
@@ -33,7 +34,11 @@ function StatusReport({
   if (isDemo) {
     return (
       <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
-        <StatusReportHeader title={report.title} {...{ monitors, actions }} />
+        <StatusReportHeader
+          title={report.title}
+          severity={report.severity}
+          {...{ monitors, actions }}
+        />
         <StatusReportUpdates updates={report.statusReportUpdates} />
       </div>
     );
@@ -42,7 +47,11 @@ function StatusReport({
   return (
     <Link href={setPrefixUrl(`/events/report/${report.id}`, params)}>
       <div className="group grid gap-4 rounded-lg border border-transparent p-3 hover:border-border hover:bg-muted/20">
-        <StatusReportHeader title={report.title} {...{ monitors, actions }} />
+        <StatusReportHeader
+          title={report.title}
+          severity={report.severity}
+          {...{ monitors, actions }}
+        />
         <StatusReportUpdates updates={report.statusReportUpdates} />
       </div>
     </Link>
@@ -51,11 +60,13 @@ function StatusReport({
 
 // REMINDER: we had the report?.id in the link href to features page to be clickable
 function StatusReportHeader({
+  severity,
   title,
   monitors,
   actions,
 }: {
   title: StatusReportWithUpdates["title"];
+  severity: StatusReportWithUpdates["severity"];
   monitors: PublicMonitor[];
   actions?: React.ReactNode;
 }) {
@@ -63,6 +74,7 @@ function StatusReportHeader({
     <div className="flex flex-wrap items-center justify-between gap-2">
       <div className="flex flex-wrap items-center gap-2">
         <h3 className="font-semibold text-xl">{title}</h3>
+        {severity ? <SeverityBadge severity={severity} /> : null}
         <ul className="flex flex-wrap gap-2">
           {monitors.map((monitor) => (
             <li key={monitor.id}>

@@ -5,6 +5,14 @@ export const colors = {
   info: "#3d9eff",
 };
 
+export const severityColors = {
+  critical: "#ef4444",
+  high: "#f97316",
+  moderate: "#f59e0b",
+  low: "#eab308",
+  informational: "#3b82f6",
+};
+
 export const styles = {
   main: {
     backgroundColor: "#ffffff",

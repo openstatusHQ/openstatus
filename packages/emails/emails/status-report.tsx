@@ -6,18 +6,22 @@ import {
   Head,
   Heading,
   Html,
+  Markdown,
   Preview,
   Row,
   Text,
 } from "@react-email/components";
 import { z } from "zod";
 import { Layout } from "./_components/layout";
-import { colors, styles } from "./_components/styles";
+import { colors, severityColors, styles } from "./_components/styles";
 
 export const StatusReportSchema = z.object({
   pageTitle: z.string(),
-  // statusReportStatus from db
   status: z.enum(["investigating", "identified", "monitoring", "resolved"]),
+  severity: z
+    .enum(["critical", "high", "moderate", "low", "informational"])
+    .nullable()
+    .optional(),
   date: z.string(),
   message: z.string(),
   reportTitle: z.string(),
@@ -44,6 +48,7 @@ function getStatusColor(status: string) {
 function StatusReportEmail({
   status,
   date,
+  severity,
   message,
   reportTitle,
   pageTitle,
@@ -86,6 +91,23 @@ function StatusReportEmail({
               <Text>{date}</Text>
             </Column>
           </Row>
+          {severity ? (
+            <Row style={styles.row}>
+              <Column>
+                <Text style={styles.bold}>Severity</Text>
+              </Column>
+              <Column style={{ textAlign: "right" }}>
+                <Text
+                  style={{
+                    color: severityColors[severity],
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {severity}
+                </Text>
+              </Column>
+            </Row>
+          ) : null}
           <Row style={styles.row}>
             <Column>
               <Text style={styles.bold}>Affected</Text>
@@ -98,7 +120,7 @@ function StatusReportEmail({
           </Row>
           <Row style={styles.row}>
             <Column>
-              <Text>{message}</Text>
+              <Markdown>{message}</Markdown>
             </Column>
           </Row>
         </Layout>
@@ -113,9 +135,10 @@ StatusReportEmail.PreviewProps = {
   pageTitle: "OpenStatus Status",
   reportTitle: "API Unavaible",
   status: "investigating",
+  severity: "major",
   date: new Date().toISOString(),
   message:
-    "The API is down, including the webhook. We are actively investigating the issue and will provide updates as soon as possible.",
+    "The API is down, **including the webhook**. We are actively investigating the issue and will provide updates as soon as possible.",
   monitors: ["OpenStatus API", "OpenStatus Webhook"],
 };
 

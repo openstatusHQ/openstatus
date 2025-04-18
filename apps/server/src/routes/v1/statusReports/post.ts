@@ -101,6 +101,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
       .insert(statusReport)
       .values({
         status: input.status,
+        severity: input.severity,
         title: input.title,
         pageId: input.pageId,
         workspaceId: workspaceId,
@@ -162,6 +163,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
           pageTitle: pageInfo.title,
           reportTitle: _newStatusReport.title,
           status: _newStatusReport.status,
+          severity: _newStatusReport.severity,
           message: _newStatusReportUpdate.message,
           date: _newStatusReportUpdate.date.toISOString(),
           monitors: pageInfo.monitorsToPages.map((i) => i.monitor.name),
