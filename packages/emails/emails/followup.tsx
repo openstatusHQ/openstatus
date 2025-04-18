@@ -7,6 +7,7 @@ const FollowUpEmail = () => {
     <Html>
       <Head>
         <title>How's it going with OpenStatus?</title>
+      </Head>
         <Preview>How's it going with OpenStatus?</Preview>
         <Body>
           Hey
@@ -22,7 +23,6 @@ const FollowUpEmail = () => {
           Thibault Le Ouay Ducasse
           <br />
         </Body>
-      </Head>
     </Html>
   );
 };

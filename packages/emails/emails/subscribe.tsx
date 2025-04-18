@@ -13,6 +13,7 @@ const SubscribeEmail = ({ token, page, domain }: SubscribeProps) => {
     <Html>
       <Head>
         <title>Confirm your subscription to "{page}" Status Page</title>
+      </Head>
         <Preview>Confirm your subscription to "{page}" Status Page</Preview>
         <Body>
           <p>Confirm your subscription to "{page}" Status Page</p>
@@ -32,7 +33,6 @@ const SubscribeEmail = ({ token, page, domain }: SubscribeProps) => {
           <br />🚀 Powered by{" "}
           <Link href="https://www.openstatus.dev">OpenStatus.dev</Link>
         </Body>
-      </Head>
     </Html>
   );
 };

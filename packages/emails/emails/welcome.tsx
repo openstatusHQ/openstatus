@@ -7,14 +7,15 @@ const WelcomeEmail = () => {
     <Html>
       <Head>
         <title>Welcome to OpenStatus</title>
+        </Head>
         <Preview>Few tips to get started</Preview>
+
         <Body>
           Hey 👋
           <br />
           <br />
           I'm Thibault, the co-founder of OpenStatus, the open-source synthetic
           monitoring platform. <br />
-          <br />
           <br />
           <br />
           Here are a few things you can do with OpenStatus:
@@ -44,7 +45,6 @@ const WelcomeEmail = () => {
           Thibault Le Ouay Ducasse
           <br />
         </Body>
-      </Head>
     </Html>
   );
 };
