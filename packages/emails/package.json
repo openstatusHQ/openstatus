@@ -17,8 +17,8 @@
     "@react-email/render": "1.0.6",
     "@react-email/tailwind": "1.0.4",
     "@t3-oss/env-core": "0.7.0",
-    "react-email": "3.0.4",
-    "resend": "4.0.1",
+    "react-email": "4.0.7",
+    "resend": "4.3.0",
     "zod": "3.23.8"
   },
   "devDependencies": {
