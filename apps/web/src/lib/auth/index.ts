@@ -33,7 +33,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             lastName: params.profile.family_name || "",
             photoUrl: params.profile.picture,
             // keep the name in sync
-            name: ${params.profile.given_name}${params.profile.family_name ? " " + params.profile.family_name : ""},
+            name: `${params.profile.given_name} ${
+              params.profile.family_name || ""
+            }`.trim(),
             updatedAt: new Date(),
           })
           .where(eq(user.id, Number(params.user.id)))
