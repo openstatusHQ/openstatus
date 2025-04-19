@@ -1,4 +1,5 @@
 import type { ValidIcon } from "@/components/icons";
+import { EnterpriseBanner } from "@/components/marketing/banner/enterprise-banner";
 import {
   BookingBanner,
   FeatureAPIMonitoring,
@@ -8,6 +9,7 @@ import {
   FeatureGitHubAction,
   FeatureMaintenance,
   FeatureNotifications,
+  FeatureOpenTelemetry,
   FeatureOperationalBanner,
   FeaturePasswordProtection,
   FeatureRaycastIntegration,
@@ -92,8 +94,6 @@ export const landingsConfig = {
     blocks: [
       <SpeedBanner key="speed-banner" />,
       <FeatureRegions key="feature-regions" />,
-      <FeatureGitHubAction key="feature-github-action" />,
-      <FeatureCLI key="feature-cli" />,
       <FeatureTimingAssertions key="feature-timing-assertions" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,
       <FeatureResponseDetails
@@ -101,6 +101,26 @@ export const landingsConfig = {
         position="right"
       />,
       <FeatureTerraformProvider key="feature-terraform-provider" />,
+      <BookingBanner key="booking-banner" />,
+    ],
+  },
+  "ci-cd": {
+    icon: "terminal",
+    title: "CI/CD Workflow",
+    description:
+      "Run your checks in your CI/CD pipeline and export metrics to your observability stack.",
+    image: {
+      srcDark: "/assets/screenshots/github-action-dark.png",
+      srcLight: "/assets/screenshots/github-action-light.png",
+      caption: "GitHub Actions workflow with OpenStatus.",
+    },
+    blocks: [
+      <EnterpriseBanner key="enterprise-banner" />,
+      <FeatureGitHubAction key="feature-github-action" />,
+      <FeatureCLI key="feature-cli" />,
+      <FeatureAPIMonitoring key="feature-api-monitoring" />,
+      <FeatureTerraformProvider key="feature-terraform-provider" />,
+      <FeatureOpenTelemetry key="feature-open-telemetry" />,
       <BookingBanner key="booking-banner" />,
     ],
   },

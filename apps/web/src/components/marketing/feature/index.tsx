@@ -382,7 +382,7 @@ export function FeatureAPIMonitoring(
             rel="noreferrer"
             target="_blank"
           >
-            How-to
+            Getting Started
           </a>
         </Button>
       }
@@ -510,6 +510,47 @@ export function FeatureCLI(
       }
       col={2}
       position={props.position || "right"}
+    />
+  );
+}
+
+const blockOpenTelemetry = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "otel-block",
+);
+
+export function FeatureOpenTelemetry(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  if (!blockOpenTelemetry) {
+    throw new Error("OpenTelemetry block not found");
+  }
+
+  return (
+    <InteractiveFeature
+      icon="radar"
+      iconText="OpenTelemetry"
+      title="Track every request."
+      subTitle="Visualize how requests flow through your system using OpenTelemetry tracing."
+      component={
+        <Mdx
+          code={blockOpenTelemetry.mdx}
+          className="max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      action={
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://docs.openstatus.dev/monitoring/opentelemetry"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Documentation
+          </a>
+        </Button>
+      }
+      col={2}
+      position={props.position || "top"}
+      withGradient
     />
   );
 }

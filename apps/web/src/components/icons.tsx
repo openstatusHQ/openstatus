@@ -44,6 +44,7 @@ import {
   Play,
   Plug,
   Puzzle,
+  Radar,
   Ratio,
   Search,
   SearchCheck,
@@ -135,6 +136,7 @@ export const Icons = {
   info: Info,
   server: Server,
   command: Command,
+  radar: Radar,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
