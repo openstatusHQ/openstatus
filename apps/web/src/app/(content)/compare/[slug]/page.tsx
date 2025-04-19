@@ -4,6 +4,7 @@ import {
   twitterMetadata,
 } from "@/app/shared-metadata";
 import { Shell } from "@/components/dashboard/shell";
+import { BookingBanner } from "@/components/marketing/banner/booking-banner";
 import { FAQs } from "@/components/marketing/faqs";
 import { PricingSlider } from "@/components/marketing/pricing/pricing-slider";
 import { alternativesConfig as config } from "@/config/alternatives";
@@ -15,7 +16,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@openstatus/ui/src/components/breadcrumb";
-import { Button } from "@openstatus/ui/src/components/button";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -38,7 +38,7 @@ export async function generateMetadata(props: {
   const description = `Looking for a ${name} alternative? OpenStatus is an open-source alternative to ${name}. Try it out for free.`;
 
   const encodedTitle = encodeURIComponent(title);
-  // TODO: check if there is a better wording
+
   const encodedDescription = encodeURIComponent(
     "Compare both and pick what fits best to you.",
   );
@@ -70,7 +70,6 @@ export async function generateMetadata(props: {
     },
   };
 }
-// add to sitemap
 
 export default async function Page({
   params,
@@ -120,35 +119,7 @@ export default async function Page({
           </div>
           <ComparisonTable slug={slug} />
         </Shell>
-        <Shell className="flex flex-col gap-6 bg-muted md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="font-semibold text-2xl">
-              Don't talk to Sales. Talk to Founders.
-            </p>
-            <p className="text-muted-foreground text-sm">
-              We are here to help you with any questions or concerns you may
-              have.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button className="rounded-full" variant="outline" asChild>
-              <Link href="/app/login" className="text-nowrap">
-                Start for free
-              </Link>
-            </Button>
-            <Button className="rounded-full" asChild>
-              <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://cal.com/team/openstatus/30min"
-                className="text-nowrap"
-              >
-                Talk to us
-              </a>
-            </Button>
-          </div>
-        </Shell>
-        {/* FIXME: responsive design */}
+        <BookingBanner />
         <Shell className="w-full max-w-4xl">
           <PricingSlider />
         </Shell>

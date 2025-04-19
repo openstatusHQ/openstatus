@@ -45,6 +45,20 @@ const nextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      {
+        source: "/features/monitoring",
+        destination: "/uptime-monitoring",
+        permanent: true,
+      },
+      {
+        source: "/features/status-page",
+        destination: "/status-page",
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [

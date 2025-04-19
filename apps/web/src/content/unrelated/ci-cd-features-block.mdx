@@ -1,6 +1,6 @@
 ```ts
 test("should fail if slow", async () => {
-  const data = await fetch("https://api.openstatus.dev/v1/check", {
+  const data = await fetch("https://api.openstatus.dev/v1/check/http", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
