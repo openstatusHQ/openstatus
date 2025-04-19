@@ -487,7 +487,7 @@ export function FeatureCLI(
   }
   return (
     <InteractiveFeature
-      icon="bot"
+      icon="terminal"
       iconText="CLI"
       title="Run everywhere."
       subTitle="Check your monitors from your favorite terminal."

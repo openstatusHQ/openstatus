@@ -22,8 +22,10 @@ export function GenericBanner({
       )}
     >
       <div>
-        <p className="font-semibold text-2xl">{title}</p>
-        <p className="text-muted-foreground text-sm">{description}</p>
+        <p className="font-semibold text-lg md:text-xl">{title}</p>
+        <p className="text-muted-foreground text-sm md:text-base">
+          {description}
+        </p>
       </div>
       {actions}
     </Shell>
