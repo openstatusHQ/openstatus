@@ -1,8 +1,11 @@
 import type { ValidIcon } from "@/components/icons";
 import {
   BookingBanner,
+  FeatureAPIMonitoring,
+  FeatureCLI,
   FeatureCharts,
   FeatureCustomDomain,
+  FeatureGitHubAction,
   FeatureMaintenance,
   FeatureNotifications,
   FeatureOperationalBanner,
@@ -14,6 +17,7 @@ import {
   FeatureStatusPageTrackerToggle,
   FeatureStatusUpdates,
   FeatureSubscriptions,
+  FeatureTerraformProvider,
   FeatureTimingAssertions,
   SpeedBanner,
 } from "@/components/marketing/feature";
@@ -88,10 +92,15 @@ export const landingsConfig = {
     blocks: [
       <SpeedBanner key="speed-banner" />,
       <FeatureRegions key="feature-regions" />,
+      <FeatureGitHubAction key="feature-github-action" />,
+      <FeatureCLI key="feature-cli" />,
       <FeatureTimingAssertions key="feature-timing-assertions" />,
-      <FeatureResponseDetails key="feature-response-details" />,
-      <FeatureCharts key="feature-charts" />,
-      // Synthetic monitoring
+      <FeatureAPIMonitoring key="feature-api-monitoring" />,
+      <FeatureResponseDetails
+        key="feature-response-details"
+        position="right"
+      />,
+      <FeatureTerraformProvider key="feature-terraform-provider" />,
       <BookingBanner key="booking-banner" />,
     ],
   },

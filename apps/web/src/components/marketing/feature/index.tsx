@@ -1,5 +1,6 @@
 import { PasswordFormSuspense } from "@/app/status-page/[domain]/_components/password-form";
 import { SubscribeButton } from "@/app/status-page/[domain]/_components/subscribe-button";
+import { Mdx } from "@/components/content/mdx";
 import { Chart } from "@/components/monitor-charts/chart";
 import { RegionsPreset } from "@/components/monitor-dashboard/region-preset";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
@@ -11,6 +12,7 @@ import type { Region } from "@openstatus/db/src/schema/constants";
 import { flyRegions } from "@openstatus/db/src/schema/constants";
 import { Button, InputWithAddons } from "@openstatus/ui";
 import { Skeleton } from "@openstatus/ui/src/components/skeleton";
+import { allUnrelateds } from "content-collections";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "./assertions-timing-form-example";
@@ -238,11 +240,9 @@ export function FeatureOperationalBanner(
       subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
       component={<StatusCheck />}
       action={
-        <div className="mt-2">
-          <Button variant="outline" className="rounded-full" asChild>
-            <Link href="https://status.openstatus.dev">Status Page</Link>
-          </Button>
-        </div>
+        <Button variant="outline" className="rounded-full" asChild>
+          <Link href="https://status.openstatus.dev">Status Page</Link>
+        </Button>
       }
       col={2}
       position={props.position || "bottom"}
@@ -336,20 +336,180 @@ export function FeatureRaycastIntegration(
       subTitle="Check status pages and incidents without leaving your flow."
       component={<RaycastExample />}
       action={
-        <div className="mt-2">
-          <Button variant="outline" className="rounded-full" asChild>
-            <a
-              href="https://www.raycast.com/thibaultleouay/openstatus"
-              rel="noreferrer"
-              target="_blank"
-            >
-              Raycast Integration
-            </a>
-          </Button>
-        </div>
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://www.raycast.com/thibaultleouay/openstatus"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Raycast Store
+          </a>
+        </Button>
       }
       col={2}
       position={props.position || "left"}
+    />
+  );
+}
+
+const blockCICD = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "ci-cd-features-block",
+);
+
+export function FeatureAPIMonitoring(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  if (!blockCICD) {
+    throw new Error("CI/CD block not found");
+  }
+
+  return (
+    <InteractiveFeature
+      icon="bot"
+      iconText="API Monitoring"
+      title="Synthetic Monitoring."
+      subTitle="Run your check in your CI/CD pipeline or on demand."
+      component={
+        <Mdx
+          code={blockCICD.mdx}
+          className="max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      action={
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://docs.openstatus.dev/cli/getting-started"
+            rel="noreferrer"
+            target="_blank"
+          >
+            How-to
+          </a>
+        </Button>
+      }
+      col={2}
+      position={props.position || "bottom"}
+      withGradient
+    />
+  );
+}
+
+const blockTerraform = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "terraform-provider-block",
+);
+
+export function FeatureTerraformProvider(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  if (!blockTerraform) {
+    throw new Error("Terraform block not found");
+  }
+
+  return (
+    <InteractiveFeature
+      icon="bot"
+      iconText="Terraform Provider"
+      title="Infra as Code."
+      subTitle="Use Terraform to manage your monitors."
+      component={
+        <Mdx
+          code={blockTerraform.mdx}
+          className="max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      action={
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://registry.terraform.io/providers/openstatusHQ/openstatus/latest"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Terraform Registry
+          </a>
+        </Button>
+      }
+      col={2}
+      position={props.position || "bottom"}
+      withGradient
+    />
+  );
+}
+
+const blockGitHubAction = allUnrelateds.find(
+  (unrelated) => unrelated.slug === "github-action-block",
+);
+
+export function FeatureGitHubAction(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  if (!blockGitHubAction) {
+    throw new Error("GitHub Action block not found");
+  }
+
+  return (
+    <InteractiveFeature
+      icon="bot"
+      iconText="GitHub Action"
+      title="CI/CD pipeline."
+      subTitle="Run your check on demand or in your workflows."
+      component={
+        <Mdx
+          code={blockGitHubAction.mdx}
+          className="max-w-none prose-pre:overflow-hidden"
+        />
+      }
+      action={
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://github.com/marketplace/actions/openstatus-synthetics-ci"
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub Action Marketplace
+          </a>
+        </Button>
+      }
+      col={2}
+      position={props.position || "bottom"}
+      withGradient
+    />
+  );
+}
+
+export function FeatureCLI(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  const blockCLI = allUnrelateds.find(
+    (unrelated) => unrelated.slug === "cli-block",
+  );
+
+  if (!blockCLI) {
+    throw new Error("CLI block not found");
+  }
+  return (
+    <InteractiveFeature
+      icon="bot"
+      iconText="CLI"
+      title="Run everywhere."
+      subTitle="Check your monitors from your favorite terminal."
+      component={
+        <Mdx
+          code={blockCLI.mdx}
+          className="max-w-none prose-pre:overflow-hidden my-auto"
+        />
+      }
+      action={
+        <Button variant="outline" className="rounded-full w-max" asChild>
+          <a
+            href="https://docs.openstatus.dev/cli/getting-started"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Getting Started
+          </a>
+        </Button>
+      }
+      col={2}
+      position={props.position || "right"}
     />
   );
 }

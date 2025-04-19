@@ -17,7 +17,7 @@ export function GenericBanner({
   return (
     <Shell
       className={cn(
-        "flex flex-col gap-6 bg-accent/50 md:flex-row md:items-center md:justify-between",
+        "flex flex-col gap-3 bg-accent/50 md:flex-row md:items-center md:justify-between",
         className,
       )}
     >
