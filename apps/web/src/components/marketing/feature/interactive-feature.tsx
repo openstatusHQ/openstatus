@@ -22,7 +22,7 @@ const containerVariant = cva(
   },
 );
 
-interface InteractiveFeatureProps
+export interface InteractiveFeatureProps
   extends React.ComponentPropsWithoutRef<"div"> {
   component: React.ReactNode;
   icon: ValidIcon;
@@ -131,7 +131,7 @@ function FeatureCardContentContainer({
 function FeatureSubheader({ icon, text }: { icon: ValidIcon; text: string }) {
   const Icon = Icons[icon];
   return (
-    <h3 className="flex items-center gap-2 text-muted-foreground">
+    <h3 className="flex items-center gap-2 text-muted-foreground text-sm md:text-base">
       <Icon className="h-4 w-4 text-foreground" />
       {text}
     </h3>
@@ -144,7 +144,7 @@ interface FeatureTitleProps
 
 function FeatureTitle({ strong, regular }: FeatureTitleProps) {
   return (
-    <p className="text-muted-foreground text-xl">
+    <p className="text-muted-foreground text-lg md:text-xl">
       <strong className="font-medium text-foreground">{strong}</strong>{" "}
       {regular}
     </p>

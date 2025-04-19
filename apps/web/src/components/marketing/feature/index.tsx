@@ -14,7 +14,10 @@ import { Skeleton } from "@openstatus/ui/src/components/skeleton";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AssertionsTimingFormExample } from "./assertions-timing-form-example";
-import { InteractiveFeature } from "./interactive-feature";
+import {
+  InteractiveFeature,
+  type InteractiveFeatureProps,
+} from "./interactive-feature";
 import {
   maintenanceData,
   mockChartData,
@@ -23,12 +26,15 @@ import {
   statusReportData,
 } from "./mock";
 import { NotificationsFormExample } from "./notifications-form-example";
+import { RaycastExample } from "./raycast-example";
 import { TrackerWithVisibilityToggle } from "./tracker-example";
 
 export { BookingBanner } from "../banner/booking-banner";
 export { SpeedBanner } from "../banner/speed-banner";
 
-export function FeatureTimingAssertions() {
+export function FeatureTimingAssertions(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="book-open-check"
@@ -43,13 +49,15 @@ export function FeatureTimingAssertions() {
         </div>
       }
       col={2}
-      position={"left"}
+      position={props.position || "left"}
       withGradient
     />
   );
 }
 
-export function FeatureNotifications() {
+export function FeatureNotifications(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="bell"
@@ -62,12 +70,14 @@ export function FeatureNotifications() {
         </div>
       }
       col={2}
-      position={"right"}
+      position={props.position || "right"}
     />
   );
 }
 
-export function FeatureStatusPageTracker() {
+export function FeatureStatusPageTracker(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="panel-top"
@@ -85,12 +95,14 @@ export function FeatureStatusPageTracker() {
         </div>
       }
       col={2}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureCharts() {
+export function FeatureCharts(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="line-chart"
@@ -105,20 +117,22 @@ export function FeatureCharts() {
         </div>
       }
       component={
-        <div className="origin-top scale-[0.80]">
+        <div className="origin-top my-auto scale-[0.80]">
           <Suspense fallback={<Skeleton />}>
             <Chart {...mockChartData} />
           </Suspense>
         </div>
       }
       col={2}
-      position={"top"}
+      position={props.position || "top"}
       withGradient
     />
   );
 }
 
-export function FeatureCustomDomain() {
+export function FeatureCustomDomain(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="globe"
@@ -131,12 +145,14 @@ export function FeatureCustomDomain() {
         </div>
       }
       col={1}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureStatusPageTrackerToggle() {
+export function FeatureStatusPageTrackerToggle(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="panel-top"
@@ -145,12 +161,14 @@ export function FeatureStatusPageTrackerToggle() {
       subTitle="Connect your monitors and inform your users about the uptime."
       component={<TrackerWithVisibilityToggle />}
       col={2}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureSubscriptions() {
+export function FeatureSubscriptions(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="users"
@@ -163,12 +181,14 @@ export function FeatureSubscriptions() {
         </div>
       }
       col={1}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureStatusUpdates() {
+export function FeatureStatusUpdates(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="search-check"
@@ -176,18 +196,20 @@ export function FeatureStatusUpdates() {
       title="Status Updates."
       subTitle="Down't let your users in the dark and show what's wrong."
       component={
-        <div className="-translate-y-6 m-auto scale-[0.80]">
+        <div className="my-auto origin-top scale-[0.80]">
           <StatusReport isDemo {...statusReportData} />
         </div>
       }
       col={1}
-      position={"bottom"}
+      position={props.position || "bottom"}
       withGradient
     />
   );
 }
 
-export function FeaturePasswordProtection() {
+export function FeaturePasswordProtection(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="eye-off"
@@ -200,12 +222,14 @@ export function FeaturePasswordProtection() {
         </div>
       }
       col={2}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureOperationalBanner() {
+export function FeatureOperationalBanner(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="user"
@@ -221,12 +245,14 @@ export function FeatureOperationalBanner() {
         </div>
       }
       col={2}
-      position={"bottom"}
+      position={props.position || "bottom"}
     />
   );
 }
 
-export function FeatureMaintenance() {
+export function FeatureMaintenance(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="hammer"
@@ -234,7 +260,7 @@ export function FeatureMaintenance() {
       title="Maintenance."
       subTitle="Mute your monitors for a specific period and inform the users about upcoming maintenance."
       component={
-        <div className="m-auto scale-[0.80]">
+        <div className="my-auto scale-[0.80]">
           <MaintenanceContainer
             className="rounded-lg border-status-monitoring/10 bg-status-monitoring/5"
             {...maintenanceData}
@@ -242,12 +268,14 @@ export function FeatureMaintenance() {
         </div>
       }
       col={2}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureRegions() {
+export function FeatureRegions(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="activity"
@@ -265,12 +293,14 @@ export function FeatureRegions() {
         </Suspense>
       }
       col={1}
-      position={"left"}
+      position={props.position || "left"}
     />
   );
 }
 
-export function FeatureResponseDetails() {
+export function FeatureResponseDetails(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
   return (
     <InteractiveFeature
       icon="timer"
@@ -289,8 +319,37 @@ export function FeatureResponseDetails() {
         </div>
       }
       col={2}
-      position={"left"}
+      position={props.position || "left"}
       withGradient
+    />
+  );
+}
+
+export function FeatureRaycastIntegration(
+  props: Partial<Pick<InteractiveFeatureProps, "position">>,
+) {
+  return (
+    <InteractiveFeature
+      icon="command"
+      iconText="Raycast"
+      title="Command K."
+      subTitle="Check status pages and incidents without leaving your flow."
+      component={<RaycastExample />}
+      action={
+        <div className="mt-2">
+          <Button variant="outline" className="rounded-full" asChild>
+            <a
+              href="https://www.raycast.com/thibaultleouay/openstatus"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Raycast Integration
+            </a>
+          </Button>
+        </div>
+      }
+      col={2}
+      position={props.position || "left"}
     />
   );
 }

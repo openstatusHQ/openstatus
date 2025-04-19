@@ -7,6 +7,7 @@ import {
   FeatureNotifications,
   FeatureOperationalBanner,
   FeaturePasswordProtection,
+  FeatureRaycastIntegration,
   FeatureRegions,
   FeatureResponseDetails,
   FeatureStatusPageTracker,
@@ -29,7 +30,7 @@ type Landing = {
   blocks: React.ReactNode[];
 };
 
-export const config = {
+export const landingsConfig = {
   "uptime-monitoring": {
     icon: "activity",
     title: "Uptime Monitoring",
@@ -47,6 +48,7 @@ export const config = {
       <FeatureNotifications key="feature-notifications" />,
       <FeatureStatusPageTracker key="feature-status-page-tracker" />,
       <FeatureCharts key="feature-charts" />,
+      <FeatureRaycastIntegration key="feature-raycast-integration" />,
       <BookingBanner key="booking-banner" />,
     ],
   },
@@ -67,6 +69,10 @@ export const config = {
       <FeaturePasswordProtection key="feature-password-protection" />,
       <FeatureOperationalBanner key="feature-operational-banner" />,
       <FeatureMaintenance key="feature-maintenance" />,
+      <FeatureRaycastIntegration
+        key="feature-raycast-integration"
+        position="right"
+      />,
       <BookingBanner key="booking-banner" />,
     ],
   },

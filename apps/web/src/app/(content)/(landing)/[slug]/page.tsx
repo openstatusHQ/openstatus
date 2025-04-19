@@ -3,7 +3,7 @@ import {
   ogMetadata,
   twitterMetadata,
 } from "@/app/shared-metadata";
-import { config } from "@/config/landings";
+import { landingsConfig } from "@/config/landings";
 import { Button } from "@openstatus/ui";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -11,17 +11,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
-  return Object.keys(config).map((slug) => ({ slug }));
+  return Object.keys(landingsConfig).map((slug) => ({ slug }));
 }
 export async function generateMetadata(props: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata | undefined> {
   const { slug } = await props.params;
-  const landing = config[slug as keyof typeof config];
+  const landing = landingsConfig[slug as keyof typeof landingsConfig];
 
   if (!landing) return;
 
   const { title, description } = landing;
+
+  const encodedTitle = encodeURIComponent(title);
+  const encodedDescription = encodeURIComponent(description);
 
   return {
     ...defaultMetadata,
@@ -31,11 +34,17 @@ export async function generateMetadata(props: {
       ...ogMetadata,
       title,
       description,
+      images: [
+        `/api/og?title=${encodedTitle}&description=${encodedDescription}`,
+      ],
     },
     twitter: {
       ...twitterMetadata,
       title,
       description,
+      images: [
+        `/api/og?title=${encodedTitle}&description=${encodedDescription}`,
+      ],
     },
   };
 }
@@ -46,7 +55,7 @@ export default async function Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const landing = config[slug as keyof typeof config];
+  const landing = landingsConfig[slug as keyof typeof landingsConfig];
 
   if (!landing) {
     notFound();
@@ -67,7 +76,7 @@ export default async function Page({
 
 function Hero({ title, description }: { title: string; description: string }) {
   return (
-    <div className="mx-auto my-16 flex max-w-xl flex-col items-center gap-4 md:gap-6">
+    <div className="mx-auto my-12 sm:my-16 flex max-w-xl flex-col items-center gap-4 md:gap-6">
       <div className="flex flex-col text-center gap-4 md:gap-6">
         <h1 className="font-cal text-5xl leading-tight md:text-6xl">{title}</h1>
         <h2 className="mx-auto max-w-md text-xl text-muted-foreground md:max-w-xl md:text-2xl">
@@ -99,7 +108,7 @@ function HeroImage({
 }) {
   return (
     <figure className="flex flex-col gap-2">
-      <div className="relative w-full h-[525px] rounded-lg overflow-hidden border">
+      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[525px] rounded-lg overflow-hidden border">
         <Image
           src={srcLight}
           alt={caption}

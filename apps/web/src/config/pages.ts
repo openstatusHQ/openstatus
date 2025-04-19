@@ -1,6 +1,6 @@
 import type { ValidIcon } from "@/components/icons";
 
-import { config as landingConfig } from "./landings";
+import { landingsConfig } from "./landings";
 
 export type Page = {
   title: string;
@@ -205,7 +205,7 @@ export const pagesConfig = [
 type MarketingPageType = Page;
 
 export const marketingProductPagesConfig = [
-  ...Object.entries(landingConfig).map(
+  ...Object.entries(landingsConfig).map(
     ([key, { title, description, icon }]) => {
       return {
         title,
