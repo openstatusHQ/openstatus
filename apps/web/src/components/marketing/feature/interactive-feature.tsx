@@ -50,6 +50,7 @@ export function InteractiveFeature({
   position,
   col,
   withGradient = false,
+  className,
 }: InteractiveFeatureProps) {
   const Component = component;
   const isSingleCol = ["top", "bottom"].includes(position);
@@ -86,6 +87,7 @@ export function InteractiveFeature({
                 : "left",
           }),
           "relative",
+          className,
         )}
       >
         {Component}

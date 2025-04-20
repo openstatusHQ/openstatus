@@ -451,6 +451,7 @@ export function FeatureGitHubAction(
       iconText="GitHub Action"
       title="CI/CD pipeline."
       subTitle="Run your check on demand or in your workflows."
+      className="max-h-max"
       component={
         <Mdx
           code={blockGitHubAction.mdx}
@@ -470,7 +471,6 @@ export function FeatureGitHubAction(
       }
       col={2}
       position={props.position || "bottom"}
-      withGradient
     />
   );
 }
