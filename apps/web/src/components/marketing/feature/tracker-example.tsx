@@ -3,7 +3,7 @@
 import { Tracker } from "@/components/tracker/tracker";
 import { Checkbox } from "@openstatus/ui";
 import { useState } from "react";
-import { mockTrackerData } from "../mock";
+import { mockTrackerData } from "./mock";
 
 export function TrackerWithVisibilityToggle() {
   const [visible, setVisible] = useState(true);

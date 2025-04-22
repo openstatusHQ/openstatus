@@ -12,6 +12,7 @@ import {
   Check,
   Clock,
   Cog,
+  Command,
   Copy,
   CreditCard,
   Eye,
@@ -43,6 +44,7 @@ import {
   Play,
   Plug,
   Puzzle,
+  Radar,
   Ratio,
   Search,
   SearchCheck,
@@ -133,6 +135,8 @@ export const Icons = {
   "book-open-check": BookOpenCheck,
   info: Info,
   server: Server,
+  command: Command,
+  radar: Radar,
   discord: ({ ...props }: LucideProps) => (
     <svg viewBox="0 0 640 512" {...props}>
       <path
