@@ -367,8 +367,8 @@ export function FeatureAPIMonitoring(
     <InteractiveFeature
       icon="bot"
       iconText="API Monitoring"
-      title="Synthetic Monitoring."
-      subTitle="Run your check in your CI/CD pipeline or on demand."
+      title="On Demand Checks."
+      subTitle="Run your check in your CI/CD pipeline or via the CLI."
       component={
         <Mdx
           code={blockCICD.mdx}

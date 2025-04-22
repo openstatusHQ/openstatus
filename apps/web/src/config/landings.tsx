@@ -85,7 +85,7 @@ export const landingsConfig = {
   "synthetic-monitoring": {
     icon: "network",
     title: "Synthetic Monitoring",
-    description: "Monitor your API and website globally.",
+    description: "Proactively monitor your api and website globally.",
     image: {
       srcLight: "/assets/screenshots/response-log-light.png",
       srcDark: "/assets/screenshots/response-log-dark.png",
