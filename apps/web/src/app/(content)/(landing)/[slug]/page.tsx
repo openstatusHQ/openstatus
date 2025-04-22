@@ -64,11 +64,6 @@ export default async function Page({
   return (
     <div className="grid gap-12">
       <Hero title={landing.title} description={landing.description} />
-      <HeroImage
-        srcLight={landing.image.srcLight}
-        srcDark={landing.image.srcDark}
-        caption={landing.image.caption}
-      />
       {landing.blocks.map((block) => block)}
     </div>
   );
@@ -94,37 +89,5 @@ function Hero({ title, description }: { title: string; description: string }) {
         </Button>
       </div>
     </div>
-  );
-}
-
-function HeroImage({
-  srcLight,
-  srcDark,
-  caption,
-}: {
-  srcLight: string;
-  srcDark: string;
-  caption: string;
-}) {
-  return (
-    <figure className="flex flex-col gap-2">
-      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[525px] rounded-lg overflow-hidden border">
-        <Image
-          src={srcLight}
-          alt={caption}
-          className="object-cover object-top dark:hidden block"
-          fill
-        />
-        <Image
-          src={srcDark}
-          alt={caption}
-          className="object-cover object-top hidden dark:block"
-          fill
-        />
-      </div>
-      <figcaption className="text-sm text-muted-foreground text-center">
-        {caption}
-      </figcaption>
-    </figure>
   );
 }

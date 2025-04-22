@@ -27,11 +27,6 @@ import {
 type Landing = {
   title: string;
   description: string;
-  image: {
-    srcLight: string;
-    srcDark: string;
-    caption: string;
-  };
   icon: ValidIcon;
   blocks: React.ReactNode[];
 };
@@ -42,16 +37,10 @@ export const landingsConfig = {
     title: "Uptime Monitoring",
     description:
       "Monitor your uptime and get notified when your services are down.",
-    image: {
-      srcLight: "/assets/screenshots/uptime-light.png",
-      srcDark: "/assets/screenshots/uptime-dark.png",
-      caption:
-        "Monitor page with uptime, percentiles, and regional response time chart.",
-    },
     blocks: [
+      <FeatureNotifications key="feature-notifications" />,
       <SpeedBanner key="speed-banner" />,
       <FeatureTimingAssertions key="feature-timing-assertions" />,
-      <FeatureNotifications key="feature-notifications" />,
       <FeatureStatusPageTracker key="feature-status-page-tracker" />,
       <FeatureCharts key="feature-charts" />,
       <FeatureRaycastIntegration key="feature-raycast-integration" />,
@@ -62,11 +51,6 @@ export const landingsConfig = {
     icon: "panel-top",
     title: "Status Page",
     description: "Create a status page to inform your users about the uptime.",
-    image: {
-      srcLight: "/assets/screenshots/status-page-light.png",
-      srcDark: "/assets/screenshots/status-page-dark.png",
-      caption: "Status page with operational systems.",
-    },
     blocks: [
       <FeatureCustomDomain key="feature-custom-domain" />,
       <FeatureStatusPageTrackerToggle key="feature-status-page-tracker" />,
@@ -86,14 +70,9 @@ export const landingsConfig = {
     icon: "network",
     title: "Synthetic Monitoring",
     description: "Proactively monitor your api and website globally.",
-    image: {
-      srcLight: "/assets/screenshots/response-log-light.png",
-      srcDark: "/assets/screenshots/response-log-dark.png",
-      caption: "Synthetic monitoring with regional response logs.",
-    },
     blocks: [
-      <SpeedBanner key="speed-banner" />,
       <FeatureRegions key="feature-regions" />,
+      <SpeedBanner key="speed-banner" />,
       <FeatureTimingAssertions key="feature-timing-assertions" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,
       <FeatureResponseDetails
@@ -106,19 +85,14 @@ export const landingsConfig = {
   },
   "ci-cd": {
     icon: "terminal",
-    title: "CI/CD Workflow",
+    title: "CI/CD Testing",
     description:
-      "Run your checks in your CI/CD pipeline and export metrics to your observability stack.",
-    image: {
-      srcDark: "/assets/screenshots/github-action-dark.png",
-      srcLight: "/assets/screenshots/github-action-light.png",
-      caption: "GitHub Actions workflow with OpenStatus.",
-    },
+      "Run your synthetic checks in your CI/CD pipeline and export metrics to your observability stack.",
     blocks: [
-      <EnterpriseBanner key="enterprise-banner" />,
       <FeatureGitHubAction key="feature-github-action" />,
-      <FeatureCLI key="feature-cli" />,
+      <EnterpriseBanner key="enterprise-banner" />,
       <FeatureAPIMonitoring key="feature-api-monitoring" />,
+      <FeatureCLI key="feature-cli" />,
       <FeatureTerraformProvider key="feature-terraform-provider" />,
       <FeatureOpenTelemetry key="feature-open-telemetry" />,
       <BookingBanner key="booking-banner" />,

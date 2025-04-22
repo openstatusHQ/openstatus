@@ -240,7 +240,7 @@ export function FeatureOperationalBanner(
       subTitle="Showcase your reliability to your users, and reduce the number of customer service tickets."
       component={<StatusCheck />}
       action={
-        <Button variant="outline" className="rounded-full" asChild>
+        <Button variant="outline" className="rounded-full w-max" asChild>
           <Link href="https://status.openstatus.dev">Status Page</Link>
         </Button>
       }

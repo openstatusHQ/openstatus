@@ -1,18 +1,12 @@
 ```ts
 test("should fail if slow", async () => {
-  const data = await fetch("https://api.openstatus.dev/v1/check/http", {
+  const data = await fetch("https://api.openstatus.dev/v1/monitor/:id/run", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-openstatus-key": process.env.OPENSTATUS_API_KEY,
-    },
-    body: JSON.stringify({
-      url: "https://openstat.us",
-      method: "GET",
-      regions: ["ams", "iad", "gru"],
-      runCount: 5,
-      aggregated: true,
-    }),
+    headers: { "x-openstatus-key": process.env.OPENSTATUS_API_KEY },
   });
+  const body = await data.json();
+
+  expect(body.status).toBe(200);
+  expect(body.latency).toBeLessThan(1000);
 });
 ```
