@@ -121,6 +121,11 @@ export const MonitorSchema = z
       example: "Documenso",
       description: "The name of the monitor",
     }),
+    publicName: z.string().optional().openapi({
+      example: "Documenso Public",
+      description:
+        "The public name of the monitor displayed on the status page.",
+    }),
     description: z.string().optional().openapi({
       example: "Documenso website",
       description: "The description of your monitor",

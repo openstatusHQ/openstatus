@@ -21,6 +21,7 @@ test("create a valid monitor", async () => {
       headers: [{ key: "key", value: "value" }],
       active: true,
       public: true,
+      publicName: "OpenStatus Name",
       assertions: [
         {
           type: "status",
