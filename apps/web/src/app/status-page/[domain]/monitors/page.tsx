@@ -81,7 +81,9 @@ export default async function Page(props: {
                 <li key={monitor.id} className="grid gap-2">
                   <div className="flex w-full min-w-0 items-center justify-between gap-3">
                     <div className="w-full min-w-0">
-                      <p className="font-semibold text-sm">{monitor.name}</p>
+                      <p className="font-semibold text-sm">
+                        {monitor.publicName || monitor.name}
+                      </p>
                       <p className="truncate text-muted-foreground text-sm">
                         {monitor.url}
                       </p>

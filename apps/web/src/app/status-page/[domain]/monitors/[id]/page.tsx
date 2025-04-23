@@ -39,7 +39,7 @@ export async function generateMetadata(props: {
 
   if (!monitor) return notFound();
 
-  return { title: monitor.name };
+  return { title: monitor.publicName || monitor.name };
 }
 
 export default async function Page(props: {
@@ -88,11 +88,12 @@ export default async function Page(props: {
     interval !== DEFAULT_INTERVAL ||
     flyRegions.length !== regions.length;
 
-  console.log({ metrics: metrics.data });
-
   return (
     <div className="relative flex w-full flex-col gap-6">
-      <Header title={monitor.name} description={monitor.url} />
+      <Header
+        title={monitor.publicName || monitor.name}
+        description={monitor.url}
+      />
       <div className="flex items-center justify-between gap-2">
         <DatePickerPreset defaultValue={period} values={periods} />
         {isDirty ? <ButtonReset /> : null}

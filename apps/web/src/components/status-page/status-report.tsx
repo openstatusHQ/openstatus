@@ -66,7 +66,9 @@ function StatusReportHeader({
         <ul className="flex flex-wrap gap-2">
           {monitors.map((monitor) => (
             <li key={monitor.id}>
-              <Badge variant="secondary">{monitor.name}</Badge>
+              <Badge variant="secondary">
+                {monitor.publicName || monitor.name}
+              </Badge>
             </li>
           ))}
         </ul>

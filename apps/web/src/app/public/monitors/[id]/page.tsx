@@ -76,7 +76,9 @@ export default async function Page(props: {
     <div className="relative flex w-full flex-col gap-6">
       <Shell className="sticky top-2 z-10 flex items-center justify-between gap-2 bg-background/80 backdrop-blur-sm">
         <div className="min-w-0">
-          <p className="font-semibold text-sm">{monitor.name}</p>
+          <p className="font-semibold text-sm">
+            {monitor.publicName || monitor.name}
+          </p>
           <a
             href={monitor.url}
             target="_blank"

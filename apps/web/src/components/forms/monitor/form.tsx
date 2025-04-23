@@ -75,6 +75,7 @@ export function MonitorForm({
     defaultValues: {
       url: defaultValues?.url || "",
       name: defaultValues?.name || "",
+      publicName: defaultValues?.publicName ?? "",
       description: defaultValues?.description || "",
       periodicity: defaultValues?.periodicity || "30m",
       active: defaultValues?.active ?? true,

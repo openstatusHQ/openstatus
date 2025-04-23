@@ -32,6 +32,7 @@ export const monitor = sqliteTable("monitor", {
 
   name: text("name", { length: 256 }).default("").notNull(),
   description: text("description").default("").notNull(),
+  publicName: text("public_name", { length: 256 }).default("").notNull(), // public name of the monitor
 
   headers: text("headers").default(""),
   body: text("body").default(""),

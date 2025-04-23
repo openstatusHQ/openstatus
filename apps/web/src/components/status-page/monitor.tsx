@@ -45,6 +45,7 @@ export const Monitor = async ({
       maintenances={maintenances}
       showValues={showValues}
       {...monitor}
+      name={monitor.publicName || monitor.name}
     />
   );
 };

@@ -29,16 +29,34 @@ interface Props {
 
 export function SectionStatusPage({ form, pages }: Props) {
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="grid md:grid-cols-5 w-full gap-4">
       <SectionHeader
         title="Status Page"
         description="Customize the informations about your monitor on the corresponding status page."
+        className="col-span-full"
+      />
+      <FormField
+        control={form.control}
+        name="publicName"
+        render={({ field }) => (
+          <FormItem className="col-span-full md:col-span-3">
+            <FormLabel>Public Name</FormLabel>
+            <FormControl>
+              <Input placeholder="Public API" {...field} />
+            </FormControl>
+            <FormDescription>
+              This name will be displayed on the status page. By default, it
+              will be your monitor name.
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
       />
       <FormField
         control={form.control}
         name="description"
         render={({ field }) => (
-          <FormItem>
+          <FormItem className="col-span-full">
             <FormLabel>Description</FormLabel>
             <FormControl>
               <Input
@@ -59,7 +77,7 @@ export function SectionStatusPage({ form, pages }: Props) {
         // biome-ignore lint/correctness/noUnusedVariables: <explanation>
         render={({ field }) => {
           return (
-            <FormItem>
+            <FormItem className="col-span-full">
               <div className="mb-4">
                 <FormLabel className="text-base">Status Pages</FormLabel>
                 <FormDescription>

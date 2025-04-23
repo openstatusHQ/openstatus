@@ -56,7 +56,7 @@ export default async function IncidentPage(props: {
                 <div className="flex flex-wrap gap-2">
                   {affectedMonitors.map((monitor) => (
                     <Badge key={monitor.id} variant="secondary">
-                      {monitor.name}
+                      {monitor.publicName || monitor.name}
                     </Badge>
                   ))}
                 </div>
