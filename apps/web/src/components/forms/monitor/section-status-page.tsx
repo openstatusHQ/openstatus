@@ -42,7 +42,11 @@ export function SectionStatusPage({ form, pages }: Props) {
           <FormItem className="col-span-full md:col-span-3">
             <FormLabel>Public Name</FormLabel>
             <FormControl>
-              <Input placeholder="Public API" {...field} />
+              <Input
+                placeholder="Public API"
+                {...field}
+                value={field.value ?? undefined}
+              />
             </FormControl>
             <FormDescription>
               This name will be displayed on the status page. By default, it
