@@ -1,1 +1,0 @@
-ALTER TABLE `monitor` ADD `public_name` text(256) DEFAULT '' NOT NULL;

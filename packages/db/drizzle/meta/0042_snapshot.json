@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "20eb4bde-1738-4246-a268-77c364d3b40f",
+  "id": "617949dc-8781-4c79-9e42-3934211b8107",
   "prevId": "3c04b245-907b-4ae3-bd0b-73e1ecfc1526",
   "tables": {
     "status_report_to_monitors": {
@@ -522,9 +522,8 @@
           "name": "public_name",
           "type": "text(256)",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "''"
+          "notNull": false,
+          "autoincrement": false
         },
         "headers": {
           "name": "headers",
