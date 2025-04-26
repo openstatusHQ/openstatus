@@ -1,6 +1,6 @@
 "use client";
 
-import { Send } from "lucide-react";
+import { Check, ChevronsUpDown, Send } from "lucide-react";
 import React from "react";
 import type { UseFormReturn } from "react-hook-form";
 
@@ -12,15 +12,20 @@ import {
 } from "@openstatus/db/src/schema/constants";
 import {
   Button,
+  type ButtonProps,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -33,6 +38,7 @@ import { RegionInfo } from "@/components/ping-response-analysis/region-info";
 import { ResponseDetailTabs } from "@/components/ping-response-analysis/response-detail-tabs";
 import type { RegionChecker } from "@/components/ping-response-analysis/utils";
 import { toast, toastAction } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import { getLimit } from "@openstatus/db/src/schema/plan/utils";
 
@@ -42,15 +48,25 @@ interface Props {
   pingEndpoint(
     region?: MonitorFlyRegion,
   ): Promise<{ data?: RegionChecker; error?: string }>;
+  onDismiss?: () => void;
+  size?: ButtonProps["size"];
 }
 
-export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
+export function RequestTestButton({
+  form,
+  pingEndpoint,
+  limits,
+  onDismiss,
+  size,
+}: Props) {
   const [check, setCheck] = React.useState<
     { data: RegionChecker; error?: string } | undefined
   >();
-  const [value, setValue] = React.useState<MonitorFlyRegion>(flyRegions[0]);
+  const [value, setValue] = React.useState<MonitorFlyRegion | undefined>(
+    flyRegions[0],
+  );
   const [isPending, startTransition] = React.useTransition();
-
+  const [open, setOpen] = React.useState(false);
   const onClick = () => {
     if (isPending) return;
 
@@ -77,56 +93,100 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
     });
   };
 
-  const { flag } = flyRegionsDict[value as keyof typeof flyRegionsDict];
+  const { flag, location, code } =
+    flyRegionsDict[value as keyof typeof flyRegionsDict];
 
   const { statusAssertions, headerAssertions } = form.getValues();
 
   const regions = getLimit(limits, "regions");
 
   return (
-    <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
-      <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
-        <Select
-          value={value}
-          onValueChange={(value: MonitorFlyRegion) => setValue(value)}
-        >
-          <SelectTrigger
-            className="flex-1 rounded-r-none border-accent focus:ring-0"
-            aria-label={value}
-          >
-            <SelectValue>{flag}</SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {regions.map((region) => {
-              const { flag } = flyRegionsDict[region];
-              return (
-                <SelectItem key={region} value={region}>
-                  {flag} <span className="ml-1 font-mono">{region}</span>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
+    <Dialog
+      open={!!check}
+      onOpenChange={() => {
+        setCheck(undefined);
+        onDismiss?.();
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              className="w-[250px] justify-between"
+              size={size}
+            >
+              {value ? (
+                <span className="flex items-center gap-2 truncate">
+                  <span className="font-mono">{code}</span>
+                  <span>{flag}</span>
+                  <span className="truncate text-muted-foreground font-normal">
+                    {location}
+                  </span>
+                </span>
+              ) : (
+                "Select region..."
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[300px] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search region..." />
+              <CommandList>
+                <CommandEmpty>No region found.</CommandEmpty>
+                <CommandGroup>
+                  {regions.map((region) => {
+                    const { flag, code, location } = flyRegionsDict[region];
+                    return (
+                      <CommandItem
+                        key={region}
+                        value={region}
+                        onSelect={(currentValue) => {
+                          const curr = currentValue as MonitorFlyRegion;
+                          setValue(curr === value ? undefined : curr);
+                          setOpen(false);
+                        }}
+                        keywords={[flag, code, location]}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === region ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        <span className="flex items-center gap-2 truncate">
+                          <span className="font-mono">{code}</span>
+                          <span>{flag}</span>
+                          <span className="truncate text-muted-foreground font-normal">
+                            {location}
+                          </span>
+                        </span>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                onClick={onClick}
-                disabled={isPending}
-                className="h-full flex-1 rounded-l-none focus:ring-0"
-                variant="secondary"
-              >
+              <Button onClick={onClick} disabled={isPending} size={size}>
                 {isPending ? (
-                  <LoadingAnimation variant="inverse" />
+                  <LoadingAnimation />
                 ) : (
                   <>
-                    Test <Send className="ml-2 h-4 w-4" />
+                    Ping <Send className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Ping your endpoint</p>
+              <p>Test your endpoint</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -136,7 +196,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
           <DialogTitle>Response</DialogTitle>
         </DialogHeader>
         {check ? (
-          <div className="grid gap-8">
+          <div className="grid gap-8 overflow-hidden">
             <RegionInfo check={check.data} error={check.error} />
             {check.data.type === "http" ? (
               <ResponseDetailTabs
@@ -149,6 +209,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
                     ...(headerAssertions || []),
                   ]),
                 )}
+                hideInfo={false}
               />
             ) : null}
           </div>

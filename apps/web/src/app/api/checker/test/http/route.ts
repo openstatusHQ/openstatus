@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       .safeParse(json);
 
     if (!_valid.success) {
+      console.error(_valid.error);
       return NextResponse.json({ success: false }, { status: 400 });
     }
 

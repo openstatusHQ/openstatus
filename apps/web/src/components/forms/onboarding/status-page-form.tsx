@@ -28,14 +28,25 @@ import { api } from "@/trpc/client";
 import * as randomWordSlugs from "random-word-slugs";
 
 interface StatusPageFormProps {
-  defaultValues: Pick<Partial<InsertPage>, "slug">;
+  defaultValues?: Partial<InsertPage>;
+  toStep: number;
 }
 
-export function StatusPageForm({ defaultValues }: StatusPageFormProps) {
+export function StatusPageForm({ defaultValues, toStep }: StatusPageFormProps) {
   const form = useForm<InsertPage>({
     resolver: zodResolver(insertPageSchema),
     defaultValues: {
-      slug: defaultValues.slug || "",
+      title: defaultValues?.title || "",
+      slug: defaultValues?.slug || "",
+      description: defaultValues?.description || "",
+      workspaceId: defaultValues?.workspaceId || 0,
+      id: defaultValues?.id || 0,
+      customDomain: defaultValues?.customDomain || "",
+      icon: defaultValues?.icon || "",
+      password: defaultValues?.password || "",
+      passwordProtected: defaultValues?.passwordProtected || false,
+      showMonitorValues: defaultValues?.showMonitorValues || true,
+      monitors: defaultValues?.monitors ?? [],
     },
   });
   const router = useRouter();
@@ -76,7 +87,7 @@ export function StatusPageForm({ defaultValues }: StatusPageFormProps) {
         } else {
           await api.page.create.mutate({
             ...props,
-            title: props.slug.replace("-", " "),
+            title: `${props.slug.replace("-", " ")} status`,
           });
 
           toast.success("Saved successfully.", {
@@ -90,6 +101,7 @@ export function StatusPageForm({ defaultValues }: StatusPageFormProps) {
           });
           // otherwise, the form will stay dirty - keepValues is used to keep the current values in the form
           form.reset({}, { keepValues: true });
+          router.replace(`?step=${toStep}`);
           router.refresh();
         }
       } catch {

@@ -15,7 +15,7 @@ import type {
   WorkspacePlan,
 } from "@openstatus/db/src/schema";
 import { insertMonitorSchema } from "@openstatus/db/src/schema";
-import { Badge, Form } from "@openstatus/ui";
+import { Badge, Form, Separator } from "@openstatus/ui";
 
 import {
   Tabs,
@@ -345,10 +345,14 @@ export function MonitorForm({
               </TabsContent>
             ) : null}
           </Tabs>
-          <div className="grid gap-4 sm:flex sm:items-start sm:justify-end">
+          <div className="gap-4 flex flex-col sm:flex-row sm:items-start sm:justify-end">
             {withTestButton ? (
-              <RequestTestButton {...{ form, limits, pingEndpoint }} />
+              <RequestTestButton
+                size="lg"
+                {...{ form, limits, pingEndpoint }}
+              />
             ) : null}
+            <Separator orientation="vertical" className="h-full" />
             <SaveButton
               isPending={isPending}
               isDirty={form.formState.isDirty}
