@@ -4,10 +4,16 @@ import { redirect } from "next/navigation";
 import { Button } from "@openstatus/ui/src/components/button";
 
 import { Header } from "@/components/dashboard/header";
-import { MonitorForm } from "@/components/forms/monitor/form";
-import { StatusPageForm } from "@/components/forms/status-page/form";
+import { MonitorForm } from "@/components/forms/onboarding/monitor-form";
+import { StatusPageForm } from "@/components/forms/onboarding/status-page-form";
 import { api } from "@/trpc/server";
-import { Description } from "./_components/description";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperTitle,
+} from "@openstatus/ui";
+import { Check } from "lucide-react";
 
 export default async function Onboarding(props: {
   params: Promise<{ workspaceSlug: string }>;
@@ -15,70 +21,91 @@ export default async function Onboarding(props: {
   const params = await props.params;
   const { workspaceSlug } = params;
 
-  const workspace = await api.workspace.getWorkspace.query();
   const allMonitors = await api.monitor.getMonitorsByWorkspace.query();
   const allPages = await api.page.getPagesByWorkspace.query();
-  const allNotifications =
-    await api.notification.getNotificationsByWorkspace.query();
 
-  if (allMonitors.length === 0) {
-    return (
-      <div className="flex h-full w-full flex-col gap-6 md:gap-8">
-        <Header
-          title="Get Started"
-          description="Create your first monitor."
-          actions={
-            <Button variant="link" className="text-muted-foreground" asChild>
-              <Link href={`/app/${workspaceSlug}/monitors`}>Skip</Link>
-            </Button>
+  const hasMonitor = allMonitors.length > 0;
+  const firstMonitor = hasMonitor ? allMonitors[0] : null;
+  const pageSlug = firstMonitor?.url
+    ?.replace(/^.*?:\/\//, "")
+    .replace(/\.[^.]*$/, "")
+    .replaceAll(".", "-");
+
+  const hasPage = allPages.length > 0;
+
+  const defaultStep = hasMonitor ? 3 : 1;
+
+  return (
+    <div className="flex h-full w-full flex-col gap-6 md:gap-8">
+      <Header
+        title="Onboarding"
+        description="Let's get you started with OpenStatus. You'll be able to update any of these entries later."
+        actions={
+          // TODO: add tooltip to skip button
+          <Button variant="link" className="text-muted-foreground" asChild>
+            <Link href={`/app/${workspaceSlug}/monitors`}>Skip</Link>
+          </Button>
+        }
+      />
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 md:gap-8 max-w-xl mx-auto">
+        <OnboardingStepper defaultStep={defaultStep} />
+        {(() => {
+          switch (defaultStep) {
+            case 1:
+              return <MonitorForm />;
+            case 3:
+              return <StatusPageForm defaultValues={{ slug: pageSlug }} />;
+            default:
+              return <>Missing Step</>;
           }
-        />
-        <div className="flex flex-1 flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
-          <div className="flex flex-col md:col-span-2">
-            <MonitorForm
-              notifications={allNotifications}
-              defaultSection="request"
-              limits={workspace.limits}
-              plan={workspace.plan}
-            />
-          </div>
-          <div className="hidden h-full md:col-span-1 md:block">
-            <Description step="monitor" />
-          </div>
-        </div>
+        })()}
+        <p className="text-xs text-muted-foreground">
+          Do you need help to set it up?
+          <Button variant="link" size="sm" className="px-1" asChild>
+            <Link href="/cal" rel="noreferrer" target="_blank">
+              Book a call
+            </Link>
+          </Button>
+        </p>
       </div>
-    );
-  }
+    </div>
+  );
 
-  if (allPages.length === 0) {
-    return (
-      <div className="flex h-full w-full flex-col gap-6 md:gap-8">
-        <Header
-          title="Get Started"
-          description="Create your first status page."
-          actions={
-            <Button variant="link" className="text-muted-foreground">
-              <Link href={`/app/${workspaceSlug}/monitors`}>Skip</Link>
-            </Button>
-          }
-        />
-        <div className="flex flex-1 flex-col gap-6 md:grid md:grid-cols-3 md:gap-8">
-          <div className="flex flex-col md:col-span-2">
-            <StatusPageForm
-              {...{ workspaceSlug, allMonitors }}
-              nextUrl={`/app/${workspaceSlug}/status-pages`}
-              defaultSection="monitors"
-              plan="free" // user is on free plan by default
-              checkAllMonitors
-            />
-          </div>
-          <div className="hidden h-full md:col-span-1 md:block">
-            <Description step="status-page" />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // return redirect(`/app/${workspaceSlug}/monitors`);
+}
 
-  return redirect(`/app/${workspaceSlug}/monitors`);
+const steps = [
+  {
+    step: 1,
+    title: "Create Monitor",
+  },
+  {
+    step: 2,
+    title: "Run Check",
+    icon: <Check className="w-4 h-4 text-green-500" />,
+  },
+  {
+    step: 3,
+    title: "Create Status Page",
+  },
+];
+
+function OnboardingStepper({ defaultStep }: { defaultStep?: number }) {
+  return (
+    <Stepper defaultValue={defaultStep} className="items-start gap-4 max-w-xl">
+      {steps.map(({ step, title, icon }) => (
+        <StepperItem key={step} step={step} className="flex-1">
+          <div className="w-full flex-col items-start gap-2 rounded">
+            <StepperIndicator asChild className="bg-border h-1 w-full">
+              <span className="sr-only">{step}</span>
+            </StepperIndicator>
+            <div className="flex items-center gap-1.5">
+              <StepperTitle>{title}</StepperTitle>
+              {icon && defaultStep && defaultStep >= step ? <>{icon}</> : null}
+            </div>
+          </div>
+        </StepperItem>
+      ))}
+    </Stepper>
+  );
 }

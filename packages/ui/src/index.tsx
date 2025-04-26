@@ -42,3 +42,4 @@ export * from "./components/navigation-menu";
 export * from "./components/slider";
 export * from "./components/chart";
 export * from "./components/breadcrumb";
+export * from "./components/stepper";
