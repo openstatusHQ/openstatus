@@ -93,8 +93,7 @@ export function RequestTestButton({
     });
   };
 
-  const { flag, location, code } =
-    flyRegionsDict[value as keyof typeof flyRegionsDict];
+  const { flag, code } = flyRegionsDict[value as keyof typeof flyRegionsDict];
 
   const { statusAssertions, headerAssertions } = form.getValues();
 
@@ -115,16 +114,13 @@ export function RequestTestButton({
               variant="outline"
               role="combobox"
               aria-expanded={open}
-              className="w-[250px] justify-between"
+              className="justify-between"
               size={size}
             >
               {value ? (
                 <span className="flex items-center gap-2 truncate">
                   <span className="font-mono">{code}</span>
                   <span>{flag}</span>
-                  <span className="truncate text-muted-foreground font-normal">
-                    {location}
-                  </span>
                 </span>
               ) : (
                 "Select region..."

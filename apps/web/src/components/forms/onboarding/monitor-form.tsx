@@ -181,7 +181,15 @@ export function MonitorForm({
               type="submit"
               disabled={isPending}
             >
-              {!isPending ? "Create Monitor" : <LoadingAnimation />}
+              {!isPending ? (
+                defaultValues ? (
+                  "Update Monitor"
+                ) : (
+                  "Create Monitor"
+                )
+              ) : (
+                <LoadingAnimation />
+              )}
             </Button>
           </div>
         </form>
