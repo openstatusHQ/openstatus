@@ -21,9 +21,9 @@ export async function sendFollowUpEmails() {
 
   console.log(`Found ${users.length} users to send follow ups.`);
 
-  for (const user of users) {
-    if (user.email) {
-      await email.sendFollowUp({ to: user.email });
-    }
-  }
+  await Promise.all(
+    users
+      .filter((user) => user.email)
+      .map((user) => email.sendFollowUp({ to: user.email }))
+  );
 }
