@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { render } from "@react-email/render";
-import { Resend } from "resend";
+import { ErrorResponse, Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
 import MonitorAlertEmail from "../emails/monitor-alert";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
@@ -40,7 +40,42 @@ export class EmailClient {
     } catch (err) {
       console.error(`Error sending follow up email to ${req.to}: ${err}`);
     }
+  };
+
+  public async sendFollowUpBatched(req: { to: string[] }) {
+    if (process.env.NODE_ENV === "development") return;
+
+    try {
+      const html = await render(<FollowUpEmail />);
+      const result = await this.client.batch.send(
+        req.to.map((subscriber) => ({
+          from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+          subject: "How's it going with OpenStatus?",
+          to: subscriber,
+          html,
+        }))
+      );
+
+      if (result.error) {
+        if (result.error.name === "rate_limit_exceeded") {
+          throw result.error;
+        }
+
+        console.error(`Batch send error:`, result.error);
+        return;
+      }
+
+      console.log(`Sent follow up email to ${req.to}`);
+    } catch (err: any) {
+      if (err?.name === "rate_limit_exceeded") {
+        throw err;
+      };
+      // Also catch unexpected exceptions
+      console.error(`Unexpected error sending follow up emails to ${req.to}:`, err);
+      return;
+    }
   }
+
 
   public async sendStatusReportUpdate(
     req: StatusReportProps & { to: string[] },

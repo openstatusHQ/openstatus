@@ -14,16 +14,30 @@ export async function sendFollowUpEmails() {
   date2.setDate(date2.getDate() - 2);
 
   const users = await db
-    .select()
+    .select({
+      email: user.email,
+    })
     .from(user)
     .where(and(gte(user.createdAt, date1), lte(user.createdAt, date2)))
     .all();
 
   console.log(`Found ${users.length} users to send follow ups.`);
 
-  await Promise.all(
-    users
-      .filter((user) => user.email)
-      .map((user) => email.sendFollowUp({ to: user.email }))
-  );
+  // Filter valid emails
+  const validEmails = users
+    .filter((user) => user.email)
+    .map((user) => user.email);
+
+  // Chunk emails into batches of 100
+  const batchSize = 80;
+  for (let i = 0; i < validEmails.length; i += batchSize) {
+    const batch = validEmails.slice(i, i + batchSize) as string[];
+    console.log(`Sending batch with ${batch.length} emails...`);
+
+    try {
+      await email.sendFollowUpBatched({ to: batch });
+    } catch {
+      console.error("Rate limit exceeded. Stopping further sends.");
+    }
+  }
 }
