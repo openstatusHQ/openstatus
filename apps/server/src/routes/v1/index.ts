@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { apiReference } from "@scalar/hono-api-reference";
+import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
@@ -107,7 +107,7 @@ api.doc("/openapi", {
 
 api.get(
   "/",
-  apiReference({
+  Scalar({
     spec: {
       url: "/v1/openapi",
     },
@@ -117,7 +117,7 @@ api.get(
         description: "Production server",
       },
       {
-        url: "http://localhost:3000",
+        url: "http://localhost:3000/v1",
         description: "Dev server",
       },
     ],
