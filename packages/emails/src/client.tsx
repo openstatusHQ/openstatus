@@ -56,21 +56,21 @@ export class EmailClient {
         }))
       );
 
-      if (result.error) {
-        if (result.error.name === "rate_limit_exceeded") {
-          throw result.error;
-        }
-
-        console.error(`Batch send error:`, result.error);
+      if (!result.error) {
+        console.log(`Sent follow up emails to ${req.to}`);
         return;
       }
 
-      console.log(`Sent follow up email to ${req.to}`);
-    } catch (err: any) {
-      if (err?.name === "rate_limit_exceeded") {
-        throw err;
-      };
-      // Also catch unexpected exceptions
+      throw result.error;
+    } catch (err: unknown) {
+      if (typeof err === "object" && err !== null && "name" in err) {
+        const error = err as { name: string };
+        //Only throw error if rate limit is exceeded, else use console error
+        if (error.name === "rate_limit_exceeded") {
+          throw error;
+        }
+      }
+
       console.error(`Unexpected error sending follow up emails to ${req.to}:`, err);
       return;
     }

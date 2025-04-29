@@ -25,19 +25,20 @@ export async function sendFollowUpEmails() {
 
   // Filter valid emails
   const validEmails = users
-    .filter((user) => user.email)
-    .map((user) => user.email);
+    .filter((user): user is { email: string } => typeof user.email === "string" && user.email.trim() !== "")
+    .map(user => user.email);
 
-  // Chunk emails into batches of 100
+  // Chunk emails into batches of 80
   const batchSize = 80;
   for (let i = 0; i < validEmails.length; i += batchSize) {
-    const batch = validEmails.slice(i, i + batchSize) as string[];
+    const batch = validEmails.slice(i, i + batchSize);
     console.log(`Sending batch with ${batch.length} emails...`);
-
     try {
       await email.sendFollowUpBatched({ to: batch });
     } catch {
+      //Stop email send when rate limit error is faced in order to avoid wasteful API calls
       console.error("Rate limit exceeded. Stopping further sends.");
+      break;
     }
   }
 }
