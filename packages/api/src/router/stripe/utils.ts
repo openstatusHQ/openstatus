@@ -15,17 +15,6 @@ export const getPriceIdForPlan = (plan: WorkspacePlan) => {
 };
 export const PLANS = [
   {
-    plan: "pro",
-    price: {
-      monthly: {
-        priceIds: {
-          test: "price_1NdurjBXJcTfzsyJdAzIxXnT",
-          production: "price_1PdJ3lBXJcTfzsyJHgqcfVG9",
-        },
-      },
-    },
-  },
-  {
     plan: "team",
     price: {
       monthly: {

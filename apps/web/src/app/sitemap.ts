@@ -1,3 +1,5 @@
+import { alternativesConfig } from "@/config/alternatives";
+import { landingsConfig } from "@/config/landings";
 import { allChangelogs, allPosts } from "content-collections";
 import type { MetadataRoute } from "next";
 
@@ -14,14 +16,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: post.publishedAt, // date format should be YYYY-MM
   }));
 
+  const comparisons = Object.keys(alternativesConfig).map((slug) => ({
+    url: `https://www.openstatus.dev/compare/${slug}`,
+    lastModified: new Date(),
+  }));
+
+  const landings = Object.keys(landingsConfig).map((slug) => ({
+    url: `https://www.openstatus.dev/${slug}`,
+    lastModified: new Date(),
+  }));
+
   const routes = [
     "/",
     "/about",
     "/app/login",
     "/blog",
     "/changelog",
-    "/features/status-page",
-    "/features/monitoring",
     "/play",
     "/play/checker",
     "/play/curl",
@@ -32,5 +42,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
-  return [...routes, ...blogs, ...changelogs];
+  return [...routes, ...blogs, ...changelogs, ...comparisons, ...landings];
 }

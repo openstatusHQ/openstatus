@@ -1,5 +1,7 @@
 import type { ValidIcon } from "@/components/icons";
 
+import { landingsConfig } from "./landings";
+
 export type Page = {
   title: string;
   subtitle?: string;
@@ -203,24 +205,17 @@ export const pagesConfig = [
 type MarketingPageType = Page;
 
 export const marketingProductPagesConfig = [
-  {
-    href: "/features/monitoring",
-    title: "Synthetic Monitoring",
-    subtitle:
-      "Get insights of the latency of your API and website from all over the world.",
-    description: "Monitor your API and website globally.",
-    segment: "features",
-    icon: "activity",
-  },
-  {
-    href: "/features/status-page",
-    title: "Status Page",
-    subtitle:
-      "Easily report to your users with our public or private status page.",
-    description: "Create beautiful status pages within seconds.",
-    segment: "features",
-    icon: "panel-top",
-  },
+  ...Object.entries(landingsConfig).map(
+    ([key, { title, description, icon }]) => {
+      return {
+        title,
+        href: `/${key}`,
+        description,
+        icon,
+        segment: "product",
+      };
+    },
+  ),
 ] as const satisfies MarketingPageType[];
 
 export const marketingResourcePagesConfig = [
@@ -246,11 +241,11 @@ export const marketingResourcePagesConfig = [
     icon: "gauge",
   },
   {
-    href: "/play",
-    title: "Playground",
-    description: "All the latest tools build by OpenStatus.",
-    segment: "play",
-    icon: "toy-brick",
+    href: "/compare",
+    title: "Compare",
+    description: "Discover how OpenStatus compares to other services.",
+    segment: "compare",
+    icon: "compare",
   },
 ] as const satisfies Page[];
 
@@ -259,7 +254,7 @@ export const marketingPagesConfig = [
     href: "/product",
     title: "Product",
     description: "All product features for OpenStatus",
-    segment: "",
+    segment: "product",
     icon: "package",
     children: marketingProductPagesConfig,
   },

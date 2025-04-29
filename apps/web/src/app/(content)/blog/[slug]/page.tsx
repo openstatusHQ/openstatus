@@ -9,7 +9,15 @@ import {
 } from "@/app/shared-metadata";
 import { Article } from "@/components/content/article";
 import { Shell } from "@/components/dashboard/shell";
-import { BackButton } from "@/components/layout/back-button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@openstatus/ui";
+import Link from "next/link";
 
 // export const dynamic = "force-static";
 
@@ -71,7 +79,19 @@ export default async function PostPage(props: {
 
   return (
     <>
-      <BackButton href="/blog" />
+      <Breadcrumb className="mb-4 px-3 md:px-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/blog">Blog</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{post.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <Shell className="sm:py-8 md:py-12">
         <Article post={post} />
       </Shell>

@@ -23,7 +23,7 @@
 
 ## About OpenStatus 🏓
 
-OpenStatus is open-source synthetic monitoring monitoring platform.
+OpenStatus is open-source synthetic monitoring platform.
 
 - **Synthetic monitoring**: Monitor your website and APIs globally and receive
   notifications when they are down or slow.

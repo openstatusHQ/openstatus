@@ -91,7 +91,7 @@ export default async function Page(props: {
           <DatePickerPreset defaultValue={period} values={periods} />
         </div>
       </Shell>
-      <Shell className="grid gap-4">
+      <Shell className="flex flex-col gap-4">
         <Metrics metrics={metrics.data} period={period} />
         <Separator className="my-8" />
         <CombinedChartWrapper

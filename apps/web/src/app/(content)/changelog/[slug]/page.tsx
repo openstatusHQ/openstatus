@@ -2,7 +2,15 @@ import { allChangelogs } from "content-collections";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { Separator } from "@openstatus/ui";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  Separator,
+} from "@openstatus/ui";
 
 import {
   defaultMetadata,
@@ -11,7 +19,7 @@ import {
 } from "@/app/shared-metadata";
 import { ChangelogCard } from "@/components/content/changelog";
 import { Shell } from "@/components/dashboard/shell";
-import { BackButton } from "@/components/layout/back-button";
+import Link from "next/link";
 import { Pagination } from "../../_components/pagination";
 
 // export const dynamic = "force-static";
@@ -93,7 +101,19 @@ export default async function ChangelogPage(props: {
 
   return (
     <>
-      <BackButton href="/changelog" />
+      <Breadcrumb className="mb-4 px-3 md:px-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/changelog">Changelog</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{post.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <Shell className="flex flex-col gap-8 sm:py-8 md:gap-12 md:py-12">
         <ChangelogCard post={post} />
         <Separator className="mx-auto max-w-prose" />

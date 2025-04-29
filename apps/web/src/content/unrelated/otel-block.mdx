@@ -1,0 +1,82 @@
+```json
+{
+  "resourceMetrics": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": { "stringValue": "openstatus-synthetic-check" }
+          },
+          {
+            "key": "service.version",
+            "value": { "stringValue": "0.1.0" }
+          }
+        ]
+      },
+      "scopeMetrics": [
+        {
+          "scope": {
+            "name": "OpenStatus"
+          },
+          "metrics": [
+            {
+              "name": "openstatus.status",
+              "description": "Status of the check",
+              "unit": "1",
+              "sum": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      { "key": "openstatus.probes", "value": { "stringValue": "fra" } },
+                      { "key": "openstatus.target", "value": { "stringValue": "https://acme.com" } },
+                      { "key": "http.response.status_code", "value": { "intValue": 200 } }
+                    ],
+                    "value": 1
+                  }
+                ],
+                "aggregationTemporality": "AGGREGATION_TEMPORALITY_CUMULATIVE",
+                "isMonotonic": true
+              }
+            },
+            {
+              "name": "openstatus.http.request.duration",
+              "description": "Duration of the check",
+              "unit": "ms",
+              "gauge": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      { "key": "openstatus.probes", "value": { "stringValue": "fra" } },
+                      { "key": "openstatus.target", "value": { "stringValue": "https://acme.com" } },
+                      { "key": "http.response.status_code", "value": { "intValue": 200 } }
+                    ],
+                    "value": 431.12
+                  }
+                ]
+              }
+            },
+            {
+              "name": "openstatus.http.dns.duration",
+              "description": "Duration of the dns lookup",
+              "unit": "ms",
+              "gauge": {
+                "dataPoints": [
+                  {
+                    "attributes": [
+                      { "key": "openstatus.probes", "value": { "stringValue": "fra" } },
+                      { "key": "openstatus.target", "value": { "stringValue": "https://acme.com" } },
+                      { "key": "http.response.status_code", "value": { "intValue": 200 } }
+                    ],
+                    "value": 56.45
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```

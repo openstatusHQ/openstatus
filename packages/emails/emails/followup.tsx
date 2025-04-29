@@ -7,22 +7,22 @@ const FollowUpEmail = () => {
     <Html>
       <Head>
         <title>How's it going with OpenStatus?</title>
-        <Preview>How's it going with OpenStatus?</Preview>
-        <Body>
-          Hey
-          <br />
-          <br />
-          How’s everything going with OpenStatus so far? Let me know if you run
-          into any issues, or have any feedback, good or bad!
-          <br />
-          <br />
-          Thank you,
-          <br />
-          <br />
-          Thibault Le Ouay Ducasse
-          <br />
-        </Body>
       </Head>
+      <Preview>How's it going with OpenStatus?</Preview>
+      <Body>
+        Hey
+        <br />
+        <br />
+        How’s everything going with OpenStatus so far? Let me know if you run
+        into any issues, or have any feedback, good or bad!
+        <br />
+        <br />
+        Thank you,
+        <br />
+        <br />
+        Thibault Le Ouay Ducasse
+        <br />
+      </Body>
     </Html>
   );
 };
