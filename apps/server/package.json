@@ -24,7 +24,7 @@
     "@openstatus/tracker": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
-    "@scalar/hono-api-reference": "0.5.131",
+    "@scalar/hono-api-reference": "0.8.5",
     "@t3-oss/env-core": "0.7.1",
     "@unkey/api": "0.26.1",
     "@upstash/qstash": "2.6.2",
