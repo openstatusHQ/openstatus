@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { Scalar } from "@scalar/hono-api-reference"
+import { Scalar } from "@scalar/hono-api-reference";
 import { cors } from "hono/cors";
 import type { RequestIdVariables } from "hono/request-id";
 
