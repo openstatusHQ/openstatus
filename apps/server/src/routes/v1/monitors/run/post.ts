@@ -20,7 +20,7 @@ const postMonitor = createRoute({
   summary: "Create a monitor run",
   description:
     "Run a synthetic check for a specific monitor. It will take all configs into account.",
-  path: "/:id/run",
+  path: "/{id}/run",
   request: {
     params: ParamsSchema,
     query: QuerySchema,

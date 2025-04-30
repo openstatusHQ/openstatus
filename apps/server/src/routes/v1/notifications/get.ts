@@ -13,7 +13,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["notification"],
   summary: "Get a notification",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

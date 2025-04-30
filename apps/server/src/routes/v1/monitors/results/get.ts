@@ -18,7 +18,7 @@ const getRoute = createRoute({
   // FIXME: Should work for all types of monitors
   description:
     "**WARNING:** This works only for HTTP monitors. We will add support for other types of monitors soon.",
-  path: "/:id/result/:resultId",
+  path: "/{id}/result/{resultId}",
   request: {
     params: ParamsSchema.extend({
       resultId: z.string().openapi({

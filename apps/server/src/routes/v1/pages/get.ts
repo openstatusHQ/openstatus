@@ -11,7 +11,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["page"],
   summary: "Get a status page",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

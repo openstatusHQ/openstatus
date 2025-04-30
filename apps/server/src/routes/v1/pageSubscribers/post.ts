@@ -14,7 +14,7 @@ const postRouteSubscriber = createRoute({
   method: "post",
   tags: ["page_subscriber"],
   summary: "Subscribe to a status page",
-  path: "/:id/update",
+  path: "/{id}/update",
   middleware: [trackMiddleware(Events.SubscribePage)],
   description: "Add a subscriber to a status page", // TODO: how to define legacy routes
   request: {

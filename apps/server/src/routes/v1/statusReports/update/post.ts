@@ -20,7 +20,7 @@ const emailClient = new EmailClient({ apiKey: env.RESEND_API_KEY });
 const postRouteUpdate = createRoute({
   method: "post",
   tags: ["status_report"],
-  path: "/:id/update",
+  path: "/{id}/update",
   summary: "Create a status report update",
   deprecated: true,
   description:

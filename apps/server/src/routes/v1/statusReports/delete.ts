@@ -11,7 +11,7 @@ const deleteRoute = createRoute({
   method: "delete",
   tags: ["status_report"],
   summary: "Delete a status report",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

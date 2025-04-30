@@ -15,7 +15,7 @@ const putRoute = createRoute({
   method: "put",
   tags: ["monitor"],
   summary: "Update a monitor",
-  path: "/:id",
+  path: "/{id}",
   middleware: [trackMiddleware(Events.UpdateMonitor)],
   request: {
     params: ParamsSchema,
