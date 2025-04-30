@@ -40,42 +40,35 @@ export class EmailClient {
     } catch (err) {
       console.error(`Error sending follow up email to ${req.to}: ${err}`);
     }
-  };
+  }
 
   public async sendFollowUpBatched(req: { to: string[] }) {
     if (process.env.NODE_ENV === "development") return;
 
-    try {
-      const html = await render(<FollowUpEmail />);
-      const result = await this.client.batch.send(
-        req.to.map((subscriber) => ({
-          from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
-          subject: "How's it going with OpenStatus?",
-          to: subscriber,
-          html,
-        }))
+    const html = await render(<FollowUpEmail />);
+    const result = await this.client.batch.send(
+      req.to.map((subscriber) => ({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "How's it going with OpenStatus?",
+        to: subscriber,
+        html,
+      })),
+    );
+
+    if (result.error) {
+      //  We only throw the error if we are rate limited
+      if (result.error?.name === "rate_limit_exceeded") {
+        throw result.error;
+      }
+      //  Otherwise let's log the error and continue
+      console.error(
+        `Error sending follow up email to ${req.to}: ${result.error}`,
       );
-
-      if (!result.error) {
-        console.log(`Sent follow up emails to ${req.to}`);
-        return;
-      }
-
-      throw result.error;
-    } catch (err: unknown) {
-      if (typeof err === "object" && err !== null && "name" in err) {
-        const error = err as { name: string };
-        //Only throw error if rate limit is exceeded, else use console error
-        if (error.name === "rate_limit_exceeded") {
-          throw error;
-        }
-      }
-
-      console.error(`Unexpected error sending follow up emails to ${req.to}:`, err);
       return;
     }
-  }
 
+    console.log(`Sent follow up emails to ${req.to}`);
+  }
 
   public async sendStatusReportUpdate(
     req: StatusReportProps & { to: string[] },
@@ -113,8 +106,12 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.workspaceName ?? "OpenStatus"} <notifications@notifications.openstatus.dev>`,
-        subject: `You've been invited to join ${req.workspaceName ?? "OpenStatus"}`,
+        from: `${
+          req.workspaceName ?? "OpenStatus"
+        } <notifications@notifications.openstatus.dev>`,
+        subject: `You've been invited to join ${
+          req.workspaceName ?? "OpenStatus"
+        }`,
         to: req.to,
         html,
       });

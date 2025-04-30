@@ -529,6 +529,9 @@ importers:
       '@types/bun':
         specifier: latest
         version: 1.2.5
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
 
   packages/analytics:
     dependencies:
