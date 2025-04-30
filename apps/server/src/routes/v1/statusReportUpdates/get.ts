@@ -11,7 +11,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["status_report_update"],
   summary: "Get a status report update",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

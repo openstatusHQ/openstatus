@@ -13,7 +13,7 @@ const deleteRoute = createRoute({
   method: "delete",
   tags: ["monitor"],
   summary: "Delete a monitor",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

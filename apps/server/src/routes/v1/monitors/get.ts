@@ -11,7 +11,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["monitor"],
   summary: "Get a monitor",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },
