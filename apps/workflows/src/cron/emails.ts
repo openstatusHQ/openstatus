@@ -28,7 +28,7 @@ export async function sendFollowUpEmails() {
     .map((u) => u.email)
     .filter((email) => email !== null)
     //  I don't know why but I can't have both filter at the same time
-    .filter((email) => typeof email === "string" && email.trim() !== "");
+    .filter((email) => email.trim() !== "");
 
   // Chunk emails into batches of 80
   const batchSize = 80;
