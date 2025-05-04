@@ -27,7 +27,8 @@ export const alternativesConfig = {
     features: [
       opensource(),
       bootstrap(),
-      global(),
+      multiregion(4),
+      schedulingStrategy(),
       incident(),
       otelexport(),
       githubaction(),
@@ -205,6 +206,15 @@ function managed(alternative = false): Feature {
     label: "Managed",
     description: "Don't worry about managing your instance.",
     openstatus: true,
+    alternative,
+  };
+}
+
+function schedulingStrategy(alternative = "round-robin"): Feature {
+  return {
+    label: "Scheduling strategy",
+    description: "Choose your scheduling strategy.",
+    openstatus: "parallel",
     alternative,
   };
 }
