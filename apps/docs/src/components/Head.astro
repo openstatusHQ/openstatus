@@ -1,6 +1,7 @@
 ---
+import { NEXT_PUBLIC_OPENPANEL_CLIENT_ID } from "astro:env/client";
 import Default from "@astrojs/starlight/components/Head.astro";
-
+import { OpenPanelComponent } from "@openpanel/astro";
 const title = Astro.locals.starlightRoute.title;
 const { siteTitle } = Astro.locals.starlightRoute;
 
@@ -17,3 +18,5 @@ const url = `https://openstatus.dev/api/og?title=${siteTitle}&description=${titl
 <!-- REMINDER: prevent unexpected font flashes for our 'OpenStatus' logo on each page load -->
 <link rel="preload" href="/fonts/CalSans-SemiBold.ttf" as="font" type="font/ttf" crossorigin>
 <script defer async src="https://buttons.github.io/buttons.js" />
+
+<OpenPanelComponent clientId={NEXT_PUBLIC_OPENPANEL_CLIENT_ID!} trackScreenViews trackOutgoingLinks trackAttributes  />

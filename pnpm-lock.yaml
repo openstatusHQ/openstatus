@@ -47,6 +47,9 @@ importers:
       '@astrojs/tailwind':
         specifier: 6.0.0
         version: 6.0.0(astro@5.6.1(@types/node@22.10.2)(jiti@1.21.7)(rollup@4.34.8)(terser@5.37.0)(typescript@5.6.2)(yaml@2.6.1))(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.6.2)))(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.6.2))
+      '@openpanel/astro':
+        specifier: 1.0.1
+        version: 1.0.1(astro@5.6.1(@types/node@22.10.2)(jiti@1.21.7)(rollup@4.34.8)(terser@5.37.0)(typescript@5.6.2)(yaml@2.6.1))
       astro:
         specifier: 5.6.1
         version: 5.6.1(@types/node@22.10.2)(jiti@1.21.7)(rollup@4.34.8)(terser@5.37.0)(typescript@5.6.2)(yaml@2.6.1)
@@ -80,7 +83,7 @@ importers:
         version: 0.2.1(hono@4.5.3)(zod@3.23.8)
       '@libsql/client':
         specifier: 0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@openstatus/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -95,7 +98,7 @@ importers:
         version: 2.6.2
       drizzle-orm:
         specifier: 0.35.3
-        version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.7.0)(bun-types@1.2.5)(react@19.1.0)
+        version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.7.0)(bun-types@1.2.12)(react@19.1.0)
       hono:
         specifier: 4.5.3
         version: 4.5.3
@@ -208,7 +211,10 @@ importers:
         version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
       '@libsql/client':
         specifier: 0.14.0
-        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+        version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
+      '@openpanel/nextjs':
+        specifier: ^1.0.7
+        version: 1.0.7(next@15.2.4(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -528,7 +534,7 @@ importers:
         version: link:../../packages/tsconfig
       '@types/bun':
         specifier: latest
-        version: 1.2.5
+        version: 1.2.12
 
   packages/analytics:
     dependencies:
@@ -639,10 +645,10 @@ importers:
         version: 0.7.0(typescript@5.6.2)(zod@3.23.8)
       drizzle-orm:
         specifier: 0.35.3
-        version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.5)(react@19.1.0)
+        version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.12)(react@19.1.0)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.5)(react@19.1.0))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.12)(react@19.1.0))(zod@3.23.8)
       zod:
         specifier: 3.23.8
         version: 3.23.8
@@ -984,7 +990,7 @@ importers:
         version: 3.4.3(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))
       tsup:
         specifier: 7.2.0
-        version: 7.2.0(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))(typescript@5.6.2)
+        version: 7.2.0(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))(typescript@5.6.2)
       typescript:
         specifier: 5.6.2
         version: 5.6.2
@@ -3212,8 +3218,23 @@ packages:
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
+  '@openpanel/astro@1.0.1':
+    resolution: {integrity: sha512-PLSOJFj4RoFbQPZXBwJNsaqprnrjq5Hj1x6oY1a1IJpWSqFqO3Wa1OSMsLh2G2QXAowsg+cfiu7Mp6h/kK1tow==}
+    peerDependencies:
+      astro: ^4.0.0 || ^5.0.0
+
+  '@openpanel/nextjs@1.0.7':
+    resolution: {integrity: sha512-XygTPiVlxUkcnZ3DYYwnWiogDgCL1hFK5G8nxokdrFKKuM0XQ+9mFElW/+dKgnVfmV2QiP1aAscudHAlRSUQhg==}
+    peerDependencies:
+      next: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   '@openpanel/sdk@1.0.0':
     resolution: {integrity: sha512-FNmmfjdXoC/VHEjA+WkrQ4lyM5lxEmV7xDd57uj4E+lIS0sU3DLG2mV/dpS8AscnZbUvuMn3kPhiLCqYzuv/gg==}
+
+  '@openpanel/web@1.0.1':
+    resolution: {integrity: sha512-cVZ7Kr9SicczJ/RDIfEtZs8+1iGDzwkabVA/j3NqSl8VSucsC8m1+LVbjmCDzCJNnK4yVn6tEcc9PJRi2rtllw==}
 
   '@opentelemetry/api-logs@0.52.1':
     resolution: {integrity: sha512-qnSqB2DQ9TPP96dl8cDubDvrUyWc0/sK81xHTK8eSUspzDM3bsewX903qclQFvVhgStjRWdC5bLb3kQqMkfV5A==}
@@ -5067,8 +5088,8 @@ packages:
   '@types/babel__traverse@7.20.6':
     resolution: {integrity: sha512-r1bzfrm0tomOI8g1SzvCaQHo6Lcv6zu0EA+W2kHrt8dyrHQxGzBBL4kdkzIS+jBMV+EYcMAEAqXqYaLJq5rOZg==}
 
-  '@types/bun@1.2.5':
-    resolution: {integrity: sha512-w2OZTzrZTVtbnJew1pdFmgV99H0/L+Pvw+z1P67HaR18MHOzYnTYOi6qzErhK8HyT+DB782ADVPPE92Xu2/Opg==}
+  '@types/bun@1.2.12':
+    resolution: {integrity: sha512-lY/GQTXDGsolT/TiH72p1tuyUORuRrdV7VwOTOjDOt8uTBJQOJc5zz3ufwwDl0VBaoxotSk4LdP0hhjLJ6ypIQ==}
 
   '@types/caseless@0.12.4':
     resolution: {integrity: sha512-2in/lrHRNmDvHPgyormtEralhPcN3An1gLjJzj2Bw145VBxkQ75JEXW6CTdMAwShiHQcYsl2d10IjQSdJSJz4g==}
@@ -5801,8 +5822,8 @@ packages:
   bun-types@1.0.8:
     resolution: {integrity: sha512-2dNB+dBwAcFW7RSd4y5vKycRjouKVklSwPk4EjBKWvcMYUBOqZGGNzV7+b2tfKBG3BeRXnozbnegVKR1azuATg==}
 
-  bun-types@1.2.5:
-    resolution: {integrity: sha512-3oO6LVGGRRKI4kHINx5PIdIgnLRb7l/SprhzqXapmoYkFl5m4j6EvALvbDVuuBFaamB46Ap6HCUxIXNLCGy+tg==}
+  bun-types@1.2.12:
+    resolution: {integrity: sha512-tvWMx5vPqbRXgE8WUZI94iS1xAYs8bkqESR9cxBB1Wi+urvfTrF1uzuDgBHFAdO0+d2lmsbG3HmeKMvUyj6pWA==}
 
   bundle-require@4.0.2:
     resolution: {integrity: sha512-jwzPOChofl67PSTW2SGubV9HBQAhhR2i6nskiOThauo9dzwDUgOWQScFVaJkjEfYX+UXiD+LEx8EblQMc2wIag==}
@@ -7584,6 +7605,7 @@ packages:
 
   libsql@0.4.5:
     resolution: {integrity: sha512-sorTJV6PNt94Wap27Sai5gtVLIea4Otb2LUiAUyr3p6BPOScGMKGt5F1b5X/XgkNtcsDKeX5qfeBDj+PdShclQ==}
+    cpu: [x64, arm64, wasm32]
     os: [darwin, linux, win32]
 
   lilconfig@2.1.0:
@@ -12505,17 +12527,6 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)':
-    dependencies:
-      '@libsql/core': 0.14.0
-      '@libsql/hrana-client': 0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
-      js-base64: 3.7.5
-      libsql: 0.4.5
-      promise-limit: 2.7.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@libsql/core@0.14.0':
     dependencies:
       js-base64: 3.7.5
@@ -12536,30 +12547,12 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@libsql/hrana-client@0.7.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)':
-    dependencies:
-      '@libsql/isomorphic-fetch': 0.3.1
-      '@libsql/isomorphic-ws': 0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.5)
-      js-base64: 3.7.5
-      node-fetch: 3.3.2
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@libsql/isomorphic-fetch@0.3.1': {}
 
   '@libsql/isomorphic-ws@0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.3)':
     dependencies:
       '@types/ws': 8.5.13
       ws: 8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@libsql/isomorphic-ws@0.1.5(bufferutil@4.0.8)(utf-8-validate@6.0.5)':
-    dependencies:
-      '@types/ws': 8.5.13
-      ws: 8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -12679,7 +12672,23 @@ snapshots:
 
   '@one-ini/wasm@0.1.1': {}
 
+  '@openpanel/astro@1.0.1(astro@5.6.1(@types/node@22.10.2)(jiti@1.21.7)(rollup@4.34.8)(terser@5.37.0)(typescript@5.6.2)(yaml@2.6.1))':
+    dependencies:
+      '@openpanel/web': 1.0.1
+      astro: 5.6.1(@types/node@22.10.2)(jiti@1.21.7)(rollup@4.34.8)(terser@5.37.0)(typescript@5.6.2)(yaml@2.6.1)
+
+  '@openpanel/nextjs@1.0.7(next@15.2.4(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      '@openpanel/web': 1.0.1
+      next: 15.2.4(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+
   '@openpanel/sdk@1.0.0': {}
+
+  '@openpanel/web@1.0.1':
+    dependencies:
+      '@openpanel/sdk': 1.0.0
 
   '@opentelemetry/api-logs@0.52.1':
     dependencies:
@@ -14977,9 +14986,9 @@ snapshots:
     dependencies:
       '@babel/types': 7.26.3
 
-  '@types/bun@1.2.5':
+  '@types/bun@1.2.12':
     dependencies:
-      bun-types: 1.2.5
+      bun-types: 1.2.12
 
   '@types/caseless@0.12.4': {}
 
@@ -15949,10 +15958,9 @@ snapshots:
 
   bun-types@1.0.8: {}
 
-  bun-types@1.2.5:
+  bun-types@1.2.12:
     dependencies:
       '@types/node': 22.10.2
-      '@types/ws': 8.5.13
 
   bundle-require@4.0.2(esbuild@0.18.20):
     dependencies:
@@ -16481,7 +16489,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.5)(react@19.1.0):
+  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.12)(react@19.1.0):
     dependencies:
       '@libsql/client-wasm': 0.14.0
     optionalDependencies:
@@ -16491,25 +16499,25 @@ snapshots:
       '@types/pg': 8.11.10
       '@types/react': 19.1.0
       better-sqlite3: 11.4.0
-      bun-types: 1.2.5
+      bun-types: 1.2.12
       react: 19.1.0
 
-  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.7.0)(bun-types@1.2.5)(react@19.1.0):
+  drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0)(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.7.0)(bun-types@1.2.12)(react@19.1.0):
     dependencies:
       '@libsql/client-wasm': 0.14.0
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250303.0
-      '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
+      '@libsql/client': 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@opentelemetry/api': 1.9.0
       '@types/pg': 8.11.10
       '@types/react': 19.1.0
       better-sqlite3: 11.7.0
-      bun-types: 1.2.5
+      bun-types: 1.2.12
       react: 19.1.0
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.5)(react@19.1.0))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.12)(react@19.1.0))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.5)(react@19.1.0)
+      drizzle-orm: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.12)(react@19.1.0)
       zod: 3.23.8
 
   dset@3.1.4: {}
@@ -19327,12 +19335,12 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.5.3
 
-  postcss-load-config@4.0.1(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2)):
+  postcss-load-config@4.0.1(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2)):
     dependencies:
       lilconfig: 2.1.0
       yaml: 2.3.3
     optionalDependencies:
-      postcss: 8.5.3
+      postcss: 8.4.38
       ts-node: 10.9.2(@types/node@20.8.0)(typescript@5.6.2)
 
   postcss-load-config@4.0.1(postcss@8.5.3)(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.6.2)):
@@ -20986,7 +20994,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsup@7.2.0(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))(typescript@5.6.2):
+  tsup@7.2.0(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))(typescript@5.6.2):
     dependencies:
       bundle-require: 4.0.2(esbuild@0.18.20)
       cac: 6.7.14
@@ -20996,14 +21004,14 @@ snapshots:
       execa: 5.1.1
       globby: 11.1.0
       joycon: 3.1.1
-      postcss-load-config: 4.0.1(postcss@8.5.3)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))
+      postcss-load-config: 4.0.1(postcss@8.4.38)(ts-node@10.9.2(@types/node@20.8.0)(typescript@5.6.2))
       resolve-from: 5.0.0
       rollup: 3.29.4
       source-map: 0.8.0-beta.0
       sucrase: 3.34.0
       tree-kill: 1.2.2
     optionalDependencies:
-      postcss: 8.5.3
+      postcss: 8.4.38
       typescript: 5.6.2
     transitivePeerDependencies:
       - supports-color
@@ -21679,11 +21687,6 @@ snapshots:
     optionalDependencies:
       bufferutil: 4.0.8
       utf-8-validate: 6.0.3
-
-  ws@8.17.0(bufferutil@4.0.8)(utf-8-validate@6.0.5):
-    optionalDependencies:
-      bufferutil: 4.0.8
-      utf-8-validate: 6.0.5
 
   ws@8.17.1(bufferutil@4.0.8)(utf-8-validate@6.0.5):
     optionalDependencies:
