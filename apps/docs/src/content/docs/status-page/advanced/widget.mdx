@@ -4,6 +4,12 @@ description: "How to embed the public status widget in your React application"
 ---
 import { Aside } from '@astrojs/starlight/components';
 
+import { Image } from 'astro:assets';
+
+import Widget from '../../../../assets/status-widget/widget-example.png';
+
+
+
 We have added a public endpoint where you can access the status of your status
 page. To access it, you only need the unique `:slug` you have chosen for your
 page.
@@ -74,7 +80,13 @@ If you are using Nextjs and RSC with the `/app` directory, feel free to use that
 Component. Small reminder that we are using shadcn ui and tailwindcss. You might
 want to update the `bg-muted` and `text-foreground` classes to your needs.
 
-![Status Widget](/images/status-widget/widget-example.png)
+
+  <Image
+    src={Widget}
+    alt="Status Widget"
+  />
+
+
 
 We are using `zod` to validate the response. You can use any other library if
 you want or just remove it. But better be safe than sorry.

@@ -4,6 +4,10 @@ title: Setup environment files
 
 import { Aside } from "@astrojs/starlight/components";
 
+import { Image } from 'astro:assets';
+
+import Drizzle from '../../../assets/setup-env/drizzle-studio.png';
+
 <Aside>WIP</Aside>
 
 # Configuration of the .env file
@@ -37,7 +41,7 @@ Here's how to obtain the Resend API key:
    variable. It should look something like this (real values without
    censorship):
 
-![Create your monitor](/images/setup-env/resend.png)
+
 
 ```
 # RESEND for email
@@ -119,7 +123,6 @@ UPSTASH.
 You will need to create an API token, Go to Auth tokens > Workspace tokens > Add
 a new token > Select your token
 
-![Create your monitor](/images/setup-env/tinybird.png)
 
 ```
 # TinyBird
@@ -349,7 +352,14 @@ the following command:
 
 It contains some dummy data that you can use to test the application.
 
-![Drizzle studio](/images/setup-env/drizzle-studio.png)
+
+
+  <Image
+    src={Drizzle}
+    alt="Drizzle"
+  />
+
+
 
 ```bash
 cd packages/db
