@@ -1,7 +1,7 @@
 import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
 import tailwind from "@astrojs/tailwind";
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import Icons from "unplugin-icons/vite";
 
@@ -10,6 +10,14 @@ export default defineConfig({
   site: "https://docs.openstatus.dev",
   vite: {
     plugins: [Icons({ compiler: "astro" })],
+  },
+  env: {
+    schema: {
+      NEXT_PUBLIC_OPENPANEL_CLIENT_ID: envField.string({
+        access: "public",
+        context: "client",
+      }),
+    },
   },
   integrations: [
     sitemap(),

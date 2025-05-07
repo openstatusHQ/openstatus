@@ -30,8 +30,11 @@ export const env = createEnv({
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string(),
     NEXT_PUBLIC_URL: z.string(),
     NEXT_PUBLIC_SENTRY_DSN: z.string(),
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string(),
   },
   runtimeEnv: {
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
+      process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,

@@ -3,7 +3,7 @@ import { env } from "../env";
 import type { EventProps } from "./events";
 
 const op = new OpenPanel({
-  clientId: env.OPENPANEL_CLIENT_ID,
+  clientId: env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
   clientSecret: env.OPENPANEL_CLIENT_SECRET,
 });
 
@@ -17,7 +17,7 @@ export type IdentifyProps = {
   fullName?: string | null;
   email?: string;
   workspaceId?: string;
-  plan?: string;
+  plan?: "free" | "starter" | "team";
   // headers from the request
   location?: string;
   userAgent?: string;

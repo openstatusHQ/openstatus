@@ -1,10 +1,10 @@
 import "@/styles/globals.css";
 
+import { Toaster } from "@/components/ui/sonner";
+import { OpenPanelComponent } from "@openpanel/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import LocalFont from "next/font/local";
-
-import { Toaster } from "@/components/ui/sonner";
 
 import {
   defaultMetadata,
@@ -13,6 +13,7 @@ import {
 } from "@/app/shared-metadata";
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
+import { env } from "@/env";
 import { TRPCReactQueryProvider } from "@/trpc/rq-client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Background from "./_components/background";
@@ -56,6 +57,14 @@ export default function RootLayout({
             </TRPCReactQueryProvider>
           </ThemeProvider>
         </NuqsAdapter>
+        {env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
+          <OpenPanelComponent
+            clientId={env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+            trackScreenViews
+            trackOutgoingLinks
+            trackAttributes
+          />
+        )}
       </body>
     </html>
   );
