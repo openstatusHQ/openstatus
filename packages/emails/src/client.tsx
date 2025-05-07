@@ -106,10 +106,12 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.workspaceName ?? "OpenStatus"
-          } <notifications@notifications.openstatus.dev>`,
-        subject: `You've been invited to join ${req.workspaceName ?? "OpenStatus"
-          }`,
+        from: `${
+          req.workspaceName ?? "OpenStatus"
+        } <notifications@notifications.openstatus.dev>`,
+        subject: `You've been invited to join ${
+          req.workspaceName ?? "OpenStatus"
+        }`,
         to: req.to,
         html,
       });
