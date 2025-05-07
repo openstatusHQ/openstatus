@@ -9,7 +9,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["maintenance"],
   summary: "Get a maintenance",
-  path: "/:id",
+  path: "/{id}",
   request: {
     params: ParamsSchema,
   },

@@ -19,7 +19,7 @@ const putRoute = createRoute({
   method: "put",
   tags: ["page"],
   summary: "Update a status page",
-  path: "/:id",
+  path: "/{id}",
   middleware: [trackMiddleware(Events.UpdatePage)],
   request: {
     params: ParamsSchema,

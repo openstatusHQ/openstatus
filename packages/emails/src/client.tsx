@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 
 import { render } from "@react-email/render";
-import { Resend } from "resend";
+import { ErrorResponse, Resend } from "resend";
 import FollowUpEmail from "../emails/followup";
 import MonitorAlertEmail from "../emails/monitor-alert";
 import type { MonitorAlertProps } from "../emails/monitor-alert";
@@ -42,6 +42,34 @@ export class EmailClient {
     }
   }
 
+  public async sendFollowUpBatched(req: { to: string[] }) {
+    if (process.env.NODE_ENV === "development") return;
+
+    const html = await render(<FollowUpEmail />);
+    const result = await this.client.batch.send(
+      req.to.map((subscriber) => ({
+        from: "Thibault Le Ouay Ducasse <thibault@openstatus.dev>",
+        subject: "How's it going with OpenStatus?",
+        to: subscriber,
+        html,
+      })),
+    );
+
+    if (result.error) {
+      //  We only throw the error if we are rate limited
+      if (result.error?.name === "rate_limit_exceeded") {
+        throw result.error;
+      }
+      //  Otherwise let's log the error and continue
+      console.error(
+        `Error sending follow up email to ${req.to}: ${result.error}`,
+      );
+      return;
+    }
+
+    console.log(`Sent follow up emails to ${req.to}`);
+  }
+
   public async sendStatusReportUpdate(
     req: StatusReportProps & { to: string[] },
   ) {
@@ -78,8 +106,12 @@ export class EmailClient {
     try {
       const html = await render(<TeamInvitationEmail {...req} />);
       const result = await this.client.emails.send({
-        from: `${req.workspaceName ?? "OpenStatus"} <notifications@notifications.openstatus.dev>`,
-        subject: `You've been invited to join ${req.workspaceName ?? "OpenStatus"}`,
+        from: `${
+          req.workspaceName ?? "OpenStatus"
+        } <notifications@notifications.openstatus.dev>`,
+        subject: `You've been invited to join ${
+          req.workspaceName ?? "OpenStatus"
+        }`,
         to: req.to,
         html,
       });

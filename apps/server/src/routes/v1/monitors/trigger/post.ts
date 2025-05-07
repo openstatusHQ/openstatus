@@ -18,7 +18,7 @@ const postRoute = createRoute({
   tags: ["monitor"],
   summary: "Create a monitor trigger",
   description: "Trigger a monitor check without waiting the result",
-  path: "/:id/trigger",
+  path: "/{id}/trigger",
   request: {
     params: ParamsSchema,
   },
