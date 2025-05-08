@@ -223,6 +223,7 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
 
       if (user && workspace) {
         identify = {
+          ...identify,
           userId: `usr_${user.id}`,
           email: user.email || undefined,
           workspaceId: String(workspace.id),
