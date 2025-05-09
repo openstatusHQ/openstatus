@@ -6,6 +6,7 @@ import { db, eq } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 
 import { WelcomeEmail, sendEmail } from "@openstatus/emails";
+import { headers } from "next/headers";
 import { adapter } from "./adapter";
 import { GitHubProvider, GoogleProvider, ResendProvider } from "./providers";
 
@@ -92,6 +93,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const analytics = await setupAnalytics({
         userId: `usr_${params.user.id}`,
         email: params.user.email,
+        location: (await headers()).get("x-forwarded-for") ?? undefined,
+        userAgent: (await headers()).get("user-agent") ?? undefined,
       });
 
       await analytics.track(Events.CreateUser);
@@ -104,6 +107,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       const analytics = await setupAnalytics({
         userId: `usr_${params.user.id}`,
         email: params.user.email,
+        location: (await headers()).get("x-forwarded-for") ?? undefined,
+        userAgent: (await headers()).get("user-agent") ?? undefined,
       });
 
       await analytics.track(Events.SignInUser);

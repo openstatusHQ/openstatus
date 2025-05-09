@@ -32,6 +32,8 @@ export function trackMiddleware(event: EventProps, eventProps?: string[]) {
           userId: `api_${workspace.id}`,
           workspaceId: `${workspace.id}`,
           plan: workspace.plan,
+          location: c.req.raw.headers.get("x-forwarded-for") ?? undefined,
+          userAgent: c.req.raw.headers.get("user-agent") ?? undefined,
         });
         await analytics.track({ ...event, additionalProps });
       }, 0);
