@@ -32,6 +32,7 @@ import { toast, toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
 import type { TCPResponse } from "@/app/api/checker/test/tcp/schema";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
@@ -46,6 +47,7 @@ export function DataTableRowActions<TData>({
   const router = useRouter();
   const [alertOpen, setAlertOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const { copy } = useCopyToClipboard();
 
   async function onDelete() {
     startTransition(async () => {
@@ -155,6 +157,15 @@ export function DataTableRowActions<TData>({
             Clone
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onTest}>Test</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              copy(`${monitor.id}`, {
+                withToast: `Copied ID '${monitor.id}'`,
+              })
+            }
+          >
+            Copy ID
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">

@@ -112,6 +112,15 @@ export function DataTableRowActions<TData>({
             <DialogTrigger asChild>
               <DropdownMenuItem>Create Badge</DropdownMenuItem>
             </DialogTrigger>
+            <DropdownMenuItem
+              onClick={() =>
+                copy(`${page.id}`, {
+                  withToast: `Copied ID '${page.id}'`,
+                })
+              }
+            >
+              Copy ID
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">

@@ -4,6 +4,7 @@ import { Badge } from "@openstatus/ui/src/components/badge";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { CopyButton } from "@/components/layout/header/copy-button";
 import { JobTypeIconWithTooltip } from "@/components/monitor/job-type-icon-with-tooltip";
 import { NotificationIconWithTooltip } from "@/components/monitor/notification-icon-with-tooltip";
 import { StatusDotWithTooltip } from "@/components/monitor/status-dot-with-tooltip";
@@ -82,6 +83,7 @@ export default async function Layout(props: {
             />
           </div>
         }
+        actions={<CopyButton key="copy" id={monitor.id} />}
       />
       {children}
     </AppPageWithSidebarLayout>

@@ -6,6 +6,7 @@ import { Button } from "@openstatus/ui/src/components/button";
 import { getBaseUrl } from "@/app/status-page/[domain]/utils";
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { CopyButton } from "@/components/layout/header/copy-button";
 import { api } from "@/trpc/server";
 
 export default async function Layout(props: {
@@ -31,8 +32,9 @@ export default async function Layout(props: {
       <Header
         title={page.title}
         description={page.description}
-        actions={
-          <Button variant="outline" asChild>
+        actions={[
+          <CopyButton key="copy" id={page.id} />,
+          <Button key="visit" variant="outline" asChild>
             <Link
               target="_blank"
               href={getBaseUrl({
@@ -42,8 +44,8 @@ export default async function Layout(props: {
             >
               Visit
             </Link>
-          </Button>
-        }
+          </Button>,
+        ]}
       />
       {children}
     </AppPageWithSidebarLayout>
