@@ -9,6 +9,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker"
 	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
@@ -17,11 +18,13 @@ import (
 
 // Only used for Tinybird.
 type TCPData struct {
-	Timing       string `json:"timing"`
-	ErrorMessage string `json:"errorMessage"`
-	Region       string `json:"region"`
-	Trigger      string `json:"trigger"`
-	URI          string `json:"uri"`
+	ID            string `json:"id"`
+	Timing        string `json:"timing"`
+	ErrorMessage  string `json:"errorMessage"`
+	Region        string `json:"region"`
+	Trigger       string `json:"trigger"`
+	URI           string `json:"uri"`
+	RequestStatus string `json:"requestStatus,omitempty"`
 
 	RequestId     int64 `json:"requestId,omitempty"`
 	WorkspaceID   int64 `json:"workspaceId"`
@@ -102,7 +105,14 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		latency := res.TCPDone - res.TCPStart
 
+
+		id, err := uuid.NewV7()
+		if err != nil {
+			return fmt.Errorf("error while generating uuid %w", err)
+		}
+
 		data := TCPData{
+			ID: id.String(),
 			WorkspaceID:   workspaceId,
 			Timestamp:     res.TCPStart,
 			Error:         0,
@@ -127,7 +137,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			JobType: "tcp",
 		}
 
-		if req.DegradedAfter == 0 &&  req.Status != "active" {
+		if req.DegradedAfter == 0 && req.Status != "active" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "active",
@@ -135,6 +145,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       latency,
 			})
+			data.RequestStatus = "success"
 		}
 
 		if (req.DegradedAfter > 0 && latency < req.DegradedAfter) && req.Status != "active" {
@@ -145,9 +156,11 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       latency,
 			})
+			data.RequestStatus = "success"
+
 		}
 
-		if req.DegradedAfter > 0 && latency > req.DegradedAfter  && req.Status != "degraded" {
+		if req.DegradedAfter > 0 && latency > req.DegradedAfter && req.Status != "degraded" {
 			checker.UpdateStatus(ctx, checker.UpdateData{
 				MonitorId:     req.MonitorID,
 				Status:        "degraded",
@@ -155,6 +168,8 @@ func (h Handler) TCPHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       latency,
 			})
+			data.RequestStatus = "degraded"
+
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
@@ -165,7 +180,14 @@ func (h Handler) TCPHandler(c *gin.Context) {
 	}
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		if err := h.TbClient.SendEvent(ctx, TCPData{
+
+		id, e := uuid.NewV7()
+		if e != nil {
+			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
+			return
+		}
+		data := TCPData{
+			ID: id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
 			ErrorMessage:  err.Error(),
@@ -174,7 +196,9 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			Error:         1,
 			Trigger:       trigger,
 			URI:           req.URI,
-		}, dataSourceName); err != nil {
+			RequestStatus: "error",
+		}
+		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 		checker.UpdateStatus(ctx, checker.UpdateData{
