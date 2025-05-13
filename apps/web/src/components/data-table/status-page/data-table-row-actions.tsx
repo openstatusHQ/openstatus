@@ -105,13 +105,6 @@ export function DataTableRowActions<TData>({
             >
               <DropdownMenuItem>Visit</DropdownMenuItem>
             </Link>
-            <DropdownMenuSeparator />
-            <Link href={`./status-pages/${page.id}/reports/new`}>
-              <DropdownMenuItem>Create Report</DropdownMenuItem>
-            </Link>
-            <DialogTrigger asChild>
-              <DropdownMenuItem>Create Badge</DropdownMenuItem>
-            </DialogTrigger>
             <DropdownMenuItem
               onClick={() =>
                 copy(`${page.id}`, {
@@ -121,6 +114,13 @@ export function DataTableRowActions<TData>({
             >
               Copy ID
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <Link href={`./status-pages/${page.id}/reports/new`}>
+              <DropdownMenuItem>Create Report</DropdownMenuItem>
+            </Link>
+            <DialogTrigger asChild>
+              <DropdownMenuItem>Create Badge</DropdownMenuItem>
+            </DialogTrigger>
             <DropdownMenuSeparator />
             <AlertDialogTrigger asChild>
               <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
