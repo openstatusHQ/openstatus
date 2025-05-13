@@ -119,6 +119,19 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return fmt.Errorf("error while generating uuid %w", err)
 		}
 
+		var requestStatus = ""
+		switch req.Status {
+		case "active":
+			requestStatus = "success"
+			break
+		case "error":
+			requestStatus = "error"
+			break
+		case "degraded":
+			requestStatus = "degraded"
+			break
+		}
+
 		data := PingData{
 			ID:            id.String(),
 			Latency:       res.Latency,
@@ -133,6 +146,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Headers:       string(headersAsString),
 			Body:          string(res.Body),
 			Trigger:       trigger,
+			RequestStatus: requestStatus,
 		}
 
 		statusCode := statusCode(res.Status)

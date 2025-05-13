@@ -105,6 +105,19 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		latency := res.TCPDone - res.TCPStart
 
+		var requestStatus = ""
+		switch req.Status {
+		case "active":
+			requestStatus = "success"
+			break
+		case "error":
+			requestStatus = "error"
+			break
+		case "degraded":
+			requestStatus = "degraded"
+			break
+		}
+
 
 		id, err := uuid.NewV7()
 		if err != nil {
@@ -124,6 +137,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			CronTimestamp: req.CronTimestamp,
 			Trigger:       trigger,
 			URI:           req.URI,
+			RequestStatus: requestStatus,
 		}
 
 		response = checker.TCPResponse{
