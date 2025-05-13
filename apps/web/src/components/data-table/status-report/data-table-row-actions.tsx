@@ -25,6 +25,7 @@ import {
 } from "@openstatus/ui";
 
 import { LoadingAnimation } from "@/components/loading-animation";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
@@ -39,6 +40,7 @@ export function DataTableRowActions<TData>({
   const router = useRouter();
   const [alertOpen, setAlertOpen] = React.useState(false);
   const [isPending, startTransition] = React.useTransition();
+  const { copy } = useCopyToClipboard();
 
   async function onDelete() {
     startTransition(async () => {
@@ -75,6 +77,15 @@ export function DataTableRowActions<TData>({
           <Link href={`./reports/${statusReport.id}/overview`}>
             <DropdownMenuItem>View</DropdownMenuItem>
           </Link>
+          <DropdownMenuItem
+            onClick={() =>
+              copy(`${statusReport.id}`, {
+                withToast: `Copied ID '${statusReport.id}'`,
+              })
+            }
+          >
+            Copy ID
+          </DropdownMenuItem>
           <AlertDialogTrigger asChild>
             <DropdownMenuItem className="text-destructive focus:bg-destructive focus:text-background">
               Delete

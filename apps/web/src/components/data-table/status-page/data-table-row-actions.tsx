@@ -105,6 +105,15 @@ export function DataTableRowActions<TData>({
             >
               <DropdownMenuItem>Visit</DropdownMenuItem>
             </Link>
+            <DropdownMenuItem
+              onClick={() =>
+                copy(`${page.id}`, {
+                  withToast: `Copied ID '${page.id}'`,
+                })
+              }
+            >
+              Copy ID
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <Link href={`./status-pages/${page.id}/reports/new`}>
               <DropdownMenuItem>Create Report</DropdownMenuItem>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { Header } from "@/components/dashboard/header";
 import AppPageWithSidebarLayout from "@/components/layout/app-page-with-sidebar-layout";
+import { CopyButton } from "@/components/layout/header/copy-button";
 import { api } from "@/trpc/server";
 
 export default async function Layout(props: {
@@ -27,6 +28,7 @@ export default async function Layout(props: {
       <Header
         title={notification.name}
         description={<span className="font-mono">{notification.provider}</span>}
+        actions={<CopyButton key="copy" id={notification.id} />}
       />
       {children}
     </AppPageWithSidebarLayout>
