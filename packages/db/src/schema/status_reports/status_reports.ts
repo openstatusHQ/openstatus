@@ -24,7 +24,7 @@ export const statusReport = sqliteTable("status_report", {
 
   workspaceId: integer("workspace_id").references(() => workspace.id),
 
-  pageId: integer("page_id").references(() => page.id),
+  pageId: integer("page_id").references(() => page.id, { onDelete: "cascade" }),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
