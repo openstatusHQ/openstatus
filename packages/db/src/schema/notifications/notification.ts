@@ -29,9 +29,12 @@ export const notificationTrigger = sqliteTable(
   "notification_trigger",
   {
     id: integer("id").primaryKey(),
-    monitorId: integer("monitor_id").references(() => monitor.id),
+    monitorId: integer("monitor_id").references(() => monitor.id, {
+      onDelete: "cascade",
+    }),
     notificationId: integer("notification_id").references(
       () => notification.id,
+      { onDelete: "cascade" },
     ),
     cronTimestamp: integer("cron_timestamp").notNull(),
   },
