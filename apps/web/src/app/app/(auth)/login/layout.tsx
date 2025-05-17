@@ -24,7 +24,7 @@ export default async function AuthLayout({
             className="rounded-full border border-border"
           />
         </Link>
-        <div className='mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-center md:mx-auto md:text-left'>
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-8 text-center md:mx-auto md:text-left">
           <div className="mx-auto grid gap-3">
             <h1 className="font-cal text-3xl text-foreground">
               Open Source Monitoring Service
