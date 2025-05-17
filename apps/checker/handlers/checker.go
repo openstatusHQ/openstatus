@@ -8,6 +8,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/openstatushq/openstatus/apps/checker"
@@ -23,6 +24,7 @@ func (s statusCode) IsSuccessful() bool {
 }
 
 type PingData struct {
+	ID            string `json:"id"`
 	WorkspaceID   string `json:"workspaceId"`
 	MonitorID     string `json:"monitorId"`
 	URL           string `json:"url"`
@@ -33,6 +35,7 @@ type PingData struct {
 	Assertions    string `json:"assertions"`
 	Body          string `json:"body,omitempty"`
 	Trigger       string `json:"trigger,omitempty"`
+	RequestStatus string `json:"requestStatus,omitempty"`
 	Latency       int64  `json:"latency"`
 	CronTimestamp int64  `json:"cronTimestamp"`
 	Timestamp     int64  `json:"timestamp"`
@@ -111,7 +114,26 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			return fmt.Errorf("error while parsing headers %s: %w", req.URL, err)
 		}
 
+		id, err := uuid.NewV7()
+		if err != nil {
+			return fmt.Errorf("error while generating uuid %w", err)
+		}
+
+		var requestStatus = ""
+		switch req.Status {
+		case "active":
+			requestStatus = "success"
+			break
+		case "error":
+			requestStatus = "error"
+			break
+		case "degraded":
+			requestStatus = "degraded"
+			break
+		}
+
 		data := PingData{
+			ID:            id.String(),
 			Latency:       res.Latency,
 			StatusCode:    res.Status,
 			MonitorID:     req.MonitorID,
@@ -124,6 +146,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Headers:       string(headersAsString),
 			Body:          string(res.Body),
 			Trigger:       trigger,
+			RequestStatus: requestStatus,
 		}
 
 		statusCode := statusCode(res.Status)
@@ -209,6 +232,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
 			})
+			data.RequestStatus = "error"
 		}
 		// it's degraded
 		if isSuccessfull && req.DegradedAfter > 0 && res.Latency > req.DegradedAfter && req.Status != "degraded" {
@@ -220,6 +244,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
 			})
+			data.RequestStatus = "degraded"
 		}
 		// it's active
 		if isSuccessfull && req.DegradedAfter == 0 && req.Status != "active" {
@@ -231,6 +256,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				CronTimestamp: req.CronTimestamp,
 				Latency:       res.Latency,
 			})
+			data.RequestStatus = "success"
 		}
 		// it's active
 		if isSuccessfull && res.Latency < req.DegradedAfter && req.DegradedAfter != 0 && req.Status != "active" {
@@ -241,6 +267,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 				StatusCode:    res.Status,
 				CronTimestamp: req.CronTimestamp,
 			})
+			data.RequestStatus = "success"
 		}
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
@@ -251,7 +278,14 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 	}
 
 	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		if err := h.TbClient.SendEvent(ctx, PingData{
+		id, e := uuid.NewV7()
+		if e != nil {
+			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
+			return
+		}
+
+		data := PingData{
+			ID:            id.String(),
 			URL:           req.URL,
 			Region:        h.Region,
 			Message:       err.Error(),
@@ -263,7 +297,10 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 			Assertions:    assertionAsString,
 			Body:          "",
 			Trigger:       trigger,
-		}, dataSourceName); err != nil {
+			RequestStatus: "error",
+		}
+
+		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
 		}
 
