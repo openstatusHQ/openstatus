@@ -130,8 +130,20 @@ checkerRoute.post("/updateStatus", async (c) => {
             // incident is already resolved
             break;
           }
-
           console.log(`🤓 recovering incident ${incident.id}`);
+
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "monitor.recovered",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: {
+              region: region,
+              statusCode: statusCode ?? -1,
+              cronTimestamp,
+              latency,
+            },
+          });
+
           await db
             .update(incidentTable)
             .set({
@@ -160,17 +172,6 @@ checkerRoute.post("/updateStatus", async (c) => {
           incidentId: `${cronTimestamp}`,
         });
 
-        await checkerAudit.publishAuditLog({
-          id: `monitor:${monitorId}`,
-          action: "monitor.recovered",
-          targets: [{ id: monitorId, type: "monitor" }],
-          metadata: {
-            region: region,
-            statusCode: statusCode ?? -1,
-            cronTimestamp,
-          },
-        });
-
         break;
       }
       case "degraded":
@@ -179,6 +180,19 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
         console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
+
+        await checkerAudit.publishAuditLog({
+          id: `monitor:${monitorId}`,
+          action: "monitor.degraded",
+          targets: [{ id: monitorId, type: "monitor" }],
+          metadata: {
+            region,
+            statusCode: statusCode ?? -1,
+            latency,
+            cronTimestamp,
+          },
+        });
+
         await db
           .update(schema.monitor)
           .set({ status: "degraded" })
@@ -195,12 +209,6 @@ checkerRoute.post("/updateStatus", async (c) => {
           incidentId: `${cronTimestamp}`,
         });
 
-        await checkerAudit.publishAuditLog({
-          id: `monitor:${monitorId}`,
-          action: "monitor.degraded",
-          targets: [{ id: monitorId, type: "monitor" }],
-          metadata: { region, statusCode: statusCode ?? -1, cronTimestamp },
-        });
         break;
       case "error":
         if (monitor.status === "error") {
@@ -209,6 +217,14 @@ checkerRoute.post("/updateStatus", async (c) => {
         }
 
         console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
+
+        await checkerAudit.publishAuditLog({
+          id: `monitor:${monitorId}`,
+          action: "monitor.failed",
+          targets: [{ id: monitorId, type: "monitor" }],
+          metadata: { region, statusCode, message, cronTimestamp, latency },
+        });
+
         await db
           .update(schema.monitor)
           .set({ status: "error" })
@@ -264,12 +280,6 @@ checkerRoute.post("/updateStatus", async (c) => {
             .update(schema.monitor)
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));
-          await checkerAudit.publishAuditLog({
-            id: `monitor:${monitorId}`,
-            action: "monitor.failed",
-            targets: [{ id: monitorId, type: "monitor" }],
-            metadata: { region, statusCode, message, cronTimestamp },
-          });
         } catch {
           console.log("incident was already created");
         }
