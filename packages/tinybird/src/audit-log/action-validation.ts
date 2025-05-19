@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import {
+  incidentCreatedSchema,
+  incidentResolvedSchema,
   monitorDegradedSchema,
   monitorFailedSchema,
   monitorRecoveredSchema,
@@ -25,6 +27,8 @@ export const ingestActionEventSchema = z
       monitorDegradedSchema,
       monitorFailedSchema,
       notificationSentSchema,
+      incidentCreatedSchema,
+      incidentResolvedSchema,
     ]),
     ingestBaseEventSchema,
   )
@@ -49,6 +53,12 @@ export const pipeActionResponseData = z.intersection(
         monitorRecoveredSchema.shape.metadata,
       ),
     }),
+    monitorDegradedSchema.extend({
+      metadata: z.preprocess(
+        (val) => JSON.parse(String(val)),
+        monitorDegradedSchema.shape.metadata,
+      ),
+    }),
     monitorFailedSchema.extend({
       metadata: z.preprocess(
         (val) => JSON.parse(String(val)),
@@ -59,6 +69,18 @@ export const pipeActionResponseData = z.intersection(
       metadata: z.preprocess(
         (val) => JSON.parse(String(val)),
         notificationSentSchema.shape.metadata,
+      ),
+    }),
+    incidentCreatedSchema.extend({
+      metadata: z.preprocess(
+        (val) => JSON.parse(String(val)),
+        incidentCreatedSchema.shape.metadata,
+      ),
+    }),
+    incidentResolvedSchema.extend({
+      metadata: z.preprocess(
+        (val) => JSON.parse(String(val)),
+        incidentResolvedSchema.shape.metadata,
       ),
     }),
   ]),

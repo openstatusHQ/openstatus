@@ -102,7 +102,7 @@ export const triggerNotifications = async ({
       id: `monitor:${monitorId}`,
       action: "notification.sent",
       targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { provider: notif.notification.provider },
+      metadata: { provider: notif.notification.provider, cronTimestamp },
     });
     //
   }
@@ -112,7 +112,11 @@ const insertNotificationTrigger = async ({
   monitorId,
   notificationId,
   cronTimestamp,
-}: { monitorId: number; notificationId: number; cronTimestamp: number }) => {
+}: {
+  monitorId: number;
+  notificationId: number;
+  cronTimestamp: number;
+}) => {
   await db
     .insert(schema.notificationTrigger)
     .values({

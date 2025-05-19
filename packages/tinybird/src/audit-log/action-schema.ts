@@ -46,20 +46,22 @@ export const monitorFailedSchema = z.object({
  */
 export const notificationSentSchema = z.object({
   action: z.literal("notification.sent"),
-  // we could use the notificationProviderSchema for more type safety
-  metadata: z.object({ provider: z.string() }),
+  metadata: z.object({
+    provider: z.string(),
+    cronTimestamp: z.number().optional(),
+  }),
 });
-
-// TODO: update schemas with correct metadata and description
 
 export const incidentCreatedSchema = z.object({
   action: z.literal("incident.created"),
-  metadata: z.object({}), // tbd
+  metadata: z.object({
+    cronTimestamp: z.number().optional(),
+  }),
 });
 
 export const incidentResolvedSchema = z.object({
   action: z.literal("incident.resolved"),
-  metadata: z.object({}), // tbd
+  metadata: z.object({
+    cronTimestamp: z.number().optional(),
+  }),
 });
-
-// ...

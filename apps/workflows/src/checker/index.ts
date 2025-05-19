@@ -140,6 +140,13 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .where(eq(incidentTable.id, incident.id))
             .run();
+
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "incident.resolved",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { cronTimestamp },
+          });
         }
 
         await triggerNotifications({
@@ -157,7 +164,11 @@ checkerRoute.post("/updateStatus", async (c) => {
           id: `monitor:${monitorId}`,
           action: "monitor.recovered",
           targets: [{ id: monitorId, type: "monitor" }],
-          metadata: { region: region, statusCode: statusCode ?? -1 },
+          metadata: {
+            region: region,
+            statusCode: statusCode ?? -1,
+            cronTimestamp,
+          },
         });
 
         break;
@@ -188,7 +199,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           id: `monitor:${monitorId}`,
           action: "monitor.degraded",
           targets: [{ id: monitorId, type: "monitor" }],
-          metadata: { region, statusCode: statusCode ?? -1 },
+          metadata: { region, statusCode: statusCode ?? -1, cronTimestamp },
         });
         break;
       case "error":
@@ -228,6 +239,13 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .returning();
 
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "incident.created",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { cronTimestamp },
+          });
+
           if (!newIncident[0].id) {
             return;
           }
@@ -250,7 +268,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             id: `monitor:${monitorId}`,
             action: "monitor.failed",
             targets: [{ id: monitorId, type: "monitor" }],
-            metadata: { region, statusCode, message },
+            metadata: { region, statusCode, message, cronTimestamp },
           });
         } catch {
           console.log("incident was already created");
