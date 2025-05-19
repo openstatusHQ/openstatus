@@ -9,6 +9,7 @@ export const monitorRecoveredSchema = z.object({
   metadata: z.object({
     region: z.string(),
     statusCode: z.number(),
+    latency: z.number().optional(),
     cronTimestamp: z.number().optional(),
   }),
 });
@@ -23,6 +24,7 @@ export const monitorDegradedSchema = z.object({
     region: z.string(),
     statusCode: z.number(),
     cronTimestamp: z.number().optional(),
+    latency: z.number().optional(),
   }),
 });
 
@@ -36,6 +38,7 @@ export const monitorFailedSchema = z.object({
     region: z.string(),
     statusCode: z.number().optional(),
     message: z.string().optional(),
+    latency: z.number().optional(),
     cronTimestamp: z.number().optional(),
   }),
 });
@@ -47,6 +50,7 @@ export const monitorFailedSchema = z.object({
 export const notificationSentSchema = z.object({
   action: z.literal("notification.sent"),
   metadata: z.object({
+    // we could use the notificationProviderSchema for more type safety
     provider: z.string(),
     cronTimestamp: z.number().optional(),
   }),
