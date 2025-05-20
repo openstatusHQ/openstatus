@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - "package/db/drizzle"
+      - "package/db/drizzle/**"
 jobs:
   migrate:
     name: 🗃️ Migrate DB
