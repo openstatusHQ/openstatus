@@ -4,6 +4,7 @@ import readingTime from "reading-time";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
 
 const autolinkHeadings = [
   rehypeAutolinkHeadings,
@@ -61,6 +62,7 @@ const posts = defineCollection({
     const mdx = await compileMDX(context, document, {
       // @ts-expect-error
       rehypePlugins: [rehypeSlug, prettyCode, autolinkHeadings],
+      remarkPlugins: [remarkGfm],
     });
     return {
       ...document,
