@@ -33,6 +33,33 @@ import Pre from "./pre";
 import type { SimpleChartProps } from "./simple-chart";
 import { SimpleChart } from "./simple-chart";
 
+// Table parser (string -> table)
+function parseMarkdownTable(mdTableString: string) {
+
+  const lines = mdTableString.trim().split('\n').filter(Boolean);
+  if (lines.length < 2) return null;
+
+  const headers = lines[0].split('|').map(h => h.trim()).filter(Boolean);
+  const rows = lines.slice(2).map(line =>
+    line.split('|').map(cell => cell.trim()).filter(Boolean)
+  );
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>{headers.map((h, i) => <TableHead key={i}>{h}</TableHead>)}</TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row, i) => (
+          <TableRow key={i}>
+            {row.map((cell, j) => <TableCell key={j}>{cell}</TableCell>)}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+
 export const components = {
   a: ({ href = "", ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) => {
     if (href.startsWith("http")) {
@@ -91,23 +118,31 @@ export const components = {
   ImageWithCaption: (props: ImageWithCaptionProps) => (
     <ImageWithCaption {...props} />
   ),
-  table: (props: HTMLAttributes<HTMLTableElement>) => <Table {...props} />,
-  thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-    <TableHeader {...props} />
-  ),
-  tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-    <TableBody {...props} />
-  ),
-  tfoot: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-    <TableFooter {...props} />
-  ),
-  tr: (props: HTMLAttributes<HTMLTableRowElement>) => <TableRow {...props} />,
-  th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
-    <TableHead {...props} />
-  ),
-  td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
-    <TableCell {...props} />
-  ),
+  p: ({ children }: { children?: React.ReactNode }) => {
+    if (typeof children === 'string' && children.includes('|')) {
+      //parse as markdown table
+      const table = parseMarkdownTable(children);
+      if (table) return table;
+    }
+    return <p>{children}</p>;
+  },
+  // table: (props: HTMLAttributes<HTMLTableElement>) => <Table {...props} />,
+  // thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
+  //   <TableHeader {...props} />
+  // ),
+  // tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => (
+  //   <TableBody {...props} />
+  // ),
+  // tfoot: (props: HTMLAttributes<HTMLTableSectionElement>) => (
+  //   <TableFooter {...props} />
+  // ),
+  // tr: (props: HTMLAttributes<HTMLTableRowElement>) => <TableRow {...props} />,
+  // th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
+  //   <TableHead {...props} />
+  // ),
+  // td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
+  //   <TableCell {...props} />
+  // ),
   // FIXME: file duplication (not related to content-collections)
   pre: (props: HTMLAttributes<HTMLPreElement>) => <Pre {...props} />,
 };
