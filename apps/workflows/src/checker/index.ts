@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { and, count, db, eq, inArray, isNull, schema } from "@openstatus/db";
-import { incidentTable, workspace } from "@openstatus/db/src/schema";
+import { incidentTable } from "@openstatus/db/src/schema";
 import {
   monitorStatusSchema,
   selectMonitorSchema,
@@ -94,6 +94,51 @@ checkerRoute.post("/updateStatus", async (c) => {
     return c.json({ success: true }, 200);
   }
 
+  // audit log the current state of the ping
+
+  switch (status) {
+    case "active":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.recovered",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+    case "degraded":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.degraded",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+    case "error":
+      await checkerAudit.publishAuditLog({
+        id: `monitor:${monitorId}`,
+        action: "monitor.failed",
+        targets: [{ id: monitorId, type: "monitor" }],
+        metadata: {
+          region,
+          statusCode: statusCode ?? -1,
+          message,
+          cronTimestamp,
+          latency,
+        },
+      });
+      break;
+  }
+
   if (affectedRegion.count >= numberOfRegions / 2 || numberOfRegions === 1) {
     switch (status) {
       case "active": {
@@ -130,8 +175,8 @@ checkerRoute.post("/updateStatus", async (c) => {
             // incident is already resolved
             break;
           }
-
           console.log(`🤓 recovering incident ${incident.id}`);
+
           await db
             .update(incidentTable)
             .set({
@@ -140,6 +185,13 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .where(eq(incidentTable.id, incident.id))
             .run();
+
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "incident.resolved",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { cronTimestamp, incidentId: incident.id },
+          });
         }
 
         await triggerNotifications({
@@ -153,13 +205,6 @@ checkerRoute.post("/updateStatus", async (c) => {
           incidentId: `${cronTimestamp}`,
         });
 
-        await checkerAudit.publishAuditLog({
-          id: `monitor:${monitorId}`,
-          action: "monitor.recovered",
-          targets: [{ id: monitorId, type: "monitor" }],
-          metadata: { region: region, statusCode: statusCode ?? -1 },
-        });
-
         break;
       }
       case "degraded":
@@ -168,6 +213,7 @@ checkerRoute.post("/updateStatus", async (c) => {
           break;
         }
         console.log(`🔄 update monitorStatus ${monitor.id} status: DEGRADED`);
+
         await db
           .update(schema.monitor)
           .set({ status: "degraded" })
@@ -184,12 +230,6 @@ checkerRoute.post("/updateStatus", async (c) => {
           incidentId: `${cronTimestamp}`,
         });
 
-        await checkerAudit.publishAuditLog({
-          id: `monitor:${monitorId}`,
-          action: "monitor.degraded",
-          targets: [{ id: monitorId, type: "monitor" }],
-          metadata: { region, statusCode: statusCode ?? -1 },
-        });
         break;
       case "error":
         if (monitor.status === "error") {
@@ -198,6 +238,7 @@ checkerRoute.post("/updateStatus", async (c) => {
         }
 
         console.log(`🔄 update monitorStatus ${monitor.id} status: ERROR`);
+
         await db
           .update(schema.monitor)
           .set({ status: "error" })
@@ -219,7 +260,7 @@ checkerRoute.post("/updateStatus", async (c) => {
             console.log("we are already in incident");
             break;
           }
-          const newIncident = await db
+          const [newIncident] = await db
             .insert(incidentTable)
             .values({
               monitorId: Number(monitorId),
@@ -228,9 +269,17 @@ checkerRoute.post("/updateStatus", async (c) => {
             })
             .returning();
 
-          if (!newIncident[0].id) {
+          if (!newIncident.id) {
             return;
           }
+
+          await checkerAudit.publishAuditLog({
+            id: `monitor:${monitorId}`,
+            action: "incident.created",
+            targets: [{ id: monitorId, type: "monitor" }],
+            metadata: { cronTimestamp, incidentId: newIncident.id },
+          });
+
           await triggerNotifications({
             monitorId,
             statusCode,
@@ -239,19 +288,13 @@ checkerRoute.post("/updateStatus", async (c) => {
             cronTimestamp,
             latency,
             region,
-            incidentId: String(newIncident[0].id),
+            incidentId: String(newIncident.id),
           });
 
           await db
             .update(schema.monitor)
             .set({ status: "error" })
             .where(eq(schema.monitor.id, monitor.id));
-          await checkerAudit.publishAuditLog({
-            id: `monitor:${monitorId}`,
-            action: "monitor.failed",
-            targets: [{ id: monitorId, type: "monitor" }],
-            metadata: { region, statusCode, message },
-          });
         } catch {
           console.log("incident was already created");
         }

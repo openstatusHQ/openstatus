@@ -9,6 +9,7 @@ export const monitorRecoveredSchema = z.object({
   metadata: z.object({
     region: z.string(),
     statusCode: z.number(),
+    latency: z.number().optional(),
     cronTimestamp: z.number().optional(),
   }),
 });
@@ -23,6 +24,7 @@ export const monitorDegradedSchema = z.object({
     region: z.string(),
     statusCode: z.number(),
     cronTimestamp: z.number().optional(),
+    latency: z.number().optional(),
   }),
 });
 
@@ -36,6 +38,7 @@ export const monitorFailedSchema = z.object({
     region: z.string(),
     statusCode: z.number().optional(),
     message: z.string().optional(),
+    latency: z.number().optional(),
     cronTimestamp: z.number().optional(),
   }),
 });
@@ -46,20 +49,27 @@ export const monitorFailedSchema = z.object({
  */
 export const notificationSentSchema = z.object({
   action: z.literal("notification.sent"),
-  // we could use the notificationProviderSchema for more type safety
-  metadata: z.object({ provider: z.string() }),
+  metadata: z.object({
+    // we could use the notificationProviderSchema for more type safety
+    provider: z.string(),
+    cronTimestamp: z.number().optional(),
+    type: z.enum(["alert", "recovery", "degraded"]).optional(),
+    notificationId: z.number().optional(),
+  }),
 });
-
-// TODO: update schemas with correct metadata and description
 
 export const incidentCreatedSchema = z.object({
   action: z.literal("incident.created"),
-  metadata: z.object({}), // tbd
+  metadata: z.object({
+    cronTimestamp: z.number().optional(),
+    incidentId: z.number().optional(),
+  }),
 });
 
 export const incidentResolvedSchema = z.object({
   action: z.literal("incident.resolved"),
-  metadata: z.object({}), // tbd
+  metadata: z.object({
+    cronTimestamp: z.number().optional(),
+    incidentId: z.number().optional(),
+  }),
 });
-
-// ...
