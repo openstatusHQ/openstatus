@@ -78,6 +78,7 @@
     "recharts": "2.15.0",
     "rehype-pretty-code": "0.10.0",
     "rehype-react": "7.2.0",
+    "remark-gfm": "^4.0.1",
     "remark-parse": "10.0.2",
     "remark-rehype": "10.1.0",
     "resend": "4.0.1",
