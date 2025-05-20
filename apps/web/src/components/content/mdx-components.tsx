@@ -126,23 +126,6 @@ export const components = {
     }
     return <p>{children}</p>;
   },
-  // table: (props: HTMLAttributes<HTMLTableElement>) => <Table {...props} />,
-  // thead: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-  //   <TableHeader {...props} />
-  // ),
-  // tbody: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-  //   <TableBody {...props} />
-  // ),
-  // tfoot: (props: HTMLAttributes<HTMLTableSectionElement>) => (
-  //   <TableFooter {...props} />
-  // ),
-  // tr: (props: HTMLAttributes<HTMLTableRowElement>) => <TableRow {...props} />,
-  // th: (props: ThHTMLAttributes<HTMLTableCellElement>) => (
-  //   <TableHead {...props} />
-  // ),
-  // td: (props: TdHTMLAttributes<HTMLTableCellElement>) => (
-  //   <TableCell {...props} />
-  // ),
   // FIXME: file duplication (not related to content-collections)
   pre: (props: HTMLAttributes<HTMLPreElement>) => <Pre {...props} />,
 };
