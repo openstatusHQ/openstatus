@@ -54,6 +54,7 @@ export const notificationSentSchema = z.object({
     provider: z.string(),
     cronTimestamp: z.number().optional(),
     type: z.enum(["alert", "recovery", "degraded"]).optional(),
+    notificationId: z.number().optional(),
   }),
 });
 
