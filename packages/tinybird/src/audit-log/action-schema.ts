@@ -53,6 +53,7 @@ export const notificationSentSchema = z.object({
     // we could use the notificationProviderSchema for more type safety
     provider: z.string(),
     cronTimestamp: z.number().optional(),
+    type: z.enum(["alert", "recovery", "degraded"]).optional(),
   }),
 });
 
@@ -60,6 +61,7 @@ export const incidentCreatedSchema = z.object({
   action: z.literal("incident.created"),
   metadata: z.object({
     cronTimestamp: z.number().optional(),
+    incidentId: z.number().optional(),
   }),
 });
 
@@ -67,5 +69,6 @@ export const incidentResolvedSchema = z.object({
   action: z.literal("incident.resolved"),
   metadata: z.object({
     cronTimestamp: z.number().optional(),
+    incidentId: z.number().optional(),
   }),
 });

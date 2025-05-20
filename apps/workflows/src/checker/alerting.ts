@@ -102,7 +102,11 @@ export const triggerNotifications = async ({
       id: `monitor:${monitorId}`,
       action: "notification.sent",
       targets: [{ id: monitorId, type: "monitor" }],
-      metadata: { provider: notif.notification.provider, cronTimestamp },
+      metadata: {
+        provider: notif.notification.provider,
+        cronTimestamp,
+        type: notifType,
+      },
     });
     //
   }
