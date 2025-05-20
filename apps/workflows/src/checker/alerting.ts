@@ -37,17 +37,17 @@ export const triggerNotifications = async ({
     .from(schema.notificationsToMonitors)
     .innerJoin(
       schema.notification,
-      eq(schema.notification.id, schema.notificationsToMonitors.notificationId)
+      eq(schema.notification.id, schema.notificationsToMonitors.notificationId),
     )
     .innerJoin(
       schema.monitor,
-      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId)
+      eq(schema.monitor.id, schema.notificationsToMonitors.monitorId),
     )
     .where(eq(schema.monitor.id, Number(monitorId)))
     .all();
   for (const notif of notifications) {
     console.log(
-      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`
+      `💌 sending notification for ${monitorId} and chanel ${notif.notification.provider} for ${notifType}`,
     );
     const monitor = selectMonitorSchema.parse(notif.monitor);
     try {
