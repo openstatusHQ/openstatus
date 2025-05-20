@@ -1,0 +1,40 @@
+name: Migrate DB
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "package/db/drizzle"
+jobs:
+  migrate:
+    name: 🗃️ Migrate DB
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL:  ${{ secrets.DATABASE_URL }}
+      DATABASE_AUTH_TOKEN:  ${{ secrets.DATABASE_AUTH_TOKEN }}
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: 🔥 Install bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: 📥 Download deps
+        run: pnpm install
+
+      - name: 🗃️ Run migrations
+        run: pnpm migrate
+        working-directory: ./packages/db
