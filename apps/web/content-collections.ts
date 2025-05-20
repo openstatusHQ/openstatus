@@ -61,7 +61,8 @@ const posts = defineCollection({
   transform: async (document, context) => {
     const mdx = await compileMDX(context, document, {
       // @ts-expect-error
-      rehypePlugins: [rehypeSlug, prettyCode, autolinkHeadings, remarkGfm],
+      rehypePlugins: [rehypeSlug, prettyCode, autolinkHeadings],
+      remarkPlugins:[remarkGfm]
     });
     return {
       ...document,
