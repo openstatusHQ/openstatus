@@ -208,7 +208,7 @@ export function SectionRequestHTTP({ form }: Props) {
           </Button>
         </div>
       </div>
-      {watchMethod === "POST" && (
+      {(watchMethod === "POST" || watchMethod === "PUT" || watchMethod === "PATCH" || watchMethod ==="DELETE") && (
         <div className="sm:col-span-full">
           <FormField
             control={form.control}

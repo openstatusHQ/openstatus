@@ -78,7 +78,8 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 		}
 	}
 
-	if inputData.Method != http.MethodGet {
+	// Maybe we should remove the default post to application JSON
+	if inputData.Method == http.MethodPost {
 		head := req.Header
 		_, ok := head["Content-Type"]
 

@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@auth/core": "0.34.1",
-    "@auth/drizzle-adapter": "1.7.0",
+    "@auth/drizzle-adapter": "1.9.1",
     "@google-cloud/tasks": "4.0.1",
     "@hookform/resolvers": "3.9.1",
     "@libsql/client": "0.14.0",
@@ -64,7 +64,7 @@
     "lucide-react": "0.468.0",
     "nanoid": "5.0.7",
     "next": "15.2.4",
-    "next-auth": "5.0.0-beta.25",
+    "next-auth": "5.0.0-beta.28",
     "next-plausible": "3.12.4",
     "next-themes": "0.2.1",
     "nuqs": "2.2.3",
