@@ -1,0 +1,1 @@
+ALTER TABLE `monitor` ADD `retry` integer DEFAULT 3;

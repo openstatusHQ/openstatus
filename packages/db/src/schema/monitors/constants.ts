@@ -3,11 +3,11 @@ export const monitorMethods = [
   "POST",
   "HEAD",
   "PUT",
+  "PATCH",
   "DELETE",
+  "TRACE",
   "CONNECT",
   "OPTIONS",
-  "TRACE",
-  "PATCH",
 ] as const;
 export const monitorStatus = ["active", "error", "degraded"] as const;
 

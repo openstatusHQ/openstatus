@@ -452,6 +452,7 @@ export const httpPayloadSchema = z.object({
       headers: z.record(z.string()),
     })
     .optional(),
+  retry: z.number().default(3),
 });
 
 export type HttpPayload = z.infer<typeof httpPayloadSchema>;
@@ -472,6 +473,7 @@ export const tpcPayloadSchema = z.object({
       headers: z.record(z.string()),
     })
     .optional(),
+  retry: z.number().default(3),
 });
 
 export type TcpPayload = z.infer<typeof tpcPayloadSchema>;

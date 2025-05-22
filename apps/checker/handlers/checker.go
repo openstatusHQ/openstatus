@@ -195,7 +195,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		}
 
 		// let's retry at least once if the status code is not successful.
-		if !isSuccessfull && called < 2 {
+		if !isSuccessfull && called < int(req.Retry) {
 			return fmt.Errorf("unable to ping: %v with status %v", res, res.Status)
 		}
 
@@ -277,7 +277,7 @@ func (h Handler) HTTPCheckerHandler(c *gin.Context) {
 		return nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
+	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(req.Retry))); err != nil {
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")

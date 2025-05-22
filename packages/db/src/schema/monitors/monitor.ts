@@ -52,6 +52,8 @@ export const monitor = sqliteTable("monitor", {
 
   public: integer("public", { mode: "boolean" }).default(false),
 
+  retry: integer("retry").default(3),
+
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`(strftime('%s', 'now'))`,
   ),
