@@ -124,7 +124,16 @@ export type Timing = z.infer<typeof timingSchema>;
 export type Checker = z.infer<typeof checkerSchema>;
 // FIXME: does not include TCP!
 export type RegionChecker = z.infer<typeof regionCheckerSchema>;
-export type Method = "GET" | "POST" | "PUT" | "DELETE" | "HEAD";
+export type Method =
+  | "GET"
+  | "HEAD"
+  | "OPTIONS"
+  | "POST"
+  | "PUT"
+  | "DELETE"
+  | "PATCH"
+  | "CONNECT"
+  | "TRACE";
 export type CachedRegionChecker = z.infer<typeof cachedCheckerSchema>;
 
 export async function checkRegion(
