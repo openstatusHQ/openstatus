@@ -47,11 +47,6 @@ email us at [ping@openstatus.dev](mailto:ping@openstatus.dev) or book a
 call<br/><br/>
 <a href="https://cal.com/team/openstatus/30min"><img alt="Book us with Cal.com" src="https://cal.com/book-with-cal-dark.svg" /></a>
 
-## Roadmap 🗺️
-
-Here's our [roadmap](https://openstatus.productlane.com/roadmap) feel free to
-contribute to it.
-
 ## Contributing 🤝
 
 If you want to help us building the best status page and alerting system, you
