@@ -194,10 +194,11 @@ export const MonitorSchema = z
       .default(false)
       .openapi({ description: "If the monitor is public" }),
     degradedAfter: z.number().nullish().openapi({
-      description: "The time after the monitor is considered degraded",
+      description:
+        "The time after the monitor is considered degraded in milliseconds",
     }),
     timeout: z.number().nullish().default(45000).openapi({
-      description: "The timeout of the request",
+      description: "The timeout of the request in milliseconds",
     }),
     jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
       description: "The type of the monitor",
