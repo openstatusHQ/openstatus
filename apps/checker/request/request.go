@@ -61,6 +61,7 @@ type HttpCheckerRequest struct {
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Retry         int64             `json:"retry,omitempty"`
 	OtelConfig    struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`
@@ -78,6 +79,7 @@ type TCPCheckerRequest struct {
 	CronTimestamp int64             `json:"cronTimestamp"`
 	Timeout       int64             `json:"timeout"`
 	DegradedAfter int64             `json:"degradedAfter,omitempty"`
+	Retry         int64             `json:"retry,omitempty"`
 	OtelConfig    struct {
 		Endpoint string            `json:"endpoint"`
 		Headers  map[string]string `json:"headers,omitempty"`

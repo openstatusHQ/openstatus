@@ -86,12 +86,17 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		trigger = req.Trigger
 	}
 
-	var called int
 
 	var response checker.TCPResponse
 
+	var retry int
+	if req.Retry == 0  {
+		retry = int(req.Retry)
+	} else {
+		retry = 3
+	}
+
 	op := func() error {
-		called++
 		res, err := checker.PingTcp(int(req.Timeout), req.URI)
 
 		if err != nil {
@@ -193,7 +198,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
+	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
 
 		id, e := uuid.NewV7()
 		if e != nil {

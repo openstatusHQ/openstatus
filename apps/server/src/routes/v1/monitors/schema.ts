@@ -200,6 +200,9 @@ export const MonitorSchema = z
     timeout: z.number().nullish().default(45000).openapi({
       description: "The timeout of the request in milliseconds",
     }),
+    retry: z.number().default(3).openapi({
+      description: "The number of retries to attempt",
+    }),
     jobType: z.enum(monitorJobTypes).optional().default("http").openapi({
       description: "The type of the monitor",
     }),
