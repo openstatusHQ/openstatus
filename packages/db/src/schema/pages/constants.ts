@@ -9,4 +9,5 @@ export const subdomainSafeList = [
   "data-table",
   "light",
   "workflows",
+  "template",
 ];
