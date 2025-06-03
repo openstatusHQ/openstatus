@@ -277,3 +277,81 @@ export const ResultRun = z.object({
     }, timingSchema.nullable())
     .optional(),
 });
+
+
+const baseRequest = z.object({
+  name: z.string().openapi({
+    description: "Name of the monitor",
+  }),
+  description: z.string().optional(),
+  retry: z.number().max(10).min(1).optional().openapi({
+    description: "Number of retries to attempt",
+    examples: [1, 3, 5],
+    default: 3,
+  }),
+  degradedAfter: z.number().min(0).optional().openapi({
+    description:
+      "Time in milliseconds to wait before marking the request as degraded",
+    examples: [30000],
+    default: 30000,
+  }),
+  timeout: z.number().min(0).optional().openapi({
+    description:
+      "Time in milliseconds to wait before marking the request as timed out",
+    examples: [45000],
+    default: 45000,
+  }),
+  frequency: z.enum(["30s", "1m", "5m", "10m", "30m", "1h"]),
+  active: z.boolean().optional().openapi({
+    description: "Whether the monitor is active",
+    default: false,
+  }),
+  public: z.boolean().optional().openapi({
+    description: "Whether the monitor is public",
+    default: false,
+  }),
+  regions: z.array(z.enum(flyRegions)).openapi({
+    description: "Regions to run the request in",
+  }),
+});
+
+const httpRequestSchema = z.object({
+  method: z.enum(monitorMethods),
+  url: z.string().url().openapi({
+    description: "URL to request",
+    examples: ["https://openstat.us", "https://www.openstatus.dev"],
+  }),
+  headers: z.record(z.string(), z.string()),
+  body: z.string().optional().openapi({
+    description: "Body to send with the request",
+    examples: ['{ "key": "value" }', "Hello World"],
+  }),
+});
+
+const tcpRequestSchema = z.object({
+  host: z.string().openapi({
+    examples: ["example.com", "localhost"],
+    description: "Host to connect to",
+  }),
+  port: z.number().openapi({
+    description: "Port to connect to",
+    examples: [80, 443, 1337],
+  }),
+});
+
+export const HTTPMonitorSchema =
+  baseRequest.extend({
+    assertions: z.array(assertion).optional().openapi({
+      description: "Assertions to run on the response",
+    }),
+    request: httpRequestSchema.openapi({
+      description: "The HTTP Request we are sending",
+    }),
+  })
+
+export const TCPMonitorSchema =
+  baseRequest.extend({
+    request: tcpRequestSchema.openapi({
+      description: "The TCP Request we are sending",
+    }),
+  })
