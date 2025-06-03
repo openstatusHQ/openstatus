@@ -41,7 +41,7 @@ test("create a valid monitor", async () => {
 });
 
 test("create a status report with invalid payload should return 400", async () => {
-  const res = await app.request("/v1/monitor", {
+  const res = await app.request("/v1/monitor/http", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -76,7 +76,7 @@ test("create a status report with invalid payload should return 400", async () =
 
 
 test("no auth key should return 401", async () => {
-  const res = await app.request("/v1/monitor", {
+  const res = await app.request("/v1/monitor/http", {
     method: "POST",
     headers: {
       "content-type": "application/json",

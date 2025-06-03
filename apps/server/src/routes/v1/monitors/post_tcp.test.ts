@@ -4,7 +4,7 @@ import { app } from "@/index";
 import { MonitorSchema } from "./schema";
 
 test("create a valid monitor", async () => {
-  const res = await app.request("/v1/monitor/http", {
+  const res = await app.request("/v1/monitor/tcp", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -41,7 +41,7 @@ test("create a valid monitor", async () => {
 });
 
 test("create a status report with invalid payload should return 400", async () => {
-  const res = await app.request("/v1/monitor", {
+  const res = await app.request("/v1/monitor/tcp", {
     method: "POST",
     headers: {
       "x-openstatus-key": "1",
@@ -53,21 +53,11 @@ test("create a status report with invalid payload should return 400", async () =
       description: "OpenStatus website",
       regions: ["ams", "gru"],
       request:{
-        url: "https://www.openstatus.dev",
-        method: "POST",
-        body: '{"hello":"world"}',
-        headers: [{"key":"value"}],
+        host: "openstatus.dev",
+        port: 443,
       },
       active: true,
       public: true,
-      assertions: [
-        {
-          type: "status",
-          compare: "eq",
-          target: 200,
-        },
-        { type: "header", compare: "not_eq", key: "key", target: "value" },
-      ],
     }),
   });
 
@@ -76,7 +66,7 @@ test("create a status report with invalid payload should return 400", async () =
 
 
 test("no auth key should return 401", async () => {
-  const res = await app.request("/v1/monitor", {
+  const res = await app.request("/v1/monitor/http", {
     method: "POST",
     headers: {
       "content-type": "application/json",
