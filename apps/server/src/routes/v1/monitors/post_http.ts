@@ -81,22 +81,28 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
 
 
 
-    const {  request,regions, assertions, ...rest } = input;
+    const {  request,regions, assertions, otelHeaders, ...rest } = input;
 
+    const headers =  input.request.headers ? Object.entries(input.request.headers) : undefined
+
+    const otelHeadersEntries = otelHeaders ? Object.entries(otelHeaders).map(([key, value]) => ({ "key":key, "value":value })) : undefined;
+    const headersEntries =  headers ? headers.map(([key, value]) => ({ "key":key, "value":value })) : undefined;
     const assert = assertions ? getAssertions(assertions) : [];
 
     const _newMonitor = await db
       .insert(monitor)
       .values({
         ...rest,
+        periodicity: input.frequency,
         url: request.url,
         method: request.method,
         body: request.body,
         workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
-        headers: input.request.headers ? JSON.stringify(input.request.headers) : undefined,
+        headers: headersEntries ? JSON.stringify(headersEntries) : undefined,
         assertions: assert.length > 0 ? serialize(assert) : undefined,
         timeout: input.timeout || 45000,
+        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined
       })
       .returning()
       .get();

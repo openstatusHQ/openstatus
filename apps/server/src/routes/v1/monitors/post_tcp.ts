@@ -15,7 +15,7 @@ const postRoute = createRoute({
   method: "post",
   tags: ["monitor"],
   summary: "Create a  tcp monitor",
-  path: "/http",
+  path: "/tcp",
   middleware: [trackMiddleware(Events.CreateMonitor, ["url", "jobType"])],
   request: {
     body: {
@@ -80,7 +80,8 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
 
 
 
-    const {  request,regions,  ...rest } = input;
+    const {  request,regions, otelHeaders, ...rest } = input;
+    const otelHeadersEntries = otelHeaders ? Object.entries(otelHeaders).map(([key, value]) => ({ "key":key, "value":value })) : undefined;
 
 
     const _newMonitor = await db
@@ -93,6 +94,7 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         headers: undefined,
         assertions: undefined,
         timeout: input.timeout || 45000,
+        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined
       })
       .returning()
       .get();

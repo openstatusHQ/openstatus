@@ -11,7 +11,7 @@ test("create a valid monitor", async () => {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      periodicity: "10m",
+      frequency: "10m",
       name: "OpenStatus",
       description: "OpenStatus website",
       regions: ["ams", "gru"],
@@ -48,7 +48,7 @@ test("create a status report with invalid payload should return 400", async () =
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      periodicity: "21m",
+      frequency: "21m",
       name: "OpenStatus",
       description: "OpenStatus website",
       regions: ["ams", "gru"],
@@ -66,7 +66,7 @@ test("create a status report with invalid payload should return 400", async () =
 
 
 test("no auth key should return 401", async () => {
-  const res = await app.request("/v1/monitor/http", {
+  const res = await app.request("/v1/monitor/tcp", {
     method: "POST",
     headers: {
       "content-type": "application/json",

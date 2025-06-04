@@ -313,6 +313,14 @@ const baseRequest = z.object({
   regions: z.array(z.enum(flyRegions)).openapi({
     description: "Regions to run the request in",
   }),
+  otelEndpoint: z.string().url().optional().openapi({
+    description: "OTEL endpoint to send metrics to",
+    examples: ["https://otel.example.com"],
+  }),
+  otelHeaders: z.record(z.string(), z.string()).optional().openapi({
+    description: "Headers to send with the OTEL request",
+    examples: [{ "Content-Type": "application/json" }],
+  }),
 });
 
 const httpRequestSchema = z.object({
@@ -321,7 +329,10 @@ const httpRequestSchema = z.object({
     description: "URL to request",
     examples: ["https://openstat.us", "https://www.openstatus.dev"],
   }),
-  headers: z.record(z.string(), z.string()),
+  headers: z.record(z.string(), z.string()).optional().openapi({
+    description: "Headers to send with the request",
+    examples: [{ "Content-Type": "application/json" }],
+  }),
   body: z.string().optional().openapi({
     description: "Body to send with the request",
     examples: ['{ "key": "value" }', "Hello World"],
