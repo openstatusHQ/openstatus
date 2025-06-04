@@ -19,7 +19,8 @@ test("create a valid monitor", async () => {
         url: "https://www.openstatus.dev",
         method: "POST",
         body: '{"hello":"world"}',
-        headers: [{ key: "value" }],
+        headers: { "content-type": "application/json" }
+,
       },
       active: true,
       public: true,
@@ -56,7 +57,7 @@ test("create a status report with invalid payload should return 400", async () =
         url: "https://www.openstatus.dev",
         method: "POST",
         body: '{"hello":"world"}',
-        headers: [{ key: "value" }],
+        headers: { "content-type": "application/json" }
       },
       active: true,
       public: true,

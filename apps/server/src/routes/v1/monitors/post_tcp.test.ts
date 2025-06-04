@@ -16,10 +16,8 @@ test("create a valid monitor", async () => {
       description: "OpenStatus website",
       regions: ["ams", "gru"],
       request: {
-        url: "https://www.openstatus.dev",
-        method: "POST",
-        body: '{"hello":"world"}',
-        headers: [{ key: "value" }],
+        host: "openstatus.dev",
+        port: 443,
       },
       active: true,
       public: true,
