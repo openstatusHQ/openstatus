@@ -15,11 +15,11 @@ test("create a valid monitor", async () => {
       name: "OpenStatus",
       description: "OpenStatus website",
       regions: ["ams", "gru"],
-      request:{
+      request: {
         url: "https://www.openstatus.dev",
         method: "POST",
         body: '{"hello":"world"}',
-        headers: [{"key":"value"}],
+        headers: [{ key: "value" }],
       },
       active: true,
       public: true,
@@ -52,7 +52,7 @@ test("create a status report with invalid payload should return 400", async () =
       name: "OpenStatus",
       description: "OpenStatus website",
       regions: ["ams", "gru"],
-      request:{
+      request: {
         host: "openstatus.dev",
         port: 443,
       },
@@ -63,7 +63,6 @@ test("create a status report with invalid payload should return 400", async () =
 
   expect(res.status).toBe(400);
 });
-
 
 test("no auth key should return 401", async () => {
   const res = await app.request("/v1/monitor/tcp", {

@@ -4,12 +4,10 @@ import { Events } from "@openstatus/analytics";
 import { and, db, eq, isNull, sql } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
-
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import type { monitorsApi } from "./index";
-import {  MonitorSchema, TCPMonitorSchema } from "./schema";
-
+import { MonitorSchema, TCPMonitorSchema } from "./schema";
 
 const postRoute = createRoute({
   method: "post",
@@ -78,11 +76,13 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       }
     }
 
-
-
-    const {  request,regions, otelHeaders, ...rest } = input;
-    const otelHeadersEntries = otelHeaders ? Object.entries(otelHeaders).map(([key, value]) => ({ "key":key, "value":value })) : undefined;
-
+    const { request, regions, otelHeaders, ...rest } = input;
+    const otelHeadersEntries = otelHeaders
+      ? Object.entries(otelHeaders).map(([key, value]) => ({
+          key: key,
+          value: value,
+        }))
+      : undefined;
 
     const _newMonitor = await db
       .insert(monitor)
@@ -94,7 +94,9 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
         headers: undefined,
         assertions: undefined,
         timeout: input.timeout || 45000,
-        otelHeaders: otelHeadersEntries ? JSON.stringify(otelHeadersEntries) : undefined
+        otelHeaders: otelHeadersEntries
+          ? JSON.stringify(otelHeadersEntries)
+          : undefined,
       })
       .returning()
       .get();
