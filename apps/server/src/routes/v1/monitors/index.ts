@@ -6,6 +6,8 @@ import { registerDeleteMonitor } from "./delete";
 import { registerGetMonitor } from "./get";
 import { registerGetAllMonitors } from "./get_all";
 import { registerPostMonitor } from "./post";
+import { registerPostMonitorHTTP } from "./post_http";
+import { registerPostMonitorTCP } from "./post_tcp";
 import { registerPutMonitor } from "./put";
 import { registerGetMonitorResult } from "./results/get";
 import { registerRunMonitor } from "./run/post";
@@ -21,6 +23,8 @@ registerGetMonitor(monitorsApi);
 registerPutMonitor(monitorsApi);
 registerDeleteMonitor(monitorsApi);
 registerPostMonitor(monitorsApi);
+registerPostMonitorHTTP(monitorsApi);
+registerPostMonitorTCP(monitorsApi);
 //
 registerGetMonitorSummary(monitorsApi);
 registerTriggerMonitor(monitorsApi);
