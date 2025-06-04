@@ -440,7 +440,7 @@ const textBodyAssertions = z
     }),
   });
 
-const assertionsSchema = z.discriminatedUnion("kind", [
+export const assertionsSchema = z.discriminatedUnion("kind", [
   statusCodeAssertion,
   headerAssertions,
   textBodyAssertions,

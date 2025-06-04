@@ -10,7 +10,7 @@ import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
 import type { monitorsApi } from "./index";
 import { HTTPMonitorSchema, MonitorSchema } from "./schema";
-import { getAssertions } from "./utils";
+import { getAssertionNew, getAssertions } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -94,7 +94,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
     const headersEntries = headers
       ? headers.map(([key, value]) => ({ key: key, value: value }))
       : undefined;
-    const assert = assertions ? getAssertions(assertions) : [];
+    const assert = assertions ? getAssertionNew(assertions) : [];
 
     const _newMonitor = await db
       .insert(monitor)
