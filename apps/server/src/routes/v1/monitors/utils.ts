@@ -32,23 +32,26 @@ export const getAssertionNew = (
 ): Assertion[] => {
   const assert: Assertion[] = [];
 
+
   for (const a of assertions) {
     if (a.kind === "header") {
+      const {kind, ...rest} = a;
       assert.push(
         new HeaderAssertion({
-          key: a.key,
-          target: a.target,
-          compare: a.compare,
+          ...rest,
           type: "header",
           version: "v1",
         }),
       );
     }
     if (a.kind === "textBody") {
-      assert.push(new TextBodyAssertion({  target: a.target, compare:a.compare, type: "textBody", version: "v1" }));
+      const {kind, ...rest} = a;
+
+      assert.push(new TextBodyAssertion({  ...rest, type: "textBody", version: "v1" }));
     }
     if (a.kind === "statusCode") {
-      assert.push(new StatusAssertion({  compare: a.compare, type: "status", version: "v1", target: a.target }));
+      const {kind, ...rest} = a;
+      assert.push(new StatusAssertion({  ...rest, type: "status", version: "v1"}));
     }
   }
   return assert;
