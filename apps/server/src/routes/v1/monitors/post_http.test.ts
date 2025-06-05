@@ -25,11 +25,11 @@ test("create a valid monitor", async () => {
       public: true,
       assertions: [
         {
-          type: "status",
+          kind: "statusCode",
           compare: "eq",
           target: 200,
         },
-        { type: "header", compare: "not_eq", key: "key", target: "value" },
+        { kind: "header", compare: "not_eq", key: "key", target: "value" },
       ],
     }),
   });
@@ -62,11 +62,11 @@ test("create a status report with invalid payload should return 400", async () =
       public: true,
       assertions: [
         {
-          type: "status",
+          kind: "status",
           compare: "eq",
           target: 200,
         },
-        { type: "header", compare: "not_eq", key: "key", target: "value" },
+        { kind: "header", compare: "not_eq", key: "key", target: "value" },
       ],
     }),
   });

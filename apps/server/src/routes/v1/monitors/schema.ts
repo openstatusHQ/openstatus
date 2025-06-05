@@ -378,8 +378,74 @@ const tcpRequestSchema = z.object({
   }),
 });
 
+const statusCodeAssertion = z
+  .object({
+    kind: z.literal("statusCode"),
+    compare: numberCompare.openapi({
+      description: "Comparison operator",
+      examples: ["eq", "not_eq", "gt", "gte", "lt", "lte"],
+    }),
+    target: z.number().openapi({
+      description: "Status code to assert",
+      examples: [200, 404, 418, 500],
+    }),
+  })
+  .openapi({
+    examples: [
+      {
+        kind: "statusCode",
+        compare: "eq",
+        target: 200,
+      },
+      {
+        kind: "statusCode",
+        compare: "not_eq",
+        target: 404,
+      },
+      {
+        kind: "statusCode",
+        compare: "gt",
+        target: 300,
+      },
+    ],
+  });
+
+const headerAssertions = z.object({
+  kind: z.literal("header"),
+  compare: stringCompare.openapi({
+    description: "Comparison operator",
+    examples: ["eq", "not_eq", "contains", "not_contains"],
+  }),
+  key: z.string().openapi({
+    description: "Header key to assert",
+    examples: ["Content-Type", "X-Request-ID"],
+  }),
+  target: z.string().openapi({
+    description: "Header value to assert",
+    examples: ["application/json", "text/html"],
+  }),
+});
+
+const textBodyAssertions = z.object({
+  kind: z.literal("textBody"),
+  compare: stringCompare.openapi({
+    description: "Comparison operator",
+    examples: ["eq", "not_eq", "contains", "not_contains"],
+  }),
+  target: z.string().openapi({
+    description: "Text body to assert",
+    examples: ["Hello, world!", "404 Not Found"],
+  }),
+});
+
+export const assertionsSchema = z.discriminatedUnion("kind", [
+  statusCodeAssertion,
+  headerAssertions,
+  textBodyAssertions,
+]);
+
 export const HTTPMonitorSchema = baseRequest.extend({
-  assertions: z.array(assertion).optional().openapi({
+  assertions: z.array(assertionsSchema).optional().openapi({
     description: "Assertions to run on the response",
   }),
   request: httpRequestSchema.openapi({
