@@ -88,6 +88,8 @@ export function registerPostMonitorTCP(api: typeof monitorsApi) {
       .insert(monitor)
       .values({
         ...rest,
+        jobType: "tcp",
+        periodicity: input.frequency,
         url: `${request.host}:${request.port}`,
         workspaceId: workspaceId,
         regions: regions ? regions.join(",") : undefined,
