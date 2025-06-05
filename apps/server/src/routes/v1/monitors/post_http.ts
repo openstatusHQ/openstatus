@@ -101,6 +101,7 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
       .values({
         ...rest,
         periodicity: input.frequency,
+        jobType: "http",
         url: request.url,
         method: request.method,
         body: request.body,
