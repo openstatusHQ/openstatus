@@ -26,16 +26,14 @@ export const getAssertions = (
   return assert;
 };
 
-
 export const getAssertionNew = (
   assertions: z.infer<typeof assertionsSchema>[],
 ): Assertion[] => {
   const assert: Assertion[] = [];
 
-
   for (const a of assertions) {
     if (a.kind === "header") {
-      const {kind, ...rest} = a;
+      const { kind, ...rest } = a;
       assert.push(
         new HeaderAssertion({
           ...rest,
@@ -45,13 +43,17 @@ export const getAssertionNew = (
       );
     }
     if (a.kind === "textBody") {
-      const {kind, ...rest} = a;
+      const { kind, ...rest } = a;
 
-      assert.push(new TextBodyAssertion({  ...rest, type: "textBody", version: "v1" }));
+      assert.push(
+        new TextBodyAssertion({ ...rest, type: "textBody", version: "v1" }),
+      );
     }
     if (a.kind === "statusCode") {
-      const {kind, ...rest} = a;
-      assert.push(new StatusAssertion({  ...rest, type: "status", version: "v1"}));
+      const { kind, ...rest } = a;
+      assert.push(
+        new StatusAssertion({ ...rest, type: "status", version: "v1" }),
+      );
     }
   }
   return assert;
