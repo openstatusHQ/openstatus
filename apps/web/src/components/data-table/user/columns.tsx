@@ -31,7 +31,7 @@ export const columns: ColumnDef<User & { role: WorkspaceRole }>[] = [
     cell: ({ row }) => {
       const role = row.getValue("role") as WorkspaceRole;
       return (
-        <Badge variant={role === "member" ? "outline-solid" : "default"}>
+        <Badge variant={role === "member" ? "outline" : "default"}>
           {row.getValue("role")}
         </Badge>
       );

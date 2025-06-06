@@ -79,7 +79,7 @@ export function PricingTable({
                 <Button
                   className="w-full"
                   size="sm"
-                  variant={key === "starter" ? "default" : "outline-solid"}
+                  variant={key === "starter" ? "default" : "outline"}
                   onClick={() => {
                     if (events?.[key]) {
                       return events[key]?.();

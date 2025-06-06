@@ -170,7 +170,7 @@ function App() {
         <p>Is this the 🐐 stack?</p>
         <div>
           <Button
-            variant={"outline-solid"}
+            variant={"outline"}
             disabled={v.isPending}
             onClick={async () => {
               await v.mutateAsync({
@@ -182,7 +182,7 @@ function App() {
             Yes
           </Button>
           <Button
-            variant={"outline-solid"}
+            variant={"outline"}
             disabled={v.isPending}
             onClick={async () => {
               await v.mutateAsync({

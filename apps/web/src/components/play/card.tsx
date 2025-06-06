@@ -23,7 +23,7 @@ export function Card({
   className,
   ...props
 }: CardProps) {
-  const buttonVariant = variant === "default" ? "outline-solid" : "default";
+  const buttonVariant = variant === "default" ? "outline" : "default";
   const shellClassName =
     variant === "default" ? "" : "bg-accent text-accent-foreground";
 
