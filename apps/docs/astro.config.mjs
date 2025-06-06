@@ -1,6 +1,6 @@
 import sitemap from "@astrojs/sitemap";
 import starlight from "@astrojs/starlight";
-import tailwind from "@astrojs/tailwind";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig, envField } from "astro/config";
 import starlightSidebarTopics from "starlight-sidebar-topics";
 import Icons from "unplugin-icons/vite";
@@ -9,7 +9,7 @@ import Icons from "unplugin-icons/vite";
 export default defineConfig({
   site: "https://docs.openstatus.dev",
   vite: {
-    plugins: [Icons({ compiler: "astro" })],
+    plugins: [Icons({ compiler: "astro" }), tailwindcss()],
   },
   env: {
     schema: {
@@ -24,11 +24,11 @@ export default defineConfig({
     starlight({
       title: "OpenStatus Documentation",
       favicon: "/favicon.ico",
-      social: {
-        github: "https://github.com/openstatusHQ/openstatus",
-        blueSky: "https://bsky.app/profile/openstatus.dev",
-        discord: "https://www.openstatus.dev/discord",
-      },
+      social: [
+        { icon: "github", label: "GitHub", href: "https://github.com/openstatusHQ/openstatus" },
+        { icon: "discord", label: "Discord", href: "https://www.openstatus.dev/discord" },
+        { icon: "blueSky", label: "BlueSky", href: "https://bsky.app/profile/openstatus.dev" },
+      ],
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
         Head: "./src/components/Head.astro",
@@ -40,7 +40,7 @@ export default defineConfig({
       },
       customCss: [
         // Path to your Tailwind base styles:
-        "./src/tailwind.css",
+        "./src/global.css",
         "./src/custom.css",
       ],
       plugins: [
@@ -247,10 +247,6 @@ export default defineConfig({
           },
         ]),
       ],
-    }),
-    tailwind({
-      // Disable the default base styles:
-      applyBaseStyles: false,
     }),
   ],
 });

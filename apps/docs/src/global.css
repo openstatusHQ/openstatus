@@ -1,14 +1,14 @@
-@font-face {
+@import 'tailwindcss';
+
+@layer base {
+  @font-face {
     font-family: 'calsans';
     src: url('/fonts/CalSans-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
     font-display: swap;
   }
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+}
 
 @layer base {
     :root[data-theme='light'] {
