@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+@theme {
+  --font-cal: "calsans", "sans-serif";
+}
+
 @layer base {
   @font-face {
     font-family: 'calsans';
