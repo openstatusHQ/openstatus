@@ -32,7 +32,7 @@ export function PauseButton({ monitor }: { monitor: Monitor }) {
 
   return (
     <Button
-      variant={monitor.active ? "outline" : "default"}
+      variant={monitor.active ? "outline-solid" : "default"}
       onClick={toggle}
       disabled={isPending}
     >

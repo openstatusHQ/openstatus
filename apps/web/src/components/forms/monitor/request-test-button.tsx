@@ -85,7 +85,7 @@ export function RequestTestButton({ form, pingEndpoint, limits }: Props) {
 
   return (
     <Dialog open={!!check} onOpenChange={() => setCheck(undefined)}>
-      <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+      <div className="group flex h-10 items-center rounded-md bg-transparent text-sm ring-offset-background focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
         <Select
           value={value}
           onValueChange={(value: MonitorFlyRegion) => setValue(value)}

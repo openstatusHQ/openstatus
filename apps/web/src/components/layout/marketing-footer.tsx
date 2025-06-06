@@ -124,7 +124,7 @@ function FooterLink({ href, label, external = false }: FooterLinkProps) {
       {...externalProps}
     >
       {label}
-      {isExternal ? <ArrowUpRight className="h-4 w-4 flex-shrink-0" /> : null}
+      {isExternal ? <ArrowUpRight className="h-4 w-4 shrink-0" /> : null}
     </Link>
   );
 }

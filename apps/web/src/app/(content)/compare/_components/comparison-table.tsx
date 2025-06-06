@@ -48,7 +48,7 @@ export function ComparisonTable({ slug }: { slug: string }) {
                       >
                         {description}
                         {/* FIXME: arrow is not `text-foreground` when hovered */}
-                        <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-transparent group-hover/row:text-muted-foreground group-hover:text-foreground" />
+                        <ArrowUpRight className="h-4 w-4 shrink-0 text-transparent group-hover/row:text-muted-foreground group-hover:text-foreground" />
                       </a>
                     ) : (
                       <span className="hidden font-normal text-muted-foreground text-sm sm:block">

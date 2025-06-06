@@ -23,7 +23,7 @@ export function Card({
   className,
   ...props
 }: CardProps) {
-  const buttonVariant = variant === "default" ? "outline" : "default";
+  const buttonVariant = variant === "default" ? "outline-solid" : "default";
   const shellClassName =
     variant === "default" ? "" : "bg-accent text-accent-foreground";
 
@@ -37,7 +37,7 @@ export function Card({
   return (
     <Shell
       className={cn(
-        "group flex flex-col gap-3 hover:shadow hover:dark:border-card-foreground/30",
+        "group flex flex-col gap-3 hover:shadow-sm dark:hover:border-card-foreground/30",
         shellClassName,
         className,
       )}

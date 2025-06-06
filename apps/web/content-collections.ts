@@ -15,7 +15,7 @@ const autolinkHeadings = [
     },
     properties: {
       className: [
-        "no-underline group-hover:after:content-['#'] after:text-muted-foreground/30 after:hover:text-muted-foreground ml-1 after:p-1",
+        "no-underline group-hover:after:content-['#'] after:text-muted-foreground/30 hover:after:text-muted-foreground ml-1 after:p-1",
       ],
       "aria-hidden": "true",
     },

@@ -44,7 +44,7 @@ export function ChangePlanButton({ workspace }: { workspace: Workspace }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={workspace.plan === "free" ? "default" : "outline"}>
+        <Button variant={workspace.plan === "free" ? "default" : "outline-solid"}>
           Change Plan
         </Button>
       </DialogTrigger>

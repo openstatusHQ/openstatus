@@ -8,7 +8,7 @@ import { Icons } from "../icons";
 
 export function CardContainer({ children }: { children: React.ReactNode }) {
   return (
-    <Shell className="flex flex-col gap-6 bg-gradient-to-br from-0% from-[hsl(var(--muted))] to-20% to-transparent">
+    <Shell className="flex flex-col gap-6 bg-linear-to-br from-0% from-[hsl(var(--muted))] to-20% to-transparent">
       {children}
     </Shell>
   );
@@ -33,7 +33,7 @@ export function CardIcon({ icon }: { icon: ValidIcon }) {
 
 export function CardTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="bg-gradient-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-center font-cal text-3xl text-transparent">
+    <h3 className="bg-linear-to-tl from-0% from-[hsl(var(--muted))] to-40% to-[hsl(var(--foreground))] bg-clip-text text-center font-cal text-3xl text-transparent">
       {children}
     </h3>
   );

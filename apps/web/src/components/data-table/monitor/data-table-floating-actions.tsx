@@ -183,7 +183,7 @@ export function DataTableFloatingActions<TData>({
   return (
     <Portal.Root>
       <div className="fixed inset-x-0 bottom-4 z-50 mx-auto w-fit px-4">
-        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-4 py-2 shadow">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border bg-background px-4 py-2 shadow-sm">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

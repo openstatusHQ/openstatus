@@ -17,7 +17,7 @@ export function StatusDot({ active, status, maintenance }: StatusDotProps) {
   if (maintenance) {
     return (
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-monitoring/80 opacity-75 duration-[2000ms]" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-monitoring/80 opacity-75 duration-2000" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-status-monitoring" />
       </span>
     );
@@ -25,7 +25,7 @@ export function StatusDot({ active, status, maintenance }: StatusDotProps) {
   if (status === "error") {
     return (
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-down/80 opacity-75 duration-[2000ms]" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-down/80 opacity-75 duration-2000" />
         <span className="absolute inline-flex h-2 w-2 rounded-full bg-status-down" />
       </span>
     );
@@ -33,7 +33,7 @@ export function StatusDot({ active, status, maintenance }: StatusDotProps) {
   if (status === "degraded") {
     return (
       <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-degraded/80 opacity-75 duration-[2000ms]" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-degraded/80 opacity-75 duration-2000" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-status-degraded" />
       </span>
     );
@@ -41,7 +41,7 @@ export function StatusDot({ active, status, maintenance }: StatusDotProps) {
 
   return (
     <span className="relative flex h-2 w-2">
-      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-operational/80 opacity-75 duration-[2000ms]" />
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-status-operational/80 opacity-75 duration-2000" />
       <span className="relative inline-flex h-2 w-2 rounded-full bg-status-operational" />
     </span>
   );

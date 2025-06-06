@@ -55,7 +55,7 @@ export function ProFeatureHoverCard({
             className="group inline-flex items-center font-medium text-foreground underline underline-offset-4 hover:no-underline"
           >
             Upgrade now
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+            <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
           </Link>
         </p>
       </HoverCardContent>

@@ -32,7 +32,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
   };
 
   return (
-    <div className="group flex h-8 items-center overflow-hidden rounded-md border border-input border-dashed bg-transparent text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+    <div className="group flex h-8 items-center overflow-hidden rounded-md border border-input border-dashed bg-transparent text-sm ring-offset-background focus-within:outline-hidden focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
       <Select
         value={selectedValue?.select || ""}
         onValueChange={(value) => {
@@ -72,7 +72,7 @@ export function DataTableFacetedInputDropdown<TData, TValue>({
       </Select>
       <Separator orientation="vertical" className="h-4" />
       <input
-        className="w-24 rounded-md bg-background px-3 py-2 placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        className="w-24 rounded-md bg-background px-3 py-2 placeholder:text-muted-foreground focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
         type="number"
         placeholder="4000"
         min={0}
