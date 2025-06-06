@@ -25,9 +25,21 @@ export default defineConfig({
       title: "OpenStatus Documentation",
       favicon: "/favicon.ico",
       social: [
-        { icon: "github", label: "GitHub", href: "https://github.com/openstatusHQ/openstatus" },
-        { icon: "discord", label: "Discord", href: "https://www.openstatus.dev/discord" },
-        { icon: "blueSky", label: "BlueSky", href: "https://bsky.app/profile/openstatus.dev" },
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/openstatusHQ/openstatus",
+        },
+        {
+          icon: "discord",
+          label: "Discord",
+          href: "https://www.openstatus.dev/discord",
+        },
+        {
+          icon: "blueSky",
+          label: "BlueSky",
+          href: "https://bsky.app/profile/openstatus.dev",
+        },
       ],
       components: {
         SiteTitle: "./src/components/SiteTitle.astro",
