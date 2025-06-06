@@ -34,7 +34,7 @@ export default function AboutPage() {
           <li />
         </ul>
         <Separator className="my-2" />
-        <Shell className="mx-auto w-auto shadow sm:px-8 sm:py-8 md:px-12 md:py-12 dark:border-card-foreground/30">
+        <Shell className="mx-auto w-auto shadow-sm sm:px-8 sm:py-8 md:px-12 md:py-12 dark:border-card-foreground/30">
           {story ? (
             <Mdx
               code={story.mdx}

@@ -14,8 +14,8 @@ export function FloatingAction({ id }: { id: string | null }) {
         <Button asChild>
           <Link href={`/play/checker/${id}`}>
             <span className="mr-1">Response Details</span>
-            <ArrowRight className="relative mb-[1px] inline h-4 w-0 transition-all group-hover:w-4" />
-            <ChevronRight className="relative mb-[1px] inline h-4 w-4 transition-all group-hover:w-0" />
+            <ArrowRight className="relative mb-px inline h-4 w-0 transition-all group-hover:w-4" />
+            <ChevronRight className="relative mb-px inline h-4 w-4 transition-all group-hover:w-0" />
           </Link>
         </Button>
       </div>

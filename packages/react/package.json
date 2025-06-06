@@ -14,15 +14,16 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsup --watch && pnpm run dev:tailwind",
-    "dev:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --watch",
-    "build:tailwind": "tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify",
+    "dev:tailwind": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --watch",
+    "build:tailwind": "npx @tailwindcss/cli -i ./src/styles.css -o ./dist/styles.css --minify",
     "build": "tsup && pnpm run build:tailwind"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
+    "@tailwindcss/cli": "4.1.8",
     "@types/node": "20.8.0",
     "@types/react": "18.3.3",
-    "tailwindcss": "3.4.3",
+    "tailwindcss": "4.1.8",
     "tsup": "7.2.0",
     "typescript": "5.6.2"
   },

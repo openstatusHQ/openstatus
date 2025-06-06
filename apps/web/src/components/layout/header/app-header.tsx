@@ -58,7 +58,7 @@ export function AppHeader() {
                 <Button variant="link" asChild>
                   <Link href="/docs" target="_blank" className="group">
                     Docs
-                    <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+                    <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
                   </Link>
                 </Button>
               </li>

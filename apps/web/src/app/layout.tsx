@@ -22,7 +22,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 const calSans = LocalFont({
   src: "../public/fonts/CalSans-SemiBold.ttf",
-  variable: "--font-calsans",
+  variable: "--font-cal",
 });
 
 export const metadata: Metadata = {

@@ -48,7 +48,7 @@ export function SimpleChart({ data }: SimpleChartProps) {
               formatter={(value, name) => (
                 <>
                   <div
-                    className="h-full w-1 shrink-0 self-center rounded-[2px] bg-[--color-bg]"
+                    className="h-full w-1 shrink-0 self-center rounded-[2px] bg-(--color-bg)"
                     style={
                       {
                         "--color-bg": `var(--color-${name})`,

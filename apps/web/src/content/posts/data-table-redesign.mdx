@@ -73,7 +73,7 @@ Several smaller hacks were necessary:
 
 To **highlight the table rows**, we added negative outlines to fit within the container. This prevents the table overflow from cutting off the outline. We couldn't use the border attribute since the table's left-hand border serves as a separator between filter controls and main content (including cmd k, chart, and toggles).
 
-Used tailwindcss classes: `focus-visible:outline outline-1 -outline-offset-1 outline-primary focus-visible:bg-muted/50 data-[state=selected]:outline`
+Used tailwindcss classes: `focus-visible:outline-solid outline-1 -outline-offset-1 outline-primary focus-visible:bg-muted/50 data-[state=selected]:outline-solid`
 
 > In general, whenever there are outline issues due to `overflow-hidden`, I often tend to add negative margin with the same positive padding to the element `-m-* p-*`.
 

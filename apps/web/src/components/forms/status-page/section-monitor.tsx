@@ -116,7 +116,7 @@ export function SectionMonitor({ form, monitors }: Props) {
           value={fields}
           onMove={({ activeIndex, overIndex }) => move(activeIndex, overIndex)}
           // overlay={
-          //   <div className="grid grid-cols-[0.5fr,1fr,auto] items-center gap-2">
+          //   <div className="grid grid-cols-[0.5fr_1fr_auto] items-center gap-2">
           //     <Skeleton className="h-8 w-full rounded-sm" />
           //     <Skeleton className="h-8 w-full rounded-sm" />
           //     <Skeleton className="size-8 shrink-0 rounded-sm" />
@@ -131,7 +131,7 @@ export function SectionMonitor({ form, monitors }: Props) {
               if (!monitor) return null;
               return (
                 <SortableItem key={field.id} value={field.id} asChild>
-                  <div className="grid grid-cols-[0.5fr,1fr,auto] items-center gap-2">
+                  <div className="grid grid-cols-[0.5fr_1fr_auto] items-center gap-2">
                     <div className="flex items-center gap-2 truncate">
                       <StatusDot
                         active={monitor.active}

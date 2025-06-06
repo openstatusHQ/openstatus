@@ -182,7 +182,7 @@ export function SectionAdvanced({ form }: Props) {
             <MousePointer2 className="h-3 w-3" />
             <p className="text-sm">Hover State</p>
           </div>
-          <div className="mx-auto max-w-[15rem]">
+          <div className="mx-auto max-w-60">
             <BarDescription
               label="Operational"
               day={new Date().toISOString()}

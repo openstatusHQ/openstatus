@@ -100,7 +100,7 @@ export function InteractiveFeature({
 function Gradient() {
   return (
     <div className="absolute inset-x-0 bottom-0 z-10 h-16 w-full overflow-hidden rounded-b-xl">
-      <div className="h-full w-full bg-gradient-to-b from-transparent to-background" />
+      <div className="h-full w-full bg-linear-to-b from-transparent to-background" />
     </div>
   );
 }

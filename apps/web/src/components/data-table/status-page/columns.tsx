@@ -69,7 +69,7 @@ export const columns: ColumnDef<
                 <span className="max-w-[125px] truncate font-mono group-hover:underline">
                   {row.getValue("slug")}
                 </span>
-                <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+                <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
               </a>
             </TooltipTrigger>
             <TooltipContent>Visit page</TooltipContent>
@@ -112,7 +112,7 @@ export const columns: ColumnDef<
           <span className="group-hover:text-muted-foreground/70">
             {formatDate(date)}
           </span>
-          <div className="-inset-x-2 -inset-y-1 invisible absolute flex items-center px-2 py-1 backdrop-blur-sm group-hover:visible">
+          <div className="-inset-x-2 -inset-y-1 invisible absolute flex items-center px-2 py-1 backdrop-blur-xs group-hover:visible">
             <Link
               href={`./status-pages/${row.original.id}/reports/${lastReport.id}`}
               className="hover:underline"

@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 export function TimelineContainer({ children }: { children: ReactNode }) {
   return (
-    // first:md:order-2 does not work
+    // md:first:order-2 does not work
     <div className="mx-auto flex max-w-md flex-col justify-center gap-3 md:order-2">
       {children}
     </div>

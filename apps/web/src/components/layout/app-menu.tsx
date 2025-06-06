@@ -30,7 +30,7 @@ export function AppMenu({ page }: { page?: Page }) {
         <span className="font-medium text-foreground">
           {activeChild?.title}
         </span>
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-md font-medium text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-md font-medium text-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
           <ChevronsUpDown className="h-4 w-4" />
         </span>
       </CollapsibleTrigger>

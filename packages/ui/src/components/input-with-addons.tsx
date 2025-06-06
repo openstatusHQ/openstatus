@@ -13,7 +13,7 @@ const InputWithAddons = React.forwardRef<
   InputWithAddonsProps
 >(({ leading, trailing, className, ...props }, ref) => {
   return (
-    <div className="border-input ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md border bg-transparent text-sm focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2">
+    <div className="border-input ring-offset-background focus-within:ring-ring group flex h-10 w-full rounded-md border bg-transparent text-sm focus-within:outline-hidden focus-within:ring-2 focus-within:ring-offset-2">
       {leading ? (
         <div className="border-input bg-muted border-r px-3 py-2">
           {leading}
@@ -21,7 +21,7 @@ const InputWithAddons = React.forwardRef<
       ) : null}
       <input
         className={cn(
-          "bg-background placeholder:text-muted-foreground w-full rounded-md px-3 py-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+          "bg-background placeholder:text-muted-foreground w-full rounded-md px-3 py-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
           className
         )}
         ref={ref}
