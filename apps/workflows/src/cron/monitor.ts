@@ -288,7 +288,7 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
     // We should only have one user :)
     if (!users) {
       console.error(`No user found for ${userId}`);
-      return
+      return;
     }
 
     await db

@@ -1,10 +1,10 @@
+import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
-import { sentry } from "@hono/sentry";
 
 const { NODE_ENV, PORT } = env();
 
