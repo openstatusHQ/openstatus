@@ -99,15 +99,15 @@ async function main() {
 
   const starters = await getWorkspaceIdsByPlan("starter");
   const teams = await getWorkspaceIdsByPlan("team");
-  const pros = await getWorkspaceIdsByPlan("pro");
+  // const pros = await getWorkspaceIdsByPlan("pro");
 
   // all other workspaces, we need to 'reverse' the deletion here to NOT include those workspaces
-  const rest = [...starters, ...teams, ...pros];
+  const rest = [...starters, ...teams];
 
   deleteLogs(lastTwoWeeks, rest, true);
   deleteLogs(lastThreeMonths, starters);
   deleteLogs(lastYear, teams);
-  deleteLogs(lastYear, pros);
+  // deleteLogs(lastYear, pros);
 }
 
 /**

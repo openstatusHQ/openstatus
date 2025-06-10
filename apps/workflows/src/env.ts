@@ -19,5 +19,6 @@ export const env = () =>
       SCREENSHOT_SERVICE_URL: z.string().default(""),
       TWILLIO_AUTH_TOKEN: z.string().default(""),
       TWILLIO_ACCOUNT_ID: z.string().default(""),
+      SENTRY_DSN: z.string().default(""),
     })
     .parse(process.env);

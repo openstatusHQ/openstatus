@@ -4,10 +4,13 @@ import { logger } from "hono/logger";
 import { checkerRoute } from "./checker";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import { sentry } from "@hono/sentry";
 
 const { NODE_ENV, PORT } = env();
 
 const app = new Hono({ strict: false });
+
+app.use("*", sentry({ dsn: env().SENTRY_DSN }));
 
 app.use("/*", logger());
 
