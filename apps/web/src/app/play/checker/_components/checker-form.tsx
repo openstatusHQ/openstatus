@@ -58,7 +58,7 @@ const FloatingActionNoSSR = dynamic(
   {
     ssr: false,
     loading: () => <></>,
-  },
+  }
 );
 
 /**
@@ -176,7 +176,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                     `Checking ${regionFormatter(_result[0].region, "long")} (${latencyFormatter(_result[0].latency)})`,
                     {
                       id: toastId,
-                    },
+                    }
                   );
                 }
               }
@@ -248,7 +248,7 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 </FormItem>
               )}
             />
-            <div className="col-span-full mt-2 sm:col-span-1">
+            <div className="col-span-full sm:col-span-1">
               <Button disabled={isPending} className="group h-10 w-full">
                 {isPending ? (
                   <LoadingAnimation />
