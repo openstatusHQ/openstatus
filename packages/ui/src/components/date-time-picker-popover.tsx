@@ -25,7 +25,7 @@ export function DateTimePickerPopover({
   className,
 }: DateTimePickerProps) {
   const [selectedDateTime, setSelectedDateTime] = React.useState<DateTime>(
-    DateTime.fromJSDate(date),
+    DateTime.fromJSDate(date)
   );
 
   const handleSelect: SelectSingleEventHandler = (_day, selected) => {
@@ -57,7 +57,7 @@ export function DateTimePickerPopover({
           className={cn(
             "w-[280px] justify-start text-left font-normal",
             !date && "text-muted-foreground",
-            className,
+            className
           )}
           suppressHydrationWarning // because timestamp is not same, server and client
         >

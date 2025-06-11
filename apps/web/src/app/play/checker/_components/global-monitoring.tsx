@@ -48,7 +48,7 @@ export const GlobalMonitoring = () => {
           <CardFeature key={i} {...feature} />
         ))}
       </ul>
-      <div className="order-first flex items-center justify-center gap-2 text-center md:order-none">
+      <div className="order-first flex items-center justify-center gap-2 text-center md:order-0">
         <Button variant="outline" className="rounded-full" asChild>
           <Link href="/features/status-page">Status Page</Link>
         </Button>

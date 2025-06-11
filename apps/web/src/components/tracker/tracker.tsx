@@ -225,7 +225,7 @@ export function BarDescription({
       <div className="grid flex-1 gap-1">
         <div className="flex justify-between gap-8 text-sm">
           <p className="font-semibold">{label}</p>
-          <p className="flex-shrink-0 text-muted-foreground">
+          <p className="shrink-0 text-muted-foreground">
             {format(new Date(day), "MMM d")}
           </p>
         </div>

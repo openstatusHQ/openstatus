@@ -150,7 +150,7 @@ export function TagsMultiBox({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full p-0">
-          <Command className="w-[var(--radix-popover-trigger-width)]" loop>
+          <Command className="w-(--radix-popover-trigger-width)" loop>
             <CommandInput
               ref={inputRef}
               placeholder="Search tag..."

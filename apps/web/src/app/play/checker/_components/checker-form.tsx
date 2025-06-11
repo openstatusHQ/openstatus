@@ -248,14 +248,14 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
                 </FormItem>
               )}
             />
-            <div className="col-span-full mt-2 sm:col-span-1">
+            <div className="col-span-full sm:col-span-1">
               <Button disabled={isPending} className="group h-10 w-full">
                 {isPending ? (
                   <LoadingAnimation />
                 ) : (
                   <>
                     Check{" "}
-                    <Gauge className="[&>*:first-child]:-rotate-90 ml-1 h-4 w-4 [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:transition-transform [&>*:first-child]:duration-500 [&>*:first-child]:ease-out [&>*:first-child]:group-hover:rotate-0" />
+                    <Gauge className="[&>*:first-child]:-rotate-90 ml-1 h-4 w-4 [&>*:first-child]:origin-[12px_14px] [&>*:first-child]:transition-transform [&>*:first-child]:duration-500 [&>*:first-child]:ease-out group-hover:[&>*:first-child]:rotate-0" />
                   </>
                 )}
               </Button>
@@ -292,8 +292,8 @@ export function CheckerForm({ defaultValues, defaultData }: CheckerFormProps) {
           <Button variant="secondary" className="group" asChild>
             <Link href={`/play/checker/${id}`}>
               <span className="mr-1">Response Details</span>
-              <ArrowRight className="relative mb-[1px] inline h-4 w-0 transition-all group-hover:w-4" />
-              <ChevronRight className="relative mb-[1px] inline h-4 w-4 transition-all group-hover:w-0" />
+              <ArrowRight className="relative mb-px inline h-4 w-0 transition-all group-hover:w-4" />
+              <ChevronRight className="relative mb-px inline h-4 w-4 transition-all group-hover:w-0" />
             </Link>
           </Button>
         ) : null}

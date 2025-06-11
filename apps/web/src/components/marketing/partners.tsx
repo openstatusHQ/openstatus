@@ -18,8 +18,8 @@ export function Partners() {
             rel="noreferrer"
             className="group inline-flex items-center justify-center"
           >
-            <Hanko className="h-6 w-[3.75rem] sm:h-8 sm:w-24" />
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+            <Hanko className="h-6 w-15 sm:h-8 sm:w-24" />
+            <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
         <div className="flex items-center justify-center">
@@ -30,7 +30,7 @@ export function Partners() {
             className="group inline-flex items-center justify-center"
           >
             <Documenso className="h-6 w-24 sm:h-8 sm:w-32" />
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+            <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
         <div className="flex items-center justify-center">
@@ -41,7 +41,7 @@ export function Partners() {
             className="group inline-flex items-center justify-center"
           >
             <Midday className="h-6 w-24 sm:h-8 sm:w-24" />
-            <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+            <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
           </a>
         </div>
         <div className="flex items-center justify-center">
@@ -53,7 +53,7 @@ export function Partners() {
               className="group inline-flex items-center justify-center"
             >
               <span className="font-cal text-2xl">Cal.com</span>
-              <ArrowUpRight className="ml-1 h-4 w-4 flex-shrink-0 text-muted-foreground group-hover:text-foreground" />
+              <ArrowUpRight className="ml-1 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-foreground" />
             </a>
           </p>
         </div>
