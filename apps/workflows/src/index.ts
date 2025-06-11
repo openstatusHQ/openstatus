@@ -1,3 +1,4 @@
+import { sentry } from "@hono/sentry";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { logger } from "hono/logger";
@@ -8,6 +9,8 @@ import { env } from "./env";
 const { NODE_ENV, PORT } = env();
 
 const app = new Hono({ strict: false });
+
+app.use("*", sentry({ dsn: env().SENTRY_DSN }));
 
 app.use("/*", logger());
 

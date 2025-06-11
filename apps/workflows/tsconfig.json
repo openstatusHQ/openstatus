@@ -2,6 +2,7 @@
   "extends": "@openstatus/tsconfig/base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "lib": ["ES2022"]
   }
 }
