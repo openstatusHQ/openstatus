@@ -1,6 +1,10 @@
-import * as React from "react";
 import { ChevronRight } from "lucide-react";
+import * as React from "react";
 
+import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+} from "@/components/content/empty-state";
 import {
   Collapsible,
   CollapsibleContent,
@@ -13,20 +17,16 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Table,
+  TableBody,
+  TableCell,
+  TableHead,
   TableHeader,
   TableRow,
-  TableHead,
-  TableCell,
-  TableBody,
 } from "@/components/ui/table";
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-} from "@/components/content/empty-state";
-import { TooltipProvider } from "@radix-ui/react-tooltip";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export type SidebarMetadataProps = {
   label: string;
@@ -137,7 +137,7 @@ function SidebarMetadataTableCell({
       ref={ref}
       className={cn(
         typeof props.children === "string" && "cursor-pointer",
-        className
+        className,
       )}
       onClick={handleClick}
     >

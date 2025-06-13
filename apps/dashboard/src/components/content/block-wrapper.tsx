@@ -2,13 +2,13 @@
 
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 
 export function BlockWrapper({
   className,
@@ -30,7 +30,7 @@ export function BlockWrapper({
           <div
             className={cn(
               "absolute flex items-center justify-center bg-gradient-to-b from-transparent to-90% to-background p-2",
-              isOpened ? "inset-x-0 bottom-0 h-12" : "inset-0"
+              isOpened ? "inset-x-0 bottom-0 h-12" : "inset-0",
             )}
           >
             <CollapsibleTrigger asChild>

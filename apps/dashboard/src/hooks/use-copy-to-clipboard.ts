@@ -15,7 +15,7 @@ export function useCopyToClipboard() {
         timeout?: number;
         withToast?: boolean;
         successMessage?: string;
-      }
+      },
     ) => {
       if (!navigator?.clipboard) {
         console.warn("Clipboard not supported");
@@ -43,7 +43,7 @@ export function useCopyToClipboard() {
         return false;
       }
     },
-    []
+    [],
   );
 
   return { text, copy, isCopied: text !== null };

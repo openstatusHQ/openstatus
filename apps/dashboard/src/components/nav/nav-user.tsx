@@ -8,6 +8,7 @@ import {
   User,
 } from "lucide-react";
 
+import { useTRPC } from "@/client/trpc";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -25,9 +26,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import { useTRPC } from "@/client/trpc";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();

@@ -1,13 +1,13 @@
 import { FormDiscord } from "@/components/forms/notifier/form-discord";
-import { FormSlack } from "@/components/forms/notifier/form-slack";
-import { DiscordIcon } from "@/components/icons/discord";
-import { SlackIcon } from "@/components/icons/slack";
-import { Pencil, Trash2, Mail, MessageCircle, Webhook } from "lucide-react";
-import { OpsGenieIcon } from "@/components/icons/opsgenie";
-import { PagerDutyIcon } from "@/components/icons/pagerduty";
 import { FormEmail } from "@/components/forms/notifier/form-email";
+import { FormSlack } from "@/components/forms/notifier/form-slack";
 import { FormSms } from "@/components/forms/notifier/form-sms";
 import { FormWebhook } from "@/components/forms/notifier/form-webhook";
+import { DiscordIcon } from "@/components/icons/discord";
+import { OpsGenieIcon } from "@/components/icons/opsgenie";
+import { PagerDutyIcon } from "@/components/icons/pagerduty";
+import { SlackIcon } from "@/components/icons/slack";
+import { Mail, MessageCircle, Pencil, Trash2, Webhook } from "lucide-react";
 
 export const actions = [
   {
@@ -27,7 +27,7 @@ export const actions = [
 export type NotifierAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>,
 ): (NotifierAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

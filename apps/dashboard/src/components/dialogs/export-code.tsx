@@ -1,4 +1,4 @@
-import { Check, Copy } from "lucide-react";
+import { Link } from "@/components/common/link";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,9 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "@/components/common/link";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import type { DialogProps } from "@radix-ui/react-dialog";
+import { Check, Copy } from "lucide-react";
 
 // TODL: make it dynamic
 const YML = `openstatus-marketing:

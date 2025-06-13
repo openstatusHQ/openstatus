@@ -1,11 +1,11 @@
 "use client";
+import { TRPCProvider } from "@/client/trpc";
+import { AppSidebar } from "@/components/nav/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import type { AppRouter } from "@/server/routers/app";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { useState } from "react";
-import { AppSidebar } from "@/components/nav/app-sidebar";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { TRPCProvider } from "@/client/trpc";
-import type { AppRouter } from "@/server/routers/app";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -24,12 +24,12 @@ function getQueryClient() {
     // Server: always make a new query client
     return makeQueryClient();
   }
-    // Browser: make a new query client if we don't already have one
-    // This is very important, so we don't re-make a new client if React
-    // suspends during the initial render. This may not be needed if we
-    // have a suspense boundary BELOW the creation of the query client
-    if (!browserQueryClient) browserQueryClient = makeQueryClient();
-    return browserQueryClient;
+  // Browser: make a new query client if we don't already have one
+  // This is very important, so we don't re-make a new client if React
+  // suspends during the initial render. This may not be needed if we
+  // have a suspense boundary BELOW the creation of the query client
+  if (!browserQueryClient) browserQueryClient = makeQueryClient();
+  return browserQueryClient;
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -41,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           url: "http://localhost:3000/api/trpc",
         }),
       ],
-    })
+    }),
   );
 
   return (

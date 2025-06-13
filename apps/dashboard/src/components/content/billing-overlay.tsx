@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function BillingOverlayContainer({
   children,
@@ -22,7 +22,7 @@ export function BillingOverlay({
     <div
       className={cn(
         "absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-b from-transparent to-50% to-background",
-        className
+        className,
       )}
       {...props}
     >
@@ -51,7 +51,7 @@ export function BillingOverlayDescription({
     <p
       className={cn(
         "max-w-xs text-center text-muted-foreground text-sm",
-        className
+        className,
       )}
       {...props}
     >

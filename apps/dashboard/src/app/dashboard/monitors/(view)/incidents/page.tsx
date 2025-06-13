@@ -1,21 +1,21 @@
 "use client";
 
 import {
+  EmptyStateContainer,
+  EmptyStateDescription,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
   Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { DataTable } from "@/components/ui/data-table/data-table";
 import { columns } from "@/components/data-table/incidents/columns";
-import { incidents } from "@/data/incidents";
+import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
-import {
-  EmptyStateContainer,
-  EmptyStateDescription,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
+import { incidents } from "@/data/incidents";
 
 const EMPTY = false;
 

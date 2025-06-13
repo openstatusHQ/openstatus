@@ -3,17 +3,20 @@
 import React, { useState } from "react";
 
 import {
-  MoreHorizontal,
-  Plus,
-  Search,
-  Tag,
   Code,
   Eye,
+  MoreHorizontal,
+  Plus,
   RotateCcw,
+  Search,
   Send,
+  Tag,
   XIcon,
 } from "lucide-react";
 
+import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,6 +31,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -43,16 +47,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
+import type { Monitor } from "@/data/monitors";
 import { getActions } from "@/data/monitors.client";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ExportCodeDialog } from "@/components/dialogs/export-code";
-import type { Monitor } from "@/data/monitors";
-import { cn } from "@/lib/utils";
 
 const STATUS: Record<Monitor["status"], string> = {
   Degraded: "bg-warning border border-warning",
@@ -92,7 +92,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
 
   function handleFilterChange<T extends keyof Filter>(
     key: T,
-    value: NonNullable<Filter[T]> extends (infer U)[] ? U : Filter[T]
+    value: NonNullable<Filter[T]> extends (infer U)[] ? U : Filter[T],
   ) {
     setFilter((prev) => {
       if (key === "keywords") {
@@ -115,7 +115,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
   const filteredMonitors = monitors.filter((item) =>
     filter.tags?.length
       ? item.tags.some((tag) => filter.tags?.includes(tag))
-      : true
+      : true,
   );
 
   return (
@@ -410,14 +410,14 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                 data-sidebar="menu-dot"
                 className={cn(
                   "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                  isMobile && "right-6"
+                  isMobile && "right-6",
                 )}
               >
                 <div className="relative flex items-center justify-center">
                   <div
                     className={cn(
                       "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
-                      STATUS[item.status]
+                      STATUS[item.status],
                     )}
                   >
                     <span className="sr-only">{item.status}</span>

@@ -1,8 +1,8 @@
 "use client";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { useRouter } from "next/navigation";
 import { getActions } from "@/data/status-pages.client";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export function NavActions() {

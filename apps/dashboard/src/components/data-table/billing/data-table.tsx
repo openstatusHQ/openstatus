@@ -13,8 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { cn } from "@/lib/utils";
 import { plans } from "@/data/plans";
+import { cn } from "@/lib/utils";
 
 export function DataTable() {
   return (
@@ -33,7 +33,7 @@ export function DataTable() {
                 key={id}
                 className={cn(
                   "h-px p-2 align-top text-foreground",
-                  id === "starter" ? "bg-muted/30" : "bg-background"
+                  id === "starter" ? "bg-muted/30" : "bg-background",
                 )}
               >
                 <div className="flex h-full flex-col justify-between gap-1">
@@ -100,7 +100,7 @@ export function DataTable() {
                     key={plan.id}
                     className={cn(
                       "font-mono",
-                      plan.id === "starter" && "bg-muted/30"
+                      plan.id === "starter" && "bg-muted/30",
                     )}
                   >
                     {renderContent()}

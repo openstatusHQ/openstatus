@@ -4,7 +4,7 @@ const TABLET_BREAKPOINT = 1024;
 
 export function useIsTablet() {
   const [isTablet, setIsTablet] = React.useState<boolean | undefined>(
-    undefined
+    undefined,
   );
 
   React.useEffect(() => {

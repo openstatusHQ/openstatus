@@ -1,12 +1,12 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { useRouter } from "next/navigation";
-import { getActions } from "@/data/monitors.client";
-import { toast } from "sonner";
-import { useState } from "react";
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { getActions } from "@/data/monitors.client";
+import type { Row } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface DataTableRowActionsProps<TData> {
   row?: Row<TData>;
@@ -14,7 +14,7 @@ interface DataTableRowActionsProps<TData> {
 
 export function DataTableRowActions<TData>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>
+  _props: DataTableRowActionsProps<TData>,
 ) {
   const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();

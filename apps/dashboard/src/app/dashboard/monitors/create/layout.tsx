@@ -1,6 +1,6 @@
 import { AppHeader, AppHeaderContent } from "@/components/nav/app-header";
-import { Breadcrumb } from "./breadcrumb";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
+import { Breadcrumb } from "./breadcrumb";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

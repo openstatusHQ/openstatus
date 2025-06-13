@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  FloatingButton,
+  StatusPageProvider,
+  useStatusPage,
+} from "@/components/status-page/floating-button";
+import {
   Status,
   StatusBanner,
   StatusContent,
@@ -9,11 +14,6 @@ import {
   StatusTitle,
 } from "@/components/status-page/status";
 import { StatusMonitor } from "@/components/status-page/status-monitor";
-import {
-  StatusPageProvider,
-  FloatingButton,
-  useStatusPage,
-} from "@/components/status-page/floating-button";
 
 function StatusPageContent() {
   const { variant, cardType } = useStatusPage();

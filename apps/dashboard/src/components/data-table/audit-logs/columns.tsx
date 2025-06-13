@@ -2,8 +2,8 @@
 
 import type { AuditLog } from "@/data/audit-logs";
 import { config } from "@/data/audit-logs.client";
-import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
+import type { ColumnDef } from "@tanstack/react-table";
 export const columns: ColumnDef<AuditLog>[] = [
   {
     id: "icon",

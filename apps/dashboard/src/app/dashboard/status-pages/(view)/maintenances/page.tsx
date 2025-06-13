@@ -1,17 +1,17 @@
 import {
   Section,
+  SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionTitle,
-  SectionDescription,
   SectionHeaderRow,
+  SectionTitle,
 } from "@/components/content/section";
+import { columns } from "@/components/data-table/maintenances/columns";
+import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
+import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { maintenances } from "@/data/maintenances";
-import { columns } from "@/components/data-table/maintenances/columns";
-import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 
 export default function Page() {
   return (

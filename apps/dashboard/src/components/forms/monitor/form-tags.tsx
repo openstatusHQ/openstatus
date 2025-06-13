@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -10,26 +10,8 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { toast } from "sonner";
-import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -38,9 +20,27 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Link } from "@/components/common/link";
-import { Badge } from "@/components/ui/badge";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { monitorTags } from "@/data/monitor-tags";
+import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   tags: z.array(
@@ -48,7 +48,7 @@ const schema = z.object({
       value: z.string(),
       label: z.string(),
       color: z.string(),
-    })
+    }),
   ),
 });
 
@@ -114,7 +114,7 @@ export function FormTags({
                           role="combobox"
                           className={cn(
                             "h-auto min-h-9 w-full justify-between",
-                            !field.value?.length && "text-muted-foreground"
+                            !field.value?.length && "text-muted-foreground",
                           )}
                         >
                           <div className="group/badges -space-x-2 flex flex-wrap">
@@ -128,7 +128,7 @@ export function FormTags({
                                   <div
                                     className={cn(
                                       "size-2.5 rounded-full",
-                                      tag.color
+                                      tag.color,
                                     )}
                                   />
                                   {tag.label}
@@ -163,8 +163,8 @@ export function FormTags({
                                     form.setValue(
                                       "tags",
                                       field.value.filter(
-                                        (value) => value.value !== tag.value
-                                      )
+                                        (value) => value.value !== tag.value,
+                                      ),
                                     );
                                   } else {
                                     form.setValue("tags", [
@@ -181,7 +181,7 @@ export function FormTags({
                                 <div
                                   className={cn(
                                     "mr-2 h-4 w-4 rounded-full",
-                                    tag.color
+                                    tag.color,
                                   )}
                                 />
                                 {tag.label}
@@ -192,7 +192,7 @@ export function FormTags({
                                       ?.map((tag) => tag.value)
                                       ?.includes(tag.value)
                                       ? "opacity-100"
-                                      : "opacity-0"
+                                      : "opacity-0",
                                   )}
                                 />
                               </CommandItem>

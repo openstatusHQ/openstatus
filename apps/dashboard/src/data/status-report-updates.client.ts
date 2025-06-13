@@ -20,7 +20,7 @@ export type StatusReportUpdateAction = (typeof actions)[number];
 export const getActions = (
   props: Partial<
     Record<StatusReportUpdateAction["id"], () => Promise<void> | void>
-  >
+  >,
 ): (StatusReportUpdateAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

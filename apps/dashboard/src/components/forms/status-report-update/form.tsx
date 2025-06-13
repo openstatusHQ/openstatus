@@ -1,11 +1,24 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -13,31 +26,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
 import { TabsContent } from "@/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
-import {
-  Form,
-  FormMessage,
-  FormItem,
-  FormField,
-  FormLabel,
-  FormControl,
-  FormDescription,
-} from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { useTransition } from "react";
-import { PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Popover } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { CalendarIcon, ClockIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
+import { CalendarIcon, ClockIcon } from "lucide-react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const colors = {
   operational: "text-success/80",
@@ -145,7 +145,7 @@ export function FormStatusReportUpdate({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground"
+                          !field.value && "text-muted-foreground",
                         )}
                       >
                         {field.value ? (

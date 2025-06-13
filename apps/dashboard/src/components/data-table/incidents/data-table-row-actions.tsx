@@ -2,7 +2,6 @@
 
 import type { Row } from "@tanstack/react-table";
 
-import { getActions } from "@/data/incidents.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   AlertDialog,
@@ -14,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { getActions } from "@/data/incidents.client";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -23,7 +23,7 @@ interface DataTableRowActionsProps<TData> {
 
 export function DataTableRowActions<TData>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>
+  _props: DataTableRowActionsProps<TData>,
 ) {
   const [isPending, startTransition] = useTransition();
   const [type, setType] = useState<"acknowledge" | "resolve" | null>(null);

@@ -26,8 +26,7 @@ import { Lock, X } from "lucide-react";
 
 const LOCKED = false;
 
-const logs = Array.from({ length: 10 })
-  .flatMap(() => responseLogs);
+const logs = Array.from({ length: 10 }).flatMap(() => responseLogs);
 
 export default function Page() {
   return (

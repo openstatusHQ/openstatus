@@ -1,3 +1,4 @@
+import { Link } from "@/components/common/link";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -5,8 +6,7 @@ import {
   SidebarMenuAction,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { X, CircleDashed, CircleCheck } from "lucide-react";
-import { Link } from "@/components/common/link";
+import { CircleCheck, CircleDashed, X } from "lucide-react";
 
 const items = [
   {

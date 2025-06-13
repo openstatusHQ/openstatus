@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -12,9 +13,8 @@ import {
 import { icons } from "@/data/icons";
 import { statusReports } from "@/data/status-reports";
 import { cn } from "@/lib/utils";
-import { DataTableRowActions } from "./data-table-row-actions";
 import { Plus } from "lucide-react";
-import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 const colors = {
   operational: "text-success/80",

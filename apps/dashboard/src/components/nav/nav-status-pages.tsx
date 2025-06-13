@@ -2,6 +2,7 @@
 
 import { MoreHorizontal, Plus } from "lucide-react";
 
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,20 +12,19 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import Link from "next/link";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useRouter } from "next/navigation";
 import { getActions } from "@/data/status-pages.client";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { cn } from "@/lib/utils";
 import type { StatusPage } from "@/data/status-pages";
+import { cn } from "@/lib/utils";
 
 const STATUS = {
   operational: "bg-success",
@@ -92,14 +92,14 @@ export function NavStatusPages({ statusPages }: { statusPages: StatusPage[] }) {
                 data-sidebar="menu-dot"
                 className={cn(
                   "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                  isMobile && "right-6"
+                  isMobile && "right-6",
                 )}
               >
                 <div className="relative flex items-center justify-center">
                   <div
                     className={cn(
                       "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
-                      STATUS[item.status]
+                      STATUS[item.status],
                     )}
                   />
                 </div>

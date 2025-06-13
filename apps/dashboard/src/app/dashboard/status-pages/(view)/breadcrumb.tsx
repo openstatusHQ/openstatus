@@ -1,7 +1,7 @@
 "use client";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
-import { Megaphone, Pencil, Hammer, Users } from "lucide-react";
+import { Hammer, Megaphone, Pencil, Users } from "lucide-react";
 
 // TODO: make it dynamic
 

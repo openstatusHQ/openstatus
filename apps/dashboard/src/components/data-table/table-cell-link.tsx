@@ -14,7 +14,7 @@ export function TableCellLink({
       <Link
         className={cn(
           "group/link flex w-full items-center justify-between gap-1",
-          className
+          className,
         )}
         {...props}
       >

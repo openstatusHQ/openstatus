@@ -4,7 +4,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { StatusTracker } from "./status-tracker";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { cn } from "@/lib/utils";
 import {
   AlertCircleIcon,
   CheckIcon,
@@ -12,10 +13,9 @@ import {
   TriangleAlertIcon,
   WrenchIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { CardType, VariantType } from "./floating-button";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { useState } from "react";
+import type { CardType, VariantType } from "./floating-button";
+import { StatusTracker } from "./status-tracker";
 
 export function StatusMonitor({
   className,
@@ -90,7 +90,7 @@ export function StatusMonitorIcon({
         "group-data-[variant=degraded]/monitor:bg-warning",
         "group-data-[variant=error]/monitor:bg-destructive",
         "group-data-[variant=info]/monitor:bg-info",
-        className
+        className,
       )}
       {...props}
     >

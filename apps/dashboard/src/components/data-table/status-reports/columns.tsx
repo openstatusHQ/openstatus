@@ -1,14 +1,14 @@
 "use client";
 
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { StatusReport } from "@/data/status-reports";
 import type { ColumnDef } from "@tanstack/react-table";
+import { formatDistanceStrict } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { formatDistanceStrict } from "date-fns";
-import { TableCellDate } from "@/components/data-table/table-cell-date";
 
 export const columns: ColumnDef<StatusReport>[] = [
   {
@@ -63,7 +63,7 @@ export const columns: ColumnDef<StatusReport>[] = [
     id: "duration",
     accessorFn: (row) => {
       const resolvedAt = row.updates.find(
-        (i) => i.status === "operational"
+        (i) => i.status === "operational",
       )?.date;
       if (!resolvedAt) return null;
       return formatDistanceStrict(row.startedAt, resolvedAt);

@@ -1,4 +1,4 @@
-import { Pencil, Copy, CopyPlus, Trash2, Code } from "lucide-react";
+import { Code, Copy, CopyPlus, Pencil, Trash2 } from "lucide-react";
 
 export const actions = [
   {
@@ -36,7 +36,7 @@ export const actions = [
 export type MonitorAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<MonitorAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<MonitorAction["id"], () => Promise<void> | void>>,
 ): (MonitorAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

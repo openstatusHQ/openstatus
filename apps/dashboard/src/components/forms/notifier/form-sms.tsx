@@ -12,12 +12,12 @@ import {
 
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),

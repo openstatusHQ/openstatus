@@ -2,13 +2,8 @@
 
 import * as React from "react";
 
-import {
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
+import { DiscordIcon } from "@/components/icons/discord";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,16 +12,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import { useSidebar } from "@/components/ui/sidebar";
+import {
   Book,
   Braces,
   CalendarClock,
   HelpCircle,
   LifeBuoy,
 } from "lucide-react";
-import { useSidebar } from "@/components/ui/sidebar";
 import Link from "next/link";
-import { DiscordIcon } from "@/components/icons/discord";
-import { FormDialogSupportContact } from "@/components/forms/support-contact/dialog";
 
 export function NavHelp() {
   const { isMobile } = useSidebar();

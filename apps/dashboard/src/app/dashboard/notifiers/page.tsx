@@ -17,11 +17,11 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
+import { columns } from "@/components/data-table/notifiers/columns";
+import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { notifiers } from "@/data/notifiers";
-import { columns } from "@/components/data-table/notifiers/columns";
 import { config } from "@/data/notifiers.client";
-import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
 
 const EMPTY = true;
 

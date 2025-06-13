@@ -1,6 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Link } from "@/components/common/link";
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   FormCard,
   FormCardContent,
@@ -11,10 +15,15 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { useForm, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Form,
   FormControl,
@@ -24,33 +33,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
-import type { Monitor } from "@/data/monitors";
 import { PopoverContent } from "@/components/ui/popover";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Check, ChevronsUpDown, GripVertical } from "lucide-react";
-import type { UniqueIdentifier } from "@dnd-kit/core";
-import {
-  Sortable,
-  SortableContent,
-  SortableItem,
-  SortableItemHandle,
-  SortableOverlay,
-} from "@/components/ui/sortable";
-import { monitors } from "@/data/monitors";
 import {
   Select,
   SelectContent,
@@ -58,7 +42,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Link } from "@/components/common/link";
+import {
+  Sortable,
+  SortableContent,
+  SortableItem,
+  SortableItemHandle,
+  SortableOverlay,
+} from "@/components/ui/sortable";
+import type { Monitor } from "@/data/monitors";
+import { monitors } from "@/data/monitors";
+import { cn } from "@/lib/utils";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown, GripVertical } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { type UseFormReturn, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 // TODO: add type selection + reordering
 
@@ -71,7 +71,7 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       type: z.enum(["all", "hide", "none"]),
-    })
+    }),
   ),
 });
 
@@ -94,14 +94,14 @@ export function FormMonitors({
   const watchMonitors = form.watch("monitors");
   const [isPending, startTransition] = useTransition();
   const [data, setData] = useState<Monitor[]>(
-    monitors.filter((monitor) => IDS.includes(monitor.id))
+    monitors.filter((monitor) => IDS.includes(monitor.id)),
   );
 
   useEffect(() => {
     setData(
       monitors.filter((monitor) =>
-        watchMonitors.some((m) => m.id === monitor.id)
-      )
+        watchMonitors.some((m) => m.id === monitor.id),
+      ),
     );
   }, [watchMonitors]);
 
@@ -119,7 +119,7 @@ export function FormMonitors({
       return <MonitorRow monitor={monitor} form={form} />;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data]
+    [data],
   );
 
   function submitAction(values: FormValues) {
@@ -166,7 +166,7 @@ export function FormMonitors({
                           role="combobox"
                           className={cn(
                             "w-[200px] justify-between",
-                            !field.value && "text-muted-foreground"
+                            !field.value && "text-muted-foreground",
                           )}
                           size="sm"
                         >
@@ -197,8 +197,8 @@ export function FormMonitors({
                                     form.setValue(
                                       "monitors",
                                       field.value.filter(
-                                        (m) => m.id !== monitor.id
-                                      )
+                                        (m) => m.id !== monitor.id,
+                                      ),
                                     );
                                   } else {
                                     form.setValue("monitors", [
@@ -214,7 +214,7 @@ export function FormMonitors({
                                     "ml-auto",
                                     field.value.some((m) => m.id === monitor.id)
                                       ? "opacity-100"
-                                      : "opacity-0"
+                                      : "opacity-0",
                                   )}
                                 />
                               </CommandItem>

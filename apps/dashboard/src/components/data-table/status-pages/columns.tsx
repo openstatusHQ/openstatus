@@ -1,9 +1,9 @@
 "use client";
 
 import { Link } from "@/components/common/link";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import type { StatusPage } from "@/data/status-pages";
 import type { ColumnDef } from "@tanstack/react-table";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<StatusPage>[] = [

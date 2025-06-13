@@ -1,10 +1,8 @@
 "use client";
 
-import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
 import { ChartAreaLatency } from "@/components/chart/chart-area-latency";
-import { MetricExample } from "@/components/metric/example";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { ChartBarUptime } from "@/components/chart/chart-bar-uptime";
+import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
   Section,
   SectionDescription,
@@ -12,35 +10,37 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/content/section";
-import { auditLogs } from "@/data/audit-logs";
-import { DataTable } from "@/components/ui/data-table/data-table";
 import { columns } from "@/components/data-table/audit-logs/columns";
-import { BlockWrapper } from "@/components/content/block-wrapper";
+import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
+import DatePicker from "@/components/date-picker";
+import { MetricExample } from "@/components/metric/example";
+import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import { DataTable } from "@/components/ui/data-table/data-table";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import DatePicker from "@/components/date-picker";
-import {
-  Command,
-  CommandEmpty,
-  CommandItem,
-  CommandGroup,
-  CommandList,
-  CommandInput,
-  CommandSeparator,
-} from "@/components/ui/command";
-import { groupedRegions, type Region, regions } from "@/data/regions";
-import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { auditLogs } from "@/data/audit-logs";
 import { regionMetrics } from "@/data/region-metrics";
-import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
+import { type Region, groupedRegions, regions } from "@/data/regions";
+import { cn } from "@/lib/utils";
+import { Check, X } from "lucide-react";
+import { useState } from "react";
 
 export default function Page() {
   const [selectedRegions, setSelectedRegions] = useState<Region[]>(
-    regions.map((r) => r.code)
+    regions.map((r) => r.code),
   );
 
   return (
@@ -144,7 +144,7 @@ function CommandRegion({
           <CommandItem
             onSelect={() => {
               const items = document.querySelectorAll(
-                '[data-slot="command-item"][data-disabled="false"]'
+                '[data-slot="command-item"][data-disabled="false"]',
               );
               const codes: Region[] = [];
 
@@ -185,7 +185,7 @@ function CommandRegion({
                     setSelectedRegions((prev) =>
                       prev.includes(region.code)
                         ? prev.filter((r) => r !== region.code)
-                        : [...prev, region.code]
+                        : [...prev, region.code],
                     );
                   }}
                 >
@@ -199,7 +199,7 @@ function CommandRegion({
                       "ml-auto",
                       selectedRegions.includes(region.code)
                         ? "opacity-100"
-                        : "opacity-0"
+                        : "opacity-0",
                     )}
                   />
                 </CommandItem>

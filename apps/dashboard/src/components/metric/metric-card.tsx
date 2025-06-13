@@ -21,7 +21,7 @@ const metricCardVariants = cva(
     defaultVariants: {
       variant: "default",
     },
-  }
+  },
 );
 
 export function MetricCard({
@@ -65,7 +65,7 @@ export function MetricCardHeader({
         "group-data-[variant=destructive]:text-destructive",
         "group-data-[variant=success]:text-success",
         "group-data-[variant=warning]:text-warning",
-        className
+        className,
       )}
       {...props}
     >
@@ -95,7 +95,7 @@ export function MetricCardGroup({
     <div
       className={cn(
         "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
-        className
+        className,
       )}
       {...props}
     >
@@ -152,7 +152,7 @@ export function MetricCardBadge({
 }
 
 const metricCardButtonVariants = cva(
-  "group w-full text-left transition-all rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 cursor-pointer"
+  "group w-full text-left transition-all rounded-md outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 cursor-pointer",
   // TODO: discuss if we want rings
 );
 
@@ -168,7 +168,7 @@ export function MetricCardButton({
       data-variant={variant}
       className={cn(
         metricCardVariants({ variant, className }),
-        metricCardButtonVariants()
+        metricCardButtonVariants(),
       )}
       {...props}
     >

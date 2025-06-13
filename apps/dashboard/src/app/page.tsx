@@ -3,8 +3,8 @@
 import { Link } from "@/components/common/link";
 import {
   WheelPicker,
-  WheelPickerSelect,
   WheelPickerOptions,
+  WheelPickerSelect,
 } from "@/components/common/wheel-picker";
 import { GitHubIcon } from "@/components/icons/github";
 import { ThemeToggle } from "@/components/theme-toggle";

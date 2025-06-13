@@ -18,7 +18,7 @@ export const actions = [
 export type RegionMetricAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<RegionMetricAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<RegionMetricAction["id"], () => Promise<void> | void>>,
 ): (RegionMetricAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

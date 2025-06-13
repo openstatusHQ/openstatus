@@ -1,4 +1,4 @@
-import { Pencil, Copy, Trash2, Tag } from "lucide-react";
+import { Copy, Pencil, Tag, Trash2 } from "lucide-react";
 
 export const actions = [
   {
@@ -30,7 +30,7 @@ export const actions = [
 export type StatusPageAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<StatusPageAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<StatusPageAction["id"], () => Promise<void> | void>>,
 ): (StatusPageAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

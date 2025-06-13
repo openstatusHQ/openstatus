@@ -1,12 +1,12 @@
 "use client";
 
+import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { Monitor } from "@/data/monitors";
 import type { ColumnDef } from "@tanstack/react-table";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Monitor>[] = [

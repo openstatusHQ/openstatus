@@ -1,3 +1,4 @@
+import { BillingProgress } from "@/components/content/billing-progress";
 import {
   Section,
   SectionDescription,
@@ -6,8 +7,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
-import { BillingProgress } from "@/components/content/billing-progress";
-import { Button } from "@/components/ui/button";
 import {
   FormCard,
   FormCardContent,
@@ -19,6 +18,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { Button } from "@/components/ui/button";
 
 export default function Page() {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import { cn } from "@/lib/utils";
+import * as React from "react";
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Context -------------------------------------------------------------------------------------------------------------
@@ -17,14 +17,14 @@ interface WheelPickerContextValue {
 }
 
 const WheelPickerContext = React.createContext<WheelPickerContextValue | null>(
-  null
+  null,
 );
 
 const useWheelPickerContext = () => {
   const ctx = React.useContext(WheelPickerContext);
   if (!ctx) {
     throw new Error(
-      "[WheelPicker] sub component must be rendered within <WheelPicker /> root"
+      "[WheelPicker] sub component must be rendered within <WheelPicker /> root",
     );
   }
   return ctx;
@@ -55,7 +55,7 @@ const WheelPicker = React.forwardRef<HTMLDivElement, WheelPickerProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     // internal render count includes two placeholders at start & end
     const count = items.length + 2;
@@ -70,7 +70,7 @@ const WheelPicker = React.forwardRef<HTMLDivElement, WheelPickerProps>(
         radius: radiusProp,
         count,
       }),
-      [items, currentIndex, onIndexChange, theta, radiusProp, count]
+      [items, currentIndex, onIndexChange, theta, radiusProp, count],
     );
 
     return (
@@ -80,7 +80,7 @@ const WheelPicker = React.forwardRef<HTMLDivElement, WheelPickerProps>(
         </div>
       </WheelPickerContext.Provider>
     );
-  }
+  },
 );
 WheelPicker.displayName = "WheelPicker";
 
@@ -110,7 +110,7 @@ const WheelPickerSelect = React.forwardRef<
 
       onIndexChange(newIndex);
     },
-    [currentIndex, items.length, onIndexChange]
+    [currentIndex, items.length, onIndexChange],
   );
 
   const handleKeyDown = React.useCallback(
@@ -136,7 +136,7 @@ const WheelPickerSelect = React.forwardRef<
           break;
       }
     },
-    [moveBy, onIndexChange, items.length]
+    [moveBy, onIndexChange, items.length],
   );
 
   return (
@@ -149,7 +149,7 @@ const WheelPickerSelect = React.forwardRef<
       tabIndex={0}
       className={cn(
         "relative h-6 w-full rounded-md border border-transparent text-left focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50",
-        className
+        className,
       )}
       onKeyDown={handleKeyDown}
       {...props}
@@ -179,7 +179,7 @@ const WheelPickerOptions = React.forwardRef<
       data-slot="wheel-options"
       className={cn(
         "h-full w-full rounded-md [perspective:1000px] [transform-style:preserve-3d]",
-        className
+        className,
       )}
       {...props}
     >
@@ -208,7 +208,7 @@ const WheelPickerOptions = React.forwardRef<
               role="option"
               aria-selected={isSelected}
               className={cn(
-                "absolute inset-0 flex cursor-pointer select-none items-center justify-start transition-transform duration-500 ease-out [backface-visibility:hidden]"
+                "absolute inset-0 flex cursor-pointer select-none items-center justify-start transition-transform duration-500 ease-out [backface-visibility:hidden]",
               )}
               style={{
                 transform: `rotateX(${angle}rad) translateZ(${radius}px)`,
@@ -225,7 +225,7 @@ const WheelPickerOptions = React.forwardRef<
               <span
                 className={cn(
                   "text-xs transition-colors",
-                  isSelected ? "text-foreground" : "text-muted-foreground/70"
+                  isSelected ? "text-foreground" : "text-muted-foreground/70",
                 )}
               >
                 {item}
@@ -272,7 +272,7 @@ const WheelPickerEmpty = React.forwardRef<
       aria-disabled
       className={cn(
         "absolute inset-0 select-none [backface-visibility:hidden]",
-        className
+        className,
       )}
       style={{
         transform: `rotateX(${angle}rad) translateZ(${radius}px)`,

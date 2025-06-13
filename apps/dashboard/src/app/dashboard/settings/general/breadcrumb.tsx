@@ -1,7 +1,7 @@
 "use client";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
-import { CreditCard, Cog, User } from "lucide-react";
+import { Cog, CreditCard, User } from "lucide-react";
 
 export function Breadcrumb() {
   return (

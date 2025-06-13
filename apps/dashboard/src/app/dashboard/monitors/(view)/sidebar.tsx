@@ -1,16 +1,16 @@
 "use client";
 
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { Badge } from "@/components/ui/badge";
 import {
-  TooltipContent,
   Tooltip,
+  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CircleCheck, Logs } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
 
 export function Sidebar() {
   const router = useRouter();

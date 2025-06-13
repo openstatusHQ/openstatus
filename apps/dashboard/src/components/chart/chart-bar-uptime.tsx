@@ -13,7 +13,7 @@ import {
 
 const chartData = Array.from({ length: 28 }, (_, i) => ({
   timestamp: new Date(
-    new Date().setHours(new Date().getHours() - i * 6)
+    new Date().setHours(new Date().getHours() - i * 6),
   ).toLocaleString("default", {
     day: "numeric",
     month: "numeric",

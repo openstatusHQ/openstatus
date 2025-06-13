@@ -12,7 +12,7 @@ export function TableCellBoolean({
       className={cn(
         "font-mono",
         _value ? "text-foreground" : "text-foreground/70",
-        className
+        className,
       )}
       {...props}
     >

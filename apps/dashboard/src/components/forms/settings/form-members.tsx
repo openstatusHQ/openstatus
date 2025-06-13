@@ -14,28 +14,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormCardFooter, FormCardFooterInfo } from "../form-card";
 
-import { FormCard } from "@/components/forms/form-card";
 import { Link } from "@/components/common/link";
+import { FormCard } from "@/components/forms/form-card";
 import { Tabs } from "@/components/ui/tabs";
 import { Lock } from "lucide-react";
 
-import { DataTable as MembersDataTable } from "@/components/data-table/settings/members/data-table";
 import { DataTable as InvitationsDataTable } from "@/components/data-table/settings/invitations/data-table";
-import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
+import { DataTable as MembersDataTable } from "@/components/data-table/settings/members/data-table";
 import {
   Form,
-  FormMessage,
   FormControl,
-  FormLabel,
   FormField,
   FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { members } from "@/data/members";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const LOCKED = true;
 

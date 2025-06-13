@@ -1,10 +1,10 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
-import { getActions } from "@/data/notifiers.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { useRef } from "react";
 import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
+import { getActions } from "@/data/notifiers.client";
+import type { Row } from "@tanstack/react-table";
+import { useRef } from "react";
 
 interface DataTableRowActionsProps<TData> {
   row?: Row<TData>;
@@ -12,7 +12,7 @@ interface DataTableRowActionsProps<TData> {
 
 export function DataTableRowActions<TData>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>
+  _props: DataTableRowActionsProps<TData>,
 ) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const actions = getActions({

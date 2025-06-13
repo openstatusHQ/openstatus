@@ -12,14 +12,14 @@ import {
 
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
@@ -121,7 +121,7 @@ export function NotifierForm({
                       checked={field.value?.length === monitors.length}
                       onCheckedChange={(checked) => {
                         field.onChange(
-                          checked ? monitors.map((m) => m.id) : []
+                          checked ? monitors.map((m) => m.id) : [],
                         );
                       }}
                     />

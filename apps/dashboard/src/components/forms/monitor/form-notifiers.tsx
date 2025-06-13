@@ -1,6 +1,9 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   FormCard,
   FormCardContent,
@@ -9,10 +12,8 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -21,13 +22,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
-import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
 import { notifiers } from "@/data/notifiers";
-import { Checkbox } from "@/components/ui/checkbox";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const schema = z.object({
   notifiers: z.array(z.number()),
@@ -115,8 +115,8 @@ export function FormNotifiers({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id
-                                          )
+                                            (value) => value !== item.id,
+                                          ),
                                         );
                                   }}
                                 />

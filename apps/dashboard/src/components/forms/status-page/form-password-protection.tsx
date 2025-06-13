@@ -1,15 +1,6 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -20,15 +11,24 @@ import {
   FormCardTitle,
   FormCardUpgrade,
 } from "@/components/forms/form-card";
-import { Input } from "@/components/ui/input";
-import { Link } from "@/components/common/link";
 import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "lucide-react";
 import { useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 const LOCKED = true;
 

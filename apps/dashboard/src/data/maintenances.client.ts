@@ -18,7 +18,7 @@ export const actions = [
 export type MaintenanceAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<MaintenanceAction["id"], () => Promise<void> | void>>
+  props: Partial<Record<MaintenanceAction["id"], () => Promise<void> | void>>,
 ): (MaintenanceAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,

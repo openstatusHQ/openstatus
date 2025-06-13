@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { chartConfig, chartData } from "./utils";
+import { Kbd } from "@/components/common/kbd";
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { formatDistanceStrict, isSameDay } from "date-fns";
-import { messages } from "./messages";
 import { Separator } from "@/components/ui/separator";
 import { statusReports } from "@/data/status-reports";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { formatDistanceStrict, isSameDay } from "date-fns";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { Kbd } from "@/components/common/kbd";
+import { useEffect, useRef, useState } from "react";
 import { type CardType, VARIANT } from "./floating-button";
-import { useMediaQuery } from "@/hooks/use-media-query";
+import { messages } from "./messages";
+import { chartConfig, chartData } from "./utils";
 
 const STATUS = VARIANT;
 
@@ -179,7 +179,7 @@ function StatusTrackerContentDetailed({
     const now = new Date();
     const duration = formatDistanceStrict(
       now,
-      new Date(now.getTime() + value * 60 * 1000)
+      new Date(now.getTime() + value * 60 * 1000),
     );
 
     return (
@@ -215,7 +215,7 @@ function StatusTrackerContentCompact({
 }) {
   const highestPriorityStatus =
     STATUS.filter((status) => item[status] > 0).sort(
-      (a, b) => priority[b] - priority[a]
+      (a, b) => priority[b] - priority[a],
     )[0] || "success";
 
   return (

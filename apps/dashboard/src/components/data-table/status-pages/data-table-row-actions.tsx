@@ -1,9 +1,9 @@
 "use client";
 
-import type { Row } from "@tanstack/react-table";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { useRouter } from "next/navigation";
 import { getActions } from "@/data/status-pages.client";
+import type { Row } from "@tanstack/react-table";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface DataTableRowActionsProps<TData> {
@@ -12,7 +12,7 @@ interface DataTableRowActionsProps<TData> {
 
 export function DataTableRowActions<TData>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>
+  _props: DataTableRowActionsProps<TData>,
 ) {
   const router = useRouter();
   const actions = getActions({

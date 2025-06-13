@@ -1,19 +1,19 @@
 "use client";
 
-import { Zap } from "lucide-react";
+import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
+  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-  TooltipContent,
 } from "@/components/ui/tooltip";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { useRouter } from "next/navigation";
 import { getActions } from "@/data/monitors.client";
-import { toast } from "sonner";
+import { Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import { toast } from "sonner";
 
 export function NavActions() {
   const [openDialog, setOpenDialog] = useState(false);

@@ -9,7 +9,7 @@ export function EmptyStateContainer({
     <div
       className={cn(
         "flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-border border-dashed p-4",
-        className
+        className,
       )}
       {...props}
     >

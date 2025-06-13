@@ -1,11 +1,11 @@
 "use client";
 
+import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { Maintenance } from "@/data/maintenances";
 import type { ColumnDef } from "@tanstack/react-table";
-import { DataTableRowActions } from "./data-table-row-actions";
 import { formatDistanceStrict } from "date-fns";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
+import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Maintenance>[] = [
   {

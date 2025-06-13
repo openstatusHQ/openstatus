@@ -1,12 +1,12 @@
-import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { UTCDate } from "@date-fns/utc";
+import { format } from "date-fns";
 import {
   AlertCircleIcon,
   CheckIcon,
@@ -60,7 +60,7 @@ export function StatusTitle({
     <div
       className={cn(
         "font-semibold text-foreground text-lg leading-none",
-        className
+        className,
       )}
       {...props}
     >
@@ -94,7 +94,7 @@ export function StatusBanner({ className }: React.ComponentProps<"div">) {
         "group-data-[variant=degraded]:border-warning/20 group-data-[variant=degraded]:bg-warning/10",
         "group-data-[variant=error]:border-destructive/20 group-data-[variant=error]:bg-destructive/10",
         "group-data-[variant=info]:border-info/20 group-data-[variant=info]:bg-info/10",
-        className
+        className,
       )}
     >
       <StatusIcon className="flex-shrink-0" />
@@ -140,7 +140,7 @@ export function StatusIcon({
         "group-data-[variant=degraded]:bg-warning",
         "group-data-[variant=error]:bg-destructive",
         "group-data-[variant=info]:bg-info",
-        className
+        className,
       )}
       {...props}
     >
@@ -164,7 +164,7 @@ export function StatusTimestamp({
         <TooltipTrigger
           className={cn(
             "font-mono text-muted-foreground underline decoration-muted-foreground/30 decoration-dashed underline-offset-4",
-            className
+            className,
           )}
           {...props}
         >

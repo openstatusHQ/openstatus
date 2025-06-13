@@ -1,16 +1,16 @@
 import { Link } from "@/components/common/link";
+import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
+import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
 import {
-  TooltipContent,
   Tooltip,
+  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ExternalLink } from "lucide-react";
-import { statusPages } from "@/data/status-pages";
 import { monitors } from "@/data/monitors";
-import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
+import { statusPages } from "@/data/status-pages";
+import { ExternalLink } from "lucide-react";
 
 // NOTE:
 const BADGE_URL =

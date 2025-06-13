@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { Link } from "@/components/common/link";
 import {
   FormCard,
   FormCardContent,
@@ -11,10 +11,8 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -23,12 +21,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { type Region, groupedRegions, regions } from "@/data/regions";
 import { cn } from "@/lib/utils";
-import { groupedRegions, type Region, regions } from "@/data/regions";
-import { Link } from "@/components/common/link";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"] satisfies Region[];
 const PERIODICITY = ["30s", "1m", "5m", "10m", "30m", "1h"] as const;
@@ -107,7 +107,7 @@ export function FormSchedulingRegions({
                         className={cn(
                           // NOTE: used for disabled steps
                           ["30s", "1m", "5m"].includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive"
+                            "[&_[data-slot=slider-range]]:bg-destructive",
                         )}
                       />
                       <span
@@ -162,7 +162,7 @@ export function FormSchedulingRegions({
                                 size="sm"
                                 type="button"
                                 className={cn(
-                                  isAllSelected && "text-muted-foreground"
+                                  isAllSelected && "text-muted-foreground",
                                 )}
                                 onClick={() => {
                                   if (!isAllSelected) {
@@ -180,8 +180,8 @@ export function FormSchedulingRegions({
                                       "regions",
                                       watchRegions?.filter(
                                         (region) =>
-                                          !r.includes(region as Region)
-                                      )
+                                          !r.includes(region as Region),
+                                      ),
                                     );
                                   }
                                 }}
@@ -192,7 +192,7 @@ export function FormSchedulingRegions({
                             <div className="grid grid-cols-2 gap-2">
                               {r.map((region) => {
                                 const config = regions.find(
-                                  (r) => r.code === region
+                                  (r) => r.code === region,
                                 );
                                 return (
                                   <FormField
@@ -219,8 +219,8 @@ export function FormSchedulingRegions({
                                             } else {
                                               field.onChange(
                                                 field.value?.filter(
-                                                  (r) => r !== region
-                                                )
+                                                  (r) => r !== region,
+                                                ),
                                               );
                                             }
                                           }}

@@ -22,7 +22,7 @@ import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartData = Array.from({ length: 30 }, (_, i) => ({
   timestamp: new Date(
-    new Date().setMinutes(new Date().getMinutes() - i)
+    new Date().setMinutes(new Date().getMinutes() - i),
   ).toLocaleString("default", {
     hour: "numeric",
     minute: "numeric",

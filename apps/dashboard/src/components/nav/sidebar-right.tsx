@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { Button } from "@/components/ui/button";
 import {
   Sidebar,
   SidebarContent,
@@ -13,17 +14,16 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
-import { Button } from "@/components/ui/button";
-import { PanelRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PanelRight } from "lucide-react";
+import { Kbd } from "../common/kbd";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { Kbd } from "../common/kbd";
+import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "]";
 

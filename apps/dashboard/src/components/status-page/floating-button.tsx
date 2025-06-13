@@ -1,9 +1,13 @@
 "use client";
 
-import type React from "react";
-import { createContext, useContext, useState } from "react";
-import { Settings } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -11,14 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Label } from "@/components/ui/label";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
+import { Settings } from "lucide-react";
+import type React from "react";
+import { createContext, useContext, useState } from "react";
 
 export const VARIANT = ["success", "degraded", "error", "info"] as const;
 export type VariantType = (typeof VARIANT)[number];

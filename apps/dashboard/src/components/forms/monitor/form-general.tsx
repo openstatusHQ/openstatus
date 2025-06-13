@@ -1,5 +1,16 @@
 "use client";
 
+import { Link } from "@/components/common/link";
+import {
+  FormCard,
+  FormCardContent,
+  FormCardDescription,
+  FormCardFooter,
+  FormCardFooterInfo,
+  FormCardHeader,
+  FormCardSeparator,
+  FormCardTitle,
+} from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -11,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -19,25 +31,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Globe, Network, Plus, X } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
-import {
-  FormCard,
-  FormCardContent,
-  FormCardDescription,
-  FormCardFooter,
-  FormCardFooterInfo,
-  FormCardHeader,
-  FormCardSeparator,
-  FormCardTitle,
-} from "@/components/forms/form-card";
 import { DevTool } from "@hookform/devtools";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Globe, Network, Plus, X } from "lucide-react";
+import { useTransition } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link } from "@/components/common/link";
+import { z } from "zod";
 
 const TYPES = ["HTTP", "TCP"] as const;
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
@@ -53,7 +53,7 @@ const schema = z.object({
     z.object({
       key: z.string(),
       value: z.string(),
-    })
+    }),
   ),
   body: z.string().optional(),
   assertions: z.array(
@@ -61,7 +61,7 @@ const schema = z.object({
       type: z.enum(ASSERTION_TYPES),
       eq: z.enum(ASSERTION_EQ),
       value: z.string().min(1),
-    })
+    }),
   ),
 });
 
@@ -274,7 +274,7 @@ export function FormGeneral({
                             variant="ghost"
                             onClick={() => {
                               const newHeaders = field.value.filter(
-                                (_, i) => i !== index
+                                (_, i) => i !== index,
                               );
                               field.onChange(newHeaders);
                             }}
@@ -408,7 +408,7 @@ export function FormGeneral({
                             type="button"
                             onClick={() => {
                               const newAssertions = field.value.filter(
-                                (_, i) => i !== index
+                                (_, i) => i !== index,
                               );
                               field.onChange(newAssertions);
                             }}

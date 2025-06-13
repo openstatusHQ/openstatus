@@ -3,7 +3,6 @@
 import { useTheme } from "next-themes";
 import type * as React from "react";
 
-import { Laptop, Moon, Sun } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -11,9 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import { Laptop, Moon, Sun } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
-import { cn } from "@/lib/utils";
 
 export function ThemeToggle({
   className,

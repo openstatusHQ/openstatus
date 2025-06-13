@@ -6,9 +6,9 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import { regions } from "@/data/regions";
 import type { ResponseLog } from "@/data/response-logs";
 import { statusCodes } from "@/data/status-codes";
-import { regions } from "@/data/regions";
 
 export interface ResponseLogsDataTableToolbarProps {
   table: Table<ResponseLog>;
