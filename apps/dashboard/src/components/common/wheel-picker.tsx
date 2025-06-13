@@ -148,7 +148,7 @@ const WheelPickerSelect = React.forwardRef<
       aria-activedescendant={`wheel-option-${currentIndex}`}
       tabIndex={0}
       className={cn(
-        "relative w-full h-6 focus:outline-none border border-transparent focus:border-ring focus:ring-ring/50 focus:ring-2 rounded-md text-left",
+        "relative h-6 w-full rounded-md border border-transparent text-left focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/50",
         className
       )}
       onKeyDown={handleKeyDown}
@@ -178,13 +178,13 @@ const WheelPickerOptions = React.forwardRef<
       ref={ref}
       data-slot="wheel-options"
       className={cn(
-        "rounded-md h-full w-full [perspective:1000px] [transform-style:preserve-3d]",
+        "h-full w-full rounded-md [perspective:1000px] [transform-style:preserve-3d]",
         className
       )}
       {...props}
     >
       <div
-        className="relative h-full w-full [transform-style:preserve-3d] transition-transform duration-500 ease-out"
+        className="relative h-full w-full transition-transform duration-500 ease-out [transform-style:preserve-3d]"
         style={{
           transform: `translateZ(-${radius}px) rotateX(${
             -(currentIndex + 1) * theta
@@ -208,7 +208,7 @@ const WheelPickerOptions = React.forwardRef<
               role="option"
               aria-selected={isSelected}
               className={cn(
-                "absolute inset-0 select-none [backface-visibility:hidden] transition-transform duration-500 ease-out flex items-center justify-start cursor-pointer"
+                "absolute inset-0 flex cursor-pointer select-none items-center justify-start transition-transform duration-500 ease-out [backface-visibility:hidden]"
               )}
               style={{
                 transform: `rotateX(${angle}rad) translateZ(${radius}px)`,

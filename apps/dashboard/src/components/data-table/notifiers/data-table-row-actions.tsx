@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 import { getActions } from "@/data/notifiers.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useRef } from "react";
@@ -30,7 +30,7 @@ export function DataTableRowActions<TData>(
       />
       {/* NOTE: id is provider name */}
       <FormSheetNotifier id="email">
-        <button ref={buttonRef} className="sr-only">
+        <button ref={buttonRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetNotifier>

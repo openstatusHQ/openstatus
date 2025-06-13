@@ -14,7 +14,7 @@ import { statusReports } from "@/data/status-reports";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Kbd } from "@/components/common/kbd";
-import { CardType, VARIANT } from "./floating-button";
+import { type CardType, VARIANT } from "./floating-button";
 import { useMediaQuery } from "@/hooks/use-media-query";
 
 const STATUS = VARIANT;
@@ -76,7 +76,6 @@ export function StatusTracker({ type = "detailed" }: { type?: CardType }) {
       ref={containerRef}
       className="flex h-[50px] w-full items-end gap-px xs:gap-0.5 sm:gap-1"
       onKeyDown={handleKeyDown}
-      tabIndex={0}
     >
       {chartData.map((item, index) => {
         const total = item.success + item.degraded + item.info + item.error;
@@ -119,14 +118,14 @@ export function StatusTracker({ type = "detailed" }: { type?: CardType }) {
             </HoverCardTrigger>
             <HoverCardContent side="top" align="center" className="w-auto p-0">
               <div>
-                <div className="text-xs p-2">
+                <div className="p-2 text-xs">
                   {new Date(item.timestamp).toLocaleDateString("default", {
                     day: "numeric",
                     month: "short",
                   })}
                 </div>
                 <Separator />
-                <div className="p-2 space-y-1 text-sm">
+                <div className="space-y-1 p-2 text-sm">
                   {type === "detailed" ? (
                     <StatusTrackerContentDetailed item={item} />
                   ) : (
@@ -138,10 +137,10 @@ export function StatusTracker({ type = "detailed" }: { type?: CardType }) {
                     <Separator />
                     <div className="p-2">
                       {reports.map((report) => (
-                        <Link key={report.id} href={`#`}>
-                          <div className="group text-sm flex items-center justify-between text-muted-foreground hover:text-foreground">
+                        <Link key={report.id} href={"#"}>
+                          <div className="group flex items-center justify-between text-muted-foreground text-sm hover:text-foreground">
                             <div>{report.name}</div>
-                            <ChevronRight className="size-3 group-hover:translate-x-0.5 transition-transform" />
+                            <ChevronRight className="size-3 transition-transform group-hover:translate-x-0.5" />
                           </div>
                         </Link>
                       ))}
@@ -151,7 +150,7 @@ export function StatusTracker({ type = "detailed" }: { type?: CardType }) {
                 {isPinned && !isTouch && (
                   <>
                     <Separator />
-                    <div className="p-2 cursor-pointer flex items-center text-xs text-muted-foreground">
+                    <div className="flex cursor-pointer items-center p-2 text-muted-foreground text-xs">
                       <span>Click again to unpin</span>
                       <Kbd>Esc</Kbd>
                     </div>
@@ -220,7 +219,7 @@ function StatusTrackerContentCompact({
     )[0] || "success";
 
   return (
-    <div className="flex items-baseline gap-4 min-w-32">
+    <div className="flex min-w-32 items-baseline gap-4">
       <div className="flex items-center gap-2">
         <div
           className="h-2.5 w-2.5 rounded-sm"

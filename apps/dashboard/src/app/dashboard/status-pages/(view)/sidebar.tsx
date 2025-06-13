@@ -34,7 +34,7 @@ export function Sidebar() {
             {
               label: "Favicon",
               value: (
-                <div className="rounded border bg-muted size-4 overflow-hidden">
+                <div className="size-4 overflow-hidden rounded border bg-muted">
                   <img src={statusPage.favicon} alt="favicon" />
                 </div>
               ),
@@ -72,7 +72,7 @@ export function Sidebar() {
           items: monitors
             // NOTE: only show the first 2 monitors
             .slice(0, 2)
-            .map((monitor) => {
+            .flatMap((monitor) => {
               const arr = [];
               const url = new URL(monitor.url);
               arr.push({
@@ -90,8 +90,7 @@ export function Sidebar() {
                 isNested: true,
               });
               return arr;
-            })
-            .flat(),
+            }),
           // items: [
           //   {
           //     label: "Name",

@@ -18,9 +18,9 @@ const nav = [
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col gap-4">
-      <header className="w-full border-b border px-3 py-2">
-        <nav className="max-w-xl mx-auto flex items-center justify-between">
+    <div className="flex min-h-screen flex-col gap-4">
+      <header className="w-full border border-b px-3 py-2">
+        <nav className="mx-auto flex max-w-xl items-center justify-between">
           <ul className="flex flex-row gap-2">
             {nav.map((item) => (
               <li key={item.label}>
@@ -33,11 +33,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div>{/* TODO: Popover */}</div>
         </nav>
       </header>
-      <main className="max-w-xl w-full mx-auto flex-1 px-3 py-2">
+      <main className="mx-auto w-full max-w-xl flex-1 px-3 py-2">
         {children}
       </main>
-      <footer className="w-full border-t border px-3 py-2">
-        <div className="max-w-xl mx-auto">
+      <footer className="w-full border border-t px-3 py-2">
+        <div className="mx-auto max-w-xl">
           <p className="text-center text-muted-foreground">
             Powered by <Link href="#">OpenStatus</Link>
           </p>

@@ -13,7 +13,7 @@ import {
   SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { SidebarMetadata, SidebarMetadataProps } from "./sidebar-metadata";
+import { SidebarMetadata, type SidebarMetadataProps } from "./sidebar-metadata";
 import { Button } from "@/components/ui/button";
 import { PanelRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -43,7 +43,7 @@ export function SidebarRight({
     <Sidebar
       collapsible="offcanvas"
       side="right"
-      className="top-14 h-[calc(100svh_-_56px)] flex"
+      className="top-14 flex h-[calc(100svh_-_56px)]"
       style={
         {
           // "--sidebar-width": "300px",
@@ -51,9 +51,9 @@ export function SidebarRight({
       }
       {...props}
     >
-      <SidebarHeader className="border-b border-sidebar-border relative">
+      <SidebarHeader className="relative border-sidebar-border border-b">
         {header}
-        <div className="absolute inset-y-0 -left-9 z-10 items-center justify-center flex">
+        <div className="-left-9 absolute inset-y-0 z-10 flex items-center justify-center">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -62,7 +62,7 @@ export function SidebarRight({
               <TooltipContent side="left">
                 <p className="mr-px inline-flex items-center gap-1">
                   Toggle Sidebar{" "}
-                  <Kbd className="bg-primary text-background border-muted-foreground">
+                  <Kbd className="border-muted-foreground bg-primary text-background">
                     ⌘+{SIDEBAR_KEYBOARD_SHORTCUT}
                   </Kbd>
                 </p>

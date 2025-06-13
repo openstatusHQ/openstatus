@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { useRouter } from "next/navigation";
 import { getActions } from "@/data/monitors.client";
@@ -19,7 +19,7 @@ export function DataTableRowActions<TData>(
   const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();
   const actions = getActions({
-    edit: () => router.push(`/dashboard/monitors/edit`),
+    edit: () => router.push("/dashboard/monitors/edit"),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");

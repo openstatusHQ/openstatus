@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import * as React from "react";
+import type * as React from "react";
 
 import { Laptop, Moon, Sun } from "lucide-react";
 import {

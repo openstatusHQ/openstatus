@@ -5,10 +5,10 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { ResponseLog } from "@/data/response-logs";
+import type { ResponseLog } from "@/data/response-logs";
 import { cn } from "@/lib/utils";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
@@ -180,7 +180,7 @@ function HoverCardTimingContent({
                 className={cn("h-2 w-2 rounded-full")}
                 style={{ backgroundColor: `var(--chart-${index + 1})` }}
               />
-              <div className="font-mono uppercase text-accent-foreground">
+              <div className="font-mono text-accent-foreground uppercase">
                 {key}
               </div>
             </div>

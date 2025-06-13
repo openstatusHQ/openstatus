@@ -8,7 +8,7 @@ export function AppHeader({
   return (
     <header
       className={cn(
-        "flex sticky top-0 bg-background h-14 shrink-0 items-center gap-2 border-b px-2 z-10",
+        "sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-2",
         className
       )}
       {...props}

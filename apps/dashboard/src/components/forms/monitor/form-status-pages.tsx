@@ -193,7 +193,7 @@ export function FormStatusPages({
                                   }}
                                 />
                               </FormControl>
-                              <FormLabel className="text-sm font-normal">
+                              <FormLabel className="font-normal text-sm">
                                 {item.name}
                               </FormLabel>
                             </FormItem>

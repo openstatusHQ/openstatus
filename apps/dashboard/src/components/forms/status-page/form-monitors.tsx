@@ -11,7 +11,7 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { useForm, UseFormReturn } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState, useTransition } from "react";
@@ -29,7 +29,7 @@ import {
   EmptyStateContainer,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import { Monitor } from "@/data/monitors";
+import type { Monitor } from "@/data/monitors";
 import { PopoverContent } from "@/components/ui/popover";
 import { Popover, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Check, ChevronsUpDown, GripVertical } from "lucide-react";
-import { UniqueIdentifier } from "@dnd-kit/core";
+import type { UniqueIdentifier } from "@dnd-kit/core";
 import {
   Sortable,
   SortableContent,
@@ -304,7 +304,7 @@ function MonitorRow({ monitor, ...props }: MonitorRowProps) {
           </SortableItemHandle>
           <span className="truncate text-sm">{monitor.name}</span>
         </div>
-        <div className="truncate self-center text-sm text-muted-foreground">
+        <div className="self-center truncate text-muted-foreground text-sm">
           {monitor.url}
         </div>
         <div>
@@ -321,7 +321,7 @@ function MonitorRow({ monitor, ...props }: MonitorRowProps) {
                 >
                   {value.label}{" "}
                   {DISABLED_TYPES.includes(key) && (
-                    <span className="text-xs text-foreground">(Upgrade)</span>
+                    <span className="text-foreground text-xs">(Upgrade)</span>
                   )}
                 </SelectItem>
               ))}

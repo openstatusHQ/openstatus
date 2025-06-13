@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 
 interface DataTableRowActionsProps<TData> {

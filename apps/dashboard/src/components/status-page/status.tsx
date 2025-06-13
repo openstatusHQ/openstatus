@@ -59,7 +59,7 @@ export function StatusTitle({
   return (
     <div
       className={cn(
-        "text-foreground text-lg leading-none font-semibold",
+        "font-semibold text-foreground text-lg leading-none",
         className
       )}
       {...props}
@@ -89,16 +89,16 @@ export function StatusBanner({ className }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 border rounded-lg p-3",
-        "group-data-[variant=success]:bg-success/10 group-data-[variant=success]:border-success/20",
-        "group-data-[variant=degraded]:bg-warning/10 group-data-[variant=degraded]:border-warning/20",
-        "group-data-[variant=error]:bg-destructive/10 group-data-[variant=error]:border-destructive/20",
-        "group-data-[variant=info]:bg-info/10 group-data-[variant=info]:border-info/20",
+        "flex items-center gap-3 rounded-lg border p-3",
+        "group-data-[variant=success]:border-success/20 group-data-[variant=success]:bg-success/10",
+        "group-data-[variant=degraded]:border-warning/20 group-data-[variant=degraded]:bg-warning/10",
+        "group-data-[variant=error]:border-destructive/20 group-data-[variant=error]:bg-destructive/10",
+        "group-data-[variant=info]:border-info/20 group-data-[variant=info]:bg-info/10",
         className
       )}
     >
       <StatusIcon className="flex-shrink-0" />
-      <div className="flex-1 flex items-center justify-between flex-wrap gap-2">
+      <div className="flex flex-1 flex-wrap items-center justify-between gap-2">
         <StatusBannerMessage className="font-semibold text-xl" />
         <StatusTimestamp date={new Date()} className="text-xs" />
       </div>
@@ -135,7 +135,7 @@ export function StatusIcon({
   return (
     <div
       className={cn(
-        "size-8 text-background rounded-full bg-muted flex items-center justify-center [&>svg]:size-4",
+        "flex size-8 items-center justify-center rounded-full bg-muted text-background [&>svg]:size-4",
         "group-data-[variant=success]:bg-success",
         "group-data-[variant=degraded]:bg-warning",
         "group-data-[variant=error]:bg-destructive",
@@ -144,10 +144,10 @@ export function StatusIcon({
       )}
       {...props}
     >
-      <CheckIcon className="group-data-[variant=success]:block hidden" />
-      <TriangleAlertIcon className="group-data-[variant=degraded]:block hidden" />
-      <AlertCircleIcon className="group-data-[variant=error]:block hidden" />
-      <WrenchIcon className="group-data-[variant=info]:block hidden" />
+      <CheckIcon className="hidden group-data-[variant=success]:block" />
+      <TriangleAlertIcon className="hidden group-data-[variant=degraded]:block" />
+      <AlertCircleIcon className="hidden group-data-[variant=error]:block" />
+      <WrenchIcon className="hidden group-data-[variant=info]:block" />
     </div>
   );
 }

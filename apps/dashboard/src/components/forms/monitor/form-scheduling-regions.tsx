@@ -111,7 +111,7 @@ export function FormSchedulingRegions({
                         )}
                       />
                       <span
-                        className="text-muted-foreground mt-3 flex w-full items-center justify-between gap-1 px-2.5 text-xs font-medium"
+                        className="mt-3 flex w-full items-center justify-between gap-1 px-2.5 font-medium text-muted-foreground text-xs"
                         aria-hidden="true"
                       >
                         {PERIODICITY.map((period) => (
@@ -120,7 +120,7 @@ export function FormSchedulingRegions({
                             className="flex w-0 flex-col items-center justify-center gap-2"
                           >
                             <span
-                              className={cn("bg-muted-foreground/70 h-1 w-px")}
+                              className={cn("h-1 w-px bg-muted-foreground/70")}
                             />
                             {period}
                           </span>
@@ -153,7 +153,7 @@ export function FormSchedulingRegions({
                             <div className="flex items-center justify-between">
                               <FormLabel>
                                 {continent}{" "}
-                                <span className="text-muted-foreground/70 font-mono font-normal text-xs align-baseline tabular-nums">
+                                <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
                                   ({selected}/{r.length})
                                 </span>
                               </FormLabel>
@@ -227,12 +227,12 @@ export function FormSchedulingRegions({
                                         />
                                         <FormLabel
                                           htmlFor={region}
-                                          className="text-sm font-normal font-mono truncate w-full"
+                                          className="w-full truncate font-mono font-normal text-sm"
                                         >
                                           <span className="text-nowrap">
                                             {region} {config?.flag}
                                           </span>
-                                          <span className="text-muted-foreground text-xs leading-[inherit] font-normal truncate">
+                                          <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
                                             {config?.location}
                                           </span>
                                         </FormLabel>

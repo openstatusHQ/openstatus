@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormMaintenance,
-  FormValues,
+  type FormValues,
 } from "@/components/forms/maintenance/form";
 import { useState } from "react";
 import {
@@ -36,7 +36,7 @@ export function FormSheetMaintenance({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
-          <FormCard className="border-none overflow-auto">
+          <FormCard className="overflow-auto border-none">
             <FormMaintenance
               onSubmit={() => setOpen(false)}
               defaultValues={defaultValues}

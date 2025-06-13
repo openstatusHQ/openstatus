@@ -47,7 +47,7 @@ export function MetricCardTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-sm font-medium", className)} {...props}>
+    <p className={cn("font-medium text-sm", className)} {...props}>
       {children}
     </p>
   );
@@ -80,7 +80,7 @@ export function MetricCardValue({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-foreground font-semibold", className)} {...props}>
+    <p className={cn("font-semibold text-foreground", className)} {...props}>
       {children}
     </p>
   );
@@ -94,7 +94,7 @@ export function MetricCardGroup({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4",
+        "grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5",
         className
       )}
       {...props}

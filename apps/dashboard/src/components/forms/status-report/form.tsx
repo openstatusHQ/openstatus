@@ -183,7 +183,7 @@ export function FormStatusReport({
                     </PopoverTrigger>
                   </FormControl>
                   <PopoverContent
-                    className="w-auto p-0 pointer-events-auto"
+                    className="pointer-events-auto w-auto p-0"
                     align="start"
                     side="left"
                   >
@@ -209,7 +209,7 @@ export function FormStatusReport({
                             defaultValue="12:00:00"
                             className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                           />
-                          <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 peer-disabled:opacity-50">
+                          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
                             <ClockIcon size={16} aria-hidden="true" />
                           </div>
                         </div>
@@ -251,7 +251,7 @@ export function FormStatusReport({
             <TabsContent value="tab-2">
               <div className="grid gap-2">
                 <Label>Preview</Label>
-                <p className="text-foreground py-2 px-3 text-sm border rounded-md">
+                <p className="rounded-md border px-3 py-2 text-foreground text-sm">
                   {watchMessage}
                 </p>
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
+import type React from "react";
+import { createContext, useContext, useState } from "react";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +66,7 @@ export function FloatingButton({ className }: { className?: string }) {
   const { variant, setVariant, cardType, setCardType } = useStatusPage();
 
   return (
-    <div className={cn("fixed bottom-4 right-4 z-50 bg-background", className)}>
+    <div className={cn("fixed right-4 bottom-4 z-50 bg-background", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -81,7 +82,7 @@ export function FloatingButton({ className }: { className?: string }) {
           <div className="space-y-4">
             <div className="space-y-2">
               <h4 className="font-medium leading-none">Status Page Settings</h4>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Configure the status page appearance
               </p>
             </div>
@@ -94,7 +95,7 @@ export function FloatingButton({ className }: { className?: string }) {
                 >
                   <SelectTrigger
                     id="status-variant"
-                    className="capitalize w-full"
+                    className="w-full capitalize"
                   >
                     <SelectValue />
                   </SelectTrigger>
@@ -113,7 +114,7 @@ export function FloatingButton({ className }: { className?: string }) {
                   value={cardType}
                   onValueChange={(v) => setCardType(v as CardType)}
                 >
-                  <SelectTrigger id="card-type" className="capitalize w-full">
+                  <SelectTrigger id="card-type" className="w-full capitalize">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

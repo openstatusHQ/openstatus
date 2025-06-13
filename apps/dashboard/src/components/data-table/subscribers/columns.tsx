@@ -1,7 +1,7 @@
 "use client";
 
-import { Subscriber } from "@/data/subscribers";
-import { ColumnDef } from "@tanstack/react-table";
+import type { Subscriber } from "@/data/subscribers";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Subscriber>[] = [

@@ -1,8 +1,8 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Notifier } from "@/data/notifiers";
-import { ColumnDef } from "@tanstack/react-table";
+import type { Notifier } from "@/data/notifiers";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 export const columns: ColumnDef<Notifier>[] = [

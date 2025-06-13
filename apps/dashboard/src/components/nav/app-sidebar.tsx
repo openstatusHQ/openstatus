@@ -120,7 +120,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="border-b py-1 h-14 flex justify-center">
+      <SidebarHeader className="flex h-14 justify-center border-b py-1">
         <OrganizationSwitcher orgs={data.orgs} />
       </SidebarHeader>
       <SidebarContent>
@@ -168,7 +168,7 @@ export function AppSidebarTrigger() {
         <TooltipContent side="right">
           <p className="mr-px inline-flex items-center gap-1">
             Toggle Sidebar{" "}
-            <Kbd className="bg-primary text-background border-muted-foreground">
+            <Kbd className="border-muted-foreground bg-primary text-background">
               ⌘+{SIDEBAR_KEYBOARD_SHORTCUT}
             </Kbd>
           </p>

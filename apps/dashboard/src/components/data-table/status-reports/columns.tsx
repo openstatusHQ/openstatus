@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { StatusReport } from "@/data/status-reports";
-import { ColumnDef } from "@tanstack/react-table";
+import type { StatusReport } from "@/data/status-reports";
+import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";

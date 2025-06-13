@@ -21,7 +21,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import React, { useTransition } from "react";
+import type React from "react";
+import { useTransition } from "react";
 import { toast } from "sonner";
 import { Link } from "@/components/common/link";
 

@@ -150,35 +150,35 @@ export function FormGeneral({
                     <RadioGroup
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      className="grid gap-4 grid-cols-2 sm:grid-cols-4"
+                      className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
-                      <FormItem className="border-input has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
+                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
                         <FormControl>
                           <RadioGroupItem value="HTTP" className="sr-only" />
                         </FormControl>
                         <Globe
-                          className="text-muted-foreground shrink-0"
+                          className="shrink-0 text-muted-foreground"
                           size={16}
                           aria-hidden="true"
                         />
-                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
+                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
                           HTTP
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="border-input has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-ring/50 relative flex cursor-pointer flex-row items-center gap-3 rounded-md border px-2 py-3 text-center shadow-xs transition-[color,box-shadow] outline-none has-focus-visible:ring-[3px]">
+                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
                         <FormControl>
                           <RadioGroupItem value="TCP" className="sr-only" />
                         </FormControl>
                         <Network
-                          className="text-muted-foreground shrink-0"
+                          className="shrink-0 text-muted-foreground"
                           size={16}
                           aria-hidden="true"
                         />
-                        <FormLabel className="text-foreground cursor-pointer text-xs leading-none font-medium after:absolute after:inset-0">
+                        <FormLabel className="cursor-pointer font-medium text-foreground text-xs leading-none after:absolute after:inset-0">
                           TCP
                         </FormLabel>
                       </FormItem>
-                      <div className="text-xs text-muted-foreground self-end sm:place-self-end col-span-2">
+                      <div className="col-span-2 self-end text-muted-foreground text-xs sm:place-self-end">
                         Missing a type? <Link href="/contact">Contact us</Link>
                       </div>
                     </RadioGroup>
@@ -191,7 +191,7 @@ export function FormGeneral({
           {watchType ? <FormCardSeparator /> : null}
           {watchType === "HTTP" && (
             <>
-              <FormCardContent className="grid gap-4 grid-cols-4">
+              <FormCardContent className="grid grid-cols-4 gap-4">
                 <FormField
                   control={form.control}
                   name="method"
@@ -396,7 +396,7 @@ export function FormGeneral({
                               <FormItem>
                                 <Input
                                   placeholder="Value"
-                                  className="w-full col-span-2"
+                                  className="col-span-2 w-full"
                                   {...field}
                                 />
                               </FormItem>
@@ -458,9 +458,9 @@ export function FormGeneral({
                   </FormItem>
                 )}
               />
-              <div className="text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-sm">
                 Examples:
-                <ul className="list-disc list-inside">
+                <ul className="list-inside list-disc">
                   <li>
                     Domain:{" "}
                     <span className="font-mono text-foreground">

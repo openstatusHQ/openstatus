@@ -10,7 +10,7 @@ export function Link({
 }: React.ComponentProps<typeof NextLink>) {
   return (
     <NextLink
-      className={cn("text-foreground font-medium", className)}
+      className={cn("font-medium text-foreground", className)}
       {...props}
     >
       {children}

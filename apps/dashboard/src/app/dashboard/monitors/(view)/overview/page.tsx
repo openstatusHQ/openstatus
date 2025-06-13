@@ -32,7 +32,7 @@ import {
   CommandInput,
   CommandSeparator,
 } from "@/components/ui/command";
-import { groupedRegions, Region, regions } from "@/data/regions";
+import { groupedRegions, type Region, regions } from "@/data/regions";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { regionMetrics } from "@/data/region-metrics";
@@ -191,7 +191,7 @@ function CommandRegion({
                 >
                   <span className="mr-1">{region.flag}</span>
                   {region.code}
-                  <span className="ml-1 text-muted-foreground text-xs truncate">
+                  <span className="ml-1 truncate text-muted-foreground text-xs">
                     {region.location}
                   </span>
                   <Check

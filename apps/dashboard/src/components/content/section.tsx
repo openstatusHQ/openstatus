@@ -32,7 +32,7 @@ export function SectionHeaderRow({
   return (
     <div
       className={cn(
-        "flex flex-col sm:flex-row gap-1.5 sm:items-end sm:justify-between",
+        "flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between",
         className
       )}
       {...props}
@@ -48,7 +48,7 @@ export function SectionDescription({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)} {...props}>
+    <p className={cn("text-muted-foreground text-sm", className)} {...props}>
       {children}
     </p>
   );
@@ -60,7 +60,7 @@ export function SectionTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-lg font-medium", className)} {...props}>
+    <p className={cn("font-medium text-lg", className)} {...props}>
       {children}
     </p>
   );
@@ -73,7 +73,7 @@ export function SectionGroup({
 }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("px-4 py-8 space-y-8 w-full max-w-4xl mx-auto", className)}
+      className={cn("mx-auto w-full max-w-4xl space-y-8 px-4 py-8", className)}
       {...props}
     >
       {children}
@@ -99,7 +99,7 @@ export function SectionGroupTitle({
   ...props
 }: React.ComponentProps<"p">) {
   return (
-    <p className={cn("text-4xl font-bold", className)} {...props}>
+    <p className={cn("font-bold text-4xl", className)} {...props}>
       {children}
     </p>
   );

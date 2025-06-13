@@ -1,9 +1,9 @@
 "use client";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
-import { Incident } from "@/data/incidents";
+import type { Incident } from "@/data/incidents";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";

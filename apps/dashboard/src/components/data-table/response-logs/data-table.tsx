@@ -1,7 +1,7 @@
 "use client";
 
 import { DataTable as DefaultDataTable } from "@/components/ui/data-table/data-table";
-import { ResponseLog } from "@/data/response-logs";
+import type { ResponseLog } from "@/data/response-logs";
 import { columns } from "./columns";
 import {
   DataTableSheet,
@@ -67,10 +67,10 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                 <TableHead colSpan={2}>Request</TableHead>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   Timestamp
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   <TableCellDate
                     value={new Date(selectedRow?.timestamp ?? 0)}
                     className="text-foreground"
@@ -78,26 +78,26 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                 </TableCell>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   URL
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   {selectedRow?.url}
                 </TableCell>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   Method
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   {selectedRow?.method}
                 </TableCell>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   Status
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   <TableCellNumber
                     value={selectedRow?.status}
                     className={statusConfig?.text}
@@ -105,18 +105,18 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                 </TableCell>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   Latency
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   <TableCellNumber value={selectedRow?.latency} unit="ms" />
                 </TableCell>
               </TableRow>
               <TableRow className="[&>:not(:last-child)]:border-r">
-                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                   Region
                 </TableHead>
-                <TableCell className="font-mono whitespace-normal">
+                <TableCell className="whitespace-normal font-mono">
                   {regionConfig?.flag} {regionConfig?.code}{" "}
                   <span className="text-muted-foreground">
                     {regionConfig?.location}
@@ -129,7 +129,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={2} className="p-0">
                   <Tabs defaultValue="table" className="w-full gap-0">
-                    <TabsList className="w-full justify-start border-b rounded-none px-2">
+                    <TabsList className="w-full justify-start rounded-none border-b px-2">
                       <TabsTrigger value="table">
                         <TableProperties className="size-3 rotate-180" />
                       </TabsTrigger>
@@ -146,10 +146,10 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                                 key={key}
                                 className="[&>:not(:last-child)]:border-r"
                               >
-                                <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                                <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                                   {key}
                                 </TableHead>
-                                <TableCell className="font-mono whitespace-normal">
+                                <TableCell className="whitespace-normal font-mono">
                                   {value}
                                 </TableCell>
                               </TableRow>
@@ -159,7 +159,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                       </Table>
                     </TabsContent>
                     <TabsContent value="raw">
-                      <pre className="p-4 bg-muted/50 rounded-none font-mono text-sm whitespace-pre-wrap">
+                      <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm">
                         {JSON.stringify(selectedRow?.headers, null, 2)}
                       </pre>
                     </TabsContent>
@@ -175,10 +175,10 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                     key={key}
                     className="[&>:not(:last-child)]:border-r"
                   >
-                    <TableHead className="bg-muted/50 text-muted-foreground font-normal">
+                    <TableHead className="bg-muted/50 font-normal text-muted-foreground">
                       <span className="uppercase">{key}</span>
                     </TableHead>
-                    <TableCell className="font-mono whitespace-normal">
+                    <TableCell className="whitespace-normal font-mono">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex-1">
                           <span className="text-muted-foreground">
@@ -190,7 +190,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                             %
                           </span>
                         </div>
-                        <div className="flex-1 flex items-center justify-end gap-2 w-full">
+                        <div className="flex w-full flex-1 items-center justify-end gap-2">
                           <span className="text-muted-foreground">
                             {value}ms
                           </span>
@@ -216,7 +216,7 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
                   </TableRow>
                   <TableRow>
                     <TableCell colSpan={2} className="p-0">
-                      <pre className="p-4 bg-muted/50 rounded-none font-mono text-sm whitespace-pre-wrap">
+                      <pre className="whitespace-pre-wrap rounded-none bg-muted/50 p-4 font-mono text-sm">
                         {selectedRow?.message}
                       </pre>
                     </TableCell>

@@ -51,7 +51,7 @@ import { getActions } from "@/data/monitors.client";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
-import { Monitor } from "@/data/monitors";
+import type { Monitor } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 
 const STATUS: Record<Monitor["status"], string> = {
@@ -82,7 +82,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const actions = getActions({
-    edit: () => router.push(`/dashboard/monitors/edit`),
+    edit: () => router.push("/dashboard/monitors/edit"),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
@@ -178,7 +178,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
                     <Tag className="text-muted-foreground" />
                     Tags
                   </DropdownMenuSubTrigger>
@@ -215,7 +215,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
                     <Send className="text-muted-foreground" />
                     Active
                   </DropdownMenuSubTrigger>
@@ -243,7 +243,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
                     <Code className="text-muted-foreground" />
                     Type
                   </DropdownMenuSubTrigger>
@@ -271,7 +271,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+                  <DropdownMenuSubTrigger className="flex items-center gap-2 [&_svg:not([class*='size-'])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0">
                     <Eye className="text-muted-foreground" />
                     Visibility
                   </DropdownMenuSubTrigger>
@@ -338,7 +338,7 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
         </div>
       </SidebarGroupLabel>
       <SidebarMenu>
-        <SidebarMenuItem className="flex flex-wrap gap-0.5 mx-2">
+        <SidebarMenuItem className="mx-2 flex flex-wrap gap-0.5">
           {Object.keys(filter).map((key) => {
             const filterValue = filter[key as keyof Filter];
             if (typeof filterValue === "string") {
@@ -350,7 +350,8 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                 >
                   {filterValue}
                   <button
-                    className="focus-visible:border-ring focus-visible:ring-ring/50 text-foreground/60 hover:text-foreground -my-[5px] -ms-0.5 -me-2 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-[inherit] p-0 transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+                    type="button"
+                    className="-my-[5px] -ms-0.5 -me-2 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-[inherit] p-0 text-foreground/60 outline-none transition-[color,box-shadow] hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                     onClick={() => {
                       handleFilterChange(key as keyof Filter, filterValue);
                     }}
@@ -371,7 +372,8 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
                   >
                     {item.toString()}
                     <button
-                      className="focus-visible:border-ring focus-visible:ring-ring/50 text-foreground/60 hover:text-foreground -my-[5px] -ms-0.5 -me-2 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-[inherit] p-0 transition-[color,box-shadow] outline-none focus-visible:ring-[3px]"
+                      type="button"
+                      className="-my-[5px] -ms-0.5 -me-2 inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-[inherit] p-0 text-foreground/60 outline-none transition-[color,box-shadow] hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
                       onClick={() => {
                         // @ts-expect-error we know that the item is a string
                         handleFilterChange(key as keyof Filter, item);
@@ -407,14 +409,14 @@ export function NavMonitors({ monitors }: { monitors: Monitor[] }) {
               <div
                 data-sidebar="menu-dot"
                 className={cn(
-                  "absolute flex items-center justify-center top-1.5 right-1 h-2.5 p-2.5 transition-all duration-200 group-hover/menu-item:right-6 group-focus-within/menu-item:right-6 group-data-[state=open]/menu-action:right-6 group-hover/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
+                  "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
                   isMobile && "right-6"
                 )}
               >
                 <div className="relative flex items-center justify-center">
                   <div
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 h-2 w-2 rounded-full",
+                      "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
                       STATUS[item.status]
                     )}
                   >

@@ -30,7 +30,7 @@ export function Sidebar() {
             {
               label: "Tags",
               value: ["API", "Production"].map((tag) => (
-                <Badge key={tag} variant="secondary" className="py-0 mr-1">
+                <Badge key={tag} variant="secondary" className="mr-1 py-0">
                   {tag}
                 </Badge>
               )),
@@ -78,12 +78,12 @@ export function Sidebar() {
                   "Johannesburg",
                 ][index % 5],
                 value: (
-                  <div className="flex justify-between items-center gap-2">
-                    <CircleCheck className="w-4 h-4 text-success" />
+                  <div className="flex items-center justify-between gap-2">
+                    <CircleCheck className="h-4 w-4 text-success" />
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger>
-                          <span className="underline decoration-dashed underline-offset-2 decoration-muted-foreground/50">
+                          <span className="underline decoration-muted-foreground/50 decoration-dashed underline-offset-2">
                             {date.toLocaleTimeString("en-US", {
                               hour: "2-digit",
                               minute: "2-digit",

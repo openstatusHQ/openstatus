@@ -8,7 +8,7 @@ import { toast } from "sonner";
 export function NavActions() {
   const router = useRouter();
   const actions = getActions({
-    edit: () => router.push(`/dashboard/status-pages/edit`),
+    edit: () => router.push("/dashboard/status-pages/edit"),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Status Page ID copied to clipboard");

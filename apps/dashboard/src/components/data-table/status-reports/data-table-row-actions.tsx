@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 import { getActions } from "@/data/status-reports.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
@@ -13,7 +13,7 @@ interface DataTableRowActionsProps<TData> {
 
 export function DataTableRowActions<TData>(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  props: DataTableRowActionsProps<TData>
+  _props: DataTableRowActionsProps<TData>
 ) {
   const buttonCreateRef = useRef<HTMLButtonElement>(null);
   const buttonUpdateRef = useRef<HTMLButtonElement>(null);
@@ -32,12 +32,12 @@ export function DataTableRowActions<TData>(
         }}
       />
       <FormSheetStatusReport>
-        <button ref={buttonCreateRef} className="sr-only">
+        <button ref={buttonCreateRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetStatusReport>
       <FormSheetStatusReportUpdate>
-        <button ref={buttonUpdateRef} className="sr-only">
+        <button ref={buttonUpdateRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetStatusReportUpdate>

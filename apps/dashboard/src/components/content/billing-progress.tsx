@@ -10,7 +10,7 @@ export function BillingProgress({ label, value, max }: BillingProgressProps) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-0.5">
-        <div className="text-sm text-muted-foreground flex justify-between">
+        <div className="flex justify-between text-muted-foreground text-sm">
           <div className="font-medium">{label}</div>
           <div className="font-mono">
             <span className="text-foreground">{value}</span>/{max}

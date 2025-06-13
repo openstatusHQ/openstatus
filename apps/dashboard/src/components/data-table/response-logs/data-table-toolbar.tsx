@@ -1,6 +1,6 @@
 "use client";
 
-import { Table } from "@tanstack/react-table";
+import type { Table } from "@tanstack/react-table";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export function ResponseLogsDataTableToolbar({
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex flex-1 flex-wrap items-center gap-2 flex-warp">
+      <div className="flex flex-1 flex-warp flex-wrap items-center gap-2">
         {table.getColumn("status") && (
           <DataTableFacetedFilter
             column={table.getColumn("status")}

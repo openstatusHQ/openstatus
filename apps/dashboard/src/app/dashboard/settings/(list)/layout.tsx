@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <NavBreadcrumb items={[{ type: "page", label: "Settings" }]} />
         </AppHeaderContent>
       </AppHeader>
-      <main className="flex-1 w-full">{children}</main>
+      <main className="w-full flex-1">{children}</main>
     </div>
   );
 }

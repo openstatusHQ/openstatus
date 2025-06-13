@@ -126,7 +126,7 @@ export default function Page() {
                   }
                 }}
               >
-                <MetricCardHeader className="flex justify-between items-center gap-2 w-full">
+                <MetricCardHeader className="flex w-full items-center justify-between gap-2">
                   <MetricCardTitle className="truncate">
                     {metric.title}
                   </MetricCardTitle>

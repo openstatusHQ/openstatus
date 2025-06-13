@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 import { getActions } from "@/data/status-report-updates.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
@@ -29,7 +29,7 @@ export function DataTableRowActions<TData>(
         }}
       />
       <FormSheetStatusReportUpdate>
-        <button ref={buttonRef} className="sr-only">
+        <button ref={buttonRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetStatusReportUpdate>

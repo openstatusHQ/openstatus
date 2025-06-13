@@ -107,7 +107,7 @@ export function ContactForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(submitAction)}
-        className={cn("grid sm:grid-cols-2 gap-4", className)}
+        className={cn("grid gap-4 sm:grid-cols-2", className)}
       >
         <FormField
           control={form.control}
@@ -179,7 +179,7 @@ export function ContactForm({
             control={form.control}
             name="blocker"
             render={({ field }) => (
-              <FormItem className="sm:col-span-full flex flex-row items-start">
+              <FormItem className="flex flex-row items-start sm:col-span-full">
                 <FormControl>
                   <Checkbox
                     checked={field.value}

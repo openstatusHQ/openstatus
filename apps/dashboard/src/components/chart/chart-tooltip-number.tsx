@@ -28,9 +28,9 @@ export function ChartTooltipNumber({
       <span>
         {chartConfig[name as keyof typeof chartConfig]?.label || name}
       </span>
-      <div className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
+      <div className="ml-auto flex items-baseline gap-0.5 font-medium font-mono text-foreground tabular-nums">
         {value}
-        <span className="text-muted-foreground font-normal">ms</span>
+        <span className="font-normal text-muted-foreground">ms</span>
       </div>
     </>
   );

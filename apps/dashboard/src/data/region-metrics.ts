@@ -1,4 +1,4 @@
-import { Region } from "./regions";
+import type { Region } from "./regions";
 
 export const regionMetrics = [
   {

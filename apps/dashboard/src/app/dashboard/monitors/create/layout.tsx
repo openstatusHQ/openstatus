@@ -11,7 +11,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Breadcrumb />
         </AppHeaderContent>
       </AppHeader>
-      <main className="flex-1 w-full">{children}</main>
+      <main className="w-full flex-1">{children}</main>
     </div>
   );
 }

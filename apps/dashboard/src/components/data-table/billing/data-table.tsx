@@ -36,10 +36,10 @@ export function DataTable() {
                   id === "starter" ? "bg-muted/30" : "bg-background"
                 )}
               >
-                <div className="flex flex-col justify-between gap-1 h-full">
-                  <div className="flex flex-col gap-1 flex-1">
+                <div className="flex h-full flex-col justify-between gap-1">
+                  <div className="flex flex-1 flex-col gap-1">
                     <p className="font-cal text-lg">{plan.title}</p>
-                    <p className="font-normal text-muted-foreground text-xs text-wrap">
+                    <p className="text-wrap font-normal text-muted-foreground text-xs">
                       {plan.description}
                     </p>
                   </div>

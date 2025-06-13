@@ -99,12 +99,12 @@ export function FormTags({
               Add tags to categorize and organize your monitor.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid md:grid-cols-2 gap-4">
+          <FormCardContent className="grid gap-4 md:grid-cols-2">
             <FormField
               control={form.control}
               name="tags"
               render={({ field }) => (
-                <FormItem className="md:col-span-1 flex flex-col">
+                <FormItem className="flex flex-col md:col-span-1">
                   <FormLabel>Tags</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -113,17 +113,17 @@ export function FormTags({
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "w-full justify-between h-auto min-h-9",
+                            "h-auto min-h-9 w-full justify-between",
                             !field.value?.length && "text-muted-foreground"
                           )}
                         >
-                          <div className="group/badges flex flex-wrap -space-x-2">
+                          <div className="group/badges -space-x-2 flex flex-wrap">
                             {field.value.length ? (
                               field.value.map((tag) => (
                                 <Badge
                                   key={tag.value}
                                   variant="outline"
-                                  className="flex items-center gap-1.5 translate-x-0 hover:translate-x-1 transition-transform relative hover:z-10 bg-background"
+                                  className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1"
                                 >
                                   <div
                                     className={cn(
@@ -144,7 +144,7 @@ export function FormTags({
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
+                    <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                       <Command>
                         <CommandInput placeholder="Search tags..." />
                         <CommandList className="w-full">

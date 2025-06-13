@@ -36,7 +36,7 @@ export function NavStatusPages({ statusPages }: { statusPages: StatusPage[] }) {
   const { isMobile, setOpenMobile } = useSidebar();
   const router = useRouter();
   const actions = getActions({
-    edit: () => router.push(`/dashboard/status-pages/edit`),
+    edit: () => router.push("/dashboard/status-pages/edit"),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Status Page ID copied to clipboard");
@@ -82,7 +82,7 @@ export function NavStatusPages({ statusPages }: { statusPages: StatusPage[] }) {
                 asChild
               >
                 <Link
-                  href={`/dashboard/status-pages/status-reports`}
+                  href={"/dashboard/status-pages/status-reports"}
                   onClick={() => setOpenMobile(false)}
                 >
                   <span>{item.name}</span>
@@ -91,14 +91,14 @@ export function NavStatusPages({ statusPages }: { statusPages: StatusPage[] }) {
               <div
                 data-sidebar="menu-dot"
                 className={cn(
-                  "absolute flex items-center justify-center top-1.5 right-1 h-2.5 p-2.5 transition-all duration-200 group-hover/menu-item:right-6 group-focus-within/menu-item:right-6 group-data-[state=open]/menu-action:right-6 group-hover/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
+                  "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
                   isMobile && "right-6"
                 )}
               >
                 <div className="relative flex items-center justify-center">
                   <div
                     className={cn(
-                      "absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 h-2 w-2 rounded-full",
+                      "-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2 h-2 w-2 rounded-full",
                       STATUS[item.status]
                     )}
                   />

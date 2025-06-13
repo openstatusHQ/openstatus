@@ -32,7 +32,7 @@ export function DataTableSheetHeader({
 }: React.ComponentProps<typeof SheetHeader>) {
   return (
     <SheetHeader
-      className={cn("border-b sticky top-0 bg-background", className)}
+      className={cn("sticky top-0 border-b bg-background", className)}
       {...props}
     >
       {children}
@@ -47,7 +47,7 @@ export function DataTableSheetFooter({
 }: React.ComponentProps<typeof SheetFooter>) {
   return (
     <SheetFooter
-      className={cn("border-t sticky bottom-0 bg-background", className)}
+      className={cn("sticky bottom-0 border-t bg-background", className)}
       {...props}
     >
       {children}

@@ -41,7 +41,7 @@ export function HoverCardTimestamp({
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent
-          className="p-2 w-auto z-10"
+          className="z-10 w-auto p-2"
           {...{ side, align, alignOffset, sideOffset }}
         >
           <dl className="flex flex-col gap-1">
@@ -67,14 +67,14 @@ function Row({ value, label }: { value: string; label: string }) {
 
   return (
     <div
-      className="group flex gap-4 text-sm justify-between items-center"
+      className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
         copy(value, {});
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-mono truncate flex items-center gap-1">
+      <dd className="flex items-center gap-1 truncate font-mono">
         <span className="invisible group-hover:visible">
           {!isCopied ? (
             <Copy className="h-3 w-3" />

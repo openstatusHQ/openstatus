@@ -50,7 +50,7 @@ export function FormCardHeader({
 	return (
 		<CardHeader
 			className={cn(
-				"pt-4 [.border-b]:pb-4 px-4 group-has-data-[slot=card-upgrade]:opacity-50 group-has-data-[slot=card-upgrade]:pointer-events-none",
+				"px-4 pt-4 group-has-data-[slot=card-upgrade]:pointer-events-none group-has-data-[slot=card-upgrade]:opacity-50 [.border-b]:pb-4",
 				className,
 			)}
 			{...props}
@@ -80,7 +80,7 @@ export function FormCardContent({
 	return (
 		<CardContent
 			className={cn(
-				"px-4 group-has-data-[slot=card-upgrade]:opacity-50 group-has-data-[slot=card-upgrade]:pointer-events-none",
+				"px-4 group-has-data-[slot=card-upgrade]:pointer-events-none group-has-data-[slot=card-upgrade]:opacity-50",
 				className,
 			)}
 			{...props}
@@ -135,7 +135,7 @@ export function FormCardFooterInfo({
 	return (
 		<div
 			data-slot="card-footer-info"
-			className={cn("text-sm text-muted-foreground", className)}
+			className={cn("text-muted-foreground text-sm", className)}
 			{...props}
 		>
 			{children}
@@ -184,7 +184,7 @@ export function FormCardEmpty({
 		<div
 			data-slot="card-empty"
 			className={cn(
-				"absolute z-10 inset-0 bg-background opacity-70 blur pointer-events-none",
+				"pointer-events-none absolute inset-0 z-10 bg-background opacity-70 blur",
 				className,
 			)}
 			{...props}

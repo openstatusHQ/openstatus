@@ -1,6 +1,6 @@
 "use client";
 
-import { Row } from "@tanstack/react-table";
+import type { Row } from "@tanstack/react-table";
 
 import { getActions } from "@/data/incidents.client";
 import { QuickActions } from "@/components/dropdowns/quick-actions";

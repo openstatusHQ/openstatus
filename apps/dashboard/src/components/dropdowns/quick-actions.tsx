@@ -1,9 +1,9 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 import { useState, useTransition } from "react";
 
-import { MoreHorizontal, Trash2, LucideIcon } from "lucide-react";
+import { MoreHorizontal, Trash2, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
+import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -169,7 +169,7 @@ export function QuickActions({
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
-            className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
+            className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40"
             disabled={
               (deleteAction?.confirmationValue &&
                 value !== deleteAction?.confirmationValue) ||

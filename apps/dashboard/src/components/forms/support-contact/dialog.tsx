@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ContactForm, FormValues } from "./form";
+import { ContactForm, type FormValues } from "./form";
 import { useState } from "react";
 
 export function FormDialogSupportContact({

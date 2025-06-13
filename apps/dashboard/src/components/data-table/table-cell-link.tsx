@@ -13,12 +13,12 @@ export function TableCellLink({
     return (
       <Link
         className={cn(
-          "group/link flex items-center justify-between gap-1 w-full",
+          "group/link flex w-full items-center justify-between gap-1",
           className
         )}
         {...props}
       >
-        <span className="truncate flex-1">{value}</span>
+        <span className="flex-1 truncate">{value}</span>
         <ChevronRight className="size-3 flex-shrink-0 text-muted-foreground group-hover/link:text-foreground" />
       </Link>
     );

@@ -20,22 +20,22 @@ const InputWithAddons = React.forwardRef<
   return (
     <div className={cn("flex rounded-md shadow-xs", className)}>
       {leading ? (
-        <span className="border-input bg-muted text-muted-foreground inline-flex items-center rounded-s-md border px-3 text-sm">
+        <span className="inline-flex items-center rounded-s-md border border-input bg-muted px-3 text-muted-foreground text-sm">
           {leading}
         </span>
       ) : null}
       <Input
         ref={ref}
-        className={cn("shadow-none z-1", {
-          "rounded-s-none -ms-px": leading,
-          "rounded-e-none -me-px": trailing,
+        className={cn("z-1 shadow-none", {
+          "-ms-px rounded-s-none": leading,
+          "-me-px rounded-e-none": trailing,
         })}
         placeholder="google.com"
         type="text"
         {...props}
       />
       {trailing ? (
-        <span className="border-input bg-muted text-muted-foreground inline-flex items-center rounded-e-md border px-3 text-sm">
+        <span className="inline-flex items-center rounded-e-md border border-input bg-muted px-3 text-muted-foreground text-sm">
           {trailing}
         </span>
       ) : null}

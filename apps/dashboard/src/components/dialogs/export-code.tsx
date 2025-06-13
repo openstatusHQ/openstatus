@@ -10,7 +10,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "@/components/common/link";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { DialogProps } from "@radix-ui/react-dialog";
+import type { DialogProps } from "@radix-ui/react-dialog";
 
 // TODL: make it dynamic
 const YML = `openstatus-marketing:
@@ -43,12 +43,12 @@ export function ExportCodeDialog(props: DialogProps) {
             <TabsTrigger value="terraform">Terraform</TabsTrigger>
           </TabsList>
           <TabsContent value="yml" className="space-y-2">
-            <pre className="relative border rounded p-2 bg-muted text-xs">
+            <pre className="relative rounded border bg-muted p-2 text-xs">
               {YML}
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute top-2 right-2 p-1 size-7"
+                className="absolute top-2 right-2 size-7 p-1"
                 onClick={() => copy(YML, { withToast: false, timeout: 1000 })}
               >
                 {isCopied ? (
@@ -58,20 +58,20 @@ export function ExportCodeDialog(props: DialogProps) {
                 )}
               </Button>
             </pre>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Use a <code>monitor.openstatus.yml</code> file to configure your
               monitors. <Link href="#">Read more.</Link>
             </p>
           </TabsContent>
           <TabsContent value="terraform" className="space-y-2">
-            <pre className="relative border rounded p-2 bg-muted text-xs">
+            <pre className="relative rounded border bg-muted p-2 text-xs">
               TODO:
             </pre>
             {/* TODO: only showcase if there are any assertions */}
-            <p className="text-xs text-destructive">
+            <p className="text-destructive text-xs">
               The Terraform provider does not support assertions yet.
             </p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Use a Terraform provider to manage your monitors.{" "}
               <Link href="#">Read more.</Link>
             </p>

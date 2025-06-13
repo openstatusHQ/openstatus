@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type LucideIcon } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -47,7 +47,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
     <Breadcrumb>
       <BreadcrumbList>
         {items.map((item, i) => (
-          <Fragment key={i}>
+          <Fragment key={`${item.type}-${i}`}>
             <BreadcrumbItem>
               {item.type === "link" ? (
                 <BreadcrumbLink className="hidden md:block" asChild>
@@ -55,7 +55,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 </BreadcrumbLink>
               ) : null}
               {item.type === "page" ? (
-                <BreadcrumbPage className="hidden md:block max-w-[120px] truncate lg:max-w-[200px]">
+                <BreadcrumbPage className="hidden max-w-[120px] truncate md:block lg:max-w-[200px]">
                   {item.label}
                 </BreadcrumbPage>
               ) : null}
@@ -68,7 +68,7 @@ export function NavBreadcrumb({ items }: NavBreadcrumbProps) {
                 >
                   <SelectTrigger
                     id="select-option"
-                    className="text-foreground [&>span_svg]:text-muted-foreground/80 [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0"
+                    className="text-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-2 [&>span_svg]:shrink-0 [&>span_svg]:text-muted-foreground/80"
                     aria-label="Select option"
                   >
                     <SelectValue placeholder="Select option" />

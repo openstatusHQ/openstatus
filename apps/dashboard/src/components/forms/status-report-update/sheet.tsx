@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormStatusReportUpdate,
-  FormValues,
+  type FormValues,
 } from "@/components/forms/status-report-update/form";
 import { useState } from "react";
 import {
@@ -36,7 +36,7 @@ export function FormSheetStatusReportUpdate({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-scroll">
-          <FormCard className="border-none overflow-auto">
+          <FormCard className="overflow-auto border-none">
             <FormStatusReportUpdate
               id="status-report-update-form"
               className="my-4"

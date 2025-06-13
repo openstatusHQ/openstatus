@@ -16,7 +16,7 @@ import {
   FormSheetTitle,
   FormSheetTrigger,
 } from "@/components/forms/form-sheet";
-import { FormValues } from "./form";
+import type { FormValues } from "./form";
 import { config, type NotifierProvider } from "@/data/notifiers.client";
 
 export function FormSheetNotifier({
@@ -39,7 +39,7 @@ export function FormSheetNotifier({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
-          <FormCard className="border-none overflow-auto">
+          <FormCard className="overflow-auto border-none">
             <FormCardContent>
               {Form && (
                 <Form

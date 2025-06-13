@@ -1,8 +1,8 @@
 "use client";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import { Maintenance } from "@/data/maintenances";
-import { ColumnDef } from "@tanstack/react-table";
+import type { Maintenance } from "@/data/maintenances";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { formatDistanceStrict } from "date-fns";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
@@ -22,7 +22,7 @@ export const columns: ColumnDef<Maintenance>[] = [
     cell: ({ row }) => {
       const value = String(row.getValue("message"));
       return (
-        <div className="text-muted-foreground max-w-[200px] truncate">
+        <div className="max-w-[200px] truncate text-muted-foreground">
           {value}
         </div>
       );

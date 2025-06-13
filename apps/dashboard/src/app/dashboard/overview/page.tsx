@@ -81,7 +81,7 @@ export default function Page() {
           {metrics.map((metric) => (
             <Link href={metric.href} key={metric.title}>
               <MetricCard variant={metric.variant}>
-                <MetricCardHeader className="flex justify-between items-center gap-2">
+                <MetricCardHeader className="flex items-center justify-between gap-2">
                   <MetricCardTitle className="truncate">
                     {metric.title}
                   </MetricCardTitle>

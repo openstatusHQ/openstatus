@@ -132,7 +132,7 @@ export function FormGeneral({
                   <FormLabel>Favicon</FormLabel>
                   <FormControl>
                     <div className="flex flex-row items-center space-x-2">
-                      <div className="size-[36px] bg-muted rounded-md border"></div>
+                      <div className="size-[36px] rounded-md border bg-muted" />
                       <Input type="file" {...field} />
                     </div>
                   </FormControl>

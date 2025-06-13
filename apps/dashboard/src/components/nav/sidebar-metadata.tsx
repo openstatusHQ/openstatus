@@ -43,7 +43,7 @@ export function SidebarMetadata({ label, items }: SidebarMetadataProps) {
       <Collapsible defaultOpen className="group/collapsible border-b">
         <SidebarGroupLabel
           asChild
-          className="group/label w-full text-sm text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-none h-9"
+          className="group/label h-9 w-full rounded-none text-sidebar-foreground text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <CollapsibleTrigger>
             {label}{" "}
@@ -86,9 +86,9 @@ function SidebarMetadataTable({
       </TableHeader>
       <TableBody>
         {items.map((item, index) => (
-          <TableRow key={index}>
-            <TableCell className="w-24 text-muted-foreground border-r">
-              <div className="truncate min-w-[80px] max-w-[80px]">
+          <TableRow key={`${item.label}-${index}`}>
+            <TableCell className="w-24 border-r text-muted-foreground">
+              <div className="min-w-[80px] max-w-[80px] truncate">
                 {item.isNested ? "└ " : ""}
                 {item.label}
               </div>
@@ -96,7 +96,7 @@ function SidebarMetadataTable({
             {/* <TableCell className="font-mono truncate max-w-0">
               {item.value}
             </TableCell> */}
-            <SidebarMetadataTableCell className="font-mono truncate max-w-0">
+            <SidebarMetadataTableCell className="max-w-0 truncate font-mono">
               {item.value}
             </SidebarMetadataTableCell>
           </TableRow>

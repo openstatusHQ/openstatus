@@ -35,14 +35,14 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(DEFAULT_INDEX);
   const selected = REGISTRY_ITEMS[currentIndex];
   return (
-    <div className="font-[family-name:var(--font-geist-sans)] min-h-screen flex flex-col">
-      <main className="flex-1 flex flex-col gap-12 justify-center items-center">
+    <div className="flex min-h-screen flex-col font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-1 flex-col items-center justify-center gap-12">
         <div className="flex flex-col items-center gap-2 p-4">
           <Badge variant="secondary">Coming soon</Badge>
-          <h1 className="text-center text-2xl sm:text-3xl font-bold max-w-xl">
+          <h1 className="max-w-xl text-center font-bold text-2xl sm:text-3xl">
             Welcome to the OpenStatus-Template
           </h1>
-          <p className="text-foreground/70 text-sm sm:text-base text-center max-w-[38rem]">
+          <p className="max-w-[38rem] text-center text-foreground/70 text-sm sm:text-base">
             We&apos;ve created this template to help you get started with your{" "}
             <Link
               href="https://ui.shadcn.com"
@@ -60,13 +60,13 @@ export default function Home() {
               @nextjs
             </Link>{" "}
             in an SPA mode and can be exported statically{" "}
-            <span className="text-foreground font-medium">(BYO router)</span>.
+            <span className="font-medium text-foreground">(BYO router)</span>.
           </p>
         </div>
         <Button
           variant="outline"
           size="sm"
-          className="relative text-xs text-foreground/70 font-mono flex items-center gap-2 max-w-[320px] sm:max-w-[620px] transition-all duration-300 ease-in-out"
+          className="relative flex max-w-[320px] items-center gap-2 font-mono text-foreground/70 text-xs transition-all duration-300 ease-in-out sm:max-w-[620px]"
           onClick={() => {
             const url = `pnpm dlx shadcn@latest add ${BASE_URL}/r/${selected}`;
             copy(url, {
@@ -74,16 +74,16 @@ export default function Home() {
             });
           }}
         >
-          <div className="block sm:hidden truncate">
+          <div className="block truncate sm:hidden">
             pnpm dlx shadcn@latest add {BASE_URL}/r/{selected}
           </div>
-          <div className="hidden sm:flex items-center">
+          <div className="hidden items-center sm:flex">
             pnpm dlx shadcn@latest add {BASE_URL}/r/
             <WheelPicker
               items={REGISTRY_ITEMS}
               currentIndex={currentIndex}
               onIndexChange={setCurrentIndex}
-              className="w-[120px] h-6"
+              className="h-6 w-[120px]"
             >
               <WheelPickerSelect>
                 <WheelPickerOptions />
@@ -112,8 +112,8 @@ export default function Home() {
           </Button>
         </div>
       </main>
-      <footer className="flex items-center justify-center gap-4 border-t border-border p-4">
-        <p className="text-foreground/70 text-center">
+      <footer className="flex items-center justify-center gap-4 border-border border-t p-4">
+        <p className="text-center text-foreground/70">
           Powered by{" "}
           <Link
             href="https://openstatus.dev"

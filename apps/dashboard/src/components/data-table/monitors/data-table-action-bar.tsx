@@ -17,7 +17,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Monitor } from "@/data/monitors";
+import type { Monitor } from "@/data/monitors";
 
 interface MonitorDataTableActionBarProps {
   table: Table<Monitor>;

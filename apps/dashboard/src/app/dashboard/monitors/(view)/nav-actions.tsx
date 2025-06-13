@@ -20,7 +20,7 @@ export function NavActions() {
   const router = useRouter();
 
   const actions = getActions({
-    edit: () => router.push(`/dashboard/monitors/edit`),
+    edit: () => router.push("/dashboard/monitors/edit"),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
@@ -42,9 +42,9 @@ export function NavActions() {
     <div className="flex items-center gap-2 text-sm">
       <div className="hidden font-medium text-muted-foreground lg:inline-block">
         Last ping 5m ago
-        <span className="relative inline-flex ml-1.5">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success/80 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+        <span className="relative ml-1.5 inline-flex">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/80 opacity-75" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
         </span>
       </div>
       <TooltipProvider>

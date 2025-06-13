@@ -1,8 +1,8 @@
 "use client";
 
-import { AuditLog } from "@/data/audit-logs";
+import type { AuditLog } from "@/data/audit-logs";
 import { config } from "@/data/audit-logs.client";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 export const columns: ColumnDef<AuditLog>[] = [
   {
@@ -42,7 +42,7 @@ export const columns: ColumnDef<AuditLog>[] = [
       const value = row.getValue("metadata");
       if (!value) return null;
       return (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           {Object.entries(value).map(([key, value]) => (
             <Pill key={key} label={key} value={String(value)} />
           ))}
@@ -67,11 +67,11 @@ export const columns: ColumnDef<AuditLog>[] = [
 
 function Pill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="inline-flex items-center justify-center rounded-md border text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden">
-      <div className="pl-2 pr-1 py-0.5 bg-muted text-foreground/70 border-r">
+    <div className="inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-md border font-medium text-xs transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3">
+      <div className="border-r bg-muted py-0.5 pr-1 pl-2 text-foreground/70">
         {label}
       </div>
-      <div className="pl-1 pr-2 py-0.5 font-mono">{value}</div>
+      <div className="py-0.5 pr-2 pl-1 font-mono">{value}</div>
     </div>
   );
 }

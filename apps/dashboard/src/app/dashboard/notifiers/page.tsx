@@ -54,10 +54,10 @@ export default function Page() {
             const Icon = config[key].icon;
             return (
               <FormSheetNotifier key={notifier} id={key}>
-                <ActionCard className="cursor-pointer h-full w-full">
+                <ActionCard className="h-full w-full cursor-pointer">
                   <ActionCardHeader>
                     <div className="flex items-center gap-2">
-                      <div className="size-6 rounded-md bg-muted border border-border flex items-center justify-center">
+                      <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted">
                         <Icon className="size-3" />
                       </div>
                       <ActionCardTitle>{config[key].label}</ActionCardTitle>
@@ -73,7 +73,7 @@ export default function Page() {
           <ActionCard className="border-dashed">
             <ActionCardHeader>
               <div className="flex items-center gap-2">
-                <div className="size-6 rounded-md bg-muted border border-border flex items-center justify-center" />
+                <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted" />
                 <ActionCardTitle className="text-muted-foreground">
                   Your Notifier
                 </ActionCardTitle>

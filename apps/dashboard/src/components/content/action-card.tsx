@@ -15,7 +15,7 @@ export function ActionCard({
 }: React.ComponentProps<"div">) {
   return (
     <Card
-      className={cn("group/action-card shadow-none py-4 gap-4", className)}
+      className={cn("group/action-card gap-4 py-4 shadow-none", className)}
       {...props}
     >
       {children}

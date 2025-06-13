@@ -8,7 +8,7 @@ export function EmptyStateContainer({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center h-full border border-border border-dashed rounded-lg p-4 gap-2",
+        "flex h-full flex-col items-center justify-center gap-2 rounded-lg border border-border border-dashed p-4",
         className
       )}
       {...props}
@@ -37,7 +37,7 @@ export function EmptyStateDescription({
 }: React.ComponentProps<"p">) {
   return (
     <p
-      className={cn("text-sm text-muted-foreground text-center", className)}
+      className={cn("text-center text-muted-foreground text-sm", className)}
       {...props}
     >
       {children}
