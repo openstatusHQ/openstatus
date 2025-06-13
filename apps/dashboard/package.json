@@ -4,11 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && shadcn build -o 'out/r'",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tsc": "tsc --noEmit",
-    "registry:build": "shadcn build -o out/r"
+    "tsc": "tsc --noEmit"
   },
   "dependencies": {
     "@auth/core": "0.34.1",
