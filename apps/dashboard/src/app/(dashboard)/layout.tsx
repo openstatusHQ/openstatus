@@ -1,11 +1,12 @@
 "use client";
-import { TRPCProvider } from "@/client/trpc";
+import { TRPCProvider } from "@/lib/trpc/client";
 import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import type { AppRouter } from "@/server/routers/app";
+import type { AppRouter } from "@openstatus/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createTRPCClient, httpBatchLink } from "@trpc/client";
+import { createTRPCClient, loggerLink } from "@trpc/client";
 import { useState } from "react";
+import { endingLink } from "@/lib/trpc/shared";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -37,11 +38,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [
-        httpBatchLink({
-          url: "http://localhost:3000/api/trpc",
+        loggerLink({
+          enabled: (opts) =>
+            process.env.NODE_ENV === "development" ||
+            (opts.direction === "down" && opts.result instanceof Error),
+        }),
+        endingLink({
+          headers: {
+            "x-trpc-source": "client",
+          },
         }),
       ],
-    }),
+    })
   );
 
   return (

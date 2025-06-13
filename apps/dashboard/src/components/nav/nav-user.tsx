@@ -8,7 +8,7 @@ import {
   User,
 } from "lucide-react";
 
-import { useTRPC } from "@/client/trpc";
+import { useTRPC } from "@/lib/trpc/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,7 +32,13 @@ import Link from "next/link";
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
   const trpc = useTRPC();
-  const { data: user, isLoading } = useQuery(trpc.user.get.queryOptions());
+  const { data, isLoading } = useQuery(trpc.user.getCurrentUser.queryOptions());
+
+  const user = {
+    name: data?.name ?? `${data?.firstName} ${data?.lastName}`.trim(),
+    email: data?.email,
+    avatar: data?.photoUrl ?? undefined,
+  };
 
   return (
     <SidebarMenu>

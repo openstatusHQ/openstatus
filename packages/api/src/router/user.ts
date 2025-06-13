@@ -5,6 +5,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
   getCurrentUser: protectedProcedure.query(async (opts) => {
+    console.log(opts.ctx.user);
     const currentUser = await opts.ctx.db
       .select()
       .from(user)
