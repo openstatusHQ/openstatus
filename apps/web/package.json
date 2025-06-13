@@ -88,7 +88,7 @@
     "superjson": "1.13.3",
     "tailwind-merge": "1.14.0",
     "tailwindcss-animate": "1.0.7",
-    "zod": "3.24.4"
+    "zod": "3.24.1"
   },
   "devDependencies": {
     "@content-collections/core": "0.7.3",
