@@ -5,7 +5,7 @@
   "license": "MIT",
   "dependencies": {
     "@chronark/zod-bird": "0.3.6",
-    "zod": "3.23.8"
+    "zod": "3.24.4"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
