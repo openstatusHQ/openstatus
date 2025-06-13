@@ -83,7 +83,7 @@ importers:
         version: 3.550.0
       '@hono/zod-validator':
         specifier: 0.2.1
-        version: 0.2.1(hono@4.5.3)(zod@3.23.8)
+        version: 0.2.1(hono@4.5.3)(zod@3.24.4)
       '@libsql/client':
         specifier: 0.14.0
         version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
@@ -95,7 +95,7 @@ importers:
         version: link:../../packages/utils
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.4)
       '@upstash/qstash':
         specifier: 2.6.2
         version: 2.6.2
@@ -109,8 +109,8 @@ importers:
         specifier: 1.46.0
         version: 1.46.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -126,10 +126,10 @@ importers:
         version: 1.2.0(hono@4.5.3)
       '@hono/zod-openapi':
         specifier: 0.15.1
-        version: 0.15.1(hono@4.5.3)(zod@3.23.8)
+        version: 0.15.1(hono@4.5.3)(zod@3.24.4)
       '@hono/zod-validator':
         specifier: 0.2.2
-        version: 0.2.2(hono@4.5.3)(zod@3.23.8)
+        version: 0.2.2(hono@4.5.3)(zod@3.24.4)
       '@openstatus/analytics':
         specifier: workspace:*
         version: link:../../packages/analytics
@@ -162,7 +162,7 @@ importers:
         version: 0.8.5(hono@4.5.3)
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.4)
       '@unkey/api':
         specifier: 0.26.1
         version: 0.26.1
@@ -182,8 +182,8 @@ importers:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -210,8 +210,8 @@ importers:
         specifier: 4.0.1
         version: 4.0.1(encoding@0.1.13)
       '@hookform/resolvers':
-        specifier: 3.9.1
-        version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
+        specifier: 5.0.1
+        version: 5.0.1(react-hook-form@7.56.2(react@19.1.0))
       '@libsql/client':
         specifier: 0.14.0
         version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
@@ -289,7 +289,7 @@ importers:
         version: 2.1.6
       '@t3-oss/env-nextjs':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       '@tailwindcss/container-queries':
         specifier: 0.1.1
         version: 0.1.1(tailwindcss@4.1.8)
@@ -384,8 +384,8 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
       react-hook-form:
-        specifier: 7.54.1
-        version: 7.54.1(react@19.1.0)
+        specifier: 7.56.2
+        version: 7.56.2(react@19.1.0)
       react-tweet:
         specifier: 3.2.1
         version: 3.2.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -432,8 +432,8 @@ importers:
         specifier: 1.0.7
         version: 1.0.7(tailwindcss@4.1.8)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@content-collections/core':
         specifier: 0.7.3
@@ -535,8 +535,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -555,10 +555,10 @@ importers:
         version: 1.0.0
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -592,7 +592,7 @@ importers:
         version: link:../tinybird
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       '@trpc/client':
         specifier: 11.4.0
         version: 11.4.0(@trpc/server@11.4.0(typescript@5.7.2))(typescript@5.7.2)
@@ -618,8 +618,8 @@ importers:
         specifier: 1.13.3
         version: 1.13.3
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -644,8 +644,8 @@ importers:
         specifier: 5.7.2
         version: 5.7.2
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
 
   packages/db:
     dependencies:
@@ -654,16 +654,16 @@ importers:
         version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3)
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       drizzle-orm:
         specifier: 0.35.3
         version: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0)
       drizzle-zod:
         specifier: 0.5.1
-        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0))(zod@3.24.4)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/assertions':
         specifier: workspace:*
@@ -718,7 +718,7 @@ importers:
         version: 1.0.4(react@19.1.0)
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       react-email:
         specifier: 4.0.7
         version: 4.0.7(@opentelemetry/api@1.9.0)(bufferutil@4.0.8)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(utf-8-validate@6.0.5)
@@ -726,8 +726,8 @@ importers:
         specifier: 4.3.0
         version: 4.3.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -748,8 +748,8 @@ importers:
   packages/error:
     dependencies:
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -773,8 +773,8 @@ importers:
         specifier: workspace:*
         version: link:../../db
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -808,13 +808,13 @@ importers:
         version: 1.0.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@t3-oss/env-core':
         specifier: 0.7.0
-        version: 0.7.0(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.0(typescript@5.7.2)(zod@3.24.4)
       resend:
         specifier: 4.0.1
         version: 4.0.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -832,8 +832,8 @@ importers:
         specifier: workspace:*
         version: link:../../db
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -852,7 +852,7 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.4)
       '@types/validator':
         specifier: 13.11.6
         version: 13.11.6
@@ -860,8 +860,8 @@ importers:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -886,7 +886,7 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.4)
       '@types/validator':
         specifier: 13.11.6
         version: 13.11.6
@@ -894,8 +894,8 @@ importers:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -919,8 +919,8 @@ importers:
         specifier: workspace:*
         version: link:../../db
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -939,13 +939,13 @@ importers:
         version: link:../../db
       '@t3-oss/env-core':
         specifier: 0.7.1
-        version: 0.7.1(typescript@5.7.2)(zod@3.23.8)
+        version: 0.7.1(typescript@5.7.2)(zod@3.24.4)
       validator:
         specifier: 13.12.0
         version: 13.12.0
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -969,8 +969,8 @@ importers:
         specifier: workspace:*
         version: link:../../utils
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1016,8 +1016,8 @@ importers:
         specifier: 0.3.6
         version: 0.3.6
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1041,8 +1041,8 @@ importers:
         specifier: workspace:*
         version: link:../tinybird
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -1069,7 +1069,7 @@ importers:
         version: 3.2.2(react@19.1.0)
       '@hookform/resolvers':
         specifier: 3.9.1
-        version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
+        version: 3.9.1(react-hook-form@7.56.2(react@19.1.0))
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.1.1(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1167,8 +1167,8 @@ importers:
         specifier: 8.10.1
         version: 8.10.1(date-fns@2.30.0)(react@19.1.0)
       react-hook-form:
-        specifier: 7.54.1
-        version: 7.54.1(react@19.1.0)
+        specifier: 7.56.2
+        version: 7.56.2(react@19.1.0)
       recharts:
         specifier: 2.15.0
         version: 2.15.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1182,8 +1182,8 @@ importers:
         specifier: 1.0.7
         version: 1.0.7(tailwindcss@4.1.8)
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -1253,8 +1253,8 @@ importers:
         specifier: 5.7.2
         version: 5.7.2
       zod:
-        specifier: 3.23.8
-        version: 3.23.8
+        specifier: 3.24.4
+        version: 3.24.4
 
 packages:
 
@@ -2676,6 +2676,11 @@ packages:
     resolution: {integrity: sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==}
     peerDependencies:
       react-hook-form: ^7.0.0
+
+  '@hookform/resolvers@5.0.1':
+    resolution: {integrity: sha512-u/+Jp83luQNx9AdyW2fIPGY6Y7NG68eN2ZW8FOJYL+M0i4s49+refdJdOp/A9n9HFQtQs3HIDHQvX3ZET2o7YA==}
+    peerDependencies:
+      react-hook-form: ^7.55.0
 
   '@iconify-json/lucide@1.2.26':
     resolution: {integrity: sha512-arD/8mK0lRxFY2LgLf345NhWVWiOtV8sOxJuLnq4QRz3frMiOwVwGxEgp5Xe/bRGzxO2CxxCBok0bPRpCkYZQQ==}
@@ -4625,6 +4630,9 @@ packages:
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
+
+  '@standard-schema/utils@0.3.0':
+    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
   '@stripe/stripe-js@2.1.6':
     resolution: {integrity: sha512-QSzqQIcowgap7a40f3a7oUR+59Xet/i8fp1EsnzzwxK5oPRQsCbbLQ4Cd6qM0y1pdZMonFnCrAWayWdE9Lr0iA==}
@@ -8284,8 +8292,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  react-hook-form@7.54.1:
-    resolution: {integrity: sha512-PUNzFwQeQ5oHiiTUO7GO/EJXGEtuun2Y1A59rLnZBBj+vNEOWt/3ERTiG1/zt7dVeJEM+4vDX/7XQ/qanuvPMg==}
+  react-hook-form@7.56.2:
+    resolution: {integrity: sha512-vpfuHuQMF/L6GpuQ4c3ZDo+pRYxIi40gQqsCmmfUBwm+oqvBhKhwghCuj2o00YCgSfU6bR9KC/xnQGWm3Gr08A==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -9830,14 +9838,8 @@ packages:
     peerDependencies:
       zod: ^3.18.0
 
-  zod@3.23.8:
-    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
-
-  zod@3.24.1:
-    resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
-
-  zod@3.24.2:
-    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+  zod@3.24.4:
+    resolution: {integrity: sha512-OdqJE9UDRPwWsrHjLN2F8bPxvwJBK22EHLWtanu0LSYr5YqzsaaW3RMgmjwr8Rypg5k+meEJdSPXJZXE/yqOMg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -9858,10 +9860,10 @@ snapshots:
 
   '@antfu/utils@8.1.1': {}
 
-  '@asteasolutions/zod-to-openapi@7.1.1(zod@3.23.8)':
+  '@asteasolutions/zod-to-openapi@7.1.1(zod@3.24.4)':
     dependencies:
       openapi3-ts: 4.1.2
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@astro-community/astro-embed-twitter@0.5.8(astro@5.6.1(@types/node@22.10.2)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.34.8)(terser@5.37.0)(typescript@5.7.2)(yaml@2.6.1))':
     dependencies:
@@ -10025,13 +10027,13 @@ snapshots:
     dependencies:
       sitemap: 8.0.0
       stream-replace-string: 2.0.0
-      zod: 3.24.1
+      zod: 3.24.4
 
   '@astrojs/sitemap@3.4.1':
     dependencies:
       sitemap: 8.0.0
       stream-replace-string: 2.0.0
-      zod: 3.24.2
+      zod: 3.24.4
 
   '@astrojs/starlight-tailwind@4.0.1(@astrojs/starlight@0.34.3(astro@5.6.1(@types/node@22.10.2)(jiti@2.4.2)(lightningcss@1.30.1)(rollup@4.34.8)(terser@5.37.0)(typescript@5.7.2)(yaml@2.6.1)))(tailwindcss@4.1.8)':
     dependencies:
@@ -10835,7 +10837,7 @@ snapshots:
 
   '@chronark/zod-bird@0.3.6':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@cloudflare/workers-types@4.20250303.0':
     optional: true
@@ -10853,7 +10855,7 @@ snapshots:
       tinyglobby: 0.2.10
       typescript: 5.7.2
       yaml: 2.6.1
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@content-collections/integrations@0.2.1(@content-collections/core@0.7.3(typescript@5.7.2))':
     dependencies:
@@ -11411,26 +11413,31 @@ snapshots:
       hono: 4.5.3
       toucan-js: 4.0.0
 
-  '@hono/zod-openapi@0.15.1(hono@4.5.3)(zod@3.23.8)':
+  '@hono/zod-openapi@0.15.1(hono@4.5.3)(zod@3.24.4)':
     dependencies:
-      '@asteasolutions/zod-to-openapi': 7.1.1(zod@3.23.8)
-      '@hono/zod-validator': 0.2.2(hono@4.5.3)(zod@3.23.8)
+      '@asteasolutions/zod-to-openapi': 7.1.1(zod@3.24.4)
+      '@hono/zod-validator': 0.2.2(hono@4.5.3)(zod@3.24.4)
       hono: 4.5.3
-      zod: 3.23.8
+      zod: 3.24.4
 
-  '@hono/zod-validator@0.2.1(hono@4.5.3)(zod@3.23.8)':
-    dependencies:
-      hono: 4.5.3
-      zod: 3.23.8
-
-  '@hono/zod-validator@0.2.2(hono@4.5.3)(zod@3.23.8)':
+  '@hono/zod-validator@0.2.1(hono@4.5.3)(zod@3.24.4)':
     dependencies:
       hono: 4.5.3
-      zod: 3.23.8
+      zod: 3.24.4
 
-  '@hookform/resolvers@3.9.1(react-hook-form@7.54.1(react@19.1.0))':
+  '@hono/zod-validator@0.2.2(hono@4.5.3)(zod@3.24.4)':
     dependencies:
-      react-hook-form: 7.54.1(react@19.1.0)
+      hono: 4.5.3
+      zod: 3.24.4
+
+  '@hookform/resolvers@3.9.1(react-hook-form@7.56.2(react@19.1.0))':
+    dependencies:
+      react-hook-form: 7.56.2(react@19.1.0)
+
+  '@hookform/resolvers@5.0.1(react-hook-form@7.56.2(react@19.1.0))':
+    dependencies:
+      '@standard-schema/utils': 0.3.0
+      react-hook-form: 7.56.2(react@19.1.0)
 
   '@iconify-json/lucide@1.2.26':
     dependencies:
@@ -13059,7 +13066,7 @@ snapshots:
 
   '@scalar/openapi-types@0.2.1':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@scalar/types@0.1.11':
     dependencies:
@@ -13067,7 +13074,7 @@ snapshots:
       '@unhead/schema': 1.11.20
       nanoid: 5.1.5
       type-fest: 4.28.0
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@selderee/plugin-htmlparser2@0.11.0':
     dependencies:
@@ -13652,6 +13659,8 @@ snapshots:
 
   '@socket.io/component-emitter@3.1.2': {}
 
+  '@standard-schema/utils@0.3.0': {}
+
   '@stripe/stripe-js@2.1.6': {}
 
   '@swc/counter@0.1.3': {}
@@ -13660,22 +13669,22 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.7.0(typescript@5.7.2)(zod@3.23.8)':
+  '@t3-oss/env-core@0.7.0(typescript@5.7.2)(zod@3.24.4)':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
     optionalDependencies:
       typescript: 5.7.2
 
-  '@t3-oss/env-core@0.7.1(typescript@5.7.2)(zod@3.23.8)':
+  '@t3-oss/env-core@0.7.1(typescript@5.7.2)(zod@3.24.4)':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
     optionalDependencies:
       typescript: 5.7.2
 
-  '@t3-oss/env-nextjs@0.7.0(typescript@5.7.2)(zod@3.23.8)':
+  '@t3-oss/env-nextjs@0.7.0(typescript@5.7.2)(zod@3.24.4)':
     dependencies:
-      '@t3-oss/env-core': 0.7.0(typescript@5.7.2)(zod@3.23.8)
-      zod: 3.23.8
+      '@t3-oss/env-core': 0.7.0(typescript@5.7.2)(zod@3.24.4)
+      zod: 3.24.4
     optionalDependencies:
       typescript: 5.7.2
 
@@ -14111,12 +14120,12 @@ snapshots:
 
   '@unkey/error@0.2.0':
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@unkey/rbac@0.3.1':
     dependencies:
       '@unkey/error': 0.2.0
-      zod: 3.23.8
+      zod: 3.24.4
 
   '@upstash/core-analytics@0.0.6(encoding@0.1.13)':
     dependencies:
@@ -14538,9 +14547,9 @@ snapshots:
       xxhash-wasm: 1.1.0
       yargs-parser: 21.1.1
       yocto-spinner: 0.2.1
-      zod: 3.24.2
-      zod-to-json-schema: 3.24.5(zod@3.24.2)
-      zod-to-ts: 1.2.0(typescript@5.7.2)(zod@3.24.2)
+      zod: 3.24.4
+      zod-to-json-schema: 3.24.5(zod@3.24.4)
+      zod-to-ts: 1.2.0(typescript@5.7.2)(zod@3.24.4)
     optionalDependencies:
       sharp: 0.33.5
     transitivePeerDependencies:
@@ -15208,10 +15217,10 @@ snapshots:
       bun-types: 1.2.13
       react: 19.1.0
 
-  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0))(zod@3.24.4):
     dependencies:
       drizzle-orm: 0.35.3(@cloudflare/workers-types@4.20250303.0)(@libsql/client-wasm@0.14.0)(@libsql/client@0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.3))(@opentelemetry/api@1.9.0)(@types/pg@8.11.10)(@types/react@19.1.0)(better-sqlite3@11.4.0)(bun-types@1.2.13)(react@19.1.0)
-      zod: 3.23.8
+      zod: 3.24.4
 
   dset@3.1.4: {}
 
@@ -16518,8 +16527,8 @@ snapshots:
       strip-json-comments: 5.0.1
       summary: 2.1.0
       typescript: 5.7.2
-      zod: 3.23.8
-      zod-validation-error: 3.3.0(zod@3.23.8)
+      zod: 3.24.4
+      zod-validation-error: 3.3.0(zod@3.24.4)
 
   kolorist@1.8.0: {}
 
@@ -18141,7 +18150,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  react-hook-form@7.54.1(react@19.1.0):
+  react-hook-form@7.56.2(react@19.1.0):
     dependencies:
       react: 19.1.0
 
@@ -19904,23 +19913,19 @@ snapshots:
 
   zhead@2.2.4: {}
 
-  zod-to-json-schema@3.24.5(zod@3.24.2):
+  zod-to-json-schema@3.24.5(zod@3.24.4):
     dependencies:
-      zod: 3.24.2
+      zod: 3.24.4
 
-  zod-to-ts@1.2.0(typescript@5.7.2)(zod@3.24.2):
+  zod-to-ts@1.2.0(typescript@5.7.2)(zod@3.24.4):
     dependencies:
       typescript: 5.7.2
-      zod: 3.24.2
+      zod: 3.24.4
 
-  zod-validation-error@3.3.0(zod@3.23.8):
+  zod-validation-error@3.3.0(zod@3.24.4):
     dependencies:
-      zod: 3.23.8
+      zod: 3.24.4
 
-  zod@3.23.8: {}
-
-  zod@3.24.1: {}
-
-  zod@3.24.2: {}
+  zod@3.24.4: {}
 
   zwitch@2.0.4: {}

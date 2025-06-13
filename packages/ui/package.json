@@ -54,11 +54,11 @@
     "next": "15.2.4",
     "react": "19.1.0",
     "react-day-picker": "8.10.1",
-    "react-hook-form": "7.54.1",
+    "react-hook-form": "7.56.2",
     "recharts": "2.15.0",
     "tailwind-merge": "2.5.5",
     "tailwindcss-animate": "1.0.7",
-    "zod": "3.23.8"
+    "zod": "3.24.4"
   },
   "peerDependencies": {
     "next-themes": "0.2.1",
