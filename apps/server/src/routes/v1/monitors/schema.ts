@@ -125,7 +125,7 @@ export const MonitorSchema = z
       example: "Documenso website",
       description: "The description of your monitor",
     }),
-    method: z.enum(monitorMethods).default("GET").openapi({ example: "GET" }),
+    method: z.enum(monitorMethods).openapi({ example: "GET" }),
     body: z
       .preprocess((val) => {
         return String(val);
