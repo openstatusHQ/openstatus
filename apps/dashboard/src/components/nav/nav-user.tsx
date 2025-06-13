@@ -32,7 +32,7 @@ import Link from "next/link";
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(trpc.user.getCurrentUser.queryOptions());
+  const { data, isLoading } = useQuery(trpc.user.get.queryOptions());
 
   const user = {
     name: data?.name ?? `${data?.firstName} ${data?.lastName}`.trim(),

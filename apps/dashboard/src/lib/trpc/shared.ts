@@ -14,11 +14,13 @@ const getBaseUrl = () => {
 const lambdas = ["stripeRouter", "emailRouter"];
 
 export const endingLink = (opts?: {
+  fetch?: typeof fetch;
   headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
 }) =>
   ((runtime) => {
     const sharedOpts = {
-      headers: opts?.headers, // REMINDER: fails when trying to `getTotalActiveMonitors()`
+      headers: opts?.headers,
+      fetch: opts?.fetch,
       transformer: superjson,
       // biome-ignore lint/suspicious/noExplicitAny: FIXME: remove any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
