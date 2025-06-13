@@ -1,5 +1,5 @@
 {
-  "name": "openstatus-template",
+  "name": "@openstatus/dashboard",
   "version": "0.1.0",
   "private": true,
   "scripts": {
