@@ -5,12 +5,11 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/utils": "workspace:*",
-
     "zod": "3.23.8"
   },
   "devDependencies": {
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "22.10.2",
-    "typescript": "5.6.2"
+    "typescript": "5.7.2"
   }
 }

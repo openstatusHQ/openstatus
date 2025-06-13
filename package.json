@@ -19,11 +19,14 @@
     "@types/node": "20.8.0",
     "knip": "5.16.0",
     "turbo": "2.3.2",
-    "typescript": "5.6.2"
+    "typescript": "5.7.2"
   },
   "packageManager": "pnpm@10.11.0",
   "pnpm": {
-    "onlyBuiltDependencies": ["@swc/core", "sharp"]
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "sharp"
+    ]
   },
   "name": "openstatus",
   "workspaces": [
