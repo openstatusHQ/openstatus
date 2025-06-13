@@ -51,8 +51,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@hookform/resolvers':
-        specifier: ^4.1.3
-        version: 4.1.3(react-hook-form@7.57.0(react@19.1.0))
+        specifier: 3.9.1
+        version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.13
         version: 1.1.14(@types/react-dom@19.1.1(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -159,8 +159,8 @@ importers:
         specifier: ^19.0.0
         version: 19.1.0(react@19.1.0)
       react-hook-form:
-        specifier: ^7.56.2
-        version: 7.57.0(react@19.1.0)
+        specifier: 7.54.1
+        version: 7.54.1(react@19.1.0)
       recharts:
         specifier: ^2.15.3
         version: 2.15.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -391,8 +391,8 @@ importers:
         specifier: 4.0.1
         version: 4.0.1(encoding@0.1.13)
       '@hookform/resolvers':
-        specifier: 4.1.3
-        version: 4.1.3(react-hook-form@7.56.2(react@19.1.0))
+        specifier: 3.9.1
+        version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
       '@libsql/client':
         specifier: 0.14.0
         version: 0.14.0(bufferutil@4.0.8)(utf-8-validate@6.0.5)
@@ -565,8 +565,8 @@ importers:
         specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
       react-hook-form:
-        specifier: 7.56.2
-        version: 7.56.2(react@19.1.0)
+        specifier: 7.54.1
+        version: 7.54.1(react@19.1.0)
       react-tweet:
         specifier: 3.2.1
         version: 3.2.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1249,8 +1249,8 @@ importers:
         specifier: 3.2.2
         version: 3.2.2(react@19.1.0)
       '@hookform/resolvers':
-        specifier: 4.1.3
-        version: 4.1.3(react-hook-form@7.56.2(react@19.1.0))
+        specifier: 3.9.1
+        version: 3.9.1(react-hook-form@7.54.1(react@19.1.0))
       '@radix-ui/react-accordion':
         specifier: 1.2.2
         version: 1.2.2(@types/react-dom@19.1.1(@types/react@19.1.0))(@types/react@19.1.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -1348,8 +1348,8 @@ importers:
         specifier: 8.10.1
         version: 8.10.1(date-fns@2.30.0)(react@19.1.0)
       react-hook-form:
-        specifier: 7.56.2
-        version: 7.56.2(react@19.1.0)
+        specifier: 7.54.1
+        version: 7.54.1(react@19.1.0)
       recharts:
         specifier: 2.15.0
         version: 2.15.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -3060,8 +3060,8 @@ packages:
       react: ^16.8.0 || ^17 || ^18 || ^19
       react-dom: ^16.8.0 || ^17 || ^18 || ^19
 
-  '@hookform/resolvers@4.1.3':
-    resolution: {integrity: sha512-Jsv6UOWYTrEFJ/01ZrnwVXs7KDvP8XIo115i++5PWvNkNvkrsTfGiLS6w+eJ57CYtUtDQalUWovCZDHFJ8u1VQ==}
+  '@hookform/resolvers@3.9.1':
+    resolution: {integrity: sha512-ud2HqmGBM0P0IABqoskKWI6PEf6ZDDBZkFqe2Vnl+mTHCEHzr3ISjjZyCwTjC/qpL25JC9aIDkloQejvMeq0ug==}
     peerDependencies:
       react-hook-form: ^7.0.0
 
@@ -5772,9 +5772,6 @@ packages:
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
-
-  '@standard-schema/utils@0.3.0':
-    resolution: {integrity: sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==}
 
   '@stripe/stripe-js@2.1.6':
     resolution: {integrity: sha512-QSzqQIcowgap7a40f3a7oUR+59Xet/i8fp1EsnzzwxK5oPRQsCbbLQ4Cd6qM0y1pdZMonFnCrAWayWdE9Lr0iA==}
@@ -10480,14 +10477,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  react-hook-form@7.56.2:
-    resolution: {integrity: sha512-vpfuHuQMF/L6GpuQ4c3ZDo+pRYxIi40gQqsCmmfUBwm+oqvBhKhwghCuj2o00YCgSfU6bR9KC/xnQGWm3Gr08A==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18 || ^19
-
-  react-hook-form@7.57.0:
-    resolution: {integrity: sha512-RbEks3+cbvTP84l/VXGUZ+JMrKOS8ykQCRYdm5aYsxnDquL0vspsyNhGRO7pcH6hsZqWlPOjLye7rJqdtdAmlg==}
+  react-hook-form@7.54.1:
+    resolution: {integrity: sha512-PUNzFwQeQ5oHiiTUO7GO/EJXGEtuun2Y1A59rLnZBBj+vNEOWt/3ERTiG1/zt7dVeJEM+4vDX/7XQ/qanuvPMg==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18 || ^19
@@ -14226,15 +14217,9 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@hookform/resolvers@4.1.3(react-hook-form@7.56.2(react@19.1.0))':
+  '@hookform/resolvers@3.9.1(react-hook-form@7.54.1(react@19.1.0))':
     dependencies:
-      '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.56.2(react@19.1.0)
-
-  '@hookform/resolvers@4.1.3(react-hook-form@7.57.0(react@19.1.0))':
-    dependencies:
-      '@standard-schema/utils': 0.3.0
-      react-hook-form: 7.57.0(react@19.1.0)
+      react-hook-form: 7.54.1(react@19.1.0)
 
   '@humanfs/core@0.19.1': {}
 
@@ -17182,8 +17167,6 @@ snapshots:
       p-map: 4.0.0
 
   '@socket.io/component-emitter@3.1.2': {}
-
-  '@standard-schema/utils@0.3.0': {}
 
   '@stripe/stripe-js@2.1.6': {}
 
@@ -22991,11 +22974,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  react-hook-form@7.56.2(react@19.1.0):
-    dependencies:
-      react: 19.1.0
-
-  react-hook-form@7.57.0(react@19.1.0):
+  react-hook-form@7.54.1(react@19.1.0):
     dependencies:
       react: 19.1.0
 
