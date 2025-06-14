@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Globe, Network, Plus, X } from "lucide-react";
 import { useTransition } from "react";
@@ -53,7 +52,7 @@ const schema = z.object({
     z.object({
       key: z.string(),
       value: z.string(),
-    }),
+    })
   ),
   body: z.string().optional(),
   assertions: z.array(
@@ -61,7 +60,7 @@ const schema = z.object({
       type: z.enum(ASSERTION_TYPES),
       eq: z.enum(ASSERTION_EQ),
       value: z.string().min(1),
-    }),
+    })
   ),
 });
 
@@ -274,7 +273,7 @@ export function FormGeneral({
                             variant="ghost"
                             onClick={() => {
                               const newHeaders = field.value.filter(
-                                (_, i) => i !== index,
+                                (_, i) => i !== index
                               );
                               field.onChange(newHeaders);
                             }}
@@ -408,7 +407,7 @@ export function FormGeneral({
                             type="button"
                             onClick={() => {
                               const newAssertions = field.value.filter(
-                                (_, i) => i !== index,
+                                (_, i) => i !== index
                               );
                               field.onChange(newAssertions);
                             }}
@@ -494,7 +493,6 @@ export function FormGeneral({
           </FormCardFooter>
         </FormCard>
       </form>
-      <DevTool control={form.control} />
     </Form>
   );
 }

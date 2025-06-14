@@ -7,14 +7,12 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type {
-  StatusReport,
-  StatusReportUpdate,
-} from "@openstatus/db/src/schema";
 
-export const columns: ColumnDef<
-  StatusReport & { updates: StatusReportUpdate[] }
->[] = [
+import type { RouterOutputs } from "@openstatus/api";
+
+type StatusReport = RouterOutputs["statusReport"]["list"][number];
+
+export const columns: ColumnDef<StatusReport>[] = [
   {
     id: "expander",
     header: () => null,

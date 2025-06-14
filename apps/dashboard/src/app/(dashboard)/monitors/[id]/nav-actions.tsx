@@ -11,16 +11,17 @@ import {
 } from "@/components/ui/tooltip";
 import { getActions } from "@/data/monitors.client";
 import { Zap } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
 export function NavActions() {
+  const { id } = useParams<{ id: string }>();
   const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();
 
   const actions = getActions({
-    edit: () => router.push("/dashboard/monitors/edit"),
+    edit: () => router.push(`/monitors/${id}/edit`),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");

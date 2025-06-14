@@ -29,10 +29,15 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = true;
+const LOCKED = false;
+
+// TODO: add headers
 
 const schema = z.object({
   endpoint: z.string().url("Please enter a valid URL"),
+  headers: z
+    .array(z.object({ key: z.string(), value: z.string() }))
+    .default([]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -43,13 +48,11 @@ export function FormOtel({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {
-      endpoint: "https://otel.openstatus.dev/api/v1/metrics",
-    },
+    defaultValues: defaultValues ?? { endpoint: "", headers: [] },
   });
   const [isPending, startTransition] = useTransition();
 
@@ -58,11 +61,10 @@ export function FormOtel({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: "Saved",
           error: "Failed to save",
         });
         await promise;
@@ -76,7 +78,7 @@ export function FormOtel({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
-          <FormCardUpgrade />
+          {LOCKED ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>OpenTelemetry</FormCardTitle>
             <FormCardDescription>

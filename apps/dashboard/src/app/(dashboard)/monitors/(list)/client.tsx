@@ -75,7 +75,7 @@ export function Client() {
       type: "filter" as const,
     },
     {
-      title: "Slowest Endpoint",
+      title: "Slowest P95",
       value: "530ms",
       variant: "ghost" as const,
       type: "sorting" as const,
@@ -122,7 +122,7 @@ export function Client() {
                     } else {
                       setColumnFilters([]);
                       // reset URL params
-                      router.push("/dashboard/monitors");
+                      router.push("/monitors");
                     }
                   } else if (metric.type === "sorting") {
                     if (sorting.length === 0 || !isActive) {

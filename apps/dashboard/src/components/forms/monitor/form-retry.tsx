@@ -29,10 +29,10 @@ import { z } from "zod";
 
 const RETRY_MIN = 1;
 const RETRY_MAX = 10;
-const RETRY_DEFAULT = 3;
+export const RETRY_DEFAULT = 3;
 
 const schema = z.object({
-  retry: z.coerce.number().min(RETRY_MIN).max(RETRY_MAX),
+  retry: z.coerce.number().min(RETRY_MIN).max(RETRY_MAX).default(RETRY_DEFAULT),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -43,7 +43,7 @@ export function FormRetry({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -58,11 +58,10 @@ export function FormRetry({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: "Saved",
           error: "Failed to save",
         });
         await promise;

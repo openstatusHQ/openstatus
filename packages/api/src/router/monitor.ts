@@ -19,6 +19,7 @@ import {
   sql,
 } from "@openstatus/db";
 import {
+  incidentTable,
   insertMonitorSchema,
   maintenancesToMonitors,
   monitor,
@@ -839,5 +840,98 @@ export const monitorRouter = createTRPCRouter({
       const result = await query.all();
 
       return z.array(selectMonitorSchema).parse(result);
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.coerce.number() }))
+    .query(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      const data = await ctx.db.query.monitor.findFirst({
+        where: and(...whereConditions),
+        with: {
+          monitorsToNotifications: {
+            with: { notification: true },
+          },
+          monitorsToPages: {
+            with: { page: true },
+          },
+          monitorTagsToMonitors: {
+            with: { monitorTag: true },
+          },
+          maintenancesToMonitors: true,
+          incidents: true,
+        },
+      });
+
+      if (!data) return null;
+
+      return {
+        ...data,
+        notifications: data.monitorsToNotifications.map((m) => m.notification),
+        pages: data.monitorsToPages.map((p) => p.page),
+        tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+        maintenances: data.maintenancesToMonitors,
+        incidents: data.incidents,
+      };
+    }),
+
+  updateRetry: protectedProcedure
+    .input(z.object({ id: z.number(), retry: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({ retry: input.retry })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateOtel: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        otelEndpoint: z.string(),
+        otelHeaders: z
+          .array(z.object({ key: z.string(), value: z.string() }))
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({
+          otelEndpoint: input.otelEndpoint,
+          otelHeaders: input.otelHeaders
+            ? JSON.stringify(input.otelHeaders)
+            : undefined,
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updatePublic: protectedProcedure
+    .input(z.object({ id: z.number(), public: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(monitor)
+        .set({ public: input.public })
+        .where(eq(monitor.id, input.id))
+        .run();
     }),
 });

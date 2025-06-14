@@ -7,7 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 // import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type { Monitor } from "@openstatus/db/src/schema";
+
+import type { RouterOutputs } from "@openstatus/api";
+
+type Monitor = RouterOutputs["monitor"]["list"][number];
 
 export const columns: ColumnDef<Monitor>[] = [
   {
@@ -39,7 +42,7 @@ export const columns: ColumnDef<Monitor>[] = [
       return (
         <TableCellLink
           value={row.getValue("name")}
-          href={"monitors/overview"}
+          href={`/monitors/${row.original.id}/overview`}
         />
       );
     },

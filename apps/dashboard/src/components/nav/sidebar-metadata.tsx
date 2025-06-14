@@ -93,9 +93,6 @@ function SidebarMetadataTable({
                 {item.label}
               </div>
             </TableCell>
-            {/* <TableCell className="font-mono truncate max-w-0">
-              {item.value}
-            </TableCell> */}
             <SidebarMetadataTableCell className="max-w-0 truncate font-mono">
               {item.value}
             </SidebarMetadataTableCell>
@@ -137,7 +134,7 @@ function SidebarMetadataTableCell({
       ref={ref}
       className={cn(
         typeof props.children === "string" && "cursor-pointer",
-        className,
+        className
       )}
       onClick={handleClick}
     >

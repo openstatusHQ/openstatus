@@ -5,7 +5,9 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
 import { DataTableRowActions } from "./data-table-row-actions";
-import type { Maintenance } from "@openstatus/db/src/schema";
+import type { RouterOutputs } from "@openstatus/api";
+
+type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
 export const columns: ColumnDef<Maintenance>[] = [
   {

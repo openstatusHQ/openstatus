@@ -12,7 +12,6 @@ import {
   selectStatusReportUpdateSchema,
   statusReport,
   statusReportStatusSchema,
-  type StatusReportUpdate,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
@@ -369,7 +368,7 @@ export const statusReportRouter = createTRPCRouter({
       const query = opts.ctx.db
         .select({
           status_report: statusReport,
-          updates: sql<StatusReportUpdate[]>`json_group_array(
+          updates: sql<(typeof statusReportUpdate)[]>`json_group_array(
           CASE 
             WHEN ${statusReportUpdate.id} IS NOT NULL 
             THEN json_object(

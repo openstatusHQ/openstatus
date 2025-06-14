@@ -9,11 +9,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
 import { CircleCheck, Logs } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { formatMilliseconds } from "@/lib/formatter";
 
 export function Sidebar() {
   const router = useRouter();
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: parseInt(id) })
+  );
+
+  if (!monitor) return null;
+
   return (
     <SidebarRight
       header="Monitor"
@@ -26,7 +37,10 @@ export function Sidebar() {
               value: <span className="text-success">Normal</span>,
             },
             { label: "Next run", value: "5m" },
-            { label: "Type", value: "HTTP" },
+            {
+              label: "Type",
+              value: <span className="uppercase">{monitor.jobType}</span>,
+            },
             {
               label: "Tags",
               value: ["API", "Production"].map((tag) => (
@@ -40,29 +54,39 @@ export function Sidebar() {
         {
           label: "Configuration",
           items: [
-            { label: "Periodicity", value: "10m" },
-            { label: "Timeout", value: "10,000ms" },
-            { label: "Public", value: "false" },
+            { label: "Periodicity", value: monitor.periodicity },
+            {
+              label: "Timeout",
+              value: formatMilliseconds(monitor.timeout),
+            },
+            { label: "Public", value: String(monitor.public) },
           ],
         },
-        // {
-        //   label: "Integrations",
-        //   items: [],
-        // },
         {
           label: "Notifiers",
-          items: [
-            {
+          items: monitor.notifications.flatMap((notification) => {
+            const arr = [];
+            arr.push({
               label: "Name",
-              value: <TableCellLink href="#" value="Team" />,
-            },
-            { label: "Type", value: "Email", isNested: true },
-            {
-              label: "Adress",
-              value: "justdoit@openstatus.dev",
+              value: (
+                <TableCellLink
+                  href={`/notifiers/${notification.id}`}
+                  value={notification.name}
+                />
+              ),
+            });
+            arr.push({
+              label: "Type",
+              value: notification.provider,
               isNested: true,
-            },
-          ],
+            });
+            arr.push({
+              label: "Value",
+              value: notification.data, // TODO: improve this based on the provider
+              isNested: true,
+            });
+            return arr;
+          }),
         },
         {
           label: "Last Logs",

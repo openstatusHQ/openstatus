@@ -29,7 +29,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = true;
+const LOCKED = false;
 
 const schema = z.object({
   visibility: z.boolean(),
@@ -43,7 +43,7 @@ export function FormVisibility({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -58,11 +58,10 @@ export function FormVisibility({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: "Saved",
           error: "Failed to save",
         });
         await promise;
@@ -76,7 +75,7 @@ export function FormVisibility({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
-          <FormCardUpgrade />
+          {LOCKED ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Visibility</FormCardTitle>
             <FormCardDescription>
