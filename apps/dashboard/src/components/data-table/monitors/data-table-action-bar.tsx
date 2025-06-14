@@ -17,15 +17,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import type { Monitor } from "@/data/monitors";
 
-interface MonitorDataTableActionBarProps {
-  table: Table<Monitor>;
+interface MonitorDataTableActionBarProps<TData> {
+  table: Table<TData>;
 }
 
-export function MonitorDataTableActionBar({
+export function MonitorDataTableActionBar<TData>({
   table,
-}: MonitorDataTableActionBarProps) {
+}: MonitorDataTableActionBarProps<TData>) {
   const rows = table.getFilteredSelectedRowModel().rows;
 
   return (

@@ -818,6 +818,7 @@ export const monitorRouter = createTRPCRouter({
         })
         .optional()
     )
+    .output(z.array(selectMonitorSchema))
     .query(async (opts) => {
       const whereConditions: SQL[] = [
         eq(monitor.workspaceId, opts.ctx.workspace.id),
@@ -837,6 +838,6 @@ export const monitorRouter = createTRPCRouter({
 
       const result = await query.all();
 
-      return result;
+      return z.array(selectMonitorSchema).parse(result);
     }),
 });

@@ -1,13 +1,13 @@
 "use client";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
-import { TableCellNumber } from "@/components/data-table/table-cell-number";
-import { Badge } from "@/components/ui/badge";
+// import { TableCellNumber } from "@/components/data-table/table-cell-number";
+// import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import type { Monitor } from "@/data/monitors";
+// import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
+import type { Monitor } from "@openstatus/db/src/schema";
 
 export const columns: ColumnDef<Monitor>[] = [
   {
@@ -68,66 +68,66 @@ export const columns: ColumnDef<Monitor>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-  {
-    accessorKey: "tags",
-    header: "Tags",
-    cell: ({ row }) => {
-      const value = row.getValue("tags");
-      if (!Array.isArray(value)) return null;
-      return (
-        <div className="flex gap-2">
-          {value.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      );
-    },
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "lastIncident",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Incident" />
-    ),
-    cell: ({ row }) => {
-      const value = String(row.getValue("lastIncident") ?? "-");
-      return <div className="text-muted-foreground">{value}</div>;
-    },
-    enableHiding: false,
-  },
-  {
-    accessorKey: "p50",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P50" />
-    ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p50")} unit="ms" />
-    ),
-    enableHiding: false,
-  },
-  {
-    accessorKey: "p90",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P90" />
-    ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p90")} unit="ms" />
-    ),
-    enableHiding: false,
-  },
-  {
-    accessorKey: "p99",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="P99" />
-    ),
-    cell: ({ row }) => (
-      <TableCellNumber value={row.getValue("p99")} unit="ms" />
-    ),
-    enableHiding: false,
-  },
+  // {
+  //   accessorKey: "tags",
+  //   header: "Tags",
+  //   cell: ({ row }) => {
+  //     const value = row.getValue("tags");
+  //     if (!Array.isArray(value)) return null;
+  //     return (
+  //       <div className="flex gap-2">
+  //         {value.map((tag) => (
+  //           <Badge key={tag} variant="secondary">
+  //             {tag}
+  //           </Badge>
+  //         ))}
+  //       </div>
+  //     );
+  //   },
+  //   enableSorting: false,
+  //   enableHiding: false,
+  // },
+  // {
+  //   accessorKey: "lastIncident",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Last Incident" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = String(row.getValue("lastIncident") ?? "-");
+  //     return <div className="text-muted-foreground">{value}</div>;
+  //   },
+  //   enableHiding: false,
+  // },
+  // {
+  //   accessorKey: "p50",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="P50" />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <TableCellNumber value={row.getValue("p50")} unit="ms" />
+  //   ),
+  //   enableHiding: false,
+  // },
+  // {
+  //   accessorKey: "p90",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="P90" />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <TableCellNumber value={row.getValue("p90")} unit="ms" />
+  //   ),
+  //   enableHiding: false,
+  // },
+  // {
+  //   accessorKey: "p99",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="P99" />
+  //   ),
+  //   cell: ({ row }) => (
+  //     <TableCellNumber value={row.getValue("p99")} unit="ms" />
+  //   ),
+  //   enableHiding: false,
+  // },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,

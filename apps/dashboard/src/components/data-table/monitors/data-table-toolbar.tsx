@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
-import type { Monitor } from "@/data/monitors";
+import type { Monitor } from "@openstatus/db/src/schema";
 
 export interface MonitorDataTableToolbarProps {
   table: Table<Monitor>;
