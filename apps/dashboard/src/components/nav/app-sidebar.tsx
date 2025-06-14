@@ -53,65 +53,65 @@ const data = {
   monitors: [
     {
       name: "OpenStatus Marketing",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Production"],
     },
     {
       name: "OpenStatus API",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Production"],
     },
     {
       name: "OpenStatus Dashboard",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Production"],
     },
     {
       name: "Lightweight OS",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Development"],
     },
     {
       name: "Astro Status Page",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Development"],
     },
     {
       name: "Vercel Edge Ping",
-      url: "/dashboard/monitors/overview",
+      url: "/monitors/overview",
       tags: ["Staging"],
     },
   ],
   statusPages: [
     {
       name: "OpenStatus Status",
-      url: "/dashboard/status-pages/status-reports",
+      url: "/status-pages/status-reports",
     },
   ],
   overview: [
     {
       name: "Overview",
-      url: "/dashboard/overview",
+      url: "/overview",
       icon: LayoutGrid,
     },
     {
       name: "Monitors",
-      url: "/dashboard/monitors",
+      url: "/monitors",
       icon: Activity,
     },
     {
       name: "Status Pages",
-      url: "/dashboard/status-pages",
+      url: "/status-pages",
       icon: PanelTop,
     },
     {
       name: "Notifiers",
-      url: "/dashboard/notifiers",
+      url: "/notifiers",
       icon: Bell,
     },
     {
       name: "Settings",
-      url: "/dashboard/settings/general",
+      url: "/settings/general",
       icon: Cog,
     },
   ],
