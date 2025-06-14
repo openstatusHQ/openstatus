@@ -8,7 +8,16 @@ import {
   TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  type SQL,
+  sql,
+} from "@openstatus/db";
 import {
   insertMonitorSchema,
   maintenancesToMonitors,
@@ -799,13 +808,35 @@ export const monitorRouter = createTRPCRouter({
       };
     }),
 
-  list: protectedProcedure.query(async (opts) => {
-    const monitors = await opts.ctx.db.query.monitor.findMany({
-      where: and(
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional()
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
         eq(monitor.workspaceId, opts.ctx.workspace.id),
-        isNull(monitor.deletedAt)
-      ),
-    });
-    return monitors;
-  }),
+        isNull(monitor.deletedAt),
+      ];
+
+      const query = opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(and(...whereConditions));
+
+      if (opts.input?.order === "asc") {
+        query.orderBy(asc(monitor.active), asc(monitor.createdAt));
+      } else {
+        query.orderBy(desc(monitor.active), desc(monitor.createdAt));
+      }
+
+      const result = await query.all();
+
+      return result;
+    }),
 });

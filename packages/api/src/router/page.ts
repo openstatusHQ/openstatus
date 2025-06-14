@@ -1,7 +1,18 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, gte, inArray, isNull, lte, sql } from "@openstatus/db";
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gte,
+  inArray,
+  isNull,
+  lte,
+  type SQL,
+  sql,
+} from "@openstatus/db";
 import {
   incidentTable,
   insertPageSchema,
@@ -386,10 +397,34 @@ export const pageRouter = createTRPCRouter({
     return pageNumbers >= pageLimit;
   }),
 
-  list: protectedProcedure.query(async (opts) => {
-    const pages = await opts.ctx.db.query.page.findMany({
-      where: eq(page.workspaceId, opts.ctx.workspace.id),
-    });
-    return pages;
-  }),
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional()
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const query = opts.ctx.db
+        .select()
+        .from(page)
+        .where(and(...whereConditions));
+
+      if (opts.input?.order === "asc") {
+        query.orderBy(asc(page.createdAt));
+      } else {
+        query.orderBy(desc(page.createdAt));
+      }
+
+      const result = await query.all();
+
+      return result;
+    }),
 });

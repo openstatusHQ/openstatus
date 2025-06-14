@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { and, eq, gte, inArray, lte } from "@openstatus/db";
+import { and, asc, desc, eq, gte, inArray, lte, SQL } from "@openstatus/db";
 import {
   insertMaintenanceSchema,
   maintenance,
@@ -30,7 +30,7 @@ export const maintenanceRouter = createTRPCRouter({
             opts.input.monitors.map((monitorId) => ({
               maintenanceId: _maintenance.id,
               monitorId,
-            })),
+            }))
           )
           .returning()
           .get();
@@ -47,8 +47,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(maintenance.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
 
@@ -73,7 +73,7 @@ export const maintenanceRouter = createTRPCRouter({
     const _maintenances = await opts.ctx.db.query.maintenance.findMany({
       where: and(
         eq(maintenance.workspaceId, opts.ctx.workspace.id),
-        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+        gte(maintenance.from, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
       ),
       with: { maintenancesToMonitors: true },
     });
@@ -91,8 +91,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.pageId, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(maintenance.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .all();
       // TODO:
@@ -106,8 +106,8 @@ export const maintenanceRouter = createTRPCRouter({
         and(
           eq(maintenance.workspaceId, opts.ctx.workspace.id),
           gte(maintenance.to, new Date()),
-          lte(maintenance.from, new Date()),
-        ),
+          lte(maintenance.from, new Date())
+        )
       )
       .all();
     return _maintenances;
@@ -126,8 +126,8 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(maintenance.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .returning()
         .get();
@@ -139,11 +139,11 @@ export const maintenanceRouter = createTRPCRouter({
         .all();
 
       const _monitorsIds = _maintenancesToMonitors.map(
-        ({ monitorId }) => monitorId,
+        ({ monitorId }) => monitorId
       );
 
       const added = opts.input.monitors?.filter(
-        (monitor) => !_monitorsIds.includes(monitor),
+        (monitor) => !_monitorsIds.includes(monitor)
       );
 
       if (added?.length) {
@@ -153,14 +153,14 @@ export const maintenanceRouter = createTRPCRouter({
             added.map((monitorId) => ({
               maintenanceId: _maintenance.id,
               monitorId,
-            })),
+            }))
           )
           .returning()
           .get();
       }
 
       const removed = _monitorsIds.filter(
-        (monitor) => !opts.input.monitors?.includes(monitor),
+        (monitor) => !opts.input.monitors?.includes(monitor)
       );
 
       if (removed?.length) {
@@ -169,8 +169,8 @@ export const maintenanceRouter = createTRPCRouter({
           .where(
             and(
               eq(maintenancesToMonitors.maintenanceId, _maintenance.id),
-              inArray(maintenancesToMonitors.monitorId, removed),
-            ),
+              inArray(maintenancesToMonitors.monitorId, removed)
+            )
           )
           .run();
       }
@@ -186,9 +186,50 @@ export const maintenanceRouter = createTRPCRouter({
         .where(
           and(
             eq(maintenance.id, opts.input.id),
-            eq(maintenance.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(maintenance.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .returning();
+    }),
+
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          createdAt: z
+            .object({
+              gte: z.date().optional(),
+            })
+            .optional(),
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional()
+    )
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(maintenance.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      if (opts.input?.createdAt?.gte) {
+        whereConditions.push(
+          gte(maintenance.createdAt, opts.input.createdAt.gte)
+        );
+      }
+      const query = opts.ctx.db
+        .select()
+        .from(maintenance)
+        .where(eq(maintenance.workspaceId, opts.ctx.workspace.id));
+
+      if (opts.input?.order === "asc") {
+        query.orderBy(asc(maintenance.createdAt));
+      } else {
+        query.orderBy(desc(maintenance.createdAt));
+      }
+
+      const result = await query.all();
+
+      return result;
     }),
 });

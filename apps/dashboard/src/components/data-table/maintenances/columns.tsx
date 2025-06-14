@@ -2,10 +2,10 @@
 
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import type { Maintenance } from "@/data/maintenances";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatDistanceStrict } from "date-fns";
 import { DataTableRowActions } from "./data-table-row-actions";
+import type { Maintenance } from "@openstatus/db/src/schema";
 
 export const columns: ColumnDef<Maintenance>[] = [
   {
@@ -49,7 +49,7 @@ export const columns: ColumnDef<Maintenance>[] = [
   },
   {
     id: "duration",
-    accessorFn: (row) => formatDistanceStrict(row.startDate, row.endDate),
+    accessorFn: (row) => formatDistanceStrict(row.from, row.to),
     header: "Duration",
     cell: ({ row }) => {
       const value = row.getValue("duration");

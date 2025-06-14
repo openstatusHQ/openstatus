@@ -4,13 +4,17 @@ import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
-import type { StatusReport } from "@/data/status-reports";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceStrict } from "date-fns";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import type {
+  StatusReport,
+  StatusReportUpdate,
+} from "@openstatus/db/src/schema";
 
-export const columns: ColumnDef<StatusReport>[] = [
+export const columns: ColumnDef<
+  StatusReport & { updates: StatusReportUpdate[] }
+>[] = [
   {
     id: "expander",
     header: () => null,
@@ -22,8 +26,8 @@ export const columns: ColumnDef<StatusReport>[] = [
             onClick: row.getToggleExpandedHandler(),
             "aria-expanded": row.getIsExpanded(),
             "aria-label": row.getIsExpanded()
-              ? `Collapse details for ${row.original.name}`
-              : `Expand details for ${row.original.name}`,
+              ? `Collapse details for ${row.original.title}`
+              : `Expand details for ${row.original.title}`,
             size: "icon",
             variant: "ghost",
           }}
@@ -50,8 +54,9 @@ export const columns: ColumnDef<StatusReport>[] = [
     accessorKey: "status",
     header: "Current Status",
     cell: ({ row }) => {
+      // TODO: add more colors for other statuses
       const value = String(row.getValue("status"));
-      if (value === "operational") {
+      if (value === "resolved") {
         return <div className="font-mono text-success">{value}</div>;
       }
       return <div className="font-mono text-muted-foreground">{value}</div>;
@@ -60,24 +65,11 @@ export const columns: ColumnDef<StatusReport>[] = [
     enableHiding: false,
   },
   {
-    id: "duration",
-    accessorFn: (row) => {
-      const resolvedAt = row.updates.find(
-        (i) => i.status === "operational",
-      )?.date;
-      if (!resolvedAt) return null;
-      return formatDistanceStrict(row.startedAt, resolvedAt);
-    },
-    header: "Duration",
+    id: "updates",
+    accessorFn: (row) => row.updates.length,
+    header: "Updates",
     cell: ({ row }) => {
-      const value = row.getValue("duration");
-      if (typeof value === "string") {
-        const [amount, unit] = value.split(" ");
-        return <TableCellNumber value={amount} unit={unit} />;
-      }
-      if (value === null) {
-        return <div className="font-mono text-destructive">Ongoing</div>;
-      }
+      const value = row.getValue("updates");
       return <TableCellNumber value={value} />;
     },
   },

@@ -24,8 +24,8 @@ export const monitorTagRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-            eq(monitorTag.id, opts.input.id),
-          ),
+            eq(monitorTag.id, opts.input.id)
+          )
         )
         .returning()
         .get();
@@ -39,8 +39,8 @@ export const monitorTagRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorTag.id, opts.input.id),
-            eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(monitorTag.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
