@@ -1,0 +1,46 @@
+"use client";
+
+import { QuickActions } from "@/components/dropdowns/quick-actions";
+import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
+import { getActions } from "@/data/status-reports.client";
+import type { Row } from "@tanstack/react-table";
+import { useRef } from "react";
+
+interface DataTableRowActionsProps<TData> {
+  row?: Row<TData>;
+}
+
+export function DataTableRowActions<TData>(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _props: DataTableRowActionsProps<TData>,
+) {
+  const buttonCreateRef = useRef<HTMLButtonElement>(null);
+  const buttonUpdateRef = useRef<HTMLButtonElement>(null);
+  const actions = getActions({
+    edit: () => buttonCreateRef.current?.click(),
+    "create-update": () => buttonUpdateRef.current?.click(),
+  });
+
+  return (
+    <>
+      <QuickActions
+        actions={actions}
+        deleteAction={{
+          title: "Delete",
+          confirmationValue: "delete",
+        }}
+      />
+      <FormSheetStatusReport>
+        <button ref={buttonCreateRef} type="button" className="sr-only">
+          Open sheet
+        </button>
+      </FormSheetStatusReport>
+      <FormSheetStatusReportUpdate>
+        <button ref={buttonUpdateRef} type="button" className="sr-only">
+          Open sheet
+        </button>
+      </FormSheetStatusReportUpdate>
+    </>
+  );
+}
