@@ -22,21 +22,25 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Slider } from "@/components/ui/slider";
-import { type Region, groupedRegions, regions } from "@/data/regions";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  monitorPeriodicity,
+  type MonitorFlyRegion,
+} from "@openstatus/db/src/schema/constants";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"] satisfies Region[];
-const PERIODICITY = ["30s", "1m", "5m", "10m", "30m", "1h"] as const;
-const GROUPED_REGIONS = groupedRegions;
+import { groupByContinent } from "@openstatus/utils";
+
+const DEFAULT_PERIODICITY = "10m";
+const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
 
 const schema = z.object({
   regions: z.array(z.string()),
-  periodicity: z.enum(PERIODICITY),
+  periodicity: z.enum(monitorPeriodicity),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -52,8 +56,8 @@ export function FormSchedulingRegions({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      regions: REGIONS,
-      periodicity: "10m",
+      regions: DEFAULT_REGIONS,
+      periodicity: DEFAULT_PERIODICITY,
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -98,23 +102,23 @@ export function FormSchedulingRegions({
                   <FormControl>
                     <div>
                       <Slider
-                        value={[PERIODICITY.indexOf(field.value)]}
-                        max={PERIODICITY.length - 1}
+                        value={[monitorPeriodicity.indexOf(field.value)]}
+                        max={monitorPeriodicity.length - 1}
                         aria-label="Slider with ticks"
                         onValueChange={(value) => {
-                          field.onChange(PERIODICITY[value[0]]);
+                          field.onChange(monitorPeriodicity[value[0]]);
                         }}
                         className={cn(
                           // NOTE: used for disabled steps
                           ["30s", "1m", "5m"].includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive",
+                            "[&_[data-slot=slider-range]]:bg-destructive"
                         )}
                       />
                       <span
                         className="mt-3 flex w-full items-center justify-between gap-1 px-2.5 font-medium text-muted-foreground text-xs"
                         aria-hidden="true"
                       >
-                        {PERIODICITY.map((period) => (
+                        {monitorPeriodicity.map((period) => (
                           <span
                             key={period}
                             className="flex w-0 flex-col items-center justify-center gap-2"
@@ -142,109 +146,115 @@ export function FormSchedulingRegions({
                 <FormItem>
                   <FormControl>
                     <div className="grid gap-4">
-                      {Object.entries(GROUPED_REGIONS).map(([continent, r]) => {
-                        const selected = r.reduce((prev, curr) => {
-                          return prev + (watchRegions.includes(curr) ? 1 : 0);
-                        }, 0);
-                        const isAllSelected = selected === r.length;
+                      {Object.entries(groupByContinent).map(
+                        ([continent, r]) => {
+                          const selected = r.reduce((prev, curr) => {
+                            return (
+                              prev + (watchRegions.includes(curr.code) ? 1 : 0)
+                            );
+                          }, 0);
+                          const isAllSelected = selected === r.length;
 
-                        return (
-                          <div key={continent} className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <FormLabel>
-                                {continent}{" "}
-                                <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
-                                  ({selected}/{r.length})
-                                </span>
-                              </FormLabel>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                type="button"
-                                className={cn(
-                                  isAllSelected && "text-muted-foreground",
-                                )}
-                                onClick={() => {
-                                  if (!isAllSelected) {
-                                    // Add all regions from this continent
-                                    const newRegions = [...watchRegions];
-                                    r.forEach((region) => {
-                                      if (!newRegions.includes(region)) {
-                                        newRegions.push(region);
-                                      }
-                                    });
-                                    form.setValue("regions", newRegions);
-                                  } else {
-                                    // Remove all regions from this continent
-                                    form.setValue(
-                                      "regions",
-                                      watchRegions?.filter(
-                                        (region) =>
-                                          !r.includes(region as Region),
-                                      ),
-                                    );
-                                  }
-                                }}
-                              >
-                                Select all
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              {r.map((region) => {
-                                const config = regions.find(
-                                  (r) => r.code === region,
-                                );
-                                return (
-                                  <FormField
-                                    key={region}
-                                    control={form.control}
-                                    name="regions"
-                                    render={({ field }) => (
-                                      <FormItem
-                                        key={region}
-                                        className="flex items-center"
-                                      >
-                                        <Checkbox
-                                          id={region}
-                                          checked={
-                                            field.value?.includes(region) ||
-                                            false
-                                          }
-                                          onCheckedChange={(checked) => {
-                                            if (checked) {
-                                              field.onChange([
-                                                ...field.value,
-                                                region,
-                                              ]);
-                                            } else {
-                                              field.onChange(
-                                                field.value?.filter(
-                                                  (r) => r !== region,
-                                                ),
-                                              );
-                                            }
-                                          }}
-                                        />
-                                        <FormLabel
-                                          htmlFor={region}
-                                          className="w-full truncate font-mono font-normal text-sm"
+                          return (
+                            <div key={continent} className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <FormLabel>
+                                  {continent}{" "}
+                                  <span className="align-baseline font-mono font-normal text-muted-foreground/70 text-xs tabular-nums">
+                                    ({selected}/{r.length})
+                                  </span>
+                                </FormLabel>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  type="button"
+                                  className={cn(
+                                    isAllSelected && "text-muted-foreground"
+                                  )}
+                                  onClick={() => {
+                                    if (!isAllSelected) {
+                                      // Add all regions from this continent
+                                      const newRegions = [...watchRegions];
+                                      r.forEach((region) => {
+                                        if (!newRegions.includes(region.code)) {
+                                          newRegions.push(region.code);
+                                        }
+                                      });
+                                      form.setValue("regions", newRegions);
+                                    } else {
+                                      // Remove all regions from this continent
+                                      form.setValue(
+                                        "regions",
+                                        watchRegions?.filter(
+                                          (region) =>
+                                            !r
+                                              .map(({ code }) => code)
+                                              .includes(
+                                                region as MonitorFlyRegion
+                                              )
+                                        )
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Select all
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                {r.map((region) => {
+                                  return (
+                                    <FormField
+                                      key={region.code}
+                                      control={form.control}
+                                      name="regions"
+                                      render={({ field }) => (
+                                        <FormItem
+                                          key={region.code}
+                                          className="flex items-center"
                                         >
-                                          <span className="text-nowrap">
-                                            {region} {config?.flag}
-                                          </span>
-                                          <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
-                                            {config?.location}
-                                          </span>
-                                        </FormLabel>
-                                      </FormItem>
-                                    )}
-                                  />
-                                );
-                              })}
+                                          <Checkbox
+                                            id={region.code}
+                                            checked={
+                                              field.value?.includes(
+                                                region.code
+                                              ) || false
+                                            }
+                                            onCheckedChange={(checked) => {
+                                              if (checked) {
+                                                field.onChange([
+                                                  ...field.value,
+                                                  region,
+                                                ]);
+                                              } else {
+                                                field.onChange(
+                                                  field.value?.filter(
+                                                    (r) => r !== region.code
+                                                  )
+                                                );
+                                              }
+                                            }}
+                                          />
+                                          <FormLabel
+                                            htmlFor={region.code}
+                                            className="w-full truncate font-mono font-normal text-sm"
+                                          >
+                                            <span className="text-nowrap">
+                                              {region.code} {region.flag}
+                                            </span>
+                                            <span className="truncate font-normal text-muted-foreground text-xs leading-[inherit]">
+                                              {region.location}
+                                            </span>
+                                          </FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                   </FormControl>
                 </FormItem>

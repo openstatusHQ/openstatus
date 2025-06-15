@@ -30,14 +30,18 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  selectIncidentSchema,
+  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
+  selectPageSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -870,14 +874,24 @@ export const monitorRouter = createTRPCRouter({
 
       if (!data) return null;
 
-      return {
-        ...data,
-        notifications: data.monitorsToNotifications.map((m) => m.notification),
-        pages: data.monitorsToPages.map((p) => p.page),
-        tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-        maintenances: data.maintenancesToMonitors,
-        incidents: data.incidents,
-      };
+      return selectMonitorSchema
+        .extend({
+          notifications: z.array(selectNotificationSchema).default([]),
+          pages: z.array(selectPageSchema).default([]),
+          tags: z.array(selectMonitorTagSchema).default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
+          incidents: z.array(selectIncidentSchema).default([]),
+        })
+        .parse({
+          ...data,
+          notifications: data.monitorsToNotifications.map(
+            (m) => m.notification
+          ),
+          pages: data.monitorsToPages.map((p) => p.page),
+          tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+          maintenances: data.maintenancesToMonitors,
+          incidents: data.incidents,
+        });
     }),
 
   updateRetry: protectedProcedure
@@ -931,6 +945,25 @@ export const monitorRouter = createTRPCRouter({
       await ctx.db
         .update(monitor)
         .set({ public: input.public })
+        .where(eq(monitor.id, input.id))
+        .run();
+    }),
+
+  updateSchedulingRegions: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        regions: z.array(z.string()),
+        periodicity: z.enum(monitorPeriodicity),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      await ctx.db
+        .update(monitor)
+        .set({
+          regions: input.regions.join(","),
+          periodicity: input.periodicity,
+        })
         .where(eq(monitor.id, input.id))
         .run();
     }),

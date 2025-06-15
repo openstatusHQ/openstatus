@@ -36,6 +36,11 @@ export function FormMonitorUpdate() {
       onSuccess: () => refetch(),
     })
   );
+  const updateSchedulingRegionsMutation = useMutation(
+    trpc.monitor.updateSchedulingRegions.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
 
   if (!monitor) return null;
 
@@ -44,7 +49,19 @@ export function FormMonitorUpdate() {
       <FormGeneral />
       <FormResponseTime />
       <FormTags />
-      <FormSchedulingRegions />
+      <FormSchedulingRegions
+        defaultValues={{
+          regions: monitor.regions,
+          periodicity: monitor.periodicity,
+        }}
+        onSubmit={async (values) => {
+          await updateSchedulingRegionsMutation.mutateAsync({
+            id: parseInt(id),
+            regions: values.regions,
+            periodicity: values.periodicity,
+          });
+        }}
+      />
       <FormStatusPages />
       <FormNotifiers />
       <FormRetry
