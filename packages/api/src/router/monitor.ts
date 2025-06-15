@@ -8,8 +8,18 @@ import {
   TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
-import { and, eq, inArray, isNull, sql } from "@openstatus/db";
 import {
+  and,
+  asc,
+  desc,
+  eq,
+  inArray,
+  isNull,
+  type SQL,
+  sql,
+} from "@openstatus/db";
+import {
+  incidentTable,
   insertMonitorSchema,
   maintenancesToMonitors,
   monitor,
@@ -20,14 +30,18 @@ import {
   notification,
   notificationsToMonitors,
   page,
+  selectIncidentSchema,
+  selectMaintenanceSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
+  selectPageSchema,
   selectPublicMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -43,7 +57,7 @@ export const monitorRouter = createTRPCRouter({
         await opts.ctx.db.query.monitor.findMany({
           where: and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
+            isNull(monitor.deletedAt)
           ),
         })
       ).length;
@@ -126,7 +140,7 @@ export const monitorRouter = createTRPCRouter({
         const allNotifications = await opts.ctx.db.query.notification.findMany({
           where: and(
             eq(notification.workspaceId, opts.ctx.workspace.id),
-            inArray(notification.id, notifications),
+            inArray(notification.id, notifications)
           ),
         });
 
@@ -142,7 +156,7 @@ export const monitorRouter = createTRPCRouter({
         const allTags = await opts.ctx.db.query.monitorTag.findMany({
           where: and(
             eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-            inArray(monitorTag.id, tags),
+            inArray(monitorTag.id, tags)
           ),
         });
 
@@ -158,7 +172,7 @@ export const monitorRouter = createTRPCRouter({
         const allPages = await opts.ctx.db.query.page.findMany({
           where: and(
             eq(page.workspaceId, opts.ctx.workspace.id),
-            inArray(page.id, pages),
+            inArray(page.id, pages)
           ),
         });
 
@@ -180,7 +194,7 @@ export const monitorRouter = createTRPCRouter({
         where: and(
           eq(monitor.id, opts.input.id),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -211,7 +225,7 @@ export const monitorRouter = createTRPCRouter({
           maintenance: _monitor?.maintenancesToMonitors.some(
             (item) =>
               item.maintenance.from.getTime() <= Date.now() &&
-              item.maintenance.to.getTime() >= Date.now(),
+              item.maintenance.to.getTime() >= Date.now()
           ),
         });
 
@@ -236,8 +250,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             isNull(monitor.deletedAt),
-            eq(monitor.public, true),
-          ),
+            eq(monitor.public, true)
+          )
         )
         .get();
 
@@ -250,7 +264,7 @@ export const monitorRouter = createTRPCRouter({
         });
 
         const hasPageRelation = _page?.monitorsToPages.find(
-          ({ monitorId }) => _monitor.id === monitorId,
+          ({ monitorId }) => _monitor.id === monitorId
         );
 
         if (!hasPageRelation) return undefined;
@@ -333,8 +347,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .returning()
         .get();
@@ -355,7 +369,7 @@ export const monitorRouter = createTRPCRouter({
         (x) =>
           !currentMonitorNotifications
             .map(({ notificationId }) => notificationId)
-            ?.includes(x),
+            ?.includes(x)
       );
 
       if (addedNotifications.length > 0) {
@@ -379,9 +393,9 @@ export const monitorRouter = createTRPCRouter({
               eq(notificationsToMonitors.monitorId, currentMonitor.id),
               inArray(
                 notificationsToMonitors.notificationId,
-                removedNotifications,
-              ),
-            ),
+                removedNotifications
+              )
+            )
           )
           .run();
       }
@@ -396,7 +410,7 @@ export const monitorRouter = createTRPCRouter({
         (x) =>
           !currentMonitorTags
             .map(({ monitorTagId }) => monitorTagId)
-            ?.includes(x),
+            ?.includes(x)
       );
 
       if (addedTags.length > 0) {
@@ -418,8 +432,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               eq(monitorTagsToMonitors.monitorId, currentMonitor.id),
-              inArray(monitorTagsToMonitors.monitorTagId, removedTags),
-            ),
+              inArray(monitorTagsToMonitors.monitorTagId, removedTags)
+            )
           )
           .run();
       }
@@ -431,7 +445,7 @@ export const monitorRouter = createTRPCRouter({
         .all();
 
       const addedPages = pages.filter(
-        (x) => !currentMonitorPages.map(({ pageId }) => pageId)?.includes(x),
+        (x) => !currentMonitorPages.map(({ pageId }) => pageId)?.includes(x)
       );
 
       if (addedPages.length > 0) {
@@ -453,8 +467,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               eq(monitorsToPages.monitorId, currentMonitor.id),
-              inArray(monitorsToPages.pageId, removedPages),
-            ),
+              inArray(monitorsToPages.pageId, removedPages)
+            )
           )
           .run();
       }
@@ -465,7 +479,7 @@ export const monitorRouter = createTRPCRouter({
       insertMonitorSchema
         .pick({ public: true, active: true })
         .partial() // batched updates
-        .extend({ ids: z.number().array() }), // array of monitor ids to update
+        .extend({ ids: z.number().array() }) // array of monitor ids to update
     )
     .mutation(async (opts) => {
       const _monitors = await opts.ctx.db
@@ -475,8 +489,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             inArray(monitor.id, opts.input.ids),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         );
     }),
 
@@ -486,20 +500,20 @@ export const monitorRouter = createTRPCRouter({
         ids: z.number().array(),
         tagId: z.number(),
         action: z.enum(["add", "remove"]),
-      }),
+      })
     )
     .mutation(async (opts) => {
       const _monitorTag = await opts.ctx.db.query.monitorTag.findFirst({
         where: and(
           eq(monitorTag.workspaceId, opts.ctx.workspace.id),
-          eq(monitorTag.id, opts.input.tagId),
+          eq(monitorTag.id, opts.input.tagId)
         ),
       });
 
       const _monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          inArray(monitor.id, opts.input.ids),
+          inArray(monitor.id, opts.input.ids)
         ),
       });
 
@@ -517,7 +531,7 @@ export const monitorRouter = createTRPCRouter({
             opts.input.ids.map((id) => ({
               monitorId: id,
               monitorTagId: opts.input.tagId,
-            })),
+            }))
           )
           .onConflictDoNothing()
           .run();
@@ -529,8 +543,8 @@ export const monitorRouter = createTRPCRouter({
           .where(
             and(
               inArray(monitorTagsToMonitors.monitorId, opts.input.ids),
-              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId),
-            ),
+              eq(monitorTagsToMonitors.monitorTagId, opts.input.tagId)
+            )
           )
           .run();
       }
@@ -546,8 +560,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(monitor.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .get();
       if (!monitorToDelete) return;
@@ -586,8 +600,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             inArray(monitor.id, opts.input.ids),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(monitor.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .all();
 
@@ -627,7 +641,7 @@ export const monitorRouter = createTRPCRouter({
     const monitors = await opts.ctx.db.query.monitor.findMany({
       where: and(
         eq(monitor.workspaceId, opts.ctx.workspace.id),
-        isNull(monitor.deletedAt),
+        isNull(monitor.deletedAt)
       ),
       with: {
         monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -641,7 +655,7 @@ export const monitorRouter = createTRPCRouter({
           monitorTagsToMonitors: z
             .array(z.object({ monitorTag: selectMonitorTagSchema }))
             .default([]),
-        }),
+        })
       )
       .parse(monitors);
   }),
@@ -652,7 +666,7 @@ export const monitorRouter = createTRPCRouter({
       const _page = await opts.ctx.db.query.page.findFirst({
         where: and(
           eq(page.id, opts.input.id),
-          eq(page.workspaceId, opts.ctx.workspace.id),
+          eq(page.workspaceId, opts.ctx.workspace.id)
         ),
       });
 
@@ -661,7 +675,7 @@ export const monitorRouter = createTRPCRouter({
       const monitors = await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
         with: {
           monitorTagsToMonitors: { with: { monitorTag: true } },
@@ -677,14 +691,14 @@ export const monitorRouter = createTRPCRouter({
             monitorTagsToMonitors: z
               .array(z.object({ monitorTag: selectMonitorTagSchema }))
               .default([]),
-          }),
+          })
         )
         .parse(
           monitors.filter((monitor) =>
             monitor.monitorsToPages
               .map(({ pageId }) => pageId)
-              .includes(_page.id),
-          ),
+              .includes(_page.id)
+          )
         );
     }),
 
@@ -698,8 +712,8 @@ export const monitorRouter = createTRPCRouter({
           and(
             eq(monitor.id, opts.input.id),
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         )
         .get();
 
@@ -718,8 +732,8 @@ export const monitorRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.id, opts.input.id),
-            eq(monitor.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(monitor.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -747,8 +761,8 @@ export const monitorRouter = createTRPCRouter({
           notification,
           and(
             eq(notificationsToMonitors.notificationId, notification.id),
-            eq(notification.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(notification.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .where(eq(notificationsToMonitors.monitorId, opts.input.id))
         .all();
@@ -761,7 +775,7 @@ export const monitorRouter = createTRPCRouter({
       await opts.ctx.db.query.monitor.findMany({
         where: and(
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
       })
     ).length;
@@ -775,7 +789,7 @@ export const monitorRouter = createTRPCRouter({
         where: and(
           eq(monitor.id, opts.input.id),
           eq(monitor.workspaceId, opts.ctx.workspace.id),
-          isNull(monitor.deletedAt),
+          isNull(monitor.deletedAt)
         ),
         with: {
           monitorTagsToMonitors: true,
@@ -785,11 +799,11 @@ export const monitorRouter = createTRPCRouter({
       });
 
       const parsedMonitorNotification = _monitor?.monitorsToNotifications.map(
-        ({ notificationId }) => notificationId,
+        ({ notificationId }) => notificationId
       );
       const parsedPages = _monitor?.monitorsToPages.map((val) => val.pageId);
       const parsedTags = _monitor?.monitorTagsToMonitors.map(
-        ({ monitorTagId }) => monitorTagId,
+        ({ monitorTagId }) => monitorTagId
       );
 
       return {
@@ -797,5 +811,174 @@ export const monitorRouter = createTRPCRouter({
         pageIds: parsedPages,
         monitorTagIds: parsedTags,
       };
+    }),
+
+  // DASHBOARD
+
+  list: protectedProcedure
+    .input(
+      z
+        .object({
+          order: z.enum(["asc", "desc"]).optional(),
+        })
+        .optional()
+    )
+    .output(z.array(selectMonitorSchema))
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      const query = opts.ctx.db
+        .select()
+        .from(monitor)
+        .where(and(...whereConditions));
+
+      if (opts.input?.order === "asc") {
+        query.orderBy(asc(monitor.active), asc(monitor.createdAt));
+      } else {
+        query.orderBy(desc(monitor.active), desc(monitor.createdAt));
+      }
+
+      const result = await query.all();
+
+      return z.array(selectMonitorSchema).parse(result);
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.coerce.number() }))
+    .query(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      const data = await ctx.db.query.monitor.findFirst({
+        where: and(...whereConditions),
+        with: {
+          monitorsToNotifications: {
+            with: { notification: true },
+          },
+          monitorsToPages: {
+            with: { page: true },
+          },
+          monitorTagsToMonitors: {
+            with: { monitorTag: true },
+          },
+          maintenancesToMonitors: {
+            with: { maintenance: true },
+          },
+          incidents: true,
+        },
+      });
+
+      if (!data) return null;
+
+      return selectMonitorSchema
+        .extend({
+          notifications: z.array(selectNotificationSchema).default([]),
+          pages: z.array(selectPageSchema).default([]),
+          tags: z.array(selectMonitorTagSchema).default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
+          incidents: z.array(selectIncidentSchema).default([]),
+        })
+        .parse({
+          ...data,
+          notifications: data.monitorsToNotifications.map(
+            (m) => m.notification
+          ),
+          pages: data.monitorsToPages.map((p) => p.page),
+          tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+          maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
+          incidents: data.incidents,
+        });
+    }),
+
+  updateRetry: protectedProcedure
+    .input(z.object({ id: z.number(), retry: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({ retry: input.retry })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateOtel: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        otelEndpoint: z.string(),
+        otelHeaders: z
+          .array(z.object({ key: z.string(), value: z.string() }))
+          .optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({
+          otelEndpoint: input.otelEndpoint,
+          otelHeaders: input.otelHeaders
+            ? JSON.stringify(input.otelHeaders)
+            : undefined,
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updatePublic: protectedProcedure
+    .input(z.object({ id: z.number(), public: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({ public: input.public })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updateSchedulingRegions: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        regions: z.array(z.string()),
+        periodicity: z.enum(monitorPeriodicity),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({
+          regions: input.regions.join(","),
+          periodicity: input.periodicity,
+        })
+        .where(and(...whereConditions))
+        .run();
     }),
 });

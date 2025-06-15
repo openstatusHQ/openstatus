@@ -4,9 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import type * as z from "zod";
+import * as z from "zod";
 
-import { insertInvitationSchema } from "@openstatus/db/src/schema";
 import {
   Button,
   Dialog,
@@ -29,7 +28,10 @@ import { LoadingAnimation } from "@/components/loading-animation";
 import { toastAction } from "@/lib/toast";
 import { api } from "@/trpc/client";
 
-const schema = insertInvitationSchema.pick({ email: true });
+const schema = z.object({
+  email: z.string().email(),
+});
+
 type Schema = z.infer<typeof schema>;
 
 export function InviteButton({
