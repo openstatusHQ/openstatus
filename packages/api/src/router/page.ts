@@ -217,16 +217,17 @@ export const pageRouter = createTRPCRouter({
     .meta({ track: Events.DeletePage })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.id, opts.input.id),
+        eq(page.workspaceId, opts.ctx.workspace.id),
+      ];
+
       await opts.ctx.db
         .delete(page)
-        .where(
-          and(
-            eq(page.id, opts.input.id),
-            eq(page.workspaceId, opts.ctx.workspace.id)
-          )
-        )
+        .where(and(...whereConditions))
         .run();
     }),
+
   getPagesByWorkspace: protectedProcedure.query(async (opts) => {
     const allPages = await opts.ctx.db.query.page.findMany({
       where: and(eq(page.workspaceId, opts.ctx.workspace.id)),

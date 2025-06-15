@@ -121,13 +121,7 @@ export function QuickActions({
               {/* NOTE: add a separator only if actions exist */}
               {actions?.length ? <DropdownMenuSeparator /> : null}
               <AlertDialogTrigger asChild>
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteAction.submitAction?.();
-                  }}
-                >
+                <DropdownMenuItem variant="destructive">
                   <Trash2 className="text-muted-foreground" />
                   Delete
                 </DropdownMenuItem>

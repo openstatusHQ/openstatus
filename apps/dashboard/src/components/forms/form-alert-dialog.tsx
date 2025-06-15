@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isTRPCClientError } from "@trpc/client";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 interface FormAlertDialogProps {
   title: string;
   confirmationValue: string;
-  submitAction?: () => Promise<void>;
+  submitAction: () => Promise<void>;
   children?: React.ReactNode;
 }
 
@@ -36,12 +37,16 @@ export function FormAlertDialog({
   const handleDelete = async () => {
     try {
       startTransition(async () => {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        await submitAction?.();
+        const promise = submitAction();
         toast.promise(promise, {
           loading: "Deleting...",
           success: "Deleted",
-          error: "Failed to delete",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to delete";
+          },
         });
         await promise;
         setOpen(false);

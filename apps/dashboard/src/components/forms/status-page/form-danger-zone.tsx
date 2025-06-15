@@ -9,7 +9,11 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 
-export function FormDangerZone() {
+export function FormDangerZone({
+  onSubmit,
+}: {
+  onSubmit: () => Promise<void>;
+}) {
   return (
     <FormCard variant="destructive">
       <FormCardHeader>
@@ -20,6 +24,7 @@ export function FormDangerZone() {
         <FormAlertDialog
           title="OpenStatus API"
           confirmationValue="delete status page"
+          submitAction={onSubmit}
         />
       </FormCardFooter>
     </FormCard>

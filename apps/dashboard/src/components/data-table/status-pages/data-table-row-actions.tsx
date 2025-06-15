@@ -2,19 +2,27 @@
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/status-pages.client";
+import { useTRPC } from "@/lib/trpc/client";
+import { RouterOutputs } from "@openstatus/api";
+import { useMutation } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-interface DataTableRowActionsProps<TData> {
-  row?: Row<TData>;
+type StatusPage = RouterOutputs["page"]["get"];
+
+interface DataTableRowActionsProps {
+  row: Row<StatusPage>;
 }
 
-export function DataTableRowActions<TData>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>,
-) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const router = useRouter();
+  const trpc = useTRPC();
+  const deleteStatusPageMutation = useMutation(
+    trpc.page.delete.mutationOptions({
+      onSuccess: () => router.refresh(),
+    })
+  );
   const actions = getActions({
     edit: () => router.push("/dashboard/status-pages/edit"),
     "copy-id": () => {
@@ -28,7 +36,12 @@ export function DataTableRowActions<TData>(
       actions={actions}
       deleteAction={{
         title: "Status Page",
-        confirmationValue: "status page",
+        confirmationValue: "delete status page",
+        submitAction: async () => {
+          await deleteStatusPageMutation.mutateAsync({
+            id: row.original.id,
+          });
+        },
       }}
     />
   );

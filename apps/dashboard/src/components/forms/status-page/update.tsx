@@ -4,12 +4,13 @@ import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormMonitors } from "./form-monitors";
 import { FormPasswordProtection } from "./form-password-protection";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const trpc = useTRPC();
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: parseInt(id) })
@@ -30,6 +31,12 @@ export function FormStatusPageUpdate() {
   const updateMonitorsMutation = useMutation(
     trpc.page.updateMonitors.mutationOptions({
       onSuccess: () => refetch(),
+    })
+  );
+
+  const deleteStatusPageMutation = useMutation(
+    trpc.page.delete.mutationOptions({
+      onSuccess: () => router.push("/status-pages"),
     })
   );
 
@@ -85,7 +92,13 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormDangerZone />
+      <FormDangerZone
+        onSubmit={async () => {
+          await deleteStatusPageMutation.mutateAsync({
+            id: parseInt(id),
+          });
+        }}
+      />
     </FormCardGroup>
   );
 }
