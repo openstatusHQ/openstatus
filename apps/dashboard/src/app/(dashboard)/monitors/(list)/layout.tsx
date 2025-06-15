@@ -18,7 +18,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </AppHeaderContent>
         <AppHeaderActions>
           <Button size="sm" asChild>
-            <Link href="/dashboard/monitors/create">Create Monitor</Link>
+            <Link href="/monitors/create">Create Monitor</Link>
           </Button>
         </AppHeaderActions>
       </AppHeader>

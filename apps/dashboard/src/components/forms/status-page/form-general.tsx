@@ -28,11 +28,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
   slug: z.string().min(3, "Slug is required"),
-  favicon: z.string().optional(),
+  icon: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -44,14 +45,14 @@ export function FormGeneral({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       title: "",
       slug: "",
-      favicon: undefined,
+      icon: "",
       description: "",
     },
   });
@@ -62,12 +63,16 @@ export function FormGeneral({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -126,10 +131,10 @@ export function FormGeneral({
             />
             <FormField
               control={form.control}
-              name="favicon"
+              name="icon"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Favicon</FormLabel>
+                  <FormLabel>Icon</FormLabel>
                   <FormControl>
                     <div className="flex flex-row items-center space-x-2">
                       <div className="size-[36px] rounded-md border bg-muted" />
@@ -138,8 +143,8 @@ export function FormGeneral({
                   </FormControl>
                   <FormMessage />
                   <FormDescription>
-                    Choose a unique subdomain for your status page (minimum 3
-                    characters).
+                    Select an icon for your status page. Ideally sized
+                    512x512px.
                   </FormDescription>
                 </FormItem>
               )}

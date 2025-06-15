@@ -19,9 +19,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </AppHeaderContent>
         <AppHeaderActions>
           <Button size="sm" asChild>
-            <Link href="/dashboard/status-pages/create">
-              Create Status Page
-            </Link>
+            <Link href="/status-pages/create">Create Status Page</Link>
           </Button>
         </AppHeaderActions>
       </AppHeader>

@@ -942,10 +942,16 @@ export const monitorRouter = createTRPCRouter({
   updatePublic: protectedProcedure
     .input(z.object({ id: z.number(), public: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
       await ctx.db
         .update(monitor)
         .set({ public: input.public })
-        .where(eq(monitor.id, input.id))
+        .where(and(...whereConditions))
         .run();
     }),
 
@@ -958,13 +964,19 @@ export const monitorRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
       await ctx.db
         .update(monitor)
         .set({
           regions: input.regions.join(","),
           periodicity: input.periodicity,
         })
-        .where(eq(monitor.id, input.id))
+        .where(and(...whereConditions))
         .run();
     }),
 });

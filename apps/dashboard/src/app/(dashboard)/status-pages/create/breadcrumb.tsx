@@ -9,7 +9,7 @@ export function Breadcrumb() {
         {
           type: "link",
           label: "Status Pages",
-          href: "/dashboard/status-pages",
+          href: "/status-pages",
         },
         { type: "page", label: "Create Status Page" },
       ]}

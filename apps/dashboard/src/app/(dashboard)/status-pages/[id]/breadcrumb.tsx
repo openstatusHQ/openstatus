@@ -1,20 +1,29 @@
 "use client";
 
 import { NavBreadcrumb } from "@/components/nav/nav-breadcrumb";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 import { Hammer, Megaphone, Pencil, Users } from "lucide-react";
 
-// TODO: make it dynamic
-
 export function Breadcrumb() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: statusPage } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
+
+  if (!statusPage) return null;
+
   return (
     <NavBreadcrumb
       items={[
         {
           type: "link",
           label: "Status Pages",
-          href: "/dashboard/status-pages",
+          href: "/status-pages",
         },
-        { type: "page", label: "OpenStatus Status" },
+        { type: "page", label: statusPage.title },
         {
           type: "select",
           items: [

@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/components/common/link";
 import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
@@ -8,17 +10,24 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { monitors } from "@/data/monitors";
-import { statusPages } from "@/data/status-pages";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
+import { useParams } from "next/navigation";
 
 // NOTE:
 const BADGE_URL =
   "https://openstatus.dev/status-page/hello-world/badge?size=sm&theme=light";
 
-const statusPage = statusPages[0];
-
 export function Sidebar() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: statusPage } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
+
+  if (!statusPage) return null;
+
   return (
     <SidebarRight
       header="Status Page"
@@ -30,13 +39,15 @@ export function Sidebar() {
               label: "Slug",
               value: <Link href="#">{statusPage.slug}</Link>,
             },
-            { label: "Domain", value: statusPage.domain },
+            { label: "Domain", value: statusPage.customDomain || "-" },
             {
               label: "Favicon",
-              value: (
+              value: statusPage.icon ? (
                 <div className="size-4 overflow-hidden rounded border bg-muted">
-                  <img src={statusPage.favicon} alt="favicon" />
+                  <img src={statusPage.icon} alt="favicon" />
                 </div>
+              ) : (
+                "-"
               ),
             },
             {
@@ -59,57 +70,39 @@ export function Sidebar() {
           items: [
             {
               label: "Protected",
-              value: <TableCellBoolean value={statusPage.protected} />,
+              value: <TableCellBoolean value={statusPage.passwordProtected} />,
             },
             {
               label: "Show values",
-              value: <TableCellBoolean value={statusPage.showValues} />,
+              value: <TableCellBoolean value={statusPage.showMonitorValues} />,
             },
           ],
         },
         {
           label: "Monitors",
-          items: monitors
-            // NOTE: only show the first 2 monitors
-            .slice(0, 2)
-            .flatMap((monitor) => {
-              const arr = [];
-              const url = new URL(monitor.url);
-              arr.push({
-                label: "Name",
-                value: (
-                  <TableCellLink
-                    href="/dashboard/monitors/overview"
-                    value={monitor.name}
-                  />
-                ),
-              });
-              arr.push({
-                label: "URL",
-                value: `${url.hostname}${url.pathname}`,
-                isNested: true,
-              });
-              return arr;
-            }),
-          // items: [
-          //   {
-          //     label: "Name",
-          //     value: (
-          //       <TableCellLink
-          //         href="/dashboard/monitors/overview"
-          //         value={monitor.name}
-          //       />
-          //     ),
-          //   },
-          //   {
-          //     label: "URL",
-          //     value: monitor.url,
-          //     isNested: true,
-          //   },
-          // ],
+          items: statusPage.monitors.flatMap((monitor) => {
+            const arr = [];
+            const url = new URL(monitor.url);
+            arr.push({
+              label: "Name",
+              value: (
+                <TableCellLink
+                  href={`/monitors/${monitor.id}/overview`}
+                  value={monitor.name}
+                />
+              ),
+            });
+            arr.push({
+              label: "URL",
+              value: `${url.hostname}${url.pathname}`,
+              isNested: true,
+            });
+            return arr;
+          }),
         },
       ]}
       footerButton={{
+        // TODO: onClick
         children: (
           <>
             <ExternalLink />

@@ -20,6 +20,8 @@ import {
   monitor,
   monitorsToPages,
   page,
+  selectMonitorSchema,
+  selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
   selectPublicPageSchemaWithRelation,
   statusReport,
@@ -426,5 +428,139 @@ export const pageRouter = createTRPCRouter({
       const result = await query.all();
 
       return result;
+    }),
+
+  get: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const data = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+        with: {
+          monitorsToPages: { with: { monitor: true } },
+        },
+      });
+
+      return selectPageSchema
+        .extend({
+          monitors: z.array(selectMonitorSchema).default([]),
+        })
+        .parse({
+          ...data,
+          monitors: data?.monitorsToPages.map((m) => m.monitor),
+        });
+    }),
+
+  // TODO: rename to create
+  new: protectedProcedure
+    .input(
+      z.object({
+        title: z.string(),
+        slug: z.string(),
+        icon: z.string().nullish(),
+        description: z.string().nullish(),
+      })
+    )
+    .mutation(async (opts) => {
+      const pageNumbers = (
+        await opts.ctx.db.query.page.findMany({
+          where: eq(page.workspaceId, opts.ctx.workspace.id),
+        })
+      ).length;
+
+      const limit = opts.ctx.workspace.limits;
+
+      // the user has reached the status page number limits
+      if (pageNumbers >= limit["status-pages"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your status-page limits.",
+        });
+      }
+
+      const newPage = await opts.ctx.db
+        .insert(page)
+        .values({
+          workspaceId: opts.ctx.workspace.id,
+          title: opts.input.title,
+          slug: opts.input.slug,
+          description: opts.input.description ?? "",
+          icon: opts.input.icon ?? "",
+          customDomain: "", // TODO: make nullable
+        })
+        .returning()
+        .get();
+
+      return newPage;
+    }),
+
+  updateGeneral: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        slug: z.string(),
+        description: z.string().nullish(),
+        icon: z.string().nullish(),
+      })
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          title: opts.input.title,
+          slug: opts.input.slug,
+          description: opts.input.description ?? "",
+          icon: opts.input.icon ?? "",
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  updatePasswordProtection: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        passwordProtected: z.boolean(),
+        password: z.string().nullish(),
+      })
+    )
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(page.workspaceId, opts.ctx.workspace.id),
+        eq(page.id, opts.input.id),
+      ];
+
+      const limit = opts.ctx.workspace.limits;
+
+      // the user is not eligible for password protection
+      if (
+        limit["password-protection"] === false &&
+        opts.input.passwordProtected === true
+      ) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message:
+            "Password protection is not available for your current plan.",
+        });
+      }
+
+      await opts.ctx.db
+        .update(page)
+        .set({
+          passwordProtected: opts.input.passwordProtected,
+          password: opts.input.password,
+        })
+        .where(and(...whereConditions))
+        .run();
     }),
 });
