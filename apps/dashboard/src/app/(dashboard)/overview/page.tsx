@@ -25,6 +25,7 @@ import { List, Search } from "lucide-react";
 import Link from "next/link";
 import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 import { formatDistanceToNowStrict } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // FIXME: the page is server side
 // whenever I change the maintenances, the page is not updated
@@ -102,6 +103,7 @@ export default async function Page() {
     {
       title: "Recent Incident",
       value: incidentDistance,
+      disabled: !lastIncident?.monitorId,
       href: `/monitors/${lastIncident?.monitorId}/incidents`,
       variant: "default" as const,
       icon: Search,
@@ -109,6 +111,7 @@ export default async function Page() {
     {
       title: "Last Report",
       value: statusReportDistance,
+      disabled: !lastStatusReport?.pageId,
       href: `/status-pages/${lastStatusReport?.pageId}/status-reports`,
       variant: "default" as const,
       icon: Search,
@@ -116,6 +119,7 @@ export default async function Page() {
     {
       title: "Last Maintenance",
       value: maintenanceDistance,
+      disabled: !lastMaintenance?.pageId,
       href: `/status-pages/${lastMaintenance?.pageId}/maintenances`,
       variant: "default" as const,
       icon: Search,
@@ -134,7 +138,12 @@ export default async function Page() {
           </SectionHeader>
           <MetricCardGroup>
             {metrics.map((metric) => (
-              <Link href={metric.href} key={metric.title}>
+              <Link
+                href={metric.href}
+                key={metric.title}
+                className={cn(metric.disabled && "pointer-events-none")}
+                aria-disabled={metric.disabled}
+              >
                 <MetricCard variant={metric.variant}>
                   <MetricCardHeader className="flex items-center justify-between gap-2">
                     <MetricCardTitle className="truncate">
