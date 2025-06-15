@@ -52,8 +52,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { Check, ChevronsUpDown, GripVertical } from "lucide-react";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -78,6 +79,21 @@ const schema = z.object({
   ),
 });
 
+const getSortedMonitors = (
+  monitors: Monitor[],
+  monitorData: { id: number; order: number }[]
+) => {
+  const orderMap = new Map(monitorData?.map((m) => [m.id, m.order]) ?? []);
+
+  return monitors
+    .filter((monitor) => orderMap.has(monitor.id))
+    .sort((a, b) => {
+      const aOrder = orderMap.get(a.id) ?? 0;
+      const bOrder = orderMap.get(b.id) ?? 0;
+      return aOrder - bOrder;
+    });
+};
+
 type FormValues = z.infer<typeof schema>;
 
 export function FormMonitors({
@@ -95,19 +111,17 @@ export function FormMonitors({
     defaultValues: defaultValues ?? {},
   });
   const [isPending, startTransition] = useTransition();
-  const [data, setData] = useState<Monitor[]>(() => {
-    const orderMap = new Map(
-      defaultValues?.monitors.map((m) => [m.id, m.order]) ?? []
-    );
+  const watchMonitors = form.watch("monitors");
+  const [data, setData] = useState<Monitor[]>(
+    getSortedMonitors(monitors, defaultValues?.monitors ?? [])
+  );
 
-    return monitors
-      .filter((monitor) => orderMap.has(monitor.id))
-      .sort((a, b) => {
-        const aOrder = orderMap.get(a.id) ?? 0;
-        const bOrder = orderMap.get(b.id) ?? 0;
-        return aOrder - bOrder;
-      });
-  });
+  useEffect(() => {
+    if (watchMonitors.length !== data.length) {
+      setData(getSortedMonitors(monitors, watchMonitors));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchMonitors]);
 
   const onValueChange = useCallback(
     (newMonitors: Monitor[]) => {
@@ -145,8 +159,13 @@ export function FormMonitors({
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -217,7 +236,11 @@ export function FormMonitors({
                                   } else {
                                     form.setValue("monitors", [
                                       ...field.value,
-                                      { id: monitor.id, order: 0, type: "all" },
+                                      {
+                                        id: monitor.id,
+                                        order: watchMonitors.length,
+                                        type: "none",
+                                      },
                                     ]);
                                   }
                                 }}
