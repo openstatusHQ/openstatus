@@ -18,22 +18,16 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Link } from "../common/link";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
-export function OrganizationSwitcher({
-  orgs,
-}: {
-  orgs: {
-    name: string;
-    slug: string;
-    plan: string;
-  }[];
-}) {
+export function WorkspaceSwitcher() {
   const { isMobile, setOpenMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(orgs[0]);
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: workspaces } = useQuery(trpc.workspace.list.queryOptions());
 
-  if (!activeTeam) {
-    return null;
-  }
+  if (!workspace) return null;
 
   return (
     <SidebarMenu>
@@ -48,8 +42,12 @@ export function OrganizationSwitcher({
                 <Building className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{activeTeam.name}</span>
-                <span className="truncate text-xs">{activeTeam.plan}</span>
+                <span className="truncate font-medium">
+                  {workspace.name || "Untitled Workspace"}
+                </span>
+                <span className="truncate font-mono text-xs">
+                  {workspace.slug}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
@@ -61,20 +59,22 @@ export function OrganizationSwitcher({
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-muted-foreground text-xs">
-              Organizations
+              Workspaces
             </DropdownMenuLabel>
-            {orgs.map((org) => (
+            {workspaces?.map((workspace) => (
               <DropdownMenuItem
-                key={org.name}
+                key={workspace.id}
                 onClick={() => {
-                  setActiveTeam(org);
+                  // TODO: switch workspace
                   setOpenMobile(false);
                 }}
                 className="gap-2 p-2"
               >
-                <span>{org.name}</span>
-                <span className="font-mono text-muted-foreground text-xs">
-                  {org.slug}
+                <span className="truncate">
+                  {workspace.name || "Untitled Workspace"}
+                </span>
+                <span className="font-mono text-muted-foreground text-xs truncate">
+                  {workspace.slug}
                 </span>
               </DropdownMenuItem>
             ))}

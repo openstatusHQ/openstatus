@@ -8,7 +8,7 @@ import { NavMonitors } from "@/components/nav/nav-monitors";
 import { NavOverview } from "@/components/nav/nav-overview";
 import { NavStatusPages } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
-import { OrganizationSwitcher } from "@/components/nav/organization-switcher";
+import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -36,18 +36,6 @@ const data = {
     email: "max@openstatus.dev",
     avatar: "/avatars/shadcn.jpg",
   },
-  orgs: [
-    {
-      name: "OpenStatus",
-      slug: "easy-peasy",
-      plan: "Hobby",
-    },
-    {
-      name: "Acme Corp.",
-      slug: "acme-corp",
-      plan: "Starter",
-    },
-  ],
   overview: [
     {
       name: "Overview",
@@ -81,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="flex h-14 justify-center border-b py-1">
-        <OrganizationSwitcher orgs={data.orgs} />
+        <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavOverview items={data.overview} />

@@ -252,8 +252,6 @@ export const workspaceRouter = createTRPCRouter({
       },
     });
 
-    console.log(result);
-
     return selectWorkspaceSchema.parse({
       ...result,
       usage: {
@@ -264,5 +262,18 @@ export const workspaceRouter = createTRPCRouter({
         checks: 0,
       },
     });
+  }),
+
+  list: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, opts.ctx.user.id),
+      with: {
+        workspace: true,
+      },
+    });
+
+    return selectWorkspaceSchema
+      .array()
+      .parse(result.map(({ workspace }) => workspace));
   }),
 });
