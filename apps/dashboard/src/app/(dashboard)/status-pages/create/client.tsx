@@ -13,15 +13,19 @@ import {
 } from "@/components/content/section";
 import { FormGeneral } from "@/components/forms/status-page/form-general";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 export function Client() {
   const trpc = useTRPC();
   const router = useRouter();
+  const { refetch } = useQuery(trpc.page.list.queryOptions());
   const createStatusPageMutation = useMutation(
     trpc.page.new.mutationOptions({
-      onSuccess: (data) => router.push(`/status-pages/${data.id}/edit`),
+      onSuccess: (data) => {
+        refetch();
+        router.push(`/status-pages/${data.id}/edit`);
+      },
     })
   );
 

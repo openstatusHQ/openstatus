@@ -3,6 +3,7 @@ import { AppSidebar } from "@/components/nav/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { auth } from "@/lib/auth";
 import { SessionProvider } from "next-auth/react";
+import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 
 export default async function Layout({
   children,
@@ -14,11 +15,21 @@ export default async function Layout({
   return (
     <SessionProvider session={session}>
       <TRPCReactProvider>
-        <SidebarProvider>
-          <AppSidebar />
-          <SidebarInset>{children}</SidebarInset>
-        </SidebarProvider>
+        <HydrateSidebar>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>{children}</SidebarInset>
+          </SidebarProvider>
+        </HydrateSidebar>
       </TRPCReactProvider>
     </SessionProvider>
   );
+}
+
+async function HydrateSidebar({ children }: { children: React.ReactNode }) {
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(trpc.page.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
+
+  return <HydrateClient>{children}</HydrateClient>;
 }

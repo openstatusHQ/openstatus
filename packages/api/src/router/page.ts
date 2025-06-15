@@ -492,15 +492,11 @@ export const pageRouter = createTRPCRouter({
         });
       }
 
-      // had filter on some words we want to keep for us
-      if (subdomainSafeList.includes(opts.input.slug)) {
-        return false;
-      }
       const result = await opts.ctx.db.query.page.findMany({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
 
-      if (result?.length > 0) {
+      if (subdomainSafeList.includes(opts.input.slug) || result?.length > 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "This slug is already taken. Please choose another one.",
@@ -539,15 +535,11 @@ export const pageRouter = createTRPCRouter({
         eq(page.id, opts.input.id),
       ];
 
-      // had filter on some words we want to keep for us
-      if (subdomainSafeList.includes(opts.input.slug)) {
-        return false;
-      }
       const result = await opts.ctx.db.query.page.findMany({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
 
-      if (result?.length > 0) {
+      if (subdomainSafeList.includes(opts.input.slug) || result?.length > 0) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "This slug is already taken. Please choose another one.",

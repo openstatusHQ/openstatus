@@ -31,7 +31,8 @@ export function NavOverview({
         {items.map((item) => (
           <SidebarMenuItem key={item.name}>
             <SidebarMenuButton
-              isActive={pathname.includes(item.url)}
+              // FIXME: check with settings as exception (as it includes subpages)
+              isActive={pathname === item.url}
               asChild
               tooltip={item.name}
             >

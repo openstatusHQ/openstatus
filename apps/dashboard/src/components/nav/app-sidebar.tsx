@@ -24,8 +24,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { monitors } from "@/data/monitors";
-import { statusPages } from "@/data/status-pages";
 import { NavChecklist } from "./nav-checklist";
 import { NavHelp } from "./nav-help";
 
@@ -48,44 +46,6 @@ const data = {
       name: "Acme Corp.",
       slug: "acme-corp",
       plan: "Starter",
-    },
-  ],
-  monitors: [
-    {
-      name: "OpenStatus Marketing",
-      url: "/monitors/overview",
-      tags: ["Production"],
-    },
-    {
-      name: "OpenStatus API",
-      url: "/monitors/overview",
-      tags: ["Production"],
-    },
-    {
-      name: "OpenStatus Dashboard",
-      url: "/monitors/overview",
-      tags: ["Production"],
-    },
-    {
-      name: "Lightweight OS",
-      url: "/monitors/overview",
-      tags: ["Development"],
-    },
-    {
-      name: "Astro Status Page",
-      url: "/monitors/overview",
-      tags: ["Development"],
-    },
-    {
-      name: "Vercel Edge Ping",
-      url: "/monitors/overview",
-      tags: ["Staging"],
-    },
-  ],
-  statusPages: [
-    {
-      name: "OpenStatus Status",
-      url: "/status-pages/status-reports",
     },
   ],
   overview: [
@@ -125,9 +85,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavOverview items={data.overview} />
-        {/* NOTE: replacing data.monitors data.statusPages */}
-        <NavStatusPages statusPages={statusPages} />
-        <NavMonitors monitors={monitors} />
+        <NavStatusPages />
+        <NavMonitors />
         <div className="mt-auto px-2">
           <NavChecklist />
         </div>
