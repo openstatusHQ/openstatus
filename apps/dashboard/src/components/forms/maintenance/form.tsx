@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
+import {
   FormCardContent,
   FormCardSeparator,
 } from "@/components/forms/form-card";
@@ -27,9 +31,9 @@ import { TabsContent } from "@/components/ui/tabs";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import type React from "react";
@@ -52,10 +56,12 @@ export function FormMaintenance({
   defaultValues,
   onSubmit,
   className,
+  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  monitors: { id: number; name: string; url: string }[];
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -75,12 +81,16 @@ export function FormMaintenance({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -129,7 +139,7 @@ export function FormMaintenance({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
+                          !field.value && "text-muted-foreground"
                         )}
                       >
                         {field.value ? (
@@ -150,9 +160,6 @@ export function FormMaintenance({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
                       initialFocus
                     />
                     <div className="border-t p-3">
@@ -199,7 +206,7 @@ export function FormMaintenance({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
+                          !field.value && "text-muted-foreground"
                         )}
                       >
                         {field.value ? (
@@ -220,9 +227,6 @@ export function FormMaintenance({
                       mode="single"
                       selected={field.value}
                       onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
                       initialFocus
                     />
                     <div className="border-t p-3">
@@ -297,39 +301,45 @@ export function FormMaintenance({
                   Connected monitors will be automatically deactivated for the
                   period of time.
                 </FormDescription>
-                <div className="grid gap-3">
-                  <div className="flex items-center gap-2">
-                    <FormControl>
-                      <Checkbox
-                        id="all"
-                        checked={field.value?.length === monitors.length}
-                        onCheckedChange={(checked) => {
-                          field.onChange(
-                            checked ? monitors.map((m) => m.id) : [],
-                          );
-                        }}
-                      />
-                    </FormControl>
-                    <Label htmlFor="all">Select all</Label>
-                  </div>
-                  {monitors.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
+                {monitors.length ? (
+                  <div className="grid gap-3">
+                    <div className="flex items-center gap-2">
                       <FormControl>
                         <Checkbox
-                          id={String(item.id)}
-                          checked={field.value?.includes(item.id)}
+                          id="all"
+                          checked={field.value?.length === monitors.length}
                           onCheckedChange={(checked) => {
-                            const newValue = checked
-                              ? [...(field.value || []), item.id]
-                              : field.value?.filter((id) => id !== item.id);
-                            field.onChange(newValue);
+                            field.onChange(
+                              checked ? monitors.map((m) => m.id) : []
+                            );
                           }}
                         />
                       </FormControl>
-                      <Label htmlFor={String(item.id)}>{item.name}</Label>
+                      <Label htmlFor="all">Select all</Label>
                     </div>
-                  ))}
-                </div>
+                    {monitors.map((item) => (
+                      <div key={item.id} className="flex items-center gap-2">
+                        <FormControl>
+                          <Checkbox
+                            id={String(item.id)}
+                            checked={field.value?.includes(item.id)}
+                            onCheckedChange={(checked) => {
+                              const newValue = checked
+                                ? [...(field.value || []), item.id]
+                                : field.value?.filter((id) => id !== item.id);
+                              field.onChange(newValue);
+                            }}
+                          />
+                        </FormControl>
+                        <Label htmlFor={String(item.id)}>{item.name}</Label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyStateContainer>
+                    <EmptyStateTitle>No monitors found</EmptyStateTitle>
+                  </EmptyStateContainer>
+                )}
                 <FormMessage />
               </FormItem>
             )}

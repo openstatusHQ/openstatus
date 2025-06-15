@@ -867,7 +867,9 @@ export const monitorRouter = createTRPCRouter({
           monitorTagsToMonitors: {
             with: { monitorTag: true },
           },
-          maintenancesToMonitors: true,
+          maintenancesToMonitors: {
+            with: { maintenance: true },
+          },
           incidents: true,
         },
       });
@@ -889,7 +891,7 @@ export const monitorRouter = createTRPCRouter({
           ),
           pages: data.monitorsToPages.map((p) => p.page),
           tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
-          maintenances: data.maintenancesToMonitors,
+          maintenances: data.maintenancesToMonitors.map((m) => m.maintenance),
           incidents: data.incidents,
         });
     }),

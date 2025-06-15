@@ -2,7 +2,6 @@ import {
   SectionDescription,
   SectionGroup,
   SectionHeader,
-  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
 
@@ -14,8 +13,6 @@ import { Section } from "@/components/content/section";
 import { columns as incidentsColumns } from "@/components/data-table/incidents/columns";
 import { columns as statusReportsColumns } from "@/components/data-table/status-reports/columns";
 import { columns as maintenancesColumns } from "@/components/data-table/maintenances/columns";
-import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
-import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import {
   MetricCard,
   MetricCardGroup,
@@ -23,9 +20,8 @@ import {
   MetricCardTitle,
   MetricCardValue,
 } from "@/components/metric/metric-card";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { List, Plus, Search } from "lucide-react";
+import { List, Search } from "lucide-react";
 import Link from "next/link";
 import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
 import { formatDistanceToNow } from "date-fns";
@@ -164,23 +160,12 @@ export default async function Page() {
           )}
         </Section>
         <Section>
-          <SectionHeaderRow>
-            <SectionHeader>
-              <SectionTitle>Reports</SectionTitle>
-              <SectionDescription>
-                Reports over the last 30 days.
-              </SectionDescription>
-            </SectionHeader>
-            {/* Should be FormSheetStatusReport **NOT** -Update */}
-            <div>
-              <FormSheetStatusReport>
-                <Button data-section="action" size="sm" variant="ghost">
-                  <Plus />
-                  Create
-                </Button>
-              </FormSheetStatusReport>
-            </div>
-          </SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Reports</SectionTitle>
+            <SectionDescription>
+              Reports over the last 30 days.
+            </SectionDescription>
+          </SectionHeader>
           {statusReports.length > 0 ? (
             <DataTable columns={statusReportsColumns} data={statusReports} />
           ) : (
@@ -190,22 +175,12 @@ export default async function Page() {
           )}
         </Section>
         <Section>
-          <SectionHeaderRow>
-            <SectionHeader>
-              <SectionTitle>Maintenance</SectionTitle>
-              <SectionDescription>
-                Maintenance over the last 30 days.
-              </SectionDescription>
-            </SectionHeader>
-            <div>
-              <FormSheetMaintenance>
-                <Button data-section="action" size="sm" variant="ghost">
-                  <Plus />
-                  Create
-                </Button>
-              </FormSheetMaintenance>
-            </div>
-          </SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Maintenance</SectionTitle>
+            <SectionDescription>
+              Maintenance over the last 30 days.
+            </SectionDescription>
+          </SectionHeader>
           {maintenances.length > 0 ? (
             <DataTable columns={maintenancesColumns} data={maintenances} />
           ) : (

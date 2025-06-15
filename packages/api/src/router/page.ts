@@ -20,6 +20,7 @@ import {
   monitor,
   monitorsToPages,
   page,
+  selectMaintenanceSchema,
   selectMonitorSchema,
   selectPageSchema,
   selectPageSchemaWithMonitorsRelation,
@@ -442,16 +443,19 @@ export const pageRouter = createTRPCRouter({
         where: and(...whereConditions),
         with: {
           monitorsToPages: { with: { monitor: true } },
+          maintenancesToPages: true,
         },
       });
 
       return selectPageSchema
         .extend({
           monitors: z.array(selectMonitorSchema).default([]),
+          maintenances: z.array(selectMaintenanceSchema).default([]),
         })
         .parse({
           ...data,
           monitors: data?.monitorsToPages.map((m) => m.monitor),
+          maintenances: data?.maintenancesToPages,
         });
     }),
 

@@ -20,7 +20,7 @@ export default async function Layout({
   const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery(
-    trpc.monitor.get.queryOptions({ id: parseInt(id) })
+    trpc.page.get.queryOptions({ id: parseInt(id) })
   );
   return (
     <HydrateClient>

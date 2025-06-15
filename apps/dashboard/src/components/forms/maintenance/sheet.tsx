@@ -21,13 +21,21 @@ import { useState } from "react";
 export function FormSheetMaintenance({
   children,
   defaultValues,
-}: React.ComponentProps<typeof FormSheetTrigger> & {
+  onSubmit,
+  monitors,
+  ...props
+}: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
+  monitors: { id: number; name: string; url: string }[];
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+
   return (
     <FormSheet open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      <FormSheetTrigger {...props} asChild>
+        {children}
+      </FormSheetTrigger>
       <FormSheetContent>
         <FormSheetHeader>
           <FormSheetTitle>Maintenance</FormSheetTitle>
@@ -38,7 +46,11 @@ export function FormSheetMaintenance({
         <FormCardGroup className="overflow-y-auto">
           <FormCard className="overflow-auto border-none">
             <FormMaintenance
-              onSubmit={() => setOpen(false)}
+              monitors={monitors}
+              onSubmit={async (values) => {
+                await onSubmit(values);
+                setOpen(false);
+              }}
               defaultValues={defaultValues}
               id="maintenance-form"
               className="my-4"

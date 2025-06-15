@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Section,
   SectionDescription,
@@ -10,10 +12,25 @@ import { columns } from "@/components/data-table/maintenances/columns";
 import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { maintenances } from "@/data/maintenances";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useParams } from "next/navigation";
 
 export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: statusPage, refetch } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
+  const createStatusPageMutation = useMutation(
+    trpc.maintenance.new.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!statusPage) return null;
+
   return (
     <SectionGroup>
       <Section>
@@ -25,7 +42,19 @@ export default function Page() {
             </SectionDescription>
           </SectionHeader>
           <div>
-            <FormSheetMaintenance>
+            <FormSheetMaintenance
+              monitors={statusPage.monitors}
+              onSubmit={async (values) => {
+                await createStatusPageMutation.mutateAsync({
+                  pageId: parseInt(id),
+                  title: values.title,
+                  message: values.message,
+                  startDate: values.startDate,
+                  endDate: values.endDate,
+                  monitors: values.monitors,
+                });
+              }}
+            >
               <Button data-section="action" size="sm" variant="ghost">
                 <Plus />
                 Create Maintenance
@@ -33,7 +62,7 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={maintenances} />
+        <DataTable columns={columns} data={statusPage.maintenances} />
       </Section>
     </SectionGroup>
   );

@@ -5,7 +5,10 @@ import {
   insertMaintenanceSchema,
   maintenance,
   maintenancesToMonitors,
+  monitor,
+  monitorsToPages,
   selectMaintenanceSchema,
+  selectMonitorSchema,
 } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
@@ -112,7 +115,7 @@ export const maintenanceRouter = createTRPCRouter({
       .all();
     return _maintenances;
   }),
-  update: protectedProcedure
+  updateLegacy: protectedProcedure
     .meta({ track: Events.UpdateMaintenance })
     .input(insertMaintenanceSchema)
     .mutation(async (opts) => {
@@ -203,6 +206,7 @@ export const maintenanceRouter = createTRPCRouter({
               gte: z.date().optional(),
             })
             .optional(),
+          pageId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
         .optional()
@@ -217,6 +221,11 @@ export const maintenanceRouter = createTRPCRouter({
           gte(maintenance.createdAt, opts.input.createdAt.gte)
         );
       }
+
+      if (opts.input?.pageId) {
+        whereConditions.push(eq(maintenance.pageId, opts.input.pageId));
+      }
+
       const query = opts.ctx.db
         .select()
         .from(maintenance)
@@ -230,6 +239,137 @@ export const maintenanceRouter = createTRPCRouter({
 
       const result = await query.all();
 
-      return result;
+      return selectMaintenanceSchema.array().parse(result);
+    }),
+
+  new: protectedProcedure
+    .input(
+      z.object({
+        pageId: z.number(),
+        title: z.string(),
+        message: z.string(),
+        startDate: z.coerce.date(),
+        endDate: z.coerce.date(),
+        monitors: z.array(z.number()).optional(),
+      })
+    )
+    .mutation(async (opts) => {
+      // Check if the user has access to the monitors
+      if (opts.input.monitors?.length) {
+        const whereConditions: SQL[] = [
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          inArray(monitor.id, opts.input.monitors),
+        ];
+        const monitors = await opts.ctx.db
+          .select()
+          .from(monitor)
+          .where(and(...whereConditions))
+          .all();
+
+        if (monitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You do not have access to all the monitors",
+          });
+        }
+      }
+
+      await opts.ctx.db.transaction(async (tx) => {
+        const newMaintenance = await tx
+          .insert(maintenance)
+          .values({
+            pageId: opts.input.pageId,
+            workspaceId: opts.ctx.workspace.id,
+            title: opts.input.title,
+            message: opts.input.message,
+            from: opts.input.startDate,
+            to: opts.input.endDate,
+          })
+          .returning()
+          .get();
+
+        if (opts.input.monitors?.length) {
+          await tx.insert(maintenancesToMonitors).values(
+            opts.input.monitors.map((monitorId) => ({
+              maintenanceId: newMaintenance.id,
+              monitorId,
+            }))
+          );
+        }
+
+        return newMaintenance;
+      });
+    }),
+
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        title: z.string(),
+        message: z.string(),
+        startDate: z.coerce.date(),
+        endDate: z.coerce.date(),
+        monitors: z.array(z.number()).optional(),
+      })
+    )
+    .mutation(async (opts) => {
+      // Check if the user has access to the monitors
+      if (opts.input.monitors?.length) {
+        const whereConditions: SQL[] = [
+          eq(monitor.workspaceId, opts.ctx.workspace.id),
+          inArray(monitor.id, opts.input.monitors),
+        ];
+        const monitors = await opts.ctx.db
+          .select()
+          .from(monitor)
+          .where(and(...whereConditions))
+          .all();
+
+        if (monitors.length !== opts.input.monitors.length) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "You do not have access to all the monitors",
+          });
+        }
+      }
+
+      await opts.ctx.db.transaction(async (tx) => {
+        const whereConditions: SQL[] = [
+          eq(maintenance.id, opts.input.id),
+          eq(maintenance.workspaceId, opts.ctx.workspace.id),
+        ];
+
+        // Update the maintenance
+        const _maintenance = await tx
+          .update(maintenance)
+          .set({
+            title: opts.input.title,
+            message: opts.input.message,
+            from: opts.input.startDate,
+            to: opts.input.endDate,
+            workspaceId: opts.ctx.workspace.id,
+          })
+          .where(and(...whereConditions))
+          .returning()
+          .get();
+
+        // Delete all existing relations
+        await tx
+          .delete(maintenancesToMonitors)
+          .where(eq(maintenancesToMonitors.maintenanceId, _maintenance.id))
+          .run();
+
+        // Create new relations if monitors are provided
+        if (opts.input.monitors?.length) {
+          await tx.insert(maintenancesToMonitors).values(
+            opts.input.monitors.map((monitorId) => ({
+              maintenanceId: _maintenance.id,
+              monitorId,
+            }))
+          );
+        }
+
+        return _maintenance;
+      });
     }),
 });

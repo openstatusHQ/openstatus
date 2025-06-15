@@ -24,7 +24,7 @@ export const page = sqliteTable("page", {
   // Password protecting the status page - no specific restriction on password
   password: text("password", { length: 256 }),
   passwordProtected: integer("password_protected", { mode: "boolean" }).default(
-    false,
+    false
   ),
 
   /**
@@ -35,10 +35,10 @@ export const page = sqliteTable("page", {
   }).default(true),
 
   createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
   updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
+    sql`(strftime('%s', 'now'))`
   ),
 });
 

@@ -60,7 +60,7 @@ export function MaintenanceForm({
     startTransition(async () => {
       try {
         if (defaultValues) {
-          await api.maintenance.update.mutate(props);
+          await api.maintenance.updateLegacy.mutate(props);
         } else {
           await api.maintenance.create.mutate(props);
         }
