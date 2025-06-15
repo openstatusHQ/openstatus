@@ -57,13 +57,6 @@ export function NavStatusPages() {
     })
   );
   const router = useRouter();
-  const actions = getActions({
-    edit: () => router.push("/dashboard/status-pages/edit"),
-    "copy-id": () => {
-      navigator.clipboard.writeText("ID");
-      toast.success("Status Page ID copied to clipboard");
-    },
-  });
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -108,6 +101,14 @@ export function NavStatusPages() {
         ) : statusPages && statusPages.length > 0 ? (
           statusPages.map((item) => {
             const isActive = pathname.startsWith(`/status-pages/${item.id}`);
+            const actions = getActions({
+              edit: () => router.push(`/status-pages/${item.id}/edit`),
+              "copy-id": () => {
+                navigator.clipboard.writeText("ID");
+                toast.success("Status Page ID copied to clipboard");
+              },
+            });
+
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
