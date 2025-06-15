@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -5,6 +7,11 @@ import {
   BillingOverlayContainer,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import {
+  EmptyStateDescription,
+  EmptyStateContainer,
+  EmptyStateTitle,
+} from "@/components/content/empty-state";
 import {
   SectionDescription,
   SectionGroup,
@@ -15,17 +22,50 @@ import {
 import { Section } from "@/components/content/section";
 import { columns } from "@/components/data-table/subscribers/columns";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { subscribers } from "@/data/subscribers";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
+import { useParams } from "next/navigation";
 
 const LOCKED = true;
+const EXAMPLES = [
+  {
+    id: 1,
+    email: "max@openstatus.dev",
+    createdAt: new Date(),
+    updatedAt: null,
+    pageId: 1,
+    token: null,
+    acceptedAt: new Date(),
+    expiresAt: new Date(),
+  },
+  {
+    id: 2,
+    email: "thibault@openstatus.dev",
+    createdAt: new Date(),
+    updatedAt: null,
+    pageId: 1,
+    token: null,
+    acceptedAt: new Date(),
+    expiresAt: new Date(),
+  },
+];
 
 export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: page } = useQuery(
+    trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
+  const { data: subscribers } = useQuery(
+    trpc.pageSubscriber.list.queryOptions({ pageId: parseInt(id) })
+  );
+
   return (
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>OpenStatus Status Page</SectionTitle>
+          <SectionTitle>{page?.title}</SectionTitle>
           <SectionDescription>
             Allow your users to subscribe to status page updates.
           </SectionDescription>
@@ -36,7 +76,7 @@ export default function Page() {
           <BillingOverlayContainer>
             <DataTable
               columns={columns}
-              data={[...subscribers, ...subscribers, ...subscribers]}
+              data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
               <BillingOverlayButton>
@@ -49,8 +89,15 @@ export default function Page() {
               </BillingOverlayDescription>
             </BillingOverlay>
           </BillingOverlayContainer>
-        ) : (
+        ) : subscribers?.length ? (
           <DataTable columns={columns} data={subscribers} />
+        ) : (
+          <EmptyStateContainer>
+            <EmptyStateTitle>No subscribers</EmptyStateTitle>
+            <EmptyStateDescription>
+              No emails have been subscribed to this status page.
+            </EmptyStateDescription>
+          </EmptyStateContainer>
         )}
       </Section>
     </SectionGroup>

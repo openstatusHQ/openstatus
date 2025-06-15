@@ -59,8 +59,6 @@ import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// TODO: add type selection + reordering
-
 type Monitor = {
   id: number;
   name: string;

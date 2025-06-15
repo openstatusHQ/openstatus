@@ -1,8 +1,11 @@
 "use client";
 
-import type { Subscriber } from "@/data/subscribers";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
+import type { RouterOutputs } from "@openstatus/api";
+import { formatDate } from "@/lib/formatter";
+
+type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
 
 export const columns: ColumnDef<Subscriber>[] = [
   {
@@ -16,15 +19,27 @@ export const columns: ColumnDef<Subscriber>[] = [
     header: "Created At",
     enableSorting: false,
     enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("createdAt");
+      if (value instanceof Date) return formatDate(value);
+      if (!value) return "-";
+      return value;
+    },
     meta: {
       cellClassName: "font-mono",
     },
   },
   {
-    accessorKey: "validatedAt",
-    header: "Validated At",
+    accessorKey: "acceptedAt",
+    header: "Accepted At",
     enableSorting: false,
     enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("acceptedAt");
+      if (value instanceof Date) return formatDate(value);
+      if (!value) return "-";
+      return value;
+    },
     meta: {
       cellClassName: "font-mono",
     },

@@ -4,3 +4,11 @@ export function formatMilliseconds(ms: number) {
     unit: "millisecond",
   }).format(ms)}`;
 }
+
+export function formatDate(date: Date) {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
