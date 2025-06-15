@@ -31,12 +31,12 @@ export const columns: ColumnDef<Maintenance>[] = [
     },
   },
   {
-    accessorKey: "startDate",
+    accessorKey: "from",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Start Date" />
     ),
     cell: ({ row }) => {
-      const value = row.getValue("startDate");
+      const value = row.getValue("from");
       if (value instanceof Date) {
         return (
           <div className="text-muted-foreground">{value.toLocaleString()}</div>

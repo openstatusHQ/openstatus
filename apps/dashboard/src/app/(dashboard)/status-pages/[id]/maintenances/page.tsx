@@ -20,8 +20,13 @@ import { useParams } from "next/navigation";
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
-  const { data: statusPage, refetch } = useQuery(
+  const { data: statusPage } = useQuery(
     trpc.page.get.queryOptions({ id: parseInt(id) })
+  );
+  const { data: maintenances, refetch } = useQuery(
+    trpc.maintenance.list.queryOptions({
+      pageId: parseInt(id),
+    })
   );
   const createStatusPageMutation = useMutation(
     trpc.maintenance.new.mutationOptions({
@@ -29,7 +34,7 @@ export default function Page() {
     })
   );
 
-  if (!statusPage) return null;
+  if (!statusPage || !maintenances) return null;
 
   return (
     <SectionGroup>
@@ -62,7 +67,7 @@ export default function Page() {
             </FormSheetMaintenance>
           </div>
         </SectionHeaderRow>
-        <DataTable columns={columns} data={statusPage.maintenances} />
+        <DataTable columns={columns} data={maintenances} />
       </Section>
     </SectionGroup>
   );

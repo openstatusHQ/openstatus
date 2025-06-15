@@ -5,9 +5,10 @@ import { FormSheetMaintenance } from "@/components/forms/maintenance/sheet";
 import { getActions } from "@/data/maintenances.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { RouterOutputs } from "@openstatus/api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 
@@ -16,13 +17,30 @@ interface DataTableRowActionsProps {
 }
 
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+  const trpc = useTRPC();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const actions = getActions({
     edit: () => buttonRef.current?.click(),
   });
-  const trpc = useTRPC();
+  const { data: statusPage } = useQuery(
+    trpc.page.get.queryOptions({ id: row.original.pageId ?? 0 })
+  );
+  const queryClient = useQueryClient();
   const updateMaintenanceMutation = useMutation(
-    trpc.maintenance.update.mutationOptions({})
+    trpc.maintenance.update.mutationOptions({
+      onSuccess: () => {
+        // Refetch all maintenance-related queries
+        queryClient.refetchQueries({
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            if (Array.isArray(key) && key[0] === "maintenance") {
+              return true;
+            }
+            return false;
+          },
+        });
+      },
+    })
   );
 
   return (
@@ -35,7 +53,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         }}
       />
       <FormSheetMaintenance
-        monitors={[]}
+        monitors={statusPage?.monitors ?? []}
         defaultValues={{
           title: row.original.title,
           message: row.original.message,

@@ -24,7 +24,11 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { List, Search } from "lucide-react";
 import Link from "next/link";
 import { getQueryClient, HydrateClient, trpc } from "@/lib/trpc/server";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNowStrict } from "date-fns";
+
+// FIXME: the page is server side
+// whenever I change the maintenances, the page is not updated
+// we need to move the queryClient to the layout and prefetch the data there
 
 export default async function Page() {
   const queryClient = getQueryClient();
@@ -63,19 +67,19 @@ export default async function Page() {
   const lastMaintenance = maintenances.length > 0 ? maintenances[0] : null;
 
   const incidentDistance = lastIncident
-    ? formatDistanceToNow(lastIncident.startedAt, {
+    ? formatDistanceToNowStrict(lastIncident.startedAt, {
         addSuffix: true,
       })
     : "None";
 
   const statusReportDistance = lastStatusReport?.createdAt
-    ? formatDistanceToNow(lastStatusReport.createdAt, {
+    ? formatDistanceToNowStrict(lastStatusReport.createdAt, {
         addSuffix: true,
       })
     : "None";
 
   const maintenanceDistance = lastMaintenance?.createdAt
-    ? formatDistanceToNow(lastMaintenance.createdAt, {
+    ? formatDistanceToNowStrict(lastMaintenance.createdAt, {
         addSuffix: true,
       })
     : "None";
@@ -84,35 +88,35 @@ export default async function Page() {
     {
       title: "Total Monitors",
       value: monitors.length,
-      href: "/dashboard/monitors",
+      href: "/monitors",
       variant: "default" as const,
       icon: List,
     },
     {
       title: "Total Status Pages",
       value: pages.length,
-      href: "/dashboard/status-pages",
+      href: "/status-pages",
       variant: "default" as const,
       icon: List,
     },
     {
       title: "Recent Incident",
       value: incidentDistance,
-      href: "/dashboard/monitors/incidents",
+      href: `/monitors/${lastIncident?.monitorId}/incidents`,
       variant: "default" as const,
       icon: Search,
     },
     {
       title: "Last Report",
       value: statusReportDistance,
-      href: "/dashboard/status-pages/status-reports",
+      href: `/status-pages/${lastStatusReport?.pageId}/status-reports`,
       variant: "default" as const,
       icon: Search,
     },
     {
       title: "Last Maintenance",
       value: maintenanceDistance,
-      href: "/dashboard/status-pages/maintenances",
+      href: `/status-pages/${lastMaintenance?.pageId}/maintenances`,
       variant: "default" as const,
       icon: Search,
     },

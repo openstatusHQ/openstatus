@@ -226,20 +226,23 @@ export const maintenanceRouter = createTRPCRouter({
         whereConditions.push(eq(maintenance.pageId, opts.input.pageId));
       }
 
-      const query = opts.ctx.db
-        .select()
-        .from(maintenance)
-        .where(eq(maintenance.workspaceId, opts.ctx.workspace.id));
+      const query = opts.ctx.db.query.maintenance.findMany({
+        where: and(...whereConditions),
+        orderBy:
+          opts.input?.order === "asc"
+            ? asc(maintenance.createdAt)
+            : desc(maintenance.createdAt),
+        with: { maintenancesToMonitors: true },
+      });
 
-      if (opts.input?.order === "asc") {
-        query.orderBy(asc(maintenance.createdAt));
-      } else {
-        query.orderBy(desc(maintenance.createdAt));
-      }
+      const result = await query;
 
-      const result = await query.all();
-
-      return selectMaintenanceSchema.array().parse(result);
+      return selectMaintenanceSchema.array().parse(
+        result.map((m) => ({
+          ...m,
+          monitors: m.maintenancesToMonitors.map((m) => m.monitorId),
+        }))
+      );
     }),
 
   new: protectedProcedure
