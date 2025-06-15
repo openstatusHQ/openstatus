@@ -539,7 +539,14 @@ export const pageRouter = createTRPCRouter({
         where: sql`lower(${page.slug}) = ${opts.input.slug}`,
       });
 
-      if (subdomainSafeList.includes(opts.input.slug) || result?.length > 0) {
+      const oldSlug = await opts.ctx.db.query.page.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (
+        subdomainSafeList.includes(opts.input.slug) ||
+        (oldSlug?.slug !== opts.input.slug && result?.length > 0)
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "This slug is already taken. Please choose another one.",

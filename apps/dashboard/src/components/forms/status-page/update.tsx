@@ -15,10 +15,15 @@ export function FormStatusPageUpdate() {
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: parseInt(id) })
   );
+  const { refetch: refreshList } = useQuery(trpc.page.list.queryOptions());
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: () => {
+        refetch();
+        // refresh list if user has changed the name of the status page (sidebar)
+        refreshList();
+      },
     })
   );
 

@@ -90,20 +90,21 @@ export function FormGeneral({
 
   useEffect(() => {
     if (isUnique === undefined) return;
+    if (defaultValues?.slug === debouncedSlug) return;
 
     if (!isUnique) {
       form.setError("slug", { message: SLUG_UNIQUE_ERROR_MESSAGE });
     } else {
       form.clearErrors("slug");
     }
-  }, [isUnique, form, debouncedSlug]);
+  }, [isUnique, form, debouncedSlug, defaultValues?.slug]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
-        if (!isUnique) {
+        if (!isUnique && defaultValues?.slug !== values.slug) {
           toast.error(SLUG_UNIQUE_ERROR_MESSAGE);
           form.setError("slug", { message: SLUG_UNIQUE_ERROR_MESSAGE });
           return;
