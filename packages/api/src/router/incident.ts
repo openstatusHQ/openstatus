@@ -10,7 +10,7 @@ import {
   schema,
   type SQL,
 } from "@openstatus/db";
-import { selectIncidentSchema } from "@openstatus/db/src/schema";
+import { incidentTable, selectIncidentSchema } from "@openstatus/db/src/schema";
 
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -179,30 +179,35 @@ export const incidentRouter = createTRPCRouter({
               gte: z.date().optional(),
             })
             .optional(),
+          monitorId: z.number().optional(),
           order: z.enum(["asc", "desc"]).optional(),
         })
         .optional()
     )
     .query(async (opts) => {
       const whereConditions: SQL[] = [
-        eq(schema.incidentTable.workspaceId, opts.ctx.workspace.id),
+        eq(incidentTable.workspaceId, opts.ctx.workspace.id),
       ];
 
       if (opts.input?.startedAt?.gte) {
         whereConditions.push(
-          gte(schema.incidentTable.startedAt, opts.input.startedAt.gte)
+          gte(incidentTable.startedAt, opts.input.startedAt.gte)
         );
+      }
+
+      if (opts.input?.monitorId) {
+        whereConditions.push(eq(incidentTable.monitorId, opts.input.monitorId));
       }
 
       const query = opts.ctx.db
         .select()
-        .from(schema.incidentTable)
+        .from(incidentTable)
         .where(and(...whereConditions));
 
       if (opts.input?.order === "asc") {
-        query.orderBy(asc(schema.incidentTable.startedAt));
+        query.orderBy(asc(incidentTable.startedAt));
       } else {
-        query.orderBy(desc(schema.incidentTable.startedAt));
+        query.orderBy(desc(incidentTable.startedAt));
       }
 
       const result = await query.all();
