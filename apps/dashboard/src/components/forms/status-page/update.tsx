@@ -6,7 +6,7 @@ import { FormMonitors } from "./form-monitors";
 import { FormPasswordProtection } from "./form-password-protection";
 import { useParams, useRouter } from "next/navigation";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -15,14 +15,16 @@ export function FormStatusPageUpdate() {
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: parseInt(id) })
   );
-  const { refetch: refreshList } = useQuery(trpc.page.list.queryOptions());
+  const queryClient = useQueryClient();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
       onSuccess: () => {
         refetch();
-        // refresh list if user has changed the name of the status page (sidebar)
-        refreshList();
+        // NOTE: invalidate status page list to update name
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
       },
     })
   );
@@ -41,7 +43,17 @@ export function FormStatusPageUpdate() {
 
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
-      onSuccess: () => router.push("/status-pages"),
+      onSuccess: () => {
+        router.push("/status-pages");
+        // NOTE: invalidate workspace to update the usage
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
+        // NOTE: invalidate status page list to update the usage
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
+      },
     })
   );
 

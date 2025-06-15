@@ -125,7 +125,7 @@ export function FormMembers() {
                   <Link href="#">Pro plan</Link>.
                 </FormCardFooterInfo>
                 <Button type="button" size="sm" asChild>
-                  <Link href="/dashboard/settings/billing">
+                  <Link href="/settings/billing">
                     <Lock />
                     Upgrade
                   </Link>

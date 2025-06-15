@@ -25,6 +25,15 @@ export const selectWorkspaceSchema = createSelectSchema(workspace)
       .nullable()
       .default("free")
       .transform((val) => val ?? "free"),
+    // REMINDER: workspace usage
+    usage: z
+      .object({
+        monitors: z.number().default(0),
+        notifications: z.number().default(0),
+        pages: z.number().default(0),
+        // checks: z.number().default(0),
+      })
+      .nullish(),
   })
   .transform((val) => {
     return {

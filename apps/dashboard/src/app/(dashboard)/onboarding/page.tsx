@@ -30,17 +30,17 @@ const moreActions = [
   {
     title: "Create a notifier",
     description: "Get notified when your website or API is down.",
-    href: "/dashboard/notifiers",
+    href: "/notifiers",
   },
   {
     title: "Setup workspace",
     description: "Add a name to your workspace and share it with your team.",
-    href: "/dashboard/settings/general",
+    href: "/settings/general",
   },
   {
     title: "Update monitor",
     description: "Change region, schedule, timeout and more.",
-    href: "/dashboard/monitors",
+    href: "/monitors",
   },
   {
     title: "Schedule a call",

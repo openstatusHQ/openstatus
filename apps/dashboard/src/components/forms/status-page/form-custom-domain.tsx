@@ -104,7 +104,7 @@ export function FormCustomDomain({
             </FormCardFooterInfo>
             {LOCKED ? (
               <Button type="button" asChild>
-                <Link href="/dashboard/settings/billing">
+                <Link href="/settings/billing">
                   <Lock />
                   Upgrade
                 </Link>

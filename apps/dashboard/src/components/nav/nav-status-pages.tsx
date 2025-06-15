@@ -25,7 +25,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -44,8 +44,17 @@ export function NavStatusPages() {
     refetch,
     isLoading,
   } = useQuery(trpc.page.list.queryOptions());
+  const queryClient = useQueryClient();
   const deleteStatusPage = useMutation(
-    trpc.page.delete.mutationOptions({ onSuccess: () => refetch() })
+    trpc.page.delete.mutationOptions({
+      onSuccess: () => {
+        refetch();
+        // NOTE: invalidate workspace to update the usage
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
+      },
+    })
   );
   const router = useRouter();
   const actions = getActions({

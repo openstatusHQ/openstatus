@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
-import { and, eq, gte, isNull, sql } from "@openstatus/db";
+import { and, eq, gte, isNull, SQL, sql } from "@openstatus/db";
 import {
   application,
   monitor,
@@ -124,7 +124,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -141,8 +141,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(usersToWorkspaces.userId, opts.input.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
-          ),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
+          )
         )
         .run();
     }),
@@ -154,7 +154,7 @@ export const workspaceRouter = createTRPCRouter({
         await opts.ctx.db.query.usersToWorkspaces.findFirst({
           where: and(
             eq(usersToWorkspaces.userId, opts.ctx.user.id),
-            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id),
+            eq(usersToWorkspaces.workspaceId, opts.ctx.workspace.id)
           ),
         });
 
@@ -208,8 +208,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitor.workspaceId, opts.ctx.workspace.id),
-            isNull(monitor.deletedAt),
-          ),
+            isNull(monitor.deletedAt)
+          )
         );
       const pages = await tx
         .select({ count: sql<number>`count(*)` })
@@ -222,8 +222,8 @@ export const workspaceRouter = createTRPCRouter({
         .where(
           and(
             eq(monitorRun.workspaceId, opts.ctx.workspace.id),
-            gte(monitorRun.createdAt, new Date(lastMonth)),
-          ),
+            gte(monitorRun.createdAt, new Date(lastMonth))
+          )
         )
         .all();
 
@@ -236,5 +236,33 @@ export const workspaceRouter = createTRPCRouter({
     });
 
     return currentNumbers;
+  }),
+
+  // DASHBOARD
+
+  get: protectedProcedure.query(async (opts) => {
+    const whereConditions: SQL[] = [eq(workspace.id, opts.ctx.workspace.id)];
+
+    const result = await opts.ctx.db.query.workspace.findFirst({
+      where: and(...whereConditions),
+      with: {
+        pages: true,
+        monitors: true,
+        notifications: true,
+      },
+    });
+
+    console.log(result);
+
+    return selectWorkspaceSchema.parse({
+      ...result,
+      usage: {
+        monitors: result?.monitors?.length || 0,
+        notifications: result?.notifications?.length || 0,
+        pages: result?.pages?.length || 0,
+        // checks: result?.checks?.length || 0,
+        checks: 0,
+      },
+    });
   }),
 });

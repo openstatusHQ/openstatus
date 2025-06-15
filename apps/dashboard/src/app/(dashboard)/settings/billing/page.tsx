@@ -1,3 +1,5 @@
+"use client";
+
 import { BillingProgress } from "@/components/content/billing-progress";
 import {
   Section,
@@ -19,8 +21,15 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
 
 export default function Page() {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  if (!workspace) return null;
+
   return (
     <SectionGroup>
       <Section>
@@ -40,9 +49,21 @@ export default function Page() {
             </FormCardHeader>
             <FormCardContent>
               <div className="flex flex-col gap-2">
-                <BillingProgress label="Monitors" value={6} max={10} />
-                <BillingProgress label="Status Pages" value={1} max={1} />
-                <BillingProgress label="Notifiers" value={0} max={1} />
+                <BillingProgress
+                  label="Monitors"
+                  value={workspace.usage?.monitors ?? 0}
+                  max={workspace.limits.monitors}
+                />
+                <BillingProgress
+                  label="Status Pages"
+                  value={workspace.usage?.pages ?? 0}
+                  max={workspace.limits["status-pages"]}
+                />
+                <BillingProgress
+                  label="Notifiers"
+                  value={workspace.usage?.notifications ?? 0}
+                  max={workspace.limits["notification-channels"]}
+                />
               </div>
             </FormCardContent>
             <FormCardFooter>

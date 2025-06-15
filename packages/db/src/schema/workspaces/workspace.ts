@@ -4,6 +4,8 @@ import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core";
 import { page } from "../pages";
 import { usersToWorkspaces } from "../users";
 import { workspacePlans } from "./constants";
+import { monitor } from "../monitors";
+import { notification } from "../notifications";
 
 export const workspace = sqliteTable(
   "workspace",
@@ -19,20 +21,23 @@ export const workspace = sqliteTable(
     paidUntil: integer("paid_until", { mode: "timestamp" }),
     limits: text("limits").default("{}").notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
     updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-      sql`(strftime('%s', 'now'))`,
+      sql`(strftime('%s', 'now'))`
     ),
 
     dsn: text("dsn"), // should be removed soon
   },
   (t) => ({
     unique: unique().on(t.id, t.dsn),
-  }),
+  })
 );
 
 export const workspaceRelations = relations(workspace, ({ many }) => ({
   usersToWorkspaces: many(usersToWorkspaces),
   pages: many(page),
+  monitors: many(monitor),
+  notifications: many(notification),
+  // TODO: add checks or monitorRuns
 }));

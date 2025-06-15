@@ -59,7 +59,7 @@ export default function Page() {
             <DataTable data={logs} />
             <BillingOverlay>
               <BillingOverlayButton asChild>
-                <Link href="/dashboard/settings/billing">
+                <Link href="/settings/billing">
                   <Lock />
                   Upgrade to Pro
                 </Link>

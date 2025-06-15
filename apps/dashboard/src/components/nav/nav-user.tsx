@@ -106,7 +106,7 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/settings/billing"
+                  href="/settings/billing"
                   onClick={() => setOpenMobile(false)}
                 >
                   <Sparkles />
@@ -118,7 +118,7 @@ export function NavUser() {
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/settings/account"
+                  href="/settings/account"
                   onClick={() => setOpenMobile(false)}
                 >
                   <User />
@@ -127,7 +127,7 @@ export function NavUser() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href="/dashboard/settings/billing"
+                  href="/settings/billing"
                   onClick={() => setOpenMobile(false)}
                 >
                   <CreditCard />

@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/components/common/link";
 import {
   SidebarGroup,
@@ -6,23 +8,38 @@ import {
   SidebarMenuAction,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, CircleDashed, X } from "lucide-react";
 
-const items = [
-  {
-    title: "Create Monitor",
-    checked: true,
-    href: "/dashboard/monitors/create",
-  },
-  {
-    title: "Create Status Page",
-    checked: true,
-    href: "/dashboard/status-pages/create",
-  },
-  { title: "Create Notifier", checked: false, href: "/dashboard/notifiers" },
-];
-
 export function NavChecklist() {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  if (!workspace) return null;
+
+  const hasMonitors = workspace.usage?.monitors ?? 0 > 0;
+  const hasStatusPages = workspace.usage?.pages ?? 0 > 0;
+  const hasNotifiers = workspace.usage?.notifications ?? 0 > 0;
+
+  const items = [
+    {
+      title: "Create Monitor",
+      checked: hasMonitors,
+      href: "/dashboard/monitors/create",
+    },
+    {
+      title: "Create Status Page",
+      checked: hasStatusPages,
+      href: "/dashboard/status-pages/create",
+    },
+    {
+      title: "Create Notifier",
+      checked: hasNotifiers,
+      href: "/dashboard/notifiers",
+    },
+  ];
+
   return (
     <SidebarGroup className="rounded-lg border bg-background group-data-[collapsible=icon]:hidden">
       <SidebarGroupLabel className="flex items-center justify-between pr-1">

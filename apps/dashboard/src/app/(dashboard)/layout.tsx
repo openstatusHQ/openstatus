@@ -30,6 +30,7 @@ async function HydrateSidebar({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery(trpc.page.list.queryOptions());
   await queryClient.prefetchQuery(trpc.monitor.list.queryOptions());
+  await queryClient.prefetchQuery(trpc.workspace.get.queryOptions());
 
   return <HydrateClient>{children}</HydrateClient>;
 }

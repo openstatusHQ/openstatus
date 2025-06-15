@@ -18,17 +18,17 @@ const settings = [
   {
     title: "General",
     description: "Manage your workspace settings.",
-    href: "/dashboard/settings/general",
+    href: "/settings/general",
   },
   {
     title: "Billing",
     description: "Manage your billing information and payment methods.",
-    href: "/dashboard/settings/billing",
+    href: "/settings/billing",
   },
   {
     title: "Account",
     description: "Manage your account information.",
-    href: "/dashboard/settings/account",
+    href: "/settings/account",
   },
 ];
 export default function Page() {

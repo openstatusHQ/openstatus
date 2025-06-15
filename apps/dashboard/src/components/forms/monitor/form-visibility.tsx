@@ -117,7 +117,7 @@ export function FormVisibility({
             </FormCardFooterInfo>
             {LOCKED ? (
               <Button asChild>
-                <NextLink href="/dashboard/settings/billing">
+                <NextLink href="/settings/billing">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>
