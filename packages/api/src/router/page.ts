@@ -449,12 +449,17 @@ export const pageRouter = createTRPCRouter({
 
       return selectPageSchema
         .extend({
-          monitors: z.array(selectMonitorSchema).default([]),
+          monitors: z
+            .array(selectMonitorSchema.extend({ order: z.number().default(0) }))
+            .default([]),
           maintenances: z.array(selectMaintenanceSchema).default([]),
         })
         .parse({
           ...data,
-          monitors: data?.monitorsToPages.map((m) => m.monitor),
+          monitors: data?.monitorsToPages.map((m) => ({
+            ...m.monitor,
+            order: m.order,
+          })),
           maintenances: data?.maintenancesToPages,
         });
     }),
@@ -566,5 +571,46 @@ export const pageRouter = createTRPCRouter({
         })
         .where(and(...whereConditions))
         .run();
+    }),
+
+  updateMonitors: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        monitors: z.array(z.object({ id: z.number(), order: z.number() })),
+      })
+    )
+    .mutation(async (opts) => {
+      // check if the monitors are in the workspace
+      const monitors = await opts.ctx.db.query.monitor.findMany({
+        where: and(
+          inArray(
+            monitor.id,
+            opts.input.monitors.map((m) => m.id)
+          ),
+          eq(monitor.workspaceId, opts.ctx.workspace.id)
+        ),
+      });
+
+      if (monitors.length !== opts.input.monitors.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to all the monitors.",
+        });
+      }
+
+      await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorsToPages)
+          .where(eq(monitorsToPages.pageId, opts.input.id));
+
+        await tx.insert(monitorsToPages).values(
+          opts.input.monitors.map((m) => ({
+            pageId: opts.input.id,
+            monitorId: m.id,
+            order: m.order,
+          }))
+        );
+      });
     }),
 });

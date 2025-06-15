@@ -14,6 +14,7 @@ export function FormStatusPageUpdate() {
   const { data: statusPage, refetch } = useQuery(
     trpc.page.get.queryOptions({ id: parseInt(id) })
   );
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
       onSuccess: () => refetch(),
@@ -26,7 +27,13 @@ export function FormStatusPageUpdate() {
     })
   );
 
-  if (!statusPage) return null;
+  const updateMonitorsMutation = useMutation(
+    trpc.page.updateMonitors.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!statusPage || !monitors) return null;
 
   return (
     <FormCardGroup>
@@ -47,7 +54,23 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormMonitors />
+      <FormMonitors
+        monitors={monitors ?? []}
+        defaultValues={{
+          monitors: statusPage.monitors.map((monitor) => ({
+            id: monitor.id,
+            order: monitor.order,
+            // type: monitor.type,
+            type: "none" as const,
+          })),
+        }}
+        onSubmit={async (values) => {
+          await updateMonitorsMutation.mutateAsync({
+            id: parseInt(id),
+            monitors: values.monitors,
+          });
+        }}
+      />
       <FormCustomDomain />
       <FormPasswordProtection
         defaultValues={{

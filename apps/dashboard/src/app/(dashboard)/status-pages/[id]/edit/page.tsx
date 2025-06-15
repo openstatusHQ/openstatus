@@ -25,7 +25,7 @@ export default function Page() {
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>OpenStatus Status</SectionTitle>
+          <SectionTitle>{statusPage.title}</SectionTitle>
           <SectionDescription>Customize your status page.</SectionDescription>
         </SectionHeader>
         <FormStatusPageUpdate />

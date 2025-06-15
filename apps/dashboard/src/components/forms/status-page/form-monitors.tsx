@@ -49,20 +49,23 @@ import {
   SortableItemHandle,
   SortableOverlay,
 } from "@/components/ui/sortable";
-import type { Monitor } from "@/data/monitors";
-import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown, GripVertical } from "lucide-react";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 // TODO: add type selection + reordering
 
-const IDS = monitors.slice(0, 3).map((monitor) => monitor.id);
+type Monitor = {
+  id: number;
+  name: string;
+  url: string;
+};
+
 const DISABLED_TYPES = ["none"];
 
 const schema = z.object({
@@ -71,7 +74,7 @@ const schema = z.object({
       id: z.number(),
       order: z.number(),
       type: z.enum(["all", "hide", "none"]),
-    }),
+    })
   ),
 });
 
@@ -80,34 +83,46 @@ type FormValues = z.infer<typeof schema>;
 export function FormMonitors({
   defaultValues,
   onSubmit,
+  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  monitors: Monitor[];
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues ?? {
-      monitors: IDS.map((id, index) => ({ id, order: index, type: "all" })),
-    },
+    defaultValues: defaultValues ?? {},
   });
-  const watchMonitors = form.watch("monitors");
   const [isPending, startTransition] = useTransition();
-  const [data, setData] = useState<Monitor[]>(
-    monitors.filter((monitor) => IDS.includes(monitor.id)),
-  );
-
-  useEffect(() => {
-    setData(
-      monitors.filter((monitor) =>
-        watchMonitors.some((m) => m.id === monitor.id),
-      ),
+  const [data, setData] = useState<Monitor[]>(() => {
+    const orderMap = new Map(
+      defaultValues?.monitors.map((m) => [m.id, m.order]) ?? []
     );
-  }, [watchMonitors]);
 
-  const onValueChange = useCallback((newMonitors: Monitor[]) => {
-    setData(newMonitors);
-  }, []);
+    return monitors
+      .filter((monitor) => orderMap.has(monitor.id))
+      .sort((a, b) => {
+        const aOrder = orderMap.get(a.id) ?? 0;
+        const bOrder = orderMap.get(b.id) ?? 0;
+        return aOrder - bOrder;
+      });
+  });
+
+  const onValueChange = useCallback(
+    (newMonitors: Monitor[]) => {
+      setData(newMonitors);
+      form.setValue(
+        "monitors",
+        newMonitors.map((m, index) => ({
+          id: m.id,
+          order: index,
+          type: "none" as const,
+        }))
+      );
+    },
+    [form]
+  );
 
   const getItemValue = useCallback((item: Monitor) => item.id, []);
 
@@ -119,7 +134,7 @@ export function FormMonitors({
       return <MonitorRow monitor={monitor} form={form} />;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data],
+    [data]
   );
 
   function submitAction(values: FormValues) {
@@ -127,8 +142,7 @@ export function FormMonitors({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: () => JSON.stringify(values),
@@ -166,7 +180,7 @@ export function FormMonitors({
                           role="combobox"
                           className={cn(
                             "w-[200px] justify-between",
-                            !field.value && "text-muted-foreground",
+                            !field.value && "text-muted-foreground"
                           )}
                           size="sm"
                         >
@@ -197,8 +211,8 @@ export function FormMonitors({
                                     form.setValue(
                                       "monitors",
                                       field.value.filter(
-                                        (m) => m.id !== monitor.id,
-                                      ),
+                                        (m) => m.id !== monitor.id
+                                      )
                                     );
                                   } else {
                                     form.setValue("monitors", [
@@ -214,7 +228,7 @@ export function FormMonitors({
                                     "ml-auto",
                                     field.value.some((m) => m.id === monitor.id)
                                       ? "opacity-100"
-                                      : "opacity-0",
+                                      : "opacity-0"
                                   )}
                                 />
                               </CommandItem>
@@ -309,8 +323,8 @@ function MonitorRow({ monitor, ...props }: MonitorRowProps) {
         </div>
         <div>
           <Select>
-            <SelectTrigger className="h-7 w-full shadow-none">
-              <SelectValue placeholder="Select type" />
+            <SelectTrigger className="h-7 w-full shadow-none" disabled>
+              <SelectValue placeholder="Select type (coming soon)" />
             </SelectTrigger>
             <SelectContent>
               {Object.entries(types).map(([key, value]) => (
