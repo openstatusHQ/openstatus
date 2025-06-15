@@ -470,7 +470,7 @@ export const pageRouter = createTRPCRouter({
     .input(
       z.object({
         title: z.string(),
-        slug: z.string(),
+        slug: z.string().toLowerCase(),
         icon: z.string().nullish(),
         description: z.string().nullish(),
       })
@@ -489,6 +489,21 @@ export const pageRouter = createTRPCRouter({
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "You reached your status-page limits.",
+        });
+      }
+
+      // had filter on some words we want to keep for us
+      if (subdomainSafeList.includes(opts.input.slug)) {
+        return false;
+      }
+      const result = await opts.ctx.db.query.page.findMany({
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
+      });
+
+      if (result?.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This slug is already taken. Please choose another one.",
         });
       }
 
@@ -513,7 +528,7 @@ export const pageRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         title: z.string(),
-        slug: z.string(),
+        slug: z.string().toLowerCase(),
         description: z.string().nullish(),
         icon: z.string().nullish(),
       })
@@ -523,6 +538,21 @@ export const pageRouter = createTRPCRouter({
         eq(page.workspaceId, opts.ctx.workspace.id),
         eq(page.id, opts.input.id),
       ];
+
+      // had filter on some words we want to keep for us
+      if (subdomainSafeList.includes(opts.input.slug)) {
+        return false;
+      }
+      const result = await opts.ctx.db.query.page.findMany({
+        where: sql`lower(${page.slug}) = ${opts.input.slug}`,
+      });
+
+      if (result?.length > 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This slug is already taken. Please choose another one.",
+        });
+      }
 
       await opts.ctx.db
         .update(page)

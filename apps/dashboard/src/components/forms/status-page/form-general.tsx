@@ -24,11 +24,24 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
+import { useTRPC } from "@/lib/trpc/client";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useQuery } from "@tanstack/react-query";
+
+const SLUG_UNIQUE_ERROR_MESSAGE =
+  "This slug is already taken. Please choose another one.";
+
+function formatSlug(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -57,12 +70,45 @@ export function FormGeneral({
     },
   });
   const [isPending, startTransition] = useTransition();
+  const trpc = useTRPC();
+  const watchSlug = form.watch("slug");
+  const watchTitle = form.watch("title");
+  const debouncedSlug = useDebounce(watchSlug, 500);
+  const { data: isUnique } = useQuery(
+    trpc.page.getSlugUniqueness.queryOptions(
+      { slug: debouncedSlug },
+      { enabled: debouncedSlug.length > 0 }
+    )
+  );
+
+  useEffect(() => {
+    if (!defaultValues?.title) {
+      const formattedSlug = formatSlug(watchTitle);
+      form.setValue("slug", formattedSlug);
+    }
+  }, [form, defaultValues?.title, watchTitle]);
+
+  useEffect(() => {
+    if (isUnique === undefined) return;
+
+    if (!isUnique) {
+      form.setError("slug", { message: SLUG_UNIQUE_ERROR_MESSAGE });
+    } else {
+      form.clearErrors("slug");
+    }
+  }, [isUnique, form, debouncedSlug]);
 
   function submitAction(values: FormValues) {
     if (isPending) return;
 
     startTransition(async () => {
       try {
+        if (!isUnique) {
+          toast.error(SLUG_UNIQUE_ERROR_MESSAGE);
+          form.setError("slug", { message: SLUG_UNIQUE_ERROR_MESSAGE });
+          return;
+        }
+
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
