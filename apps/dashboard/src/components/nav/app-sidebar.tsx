@@ -68,7 +68,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader className="flex h-14 justify-center border-b py-1">
+      <SidebarHeader className="flex p-0 gap-0 h-14 justify-center border-b">
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent>
@@ -80,7 +80,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </div>
         <NavHelp />
       </SidebarContent>
-      <SidebarFooter className="border-t">
+      <SidebarFooter className="p-0 gap-0 h-14 border-t">
         <NavUser />
       </SidebarFooter>
       <SidebarRail />

@@ -29,6 +29,11 @@ export function WorkspaceSwitcher() {
 
   if (!workspace) return null;
 
+  function handleClick(slug: string) {
+    document.cookie = `workspace-slug=${slug}; path=/;`;
+    window.location.reload();
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -36,7 +41,7 @@ export function WorkspaceSwitcher() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               {/* TODO: make it only appear when collapsed */}
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
@@ -71,7 +76,7 @@ export function WorkspaceSwitcher() {
               <DropdownMenuItem
                 key={workspace.id}
                 onClick={() => {
-                  // TODO: switch workspace
+                  handleClick(workspace.slug);
                   setOpenMobile(false);
                 }}
                 className="gap-2 p-2"
