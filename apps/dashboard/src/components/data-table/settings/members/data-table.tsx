@@ -7,9 +7,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Member } from "@/data/members";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-export function DataTable({ data }: { data: Member[] }) {
+export function DataTable() {
+  const trpc = useTRPC();
+  const { data: members, refetch } = useQuery(trpc.member.list.queryOptions());
+  const deleteMemberMutation = useMutation(
+    trpc.member.delete.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!members) return null;
+
   return (
     <Table>
       <TableHeader>
@@ -24,18 +36,27 @@ export function DataTable({ data }: { data: Member[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((item) => (
-          <TableRow key={item.id}>
-            <TableCell>{item.name}</TableCell>
-            <TableCell>{item.email}</TableCell>
+        {members.map((item) => (
+          <TableRow key={item.user.id}>
+            <TableCell>
+              {item.user.name ?? (
+                <span className="text-muted-foreground">-</span>
+              )}
+            </TableCell>
+            <TableCell>{item.user.email}</TableCell>
             <TableCell>{item.role}</TableCell>
-            <TableCell>{item.createdAt}</TableCell>
+            <TableCell>{formatDate(item.createdAt)}</TableCell>
             <TableCell>
               <div className="flex justify-end">
                 <QuickActions
                   deleteAction={{
-                    title: "User",
-                    confirmationValue: "delete",
+                    title: "Member",
+                    confirmationValue: "delete member",
+                    // FIXME: when deleting myself, throws an error, should have been caught by the toast.error
+                    submitAction: async () =>
+                      await deleteMemberMutation.mutateAsync({
+                        id: item.user.id,
+                      }),
                   }}
                 />
               </div>

@@ -12,10 +12,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Invitation } from "@/data/invitations";
+import { formatDate } from "@/lib/formatter";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-export function DataTable({ data }: { data: Invitation[] }) {
-  if (data.length === 0) {
+export function DataTable() {
+  const trpc = useTRPC();
+  const { data: invitations, refetch } = useQuery(
+    trpc.invitation.list.queryOptions()
+  );
+  const deleteInvitationMutation = useMutation(
+    trpc.invitation.delete.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!invitations) return null;
+
+  if (invitations.length === 0) {
     return (
       <EmptyStateContainer>
         <EmptyStateTitle>No pending invitations</EmptyStateTitle>
@@ -41,16 +55,26 @@ export function DataTable({ data }: { data: Invitation[] }) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((item) => (
+        {invitations.map((item) => (
           <TableRow key={item.id}>
             <TableCell>{item.email}</TableCell>
             <TableCell>{item.role}</TableCell>
-            <TableCell>{item.createdAt}</TableCell>
-            <TableCell>{item.expiresAt}</TableCell>
-            <TableCell>{item.acceptedAt}</TableCell>
+            <TableCell>
+              {item.createdAt ? formatDate(item.createdAt) : "-"}
+            </TableCell>
+            <TableCell>{formatDate(item.expiresAt)}</TableCell>
+            <TableCell>
+              {item.acceptedAt ? formatDate(item.acceptedAt) : "-"}
+            </TableCell>
             <TableCell>
               <div className="flex justify-end">
-                <QuickActions deleteAction={{ title: "Invitation" }} />
+                <QuickActions
+                  deleteAction={{
+                    title: "Invitation",
+                    submitAction: async () =>
+                      deleteInvitationMutation.mutateAsync({ id: item.id }),
+                  }}
+                />
               </div>
             </TableCell>
           </TableRow>

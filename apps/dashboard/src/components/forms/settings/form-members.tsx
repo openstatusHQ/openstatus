@@ -30,14 +30,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { members } from "@/data/members";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = true;
+const LOCKED = false;
 
 const schema = z.object({
   email: z.string().email(),
@@ -46,7 +45,11 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function FormMembers() {
+export function FormMembers({
+  onCreate,
+}: {
+  onCreate: (values: FormValues) => Promise<void>;
+}) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -61,10 +64,10 @@ export function FormMembers() {
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise = onCreate(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: () => "Saved",
           error: "Failed to save",
         });
         await promise;
@@ -91,10 +94,10 @@ export function FormMembers() {
                 <TabsTrigger value="pending">Pending</TabsTrigger>
               </TabsList>
               <TabsContent value="members">
-                <MembersDataTable data={members} />
+                <MembersDataTable />
               </TabsContent>
               <TabsContent value="pending">
-                <InvitationsDataTable data={[]} />
+                <InvitationsDataTable />
               </TabsContent>
             </Tabs>
           </FormCardContent>

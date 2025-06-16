@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import type { DropdownMenuContentProps } from "@radix-ui/react-dropdown-menu";
 import { toast } from "sonner";
+import { isTRPCClientError } from "@trpc/client";
 
 interface QuickActionsProps extends React.ComponentProps<typeof Button> {
   align?: DropdownMenuContentProps["align"];
@@ -66,12 +67,17 @@ export function QuickActions({
   const handleDelete = async () => {
     try {
       startTransition(async () => {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        await deleteAction?.submitAction?.();
+        if (!deleteAction?.submitAction) return;
+        const promise = deleteAction.submitAction();
         toast.promise(promise, {
           loading: "Deleting...",
           success: "Deleted",
-          error: "Failed to delete",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to delete";
+          },
         });
         await promise;
         setOpen(false);

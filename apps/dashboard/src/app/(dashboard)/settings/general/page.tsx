@@ -31,6 +31,15 @@ export default function Page() {
       },
     })
   );
+  const createInvitationMutation = useMutation(
+    trpc.invitation.create.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.invitation.list.queryKey(),
+        });
+      },
+    })
+  );
 
   if (!workspace) return null;
 
@@ -53,7 +62,13 @@ export default function Page() {
             }}
           />
           <FormSlug />
-          <FormMembers />
+          <FormMembers
+            onCreate={async (values) => {
+              await createInvitationMutation.mutateAsync({
+                email: values.email,
+              });
+            }}
+          />
           <FormApiKey />
         </FormCardGroup>
       </Section>

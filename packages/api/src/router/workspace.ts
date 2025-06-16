@@ -10,11 +10,13 @@ import {
   notification,
   page,
   selectApplicationSchema,
+  selectUserSchema,
   selectWorkspaceSchema,
   user,
   usersToWorkspaces,
   workspace,
   workspacePlanSchema,
+  workspaceRole,
 } from "@openstatus/db/src/schema";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 
@@ -262,6 +264,24 @@ export const workspaceRouter = createTRPCRouter({
         checks: 0,
       },
     });
+  }),
+
+  getMembers: protectedProcedure.query(async (opts) => {
+    const result = await opts.ctx.db.query.usersToWorkspaces.findMany({
+      where: eq(usersToWorkspaces.userId, opts.ctx.workspace.id),
+      with: {
+        user: true,
+      },
+    });
+
+    return z
+      .object({
+        role: z.enum(workspaceRole),
+        createdAt: z.coerce.date(),
+        user: selectUserSchema,
+      })
+      .array()
+      .parse(result);
   }),
 
   list: protectedProcedure.query(async (opts) => {
