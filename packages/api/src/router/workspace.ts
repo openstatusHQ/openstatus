@@ -276,4 +276,15 @@ export const workspaceRouter = createTRPCRouter({
       .array()
       .parse(result.map(({ workspace }) => workspace));
   }),
+
+  updateName: protectedProcedure
+    .input(z.object({ name: z.string() }))
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [eq(workspace.id, opts.ctx.workspace.id)];
+
+      await opts.ctx.db
+        .update(workspace)
+        .set({ name: opts.input.name })
+        .where(and(...whereConditions));
+    }),
 });
