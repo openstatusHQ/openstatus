@@ -15,8 +15,10 @@ import { FormGeneral } from "@/components/forms/status-page/form-general";
 import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 export function Client() {
+  const [isPending, startTransition] = useTransition();
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -29,7 +31,9 @@ export function Client() {
         queryClient.invalidateQueries({
           queryKey: trpc.workspace.get.queryKey(),
         });
-        router.push(`/status-pages/${data.id}/edit`);
+        startTransition(() => {
+          router.push(`/status-pages/${data.id}/edit`);
+        });
       },
     })
   );
@@ -41,6 +45,7 @@ export function Client() {
           <SectionTitle>Create Status Page</SectionTitle>
         </SectionHeader>
         <FormGeneral
+          disabled={isPending}
           onSubmit={async (values) => {
             await createStatusPageMutation.mutateAsync({
               title: values.title,

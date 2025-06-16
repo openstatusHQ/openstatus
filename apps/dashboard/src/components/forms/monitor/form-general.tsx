@@ -69,10 +69,12 @@ type FormValues = z.infer<typeof schema>;
 export function FormGeneral({
   defaultValues,
   onSubmit,
+  disabled,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit?: (values: FormValues) => Promise<void> | void;
+  disabled?: boolean;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -91,7 +93,7 @@ export function FormGeneral({
   const watchMethod = form.watch("method");
 
   function submitAction(values: FormValues) {
-    if (isPending) return;
+    if (isPending || disabled) return;
 
     startTransition(async () => {
       try {
@@ -487,7 +489,7 @@ export function FormGeneral({
               Learn more about <Link href="#">Monitor Type</Link> and{" "}
               <Link href="#">Assertions</Link>.
             </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending || disabled}>
               {isPending ? "Submitting..." : "Submit"}
             </Button>
           </FormCardFooter>

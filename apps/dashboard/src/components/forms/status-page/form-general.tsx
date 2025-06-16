@@ -53,12 +53,14 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function FormGeneral({
+  disabled,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  disabled?: boolean;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -100,7 +102,7 @@ export function FormGeneral({
   }, [isUnique, form, debouncedSlug, defaultValues?.slug]);
 
   function submitAction(values: FormValues) {
-    if (isPending) return;
+    if (isPending || disabled) return;
 
     startTransition(async () => {
       try {
@@ -214,7 +216,9 @@ export function FormGeneral({
             />
           </FormCardContent>
           <FormCardFooter>
-            <Button type="submit">Submit</Button>
+            <Button type="submit" disabled={isPending || disabled}>
+              {isPending ? "Submitting..." : "Submit"}
+            </Button>
           </FormCardFooter>
         </FormCard>
       </form>
