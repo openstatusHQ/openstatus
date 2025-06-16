@@ -5,31 +5,71 @@ description: "Manage your monitors in OpenStatus from the command line"
 
 The monitors command is used to manage your monitors. You trigger, view and list your monitors using this command.
 
-## Info
-You can get the details of a monitor using the following command.
+### create (beta)
+
+Create monitors
 
 ```bash
-openstatus monitors info <monitor-id>
+openstatus monitors create [options]
 ```
+**--access-token, -t**="": OpenStatus API Access Token
 
+**--auto-accept, -y**: Automatically accept the prompt
 
+**--config**="": The configuration file containing monitor information (default: openstatus.yaml)
 
-## List
+### delete
 
-You can list all the monitors using the following command.
+Delete a monitor
 
 ```bash
-openstatus monitors list
+openstatus monitors delete [MonitorID] [options]
 ```
 
-### Options
+**--access-token, -t**="": OpenStatus API Access Token
 
-- `--all` - List all the monitors including the inactive ones.
+**--auto-accept, -y**: Automatically accept the prompt
 
-## Trigger
+### export
 
-You can trigger a monitor using the following command.
+Export all your monitors
 
 ```bash
-openstatus monitors trigger <monitor-id>
+openstatus monitors export [options]
 ```
+
+**--access-token, -t**="": OpenStatus API Access Token
+
+**--output, -o**="": The output file name  (default: openstatus.yaml)
+
+### info
+
+Get a monitor information
+
+```bash
+openstatus monitors info [MonitorID] [options]
+```
+
+**--access-token, -t**="": OpenStatus API Access Token
+
+### list
+
+List all monitors
+
+```bash
+openstatus monitors list [options]
+```
+
+**--access-token, -t**="": OpenStatus API Access Token
+
+**--all**: List all monitors including inactive ones
+
+### trigger
+
+Trigger a monitor execution
+
+```bash
+openstatus monitors trigger [MonitorId] [options]
+```
+
+**--access-token, -t**="": OpenStatus API Access Token
