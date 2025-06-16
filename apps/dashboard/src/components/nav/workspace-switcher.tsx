@@ -38,6 +38,15 @@ export function WorkspaceSwitcher() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
+              {/* TODO: make it only appear when collapsed */}
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
+                <div className="size-8 rounded-lg overflow-hidden">
+                  <img
+                    src={`https://api.dicebear.com/9.x/glass/svg?seed=${workspace.slug}`}
+                    alt="avatar"
+                  />
+                </div>
+              </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
                   {workspace.name || "Untitled Workspace"}
