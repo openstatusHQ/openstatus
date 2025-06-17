@@ -1003,4 +1003,37 @@ export const monitorRouter = createTRPCRouter({
         .where(and(...whereConditions))
         .run();
     }),
+
+  updateTags: protectedProcedure
+    .input(z.object({ id: z.number(), tags: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      const allTags = await ctx.db.query.monitorTag.findMany({
+        where: and(
+          eq(monitorTag.workspaceId, ctx.workspace.id),
+          inArray(monitorTag.id, input.tags)
+        ),
+      });
+
+      if (allTags.length !== input.tags.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this tag.",
+        });
+      }
+
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorTagsToMonitors)
+          .where(and(eq(monitorTagsToMonitors.monitorId, input.id)));
+
+        if (input.tags.length > 0) {
+          await tx.insert(monitorTagsToMonitors).values(
+            input.tags.map((tagId) => ({
+              monitorId: input.id,
+              monitorTagId: tagId,
+            }))
+          );
+        }
+      });
+    }),
 });

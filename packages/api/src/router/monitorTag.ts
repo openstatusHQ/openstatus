@@ -58,4 +58,13 @@ export const monitorTagRouter = createTRPCRouter({
         .returning()
         .get();
     }),
+
+  // DASHBOARD
+
+  list: protectedProcedure.query(async (opts) => {
+    return opts.ctx.db.query.monitorTag.findMany({
+      where: eq(monitorTag.workspaceId, opts.ctx.workspace.id),
+      with: { monitor: true },
+    });
+  }),
 });

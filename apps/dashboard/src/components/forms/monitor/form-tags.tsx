@@ -33,9 +33,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { monitorTags } from "@/data/monitor-tags";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -45,10 +46,10 @@ import { z } from "zod";
 const schema = z.object({
   tags: z.array(
     z.object({
-      value: z.string(),
-      label: z.string(),
+      id: z.number(),
+      name: z.string(),
       color: z.string(),
-    }),
+    })
   ),
 });
 
@@ -62,6 +63,9 @@ export function FormTags({
   defaultValues?: FormValues;
   onSubmit?: (values: FormValues) => Promise<void> | void;
 }) {
+  const trpc = useTRPC();
+  const { data: tags } = useQuery(trpc.monitorTag.list.queryOptions());
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -79,7 +83,7 @@ export function FormTags({
         onSubmit?.(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: "Saved",
           error: "Failed to save",
         });
         await promise;
@@ -88,6 +92,8 @@ export function FormTags({
       }
     });
   }
+
+  if (!tags) return null;
 
   return (
     <Form {...form}>
@@ -114,24 +120,24 @@ export function FormTags({
                           role="combobox"
                           className={cn(
                             "h-auto min-h-9 w-full justify-between",
-                            !field.value?.length && "text-muted-foreground",
+                            !field.value?.length && "text-muted-foreground"
                           )}
                         >
                           <div className="group/badges -space-x-2 flex flex-wrap">
                             {field.value.length ? (
                               field.value.map((tag) => (
                                 <Badge
-                                  key={tag.value}
+                                  key={tag.id}
                                   variant="outline"
                                   className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1"
                                 >
                                   <div
                                     className={cn(
                                       "size-2.5 rounded-full",
-                                      tag.color,
+                                      tag.color
                                     )}
                                   />
-                                  {tag.label}
+                                  {tag.name}
                                 </Badge>
                               ))
                             ) : (
@@ -150,28 +156,28 @@ export function FormTags({
                         <CommandList className="w-full">
                           <CommandEmpty>No tag found.</CommandEmpty>
                           <CommandGroup>
-                            {monitorTags.map((tag) => (
+                            {tags?.map((tag) => (
                               <CommandItem
-                                value={tag.label}
-                                key={tag.value}
+                                value={tag.name}
+                                key={tag.id}
                                 onSelect={() => {
                                   if (
                                     field.value
-                                      .map((tag) => tag.value)
-                                      ?.includes(tag.value)
+                                      .map((tag) => tag.id)
+                                      ?.includes(tag.id)
                                   ) {
                                     form.setValue(
                                       "tags",
                                       field.value.filter(
-                                        (value) => value.value !== tag.value,
-                                      ),
+                                        (value) => value.id !== tag.id
+                                      )
                                     );
                                   } else {
                                     form.setValue("tags", [
                                       ...(field.value ?? []),
                                       {
-                                        value: tag.value,
-                                        label: tag.label,
+                                        id: tag.id,
+                                        name: tag.name,
                                         color: tag.color,
                                       },
                                     ]);
@@ -181,18 +187,18 @@ export function FormTags({
                                 <div
                                   className={cn(
                                     "mr-2 h-4 w-4 rounded-full",
-                                    tag.color,
+                                    tag.color
                                   )}
                                 />
-                                {tag.label}
+                                {tag.name}
                                 <Check
                                   className={cn(
                                     "ml-auto h-4 w-4",
                                     field.value
-                                      ?.map((tag) => tag.value)
-                                      ?.includes(tag.value)
+                                      ?.map((tag) => tag.id)
+                                      ?.includes(tag.id)
                                       ? "opacity-100"
-                                      : "opacity-0",
+                                      : "opacity-0"
                                   )}
                                 />
                               </CommandItem>

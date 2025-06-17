@@ -46,6 +46,11 @@ export function FormMonitorUpdate() {
       onSuccess: () => refetch(),
     })
   );
+  const updateTagsMutation = useMutation(
+    trpc.monitor.updateTags.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
 
   if (!monitor) return null;
 
@@ -65,7 +70,17 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormTags />
+      <FormTags
+        defaultValues={{
+          tags: monitor.tags,
+        }}
+        onSubmit={async (values) => {
+          await updateTagsMutation.mutateAsync({
+            id: parseInt(id),
+            tags: values.tags.map((tag) => tag.id),
+          });
+        }}
+      />
       <FormSchedulingRegions
         defaultValues={{
           regions: monitor.regions,
