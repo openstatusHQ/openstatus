@@ -112,8 +112,8 @@ export const cardConfig = {
         catchline: "No ClickOps",
         description: (
           <p>
-            Never leave your terminal. Use your config file to manage your
-            monitors.{" "}
+            Never leave your terminal. Use your config file to manage or trigger
+            your monitors.{" "}
             <a
               className="text-foreground"
               href="https://docs.openstatus.dev/cli/getting-started/"
