@@ -118,6 +118,7 @@ export const cardConfig = {
               className="text-foreground"
               href="https://docs.openstatus.dev/cli/getting-started/"
               target="_blank"
+              rel="noreferrer"
             >
               Learn more
             </a>

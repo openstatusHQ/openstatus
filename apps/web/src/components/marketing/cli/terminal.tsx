@@ -4,7 +4,7 @@ import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import { Button } from "@openstatus/ui";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import React from "react";
+import type React from "react";
 
 const command = "brew tap openstatusHQ/cli";
 
@@ -20,7 +20,7 @@ export function Terminal({ className, ...props }: React.ComponentProps<"pre">) {
       <pre
         className={cn(
           "bg-muted/50 w-full rounded-lg px-4 py-2 flex items-center gap-2 border",
-          className
+          className,
         )}
         {...props}
       >
