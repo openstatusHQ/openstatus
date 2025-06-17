@@ -20,7 +20,7 @@ export function Terminal({ className, ...props }: React.ComponentProps<"pre">) {
       <pre
         className={cn(
           "bg-muted/50 w-full rounded-lg px-4 py-2 flex items-center gap-2 border",
-          className
+          className,
         )}
         {...props}
       >
