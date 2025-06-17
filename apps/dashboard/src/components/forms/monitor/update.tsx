@@ -41,13 +41,30 @@ export function FormMonitorUpdate() {
       onSuccess: () => refetch(),
     })
   );
+  const updateResponseTimeMutation = useMutation(
+    trpc.monitor.updateResponseTime.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
 
   if (!monitor) return null;
 
   return (
     <FormCardGroup>
       <FormGeneral />
-      <FormResponseTime />
+      <FormResponseTime
+        defaultValues={{
+          timeout: monitor.timeout,
+          degradedAfter: monitor.degradedAfter ?? undefined,
+        }}
+        onSubmit={async (values) => {
+          await updateResponseTimeMutation.mutateAsync({
+            id: parseInt(id),
+            timeout: values.timeout,
+            degradedAfter: values.degradedAfter ?? undefined,
+          });
+        }}
+      />
       <FormTags />
       <FormSchedulingRegions
         defaultValues={{

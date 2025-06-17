@@ -981,4 +981,26 @@ export const monitorRouter = createTRPCRouter({
         .where(and(...whereConditions))
         .run();
     }),
+
+  updateResponseTime: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        timeout: z.number(),
+        degradedAfter: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({ timeout: input.timeout, degradedAfter: input.degradedAfter })
+        .where(and(...whereConditions))
+        .run();
+    }),
 });

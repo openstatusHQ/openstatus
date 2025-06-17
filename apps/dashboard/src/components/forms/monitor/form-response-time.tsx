@@ -30,8 +30,8 @@ const DEGRADED = 30_000;
 const TIMEOUT = 45_000;
 
 const schema = z.object({
-  degraded: z.number(),
-  timeout: z.number(),
+  degradedAfter: z.coerce.number().optional(),
+  timeout: z.coerce.number(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -47,7 +47,7 @@ export function FormResponseTime({
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      degraded: DEGRADED,
+      degradedAfter: DEGRADED,
       timeout: TIMEOUT,
     },
   });
@@ -85,7 +85,7 @@ export function FormResponseTime({
           <FormCardContent className="grid gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
-              name="degraded"
+              name="degradedAfter"
               render={({ field }) => (
                 <FormItem className="self-start">
                   <FormLabel>Degraded (in ms.)</FormLabel>
