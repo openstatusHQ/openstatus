@@ -1,4 +1,5 @@
 import type { ValidIcon } from "@/components/icons";
+import { Terminal } from "@/components/marketing/cli/terminal";
 
 export type Feature = {
   icon: ValidIcon;
@@ -99,6 +100,29 @@ export const cardConfig = {
         catchline: "Get alerted.",
         description:
           "Get notified via Email, SMS, Slack, Discord,... before your users do.",
+      },
+    ],
+  },
+  cli: {
+    icon: "terminal",
+    title: "CLI",
+    features: [
+      {
+        icon: "sparkles",
+        catchline: "No ClickOps",
+        description: (
+          <p>
+            Never leave your terminal. Use your config file to manage your
+            monitors.{" "}
+            <a
+              className="text-foreground"
+              href="https://docs.openstatus.dev/cli/getting-started/"
+              target="_blank"
+            >
+              Learn more
+            </a>
+          </p>
+        ),
       },
     ],
   },
