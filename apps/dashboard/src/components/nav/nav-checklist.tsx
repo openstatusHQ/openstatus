@@ -26,17 +26,17 @@ export function NavChecklist() {
     {
       title: "Create Monitor",
       checked: hasMonitors,
-      href: "/dashboard/monitors/create",
+      href: "/monitors/create",
     },
     {
       title: "Create Status Page",
       checked: hasStatusPages,
-      href: "/dashboard/status-pages/create",
+      href: "/status-pages/create",
     },
     {
       title: "Create Notifier",
       checked: hasNotifiers,
-      href: "/dashboard/notifiers",
+      href: "/notifiers",
     },
   ];
 

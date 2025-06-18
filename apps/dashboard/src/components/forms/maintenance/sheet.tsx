@@ -44,7 +44,7 @@ export function FormSheetMaintenance({
           </FormSheetDescription>
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
-          <FormCard className="overflow-auto border-none">
+          <FormCard className="overflow-auto border-none rounded-none">
             <FormMaintenance
               monitors={monitors}
               onSubmit={async (values) => {

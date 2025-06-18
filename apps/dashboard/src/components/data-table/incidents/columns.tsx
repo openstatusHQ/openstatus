@@ -21,7 +21,7 @@ export const columns: ColumnDef<Incident>[] = [
       return (
         <TableCellLink
           value={row.getValue("monitor")}
-          href="/dashboard/monitors/overview"
+          href="/monitors/overview"
         />
       );
     },

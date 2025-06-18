@@ -34,6 +34,9 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { groupByContinent } from "@openstatus/utils";
+import { isTRPCClientError } from "@trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
@@ -51,8 +54,10 @@ export function FormSchedulingRegions({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -68,12 +73,17 @@ export function FormSchedulingRegions({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            console.error(error);
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -109,9 +119,9 @@ export function FormSchedulingRegions({
                           field.onChange(monitorPeriodicity[value[0]]);
                         }}
                         className={cn(
-                          // NOTE: used for disabled steps
-                          ["30s", "1m", "5m"].includes(watchPeriodicity) &&
-                            "[&_[data-slot=slider-range]]:bg-destructive"
+                          !workspace?.limits.periodicity.includes(
+                            watchPeriodicity
+                          ) && "[&_[data-slot=slider-range]]:bg-destructive"
                         )}
                       />
                       <span

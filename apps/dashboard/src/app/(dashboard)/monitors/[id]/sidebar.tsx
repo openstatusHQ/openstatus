@@ -127,7 +127,7 @@ export function Sidebar() {
         },
       ]}
       footerButton={{
-        onClick: () => router.push("/dashboard/monitors/logs"),
+        onClick: () => router.push("/monitors/logs"),
         children: (
           <>
             <Logs />

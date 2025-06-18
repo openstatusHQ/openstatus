@@ -36,12 +36,13 @@ import {
 import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { FormSheetMonitorTag } from "../monitor-tag/sheet";
 
 const schema = z.object({
   tags: z.array(
@@ -64,7 +65,12 @@ export function FormTags({
   onSubmit?: (values: FormValues) => Promise<void> | void;
 }) {
   const trpc = useTRPC();
-  const { data: tags } = useQuery(trpc.monitorTag.list.queryOptions());
+  const { data: tags, refetch } = useQuery(trpc.monitorTag.list.queryOptions());
+  const syncTagsMutation = useMutation(
+    trpc.monitorTag.syncTags.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -97,7 +103,11 @@ export function FormTags({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(submitAction)} {...props}>
+      <form
+        onSubmit={form.handleSubmit(submitAction)}
+        id="monitor-tags-form"
+        {...props}
+      >
         <FormCard>
           <FormCardHeader>
             <FormCardTitle>Tags</FormCardTitle>
@@ -132,10 +142,8 @@ export function FormTags({
                                   className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1"
                                 >
                                   <div
-                                    className={cn(
-                                      "size-2.5 rounded-full",
-                                      tag.color
-                                    )}
+                                    className={cn("size-2.5 rounded-full")}
+                                    style={{ backgroundColor: tag.color }}
                                   />
                                   {tag.name}
                                 </Badge>
@@ -185,10 +193,8 @@ export function FormTags({
                                 }}
                               >
                                 <div
-                                  className={cn(
-                                    "mr-2 h-4 w-4 rounded-full",
-                                    tag.color
-                                  )}
+                                  className={cn("mr-2 h-4 w-4 rounded-full")}
+                                  style={{ backgroundColor: tag.color }}
                                 />
                                 {tag.name}
                                 <Check
@@ -212,12 +218,30 @@ export function FormTags({
                 </FormItem>
               )}
             />
+            <div className="flex items-end">
+              <FormSheetMonitorTag
+                onSubmit={async (values) => {
+                  await syncTagsMutation.mutateAsync(values.tags);
+                }}
+                defaultValues={{
+                  tags: tags.map((tag) => ({
+                    id: tag.id,
+                    name: tag.name,
+                    color: tag.color,
+                  })),
+                }}
+              >
+                <Button variant="outline" size="sm">
+                  Edit tags
+                </Button>
+              </FormSheetMonitorTag>
+            </div>
           </FormCardContent>
           <FormCardFooter>
             <FormCardFooterInfo>
               Learn more about <Link href="#">tags</Link> and how to use them.
             </FormCardFooterInfo>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" form="monitor-tags-form" disabled={isPending}>
               {isPending ? "Submitting..." : "Submit"}
             </Button>
           </FormCardFooter>

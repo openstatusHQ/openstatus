@@ -47,14 +47,6 @@ export function NavMonitors() {
   const { data: monitors, isLoading } = useQuery(
     trpc.monitor.list.queryOptions()
   );
-  const actions = getActions({
-    edit: () => router.push("/dashboard/monitors/edit"),
-    "copy-id": () => {
-      navigator.clipboard.writeText("ID");
-      toast.success("Monitor ID copied to clipboard");
-    },
-    export: () => setOpenDialog(true),
-  });
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -77,7 +69,7 @@ export function NavMonitors() {
                 <SidebarMenuAction
                   className="relative top-0 right-0 border"
                   onClick={() => {
-                    router.push("/dashboard/monitors/create");
+                    router.push("/monitors/create");
                     setOpenMobile(false);
                   }}
                 >
@@ -100,6 +92,14 @@ export function NavMonitors() {
         ) : monitors && monitors.length > 0 ? (
           monitors.map((item) => {
             const isActive = pathname.startsWith(`/monitors/${item.id}`);
+            const actions = getActions({
+              edit: () => router.push(`/monitors/${item.id}/edit`),
+              "copy-id": () => {
+                navigator.clipboard.writeText("ID");
+                toast.success("Monitor ID copied to clipboard");
+              },
+              export: () => setOpenDialog(true),
+            });
             return (
               <SidebarMenuItem key={item.name}>
                 <SidebarMenuButton

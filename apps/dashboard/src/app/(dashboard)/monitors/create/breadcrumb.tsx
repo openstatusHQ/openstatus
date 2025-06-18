@@ -9,7 +9,7 @@ export function Breadcrumb() {
         {
           type: "link",
           label: "Monitors",
-          href: "/dashboard/monitors",
+          href: "/monitors",
         },
         { type: "page", label: "Create Monitor" },
       ]}

@@ -3,23 +3,22 @@
 import { ExportCodeDialog } from "@/components/dialogs/export-code";
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/monitors.client";
+import { RouterOutputs } from "@openstatus/api";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-interface DataTableRowActionsProps<TData> {
-  row?: Row<TData>;
+type Monitor = RouterOutputs["monitor"]["list"][number];
+interface DataTableRowActionsProps {
+  row: Row<Monitor>;
 }
 
-export function DataTableRowActions<TData>(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _props: DataTableRowActionsProps<TData>,
-) {
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();
   const actions = getActions({
-    edit: () => router.push("/dashboard/monitors/edit"),
+    edit: () => router.push(`/monitors/edit/${row.original.id}`),
     "copy-id": () => {
       navigator.clipboard.writeText("ID");
       toast.success("Monitor ID copied to clipboard");
