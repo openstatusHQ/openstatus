@@ -19,11 +19,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
 
 const schema = z.object({
   name: z.string(),
   provider: z.literal("webhook"),
-  data: z.string(),
+  data: z.record(z.string(), z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,7 +43,10 @@ export function FormWebhook({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "webhook",
-      data: "",
+      data: {
+        endpoint: "",
+        // headers: []
+      },
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -56,8 +60,13 @@ export function FormWebhook({
         onSubmit?.(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -91,7 +100,7 @@ export function FormWebhook({
         />
         <FormField
           control={form.control}
-          name="data"
+          name="data.endpoint"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

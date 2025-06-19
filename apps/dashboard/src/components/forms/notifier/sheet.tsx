@@ -49,7 +49,6 @@ export function FormSheetNotifier({
                   id={`notifier-form-${provider}`}
                   className="my-4"
                   onSubmit={async (values) => {
-                    // @ts-expect-error - defaultValues is not defined in the form component
                     await onSubmit?.(values);
                     setOpen(false);
                   }}

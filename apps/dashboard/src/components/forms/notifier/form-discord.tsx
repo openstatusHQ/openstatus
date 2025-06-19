@@ -19,11 +19,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
 
 const schema = z.object({
   name: z.string(),
   provider: z.literal("discord"),
-  data: z.string(),
+  data: z.record(z.string(), z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -35,14 +36,16 @@ export function FormDiscord({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
       provider: "discord",
-      data: "",
+      data: {
+        discord: "",
+      },
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -52,12 +55,16 @@ export function FormDiscord({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -91,7 +98,7 @@ export function FormDiscord({
         />
         <FormField
           control={form.control}
-          name="data"
+          name="data.discord"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

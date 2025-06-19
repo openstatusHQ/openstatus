@@ -19,10 +19,12 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
+
 const schema = z.object({
   name: z.string(),
   provider: z.literal("slack"),
-  data: z.string(),
+  data: z.record(z.string(), z.string()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -34,14 +36,16 @@ export function FormSlack({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
       provider: "slack",
-      data: "",
+      data: {
+        slack: "",
+      },
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -51,12 +55,16 @@ export function FormSlack({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -90,7 +98,7 @@ export function FormSlack({
         />
         <FormField
           control={form.control}
-          name="data"
+          name="data.slack"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>
