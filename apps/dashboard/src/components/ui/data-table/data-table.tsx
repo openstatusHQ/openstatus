@@ -34,7 +34,7 @@ import type { DataTableToolbarProps } from "./data-table-toobar";
 export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  rowComponent?: React.ReactNode;
+  rowComponent?: React.ComponentType<{ row: Row<TData> }>;
   toolbarComponent?: React.ComponentType<DataTableToolbarProps<TData>>;
   actionBar?: React.ComponentType<DataTableActionBarProps<TData>>;
   paginationComponent?: React.ComponentType<DataTablePaginationProps<TData>>;
@@ -125,7 +125,7 @@ export function DataTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext(),
+                          header.getContext()
                         )}
                   </TableHead>
                 );
@@ -151,7 +151,7 @@ export function DataTable<TData, TValue>({
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext(),
+                        cell.getContext()
                       )}
                     </TableCell>
                   ))}
@@ -162,7 +162,9 @@ export function DataTable<TData, TValue>({
                       className="p-0"
                       colSpan={row.getVisibleCells().length}
                     >
-                      {rowComponent}
+                      {rowComponent
+                        ? React.createElement(rowComponent, { row })
+                        : null}
                     </TableCell>
                   </TableRow>
                 )}

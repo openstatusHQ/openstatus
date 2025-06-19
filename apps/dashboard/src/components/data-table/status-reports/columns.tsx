@@ -43,8 +43,8 @@ export const columns: ColumnDef<StatusReport>[] = [
     },
   },
   {
-    accessorKey: "name",
-    header: "Name",
+    accessorKey: "title",
+    header: "Title",
     enableSorting: false,
     enableHiding: false,
   },

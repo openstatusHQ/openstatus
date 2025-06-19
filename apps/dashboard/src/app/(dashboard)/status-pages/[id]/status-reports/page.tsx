@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Section,
   SectionDescription,
@@ -11,10 +13,25 @@ import { columns } from "@/components/data-table/status-reports/columns";
 import { FormSheetStatusReport } from "@/components/forms/status-report/sheet";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { statusReports } from "@/data/status-reports";
 import { Plus } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
+import { useParams } from "next/navigation";
 
 export default function Page() {
+  const { id } = useParams<{ id: string }>();
+  const trpc = useTRPC();
+  const { data: statusReports, refetch } = useQuery(
+    trpc.statusReport.list.queryOptions({ pageId: parseInt(id) })
+  );
+  const createStatusReportMutation = useMutation(
+    trpc.statusReport.create.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!statusReports) return null;
+
   return (
     <SectionGroup>
       <Section>
@@ -26,7 +43,18 @@ export default function Page() {
             </SectionDescription>
           </SectionHeader>
           <div>
-            <FormSheetStatusReport>
+            <FormSheetStatusReport
+              onSubmit={async (values) => {
+                await createStatusReportMutation.mutateAsync({
+                  title: values.title,
+                  status: values.status,
+                  pageId: parseInt(id),
+                  monitors: values.monitors,
+                  date: values.date,
+                  message: values.message,
+                });
+              }}
+            >
               <Button data-section="action" size="sm" variant="ghost">
                 <Plus />
                 Create Status Report
@@ -37,7 +65,9 @@ export default function Page() {
         <DataTable
           columns={columns}
           data={statusReports}
-          rowComponent={<UpdatesDataTable />}
+          rowComponent={({ row }) => (
+            <UpdatesDataTable updates={row.original.updates} />
+          )}
         />
       </Section>
     </SectionGroup>

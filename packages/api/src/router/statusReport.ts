@@ -11,6 +11,7 @@ import {
   selectStatusReportSchema,
   selectStatusReportUpdateSchema,
   statusReport,
+  statusReportStatus,
   statusReportStatusSchema,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
@@ -352,6 +353,7 @@ export const statusReportRouter = createTRPCRouter({
           })
           .optional(),
         order: z.enum(["asc", "desc"]).optional(),
+        pageId: z.number().optional(),
       })
     )
     .query(async (opts) => {
@@ -365,46 +367,134 @@ export const statusReportRouter = createTRPCRouter({
         );
       }
 
-      const query = opts.ctx.db
-        .select({
-          status_report: statusReport,
-          updates: sql<(typeof statusReportUpdate)[]>`json_group_array(
-          CASE 
-            WHEN ${statusReportUpdate.id} IS NOT NULL 
-            THEN json_object(
-              'id', ${statusReportUpdate.id},
-              'status', ${statusReportUpdate.status},
-              'date', ${statusReportUpdate.date},
-              'message', ${statusReportUpdate.message},
-              'statusReportId', ${statusReportUpdate.statusReportId},
-              'createdAt', ${statusReportUpdate.createdAt},
-              'updatedAt', ${statusReportUpdate.updatedAt}
-            )
-            ELSE NULL
-          END
-        )`,
-        })
-        .from(statusReport)
-        .leftJoin(
-          statusReportUpdate,
-          eq(statusReport.id, statusReportUpdate.statusReportId)
-        )
-        .where(and(...whereConditions))
-        .groupBy(statusReport.id);
-
-      if (opts.input?.order === "asc") {
-        query.orderBy(asc(statusReport.createdAt));
-      } else {
-        query.orderBy(desc(statusReport.createdAt));
+      if (opts.input?.pageId) {
+        whereConditions.push(eq(statusReport.pageId, opts.input.pageId));
       }
 
-      const result = await query.all();
+      const result = await opts.ctx.db.query.statusReport.findMany({
+        where: and(...whereConditions),
+        with: {
+          statusReportUpdates: true,
+          monitorsToStatusReports: { with: { monitor: true } },
+        },
+        orderBy: (statusReport) => [
+          opts.input.order === "asc"
+            ? asc(statusReport.createdAt)
+            : desc(statusReport.createdAt),
+        ],
+      });
 
-      const processedResult = result.map((report) => ({
-        ...report.status_report,
-        updates: report.updates,
-      }));
+      return selectStatusReportSchema
+        .extend({
+          updates: z.array(selectStatusReportUpdateSchema).default([]),
+          monitors: z.number().array().default([]),
+        })
+        .array()
+        .parse(
+          result.map((report) => ({
+            ...report,
+            updates: report.statusReportUpdates,
+            monitors: report.monitorsToStatusReports.map(
+              ({ monitorId }) => monitorId
+            ),
+          }))
+        );
+    }),
 
-      return processedResult;
+  create: protectedProcedure
+    .input(
+      z.object({
+        title: z.string(),
+        status: z.enum(statusReportStatus),
+        pageId: z.number(),
+        monitors: z.array(z.number()),
+        date: z.coerce.date(),
+        message: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      // TODO: send email via eailRouter.sendStatusReport
+
+      opts.ctx.db.transaction(async (tx) => {
+        const newStatusReport = await tx
+          .insert(statusReport)
+          .values({
+            workspaceId: opts.ctx.workspace.id,
+            title: opts.input.title,
+            status: opts.input.status,
+            pageId: opts.input.pageId,
+          })
+          .returning()
+          .get();
+
+        await tx
+          .insert(statusReportUpdate)
+          .values({
+            statusReportId: newStatusReport.id,
+            status: opts.input.status,
+            date: opts.input.date,
+            message: opts.input.message,
+          })
+          .returning()
+          .get();
+
+        if (opts.input.monitors.length > 0) {
+          await tx
+            .insert(monitorsToStatusReport)
+            .values(
+              opts.input.monitors.map((monitor) => ({
+                monitorId: monitor,
+                statusReportId: newStatusReport.id,
+              }))
+            )
+            .returning()
+            .get();
+        }
+      });
+    }),
+
+  updateStatus: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        monitors: z.array(z.number()),
+        title: z.string(),
+        status: z.enum(statusReportStatus),
+      })
+    )
+    .mutation(async (opts) => {
+      opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .update(statusReport)
+          .set({
+            title: opts.input.title,
+            status: opts.input.status,
+            updatedAt: new Date(),
+          })
+          .where(
+            and(
+              eq(statusReport.id, opts.input.id),
+              eq(statusReport.workspaceId, opts.ctx.workspace.id)
+            )
+          )
+          .run();
+
+        await tx
+          .delete(monitorsToStatusReport)
+          .where(eq(monitorsToStatusReport.statusReportId, opts.input.id))
+          .run();
+
+        if (opts.input.monitors.length > 0) {
+          await tx
+            .insert(monitorsToStatusReport)
+            .values(
+              opts.input.monitors.map((monitor) => ({
+                monitorId: monitor,
+                statusReportId: opts.input.id,
+              }))
+            )
+            .run();
+        }
+      });
     }),
 });

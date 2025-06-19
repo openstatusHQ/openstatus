@@ -37,6 +37,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { statusReportStatus } from "@openstatus/db/src/schema";
+import { isTRPCClientError } from "@trpc/client";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { useTransition } from "react";
@@ -45,19 +47,30 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const colors = {
-  operational: "text-success/80",
-  investigating: "text-destructive/80",
+  investigating:
+    "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
+  identified:
+    "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
+  monitoring:
+    "text-info/80 data-[state=selected]:bg-info/10 data-[state=selected]:text-info",
+  resolved:
+    "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
 };
 
 const schema = z.object({
-  status: z.enum(["operational", "investigating"]),
+  status: z.enum(statusReportStatus),
   title: z.string(),
   message: z.string(),
   date: z.date(),
   monitors: z.array(z.number()),
 });
 
-export type FormValues = z.infer<typeof schema>;
+const updateSchema = schema.omit({
+  message: true,
+  date: true,
+});
+
+export type FormValues = z.infer<typeof schema> | z.infer<typeof updateSchema>;
 
 export function FormStatusReport({
   defaultValues,
@@ -66,12 +79,13 @@ export function FormStatusReport({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
+  monitors: { id: number; name: string }[];
 }) {
   const form = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(defaultValues ? updateSchema : schema),
     defaultValues: defaultValues ?? {
-      status: "operational",
+      status: "investigating",
       title: "",
       message: "",
       date: new Date(),
@@ -86,12 +100,16 @@ export function FormStatusReport({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -136,15 +154,23 @@ export function FormStatusReport({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger
-                      className={cn(colors[field.value], "font-mono")}
+                      className={cn(
+                        colors[field.value],
+                        "font-mono capitalize"
+                      )}
                     >
                       <SelectValue placeholder="Select a status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="operational">Operational</SelectItem>
-                      <SelectItem value="investigating">
-                        Investigating
-                      </SelectItem>
+                      {statusReportStatus.map((status) => (
+                        <SelectItem
+                          key={status}
+                          value={status}
+                          className={cn("capitalize font-mono", colors[status])}
+                        >
+                          {status}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -153,111 +179,115 @@ export function FormStatusReport({
             )}
           />
         </FormCardContent>
-        <FormCardSeparator />
-        <FormCardContent>
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel>Date</FormLabel>
-                <Popover modal>
-                  <FormControl>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
-                        )}
-                      >
-                        {field.value ? (
-                          format(field.value, "PPP")
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                  </FormControl>
-                  <PopoverContent
-                    className="pointer-events-auto w-auto p-0"
-                    align="start"
-                    side="left"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
-                      disabled={(date) =>
-                        date > new Date() || date < new Date("1900-01-01")
-                      }
-                      initialFocus
-                    />
-                    <div className="border-t p-3">
-                      <div className="flex items-center gap-3">
-                        <Label htmlFor="time" className="text-xs">
-                          Enter time
-                        </Label>
-                        <div className="relative grow">
-                          <Input
-                            id="time"
-                            type="time"
-                            step="1"
-                            defaultValue="12:00:00"
-                            className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
-                          />
-                          <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
-                            <ClockIcon size={16} aria-hidden="true" />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <FormDescription>
-                  When the status report was created.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </FormCardContent>
-        <FormCardSeparator />
-        <FormCardContent>
-          <Tabs defaultValue="tab-1">
-            <TabsList>
-              <TabsTrigger value="tab-1">Writing</TabsTrigger>
-              <TabsTrigger value="tab-2">Preview</TabsTrigger>
-            </TabsList>
-            <TabsContent value="tab-1">
+        {!defaultValues ? (
+          <>
+            <FormCardSeparator />
+            <FormCardContent>
               <FormField
                 control={form.control}
-                name="message"
+                name="date"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Message</FormLabel>
-                    <FormControl>
-                      <Textarea rows={6} {...field} />
-                    </FormControl>
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Date</FormLabel>
+                    <Popover modal>
+                      <FormControl>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                      </FormControl>
+                      <PopoverContent
+                        className="pointer-events-auto w-auto p-0"
+                        align="start"
+                        side="left"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date() || date < new Date("1900-01-01")
+                          }
+                          initialFocus
+                        />
+                        <div className="border-t p-3">
+                          <div className="flex items-center gap-3">
+                            <Label htmlFor="time" className="text-xs">
+                              Enter time
+                            </Label>
+                            <div className="relative grow">
+                              <Input
+                                id="time"
+                                type="time"
+                                step="1"
+                                defaultValue="12:00:00"
+                                className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                              />
+                              <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
+                                <ClockIcon size={16} aria-hidden="true" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                      When the status report was created.
+                    </FormDescription>
                     <FormMessage />
-                    <FormDescription>Markdown support</FormDescription>
                   </FormItem>
                 )}
               />
-            </TabsContent>
-            <TabsContent value="tab-2">
-              <div className="grid gap-2">
-                <Label>Preview</Label>
-                <p className="rounded-md border px-3 py-2 text-foreground text-sm">
-                  {watchMessage}
-                </p>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </FormCardContent>
+            </FormCardContent>
+            <FormCardSeparator />
+            <FormCardContent>
+              <Tabs defaultValue="tab-1">
+                <TabsList>
+                  <TabsTrigger value="tab-1">Writing</TabsTrigger>
+                  <TabsTrigger value="tab-2">Preview</TabsTrigger>
+                </TabsList>
+                <TabsContent value="tab-1">
+                  <FormField
+                    control={form.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea rows={6} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        <FormDescription>Markdown support</FormDescription>
+                      </FormItem>
+                    )}
+                  />
+                </TabsContent>
+                <TabsContent value="tab-2">
+                  <div className="grid gap-2">
+                    <Label>Preview</Label>
+                    <p className="rounded-md border px-3 py-2 text-foreground text-sm">
+                      {watchMessage}
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </FormCardContent>
+          </>
+        ) : null}
         <FormCardSeparator />
         <FormCardContent>
           <FormField
@@ -277,7 +307,7 @@ export function FormStatusReport({
                         checked={field.value?.length === monitors.length}
                         onCheckedChange={(checked) => {
                           field.onChange(
-                            checked ? monitors.map((m) => m.id) : [],
+                            checked ? monitors.map((m) => m.id) : []
                           );
                         }}
                       />

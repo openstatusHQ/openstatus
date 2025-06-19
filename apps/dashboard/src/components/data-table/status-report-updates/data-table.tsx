@@ -11,19 +11,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { icons } from "@/data/icons";
-import { statusReports } from "@/data/status-reports";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { RouterOutputs } from "@openstatus/api";
 
 const colors = {
-  operational: "text-success/80",
   investigating: "text-destructive/80",
+  identified: "text-warning/80",
+  monitoring: "text-info/80",
+  resolved: "text-success/80",
 };
 
-// TODO: move to columns.tsx and use tanstack table
+type StatusReportUpdates =
+  RouterOutputs["statusReport"]["list"][number]["updates"];
 
-export function DataTable() {
+export function DataTable({ updates }: { updates: StatusReportUpdates }) {
   return (
     <Table className="w-full">
       <TableHeader>
@@ -48,7 +51,7 @@ export function DataTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {statusReports[0].updates.map((update) => {
+        {updates.map((update) => {
           const Icon = icons.status[update.status];
           return (
             <TableRow key={update.id}>
