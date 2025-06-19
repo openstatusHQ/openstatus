@@ -25,7 +25,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -39,24 +39,19 @@ export function NavStatusPages() {
   const { isMobile, setOpenMobile } = useSidebar();
   const pathname = usePathname();
   const trpc = useTRPC();
+  const router = useRouter();
   const {
     data: statusPages,
     refetch,
     isLoading,
   } = useQuery(trpc.page.list.queryOptions());
-  const queryClient = useQueryClient();
   const deleteStatusPage = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
         refetch();
-        // NOTE: invalidate workspace to update the usage
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
-        });
       },
     })
   );
-  const router = useRouter();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -146,6 +141,9 @@ export function NavStatusPages() {
                     confirmationValue: "delete status page",
                     submitAction: async () => {
                       await deleteStatusPage.mutateAsync({ id: item.id });
+                      if (pathname.includes(`/status-pages/${item.id}`)) {
+                        router.push("/status-pages");
+                      }
                     },
                   }}
                   side={isMobile ? "bottom" : "right"}

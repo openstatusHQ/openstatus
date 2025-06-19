@@ -11,14 +11,30 @@ import {
 } from "@/components/ui/tooltip";
 import { getActions } from "@/data/monitors.client";
 import { Zap } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc/client";
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
   const [openDialog, setOpenDialog] = useState(false);
+  const queryClient = useQueryClient();
+  const trpc = useTRPC();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const deleteMonitorMutation = useMutation(
+    trpc.monitor.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(trpc.monitor.list.queryKey());
+        if (pathname.includes(`/monitors/${id}`)) {
+          router.push("/monitors");
+        }
+      },
+    })
+  );
 
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
@@ -68,6 +84,9 @@ export function NavActions() {
         deleteAction={{
           title: "Monitor",
           confirmationValue: "delete monitor",
+          submitAction: async () => {
+            await deleteMonitorMutation.mutateAsync({ id: parseInt(id) });
+          },
         }}
       />
       <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
