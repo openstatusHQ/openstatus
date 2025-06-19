@@ -29,8 +29,9 @@ export default function Page() {
       onSuccess: () => refetch(),
     })
   );
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
 
-  if (!statusReports) return null;
+  if (!statusReports || !monitors) return null;
 
   return (
     <SectionGroup>
@@ -44,15 +45,20 @@ export default function Page() {
           </SectionHeader>
           <div>
             <FormSheetStatusReport
+              monitors={monitors}
               onSubmit={async (values) => {
-                await createStatusReportMutation.mutateAsync({
-                  title: values.title,
-                  status: values.status,
-                  pageId: parseInt(id),
-                  monitors: values.monitors,
-                  date: values.date,
-                  message: values.message,
-                });
+                // NOTE: for type safety, we need to check if the values have a date property
+                // because of the union type
+                if ("date" in values) {
+                  await createStatusReportMutation.mutateAsync({
+                    title: values.title,
+                    status: values.status,
+                    pageId: parseInt(id),
+                    monitors: values.monitors,
+                    date: values.date,
+                    message: values.message,
+                  });
+                }
               }}
             >
               <Button data-section="action" size="sm" variant="ghost">
@@ -66,7 +72,10 @@ export default function Page() {
           columns={columns}
           data={statusReports}
           rowComponent={({ row }) => (
-            <UpdatesDataTable updates={row.original.updates} />
+            <UpdatesDataTable
+              updates={row.original.updates}
+              reportId={row.original.id}
+            />
           )}
         />
       </Section>

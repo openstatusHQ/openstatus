@@ -6,7 +6,6 @@ import {
   FormSheetContent,
   FormSheetDescription,
   FormSheetFooter,
-  FormSheetFooterInfo,
   FormSheetHeader,
   FormSheetTitle,
   FormSheetTrigger,
@@ -21,8 +20,10 @@ import { useState } from "react";
 export function FormSheetStatusReportUpdate({
   children,
   defaultValues,
-}: React.ComponentProps<typeof FormSheetTrigger> & {
+  onSubmit,
+}: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -40,17 +41,15 @@ export function FormSheetStatusReportUpdate({
             <FormStatusReportUpdate
               id="status-report-update-form"
               className="my-4"
-              onSubmit={() => setOpen(false)}
+              onSubmit={async (values) => {
+                await onSubmit(values);
+                setOpen(false);
+              }}
               defaultValues={defaultValues}
             />
           </FormCard>
         </FormCardGroup>
         <FormSheetFooter>
-          {defaultValues ? (
-            <FormSheetFooterInfo>
-              Last Updated <time>{defaultValues.date.toLocaleString()}</time>
-            </FormSheetFooterInfo>
-          ) : null}
           <Button type="submit" form="status-report-update-form">
             Submit
           </Button>

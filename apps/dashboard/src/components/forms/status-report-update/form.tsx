@@ -32,20 +32,18 @@ import { Tabs } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { statusReportStatus } from "@openstatus/db/src/schema";
 import { format } from "date-fns";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-const colors = {
-  operational: "text-success/80",
-  investigating: "text-destructive/80",
-};
+import { colors } from "@/data/status-report-updates.client";
+import { isTRPCClientError } from "@trpc/client";
 
 const schema = z.object({
-  status: z.enum(["operational", "investigating"]),
+  status: z.enum(statusReportStatus),
   message: z.string(),
   date: z.date(),
 });
@@ -59,12 +57,12 @@ export function FormStatusReportUpdate({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      status: "operational",
+      status: "identified",
       message: "",
       date: new Date(),
     },
@@ -77,12 +75,16 @@ export function FormStatusReportUpdate({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -111,15 +113,23 @@ export function FormStatusReportUpdate({
                     onValueChange={field.onChange}
                   >
                     <SelectTrigger
-                      className={cn(colors[field.value], "font-mono")}
+                      className={cn(
+                        colors[field.value],
+                        "font-mono capitalize"
+                      )}
                     >
                       <SelectValue placeholder="Select a status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="operational">Operational</SelectItem>
-                      <SelectItem value="investigating">
-                        Investigating
-                      </SelectItem>
+                      {statusReportStatus.map((status) => (
+                        <SelectItem
+                          key={status}
+                          value={status}
+                          className={cn(colors[status], "font-mono capitalize")}
+                        >
+                          {status}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -145,7 +155,7 @@ export function FormStatusReportUpdate({
                         size="sm"
                         className={cn(
                           "w-[240px] pl-3 text-left font-normal",
-                          !field.value && "text-muted-foreground",
+                          !field.value && "text-muted-foreground"
                         )}
                       >
                         {field.value ? (

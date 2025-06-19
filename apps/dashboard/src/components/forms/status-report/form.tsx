@@ -45,17 +45,7 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-
-const colors = {
-  investigating:
-    "text-destructive/80 data-[state=selected]:bg-destructive/10 data-[state=selected]:text-destructive",
-  identified:
-    "text-warning/80 data-[state=selected]:bg-warning/10 data-[state=selected]:text-warning",
-  monitoring:
-    "text-info/80 data-[state=selected]:bg-info/10 data-[state=selected]:text-info",
-  resolved:
-    "text-success/80 data-[state=selected]:bg-success/10 data-[state=selected]:text-success",
-};
+import { colors } from "@/data/status-report-updates.client";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),

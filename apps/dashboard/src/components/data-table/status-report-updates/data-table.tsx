@@ -15,18 +15,34 @@ import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
 import { RouterOutputs } from "@openstatus/api";
-
-const colors = {
-  investigating: "text-destructive/80",
-  identified: "text-warning/80",
-  monitoring: "text-info/80",
-  resolved: "text-success/80",
-};
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { colors } from "@/data/status-report-updates.client";
 
 type StatusReportUpdates =
   RouterOutputs["statusReport"]["list"][number]["updates"];
 
-export function DataTable({ updates }: { updates: StatusReportUpdates }) {
+export function DataTable({
+  updates,
+  reportId,
+}: {
+  updates: StatusReportUpdates;
+  reportId: number;
+}) {
+  const trpc = useTRPC();
+  const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
+  const createStatusReportUpdateMutation = useMutation(
+    trpc.statusReport.createStatusReportUpdate.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+        });
+      },
+    })
+  );
+
   return (
     <Table className="w-full">
       <TableHeader>
@@ -37,7 +53,16 @@ export function DataTable({ updates }: { updates: StatusReportUpdates }) {
           <TableHead>Message</TableHead>
           <TableHead>Date</TableHead>
           <TableHead className="w-[px]">
-            <FormSheetStatusReportUpdate>
+            <FormSheetStatusReportUpdate
+              onSubmit={async (values) => {
+                await createStatusReportUpdateMutation.mutateAsync({
+                  statusReportId: reportId,
+                  message: values.message,
+                  status: values.status,
+                  date: values.date,
+                });
+              }}
+            >
               <Button
                 variant="ghost"
                 size="icon"
@@ -67,7 +92,7 @@ export function DataTable({ updates }: { updates: StatusReportUpdates }) {
                 {update.date.toLocaleString()}
               </TableCell>
               <TableCell className="w-8">
-                <DataTableRowActions />
+                <DataTableRowActions row={update} />
               </TableCell>
             </TableRow>
           );

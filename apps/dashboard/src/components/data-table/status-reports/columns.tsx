@@ -7,6 +7,8 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import type { ColumnDef } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { colors } from "@/data/status-report-updates.client";
+import { cn } from "@/lib/utils";
 
 import type { RouterOutputs } from "@openstatus/api";
 
@@ -52,12 +54,17 @@ export const columns: ColumnDef<StatusReport>[] = [
     accessorKey: "status",
     header: "Current Status",
     cell: ({ row }) => {
-      // TODO: add more colors for other statuses
       const value = String(row.getValue("status"));
-      if (value === "resolved") {
-        return <div className="font-mono text-success">{value}</div>;
-      }
-      return <div className="font-mono text-muted-foreground">{value}</div>;
+      return (
+        <div
+          className={cn(
+            "font-mono capitalize",
+            colors[value as keyof typeof colors]
+          )}
+        >
+          {value}
+        </div>
+      );
     },
     enableSorting: false,
     enableHiding: false,
