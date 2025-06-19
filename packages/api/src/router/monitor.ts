@@ -11,6 +11,7 @@ import {
 import {
   and,
   asc,
+  count,
   desc,
   eq,
   inArray,
@@ -23,6 +24,8 @@ import {
   insertMonitorSchema,
   maintenancesToMonitors,
   monitor,
+  monitorJobTypes,
+  monitorMethods,
   monitorTag,
   monitorTagsToMonitors,
   monitorsToPages,
@@ -1043,5 +1046,92 @@ export const monitorRouter = createTRPCRouter({
           );
         }
       });
+    }),
+
+  updateGeneral: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        jobType: z.enum(monitorJobTypes),
+        url: z.string(),
+        method: z.enum(monitorMethods),
+        headers: z.array(z.object({ key: z.string(), value: z.string() })),
+        body: z.string().optional(),
+        name: z.string(),
+        // assertions: z.array(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, input.id),
+        eq(monitor.workspaceId, ctx.workspace.id),
+        isNull(monitor.deletedAt),
+      ];
+
+      await ctx.db
+        .update(monitor)
+        .set({
+          name: input.name,
+          jobType: input.jobType,
+          url: input.url,
+          method: input.method,
+          headers: input.headers ? JSON.stringify(input.headers) : undefined,
+          body: input.body,
+          // assertions: input.assertions,
+        })
+        .where(and(...whereConditions))
+        .run();
+    }),
+
+  new: protectedProcedure
+    .input(
+      z.object({
+        name: z.string(),
+        jobType: z.enum(monitorJobTypes),
+        url: z.string(),
+        method: z.enum(monitorMethods),
+        headers: z.array(z.object({ key: z.string(), value: z.string() })),
+        body: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const limits = ctx.workspace.limits;
+
+      const res = await ctx.db
+        .select({ count: count() })
+        .from(monitor)
+        .where(
+          and(
+            eq(monitor.workspaceId, ctx.workspace.id),
+            isNull(monitor.deletedAt)
+          )
+        )
+        .get();
+
+      // the user has reached the limits
+      if (res && res.count >= limits.monitors) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your monitor limits.",
+        });
+      }
+
+      const newMonitor = await ctx.db
+        .insert(monitor)
+        .values({
+          name: input.name,
+          jobType: input.jobType,
+          url: input.url,
+          method: input.method,
+          headers: input.headers ? JSON.stringify(input.headers) : undefined,
+          body: input.body,
+          workspaceId: ctx.workspace.id,
+          periodicity: "30m",
+          regions: "fra", // TODO: add default regions
+        })
+        .returning()
+        .get();
+
+      return newMonitor;
     }),
 });

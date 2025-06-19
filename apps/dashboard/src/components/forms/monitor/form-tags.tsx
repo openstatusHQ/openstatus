@@ -251,7 +251,7 @@ export function FormTags({
                 }}
               >
                 <Button variant="outline" size="sm">
-                  Edit tags
+                  Edit Tags
                 </Button>
               </FormSheetMonitorTag>
             </div>

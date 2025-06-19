@@ -54,10 +54,24 @@ export function FormMonitorUpdate() {
     })
   );
 
+  const updateGeneralMutation = useMutation(
+    trpc.monitor.updateGeneral.mutationOptions({
+      onSuccess: () => {
+        // NOTE: invalidate the list query to update the monitor in the list (especially the name)
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
+        refetch();
+      },
+    })
+  );
+
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.monitor.list.queryKey());
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
         router.push("/monitors");
       },
     })
@@ -67,7 +81,29 @@ export function FormMonitorUpdate() {
 
   return (
     <FormCardGroup>
-      <FormGeneral />
+      <FormGeneral
+        defaultValues={{
+          type: monitor.jobType as "http" | "tcp",
+          url: monitor.url,
+          name: monitor.name,
+          method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+          headers: monitor.headers ?? [],
+          body: monitor.body,
+          assertions: [],
+        }}
+        onSubmit={async (values) => {
+          await updateGeneralMutation.mutateAsync({
+            id: parseInt(id),
+            name: values.name,
+            jobType: values.type,
+            url: values.url,
+            method: values.method,
+            headers: values.headers,
+            body: values.body,
+            // assertions: values.assertions,
+          });
+        }}
+      />
       <FormResponseTime
         defaultValues={{
           timeout: monitor.timeout,

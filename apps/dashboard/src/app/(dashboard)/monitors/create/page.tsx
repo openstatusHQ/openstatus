@@ -1,3 +1,5 @@
+"use client";
+
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -10,15 +12,44 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormGeneral } from "@/components/forms/monitor/form-general";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const createMonitorMutation = useMutation(
+    trpc.monitor.new.mutationOptions({
+      onSuccess: (data) => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
+        router.push(`/monitors/${data.id}/edit`);
+      },
+    })
+  );
+
   return (
     <SectionGroup>
       <Section>
         <SectionHeader>
           <SectionTitle>Create Monitor</SectionTitle>
         </SectionHeader>
-        <FormGeneral />
+        <FormGeneral
+          onSubmit={async (data) => {
+            await createMonitorMutation.mutateAsync({
+              name: data.name,
+              jobType: data.type,
+              url: data.url,
+              method: data.method,
+              headers: data.headers,
+              body: data.body,
+              // assertions
+            });
+          }}
+        />
       </Section>
       <Section>
         <EmptyStateContainer>

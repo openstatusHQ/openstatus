@@ -32,13 +32,14 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { Globe, Network, Plus, X } from "lucide-react";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const TYPES = ["HTTP", "TCP"] as const;
+const TYPES = ["http", "tcp"] as const;
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 const ASSERTION_TYPES = ["status", "header", "body"] as const;
 const ASSERTION_EQ = ["eq", "neq", "gt", "gte", "lt", "lte"] as const;
@@ -68,12 +69,12 @@ type FormValues = z.infer<typeof schema>;
 
 export function FormGeneral({
   defaultValues,
-  onSubmit,
   disabled,
+  onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
   const form = useForm<FormValues>({
@@ -95,14 +96,24 @@ export function FormGeneral({
   function submitAction(values: FormValues) {
     if (isPending || disabled) return;
 
+    // TODO: validate url if HTTP
+    // if (values.type === "http" && !values.url.startsWith("http")) {
+    //   form.setError("url", { message: "Please enter a valid URL" });
+    //   return;
+    // }
+
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: () => JSON.stringify(values),
-          error: "Failed to save",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -155,7 +166,7 @@ export function FormGeneral({
                     >
                       <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
                         <FormControl>
-                          <RadioGroupItem value="HTTP" className="sr-only" />
+                          <RadioGroupItem value="http" className="sr-only" />
                         </FormControl>
                         <Globe
                           className="shrink-0 text-muted-foreground"
@@ -168,7 +179,7 @@ export function FormGeneral({
                       </FormItem>
                       <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
                         <FormControl>
-                          <RadioGroupItem value="TCP" className="sr-only" />
+                          <RadioGroupItem value="tcp" className="sr-only" />
                         </FormControl>
                         <Network
                           className="shrink-0 text-muted-foreground"
@@ -190,52 +201,57 @@ export function FormGeneral({
             />
           </FormCardContent>
           {watchType ? <FormCardSeparator /> : null}
-          {watchType === "HTTP" && (
+          {watchType === "http" && (
             <>
               <FormCardContent className="grid grid-cols-4 gap-4">
-                <FormField
-                  control={form.control}
-                  name="method"
-                  render={({ field }) => (
-                    <FormItem className="col-span-1">
-                      <FormLabel>Method</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
+                <div className="col-span-1">
+                  <FormField
+                    control={form.control}
+                    name="method"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Method</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select a method" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {METHODS.map((method) => (
+                              <SelectItem key={method} value={method}>
+                                {method}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="col-span-3">
+                  <FormField
+                    control={form.control}
+                    name="url"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>URL</FormLabel>
                         <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select a method" />
-                          </SelectTrigger>
+                          <Input
+                            placeholder="https://openstatus.dev"
+                            // type="url"
+                            {...field}
+                          />
                         </FormControl>
-                        <SelectContent>
-                          {METHODS.map((method) => (
-                            <SelectItem key={method} value={method}>
-                              {method}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem className="col-span-3">
-                      <FormLabel>URL</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="https://openstatus.dev"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="headers"
@@ -441,7 +457,7 @@ export function FormGeneral({
               </FormCardContent>
             </>
           )}
-          {watchType === "TCP" && (
+          {watchType === "tcp" && (
             <FormCardContent className="grid gap-4">
               <FormField
                 control={form.control}

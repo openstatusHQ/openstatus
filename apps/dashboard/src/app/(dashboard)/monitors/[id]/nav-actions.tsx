@@ -14,7 +14,7 @@ import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function NavActions() {
@@ -28,7 +28,9 @@ export function NavActions() {
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
-        queryClient.invalidateQueries(trpc.monitor.list.queryKey());
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
         if (pathname.includes(`/monitors/${id}`)) {
           router.push("/monitors");
         }
