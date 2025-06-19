@@ -22,7 +22,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("sms"),
-  sms: z.string(),
+  data: z.string(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -41,7 +41,7 @@ export function FormSms({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "sms",
-      sms: "",
+      data: "",
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -90,7 +90,7 @@ export function FormSms({
         />
         <FormField
           control={form.control}
-          name="sms"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>SMS</FormLabel>

@@ -22,7 +22,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("slack"),
-  webhookUrl: z.string(),
+  data: z.string(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -41,7 +41,7 @@ export function FormSlack({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "slack",
-      webhookUrl: "",
+      data: "",
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -90,7 +90,7 @@ export function FormSlack({
         />
         <FormField
           control={form.control}
-          name="webhookUrl"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

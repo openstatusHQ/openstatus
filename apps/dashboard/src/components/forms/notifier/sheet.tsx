@@ -15,19 +15,22 @@ import {
   FormSheetTrigger,
 } from "@/components/forms/form-sheet";
 import { Button } from "@/components/ui/button";
-import { type NotifierProvider, config } from "@/data/notifiers.client";
+import { config } from "@/data/notifiers.client";
 import { useState } from "react";
 import type { FormValues } from "./form";
 
 export function FormSheetNotifier({
   children,
-  id,
-}: React.ComponentProps<typeof FormSheetTrigger> & {
+  defaultValues,
+  provider,
+  onSubmit,
+}: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
-  id?: NotifierProvider;
+  provider: FormValues["provider"];
+  onSubmit?: (values: FormValues) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
-  const Form = id ? config[id].form : undefined;
+  const Form = provider ? config[provider].form : undefined;
   return (
     <FormSheet open={open} onOpenChange={setOpen}>
       <FormSheetTrigger asChild>{children}</FormSheetTrigger>
@@ -43,18 +46,22 @@ export function FormSheetNotifier({
             <FormCardContent>
               {Form && (
                 <Form
-                  id={`notifier-form-${id}`}
+                  id={`notifier-form-${provider}`}
                   className="my-4"
-                  onSubmit={() => setOpen(false)}
-                  // defaultValues={defaultValues}
+                  onSubmit={async (values) => {
+                    // @ts-expect-error - defaultValues is not defined in the form component
+                    await onSubmit?.(values);
+                    setOpen(false);
+                  }}
+                  // @ts-expect-error - defaultValues is not defined in the form component
+                  defaultValues={defaultValues}
                 />
               )}
             </FormCardContent>
           </FormCard>
         </FormCardGroup>
         <FormSheetFooter>
-          {/* TODO: add updatedAt footer info if defaultValues is provided */}
-          <Button type="submit" form={`notifier-form-${id}`}>
+          <Button type="submit" form={`notifier-form-${provider}`}>
             Submit
           </Button>
         </FormSheetFooter>

@@ -23,7 +23,7 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("discord"),
-  webhookUrl: z.string(),
+  data: z.string(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -42,7 +42,7 @@ export function FormDiscord({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "discord",
-      webhookUrl: "",
+      data: "",
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -91,7 +91,7 @@ export function FormDiscord({
         />
         <FormField
           control={form.control}
-          name="webhookUrl"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

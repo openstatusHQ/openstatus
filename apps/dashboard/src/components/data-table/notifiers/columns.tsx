@@ -1,9 +1,11 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import type { Notifier } from "@/data/notifiers";
 import type { ColumnDef } from "@tanstack/react-table";
 import { DataTableRowActions } from "./data-table-row-actions";
+import { RouterOutputs } from "@openstatus/api";
+
+type Notifier = RouterOutputs["notification"]["list"][number];
 
 export const columns: ColumnDef<Notifier>[] = [
   {
@@ -25,15 +27,15 @@ export const columns: ColumnDef<Notifier>[] = [
       );
     },
   },
-  {
-    accessorKey: "value",
-    header: "Value",
-    enableSorting: false,
-    enableHiding: false,
-    meta: {
-      cellClassName: "text-foreground/70",
-    },
-  },
+  // {
+  //   accessorKey: "value",
+  //   header: "Value",
+  //   enableSorting: false,
+  //   enableHiding: false,
+  //   meta: {
+  //     cellClassName: "text-foreground/70",
+  //   },
+  // },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,

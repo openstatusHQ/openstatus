@@ -7,7 +7,14 @@ import { DiscordIcon } from "@/components/icons/discord";
 import { OpsGenieIcon } from "@/components/icons/opsgenie";
 import { PagerDutyIcon } from "@/components/icons/pagerduty";
 import { SlackIcon } from "@/components/icons/slack";
-import { Mail, MessageCircle, Pencil, Trash2, Webhook } from "lucide-react";
+import {
+  BellIcon,
+  Mail,
+  MessageCircle,
+  Pencil,
+  Trash2,
+  Webhook,
+} from "lucide-react";
 
 export const actions = [
   {
@@ -27,7 +34,7 @@ export const actions = [
 export type NotifierAction = (typeof actions)[number];
 
 export const getActions = (
-  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>,
+  props: Partial<Record<NotifierAction["id"], () => Promise<void> | void>>
 ): (NotifierAction & { onClick?: () => Promise<void> | void })[] => {
   return actions.map((action) => ({
     ...action,
@@ -71,6 +78,11 @@ export const config = {
   pagerduty: {
     icon: PagerDutyIcon,
     label: "PagerDuty",
+    form: undefined,
+  },
+  ntfy: {
+    icon: BellIcon, // TODO: add svg icon
+    label: "Ntfy",
     form: undefined,
   },
 };

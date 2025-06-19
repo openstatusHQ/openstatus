@@ -22,7 +22,9 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("email"),
-  email: z.string(),
+  data: z.object({
+    email: z.string().email(),
+  }),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -34,14 +36,16 @@ export function FormEmail({
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
       provider: "email",
-      email: "",
+      data: {
+        email: "",
+      },
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -51,8 +55,7 @@ export function FormEmail({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
           success: () => JSON.stringify(values),
@@ -90,7 +93,7 @@ export function FormEmail({
         />
         <FormField
           control={form.control}
-          name="email"
+          name="data.email"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>

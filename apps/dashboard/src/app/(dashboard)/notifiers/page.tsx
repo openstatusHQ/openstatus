@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/components/common/link";
 import {
   ActionCard,
@@ -20,19 +22,30 @@ import {
 import { columns } from "@/components/data-table/notifiers/columns";
 import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
 import { DataTable } from "@/components/ui/data-table/data-table";
-import { notifiers } from "@/data/notifiers";
 import { config } from "@/data/notifiers.client";
-
-const EMPTY = true;
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 export default function Page() {
+  const trpc = useTRPC();
+  const { data: notifiers, refetch } = useQuery(
+    trpc.notification.list.queryOptions()
+  );
+  const createNotifierMutation = useMutation(
+    trpc.notification.new.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
+  if (!notifiers) return null;
+
   return (
     <SectionGroup>
       <SectionHeader>
         <SectionTitle>Notifiers</SectionTitle>
       </SectionHeader>
       <Section>
-        {EMPTY ? (
+        {notifiers.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No notifier found</EmptyStateTitle>
           </EmptyStateContainer>
@@ -53,7 +66,17 @@ export default function Page() {
             const key = notifier as keyof typeof config;
             const Icon = config[key].icon;
             return (
-              <FormSheetNotifier key={notifier} id={key}>
+              <FormSheetNotifier
+                key={notifier}
+                provider={key}
+                onSubmit={async (values) => {
+                  await createNotifierMutation.mutateAsync({
+                    provider: key,
+                    name: values.name,
+                    data: values.data,
+                  });
+                }}
+              >
                 <ActionCard className="h-full w-full cursor-pointer">
                   <ActionCardHeader>
                     <div className="flex items-center gap-2">

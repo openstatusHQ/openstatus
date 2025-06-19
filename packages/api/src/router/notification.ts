@@ -1,12 +1,14 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { and, eq, inArray } from "@openstatus/db";
+import { and, count, eq, inArray, type SQL } from "@openstatus/db";
 import {
   NotificationDataSchema,
+  NotificationProvider,
   insertNotificationSchema,
   monitor,
   notification,
+  notificationProvider,
   notificationsToMonitors,
   selectMonitorSchema,
   selectNotificationSchema,
@@ -245,4 +247,91 @@ export const notificationRouter = createTRPCRouter({
 
     return selectNotificationSchema.array().parse(notifications);
   }),
+
+  updateNotifier: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        data: z.record(z.string(), z.string()),
+      })
+    )
+    .mutation(async (opts) => {
+      const whereCondition: SQL[] = [
+        eq(notification.id, opts.input.id),
+        eq(notification.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      await opts.ctx.db
+        .update(notification)
+        .set({
+          name: opts.input.name,
+          data: JSON.stringify(opts.input.data),
+        })
+        .where(and(...whereCondition));
+    }),
+
+  new: protectedProcedure
+    .meta({ track: Events.CreateNotification })
+    .input(
+      z.object({
+        provider: z.enum(notificationProvider),
+        data: z.record(z.string(), z.string()),
+        name: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const limits = opts.ctx.workspace.limits;
+
+      const res = await opts.ctx.db
+        .select({ count: count() })
+        .from(notification)
+        .where(eq(notification.workspaceId, opts.ctx.workspace.id))
+        .get();
+
+      // the user has reached the limits
+      if (res && res.count >= limits["notification-channels"]) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You reached your notification limits.",
+        });
+      }
+
+      const limitedProviders = ["sms", "pagerduty", "opsgenie"] as const;
+      if (limitedProviders.includes(opts.input.provider as any)) {
+        const isAllowed =
+          opts.ctx.workspace.limits[
+            opts.input.provider as "sms" | "pagerduty" | "opsgenie"
+          ];
+
+        if (!isAllowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Upgrade to use the notification channel.",
+          });
+        }
+      }
+
+      const _data = NotificationDataSchema.safeParse(opts.input.data);
+
+      if (!_data.success) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: SchemaError.fromZod(_data.error, opts.input).message,
+        });
+      }
+
+      const _notification = await opts.ctx.db
+        .insert(notification)
+        .values({
+          name: opts.input.name,
+          provider: opts.input.provider,
+          data: JSON.stringify(opts.input.data),
+          workspaceId: opts.ctx.workspace.id,
+        })
+        .returning()
+        .get();
+
+      return _notification;
+    }),
 });

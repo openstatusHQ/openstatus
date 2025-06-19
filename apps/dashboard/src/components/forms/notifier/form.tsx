@@ -1,6 +1,5 @@
 "use client";
 
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -12,8 +11,6 @@ import {
 
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { monitors } from "@/data/monitors";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
@@ -23,8 +20,18 @@ import { z } from "zod";
 
 const schema = z.object({
   name: z.string(),
-  webhookUrl: z.string(),
-  monitors: z.array(z.number()),
+  provider: z.enum([
+    "slack",
+    "discord",
+    "email",
+    "sms",
+    "webhook",
+    "opsgenie",
+    "pagerduty",
+    "ntfy",
+  ]),
+  data: z.record(z.string(), z.string()),
+  // monitors: z.array(z.number()),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -42,8 +49,10 @@ export function NotifierForm({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
-      webhookUrl: "",
-      monitors: [],
+      data: {
+        webhook: "",
+      },
+      // monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -93,7 +102,7 @@ export function NotifierForm({
         />
         <FormField
           control={form.control}
-          name="webhookUrl"
+          name="data.webhook"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>
@@ -104,7 +113,7 @@ export function NotifierForm({
             </FormItem>
           )}
         />
-        <FormField
+        {/* <FormField
           control={form.control}
           name="monitors"
           render={({ field }) => (
@@ -121,7 +130,7 @@ export function NotifierForm({
                       checked={field.value?.length === monitors.length}
                       onCheckedChange={(checked) => {
                         field.onChange(
-                          checked ? monitors.map((m) => m.id) : [],
+                          checked ? monitors.map((m) => m.id) : []
                         );
                       }}
                     />
@@ -149,7 +158,7 @@ export function NotifierForm({
               <FormMessage />
             </FormItem>
           )}
-        />
+        /> */}
       </form>
     </Form>
   );
