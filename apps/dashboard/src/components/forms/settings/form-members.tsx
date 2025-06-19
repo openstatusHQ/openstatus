@@ -36,8 +36,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = false;
-
 const schema = z.object({
   email: z.string().email(),
   role: z.enum(["member"]),
@@ -46,8 +44,10 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function FormMembers({
+  locked,
   onCreate,
 }: {
+  locked?: boolean;
   onCreate: (values: FormValues) => Promise<void>;
 }) {
   const form = useForm<FormValues>({
@@ -82,7 +82,7 @@ export function FormMembers({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
         <FormCard>
-          {LOCKED ? <FormCardUpgrade /> : null}
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Team</FormCardTitle>
             <FormCardDescription>Manage your team members.</FormCardDescription>
@@ -105,12 +105,18 @@ export function FormMembers({
           <FormCardContent>
             <FormField
               control={form.control}
+              disabled={locked}
               name="email"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Add member</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="Email" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      disabled={locked}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                   <FormCardDescription>
@@ -121,7 +127,7 @@ export function FormMembers({
             />
           </FormCardContent>
           <FormCardFooter>
-            {LOCKED ? (
+            {locked ? (
               <>
                 <FormCardFooterInfo>
                   This feature is available on the{" "}

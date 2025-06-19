@@ -26,6 +26,7 @@ export function FormMonitorUpdate() {
   );
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
   const { data: notifiers } = useQuery(trpc.notification.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
       onSuccess: () => refetch(),
@@ -92,7 +93,7 @@ export function FormMonitorUpdate() {
     })
   );
 
-  if (!monitor || !statusPages || !notifiers) return null;
+  if (!monitor || !statusPages || !notifiers || !workspace) return null;
 
   return (
     <FormCardGroup>
@@ -197,6 +198,7 @@ export function FormMonitorUpdate() {
         }
       />
       <FormOtel
+        locked={workspace.limits["otel"] === false}
         defaultValues={{
           endpoint: monitor.otelEndpoint ?? "",
           headers: monitor.otelHeaders ?? [],

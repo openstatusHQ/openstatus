@@ -27,7 +27,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Lock } from "lucide-react";
 import { useParams } from "next/navigation";
 
-const LOCKED = true;
 const EXAMPLES = [
   {
     id: 1,
@@ -60,6 +59,9 @@ export default function Page() {
   const { data: subscribers } = useQuery(
     trpc.pageSubscriber.list.queryOptions({ pageId: parseInt(id) })
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  if (!workspace) return null;
 
   return (
     <SectionGroup>
@@ -72,7 +74,7 @@ export default function Page() {
         </SectionHeader>
       </Section>
       <Section>
-        {LOCKED ? (
+        {workspace.limits["status-subscribers"] === false ? (
           <BillingOverlayContainer>
             <DataTable
               columns={columns}

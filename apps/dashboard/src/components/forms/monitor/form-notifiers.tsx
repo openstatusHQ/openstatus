@@ -29,6 +29,7 @@ import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 
 const schema = z.object({
   notifiers: z.array(z.number()),
@@ -52,6 +53,7 @@ export function FormNotifiers({
       notifiers: [],
     },
   });
+  const watchNotifiers = form.watch("notifiers");
   const [isPending, startTransition] = useTransition();
 
   function submitAction(values: FormValues) {
@@ -94,9 +96,36 @@ export function FormNotifiers({
                 name="notifiers"
                 render={() => (
                   <FormItem>
-                    <FormLabel className="text-base">
-                      List of Notifiers
-                    </FormLabel>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-base">
+                        List of Status Pages
+                      </FormLabel>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        className={cn(
+                          watchNotifiers.length === notifiers.length &&
+                            "text-muted-foreground"
+                        )}
+                        onClick={() => {
+                          const allSelected = notifiers.every((item) =>
+                            watchNotifiers.includes(item.id)
+                          );
+
+                          if (!allSelected) {
+                            form.setValue(
+                              "notifiers",
+                              notifiers.map((item) => item.id)
+                            );
+                          } else {
+                            form.setValue("notifiers", []);
+                          }
+                        }}
+                      >
+                        Select all
+                      </Button>
+                    </div>
                     {notifiers.map((item) => (
                       <FormField
                         key={item.id}

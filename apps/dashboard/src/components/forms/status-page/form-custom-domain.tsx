@@ -26,8 +26,6 @@ import type React from "react";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-const LOCKED = true;
-
 const schema = z.object({
   domain: z.string().min(1, "Domain is required"),
 });
@@ -35,10 +33,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function FormCustomDomain({
+  locked,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
+  locked?: boolean;
   defaultValues?: FormValues;
   onSubmit?: (values: FormValues) => Promise<void> | void;
 }) {
@@ -73,7 +73,7 @@ export function FormCustomDomain({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
-          {LOCKED ? <FormCardUpgrade /> : null}
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Custom Domain</FormCardTitle>
             <FormCardDescription>
@@ -90,7 +90,7 @@ export function FormCustomDomain({
                   <InputWithAddons
                     placeholder="status.openstatus.dev"
                     leading="https://"
-                    disabled={LOCKED}
+                    disabled={locked}
                     {...field}
                   />
                   <FormMessage />
@@ -102,7 +102,7 @@ export function FormCustomDomain({
             <FormCardFooterInfo>
               Learn more about <Link href="#">Custom Domain</Link>.
             </FormCardFooterInfo>
-            {LOCKED ? (
+            {locked ? (
               <Button type="button" asChild>
                 <Link href="/settings/billing">
                   <Lock />

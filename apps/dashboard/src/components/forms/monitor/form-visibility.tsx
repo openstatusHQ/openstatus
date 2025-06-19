@@ -29,8 +29,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = false;
-
 const schema = z.object({
   visibility: z.boolean(),
 });
@@ -38,10 +36,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function FormVisibility({
+  locked,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
+  locked?: boolean;
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -75,7 +75,7 @@ export function FormVisibility({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
-          {LOCKED ? <FormCardUpgrade /> : null}
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Visibility</FormCardTitle>
             <FormCardDescription>
@@ -86,6 +86,7 @@ export function FormVisibility({
             <FormField
               control={form.control}
               name="visibility"
+              disabled={locked}
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center justify-between">
                   <div className="space-y-0.5">
@@ -104,7 +105,7 @@ export function FormVisibility({
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
-                      disabled={LOCKED}
+                      disabled={locked}
                     />
                   </FormControl>
                 </FormItem>
@@ -115,7 +116,7 @@ export function FormVisibility({
             <FormCardFooterInfo>
               Learn more about <Link href="#">monitor visibility</Link>.
             </FormCardFooterInfo>
-            {LOCKED ? (
+            {locked ? (
               <Button asChild>
                 <NextLink href="/settings/billing">
                   <Lock className="size-4" />

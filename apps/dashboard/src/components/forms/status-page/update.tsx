@@ -17,6 +17,7 @@ export function FormStatusPageUpdate() {
   );
   const queryClient = useQueryClient();
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const updateStatusPageMutation = useMutation(
     trpc.page.updateGeneral.mutationOptions({
       onSuccess: () => {
@@ -57,7 +58,7 @@ export function FormStatusPageUpdate() {
     })
   );
 
-  if (!statusPage || !monitors) return null;
+  if (!statusPage || !monitors || !workspace) return null;
 
   return (
     <FormCardGroup>
@@ -95,8 +96,9 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormCustomDomain />
+      <FormCustomDomain locked={workspace.limits["custom-domain"] === false} />
       <FormPasswordProtection
+        locked={workspace.limits["password-protection"] === false}
         defaultValues={{
           passwordProtected: statusPage.passwordProtected ?? false,
           password: statusPage.password ?? undefined,

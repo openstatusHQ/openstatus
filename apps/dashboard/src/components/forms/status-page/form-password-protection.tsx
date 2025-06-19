@@ -31,8 +31,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const LOCKED = false;
-
 const schema = z.object({
   passwordProtected: z.boolean().optional(),
   password: z.string().optional(),
@@ -41,10 +39,12 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function FormPasswordProtection({
+  locked,
   defaultValues,
   onSubmit,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
+  locked?: boolean;
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
 }) {
@@ -84,7 +84,7 @@ export function FormPasswordProtection({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
         <FormCard>
-          {LOCKED ? <FormCardUpgrade /> : null}
+          {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Password Protection</FormCardTitle>
             <FormCardDescription>
@@ -94,6 +94,7 @@ export function FormPasswordProtection({
           <FormCardContent className="grid gap-4">
             <FormField
               control={form.control}
+              disabled={locked}
               name="passwordProtected"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start">
@@ -115,6 +116,7 @@ export function FormPasswordProtection({
             <FormField
               control={form.control}
               name="password"
+              disabled={locked}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
@@ -130,7 +132,7 @@ export function FormPasswordProtection({
             <FormCardFooterInfo>
               Learn more about <Link href="#">Password Protection</Link>.
             </FormCardFooterInfo>
-            {LOCKED ? (
+            {locked ? (
               <Button type="button" asChild>
                 <Link href="/settings/billing">
                   <Lock />
