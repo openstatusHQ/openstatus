@@ -6,7 +6,11 @@ import {
   HeaderAssertion,
   StatusAssertion,
   TextBodyAssertion,
+  headerAssertion,
+  jsonBodyAssertion,
   serialize,
+  statusAssertion,
+  textBodyAssertion,
 } from "@openstatus/assertions";
 import {
   and,
@@ -1058,7 +1062,14 @@ export const monitorRouter = createTRPCRouter({
         headers: z.array(z.object({ key: z.string(), value: z.string() })),
         body: z.string().optional(),
         name: z.string(),
-        // assertions: z.array(),
+        assertions: z.array(
+          z.discriminatedUnion("type", [
+            statusAssertion,
+            headerAssertion,
+            textBodyAssertion,
+            jsonBodyAssertion,
+          ])
+        ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1067,6 +1078,19 @@ export const monitorRouter = createTRPCRouter({
         eq(monitor.workspaceId, ctx.workspace.id),
         isNull(monitor.deletedAt),
       ];
+
+      const assertions: Assertion[] = [];
+      for (const a of input.assertions ?? []) {
+        if (a.type === "status") {
+          assertions.push(new StatusAssertion(a));
+        }
+        if (a.type === "header") {
+          assertions.push(new HeaderAssertion(a));
+        }
+        if (a.type === "textBody") {
+          assertions.push(new TextBodyAssertion(a));
+        }
+      }
 
       await ctx.db
         .update(monitor)
@@ -1077,7 +1101,7 @@ export const monitorRouter = createTRPCRouter({
           method: input.method,
           headers: input.headers ? JSON.stringify(input.headers) : undefined,
           body: input.body,
-          // assertions: input.assertions,
+          assertions: serialize(assertions),
         })
         .where(and(...whereConditions))
         .run();
@@ -1092,6 +1116,14 @@ export const monitorRouter = createTRPCRouter({
         method: z.enum(monitorMethods),
         headers: z.array(z.object({ key: z.string(), value: z.string() })),
         body: z.string().optional(),
+        assertions: z.array(
+          z.discriminatedUnion("type", [
+            statusAssertion,
+            headerAssertion,
+            textBodyAssertion,
+            jsonBodyAssertion,
+          ])
+        ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1116,6 +1148,19 @@ export const monitorRouter = createTRPCRouter({
         });
       }
 
+      const assertions: Assertion[] = [];
+      for (const a of input.assertions ?? []) {
+        if (a.type === "status") {
+          assertions.push(new StatusAssertion(a));
+        }
+        if (a.type === "header") {
+          assertions.push(new HeaderAssertion(a));
+        }
+        if (a.type === "textBody") {
+          assertions.push(new TextBodyAssertion(a));
+        }
+      }
+
       const newMonitor = await ctx.db
         .insert(monitor)
         .values({
@@ -1128,6 +1173,7 @@ export const monitorRouter = createTRPCRouter({
           workspaceId: ctx.workspace.id,
           periodicity: "30m",
           regions: "fra", // TODO: add default regions
+          assertions: serialize(assertions),
         })
         .returning()
         .get();

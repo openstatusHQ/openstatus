@@ -34,35 +34,44 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Globe, Network, Plus, X } from "lucide-react";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  textBodyAssertion,
+  statusAssertion,
+  headerAssertion,
+  numberCompareDictionary,
+  stringCompareDictionary,
+  jsonBodyAssertion,
+} from "@openstatus/assertions";
+import { monitorMethods } from "@openstatus/db/src/schema";
+import { cn } from "@/lib/utils";
 
 const TYPES = ["http", "tcp"] as const;
-const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
-const ASSERTION_TYPES = ["status", "header", "body"] as const;
-const ASSERTION_EQ = ["eq", "neq", "gt", "gte", "lt", "lte"] as const;
+const ASSERTION_TYPES = ["status", "header", "textBody"] as const;
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(TYPES),
-  method: z.enum(METHODS),
-  url: z.string(),
+  method: z.enum(monitorMethods),
+  url: z.string().min(1, "URL is required"),
   headers: z.array(
     z.object({
       key: z.string(),
       value: z.string(),
     })
   ),
-  body: z.string().optional(),
   assertions: z.array(
-    z.object({
-      type: z.enum(ASSERTION_TYPES),
-      eq: z.enum(ASSERTION_EQ),
-      value: z.string().min(1),
-    })
+    z.discriminatedUnion("type", [
+      statusAssertion,
+      headerAssertion,
+      textBodyAssertion,
+      jsonBodyAssertion,
+    ])
   ),
+  body: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -85,16 +94,61 @@ export function FormGeneral({
       method: "GET",
       url: "",
       headers: [],
-      assertions: [],
       body: "",
+      assertions: [],
     },
   });
   const [isPending, startTransition] = useTransition();
   const watchType = form.watch("type");
   const watchMethod = form.watch("method");
 
+  useEffect(() => {
+    // NOTE: reset form when type changes
+    if (watchType && !defaultValues) {
+      form.setValue("assertions", []);
+      form.setValue("body", "");
+      form.setValue("headers", []);
+      form.setValue("method", "GET");
+      form.setValue("url", "");
+    }
+  }, [watchType, defaultValues, form]);
+
   function submitAction(values: FormValues) {
     if (isPending || disabled) return;
+
+    // Validate assertions based on type
+    for (let i = 0; i < values.assertions.length; i++) {
+      const assertion = values.assertions[i];
+
+      if (assertion.type === "status") {
+        if (typeof assertion.target !== "number" || assertion.target <= 0) {
+          form.setError(`assertions.${i}.target`, {
+            message: "Status target must be a positive number",
+          });
+          return;
+        }
+      } else if (assertion.type === "header") {
+        if (!assertion.key || assertion.key.trim() === "") {
+          form.setError(`assertions.${i}.key`, {
+            message: "Header key is required",
+          });
+          return;
+        }
+        if (!assertion.target || assertion.target.trim() === "") {
+          form.setError(`assertions.${i}.target`, {
+            message: "Header target is required",
+          });
+          return;
+        }
+      } else if (assertion.type === "textBody") {
+        if (!assertion.target || assertion.target.trim() === "") {
+          form.setError(`assertions.${i}.target`, {
+            message: "Body target is required",
+          });
+          return;
+        }
+      }
+    }
 
     // TODO: validate url if HTTP
     // if (values.type === "http" && !values.url.startsWith("http")) {
@@ -107,7 +161,7 @@ export function FormGeneral({
         const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
+          success: "Saved",
           error: (error) => {
             if (isTRPCClientError(error)) {
               return error.message;
@@ -163,10 +217,23 @@ export function FormGeneral({
                       onValueChange={field.onChange}
                       defaultValue={field.value}
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
+                      disabled={!!defaultValues?.type}
                     >
-                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                      <FormItem
+                        className={cn(
+                          "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                          // FIXME: ugly af
+                          defaultValues &&
+                            defaultValues.type !== "http" &&
+                            "opacity-50 pointer-events-none"
+                        )}
+                      >
                         <FormControl>
-                          <RadioGroupItem value="http" className="sr-only" />
+                          <RadioGroupItem
+                            value="http"
+                            className="sr-only"
+                            disabled={!!defaultValues?.type}
+                          />
                         </FormControl>
                         <Globe
                           className="shrink-0 text-muted-foreground"
@@ -177,9 +244,20 @@ export function FormGeneral({
                           HTTP
                         </FormLabel>
                       </FormItem>
-                      <FormItem className="relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50">
+                      <FormItem
+                        className={cn(
+                          "relative flex cursor-pointer flex-row items-center gap-3 rounded-md border border-input px-2 py-3 text-center shadow-xs outline-none transition-[color,box-shadow] has-aria-[invalid=true]:border-destructive has-data-[state=checked]:border-primary/50 has-focus-visible:border-ring has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50",
+                          defaultValues &&
+                            defaultValues.type !== "tcp" &&
+                            "opacity-50 pointer-events-none"
+                        )}
+                      >
                         <FormControl>
-                          <RadioGroupItem value="tcp" className="sr-only" />
+                          <RadioGroupItem
+                            value="tcp"
+                            className="sr-only"
+                            disabled={!!defaultValues?.type}
+                          />
                         </FormControl>
                         <Network
                           className="shrink-0 text-muted-foreground"
@@ -221,7 +299,7 @@ export function FormGeneral({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {METHODS.map((method) => (
+                            {monitorMethods.map((method) => (
                               <SelectItem key={method} value={method}>
                                 {method}
                               </SelectItem>
@@ -243,7 +321,7 @@ export function FormGeneral({
                         <FormControl>
                           <Input
                             placeholder="https://openstatus.dev"
-                            // type="url"
+                            type="url"
                             {...field}
                           />
                         </FormControl>
@@ -320,7 +398,7 @@ export function FormGeneral({
                     </FormItem>
                   )}
                 />
-                {watchMethod === "POST" && (
+                {["POST", "PUT", "PATCH", "DELETE"].includes(watchMethod) && (
                   <FormField
                     control={form.control}
                     name="body"
@@ -350,8 +428,8 @@ export function FormGeneral({
                         as expected. <br />
                         Add body, header, or status assertions.
                       </FormDescription>
-                      {field.value.map((_, index) => (
-                        <div key={index} className="grid gap-2 sm:grid-cols-5">
+                      {field.value.map((assertion, index) => (
+                        <div key={index} className="grid gap-2 sm:grid-cols-6">
                           <FormField
                             control={form.control}
                             name={`assertions.${index}.type`}
@@ -360,6 +438,7 @@ export function FormGeneral({
                                 <Select
                                   value={field.value}
                                   onValueChange={field.onChange}
+                                  disabled={true}
                                 >
                                   <SelectTrigger
                                     aria-invalid={
@@ -384,7 +463,7 @@ export function FormGeneral({
                           />
                           <FormField
                             control={form.control}
-                            name={`assertions.${index}.eq`}
+                            name={`assertions.${index}.compare`}
                             render={({ field }) => (
                               <FormItem>
                                 <Select
@@ -392,30 +471,70 @@ export function FormGeneral({
                                   onValueChange={field.onChange}
                                 >
                                   <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select eq" />
+                                    <SelectValue placeholder="Select compare" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {ASSERTION_EQ.map((eq) => (
-                                      <SelectItem key={eq} value={eq}>
-                                        {eq}
-                                      </SelectItem>
-                                    ))}
+                                    {assertion.type === "status"
+                                      ? Object.entries(
+                                          numberCompareDictionary
+                                        ).map(([key, value]) => (
+                                          <SelectItem key={key} value={key}>
+                                            {value}
+                                          </SelectItem>
+                                        ))
+                                      : Object.entries(
+                                          stringCompareDictionary
+                                        ).map(([key, value]) => (
+                                          <SelectItem key={key} value={key}>
+                                            {value}
+                                          </SelectItem>
+                                        ))}
                                   </SelectContent>
                                 </Select>
                                 <FormMessage />
                               </FormItem>
                             )}
                           />
+                          {assertion.type === "header" && (
+                            <FormField
+                              control={form.control}
+                              name={`assertions.${index}.key`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <Input
+                                    placeholder="Header key"
+                                    className="w-full"
+                                    {...field}
+                                  />
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          )}
                           <FormField
                             control={form.control}
-                            name={`assertions.${index}.value`}
+                            name={`assertions.${index}.target`}
                             render={({ field }) => (
                               <FormItem>
                                 <Input
-                                  placeholder="Value"
-                                  className="col-span-2 w-full"
+                                  placeholder="Target value"
+                                  className="w-full"
+                                  type={
+                                    assertion.type === "status"
+                                      ? "number"
+                                      : "text"
+                                  }
                                   {...field}
+                                  value={field.value?.toString() || ""}
+                                  onChange={(e) => {
+                                    const value =
+                                      assertion.type === "status"
+                                        ? parseInt(e.target.value) || 0
+                                        : e.target.value;
+                                    field.onChange(value);
+                                  }}
                                 />
+                                <FormMessage />
                               </FormItem>
                             )}
                           />
@@ -434,7 +553,7 @@ export function FormGeneral({
                           </Button>
                         </div>
                       ))}
-                      <div>
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           variant="outline"
@@ -442,12 +561,56 @@ export function FormGeneral({
                           onClick={() => {
                             field.onChange([
                               ...field.value,
-                              { type: "status", value: "" },
+                              {
+                                type: "status",
+                                version: "v1",
+                                compare: "eq",
+                                target: 200,
+                              },
                             ]);
                           }}
                         >
                           <Plus />
-                          Add Assertion
+                          Add Status Assertion
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            field.onChange([
+                              ...field.value,
+                              {
+                                type: "header",
+                                version: "v1",
+                                compare: "eq",
+                                key: "",
+                                target: "",
+                              },
+                            ]);
+                          }}
+                        >
+                          <Plus />
+                          Add Header Assertion
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          type="button"
+                          onClick={() => {
+                            field.onChange([
+                              ...field.value,
+                              {
+                                type: "textBody",
+                                version: "v1",
+                                compare: "eq",
+                                target: "",
+                              },
+                            ]);
+                          }}
+                        >
+                          <Plus />
+                          Add Body Assertion
                         </Button>
                       </div>
                       <FormMessage />

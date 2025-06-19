@@ -14,6 +14,7 @@ import { FormVisibility } from "./form-visibility";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { useParams, useRouter } from "next/navigation";
+import { deserialize } from "@openstatus/assertions";
 
 export function FormMonitorUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +90,10 @@ export function FormMonitorUpdate() {
           method: monitor.method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
           headers: monitor.headers ?? [],
           body: monitor.body,
-          assertions: [],
+          // TODO: move to server after migration
+          assertions: deserialize(monitor?.assertions ?? "").map(
+            (a) => a.schema
+          ),
         }}
         onSubmit={async (values) => {
           await updateGeneralMutation.mutateAsync({
@@ -100,7 +104,7 @@ export function FormMonitorUpdate() {
             method: values.method,
             headers: values.headers,
             body: values.body,
-            // assertions: values.assertions,
+            assertions: values.assertions,
           });
         }}
       />
