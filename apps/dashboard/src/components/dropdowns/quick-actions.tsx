@@ -118,7 +118,7 @@ export function QuickActions({
                   }}
                 >
                   <item.icon className="text-muted-foreground" />
-                  <span>{item.label}</span>
+                  <span className="truncate">{item.label}</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
             ))}

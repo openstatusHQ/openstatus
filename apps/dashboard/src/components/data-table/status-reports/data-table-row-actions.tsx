@@ -21,8 +21,8 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const buttonCreateRef = useRef<HTMLButtonElement>(null);
   const buttonUpdateRef = useRef<HTMLButtonElement>(null);
   const actions = getActions({
-    edit: () => buttonCreateRef.current?.click(),
-    "create-update": () => buttonUpdateRef.current?.click(),
+    "create-update": () => buttonCreateRef.current?.click(),
+    edit: () => buttonUpdateRef.current?.click(),
   });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -30,6 +30,24 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateStatusReportMutation = useMutation(
     trpc.statusReport.updateStatus.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+        });
+      },
+    })
+  );
+  const createStatusReportUpdateMutation = useMutation(
+    trpc.statusReport.createStatusReportUpdate.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+        });
+      },
+    })
+  );
+  const deleteStatusReportMutation = useMutation(
+    trpc.statusReport.delete.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
@@ -46,7 +64,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         actions={actions}
         deleteAction={{
           title: "Delete",
-          confirmationValue: "delete",
+          submitAction: async () => {
+            await deleteStatusReportMutation.mutateAsync({
+              id: row.original.id,
+            });
+          },
         }}
       />
       <FormSheetStatusReport
@@ -65,12 +87,21 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           });
         }}
       >
-        <button ref={buttonCreateRef} type="button" className="sr-only">
+        <button ref={buttonUpdateRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetStatusReport>
-      <FormSheetStatusReportUpdate>
-        <button ref={buttonUpdateRef} type="button" className="sr-only">
+      <FormSheetStatusReportUpdate
+        onSubmit={async (values) => {
+          await createStatusReportUpdateMutation.mutateAsync({
+            statusReportId: row.original.id,
+            message: values.message,
+            status: values.status,
+            date: values.date,
+          });
+        }}
+      >
+        <button ref={buttonCreateRef} type="button" className="sr-only">
           Open sheet
         </button>
       </FormSheetStatusReportUpdate>

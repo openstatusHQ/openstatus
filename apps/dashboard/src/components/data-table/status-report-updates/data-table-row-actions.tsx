@@ -30,6 +30,15 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
       },
     })
   );
+  const deleteStatusReportUpdateMutation = useMutation(
+    trpc.statusReport.deleteUpdate.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.statusReport.list.queryKey({ pageId: parseInt(id) }),
+        });
+      },
+    })
+  );
   const actions = getActions({
     edit: () => buttonRef.current?.click(),
   });
@@ -40,7 +49,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         actions={actions}
         deleteAction={{
           title: "Delete",
-          confirmationValue: "delete",
+          submitAction: async () => {
+            await deleteStatusReportUpdateMutation.mutateAsync({
+              id: row.id,
+            });
+          },
         }}
       />
       <FormSheetStatusReportUpdate

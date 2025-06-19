@@ -17,6 +17,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 
 export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
@@ -495,6 +496,47 @@ export const statusReportRouter = createTRPCRouter({
             )
             .run();
         }
+      });
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(statusReport.id, opts.input.id),
+        eq(statusReport.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      await opts.ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(statusReport)
+          .where(and(...whereConditions))
+          .run();
+      });
+    }),
+
+  deleteUpdate: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      await opts.ctx.db.transaction(async (tx) => {
+        const update = await tx.query.statusReportUpdate.findFirst({
+          where: eq(statusReportUpdate.id, opts.input.id),
+          with: {
+            statusReport: true,
+          },
+        });
+
+        if (update?.statusReport.workspaceId !== opts.ctx.workspace.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You are not allowed to delete this update",
+          });
+        }
+
+        await tx
+          .delete(statusReportUpdate)
+          .where(eq(statusReportUpdate.id, opts.input.id))
+          .run();
       });
     }),
 });
