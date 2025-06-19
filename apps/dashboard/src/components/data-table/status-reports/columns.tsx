@@ -79,6 +79,15 @@ export const columns: ColumnDef<StatusReport>[] = [
     },
   },
   {
+    id: "monitors",
+    accessorFn: (row) => row.monitors.length,
+    header: "Monitors",
+    cell: ({ row }) => {
+      const value = row.getValue("monitors");
+      return <TableCellNumber value={value} />;
+    },
+  },
+  {
     accessorKey: "startedAt",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Started At" />
