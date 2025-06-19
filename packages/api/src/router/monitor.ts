@@ -972,6 +972,14 @@ export const monitorRouter = createTRPCRouter({
         isNull(monitor.deletedAt),
       ];
 
+      const limits = ctx.workspace.limits;
+      if (!limits.periodicity.includes(input.periodicity)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Upgrade to check more often.",
+        });
+      }
+
       await ctx.db
         .update(monitor)
         .set({

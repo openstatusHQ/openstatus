@@ -38,7 +38,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { useTransition } from "react";
+import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -99,6 +99,25 @@ export function FormTags({
     });
   }
 
+  useEffect(() => {
+    // if tags name/color changed, update the form
+    if (!tags) {
+      form.setValue("tags", []);
+    } else {
+      const formTags = form.getValues("tags");
+      form.setValue(
+        "tags",
+        tags
+          ?.filter((tag) => formTags.map((t) => t.id).includes(tag.id))
+          .map((tag) => ({
+            id: tag.id,
+            name: tag.name,
+            color: tag.color,
+          })) ?? []
+      );
+    }
+  }, [tags, form]);
+
   if (!tags) return null;
 
   return (
@@ -139,7 +158,7 @@ export function FormTags({
                                 <Badge
                                   key={tag.id}
                                   variant="outline"
-                                  className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1"
+                                  className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
                                 >
                                   <div
                                     className={cn("size-2.5 rounded-full")}

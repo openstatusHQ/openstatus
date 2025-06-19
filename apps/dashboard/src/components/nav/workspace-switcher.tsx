@@ -41,9 +41,9 @@ export function WorkspaceSwitcher() {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              // FIXME: group-data-[collapsible=icon]:mx-8! (incl. nav-user)
+              className="px-4 h-14 rounded-none ring-inset data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground group-data-[collapsible=icon]:mx-6!"
             >
-              {/* TODO: make it only appear when collapsed */}
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary">
                 <div className="size-8 rounded-lg overflow-hidden">
                   <img
