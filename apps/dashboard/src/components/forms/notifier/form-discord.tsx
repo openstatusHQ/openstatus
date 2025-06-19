@@ -1,6 +1,6 @@
 "use client";
 
-import {} from "@/components/ui/checkbox";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -20,11 +20,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
+import { Label } from "@/components/ui/label";
 
 const schema = z.object({
   name: z.string(),
   provider: z.literal("discord"),
   data: z.record(z.string(), z.string()),
+  monitors: z.array(z.number()),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -33,10 +35,12 @@ export function FormDiscord({
   defaultValues,
   onSubmit,
   className,
+  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
+  monitors: { id: number; name: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -46,6 +50,7 @@ export function FormDiscord({
       data: {
         discord: "",
       },
+      monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -110,6 +115,52 @@ export function FormDiscord({
                 Enter the webhook URL for your Discord server.{" "}
                 <Link href="#">Read more</Link>.
               </FormDescription>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="monitors"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Monitors</FormLabel>
+              <FormDescription>
+                Select the monitors you want to notify.
+              </FormDescription>
+              <div className="grid gap-3">
+                <div className="flex items-center gap-2">
+                  <FormControl>
+                    <Checkbox
+                      id="all"
+                      checked={field.value?.length === monitors.length}
+                      onCheckedChange={(checked) => {
+                        field.onChange(
+                          checked ? monitors.map((m) => m.id) : []
+                        );
+                      }}
+                    />
+                  </FormControl>
+                  <Label htmlFor="all">Select all</Label>
+                </div>
+                {monitors.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2">
+                    <FormControl>
+                      <Checkbox
+                        id={String(item.id)}
+                        checked={field.value?.includes(item.id)}
+                        onCheckedChange={(checked) => {
+                          const newValue = checked
+                            ? [...(field.value || []), item.id]
+                            : field.value?.filter((id) => id !== item.id);
+                          field.onChange(newValue);
+                        }}
+                      />
+                    </FormControl>
+                    <Label htmlFor={String(item.id)}>{item.name}</Label>
+                  </div>
+                ))}
+              </div>
+              <FormMessage />
             </FormItem>
           )}
         />

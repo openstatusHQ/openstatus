@@ -27,15 +27,22 @@ export const columns: ColumnDef<Notifier>[] = [
       );
     },
   },
-  // {
-  //   accessorKey: "value",
-  //   header: "Value",
-  //   enableSorting: false,
-  //   enableHiding: false,
-  //   meta: {
-  //     cellClassName: "text-foreground/70",
-  //   },
-  // },
+  {
+    accessorKey: "monitors",
+    header: "Monitors",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("monitors");
+      if (Array.isArray(value) && value.length > 0) {
+        return value.length;
+      }
+      return <span className="text-muted-foreground">-</span>;
+    },
+    meta: {
+      cellClassName: "tabular-nums font-mono",
+    },
+  },
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,

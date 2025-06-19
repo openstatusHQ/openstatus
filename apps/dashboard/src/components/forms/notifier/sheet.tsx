@@ -24,10 +24,12 @@ export function FormSheetNotifier({
   defaultValues,
   provider,
   onSubmit,
+  monitors,
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   provider: FormValues["provider"];
   onSubmit?: (values: FormValues) => Promise<void>;
+  monitors: { id: number; name: string }[];
 }) {
   const [open, setOpen] = useState(false);
   const Form = provider ? config[provider].form : undefined;
@@ -54,6 +56,7 @@ export function FormSheetNotifier({
                   }}
                   // @ts-expect-error - defaultValues is not defined in the form component
                   defaultValues={defaultValues}
+                  monitors={monitors}
                 />
               )}
             </FormCardContent>

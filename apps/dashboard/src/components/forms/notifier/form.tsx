@@ -1,5 +1,6 @@
 "use client";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   FormControl,
   FormDescription,
@@ -11,6 +12,7 @@ import {
 
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
@@ -31,7 +33,7 @@ const schema = z.object({
     "ntfy",
   ]),
   data: z.record(z.string(), z.string()),
-  // monitors: z.array(z.number()),
+  monitors: z.array(z.number()),
 });
 
 export type FormValues = z.infer<typeof schema>;
@@ -40,10 +42,12 @@ export function NotifierForm({
   defaultValues,
   className,
   onSubmit,
+  monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit?: (values: FormValues) => Promise<void> | void;
+  monitors: { id: number; name: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -52,7 +56,7 @@ export function NotifierForm({
       data: {
         webhook: "",
       },
-      // monitors: [],
+      monitors: [],
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -113,7 +117,7 @@ export function NotifierForm({
             </FormItem>
           )}
         />
-        {/* <FormField
+        <FormField
           control={form.control}
           name="monitors"
           render={({ field }) => (
@@ -158,7 +162,7 @@ export function NotifierForm({
               <FormMessage />
             </FormItem>
           )}
-        /> */}
+        />
       </form>
     </Form>
   );

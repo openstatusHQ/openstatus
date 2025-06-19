@@ -31,13 +31,14 @@ export default function Page() {
   const { data: notifiers, refetch } = useQuery(
     trpc.notification.list.queryOptions()
   );
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const createNotifierMutation = useMutation(
     trpc.notification.new.mutationOptions({
       onSuccess: () => refetch(),
     })
   );
 
-  if (!notifiers) return null;
+  if (!notifiers || !monitors) return null;
 
   return (
     <SectionGroup>
@@ -69,11 +70,13 @@ export default function Page() {
               <FormSheetNotifier
                 key={notifier}
                 provider={key}
+                monitors={monitors}
                 onSubmit={async (values) => {
                   await createNotifierMutation.mutateAsync({
                     provider: key,
                     name: values.name,
                     data: values.data,
+                    monitors: values.monitors,
                   });
                 }}
               >

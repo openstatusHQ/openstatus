@@ -5,7 +5,7 @@ import { FormSheetNotifier } from "@/components/forms/notifier/sheet";
 import { getActions } from "@/data/notifiers.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { RouterOutputs } from "@openstatus/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRef } from "react";
 
@@ -22,6 +22,7 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
   });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const updateNotifierMutation = useMutation(
     trpc.notification.updateNotifier.mutationOptions({
       onSuccess: () => {
@@ -48,12 +49,15 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           provider: props.row.original.provider,
           // TBD: parse it?
           data: JSON.parse(props.row.original.data ?? "{}"),
+          monitors: props.row.original.monitors,
         }}
+        monitors={monitors ?? []}
         onSubmit={async (values) => {
           await updateNotifierMutation.mutateAsync({
             id: props.row.original.id,
             name: values.name,
             data: values.data,
+            monitors: values.monitors,
           });
         }}
       >
