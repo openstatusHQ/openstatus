@@ -11,13 +11,15 @@ import { FormSchedulingRegions } from "./form-scheduling-regions";
 import { FormStatusPages } from "./form-status-pages";
 import { FormTags } from "./form-tags";
 import { FormVisibility } from "./form-visibility";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 export function FormMonitorUpdate() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: monitor, refetch } = useQuery(
     trpc.monitor.get.queryOptions({ id: parseInt(id) })
   );
@@ -49,6 +51,15 @@ export function FormMonitorUpdate() {
   const updateTagsMutation = useMutation(
     trpc.monitor.updateTags.mutationOptions({
       onSuccess: () => refetch(),
+    })
+  );
+
+  const deleteMonitorMutation = useMutation(
+    trpc.monitor.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries(trpc.monitor.list.queryKey());
+        router.push("/monitors");
+      },
     })
   );
 
@@ -132,7 +143,11 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormDangerZone />
+      <FormDangerZone
+        onSubmit={async () => {
+          await deleteMonitorMutation.mutateAsync({ id: parseInt(id) });
+        }}
+      />
     </FormCardGroup>
   );
 }
