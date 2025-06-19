@@ -181,9 +181,7 @@ export function FormMonitorUpdate() {
       <FormOtel
         defaultValues={{
           endpoint: monitor.otelEndpoint ?? "",
-          // TODO: headers
-          // headers: monitor.otelHeaders ?? [],
-          headers: [],
+          headers: monitor.otelHeaders ?? [],
         }}
         onSubmit={async (values) => {
           await updateOtelMutation.mutateAsync({

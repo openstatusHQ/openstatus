@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Lock } from "lucide-react";
+import { Lock, X, Plus } from "lucide-react";
 import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -85,12 +85,12 @@ export function FormOtel({
               Configure your OpenTelemetry Exporter.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid grid-cols-4 gap-4">
             <FormField
               control={form.control}
               name="endpoint"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-full">
                   <FormLabel>Endpoint</FormLabel>
                   <FormControl>
                     <Input
@@ -99,6 +99,74 @@ export function FormOtel({
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="headers"
+              render={({ field }) => (
+                <FormItem className="col-span-full">
+                  <FormLabel>Request Headers</FormLabel>
+                  {field.value.map((header, index) => (
+                    <div key={index} className="grid gap-2 sm:grid-cols-5">
+                      <Input
+                        placeholder="Key"
+                        className="col-span-2"
+                        value={header.key}
+                        onChange={(e) => {
+                          const newHeaders = [...field.value];
+                          newHeaders[index] = {
+                            ...newHeaders[index],
+                            key: e.target.value,
+                          };
+                          field.onChange(newHeaders);
+                        }}
+                      />
+                      <Input
+                        placeholder="Value"
+                        className="col-span-2"
+                        value={header.value}
+                        onChange={(e) => {
+                          const newHeaders = [...field.value];
+                          newHeaders[index] = {
+                            ...newHeaders[index],
+                            value: e.target.value,
+                          };
+                          field.onChange(newHeaders);
+                        }}
+                      />
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          const newHeaders = field.value.filter(
+                            (_, i) => i !== index
+                          );
+                          field.onChange(newHeaders);
+                        }}
+                      >
+                        <X />
+                      </Button>
+                    </div>
+                  ))}
+                  <div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        field.onChange([
+                          ...field.value,
+                          { key: "", value: "" },
+                        ]);
+                      }}
+                    >
+                      <Plus />
+                      Add Header
+                    </Button>
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
