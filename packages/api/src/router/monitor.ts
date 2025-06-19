@@ -1154,6 +1154,39 @@ export const monitorRouter = createTRPCRouter({
         .run();
     }),
 
+  updateNotifiers: protectedProcedure
+    .input(z.object({ id: z.number(), notifiers: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      const allNotifiers = await ctx.db.query.notification.findMany({
+        where: and(
+          eq(notification.workspaceId, ctx.workspace.id),
+          inArray(notification.id, input.notifiers)
+        ),
+      });
+
+      if (allNotifiers.length !== input.notifiers.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this notifier.",
+        });
+      }
+
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(notificationsToMonitors)
+          .where(and(eq(notificationsToMonitors.monitorId, input.id)));
+
+        if (input.notifiers.length > 0) {
+          await tx.insert(notificationsToMonitors).values(
+            input.notifiers.map((notifierId) => ({
+              monitorId: input.id,
+              notificationId: notifierId,
+            }))
+          );
+        }
+      });
+    }),
+
   new: protectedProcedure
     .input(
       z.object({

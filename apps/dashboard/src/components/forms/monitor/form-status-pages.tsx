@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
@@ -51,7 +52,7 @@ export function FormStatusPages({
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
   onSubmit: (values: FormValues) => Promise<void>;
-  statusPages: { id: number; title: string }[];
+  statusPages: { id: number; title: string; slug: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -202,7 +203,13 @@ export function FormStatusPages({
                                 />
                               </FormControl>
                               <FormLabel className="font-normal text-sm">
-                                {item.title}
+                                {item.title}{" "}
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-px font-mono"
+                                >
+                                  {item.slug}
+                                </Badge>
                               </FormLabel>
                             </FormItem>
                           );

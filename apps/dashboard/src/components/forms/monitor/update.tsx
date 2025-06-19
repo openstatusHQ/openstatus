@@ -25,6 +25,7 @@ export function FormMonitorUpdate() {
     trpc.monitor.get.queryOptions({ id: parseInt(id) })
   );
   const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
+  const { data: notifiers } = useQuery(trpc.notification.list.queryOptions());
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
       onSuccess: () => refetch(),
@@ -74,6 +75,12 @@ export function FormMonitorUpdate() {
     })
   );
 
+  const updateNotifiersMutation = useMutation(
+    trpc.monitor.updateNotifiers.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
       onSuccess: () => {
@@ -85,7 +92,7 @@ export function FormMonitorUpdate() {
     })
   );
 
-  if (!monitor) return null;
+  if (!monitor || !statusPages || !notifiers) return null;
 
   return (
     <FormCardGroup>
@@ -153,7 +160,7 @@ export function FormMonitorUpdate() {
         }}
       />
       <FormStatusPages
-        statusPages={statusPages ?? []}
+        statusPages={statusPages}
         defaultValues={{
           statusPages: monitor.pages.map(({ id }) => id),
           description: monitor.description,
@@ -166,7 +173,18 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormNotifiers />
+      <FormNotifiers
+        notifiers={notifiers}
+        defaultValues={{
+          notifiers: monitor.notifications.map(({ id }) => id),
+        }}
+        onSubmit={async (values) => {
+          await updateNotifiersMutation.mutateAsync({
+            id: parseInt(id),
+            notifiers: values.notifiers,
+          });
+        }}
+      />
       <FormRetry
         defaultValues={{
           retry: monitor.retry ?? RETRY_DEFAULT,

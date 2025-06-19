@@ -22,8 +22,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { notifiers } from "@/data/notifiers";
+import { Badge } from "@/components/ui/badge";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -38,10 +39,12 @@ type FormValues = z.infer<typeof schema>;
 export function FormNotifiers({
   defaultValues,
   onSubmit,
+  notifiers,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
+  notifiers: { id: number; name: string; provider: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -56,12 +59,16 @@ export function FormNotifiers({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -81,8 +88,7 @@ export function FormNotifiers({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
-            {/* NOTE: we want to display the empty state */}
-            {[].length > 0 ? (
+            {notifiers.length > 0 ? (
               <FormField
                 control={form.control}
                 name="notifiers"
@@ -115,14 +121,20 @@ export function FormNotifiers({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id,
-                                          ),
+                                            (value) => value !== item.id
+                                          )
                                         );
                                   }}
                                 />
                               </FormControl>
                               <FormLabel className="font-normal text-sm">
-                                {item.name}
+                                {item.name}{" "}
+                                <Badge
+                                  variant="secondary"
+                                  className="text-[10px] px-1.5 py-px font-mono"
+                                >
+                                  {item.provider}
+                                </Badge>
                               </FormLabel>
                             </FormItem>
                           );
