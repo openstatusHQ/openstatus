@@ -1052,6 +1052,53 @@ export const monitorRouter = createTRPCRouter({
       });
     }),
 
+  updateStatusPages: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        statusPages: z.array(z.number()),
+        // TODO: add custom name for monitor, shown on status page, requires db migration
+        description: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const allPages = await ctx.db.query.page.findMany({
+        where: and(
+          eq(page.workspaceId, ctx.workspace.id),
+          inArray(page.id, input.statusPages)
+        ),
+      });
+
+      if (allPages.length !== input.statusPages.length) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You don't have access to this status page.",
+        });
+      }
+
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .delete(monitorsToPages)
+          .where(and(eq(monitorsToPages.monitorId, input.id)));
+
+        if (input.statusPages.length > 0) {
+          await tx.insert(monitorsToPages).values(
+            input.statusPages.map((pageId) => ({
+              monitorId: input.id,
+              pageId,
+            }))
+          );
+        }
+
+        if (input.description) {
+          await tx
+            .update(monitor)
+            .set({ description: input.description })
+            .where(and(eq(monitor.id, input.id)));
+        }
+      });
+    }),
+
   updateGeneral: protectedProcedure
     .input(
       z.object({

@@ -40,6 +40,7 @@ import { useTRPC } from "@/lib/trpc/client";
 
 const DEFAULT_PERIODICITY = "10m";
 const DEFAULT_REGIONS = ["ams", "fra", "iad", "syd", "jnb", "gru"];
+const PERIODICITY = monitorPeriodicity.filter((p) => p !== "other");
 
 const schema = z.object({
   regions: z.array(z.string()),
@@ -113,10 +114,10 @@ export function FormSchedulingRegions({
                     <div>
                       <Slider
                         value={[monitorPeriodicity.indexOf(field.value)]}
-                        max={monitorPeriodicity.length - 1}
+                        max={PERIODICITY.length - 1}
                         aria-label="Slider with ticks"
                         onValueChange={(value) => {
-                          field.onChange(monitorPeriodicity[value[0]]);
+                          field.onChange(PERIODICITY[value[0]]);
                         }}
                         className={cn(
                           !workspace?.limits.periodicity.includes(
@@ -128,7 +129,7 @@ export function FormSchedulingRegions({
                         className="mt-3 flex w-full items-center justify-between gap-1 px-2.5 font-medium text-muted-foreground text-xs"
                         aria-hidden="true"
                       >
-                        {monitorPeriodicity.map((period) => (
+                        {PERIODICITY.map((period) => (
                           <span
                             key={period}
                             className="flex w-0 flex-col items-center justify-center gap-2"

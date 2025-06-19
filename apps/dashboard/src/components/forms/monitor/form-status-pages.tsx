@@ -25,16 +25,18 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { statusPages } from "@/data/status-pages";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { isTRPCClientError } from "@trpc/client";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
+// TODO: add custom name for monitor, shown on status page, requires db migration
+
 const schema = z.object({
-  name: z.string().optional(),
+  // name: z.string().optional(),
   description: z.string().optional(),
   statusPages: z.array(z.number()),
 });
@@ -44,15 +46,17 @@ type FormValues = z.infer<typeof schema>;
 export function FormStatusPages({
   defaultValues,
   onSubmit,
+  statusPages,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
+  statusPages: { id: number; title: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
-      name: "",
+      // name: "",
       description: "",
       statusPages: [],
     },
@@ -65,12 +69,16 @@ export function FormStatusPages({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-        onSubmit?.(values);
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: () => "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
       } catch (error) {
@@ -90,7 +98,7 @@ export function FormStatusPages({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent className="grid gap-4 sm:grid-cols-3">
-            <FormField
+            {/* <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
@@ -106,7 +114,7 @@ export function FormStatusPages({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
             <FormField
               control={form.control}
               name="description"
@@ -143,17 +151,17 @@ export function FormStatusPages({
                         type="button"
                         className={cn(
                           watchStatusPages.length === statusPages.length &&
-                            "text-muted-foreground",
+                            "text-muted-foreground"
                         )}
                         onClick={() => {
                           const allSelected = statusPages.every((item) =>
-                            watchStatusPages.includes(item.id),
+                            watchStatusPages.includes(item.id)
                           );
 
                           if (!allSelected) {
                             form.setValue(
                               "statusPages",
-                              statusPages.map((item) => item.id),
+                              statusPages.map((item) => item.id)
                             );
                           } else {
                             form.setValue("statusPages", []);
@@ -187,14 +195,14 @@ export function FormStatusPages({
                                         ])
                                       : field.onChange(
                                           field.value?.filter(
-                                            (value) => value !== item.id,
-                                          ),
+                                            (value) => value !== item.id
+                                          )
                                         );
                                   }}
                                 />
                               </FormControl>
                               <FormLabel className="font-normal text-sm">
-                                {item.name}
+                                {item.title}
                               </FormLabel>
                             </FormItem>
                           );

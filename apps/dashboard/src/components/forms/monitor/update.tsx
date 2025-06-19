@@ -24,6 +24,7 @@ export function FormMonitorUpdate() {
   const { data: monitor, refetch } = useQuery(
     trpc.monitor.get.queryOptions({ id: parseInt(id) })
   );
+  const { data: statusPages } = useQuery(trpc.page.list.queryOptions());
   const updateRetryMutation = useMutation(
     trpc.monitor.updateRetry.mutationOptions({
       onSuccess: () => refetch(),
@@ -64,6 +65,12 @@ export function FormMonitorUpdate() {
         });
         refetch();
       },
+    })
+  );
+
+  const updateStatusPagesMutation = useMutation(
+    trpc.monitor.updateStatusPages.mutationOptions({
+      onSuccess: () => refetch(),
     })
   );
 
@@ -145,7 +152,20 @@ export function FormMonitorUpdate() {
           });
         }}
       />
-      <FormStatusPages />
+      <FormStatusPages
+        statusPages={statusPages ?? []}
+        defaultValues={{
+          statusPages: monitor.pages.map(({ id }) => id),
+          description: monitor.description,
+        }}
+        onSubmit={async (values) => {
+          await updateStatusPagesMutation.mutateAsync({
+            id: parseInt(id),
+            statusPages: values.statusPages,
+            description: values.description,
+          });
+        }}
+      />
       <FormNotifiers />
       <FormRetry
         defaultValues={{
@@ -161,6 +181,7 @@ export function FormMonitorUpdate() {
       <FormOtel
         defaultValues={{
           endpoint: monitor.otelEndpoint ?? "",
+          // TODO: headers
           // headers: monitor.otelHeaders ?? [],
           headers: [],
         }}
