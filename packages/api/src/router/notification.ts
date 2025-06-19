@@ -404,4 +404,19 @@ export const notificationRouter = createTRPCRouter({
 
       return _notification;
     }),
+
+  delete: protectedProcedure
+    .meta({ track: Events.DeleteNotification })
+    .input(z.object({ id: z.number() }))
+    .mutation(async (opts) => {
+      await opts.ctx.db
+        .delete(notification)
+        .where(
+          and(
+            eq(notification.id, opts.input.id),
+            eq(notification.workspaceId, opts.ctx.workspace.id)
+          )
+        )
+        .run();
+    }),
 });

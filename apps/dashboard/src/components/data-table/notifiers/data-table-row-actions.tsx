@@ -32,6 +32,15 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
       },
     })
   );
+  const deleteNotifierMutation = useMutation(
+    trpc.notification.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.notification.list.queryKey(),
+        });
+      },
+    })
+  );
 
   return (
     <>
@@ -40,6 +49,11 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
         deleteAction={{
           title: "Delete",
           confirmationValue: "delete notifier",
+          submitAction: async () => {
+            await deleteNotifierMutation.mutateAsync({
+              id: props.row.original.id,
+            });
+          },
         }}
       />
       <FormSheetNotifier
