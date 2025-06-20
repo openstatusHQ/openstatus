@@ -34,21 +34,31 @@ import {
 import { auditLogs } from "@/data/audit-logs";
 import { regionMetrics } from "@/data/region-metrics";
 import { type Region, groupedRegions, regions } from "@/data/regions";
+import { useTRPC } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 
 export default function Page() {
-  const [selectedRegions, setSelectedRegions] = useState<Region[]>(
-    regions.map((r) => r.code),
+  const trpc = useTRPC();
+  const { id } = useParams<{ id: string }>();
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
   );
+  const [selectedRegions, setSelectedRegions] = useState<Region[]>(
+    regions.map((r) => r.code)
+  );
+
+  if (!monitor) return null;
 
   return (
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>OpenStatus API</SectionTitle>
-          <SectionDescription>https://api.openstatus.dev</SectionDescription>
+          <SectionTitle>{monitor.name}</SectionTitle>
+          <SectionDescription>{monitor.url}</SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <Popover>
@@ -144,7 +154,7 @@ function CommandRegion({
           <CommandItem
             onSelect={() => {
               const items = document.querySelectorAll(
-                '[data-slot="command-item"][data-disabled="false"]',
+                '[data-slot="command-item"][data-disabled="false"]'
               );
               const codes: Region[] = [];
 
@@ -185,7 +195,7 @@ function CommandRegion({
                     setSelectedRegions((prev) =>
                       prev.includes(region.code)
                         ? prev.filter((r) => r !== region.code)
-                        : [...prev, region.code],
+                        : [...prev, region.code]
                     );
                   }}
                 >
@@ -199,7 +209,7 @@ function CommandRegion({
                       "ml-auto",
                       selectedRegions.includes(region.code)
                         ? "opacity-100"
-                        : "opacity-0",
+                        : "opacity-0"
                     )}
                   />
                 </CommandItem>

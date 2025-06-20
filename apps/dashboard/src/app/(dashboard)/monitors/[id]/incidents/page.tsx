@@ -19,8 +19,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
 import { useParams } from "next/navigation";
 
-const EMPTY = false;
-
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const trpc = useTRPC();
@@ -29,17 +27,20 @@ export default function Page() {
       monitorId: parseInt(id),
     })
   );
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+  );
 
-  if (!incidents) return null;
+  if (!incidents || !monitor) return null;
 
   return (
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>OpenStatus API</SectionTitle>
-          <SectionDescription>https://api.openstatus.dev</SectionDescription>
+          <SectionTitle>{monitor.name}</SectionTitle>
+          <SectionDescription>{monitor.url}</SectionDescription>
         </SectionHeader>
-        {EMPTY ? (
+        {incidents.length === 0 ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No incidents</EmptyStateTitle>
             <EmptyStateDescription>

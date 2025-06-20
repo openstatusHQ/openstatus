@@ -14,8 +14,9 @@ import { Zap } from "lucide-react";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/lib/trpc/client";
+import { isTRPCClientError } from "@trpc/client";
 
 export function NavActions() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,10 @@ export function NavActions() {
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
+
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+  );
 
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
@@ -38,6 +43,9 @@ export function NavActions() {
     })
   );
 
+  const testHttpMutation = useMutation(trpc.checker.testHttp.mutationOptions());
+  const testTcpMutation = useMutation(trpc.checker.testTcp.mutationOptions());
+
   const actions = getActions({
     edit: () => router.push(`/monitors/${id}/edit`),
     "copy-id": () => {
@@ -48,13 +56,38 @@ export function NavActions() {
   });
 
   async function testAction() {
-    const promise = new Promise((resolve) => setTimeout(resolve, 1000));
-    toast.promise(promise, {
-      loading: "Checking...",
-      success: "Success",
-      error: "Failed",
-    });
-    await promise;
+    if (monitor?.jobType === "http") {
+      const promise = testHttpMutation.mutateAsync({
+        url: monitor.url,
+        body: monitor.body,
+        method: monitor.method,
+        headers: monitor.headers,
+      });
+
+      toast.promise(promise, {
+        loading: "Testing HTTP request...",
+        success: "HTTP test completed successfully",
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "HTTP test failed";
+        },
+      });
+    } else if (monitor?.jobType === "tcp") {
+      const promise = testTcpMutation.mutateAsync({ url: monitor.url });
+
+      toast.promise(promise, {
+        loading: "Testing TCP connection...",
+        success: "TCP test completed successfully",
+        error: (error) => {
+          if (isTRPCClientError(error)) {
+            return error.message;
+          }
+          return "TCP test failed";
+        },
+      });
+    }
   }
 
   return (

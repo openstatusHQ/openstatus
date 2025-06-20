@@ -14,6 +14,7 @@ import { tinybirdRouter } from "./router/tinybird";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
+import { checkerRouter } from "./router/checker";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({
@@ -32,4 +33,5 @@ export const edgeRouter = createTRPCRouter({
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
   member: memberRouter,
+  checker: checkerRouter,
 });

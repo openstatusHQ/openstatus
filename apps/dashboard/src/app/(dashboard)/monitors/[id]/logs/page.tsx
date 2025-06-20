@@ -27,21 +27,26 @@ import { responseLogs } from "@/data/response-logs";
 import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { Lock, X } from "lucide-react";
+import { useParams } from "next/navigation";
 
 const logs = Array.from({ length: 10 }).flatMap(() => responseLogs);
 
 export default function Page() {
   const trpc = useTRPC();
+  const { id } = useParams<{ id: string }>();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: monitor } = useQuery(
+    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
+  );
 
-  if (!workspace) return null;
+  if (!workspace || !monitor) return null;
 
   return (
     <SectionGroup>
       <Section>
         <SectionHeader>
-          <SectionTitle>OpenStatus API</SectionTitle>
-          <SectionDescription>https://api.openstatus.dev</SectionDescription>
+          <SectionTitle>{monitor.name}</SectionTitle>
+          <SectionDescription>{monitor.url}</SectionDescription>
         </SectionHeader>
         <div className="flex flex-wrap gap-2">
           <Popover>

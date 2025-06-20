@@ -9,6 +9,7 @@ export const env = createEnv({
     VERCEL_AUTH_BEARER_TOKEN: z.string(),
     TINY_BIRD_API_KEY: z.string(),
     RESEND_API_KEY: z.string(),
+    CRON_SECRET: z.string(),
   },
 
   runtimeEnv: {
@@ -18,6 +19,7 @@ export const env = createEnv({
     VERCEL_AUTH_BEARER_TOKEN: process.env.VERCEL_AUTH_BEARER_TOKEN,
     TINY_BIRD_API_KEY: process.env.TINY_BIRD_API_KEY,
     RESEND_API_KEY: process.env.RESEND_API_KEY,
+    CRON_SECRET: process.env.CRON_SECRET,
   },
   skipValidation: process.env.NODE_ENV === "test",
 });
