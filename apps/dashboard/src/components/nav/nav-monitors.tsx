@@ -28,7 +28,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTRPC } from "@/lib/trpc/client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS = {
@@ -50,9 +50,15 @@ export function NavMonitors() {
     refetch,
   } = useQuery(trpc.monitor.list.queryOptions());
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const queryClient = useQueryClient();
   const deleteMonitorMutation = useMutation(
     trpc.monitor.delete.mutationOptions({
-      onSuccess: () => refetch(),
+      onSuccess: () => {
+        refetch();
+        queryClient.invalidateQueries({
+          queryKey: trpc.workspace.get.queryKey(),
+        });
+      },
     })
   );
 
