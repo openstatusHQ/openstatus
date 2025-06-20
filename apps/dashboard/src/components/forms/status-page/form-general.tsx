@@ -106,7 +106,7 @@ export function FormGeneral({
 
     startTransition(async () => {
       try {
-        if (!isUnique && defaultValues?.slug !== values.slug) {
+        if (isUnique === false && defaultValues?.slug !== values.slug) {
           toast.error(SLUG_UNIQUE_ERROR_MESSAGE);
           form.setError("slug", { message: SLUG_UNIQUE_ERROR_MESSAGE });
           return;
