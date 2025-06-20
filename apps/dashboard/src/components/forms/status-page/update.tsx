@@ -42,6 +42,12 @@ export function FormStatusPageUpdate() {
     })
   );
 
+  const updateCustomDomainMutation = useMutation(
+    trpc.page.updateCustomDomain.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
+
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
@@ -96,7 +102,18 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
-      <FormCustomDomain locked={workspace.limits["custom-domain"] === false} />
+      <FormCustomDomain
+        locked={workspace.limits["custom-domain"] === false}
+        defaultValues={{
+          domain: statusPage.customDomain ?? undefined,
+        }}
+        onSubmit={async (values) => {
+          await updateCustomDomainMutation.mutateAsync({
+            id: parseInt(id),
+            customDomain: values.domain,
+          });
+        }}
+      />
       <FormPasswordProtection
         locked={workspace.limits["password-protection"] === false}
         defaultValues={{
