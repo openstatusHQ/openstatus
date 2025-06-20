@@ -45,6 +45,7 @@ export function NavStatusPages() {
     refetch,
     isLoading,
   } = useQuery(trpc.page.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const deleteStatusPage = useMutation(
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
@@ -52,6 +53,10 @@ export function NavStatusPages() {
       },
     })
   );
+
+  if (!workspace || !statusPages) return null;
+
+  const limitReached = statusPages.length >= workspace.limits["status-pages"];
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -71,7 +76,9 @@ export function NavStatusPages() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuAction
-                  className="relative top-0 right-0 border"
+                  data-disabled={limitReached}
+                  className="relative top-0 right-0 border data-[disabled=true]:opacity-50"
+                  disabled={limitReached}
                   onClick={() => {
                     router.push("/status-pages/create");
                     setOpenMobile(false);
@@ -82,7 +89,7 @@ export function NavStatusPages() {
                 </SidebarMenuAction>
               </TooltipTrigger>
               <TooltipContent side="right" align="center">
-                Create Status Page
+                {limitReached ? "Upgrade" : "Create Status Page"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>

@@ -134,5 +134,8 @@ export const columns: ColumnDef<Monitor>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
+    meta: {
+      cellClassName: "w-8",
+    },
   },
 ];

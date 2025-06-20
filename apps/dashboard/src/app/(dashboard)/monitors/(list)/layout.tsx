@@ -4,9 +4,8 @@ import {
   AppHeaderContent,
 } from "@/components/nav/app-header";
 import { AppSidebarTrigger } from "@/components/nav/app-sidebar";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { Breadcrumb } from "./breadcrumb";
+import { NavActions } from "./nav-actions";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,9 +16,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Breadcrumb />
         </AppHeaderContent>
         <AppHeaderActions>
-          <Button size="sm" asChild>
-            <Link href="/monitors/create">Create Monitor</Link>
-          </Button>
+          <NavActions />
         </AppHeaderActions>
       </AppHeader>
       <main className="w-full flex-1">{children}</main>

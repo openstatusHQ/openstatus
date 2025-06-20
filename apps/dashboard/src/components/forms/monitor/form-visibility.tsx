@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock } from "lucide-react";
 import NextLink from "next/link";
+import { useParams } from "next/navigation";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -52,6 +53,7 @@ export function FormVisibility({
     },
   });
   const [isPending, startTransition] = useTransition();
+  const { id } = useParams<{ id: string }>();
 
   function submitAction(values: FormValues) {
     if (isPending) return;
@@ -95,8 +97,12 @@ export function FormVisibility({
                       Change monitor visibility. When checked, the monitor stats
                       from the overview page will be public. You will be able to
                       share it via a connected status page or{" "}
-                      <Link href="#">
-                        https://openstatus.dev/public/monitors/:id
+                      <Link
+                        href={`https://openstatus.dev/public/monitors/${id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        https://openstatus.dev/public/monitors/{id}
                       </Link>
                       .
                     </FormDescription>

@@ -82,7 +82,6 @@ export function Sidebar() {
           label: "Monitors",
           items: statusPage.monitors.flatMap((monitor) => {
             const arr = [];
-            const url = new URL(monitor.url);
             arr.push({
               label: "Name",
               value: (
@@ -94,7 +93,7 @@ export function Sidebar() {
             });
             arr.push({
               label: "URL",
-              value: `${url.hostname}${url.pathname}`,
+              value: monitor.url,
               isNested: true,
             });
             return arr;

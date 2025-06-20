@@ -28,7 +28,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useTRPC } from "@/lib/trpc/client";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS = {
@@ -44,9 +44,21 @@ export function NavMonitors() {
   const trpc = useTRPC();
   const router = useRouter();
   const pathname = usePathname();
-  const { data: monitors, isLoading } = useQuery(
-    trpc.monitor.list.queryOptions()
+  const {
+    data: monitors,
+    isLoading,
+    refetch,
+  } = useQuery(trpc.monitor.list.queryOptions());
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const deleteMonitorMutation = useMutation(
+    trpc.monitor.delete.mutationOptions({
+      onSuccess: () => refetch(),
+    })
   );
+
+  if (!workspace || !monitors) return null;
+
+  const limitReached = monitors.length >= workspace.limits["monitors"];
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -59,7 +71,7 @@ export function NavMonitors() {
           {isLoading ? (
             <Skeleton className="h-4 w-5 shrink-0" />
           ) : (
-            <code className="text-muted-foreground">({monitors?.length})</code>
+            <code className="text-muted-foreground">({monitors.length})</code>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -67,7 +79,9 @@ export function NavMonitors() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuAction
-                  className="relative top-0 right-0 border"
+                  disabled={limitReached}
+                  data-disabled={limitReached}
+                  className="relative top-0 right-0 border data-[disabled=true]:opacity-50"
                   onClick={() => {
                     router.push("/monitors/create");
                     setOpenMobile(false);
@@ -78,7 +92,7 @@ export function NavMonitors() {
                 </SidebarMenuAction>
               </TooltipTrigger>
               <TooltipContent side="right" align="center">
-                Create Monitor
+                {limitReached ? "Upgrade" : "Create Monitor"}
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -137,6 +151,11 @@ export function NavMonitors() {
                   deleteAction={{
                     title: "Monitor",
                     confirmationValue: "delete monitor",
+                    submitAction: async () => {
+                      await deleteMonitorMutation.mutateAsync({
+                        id: item.id,
+                      });
+                    },
                   }}
                   side={isMobile ? "bottom" : "right"}
                   align={isMobile ? "end" : "start"}

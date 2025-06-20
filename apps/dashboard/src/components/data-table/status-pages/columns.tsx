@@ -69,5 +69,8 @@ export const columns: ColumnDef<StatusPage>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
+    meta: {
+      cellClassName: "w-8",
+    },
   },
 ];

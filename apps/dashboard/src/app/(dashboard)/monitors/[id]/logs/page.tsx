@@ -1,3 +1,5 @@
+"use client";
+
 import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
@@ -22,13 +24,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { responseLogs } from "@/data/response-logs";
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 import { Lock, X } from "lucide-react";
-
-const LOCKED = false;
 
 const logs = Array.from({ length: 10 }).flatMap(() => responseLogs);
 
 export default function Page() {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+
+  if (!workspace) return null;
+
   return (
     <SectionGroup>
       <Section>
@@ -54,7 +61,7 @@ export default function Page() {
         </div>
       </Section>
       <Section>
-        {LOCKED ? (
+        {workspace.plan === "free" ? (
           <BillingOverlayContainer>
             <DataTable data={logs} />
             <BillingOverlay>

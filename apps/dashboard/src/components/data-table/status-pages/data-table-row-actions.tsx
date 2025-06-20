@@ -9,7 +9,7 @@ import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-type StatusPage = RouterOutputs["page"]["get"];
+type StatusPage = RouterOutputs["page"]["list"][number];
 
 interface DataTableRowActionsProps {
   row: Row<StatusPage>;

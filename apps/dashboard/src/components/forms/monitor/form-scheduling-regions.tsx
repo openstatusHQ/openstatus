@@ -69,6 +69,7 @@ export function FormSchedulingRegions({
   const [isPending, startTransition] = useTransition();
   const watchPeriodicity = form.watch("periodicity");
   const watchRegions = form.watch("regions");
+
   function submitAction(values: FormValues) {
     if (isPending) return;
 
@@ -92,6 +93,10 @@ export function FormSchedulingRegions({
       }
     });
   }
+
+  if (!workspace) return null;
+
+  const limits = workspace.limits["regions"];
 
   return (
     <Form {...form}>
@@ -159,12 +164,17 @@ export function FormSchedulingRegions({
                     <div className="grid gap-4">
                       {Object.entries(groupByContinent).map(
                         ([continent, r]) => {
-                          const selected = r.reduce((prev, curr) => {
-                            return (
-                              prev + (watchRegions.includes(curr.code) ? 1 : 0)
-                            );
-                          }, 0);
-                          const isAllSelected = selected === r.length;
+                          const selected = r
+                            .filter((r) => limits.includes(r.code))
+                            .reduce((prev, curr) => {
+                              return (
+                                prev +
+                                (watchRegions.includes(curr.code) ? 1 : 0)
+                              );
+                            }, 0);
+                          const isAllSelected =
+                            selected ===
+                            r.filter((r) => limits.includes(r.code)).length;
 
                           return (
                             <div key={continent} className="space-y-2">
@@ -186,7 +196,9 @@ export function FormSchedulingRegions({
                                     if (!isAllSelected) {
                                       // Add all regions from this continent
                                       const newRegions = [...watchRegions];
-                                      r.forEach((region) => {
+                                      r.filter((r) =>
+                                        limits.includes(r.code)
+                                      ).forEach((region) => {
                                         if (!newRegions.includes(region.code)) {
                                           newRegions.push(region.code);
                                         }
@@ -230,11 +242,15 @@ export function FormSchedulingRegions({
                                                 region.code
                                               ) || false
                                             }
+                                            disabled={
+                                              !limits.includes(region.code)
+                                            }
                                             onCheckedChange={(checked) => {
+                                              console.log(checked, field.value);
                                               if (checked) {
                                                 field.onChange([
                                                   ...field.value,
-                                                  region,
+                                                  region.code,
                                                 ]);
                                               } else {
                                                 field.onChange(

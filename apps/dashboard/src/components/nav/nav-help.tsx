@@ -58,22 +58,38 @@ export function NavHelp() {
                   </DropdownMenuItem>
                 </FormDialogSupportContact>
                 <DropdownMenuItem asChild>
-                  <Link href="#">
+                  <Link
+                    href="https://docs.openstatus.dev"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Book /> Docs
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="#">
+                  <Link
+                    href="https://docs.openstatus.dev/api-reference"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Braces /> API Reference
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="#">
+                  <Link
+                    href="https://openstatus.dev/cal"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <CalendarClock /> Book a Call
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="#">
+                  <Link
+                    href="https://openstatus.dev/discord"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <DiscordIcon />
                     Community
                   </Link>
