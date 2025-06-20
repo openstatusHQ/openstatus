@@ -1,5 +1,7 @@
 import { FormDiscord } from "@/components/forms/notifier/form-discord";
 import { FormEmail } from "@/components/forms/notifier/form-email";
+import { FormNtfy } from "@/components/forms/notifier/form-ntfy";
+import { FormOpsGenie } from "@/components/forms/notifier/form-opsgenie";
 import { FormSlack } from "@/components/forms/notifier/form-slack";
 import { FormSms } from "@/components/forms/notifier/form-sms";
 import { FormWebhook } from "@/components/forms/notifier/form-webhook";
@@ -73,7 +75,7 @@ export const config = {
   opsgenie: {
     icon: OpsGenieIcon,
     label: "OpsGenie",
-    form: undefined,
+    form: FormOpsGenie,
   },
   pagerduty: {
     icon: PagerDutyIcon,
@@ -83,7 +85,7 @@ export const config = {
   ntfy: {
     icon: BellIcon, // TODO: add svg icon
     label: "Ntfy",
-    form: undefined,
+    form: FormNtfy,
   },
 };
 

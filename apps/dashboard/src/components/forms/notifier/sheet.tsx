@@ -25,6 +25,7 @@ export function FormSheetNotifier({
   provider,
   onSubmit,
   monitors,
+  ...props
 }: Omit<React.ComponentProps<typeof FormSheetTrigger>, "onSubmit"> & {
   defaultValues?: FormValues;
   provider: FormValues["provider"];
@@ -35,7 +36,9 @@ export function FormSheetNotifier({
   const Form = provider ? config[provider].form : undefined;
   return (
     <FormSheet open={open} onOpenChange={setOpen}>
-      <FormSheetTrigger asChild>{children}</FormSheetTrigger>
+      <FormSheetTrigger {...props} asChild>
+        {children}
+      </FormSheetTrigger>
       <FormSheetContent>
         <FormSheetHeader>
           <FormSheetTitle>Notifier</FormSheetTitle>

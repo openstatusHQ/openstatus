@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("slack"),
-  data: z.record(z.string(), z.string()),
+  data: z.string().url(),
   monitors: z.array(z.number()),
 });
 
@@ -47,9 +47,7 @@ export function FormSlack({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "slack",
-      data: {
-        slack: "",
-      },
+      data: "",
       monitors: [],
     },
   });
@@ -103,7 +101,7 @@ export function FormSlack({
         />
         <FormField
           control={form.control}
-          name="data.slack"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

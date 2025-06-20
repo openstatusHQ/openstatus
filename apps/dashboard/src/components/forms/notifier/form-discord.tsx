@@ -25,7 +25,7 @@ import { Label } from "@/components/ui/label";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("discord"),
-  data: z.record(z.string(), z.string()),
+  data: z.string(),
   monitors: z.array(z.number()),
 });
 
@@ -47,9 +47,7 @@ export function FormDiscord({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "discord",
-      data: {
-        discord: "",
-      },
+      data: "",
       monitors: [],
     },
   });
@@ -103,7 +101,7 @@ export function FormDiscord({
         />
         <FormField
           control={form.control}
-          name="data.discord"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>

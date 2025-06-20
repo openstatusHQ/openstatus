@@ -65,9 +65,29 @@ export function FormSheetFooterInfo({
   );
 }
 
+export function FormSheetTrigger({
+  children,
+  className,
+  disabled,
+  ...props
+}: React.ComponentProps<typeof SheetTrigger>) {
+  return (
+    <SheetTrigger
+      className={cn(
+        "cursor-pointer data-[disabled=true]:opacity-50 data-[disabled=true]:pointer-events-none",
+        className
+      )}
+      data-disabled={disabled}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </SheetTrigger>
+  );
+}
+
 export {
   SheetTitle as FormSheetTitle,
   SheetDescription as FormSheetDescription,
-  SheetTrigger as FormSheetTrigger,
   Sheet as FormSheet,
 };

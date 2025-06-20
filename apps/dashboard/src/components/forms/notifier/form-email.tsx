@@ -24,9 +24,7 @@ import { Label } from "@/components/ui/label";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("email"),
-  data: z.object({
-    email: z.string().email(),
-  }),
+  data: z.string().email(),
   monitors: z.array(z.number()),
 });
 
@@ -48,9 +46,7 @@ export function FormEmail({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "email",
-      data: {
-        email: "",
-      },
+      data: "",
       monitors: [],
     },
   });
@@ -104,7 +100,7 @@ export function FormEmail({
         />
         <FormField
           control={form.control}
-          name="data.email"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>

@@ -320,9 +320,12 @@ export const notificationRouter = createTRPCRouter({
     .input(
       z.object({
         provider: z.enum(notificationProvider),
-        data: z.record(z.string(), z.string()),
+        data: z.record(
+          z.enum(notificationProvider),
+          z.record(z.string(), z.string()).or(z.string())
+        ),
         name: z.string(),
-        monitors: z.array(z.number()),
+        monitors: z.array(z.number()).default([]),
       })
     )
     .mutation(async (opts) => {
@@ -392,12 +395,14 @@ export const notificationRouter = createTRPCRouter({
           .returning()
           .get();
 
-        await tx.insert(notificationsToMonitors).values(
-          opts.input.monitors.map((monitorId) => ({
-            notificationId: _notification.id,
-            monitorId,
-          }))
-        );
+        if (opts.input.monitors.length) {
+          await tx.insert(notificationsToMonitors).values(
+            opts.input.monitors.map((monitorId) => ({
+              notificationId: _notification.id,
+              monitorId,
+            }))
+          );
+        }
 
         return _notification;
       });

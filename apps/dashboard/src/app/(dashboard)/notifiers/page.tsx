@@ -31,6 +31,7 @@ export default function Page() {
   const { data: notifiers, refetch } = useQuery(
     trpc.notification.list.queryOptions()
   );
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const createNotifierMutation = useMutation(
     trpc.notification.new.mutationOptions({
@@ -38,7 +39,7 @@ export default function Page() {
     })
   );
 
-  if (!notifiers || !monitors) return null;
+  if (!notifiers || !monitors || !workspace) return null;
 
   return (
     <SectionGroup>
@@ -66,6 +67,13 @@ export default function Page() {
           {Object.keys(config).map((notifier) => {
             const key = notifier as keyof typeof config;
             const Icon = config[key].icon;
+            let enabled = true;
+
+            if (key in workspace.limits) {
+              enabled =
+                workspace.limits[key as "opsgenie" | "sms" | "opsgenie"];
+            }
+
             return (
               <FormSheetNotifier
                 key={notifier}
@@ -75,12 +83,13 @@ export default function Page() {
                   await createNotifierMutation.mutateAsync({
                     provider: key,
                     name: values.name,
-                    data: values.data,
+                    data: { [key]: values.data },
                     monitors: values.monitors,
                   });
                 }}
+                disabled={!enabled}
               >
-                <ActionCard className="h-full w-full cursor-pointer">
+                <ActionCard className="h-full w-full">
                   <ActionCardHeader>
                     <div className="flex items-center gap-2">
                       <div className="flex size-6 items-center justify-center rounded-md border border-border bg-muted">

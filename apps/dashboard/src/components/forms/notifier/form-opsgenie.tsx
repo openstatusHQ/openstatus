@@ -10,51 +10,55 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+import { Link } from "@/components/common/link";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const REGIONS = ["us", "eu"];
 
 const schema = z.object({
   name: z.string(),
-  provider: z.enum([
-    "slack",
-    "discord",
-    "email",
-    "sms",
-    "webhook",
-    "opsgenie",
-    "pagerduty",
-    "ntfy",
-  ]),
-  data: z.record(z.string(), z.string()).or(z.string()),
+  provider: z.literal("opsgenie"),
+  data: z.record(z.string(), z.string()),
   monitors: z.array(z.number()),
 });
 
-export type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
-export function NotifierForm({
+export function FormOpsGenie({
   defaultValues,
-  className,
   onSubmit,
+  className,
   monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
+      provider: "opsgenie",
       data: {
-        webhook: "",
+        apiKey: "",
+        region: undefined,
       },
       monitors: [],
     },
@@ -66,14 +70,18 @@ export function NotifierForm({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
-        onSubmit?.(values);
       } catch (error) {
         console.error(error);
       }
@@ -83,7 +91,6 @@ export function NotifierForm({
   return (
     <Form {...form}>
       <form
-        id="notifier-form"
         className={cn("grid gap-4", className)}
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
@@ -106,14 +113,47 @@ export function NotifierForm({
         />
         <FormField
           control={form.control}
-          name="data.webhook"
+          name="data.apiKey"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Webhook URL</FormLabel>
+              <FormLabel>API key</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/webhook" {...field} />
+                <Input placeholder="xxx-yyy-zzz" required {...field} />
               </FormControl>
               <FormMessage />
+              <FormDescription>
+                Enter the API key. <Link href="#">Read more</Link>.
+              </FormDescription>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="data.region"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Region</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a region" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {REGIONS.map((region) => (
+                      <SelectItem key={region} value={region}>
+                        {region}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+              <FormDescription>The region is required.</FormDescription>
             </FormItem>
           )}
         />

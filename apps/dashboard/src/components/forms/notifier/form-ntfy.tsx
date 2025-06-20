@@ -12,49 +12,44 @@ import {
 
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { isTRPCClientError } from "@trpc/client";
+import { Label } from "@/components/ui/label";
 
 const schema = z.object({
   name: z.string(),
-  provider: z.enum([
-    "slack",
-    "discord",
-    "email",
-    "sms",
-    "webhook",
-    "opsgenie",
-    "pagerduty",
-    "ntfy",
-  ]),
-  data: z.record(z.string(), z.string()).or(z.string()),
+  provider: z.literal("ntfy"),
+  data: z.record(z.string(), z.string()),
   monitors: z.array(z.number()),
 });
 
-export type FormValues = z.infer<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
-export function NotifierForm({
+export function FormNtfy({
   defaultValues,
-  className,
   onSubmit,
+  className,
   monitors,
   ...props
 }: Omit<React.ComponentProps<"form">, "onSubmit"> & {
   defaultValues?: FormValues;
-  onSubmit?: (values: FormValues) => Promise<void> | void;
+  onSubmit: (values: FormValues) => Promise<void>;
   monitors: { id: number; name: string }[];
 }) {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
       name: "",
+      provider: "ntfy",
       data: {
-        webhook: "",
+        topic: "",
+        serverUrl: "",
+        token: "",
       },
       monitors: [],
     },
@@ -66,14 +61,18 @@ export function NotifierForm({
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise = onSubmit(values);
         toast.promise(promise, {
           loading: "Saving...",
-          success: () => JSON.stringify(values),
-          error: "Failed to save",
+          success: "Saved",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to save";
+          },
         });
         await promise;
-        onSubmit?.(values);
       } catch (error) {
         console.error(error);
       }
@@ -83,7 +82,6 @@ export function NotifierForm({
   return (
     <Form {...form}>
       <form
-        id="notifier-form"
         className={cn("grid gap-4", className)}
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
@@ -106,12 +104,43 @@ export function NotifierForm({
         />
         <FormField
           control={form.control}
-          name="data.webhook"
+          name="data.topic"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Webhook URL</FormLabel>
+              <FormLabel>Topic</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/webhook" {...field} />
+                <Input placeholder="your-topic" required {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="data.serverUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL</FormLabel>
+              <FormControl>
+                <Input
+                  type="url"
+                  placeholder="https://ntfy.sh"
+                  required
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="data.token"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Bearer Token</FormLabel>
+              <FormControl>
+                <Input placeholder="tk_iloveopenstatus" required {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

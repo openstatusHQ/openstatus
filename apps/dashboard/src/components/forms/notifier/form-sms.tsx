@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 const schema = z.object({
   name: z.string(),
   provider: z.literal("sms"),
-  data: z.record(z.string(), z.string()),
+  data: z.string(),
   monitors: z.array(z.number()),
 });
 
@@ -45,9 +45,7 @@ export function FormSms({
     defaultValues: defaultValues ?? {
       name: "",
       provider: "sms",
-      data: {
-        sms: "",
-      },
+      data: "",
       monitors: [],
     },
   });
@@ -97,7 +95,7 @@ export function FormSms({
         />
         <FormField
           control={form.control}
-          name="data.sms"
+          name="data"
           render={({ field }) => (
             <FormItem>
               <FormLabel>SMS</FormLabel>
