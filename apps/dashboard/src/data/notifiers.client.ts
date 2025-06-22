@@ -18,6 +18,12 @@ import {
   Trash2,
   Webhook,
 } from "lucide-react";
+import { sendTestSlackMessage as sendTestSlack } from "@openstatus/notification-slack";
+import { sendTestDiscordMessage as sendTestDiscord } from "@openstatus/notification-discord";
+import { sendTest as sendTestWebhook } from "@openstatus/notification-webhook";
+import { sendTest as sendTestOpsGenie } from "@openstatus/notification-opsgenie";
+import { sendTest as sendTestPagerDuty } from "@openstatus/notification-pagerduty";
+import { sendTest as sendTestNtfy } from "@openstatus/notification-ntfy";
 
 export const actions = [
   {
@@ -52,41 +58,51 @@ export const config = {
     icon: SlackIcon,
     label: "Slack",
     form: FormSlack,
+    sendTest: sendTestSlack,
   },
   discord: {
     icon: DiscordIcon,
     label: "Discord",
     form: FormDiscord,
+    sendTest: sendTestDiscord,
   },
   email: {
     icon: Mail,
     label: "Email",
     form: FormEmail,
+    // TODO: add sendTest
+    sendTest: undefined,
   },
   sms: {
     icon: MessageCircle,
     label: "SMS",
     form: FormSms,
+    // TODO: add sendTest
+    sendTest: undefined,
   },
   webhook: {
     icon: Webhook,
     label: "Webhook",
     form: FormWebhook,
+    sendTest: sendTestWebhook,
   },
   opsgenie: {
     icon: OpsGenieIcon,
     label: "OpsGenie",
     form: FormOpsGenie,
+    sendTest: sendTestOpsGenie,
   },
   pagerduty: {
     icon: PagerDutyIcon,
     label: "PagerDuty",
     form: FormPagerDuty,
+    sendTest: sendTestPagerDuty,
   },
   ntfy: {
     icon: BellIcon, // TODO: add svg icon
     label: "Ntfy",
     form: FormNtfy,
+    sendTest: sendTestNtfy,
   },
 };
 

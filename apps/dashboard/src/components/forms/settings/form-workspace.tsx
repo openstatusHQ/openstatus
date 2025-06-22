@@ -90,7 +90,7 @@ export function FormWorkspace({
             />
           </FormCardContent>
           <FormCardFooter>
-            <Button type="submit" disabled={isPending}>
+            <Button type="submit" disabled={isPending} size="sm">
               {isPending ? "Submitting..." : "Submit"}
             </Button>
           </FormCardFooter>

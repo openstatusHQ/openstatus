@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Label } from "@/components/ui/label";
+import { config } from "@/data/notifiers.client";
+import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   name: z.string(),
@@ -76,6 +78,31 @@ export function FormSlack({
     });
   }
 
+  function sendTest() {
+    if (isPending) return;
+
+    startTransition(async () => {
+      try {
+        const promise = config[form.getValues("provider")].sendTest(
+          form.getValues("data")
+        );
+        toast.promise(promise, {
+          loading: "Sending test...",
+          success: "Test sent",
+          error: (error) => {
+            if (error instanceof Error) {
+              return error.message;
+            }
+            return "Failed to send test";
+          },
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
   return (
     <Form {...form}>
       <form
@@ -116,6 +143,9 @@ export function FormSlack({
             </FormItem>
           )}
         />
+        <Button variant="outline" size="sm" onClick={sendTest}>
+          Send Test
+        </Button>
         <FormField
           control={form.control}
           name="monitors"

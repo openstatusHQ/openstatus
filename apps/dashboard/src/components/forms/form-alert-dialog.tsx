@@ -59,7 +59,11 @@ export function FormAlertDialog({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        {children ?? <Button variant="destructive">Revoke</Button>}
+        {children ?? (
+          <Button variant="destructive" size="sm">
+            Revoke
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
