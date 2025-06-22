@@ -29,15 +29,22 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const updateMaintenanceMutation = useMutation(
     trpc.maintenance.update.mutationOptions({
       onSuccess: () => {
-        // Refetch all maintenance-related queries
         queryClient.refetchQueries({
-          predicate: (query) => {
-            const key = query.queryKey[0];
-            if (Array.isArray(key) && key[0] === "maintenance") {
-              return true;
-            }
-            return false;
-          },
+          queryKey: trpc.maintenance.list.queryKey({
+            pageId: row.original.pageId ?? undefined,
+          }),
+        });
+      },
+    })
+  );
+
+  const deleteMaintenanceMutation = useMutation(
+    trpc.maintenance.delete.mutationOptions({
+      onSuccess: () => {
+        queryClient.refetchQueries({
+          queryKey: trpc.maintenance.list.queryKey({
+            pageId: row.original.pageId ?? undefined,
+          }),
         });
       },
     })
@@ -50,6 +57,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
         deleteAction={{
           title: "Delete",
           confirmationValue: "delete",
+          submitAction: async () => {
+            await deleteMaintenanceMutation.mutateAsync({
+              id: row.original.id,
+            });
+          },
         }}
       />
       <FormSheetMaintenance
