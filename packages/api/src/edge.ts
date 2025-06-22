@@ -1,3 +1,4 @@
+import { apiKeyRouter } from "./router/apiKey";
 import { domainRouter } from "./router/domain";
 import { incidentRouter } from "./router/incident";
 import { integrationRouter } from "./router/integration";
@@ -18,6 +19,7 @@ import { checkerRouter } from "./router/checker";
 
 // Deployed to /trpc/edge/**
 export const edgeRouter = createTRPCRouter({
+  apiKey: apiKeyRouter,
   workspace: workspaceRouter,
   monitor: monitorRouter,
   page: pageRouter,

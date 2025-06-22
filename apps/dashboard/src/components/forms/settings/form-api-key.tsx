@@ -18,24 +18,93 @@ import {
   FormCardTitle,
 } from "@/components/forms/form-card";
 import { Button } from "@/components/ui/button";
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import { toast } from "sonner";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogDescription,
+  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { isTRPCClientError } from "@trpc/client";
 
-const EMPTY = false;
+// we should prefetch the api key on the server (layout)
 
 export function FormApiKey() {
+  const trpc = useTRPC();
   const [isPending, startTransition] = useTransition();
+  const { copy } = useCopyToClipboard();
+  const [result, setResult] = useState<{
+    keyId: string;
+    key: string;
+  } | null>(null);
+  const { data: workspace } = useQuery(
+    trpc.workspace.getWorkspace.queryOptions()
+  );
+  const { data: apiKey, refetch } = useQuery(trpc.apiKey.get.queryOptions());
+  const createApiKeyMutation = useMutation(
+    trpc.apiKey.create.mutationOptions({
+      onSuccess: (data) => {
+        if (data.result) {
+          setResult(data.result);
+        } else {
+          throw new Error("Failed to create API key");
+        }
+      },
+    })
+  );
+  const revokeApiKeyMutation = useMutation(
+    trpc.apiKey.revoke.mutationOptions({
+      onSuccess: () => refetch(),
+    })
+  );
 
-  function createAction() {
-    if (isPending) return;
+  async function createAction() {
+    if (isPending || !workspace) return;
 
     startTransition(async () => {
       try {
-        const promise = new Promise((resolve) => setTimeout(resolve, 1000));
+        const promise = createApiKeyMutation.mutateAsync({
+          ownerId: workspace.id,
+        });
         toast.promise(promise, {
           loading: "Creating...",
-          success: () => "API key created",
-          error: "Failed to create API key",
+          success: () => "Created",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to create API key";
+          },
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  async function revokeAction() {
+    if (isPending || !apiKey) return;
+
+    startTransition(async () => {
+      try {
+        const promise = revokeApiKeyMutation.mutateAsync({
+          keyId: apiKey.id,
+        });
+        toast.promise(promise, {
+          loading: "Revoking...",
+          success: () => "Revoked",
+          error: (error) => {
+            if (isTRPCClientError(error)) {
+              return error.message;
+            }
+            return "Failed to revoke API key";
+          },
         });
         await promise;
       } catch (error) {
@@ -53,7 +122,7 @@ export function FormApiKey() {
         </FormCardDescription>
       </FormCardHeader>
       <FormCardContent>
-        {EMPTY ? (
+        {!apiKey ? (
           <EmptyStateContainer>
             <EmptyStateTitle>No API key</EmptyStateTitle>
             <EmptyStateDescription>
@@ -61,7 +130,7 @@ export function FormApiKey() {
             </EmptyStateDescription>
           </EmptyStateContainer>
         ) : (
-          <DataTable />
+          <DataTable apiKey={apiKey} />
         )}
       </FormCardContent>
       <FormCardFooter>
@@ -69,14 +138,36 @@ export function FormApiKey() {
           Trigger monitors via CLI, CI/CD or create your own status page.{" "}
           <Link href="#">Learn more</Link>.
         </FormCardFooterInfo>
-        {EMPTY ? (
+        {!apiKey ? (
           <Button size="sm" onClick={createAction}>
             Create
           </Button>
         ) : (
-          <FormAlertDialog title="API Key" confirmationValue="delete api key" />
+          <FormAlertDialog
+            title="API Key"
+            confirmationValue="delete api key"
+            submitAction={async () => {
+              await revokeAction();
+            }}
+          />
         )}
       </FormCardFooter>
+      <AlertDialog open={!!result} onOpenChange={() => setResult(null)}>
+        <AlertDialogContent>
+          <AlertDialogTitle>API Key</AlertDialogTitle>
+          <AlertDialogDescription>
+            Ensure you copy your API key before closing this dialog.
+          </AlertDialogDescription>
+          <p className="font-mono text-sm">{result?.key}</p>
+          <AlertDialogFooter>
+            <Button
+              onClick={() => copy(result?.key || "", { withToast: true })}
+            >
+              Copy
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </FormCard>
   );
 }

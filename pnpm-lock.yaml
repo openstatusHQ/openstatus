@@ -864,6 +864,9 @@ importers:
       '@trpc/server':
         specifier: 11.4.0
         version: 11.4.0(typescript@5.7.2)
+      '@unkey/api':
+        specifier: 0.26.1
+        version: 0.26.1
       nanoid:
         specifier: 5.0.7
         version: 5.0.7

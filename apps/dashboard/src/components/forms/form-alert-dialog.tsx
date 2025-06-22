@@ -52,23 +52,23 @@ export function FormAlertDialog({
         setOpen(false);
       });
     } catch (error) {
-      console.error("Failed to delete:", error);
+      console.error("Failed to revoke:", error);
     }
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        {children ?? <Button variant="destructive">Delete</Button>}
+        {children ?? <Button variant="destructive">Revoke</Button>}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Are you sure about deleting `{title}`?
+            Are you sure about revoking `{title}`?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently remove the entry
-            from the database.
+            This action cannot be undone. This will permanently revoke the API
+            key.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <form id="form-alert-dialog" className="space-y-0.5">

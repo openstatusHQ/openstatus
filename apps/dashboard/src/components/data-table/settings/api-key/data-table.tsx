@@ -5,18 +5,23 @@ import {
   TableHead,
   TableRow,
 } from "@/components/ui/table";
+import { RouterOutputs } from "@openstatus/api";
 
-export function DataTable() {
+type ApiKey = RouterOutputs["apiKey"]["get"];
+
+export function DataTable({ apiKey }: { apiKey: ApiKey }) {
   return (
     <Table>
       <TableBody>
         <TableRow className="[&>:not(:last-child)]:border-r">
           <TableHead className="h-auto bg-muted/50">Created At</TableHead>
-          <TableCell>{new Date().toLocaleDateString()}</TableCell>
+          <TableCell>
+            {new Date(apiKey.createdAt).toLocaleDateString()}
+          </TableCell>
         </TableRow>
         <TableRow className="[&>:not(:last-child)]:border-r">
           <TableHead className="h-auto bg-muted/50">Token</TableHead>
-          <TableCell>os_3ZJh...</TableCell>
+          <TableCell>{apiKey.start}...</TableCell>
         </TableRow>
       </TableBody>
     </Table>
