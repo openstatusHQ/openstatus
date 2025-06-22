@@ -5,11 +5,10 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
   get: protectedProcedure.query(async (opts) => {
-    const currentUser = await opts.ctx.db
+    return await opts.ctx.db
       .select()
       .from(user)
       .where(eq(user.id, opts.ctx.user.id))
       .get();
-    return currentUser;
   }),
 });

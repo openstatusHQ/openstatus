@@ -47,6 +47,8 @@ export default function Page() {
               headers: data.headers,
               body: data.body,
               assertions: data.assertions,
+              saveCheck: data.saveCheck,
+              skipCheck: data.skipCheck,
             });
           }}
         />

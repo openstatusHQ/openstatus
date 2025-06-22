@@ -34,7 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isTRPCClientError } from "@trpc/client";
 import { Globe, Network, Plus, X } from "lucide-react";
-import { useEffect, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -48,6 +48,16 @@ import {
 } from "@openstatus/assertions";
 import { monitorMethods } from "@openstatus/db/src/schema";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogTitle,
+  AlertDialogFooter,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+} from "@/components/ui/alert-dialog";
 
 const TYPES = ["http", "tcp"] as const;
 const ASSERTION_TYPES = ["status", "header", "textBody"] as const;
@@ -72,6 +82,8 @@ const schema = z.object({
     ])
   ),
   body: z.string().optional(),
+  skipCheck: z.boolean().optional().default(false),
+  saveCheck: z.boolean().optional().default(false),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -86,6 +98,7 @@ export function FormGeneral({
   onSubmit: (values: FormValues) => Promise<void>;
   disabled?: boolean;
 }) {
+  const [error, setError] = useState<string | null>(null);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: defaultValues ?? {
@@ -96,6 +109,8 @@ export function FormGeneral({
       headers: [],
       body: "",
       assertions: [],
+      skipCheck: false,
+      saveCheck: false,
     },
   });
   const [isPending, startTransition] = useTransition();
@@ -114,6 +129,7 @@ export function FormGeneral({
   }, [watchType, defaultValues, form]);
 
   function submitAction(values: FormValues) {
+    console.log("submitAction", values);
     if (isPending || disabled) return;
 
     // Validate assertions based on type
@@ -164,6 +180,7 @@ export function FormGeneral({
           success: "Saved",
           error: (error) => {
             if (isTRPCClientError(error)) {
+              setError(error.message);
               return error.message;
             }
             return "Failed to save";
@@ -175,6 +192,8 @@ export function FormGeneral({
       }
     });
   }
+
+  console.log(form.getValues("skipCheck"));
 
   return (
     <Form {...form}>
@@ -673,6 +692,34 @@ export function FormGeneral({
             </Button>
           </FormCardFooter>
         </FormCard>
+        <AlertDialog open={!!error} onOpenChange={() => setError(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Still save?</AlertDialogTitle>
+              <AlertDialogDescription>
+                It seems like the endpoint is not reachable or the assertions
+                failed. Do you want to save the monitor anyway?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <p className="font-mono text-sm text-destructive">{error}</p>
+            <AlertDialogFooter>
+              <AlertDialogCancel type="button">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                type="button"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  form.setValue("skipCheck", true);
+                  form.handleSubmit(submitAction)();
+                  form.setValue("skipCheck", false);
+                  setError(null);
+                }}
+                disabled={isPending}
+              >
+                Save
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </form>
     </Form>
   );

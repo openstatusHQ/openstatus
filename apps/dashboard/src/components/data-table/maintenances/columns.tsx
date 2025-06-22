@@ -65,5 +65,8 @@ export const columns: ColumnDef<Maintenance>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
+    meta: {
+      cellClassName: "w-8",
+    },
   },
 ];

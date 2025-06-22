@@ -12,6 +12,8 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { CircleCheck, CircleDashed, X } from "lucide-react";
 
+// TODO: add a close action to localStorage
+
 export function NavChecklist() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -21,6 +23,8 @@ export function NavChecklist() {
   const hasMonitors = workspace.usage?.monitors ?? 0 > 0;
   const hasStatusPages = workspace.usage?.pages ?? 0 > 0;
   const hasNotifiers = workspace.usage?.notifications ?? 0 > 0;
+
+  if (hasMonitors && hasStatusPages && hasNotifiers) return null;
 
   const items = [
     {

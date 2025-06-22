@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
-import type { Monitor } from "@openstatus/db/src/schema";
+import { RouterOutputs } from "@openstatus/api";
 
+type Monitor = RouterOutputs["monitor"]["list"][number];
 export interface MonitorDataTableToolbarProps {
   table: Table<Monitor>;
 }

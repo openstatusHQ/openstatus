@@ -2,7 +2,7 @@
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 // import { TableCellNumber } from "@/components/data-table/table-cell-number";
-// import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 // import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -53,16 +53,23 @@ export const columns: ColumnDef<Monitor>[] = [
     },
   },
   {
+    accessorKey: "active",
+    header: "Active",
+    meta: {
+      cellClassName: "font-mono",
+    },
+  },
+  {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
       const value = String(row.getValue("status"));
       switch (value) {
-        case "Normal":
+        case "active":
           return <div className="font-mono text-success">{value}</div>;
-        case "Degraded":
+        case "degraded":
           return <div className="font-mono text-warning">{value}</div>;
-        case "Failing":
+        case "error":
           return <div className="font-mono text-destructive">{value}</div>;
         default:
           return <div className="font-mono text-muted-foreground">{value}</div>;
@@ -71,25 +78,34 @@ export const columns: ColumnDef<Monitor>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-  // {
-  //   accessorKey: "tags",
-  //   header: "Tags",
-  //   cell: ({ row }) => {
-  //     const value = row.getValue("tags");
-  //     if (!Array.isArray(value)) return null;
-  //     return (
-  //       <div className="flex gap-2">
-  //         {value.map((tag) => (
-  //           <Badge key={tag} variant="secondary">
-  //             {tag}
-  //           </Badge>
-  //         ))}
-  //       </div>
-  //     );
-  //   },
-  //   enableSorting: false,
-  //   enableHiding: false,
-  // },
+  {
+    accessorKey: "tags",
+    header: "Tags",
+    cell: ({ row }) => {
+      const value = row.getValue("tags");
+      if (!Array.isArray(value)) return null;
+      if (value.length === 0) return null;
+      return (
+        <div className="group/badges -space-x-2 flex flex-wrap">
+          {value.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="outline"
+              className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
+            >
+              <div
+                className="size-2.5 rounded-full"
+                style={{ backgroundColor: tag.color }}
+              />
+              {tag.name}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
   // {
   //   accessorKey: "lastIncident",
   //   header: ({ column }) => (

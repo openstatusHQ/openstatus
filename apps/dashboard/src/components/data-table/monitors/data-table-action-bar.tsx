@@ -17,15 +17,52 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { RouterOutputs } from "@openstatus/api";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { isTRPCClientError } from "@trpc/client";
 
-interface MonitorDataTableActionBarProps<TData> {
-  table: Table<TData>;
+type Monitor = RouterOutputs["monitor"]["list"][number];
+
+const ACTIVE = [
+  { label: "active", value: true },
+  { label: "inactive", value: false },
+];
+
+interface MonitorDataTableActionBarProps {
+  table: Table<Monitor>;
 }
 
-export function MonitorDataTableActionBar<TData>({
+export function MonitorDataTableActionBar({
   table,
-}: MonitorDataTableActionBarProps<TData>) {
+}: MonitorDataTableActionBarProps) {
   const rows = table.getFilteredSelectedRowModel().rows;
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  // TODO:
+  // const deleteMonitorsMutation = useMutation(
+  //   trpc.monitor.deleteMonitors.mutationOptions({
+  //     onSuccess: () => {
+  //       queryClient.invalidateQueries({
+  //         queryKey: trpc.monitor.list.queryKey(),
+  //       });
+  //       queryClient.invalidateQueries({
+  //         queryKey: trpc.workspace.get.queryKey(),
+  //       });
+  //     },
+  //   })
+  // );
+
+  const updateMonitorsMutation = useMutation(
+    trpc.monitor.updateMonitors.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.monitor.list.queryKey(),
+        });
+      },
+    })
+  );
 
   return (
     <DataTableActionBar table={table} visible={rows.length > 0}>
@@ -35,7 +72,26 @@ export function MonitorDataTableActionBar<TData>({
         className="hidden data-[orientation=vertical]:h-5 sm:block"
       />
       <div className="flex items-center gap-1.5">
-        <Select>
+        <Select
+          onValueChange={(v) => {
+            toast.promise(
+              updateMonitorsMutation.mutateAsync({
+                ids: rows.map((row) => row.original.id),
+                active: v === "active",
+              }),
+              {
+                loading: "Updating...",
+                success: "Updated",
+                error: (error) => {
+                  if (isTRPCClientError(error)) {
+                    return error.message;
+                  }
+                  return "Failed to update";
+                },
+              }
+            );
+          }}
+        >
           <SelectTrigger asChild>
             <DataTableActionBarAction size="icon" tooltip="Update status">
               <CheckCircle2 />
@@ -43,14 +99,19 @@ export function MonitorDataTableActionBar<TData>({
           </SelectTrigger>
           <SelectContent align="center">
             <SelectGroup>
-              {["active", "inactive"].map((status) => (
-                <SelectItem key={status} value={status} className="capitalize">
-                  {status}
+              {ACTIVE.map((status) => (
+                <SelectItem
+                  key={status.label}
+                  value={status.label}
+                  className="capitalize"
+                >
+                  {status.label}
                 </SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
         </Select>
+        {/* TODO: extract the AlertDialog from QuickActions */}
         <DataTableActionBarAction size="icon" tooltip="Delete monitors">
           <Trash2 />
         </DataTableActionBarAction>

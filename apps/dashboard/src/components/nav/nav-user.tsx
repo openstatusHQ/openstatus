@@ -25,7 +25,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -33,7 +32,9 @@ import { signOut } from "next-auth/react";
 export function NavUser() {
   const { isMobile, setOpenMobile } = useSidebar();
   const trpc = useTRPC();
-  const { data, isLoading } = useQuery(trpc.user.get.queryOptions());
+  const { data } = useQuery(trpc.user.get.queryOptions());
+
+  if (!data) return null;
 
   const user = {
     name: data?.name ?? `${data?.firstName} ${data?.lastName}`.trim(),
@@ -54,20 +55,17 @@ export function NavUser() {
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user?.avatar} alt={user?.name} />
                 <AvatarFallback className="rounded-lg uppercase">
-                  {isLoading ? (
-                    <Skeleton className="h-8 w-32" />
-                  ) : (
-                    user?.name.slice(0, 2)
-                  )}
+                  {user?.name.slice(0, 2)}
                 </AvatarFallback>
+                {/*                   <img
+                    src={`https://api.dicebear.com/9.x/glass/svg?seed=${workspace.slug}`}
+                    alt="avatar"
+                  />
+                   */}
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">
-                  {isLoading ? <Skeleton className="h-4 w-24" /> : user?.name}
-                </span>
-                <span className="truncate text-xs">
-                  {isLoading ? <Skeleton className="h-4 w-36" /> : user?.email}
-                </span>
+                <span className="truncate font-medium">{user?.name}</span>
+                <span className="truncate text-xs">{user?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -83,24 +81,12 @@ export function NavUser() {
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user?.avatar} alt={user?.name} />
                   <AvatarFallback className="rounded-lg">
-                    {isLoading ? (
-                      <Skeleton className="h-8 w-32" />
-                    ) : (
-                      user?.name.slice(0, 2)
-                    )}
+                    {user?.name.slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">
-                    {isLoading ? <Skeleton className="h-4 w-24" /> : user?.name}
-                  </span>
-                  <span className="truncate text-xs">
-                    {isLoading ? (
-                      <Skeleton className="h-4 w-36" />
-                    ) : (
-                      user?.email
-                    )}
-                  </span>
+                  <span className="truncate font-medium">{user?.name}</span>
+                  <span className="truncate text-xs">{user?.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>

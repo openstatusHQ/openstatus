@@ -34,20 +34,32 @@ export function Sidebar() {
           items: [
             {
               label: "Status",
+              // FIXME: dynamic
               value: <span className="text-success">Normal</span>,
             },
-            { label: "Next run", value: "5m" },
             {
               label: "Type",
               value: <span className="uppercase">{monitor.jobType}</span>,
             },
             {
               label: "Tags",
-              value: ["API", "Production"].map((tag) => (
-                <Badge key={tag} variant="secondary" className="mr-1 py-0">
-                  {tag}
-                </Badge>
-              )),
+              value: (
+                <div className="group/badges -space-x-2 flex flex-wrap">
+                  {monitor.tags.map((tag) => (
+                    <Badge
+                      key={tag.id}
+                      variant="outline"
+                      className="relative flex translate-x-0 items-center gap-1.5 bg-background transition-transform hover:z-10 hover:translate-x-1 rounded-full"
+                    >
+                      <div
+                        className="size-2.5 rounded-full"
+                        style={{ backgroundColor: tag.color }}
+                      />
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              ),
             },
           ],
         },
@@ -60,6 +72,7 @@ export function Sidebar() {
               value: formatMilliseconds(monitor.timeout),
             },
             { label: "Public", value: String(monitor.public) },
+            { label: "Active", value: String(monitor.active) },
           ],
         },
         {
@@ -82,7 +95,7 @@ export function Sidebar() {
             });
             arr.push({
               label: "Value",
-              value: notification.data, // TODO: improve this based on the provider
+              value: notification.data, // TODO: improve this based on the provider - we might wanna parse it!
               isNested: true,
             });
             return arr;

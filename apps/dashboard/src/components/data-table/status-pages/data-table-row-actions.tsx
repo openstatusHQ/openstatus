@@ -4,7 +4,7 @@ import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { RouterOutputs } from "@openstatus/api";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Row } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -18,9 +18,14 @@ interface DataTableRowActionsProps {
 export function DataTableRowActions({ row }: DataTableRowActionsProps) {
   const router = useRouter();
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const deleteStatusPageMutation = useMutation(
     trpc.page.delete.mutationOptions({
-      onSuccess: () => router.refresh(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: trpc.page.list.queryKey(),
+        });
+      },
     })
   );
   const actions = getActions({

@@ -47,5 +47,8 @@ export const columns: ColumnDef<Subscriber>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
+    meta: {
+      cellClassName: "w-8",
+    },
   },
 ];

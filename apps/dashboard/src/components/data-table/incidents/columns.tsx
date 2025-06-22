@@ -72,5 +72,8 @@ export const columns: ColumnDef<Incident>[] = [
   {
     id: "actions",
     cell: ({ row }) => <DataTableRowActions row={row} />,
+    meta: {
+      cellClassName: "w-8",
+    },
   },
 ];

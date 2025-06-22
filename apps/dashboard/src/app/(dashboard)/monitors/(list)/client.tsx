@@ -46,41 +46,45 @@ export function Client() {
 
   // TODO: fetch tinybird data from trpc(!)
 
-  // TODO: add skeleton
   if (!monitors) return null;
 
   const metrics = [
     {
       title: "Normal",
+      key: "active",
       value: monitors.filter((monitor) => monitor.status === "active").length,
       variant: "success" as const,
       type: "filter" as const,
     },
     {
       title: "Degraded",
+      key: "degraded",
       value: monitors.filter((monitor) => monitor.status === "degraded").length,
       variant: "warning" as const,
       type: "filter" as const,
     },
     {
       title: "Failing",
+      key: "error",
       value: monitors.filter((monitor) => monitor.status === "error").length,
       variant: "destructive" as const,
       type: "filter" as const,
     },
     {
       title: "Inactive",
+      key: false,
       value: monitors.filter((monitor) => monitor.active === false).length,
       variant: "default" as const,
       type: "filter" as const,
     },
     {
       title: "Slowest P95",
+      key: "p95",
       value: "530ms",
       variant: "ghost" as const,
       type: "sorting" as const,
     },
-  ];
+  ] as const;
 
   return (
     <SectionGroup>

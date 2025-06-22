@@ -2,6 +2,7 @@ import { FormDiscord } from "@/components/forms/notifier/form-discord";
 import { FormEmail } from "@/components/forms/notifier/form-email";
 import { FormNtfy } from "@/components/forms/notifier/form-ntfy";
 import { FormOpsGenie } from "@/components/forms/notifier/form-opsgenie";
+import { FormPagerDuty } from "@/components/forms/notifier/form-pagerduty";
 import { FormSlack } from "@/components/forms/notifier/form-slack";
 import { FormSms } from "@/components/forms/notifier/form-sms";
 import { FormWebhook } from "@/components/forms/notifier/form-webhook";
@@ -80,7 +81,7 @@ export const config = {
   pagerduty: {
     icon: PagerDutyIcon,
     label: "PagerDuty",
-    form: undefined,
+    form: FormPagerDuty,
   },
   ntfy: {
     icon: BellIcon, // TODO: add svg icon

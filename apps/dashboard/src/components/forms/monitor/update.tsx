@@ -67,6 +67,10 @@ export function FormMonitorUpdate() {
         });
         refetch();
       },
+      onError: (err) => {
+        // TODO: open dialog
+        console.error(err);
+      },
     })
   );
 
@@ -109,6 +113,8 @@ export function FormMonitorUpdate() {
           assertions: deserialize(monitor?.assertions ?? "").map(
             (a) => a.schema
           ),
+          skipCheck: false,
+          saveCheck: false,
         }}
         onSubmit={async (values) => {
           await updateGeneralMutation.mutateAsync({
@@ -120,6 +126,8 @@ export function FormMonitorUpdate() {
             headers: values.headers,
             body: values.body,
             assertions: values.assertions,
+            skipCheck: values.skipCheck,
+            saveCheck: values.saveCheck,
           });
         }}
       />

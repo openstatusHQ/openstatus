@@ -49,6 +49,7 @@ import {
 import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
+import { checkerRouter, testHttp, testTcp } from "./checker";
 
 export const monitorRouter = createTRPCRouter({
   create: protectedProcedure
@@ -830,27 +831,37 @@ export const monitorRouter = createTRPCRouter({
         })
         .optional()
     )
-    .output(z.array(selectMonitorSchema))
     .query(async (opts) => {
       const whereConditions: SQL[] = [
         eq(monitor.workspaceId, opts.ctx.workspace.id),
         isNull(monitor.deletedAt),
       ];
 
-      const query = opts.ctx.db
-        .select()
-        .from(monitor)
-        .where(and(...whereConditions));
+      const result = await opts.ctx.db.query.monitor.findMany({
+        where: and(...whereConditions),
+        with: {
+          monitorTagsToMonitors: {
+            with: { monitorTag: true },
+          },
+        },
+        orderBy: (monitor, { asc, desc }) =>
+          opts.input?.order === "asc"
+            ? [asc(monitor.active), asc(monitor.createdAt)]
+            : [desc(monitor.active), desc(monitor.createdAt)],
+      });
 
-      if (opts.input?.order === "asc") {
-        query.orderBy(asc(monitor.active), asc(monitor.createdAt));
-      } else {
-        query.orderBy(desc(monitor.active), desc(monitor.createdAt));
-      }
-
-      const result = await query.all();
-
-      return z.array(selectMonitorSchema).parse(result);
+      return z
+        .array(
+          selectMonitorSchema.extend({
+            tags: z.array(selectMonitorTagSchema).default([]),
+          })
+        )
+        .parse(
+          result.map((data) => ({
+            ...data,
+            tags: data.monitorTagsToMonitors.map((t) => t.monitorTag),
+          }))
+        );
     }),
 
   get: protectedProcedure
@@ -1117,6 +1128,10 @@ export const monitorRouter = createTRPCRouter({
             jsonBodyAssertion,
           ])
         ),
+        // skip the test check if assertions are OK
+        skipCheck: z.boolean().default(true),
+        // save check in db (iff success? -> e.g. onboarding to get a first ping)
+        saveCheck: z.boolean().default(false),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1136,6 +1151,25 @@ export const monitorRouter = createTRPCRouter({
         }
         if (a.type === "textBody") {
           assertions.push(new TextBodyAssertion(a));
+        }
+      }
+
+      // NOTE: we are checking the endpoint before saving
+      if (!input.skipCheck) {
+        if (input.jobType === "http") {
+          await testHttp({
+            url: input.url,
+            method: input.method,
+            headers: input.headers,
+            body: input.body,
+            assertions: input.assertions,
+            region: "ams",
+          });
+        } else if (input.jobType === "tcp") {
+          await testTcp({
+            url: input.url,
+            region: "ams",
+          });
         }
       }
 
@@ -1204,6 +1238,8 @@ export const monitorRouter = createTRPCRouter({
             jsonBodyAssertion,
           ])
         ),
+        saveCheck: z.boolean().default(false),
+        skipCheck: z.boolean().default(false),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -1238,6 +1274,27 @@ export const monitorRouter = createTRPCRouter({
         }
         if (a.type === "textBody") {
           assertions.push(new TextBodyAssertion(a));
+        }
+      }
+
+      console.log("assertions", input.assertions);
+
+      // NOTE: we are checking the endpoint before saving
+      if (!input.skipCheck) {
+        if (input.jobType === "http") {
+          await testHttp({
+            url: input.url,
+            method: input.method,
+            headers: input.headers,
+            body: input.body,
+            assertions: input.assertions,
+            region: "ams",
+          });
+        } else if (input.jobType === "tcp") {
+          await testTcp({
+            url: input.url,
+            region: "ams",
+          });
         }
       }
 
