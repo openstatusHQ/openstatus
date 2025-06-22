@@ -78,7 +78,7 @@ export function FormSlack({
     });
   }
 
-  function sendTest() {
+  function testAction() {
     if (isPending) return;
 
     startTransition(async () => {
@@ -102,8 +102,6 @@ export function FormSlack({
       }
     });
   }
-
-  console.log({ defaultValues });
 
   return (
     <Form {...form}>
@@ -145,7 +143,7 @@ export function FormSlack({
             </FormItem>
           )}
         />
-        <Button variant="outline" size="sm" onClick={sendTest}>
+        <Button variant="outline" size="sm" onClick={testAction}>
           Send Test
         </Button>
         <FormField
