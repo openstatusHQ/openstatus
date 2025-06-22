@@ -56,7 +56,8 @@ export const columns: ColumnDef<StatusPage>[] = [
     accessorKey: "domain",
     header: "Domain",
     cell: ({ row }) => {
-      const value = String(row.getValue("domain"));
+      const value = row.getValue("domain");
+      if (typeof value !== "string") return "-";
       return (
         <Link href={"#"} className="font-mono">
           {value}

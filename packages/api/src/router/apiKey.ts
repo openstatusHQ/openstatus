@@ -1,6 +1,7 @@
 import { Unkey } from "@unkey/api";
 import { z } from "zod";
 
+import { Events } from "@openstatus/analytics";
 import { db, eq } from "@openstatus/db";
 import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
 
@@ -12,6 +13,7 @@ const unkey = new Unkey({ token: env.UNKEY_TOKEN, cache: "no-cache" });
 
 export const apiKeyRouter = createTRPCRouter({
   create: protectedProcedure
+    .meta({ track: Events.CreateAPI })
     .input(z.object({ ownerId: z.number() }))
     .mutation(async ({ input, ctx }) => {
       const allowedWorkspaces = await db
@@ -40,6 +42,7 @@ export const apiKeyRouter = createTRPCRouter({
     }),
 
   revoke: protectedProcedure
+    .meta({ track: Events.RevokeAPI })
     .input(z.object({ keyId: z.string() }))
     .mutation(async ({ input }) => {
       const res = await unkey.keys.delete({ keyId: input.keyId });

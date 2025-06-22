@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { Events } from "@openstatus/analytics";
 import { and, eq, SQL } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
 
@@ -64,6 +65,7 @@ export const pageSubscriberRouter = createTRPCRouter({
     }),
 
   acceptSubscriberById: protectedProcedure
+    .meta({ track: Events.SubscribePage })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const subscriber = await opts.ctx.db.query.pageSubscriber.findFirst({

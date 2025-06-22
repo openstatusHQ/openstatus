@@ -250,6 +250,7 @@ export const maintenanceRouter = createTRPCRouter({
     }),
 
   new: protectedProcedure
+    .meta({ track: Events.CreateMaintenance })
     .input(
       z.object({
         pageId: z.number(),
@@ -309,6 +310,7 @@ export const maintenanceRouter = createTRPCRouter({
     }),
 
   update: protectedProcedure
+    .meta({ track: Events.UpdateMaintenance })
     .input(
       z.object({
         id: z.number(),

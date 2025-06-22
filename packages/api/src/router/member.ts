@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { and, eq, SQL } from "@openstatus/db";
+import { Events } from "@openstatus/analytics";
+import { and, eq } from "@openstatus/db";
 import {
   selectUserSchema,
   usersToWorkspaces,
@@ -30,6 +31,7 @@ export const memberRouter = createTRPCRouter({
   }),
 
   delete: protectedProcedure
+    .meta({ track: Events.RemoveUser })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const currentUser = await opts.ctx.db.query.usersToWorkspaces.findFirst({

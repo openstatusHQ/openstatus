@@ -11,6 +11,7 @@ import {
   statusAssertion,
   deserialize,
 } from "@openstatus/assertions";
+import { Events } from "@openstatus/analytics";
 
 const ABORT_TIMEOUT = 10000;
 
@@ -189,12 +190,14 @@ export async function testTcp(input: z.infer<typeof tcpTestInput>) {
 
 export const checkerRouter = createTRPCRouter({
   testHttp: protectedProcedure
+    .meta({ track: Events.TestMonitor })
     .input(httpTestInput)
     .mutation(async ({ input }) => {
       return testHttp(input);
     }),
 
   testTcp: protectedProcedure
+    .meta({ track: Events.TestMonitor })
     .input(tcpTestInput)
     .mutation(async ({ input }) => {
       return testTcp(input);

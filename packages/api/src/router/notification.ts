@@ -263,6 +263,7 @@ export const notificationRouter = createTRPCRouter({
 
   // TODO: rename to update after migration
   updateNotifier: protectedProcedure
+    .meta({ track: Events.UpdateNotification })
     .input(
       z.object({
         id: z.number(),

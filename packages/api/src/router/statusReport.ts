@@ -16,11 +16,13 @@ import {
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
 
+import { Events } from "@openstatus/analytics";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
 
 export const statusReportRouter = createTRPCRouter({
   createStatusReport: protectedProcedure
+    .meta({ track: Events.CreateReport })
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { id, monitors, date, message, ...statusReportInput } = opts.input;
@@ -80,6 +82,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   updateStatusReport: protectedProcedure
+    .meta({ track: Events.UpdateReport })
     .input(insertStatusReportSchema)
     .mutation(async (opts) => {
       const { monitors, ...statusReportInput } = opts.input;
@@ -161,6 +164,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   deleteStatusReport: protectedProcedure
+    .meta({ track: Events.DeleteReport })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const statusReportToDelete = await opts.ctx.db
@@ -403,6 +407,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
+    .meta({ track: Events.CreateReport })
     .input(
       z.object({
         title: z.string(),
@@ -455,6 +460,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   updateStatus: protectedProcedure
+    .meta({ track: Events.UpdateReport })
     .input(
       z.object({
         id: z.number(),
@@ -500,6 +506,7 @@ export const statusReportRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
+    .meta({ track: Events.DeleteReport })
     .input(z.object({ id: z.number() }))
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [

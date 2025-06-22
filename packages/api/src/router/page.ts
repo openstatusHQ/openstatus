@@ -504,6 +504,7 @@ export const pageRouter = createTRPCRouter({
 
   // TODO: rename to create
   new: protectedProcedure
+    .meta({ track: Events.CreatePage, trackProps: ["slug"] })
     .input(
       z.object({
         title: z.string(),
@@ -557,6 +558,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   updateGeneral: protectedProcedure
+    .meta({ track: Events.UpdatePage })
     .input(
       z.object({
         id: z.number(),
@@ -604,6 +606,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   updateCustomDomain: protectedProcedure
+    .meta({ track: Events.UpdatePage })
     .input(z.object({ id: z.number(), customDomain: z.string().toLowerCase() }))
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [
@@ -690,6 +693,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   updatePasswordProtection: protectedProcedure
+    .meta({ track: Events.UpdatePage })
     .input(
       z.object({
         id: z.number(),
@@ -729,6 +733,7 @@ export const pageRouter = createTRPCRouter({
     }),
 
   updateMonitors: protectedProcedure
+    .meta({ track: Events.UpdatePage })
     .input(
       z.object({
         id: z.number(),

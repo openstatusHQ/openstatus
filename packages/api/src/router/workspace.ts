@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import * as randomWordSlugs from "random-word-slugs";
 import { z } from "zod";
 
+import { Events } from "@openstatus/analytics";
 import { and, eq, gte, isNull, SQL, sql } from "@openstatus/db";
 import {
   application,
@@ -111,6 +112,7 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   updateWorkspace: protectedProcedure
+    .meta({ track: Events.UpdateWorkspace })
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
       return await opts.ctx.db
@@ -298,6 +300,7 @@ export const workspaceRouter = createTRPCRouter({
   }),
 
   updateName: protectedProcedure
+    .meta({ track: Events.UpdateWorkspace })
     .input(z.object({ name: z.string() }))
     .mutation(async (opts) => {
       const whereConditions: SQL[] = [eq(workspace.id, opts.ctx.workspace.id)];

@@ -136,6 +136,10 @@ export const Events = {
     name: "api_key_revoked",
     channel: "api_key",
   },
+  UpdateWorkspace: {
+    name: "workspace_updated",
+    channel: "workspace",
+  },
   UpgradeWorkspace: {
     name: "workspace_updated",
     channel: "billing",
