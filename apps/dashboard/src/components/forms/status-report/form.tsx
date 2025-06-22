@@ -192,7 +192,7 @@ export function FormStatusReport({
                             )}
                           >
                             {field.value ? (
-                              format(field.value, "PPP")
+                              format(field.value, "PPP 'at' h:mm a")
                             ) : (
                               <span>Pick a date</span>
                             )}
@@ -226,6 +226,19 @@ export function FormStatusReport({
                                 step="1"
                                 defaultValue="12:00:00"
                                 className="peer appearance-none ps-9 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                                onChange={(e) => {
+                                  try {
+                                    const date = field.value
+                                      ?.toISOString()
+                                      .split("T")[0];
+
+                                    field.onChange(
+                                      new Date(`${date}T${e.target.value}`)
+                                    );
+                                  } catch (error) {
+                                    console.error(error);
+                                  }
+                                }}
                               />
                               <div className="pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3 text-muted-foreground/80 peer-disabled:opacity-50">
                                 <ClockIcon size={16} aria-hidden="true" />
