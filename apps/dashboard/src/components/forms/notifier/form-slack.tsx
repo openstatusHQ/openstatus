@@ -83,9 +83,9 @@ export function FormSlack({
 
     startTransition(async () => {
       try {
-        const promise = config[form.getValues("provider")].sendTest(
-          form.getValues("data")
-        );
+        const provider = form.getValues("provider");
+        const data = form.getValues("data");
+        const promise = config[provider].sendTest(data);
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
@@ -102,6 +102,8 @@ export function FormSlack({
       }
     });
   }
+
+  console.log({ defaultValues });
 
   return (
     <Form {...form}>

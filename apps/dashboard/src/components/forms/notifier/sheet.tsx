@@ -58,13 +58,17 @@ export function FormSheetNotifier({
                     setOpen(false);
                   }}
                   // @ts-expect-error - defaultValues is not defined in the form component
-                  defaultValues={{
-                    ...defaultValues,
-                    data:
-                      typeof defaultValues?.data === "string"
-                        ? defaultValues?.data
-                        : defaultValues?.data?.[provider],
-                  }}
+                  defaultValues={
+                    defaultValues
+                      ? {
+                          ...defaultValues,
+                          data:
+                            typeof defaultValues?.data === "string"
+                              ? defaultValues?.data
+                              : defaultValues?.data?.[provider],
+                        }
+                      : undefined
+                  }
                   monitors={monitors}
                 />
               )}
