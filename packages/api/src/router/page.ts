@@ -421,7 +421,7 @@ export const pageRouter = createTRPCRouter({
       // TODO Add some check ?
       await opts.ctx.db
         .update(page)
-        .set({ customDomain: opts.input.customDomain })
+        .set({ customDomain: opts.input.customDomain, updatedAt: new Date() })
         .where(eq(page.id, opts.input.pageId))
         .returning()
         .get();
@@ -597,6 +597,7 @@ export const pageRouter = createTRPCRouter({
           slug: opts.input.slug,
           description: opts.input.description ?? "",
           icon: opts.input.icon ?? "",
+          updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();
@@ -638,7 +639,7 @@ export const pageRouter = createTRPCRouter({
           // Adding a new domain
           await opts.ctx.db
             .update(page)
-            .set({ customDomain: newDomain })
+            .set({ customDomain: newDomain, updatedAt: new Date() })
             .where(and(...whereConditions))
             .run();
 
@@ -648,7 +649,7 @@ export const pageRouter = createTRPCRouter({
           // Changing domain - remove old and add new
           await opts.ctx.db
             .update(page)
-            .set({ customDomain: newDomain })
+            .set({ customDomain: newDomain, updatedAt: new Date() })
             .where(and(...whereConditions))
             .run();
 
@@ -663,7 +664,7 @@ export const pageRouter = createTRPCRouter({
           // Removing domain
           await opts.ctx.db
             .update(page)
-            .set({ customDomain: "" })
+            .set({ customDomain: "", updatedAt: new Date() })
             .where(and(...whereConditions))
             .run();
 
@@ -673,7 +674,7 @@ export const pageRouter = createTRPCRouter({
           // No change needed, just update the database
           await opts.ctx.db
             .update(page)
-            .set({ customDomain: newDomain })
+            .set({ customDomain: newDomain, updatedAt: new Date() })
             .where(and(...whereConditions))
             .run();
         }
@@ -721,6 +722,7 @@ export const pageRouter = createTRPCRouter({
         .set({
           passwordProtected: opts.input.passwordProtected,
           password: opts.input.password,
+          updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();

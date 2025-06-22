@@ -95,6 +95,7 @@ export const pageSubscriberRouter = createTRPCRouter({
         .update(pageSubscriber)
         .set({
           acceptedAt: new Date(),
+          updatedAt: new Date(),
         })
         .where(eq(pageSubscriber.id, subscriber.id));
     }),

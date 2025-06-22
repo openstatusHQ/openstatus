@@ -26,7 +26,11 @@ export const monitorTagRouter = createTRPCRouter({
       if (!opts.input.id) return;
       return await opts.ctx.db
         .update(monitorTag)
-        .set({ name: opts.input.name, color: opts.input.color })
+        .set({
+          name: opts.input.name,
+          color: opts.input.color,
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(monitorTag.workspaceId, opts.ctx.workspace.id),
@@ -119,7 +123,11 @@ export const monitorTagRouter = createTRPCRouter({
               // Update existing tag
               return tx
                 .update(monitorTag)
-                .set({ name: tag.name, color: tag.color })
+                .set({
+                  name: tag.name,
+                  color: tag.color,
+                  updatedAt: new Date(),
+                })
                 .where(
                   and(
                     eq(monitorTag.workspaceId, workspaceId),

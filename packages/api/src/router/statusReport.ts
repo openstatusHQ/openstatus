@@ -152,7 +152,7 @@ export const statusReportRouter = createTRPCRouter({
 
       const currentStatusReportUpdate = await opts.ctx.db
         .update(statusReportUpdate)
-        .set(statusReportUpdateInput)
+        .set({ ...statusReportUpdateInput, updatedAt: new Date() })
         .where(eq(statusReportUpdate.id, statusReportUpdateInput.id))
         .returning()
         .get();

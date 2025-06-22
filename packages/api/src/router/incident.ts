@@ -99,6 +99,7 @@ export const incidentRouter = createTRPCRouter({
         .set({
           acknowledgedAt: new Date(),
           acknowledgedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
         })
         .where(
           and(
@@ -136,6 +137,7 @@ export const incidentRouter = createTRPCRouter({
         .set({
           resolvedAt: new Date(),
           resolvedBy: opts.ctx.user.id,
+          updatedAt: new Date(),
         })
         .where(
           and(

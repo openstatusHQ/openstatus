@@ -925,7 +925,7 @@ export const monitorRouter = createTRPCRouter({
 
       await ctx.db
         .update(monitor)
-        .set({ retry: input.retry })
+        .set({ retry: input.retry, updatedAt: new Date() })
         .where(and(...whereConditions))
         .run();
     }),
@@ -954,6 +954,7 @@ export const monitorRouter = createTRPCRouter({
           otelHeaders: input.otelHeaders
             ? JSON.stringify(input.otelHeaders)
             : undefined,
+          updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();
@@ -970,7 +971,7 @@ export const monitorRouter = createTRPCRouter({
 
       await ctx.db
         .update(monitor)
-        .set({ public: input.public })
+        .set({ public: input.public, updatedAt: new Date() })
         .where(and(...whereConditions))
         .run();
     }),
@@ -1003,6 +1004,7 @@ export const monitorRouter = createTRPCRouter({
         .set({
           regions: input.regions.join(","),
           periodicity: input.periodicity,
+          updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();
@@ -1025,7 +1027,11 @@ export const monitorRouter = createTRPCRouter({
 
       await ctx.db
         .update(monitor)
-        .set({ timeout: input.timeout, degradedAfter: input.degradedAfter })
+        .set({
+          timeout: input.timeout,
+          degradedAfter: input.degradedAfter,
+          updatedAt: new Date(),
+        })
         .where(and(...whereConditions))
         .run();
     }),
@@ -1104,7 +1110,7 @@ export const monitorRouter = createTRPCRouter({
         if (input.description) {
           await tx
             .update(monitor)
-            .set({ description: input.description })
+            .set({ description: input.description, updatedAt: new Date() })
             .where(and(eq(monitor.id, input.id)));
         }
       });
@@ -1183,6 +1189,7 @@ export const monitorRouter = createTRPCRouter({
           headers: input.headers ? JSON.stringify(input.headers) : undefined,
           body: input.body,
           assertions: serialize(assertions),
+          updatedAt: new Date(),
         })
         .where(and(...whereConditions))
         .run();
@@ -1311,6 +1318,7 @@ export const monitorRouter = createTRPCRouter({
           periodicity: "30m",
           regions: "fra", // TODO: add default regions
           assertions: serialize(assertions),
+          updatedAt: new Date(),
         })
         .returning()
         .get();

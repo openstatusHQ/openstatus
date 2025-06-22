@@ -115,7 +115,7 @@ export const workspaceRouter = createTRPCRouter({
     .mutation(async (opts) => {
       return await opts.ctx.db
         .update(workspace)
-        .set({ name: opts.input.name })
+        .set({ name: opts.input.name, updatedAt: new Date() })
         .where(eq(workspace.id, opts.ctx.workspace.id));
     }),
 
@@ -192,7 +192,7 @@ export const workspaceRouter = createTRPCRouter({
 
       await opts.ctx.db
         .update(workspace)
-        .set({ plan: opts.input.plan })
+        .set({ plan: opts.input.plan, updatedAt: new Date() })
         .where(eq(workspace.id, opts.ctx.workspace.id));
     }),
 
@@ -304,7 +304,7 @@ export const workspaceRouter = createTRPCRouter({
 
       await opts.ctx.db
         .update(workspace)
-        .set({ name: opts.input.name })
+        .set({ name: opts.input.name, updatedAt: new Date() })
         .where(and(...whereConditions));
     }),
 });

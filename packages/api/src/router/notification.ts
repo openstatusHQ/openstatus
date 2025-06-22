@@ -297,6 +297,7 @@ export const notificationRouter = createTRPCRouter({
           .set({
             name: opts.input.name,
             data: JSON.stringify(opts.input.data),
+            updatedAt: new Date(),
           })
           .where(and(...whereCondition));
 

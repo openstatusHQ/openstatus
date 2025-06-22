@@ -125,7 +125,11 @@ export const maintenanceRouter = createTRPCRouter({
 
       const _maintenance = await opts.ctx.db
         .update(maintenance)
-        .set({ ...opts.input, workspaceId: opts.ctx.workspace.id })
+        .set({
+          ...opts.input,
+          workspaceId: opts.ctx.workspace.id,
+          updatedAt: new Date(),
+        })
         .where(
           and(
             eq(maintenance.id, opts.input.id),
@@ -351,6 +355,7 @@ export const maintenanceRouter = createTRPCRouter({
             from: opts.input.startDate,
             to: opts.input.endDate,
             workspaceId: opts.ctx.workspace.id,
+            updatedAt: new Date(),
           })
           .where(and(...whereConditions))
           .returning()
