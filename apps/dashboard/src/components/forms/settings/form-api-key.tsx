@@ -28,9 +28,11 @@ import {
   AlertDialogTitle,
   AlertDialogContent,
   AlertDialogFooter,
+  AlertDialogHeader,
 } from "@/components/ui/alert-dialog";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { isTRPCClientError } from "@trpc/client";
+import { Copy } from "lucide-react";
 
 // we should prefetch the api key on the server (layout)
 
@@ -62,6 +64,9 @@ export function FormApiKey() {
       onSuccess: () => refetch(),
     })
   );
+
+  // FIXME: Why is unkey caching so hardly? I have to hard refresh.
+  console.log(apiKey);
 
   async function createAction() {
     if (isPending || !workspace) return;
@@ -154,16 +159,33 @@ export function FormApiKey() {
       </FormCardFooter>
       <AlertDialog open={!!result} onOpenChange={() => setResult(null)}>
         <AlertDialogContent>
-          <AlertDialogTitle>API Key</AlertDialogTitle>
-          <AlertDialogDescription>
-            Ensure you copy your API key before closing this dialog.
-          </AlertDialogDescription>
-          <p className="font-mono text-sm">{result?.key}</p>
+          <AlertDialogHeader>
+            <AlertDialogTitle>API Key</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ensure you copy your API key before closing this dialog.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-2">
+            <code className="flex-1 font-mono text-sm">{result?.key}</code>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => {
+                copy(result?.key || "", { withToast: true });
+              }}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          </div>
           <AlertDialogFooter>
             <Button
-              onClick={() => copy(result?.key || "", { withToast: true })}
+              onClick={() => {
+                refetch();
+                setResult(null);
+              }}
             >
-              Copy
+              Done
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
