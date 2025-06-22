@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  FormCard,
-  FormCardContent,
-  FormCardGroup,
-} from "@/components/forms/form-card";
+import { FormCard, FormCardGroup } from "@/components/forms/form-card";
 import {
   FormSheet,
   FormSheetContent,
@@ -48,31 +44,29 @@ export function FormSheetNotifier({
         </FormSheetHeader>
         <FormCardGroup className="overflow-y-auto">
           <FormCard className="overflow-auto border-none rounded-none">
-            <FormCardContent>
-              {Form && (
-                <Form
-                  id={`notifier-form-${provider}`}
-                  className="my-4"
-                  onSubmit={async (values) => {
-                    await onSubmit?.(values);
-                    setOpen(false);
-                  }}
-                  // @ts-expect-error - defaultValues is not defined in the form component
-                  defaultValues={
-                    defaultValues
-                      ? {
-                          ...defaultValues,
-                          data:
-                            typeof defaultValues?.data === "string"
-                              ? defaultValues?.data
-                              : defaultValues?.data?.[provider],
-                        }
-                      : undefined
-                  }
-                  monitors={monitors}
-                />
-              )}
-            </FormCardContent>
+            {Form && (
+              <Form
+                id={`notifier-form-${provider}`}
+                className="my-4"
+                onSubmit={async (values) => {
+                  await onSubmit?.(values);
+                  setOpen(false);
+                }}
+                // @ts-expect-error - defaultValues is not defined in the form component
+                defaultValues={
+                  defaultValues
+                    ? {
+                        ...defaultValues,
+                        data:
+                          typeof defaultValues?.data === "string"
+                            ? defaultValues?.data
+                            : defaultValues?.data?.[provider],
+                      }
+                    : undefined
+                }
+                monitors={monitors}
+              />
+            )}
           </FormCard>
         </FormCardGroup>
         <FormSheetFooter>

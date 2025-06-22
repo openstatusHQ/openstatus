@@ -10,7 +10,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { Link } from "@/components/common/link";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -28,8 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const REGIONS = ["us", "eu"];
+import { config } from "@/data/notifiers.client";
+import {
+  FormCardContent,
+  FormCardSeparator,
+} from "@/components/forms/form-card";
+import { Button } from "@/components/ui/button";
 
 const schema = z.object({
   name: z.string(),
@@ -88,6 +91,31 @@ export function FormOpsGenie({
     });
   }
 
+  function testAction() {
+    if (isPending) return;
+
+    startTransition(async () => {
+      try {
+        const provider = form.getValues("provider");
+        const data = form.getValues("data");
+        const promise = config[provider].sendTest(data);
+        toast.promise(promise, {
+          loading: "Sending test...",
+          success: "Test sent",
+          error: (error) => {
+            if (error instanceof Error) {
+              return error.message;
+            }
+            return "Failed to send test";
+          },
+        });
+        await promise;
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
   return (
     <Form {...form}>
       <form
@@ -95,114 +123,117 @@ export function FormOpsGenie({
         onSubmit={form.handleSubmit(submitAction)}
         {...props}
       >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="My Notifier" {...field} />
-              </FormControl>
-              <FormMessage />
-              <FormDescription>
-                Enter a descriptive name for your notifier.
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="data.apiKey"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>API key</FormLabel>
-              <FormControl>
-                <Input placeholder="xxx-yyy-zzz" required {...field} />
-              </FormControl>
-              <FormMessage />
-              <FormDescription>
-                Enter the API key. <Link href="#">Read more</Link>.
-              </FormDescription>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="data.region"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Region</FormLabel>
-              <FormControl>
+        <FormCardContent className="grid gap-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="My Notifier" {...field} />
+                </FormControl>
+                <FormMessage />
+                <FormDescription>
+                  Enter a descriptive name for your notifier.
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="data.apiKey"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>API Key</FormLabel>
+                <FormControl>
+                  <Input placeholder="your-api-key" {...field} />
+                </FormControl>
+                <FormMessage />
+                <FormDescription>Enter your OpsGenie API key.</FormDescription>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="data.region"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Region</FormLabel>
                 <Select
                   onValueChange={field.onChange}
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a region" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {REGIONS.map((region) => (
-                      <SelectItem key={region} value={region}>
-                        {region}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="us">US</SelectItem>
+                    <SelectItem value="eu">EU</SelectItem>
                   </SelectContent>
                 </Select>
-              </FormControl>
-              <FormMessage />
-              <FormDescription>The region is required.</FormDescription>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="monitors"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Monitors</FormLabel>
-              <FormDescription>
-                Select the monitors you want to notify.
-              </FormDescription>
-              <div className="grid gap-3">
-                <div className="flex items-center gap-2">
-                  <FormControl>
-                    <Checkbox
-                      id="all"
-                      checked={field.value?.length === monitors.length}
-                      onCheckedChange={(checked) => {
-                        field.onChange(
-                          checked ? monitors.map((m) => m.id) : []
-                        );
-                      }}
-                    />
-                  </FormControl>
-                  <Label htmlFor="all">Select all</Label>
-                </div>
-                {monitors.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2">
+                <FormMessage />
+                <FormDescription>Select your OpsGenie region.</FormDescription>
+              </FormItem>
+            )}
+          />
+          <div>
+            <Button variant="outline" size="sm" onClick={testAction}>
+              Send Test
+            </Button>
+          </div>
+        </FormCardContent>
+        <FormCardSeparator />
+        <FormCardContent>
+          <FormField
+            control={form.control}
+            name="monitors"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Monitors</FormLabel>
+                <FormDescription>
+                  Select the monitors you want to notify.
+                </FormDescription>
+                <div className="grid gap-3">
+                  <div className="flex items-center gap-2">
                     <FormControl>
                       <Checkbox
-                        id={String(item.id)}
-                        checked={field.value?.includes(item.id)}
+                        id="all"
+                        checked={field.value?.length === monitors.length}
                         onCheckedChange={(checked) => {
-                          const newValue = checked
-                            ? [...(field.value || []), item.id]
-                            : field.value?.filter((id) => id !== item.id);
-                          field.onChange(newValue);
+                          field.onChange(
+                            checked ? monitors.map((m) => m.id) : []
+                          );
                         }}
                       />
                     </FormControl>
-                    <Label htmlFor={String(item.id)}>{item.name}</Label>
+                    <Label htmlFor="all">Select all</Label>
                   </div>
-                ))}
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                  {monitors.map((item) => (
+                    <div key={item.id} className="flex items-center gap-2">
+                      <FormControl>
+                        <Checkbox
+                          id={String(item.id)}
+                          checked={field.value?.includes(item.id)}
+                          onCheckedChange={(checked) => {
+                            const newValue = checked
+                              ? [...(field.value || []), item.id]
+                              : field.value?.filter((id) => id !== item.id);
+                            field.onChange(newValue);
+                          }}
+                        />
+                      </FormControl>
+                      <Label htmlFor={String(item.id)}>{item.name}</Label>
+                    </div>
+                  ))}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </FormCardContent>
       </form>
     </Form>
   );
