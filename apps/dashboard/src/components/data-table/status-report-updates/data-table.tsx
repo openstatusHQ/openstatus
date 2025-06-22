@@ -19,6 +19,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { colors } from "@/data/status-report-updates.client";
+import { ProcessMessage } from "@/components/content/process-message";
 
 type StatusReportUpdates =
   RouterOutputs["statusReport"]["list"][number]["updates"];
@@ -86,7 +87,9 @@ export function DataTable({
                 </div>
               </TableCell>
               <TableCell>
-                <p className="text-wrap">{update.message}</p>
+                <div className="text-wrap">
+                  <ProcessMessage value={update.message} />
+                </div>
               </TableCell>
               <TableCell className="w-[170px] text-muted-foreground">
                 {update.date.toLocaleString()}

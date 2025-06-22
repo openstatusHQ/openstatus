@@ -45,6 +45,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { colors } from "@/data/status-report-updates.client";
+import { ProcessMessage } from "@/components/content/process-message";
 
 const schema = z.object({
   status: z.enum(statusReportStatus),
@@ -282,9 +283,9 @@ export function FormStatusReport({
                 <TabsContent value="tab-2">
                   <div className="grid gap-2">
                     <Label>Preview</Label>
-                    <p className="rounded-md border px-3 py-2 text-foreground text-sm">
-                      {watchMessage}
-                    </p>
+                    <div className="rounded-md border px-3 py-2 text-foreground text-sm">
+                      <ProcessMessage value={watchMessage} />
+                    </div>
                   </div>
                 </TabsContent>
               </Tabs>

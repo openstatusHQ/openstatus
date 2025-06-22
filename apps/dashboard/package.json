@@ -81,10 +81,15 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "7.54.1",
     "recharts": "^2.15.3",
+    "rehype-react": "7.2.0",
+    "remark-gfm": "4.0.1",
+    "remark-parse": "10.0.2",
+    "remark-rehype": "10.1.0",
     "sonner": "^2.0.3",
     "stripe": "13.8.0",
     "superjson": "1.13.3",
     "tailwind-merge": "^3.2.0",
+    "unified": "10.1.2",
     "zod": "3.24.1"
   },
   "devDependencies": {
