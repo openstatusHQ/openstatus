@@ -6,7 +6,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-// import { UTCDate } from "@date-fns/utc";
+import { UTCDate } from "@date-fns/utc";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { format, formatDistanceToNowStrict } from "date-fns";
 import { Copy } from "lucide-react";
@@ -46,10 +46,10 @@ export function HoverCardTimestamp({
         >
           <dl className="flex flex-col gap-1">
             <Row value={String(date.getTime())} label="Timestamp" />
-            {/* <Row
+            <Row
               value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")}
               label="UTC"
-            /> */}
+            />
             <Row value={format(date, "LLL dd, y HH:mm:ss")} label={timezone} />
             <Row
               value={formatDistanceToNowStrict(date, { addSuffix: true })}

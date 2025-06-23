@@ -47,9 +47,20 @@ export default function Page() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) })
   );
+
   const [selectedRegions, setSelectedRegions] = useState<Region[]>(
     regions.map((r) => r.code)
   );
+
+  const { data: metrics } = useQuery(
+    trpc.tinybird.metrics.queryOptions({
+      monitorId: id,
+      period: "7d",
+      type: monitor?.jobType as "http" | "tcp",
+    })
+  );
+
+  console.log(metrics);
 
   if (!monitor) return null;
 

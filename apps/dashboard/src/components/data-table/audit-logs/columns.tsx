@@ -1,9 +1,13 @@
 "use client";
 
+import { HoverCardTimestamp } from "@/components/common/hover-card-timestamp";
 import type { AuditLog } from "@/data/audit-logs";
 import { config } from "@/data/audit-logs.client";
+import { formatMilliseconds } from "@/lib/formatter";
 import { cn } from "@/lib/utils";
 import type { ColumnDef } from "@tanstack/react-table";
+import { TableCellDate } from "@/components/data-table/table-cell-date";
+
 export const columns: ColumnDef<AuditLog>[] = [
   {
     id: "icon",
@@ -44,7 +48,7 @@ export const columns: ColumnDef<AuditLog>[] = [
       return (
         <div className="flex flex-wrap gap-2">
           {Object.entries(value).map(([key, value]) => (
-            <Pill key={key} label={key} value={String(value)} />
+            <Pill key={key} label={key} value={value} />
           ))}
         </div>
       );
@@ -58,20 +62,27 @@ export const columns: ColumnDef<AuditLog>[] = [
     cell: ({ row }) => {
       const value = row.getValue("timestamp");
       if (value instanceof Date) {
-        return <div className="font-mono">{value.toLocaleString()}</div>;
+        return (
+          <HoverCardTimestamp date={value}>
+            <TableCellDate value={value} className="font-mono" />
+          </HoverCardTimestamp>
+        );
       }
       return <div className="font-mono">{String(value)}</div>;
     },
   },
 ];
 
-function Pill({ label, value }: { label: string; value: string }) {
+function Pill({ label, value }: { label: string; value: unknown }) {
   return (
     <div className="inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap rounded-md border font-medium text-xs transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3">
       <div className="border-r bg-muted py-0.5 pr-1 pl-2 text-foreground/70">
         {label}
       </div>
-      <div className="py-0.5 pr-2 pl-1 font-mono">{value}</div>
+      <div className="py-0.5 pr-2 pl-1 font-mono">
+        {/* NOTE: if we have more number values, we might wanna change it */}
+        {typeof value === "number" ? formatMilliseconds(value) : String(value)}
+      </div>
     </div>
   );
 }

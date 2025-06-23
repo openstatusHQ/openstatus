@@ -52,7 +52,7 @@ export const columns: ColumnDef<ResponseLog>[] = [
       const value = new Date(row.getValue("timestamp"));
       return (
         <HoverCardTimestamp date={value}>
-          <TableCellDate value={value} className="text-foreground" />
+          <TableCellDate value={value} className="text-foreground font-mono" />
         </HoverCardTimestamp>
       );
     },
