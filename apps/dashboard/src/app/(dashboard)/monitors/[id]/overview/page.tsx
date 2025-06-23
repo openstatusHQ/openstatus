@@ -13,7 +13,7 @@ import {
 import { columns } from "@/components/data-table/audit-logs/columns";
 import { columns as regionColumns } from "@/components/data-table/response-logs/regions/columns";
 import DatePicker from "@/components/date-picker";
-import { MetricExample } from "@/components/metric/example";
+import { GlobalUptimeSection } from "@/components/metric/global-uptime/section";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -64,6 +64,63 @@ export default function Page() {
 
   if (!monitor) return null;
 
+  const refinedMetrics = [
+    {
+      label: "UPTIME",
+      value: "99.99%",
+      trend: 1.01,
+      variant: "success" as const,
+    },
+    {
+      label: "FAILS",
+      value: "0",
+      variant: "destructive" as const,
+    },
+    {
+      label: "DEGRADED",
+      value: "0",
+      trend: 0,
+      variant: "warning" as const,
+    },
+    {
+      label: "TOTAL PINGS",
+      value: "8,639",
+      trend: null,
+      variant: "ghost" as const,
+    },
+    null,
+    {
+      label: "P50",
+      value: "150ms",
+      trend: 2,
+      variant: "default" as const,
+    },
+    {
+      label: "P75",
+      value: "274ms",
+      trend: 1,
+      variant: "default" as const,
+    },
+    {
+      label: "P90",
+      value: "397ms",
+      trend: 0.5,
+      variant: "default" as const,
+    },
+    {
+      label: "P95",
+      value: "447ms",
+      trend: 0.24,
+      variant: "default" as const,
+    },
+    {
+      label: "P99",
+      value: "1,062ms",
+      trend: 1.4,
+      variant: "default" as const,
+    },
+  ];
+
   return (
     <SectionGroup>
       <Section>
@@ -102,7 +159,7 @@ export default function Page() {
             Reset
           </Button>
         </div>
-        <MetricExample />
+        <GlobalUptimeSection metrics={refinedMetrics} />
       </Section>
       <Section>
         <SectionHeader>
