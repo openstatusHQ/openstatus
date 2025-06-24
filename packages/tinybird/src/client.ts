@@ -9,11 +9,12 @@ export class OSTinybird {
   private readonly tb: Client;
 
   constructor(token: string) {
-    if (process.env.NODE_ENV === "development") {
-      this.tb = new NoopTinybird();
-    } else {
-      this.tb = new Client({ token });
-    }
+    this.tb = new Client({ token });
+    // if (process.env.NODE_ENV === "development") {
+    //   this.tb = new NoopTinybird();
+    // } else {
+    //   this.tb = new Client({ token });
+    // }
   }
 
   public get homeStats() {

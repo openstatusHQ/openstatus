@@ -28,7 +28,7 @@ const chartConfig = {
 export function ChartLineRegion({ className }: { className?: string }) {
   const chartData = Array.from({ length: 30 }, (_, i) => ({
     timestamp: new Date(
-      new Date().setMinutes(new Date().getMinutes() - i),
+      new Date().setMinutes(new Date().getMinutes() - i)
     ).toLocaleString("default", {
       hour: "numeric",
       minute: "numeric",

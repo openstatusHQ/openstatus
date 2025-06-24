@@ -5,6 +5,9 @@ import { flyRegions } from "@openstatus/db/src/schema/constants";
 
 import { env } from "../../env";
 import { createTRPCRouter, protectedProcedure } from "../../trpc";
+import { and, db, eq, SQL } from "@openstatus/db";
+import { TRPCError } from "@trpc/server";
+import { monitor } from "@openstatus/db/src/schema";
 
 const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
 
@@ -128,7 +131,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
-      // TODO: check if user as access to monitor id
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getListProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
@@ -144,7 +162,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
-      // TODO: check if user as access to monitor id
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getMetricsProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
@@ -160,7 +193,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
-      // TODO: check if user as access to monitor id
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getMetricsByRegionProcedure(
         opts.input.period,
         opts.input.type
@@ -179,7 +227,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
-      // TODO: check if user as access to monitor id
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getMetricsByIntervalProcedure(
         opts.input.period,
         opts.input.type
@@ -198,6 +261,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getStatusProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),
@@ -213,6 +292,22 @@ export const tinybirdRouter = createTRPCRouter({
       })
     )
     .query(async (opts) => {
+      const whereConditions: SQL[] = [
+        eq(monitor.id, Number.parseInt(opts.input.monitorId)),
+        eq(monitor.workspaceId, opts.ctx.workspace.id),
+      ];
+
+      const _monitor = await db.query.monitor.findFirst({
+        where: and(...whereConditions),
+      });
+
+      if (!_monitor) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Monitor not found",
+        });
+      }
+
       const procedure = getGetProcedure(opts.input.period, opts.input.type);
       return await procedure(opts.input);
     }),

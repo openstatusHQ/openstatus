@@ -22,7 +22,7 @@ import { ChartTooltipNumber } from "./chart-tooltip-number";
 
 const chartData = Array.from({ length: 30 }, (_, i) => ({
   timestamp: new Date(
-    new Date().setMinutes(new Date().getMinutes() - i),
+    new Date().setMinutes(new Date().getMinutes() - i)
   ).toLocaleString("default", {
     hour: "numeric",
     minute: "numeric",
@@ -52,7 +52,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartAreaLatency() {
+// TODO: create new pipes for timing phase metrics
+
+export function ChartAreaLatency({}: {
+  monitorId: string;
+  period: "1d" | "7d" | "14d";
+  type: "http" | "tcp";
+}) {
   return (
     <ChartContainer config={chartConfig} className="h-[250px] w-full">
       <AreaChart accessibilityLayer data={chartData}>

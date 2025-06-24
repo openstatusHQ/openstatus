@@ -10,20 +10,9 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-const chartData = Array.from({ length: 28 }, (_, i) => ({
-  timestamp: new Date(
-    new Date().setHours(new Date().getHours() - i * 6),
-  ).toLocaleString("default", {
-    day: "numeric",
-    month: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-  }),
-  ok: i === 3 || i === 16 ? 172 : 186,
-  error: i === 3 ? 14 : 0,
-  degraded: i === 16 ? 14 : 0,
-})).reverse();
+import { useTRPC } from "@/lib/trpc/client";
+import { useQuery } from "@tanstack/react-query";
+import { mapStatus } from "@/data/metrics.client";
 
 const chartConfig = {
   ok: {
@@ -40,10 +29,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ChartBarUptime() {
+export function ChartBarUptime({
+  monitorId,
+  type,
+}: {
+  monitorId: string;
+  period: "1d" | "7d" | "14d";
+  type: "http" | "tcp";
+}) {
+  const trpc = useTRPC();
+  const { data: uptime } = useQuery(
+    trpc.tinybird.status.queryOptions({
+      monitorId,
+      // TODO: use period properly
+      period: "45d",
+      type,
+    })
+  );
+
+  const refinedUptime = uptime ? mapStatus(uptime) : [];
+
   return (
     <ChartContainer config={chartConfig} className="h-[130px] w-full">
-      <BarChart accessibilityLayer data={chartData} barCategoryGap={2}>
+      <BarChart accessibilityLayer data={refinedUptime} barCategoryGap={2}>
         <CartesianGrid vertical={false} />
         <ChartTooltip
           cursor={false}
