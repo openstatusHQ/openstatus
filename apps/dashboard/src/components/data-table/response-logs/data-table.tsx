@@ -24,13 +24,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { regions } from "@/data/regions";
 import { statusCodes } from "@/data/status-codes";
 import { Braces, Share, TableProperties } from "lucide-react";
-import { useState } from "react";
 import { columns } from "./columns";
 import type { ResponseLog } from "@/data/response-logs";
+import { useQueryState } from "nuqs";
+import { searchParamsParsers } from "@/app/(dashboard)/monitors/[id]/logs/search-params";
 
 export function DataTable({ data }: { data: ResponseLog[] }) {
-  // TODO: use rowSelection from tanstack-table
-  const [selectedRow, setSelectedRow] = useState<ResponseLog | null>(null);
+  const [selected, setSelected] = useQueryState(
+    "selected",
+    searchParamsParsers.selected
+  );
+
+  const selectedRow = data.find(
+    (row) =>
+      row.id === selected?.monitorId &&
+      row.timestamp === selected?.cronTimestamp &&
+      row.region === selected?.region
+  );
+
   const regionConfig = regions.find(
     (region) => region.code === selectedRow?.region
   );
@@ -48,13 +59,16 @@ export function DataTable({ data }: { data: ResponseLog[] }) {
         //   checked={row.getIsSelected()}
         //   onCheckedChange={(value) => row.toggleSelected(!!value)}
         // />
-        onRowClick={(row) => setSelectedRow(row.original)}
+        onRowClick={(row) =>
+          setSelected({
+            monitorId: row.original.id,
+            cronTimestamp: row.original.timestamp,
+            region: row.original.region,
+          })
+        }
         paginationComponent={DataTablePagination}
       />
-      <DataTableSheet
-        open={!!selectedRow}
-        onOpenChange={() => setSelectedRow(null)}
-      >
+      <DataTableSheet open={!!selected} onOpenChange={() => setSelected(null)}>
         <DataTableSheetContent>
           <DataTableSheetHeader className="px-2">
             <DataTableSheetTitle>Response Logs</DataTableSheetTitle>
