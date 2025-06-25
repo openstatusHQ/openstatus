@@ -14,6 +14,7 @@ import { useTRPC } from "@/lib/trpc/client";
 import { CircleCheck, Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { formatMilliseconds } from "@/lib/formatter";
+import { deserialize } from "@openstatus/assertions";
 
 export function Sidebar() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export function Sidebar() {
   );
 
   if (!monitor) return null;
+
+  const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
 
   return (
     <SidebarRight
@@ -100,6 +103,45 @@ export function Sidebar() {
             });
             return arr;
           }),
+        },
+        {
+          label: "Assertions",
+          items:
+            assertions.length > 0
+              ? assertions.flatMap((assertion) => {
+                  const arr = [];
+
+                  arr.push({
+                    label: "Type",
+                    value: assertion.schema.type,
+                  });
+
+                  arr.push({
+                    label: "Compare",
+                    value: assertion.schema.compare,
+                    isNested: true,
+                  });
+
+                  if (
+                    assertion.schema.type === "header" &&
+                    assertion.schema.key
+                  ) {
+                    arr.push({
+                      label: "Key",
+                      value: assertion.schema.key,
+                      isNested: true,
+                    });
+                  }
+
+                  arr.push({
+                    label: "Value",
+                    value: assertion.schema.target,
+                    isNested: true,
+                  });
+
+                  return arr;
+                })
+              : [],
         },
         {
           label: "Last Logs",
