@@ -268,7 +268,10 @@ export const notificationRouter = createTRPCRouter({
       z.object({
         id: z.number(),
         name: z.string(),
-        data: z.record(z.string(), z.string()),
+        data: z.record(
+          z.string(),
+          z.string().or(z.record(z.string(), z.string()))
+        ),
         monitors: z.array(z.number()),
       })
     )

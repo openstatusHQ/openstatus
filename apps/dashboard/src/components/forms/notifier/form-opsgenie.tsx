@@ -98,7 +98,12 @@ export function FormOpsGenie({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(data);
+        const promise = config[provider].sendTest(
+          data as unknown as {
+            apiKey: string;
+            region: "eu" | "us";
+          }
+        );
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",

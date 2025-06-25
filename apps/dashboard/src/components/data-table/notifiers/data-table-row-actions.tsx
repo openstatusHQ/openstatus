@@ -70,7 +70,10 @@ export function DataTableRowActions(props: DataTableRowActionsProps) {
           await updateNotifierMutation.mutateAsync({
             id: props.row.original.id,
             name: values.name,
-            data: values.data,
+            data:
+              typeof values.data === "string"
+                ? { [values.provider]: values.data }
+                : values.data,
             monitors: values.monitors,
           });
         }}

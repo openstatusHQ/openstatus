@@ -88,7 +88,12 @@ export function FormPagerDuty({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(data);
+        const promise = config[provider].sendTest(
+          data as unknown as {
+            url: string;
+            integrationKey: string;
+          }
+        );
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",

@@ -92,7 +92,13 @@ export function FormNtfy({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        const promise = config[provider].sendTest(data);
+        const promise = config[provider].sendTest(
+          data as unknown as {
+            topic: string;
+            serverUrl?: string;
+            token?: string;
+          }
+        );
         toast.promise(promise, {
           loading: "Sending test...",
           success: "Test sent",
